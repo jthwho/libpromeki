@@ -5,9 +5,11 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <chrono>
 #include <cmath>
 #include <promeki/tpgmediaio.h>
 #include <promeki/videoformat.h>
+#include <promeki/file.h>
 #include <promeki/frame.h>
 #include <promeki/memspace.h>
 #include <promeki/pixelformat.h>
@@ -21,6 +23,11 @@
 #include <promeki/mediaioportgroup.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/mediaiorequest.h>
+#include <promeki/ancpacket.h>
+#include <promeki/ancpayload.h>
+#include <promeki/anctranslateconfig.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/subrip.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -139,6 +146,17 @@ MediaIOFactory::Config::SpecMap TpgFactory::configSpecs() const {
         s(MediaConfig::TpgDataEncoderEnabled, true);
         s(MediaConfig::TpgDataEncoderRepeatLines, int32_t(16));
         s(MediaConfig::StreamID, uint32_t(0));
+        // CEA-708 caption ANC — disabled by default so the plain TPG
+        // stream stays compatible with consumers that don't expect ANC.
+        // Flip on with TpgAncCaptionsEnabled = true and point
+        // TpgAncCaptionsFile at a SubRip (`.srt`) file.  The TPG
+        // parses it once at open time, runs a Cea608Encoder against
+        // the cue timeline, and injects the encoder's per-frame
+        // CcDataList into a CEA-708 CDP on every emitted frame.
+        s(MediaConfig::TpgAncCaptionsEnabled, false);
+        s(MediaConfig::TpgAncCaptionsFile, String());
+        s(MediaConfig::TpgAncCaptionsOffset, Duration());
+        s(MediaConfig::TpgAncCaptionsLine, int32_t(11));
         return specs;
 }
 
@@ -372,8 +390,160 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 _tcGen.setFrameRate(_frameRate);
         }
 
+        // -- ANC (CEA-708 caption injection) --
+        _ancCaptionsEnabled = cfg.getAs<bool>(MediaConfig::TpgAncCaptionsEnabled, false);
+        if (_ancCaptionsEnabled) {
+                _ancCaptionsFile = cfg.getAs<String>(MediaConfig::TpgAncCaptionsFile, String());
+                _ancCaptionsOffset = cfg.getAs<Duration>(MediaConfig::TpgAncCaptionsOffset, Duration());
+                _ancCaptionsLine = static_cast<uint16_t>(
+                        cfg.getAs<int32_t>(MediaConfig::TpgAncCaptionsLine, int32_t(11)));
+                _ancSequenceCounter = 0;
+
+                // Load and shift the SubRip file if one is configured.
+                // Empty path = no cues; the TPG still emits per-frame
+                // CDPs carrying null caption pairs so the receiver sees
+                // a steady stream.
+                _ancCaptions = SubtitleList();
+                if (!_ancCaptionsFile.isEmpty()) {
+                        File   srtFile(_ancCaptionsFile);
+                        Buffer srtBytes;
+                        Error  openErr = srtFile.open(IODevice::ReadOnly);
+                        if (openErr.isError()) {
+                                promekiErr("TpgMediaIO: failed to open SubRip file '%s': %s",
+                                           _ancCaptionsFile.cstr(), openErr.name().cstr());
+                                return openErr;
+                        }
+                        Result<int64_t> szR = srtFile.size();
+                        if (szR.second().isError()) {
+                                promekiErr("TpgMediaIO: stat failed on SubRip file '%s': %s",
+                                           _ancCaptionsFile.cstr(), szR.second().name().cstr());
+                                srtFile.close();
+                                return szR.second();
+                        }
+                        const int64_t sz = szR.first();
+                        if (sz > 0) {
+                                srtBytes = Buffer(static_cast<size_t>(sz));
+                                srtBytes.setSize(static_cast<size_t>(sz));
+                                int64_t got = srtFile.read(srtBytes.data(), sz);
+                                if (got != sz) {
+                                        promekiErr("TpgMediaIO: short read on SubRip file '%s': %lld / %lld bytes",
+                                                   _ancCaptionsFile.cstr(), static_cast<long long>(got),
+                                                   static_cast<long long>(sz));
+                                        srtFile.close();
+                                        return Error::IOError;
+                                }
+                        }
+                        srtFile.close();
+                        Result<SubtitleList> r = SubRip::parse(srtBytes);
+                        if (r.second().isError()) {
+                                promekiErr("TpgMediaIO: SubRip parse failed for '%s': %s",
+                                           _ancCaptionsFile.cstr(), r.second().name().cstr());
+                                return r.second();
+                        }
+                        _ancCaptions = r.first();
+                        // Apply the configured offset to every cue.
+                        // Negative offsets that would push a cue's start
+                        // below t=0 are detected later by the encoder's
+                        // pre-roll check (Error::OutOfRange).
+                        if (_ancCaptionsOffset.nanoseconds() != 0) {
+                                using ClockDur = TimeStamp::Value::duration;
+                                const ClockDur shift = std::chrono::duration_cast<ClockDur>(
+                                        std::chrono::nanoseconds(_ancCaptionsOffset.nanoseconds()));
+                                SubtitleList shifted;
+                                shifted.reserve(_ancCaptions.size());
+                                for (size_t i = 0; i < _ancCaptions.size(); ++i) {
+                                        Subtitle s = _ancCaptions[i];
+                                        s.setStart(TimeStamp(s.start().value() + shift));
+                                        s.setEnd(TimeStamp(s.end().value() + shift));
+                                        shifted.append(s);
+                                }
+                                _ancCaptions = shifted;
+                        }
+                        _ancCaptions.sortByStart();
+                        // Snap each cue's start / end to the nearest
+                        // frame boundary at the configured rate.
+                        // Authoring tools emit ms-precision; the
+                        // pipeline is frame-quantised — making the
+                        // snap explicit keeps per-frame equality
+                        // checks (metadata stamping, encoder schedule)
+                        // exact across NTSC fractional rates.
+                        _ancCaptions = _ancCaptions.snapToFrames(_frameRate);
+                }
+
+                // Instantiate the Cea608Encoder and load the cues.
+                // Filter cues that wouldn't fit the encoder's pre-roll
+                // / back-to-back constraints first — a SubRip file
+                // whose first cue starts at frame 0 (or at < pre-roll
+                // frames from t=0) is common and shouldn't make the
+                // whole pipeline refuse to open.  Dropped cues are
+                // logged as warnings; the rest still encode normally.
+                Cea608Encoder::Config encCfg;
+                encCfg.frameRate = _frameRate;
+                _ancCaptionEncoder = std::make_unique<Cea608Encoder>(encCfg);
+                SubtitleList dropped;
+                SubtitleList kept = _ancCaptionEncoder->encodableSubset(_ancCaptions, &dropped);
+                for (size_t di = 0; di < dropped.size(); ++di) {
+                        const Subtitle &d = dropped[di];
+                        promekiWarn("TpgMediaIO: dropping caption cue %lld..%lld (\"%s\") — too "
+                                    "close to t=0 or overlaps the prior cue's wire stream",
+                                    static_cast<long long>(d.start().value().time_since_epoch().count()),
+                                    static_cast<long long>(d.end().value().time_since_epoch().count()),
+                                    d.text().cstr());
+                }
+                _ancCaptions = kept;
+                Error encErr = _ancCaptionEncoder->setSubtitles(_ancCaptions);
+                if (encErr.isError()) {
+                        promekiErr("TpgMediaIO: Cea608Encoder::setSubtitles failed: %s "
+                                   "(check that cue start times are far enough from t=0 "
+                                   "to honour pre-roll, and that consecutive cues don't "
+                                   "overlap)",
+                                   encErr.name().cstr());
+                        return encErr;
+                }
+                // SMPTE 334-2 §5.1.4 frame-rate codes.  We pick the
+                // closest match for the configured FrameRate; unknowns
+                // emit code 0 (CDP still round-trips structurally).
+                const unsigned int num = _frameRate.numerator();
+                const unsigned int den = _frameRate.denominator();
+                if (num == 24000 && den == 1001)
+                        _ancFrameRateCode = 1; // 23.976
+                else if (num == 24 && den == 1)
+                        _ancFrameRateCode = 2; // 24
+                else if (num == 25 && den == 1)
+                        _ancFrameRateCode = 3; // 25
+                else if (num == 30000 && den == 1001)
+                        _ancFrameRateCode = 4; // 29.97
+                else if (num == 30 && den == 1)
+                        _ancFrameRateCode = 5; // 30
+                else if (num == 50 && den == 1)
+                        _ancFrameRateCode = 6; // 50
+                else if (num == 60000 && den == 1001)
+                        _ancFrameRateCode = 7; // 59.94
+                else if (num == 60 && den == 1)
+                        _ancFrameRateCode = 8; // 60
+                else
+                        _ancFrameRateCode = 0;
+
+                // Build the per-stream descriptor advertised through MediaDesc.
+                _ancDesc = AncDesc();
+                _ancDesc.setSourceRaster(_imageDesc.size());
+                _ancDesc.setScanMode(VideoScanMode::Progressive);
+                _ancDesc.setFrameRate(_frameRate);
+                AncFormat::IDList allowed;
+                allowed.pushToBack(AncFormat::Cea708);
+                _ancDesc.setAllowedFormats(allowed);
+                mediaDesc.ancList().pushToBack(_ancDesc);
+
+                // Stamp the build-line into the held translator config
+                // so every per-frame build() emits packets on the
+                // configured VANC line.
+                AncTranslateConfig ancCfg;
+                ancCfg.set(AncTranslateConfig::St291BuildLine, _ancCaptionsLine);
+                _ancTranslator.setConfig(ancCfg);
+        }
+
         // Must have at least one component enabled
-        if (!_videoEnabled && !_audioEnabled && !_timecodeEnabled) {
+        if (!_videoEnabled && !_audioEnabled && !_timecodeEnabled && !_ancCaptionsEnabled) {
                 promekiErr("TpgMediaIO: no components enabled");
                 return Error::InvalidArgument;
         }
@@ -425,6 +595,15 @@ Error TpgMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _motionBandEnabled = false;
         _burnEnabled = false;
         _burnTextTemplate = String();
+        _ancCaptionsEnabled = false;
+        _ancCaptionsFile = String();
+        _ancCaptionsOffset = Duration();
+        _ancSequenceCounter = 0;
+        _ancFrameRateCode = 0;
+        _ancDesc = AncDesc();
+        _ancTranslator = AncTranslator();
+        _ancCaptions = SubtitleList();
+        _ancCaptionEncoder.reset();
         return Error::Ok;
 }
 
@@ -585,6 +764,56 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 promekiWarn("TpgMediaIO: data encoder pass "
                                             "failed: %s",
                                             encErr.name().cstr());
+                        }
+                }
+        }
+
+        // -- CEA-708 caption ANC injection --
+        if (_ancCaptionsEnabled && _ancCaptionEncoder != nullptr) {
+                // Pull the byte-pair for this frame from the SubRip-
+                // driven Cea608Encoder.  Empty frames carry the null
+                // pair (0x80, 0x80) so the receiver sees a steady
+                // stream of cc_data triples — that's what real
+                // broadcast captioners do.
+                const FrameNumber       fn(_frameCount.value());
+                Cea708Cdp::CcDataList   triples = _ancCaptionEncoder->nextFrame(fn);
+                Cea708Cdp               cdp(_ancFrameRateCode, triples, _ancSequenceCounter);
+                cdp.timeCodePresent = _timecodeEnabled;
+                if (_timecodeEnabled) cdp.timeCode = tc;
+
+                Result<AncPacket> r = _ancTranslator.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+                                                            AncTransport::St291);
+                if (r.second().isOk()) {
+                        AncPayload::Ptr ancPayload = AncPayload::Ptr::create(_ancDesc);
+                        ancPayload.modify()->addPacket(r.first());
+                        frame.addPayload(ancPayload);
+                } else {
+                        promekiWarn("TpgMediaIO: CEA-708 ANC build failed: %s", r.second().name().cstr());
+                }
+                ++_ancSequenceCounter;
+
+                // Stamp the active Subtitle into the Frame's metadata
+                // for *every* frame in the cue's display window.
+                // Renderers (SubtitleBurn) and other downstream
+                // consumers that don't decode ANC pull the active cue
+                // straight off the Frame each tick — they need it on
+                // every frame the cue is visible, not just the start.
+                // The CoW Subtitle handle makes per-frame re-stamping
+                // essentially free (a refcount bump).
+                if (!_ancCaptions.isEmpty()) {
+                        // Compute this frame's media-relative TimeStamp
+                        // (epoch = TPG t=0).  Use FrameRate's exact
+                        // rational helper to avoid drift on NTSC rates.
+                        using ClockDur = TimeStamp::Value::duration;
+                        const int64_t   nsPerSec = 1'000'000'000;
+                        const int64_t   tickNs = _frameRate.cumulativeTicks(nsPerSec, _frameCount.value());
+                        const ClockDur  frameDur =
+                                std::chrono::duration_cast<ClockDur>(std::chrono::nanoseconds(tickNs));
+                        const TimeStamp frameTs{TimeStamp::Value(frameDur)};
+                        int64_t         idx = _ancCaptions.findActiveAt(frameTs);
+                        if (idx >= 0) {
+                                const Subtitle &active = _ancCaptions[static_cast<size_t>(idx)];
+                                frame.metadata().set(Metadata::Subtitle, Variant(active));
                         }
                 }
         }

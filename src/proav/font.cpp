@@ -27,6 +27,13 @@ Font::~Font() {}
 
 void Font::onStateChanged() {}
 
+void Font::onColorChanged() {
+        // Default to the same heavy-handed invalidation as
+        // onStateChanged so existing subclasses (BasicFont, etc.)
+        // keep behaving correctly without overriding the new hook.
+        onStateChanged();
+}
+
 void Font::setFontFilename(const String &val) {
         if (_fontFilename == val) return;
         _fontFilename = val;
@@ -42,13 +49,13 @@ void Font::setFontSize(int val) {
 void Font::setForegroundColor(const Color &color) {
         if (_fg == color) return;
         _fg = color;
-        onStateChanged();
+        onColorChanged();
 }
 
 void Font::setBackgroundColor(const Color &color) {
         if (_bg == color) return;
         _bg = color;
-        onStateChanged();
+        onColorChanged();
 }
 
 void Font::setPaintEngine(const PaintEngine &pe) {

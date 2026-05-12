@@ -167,7 +167,8 @@ class Buffer {
                 bool isValid() const { return _d.isValid() && _d->allocSize() > 0; }
 
                 /**
-                 * @brief Returns the current host data pointer.
+                 * @brief Returns the current host data pointer
+                 *        (mutable view, non-const handle).
                  *
                  * For host-resident backends this is the (possibly
                  * shifted) host pointer; for backends that are not
@@ -175,22 +176,46 @@ class Buffer {
                  * Callers that need a host pointer for non-host
                  * backends call @ref mapAcquire(MemDomain::Host)
                  * first.
+                 *
+                 * The const overload returns @c const @c void* — a
+                 * const-qualified @ref Buffer handle is a read-only
+                 * view of its bytes.  Mutators (@ref copyFrom,
+                 * @ref setSize, @ref fill, …) keep their "mutate
+                 * through const handle" idiom for backwards
+                 * compatibility; only the read accessors gate on
+                 * handle constness.
                  */
-                void *data() const {
+                void *data() {
                         if (!_d.isValid()) return nullptr;
                         void *base = _d->mappedHostData();
                         if (base == nullptr) return nullptr;
                         return static_cast<uint8_t *>(base) + _d->shift();
                 }
 
+                /** @copydoc data() — const-correct read-only view. */
+                const void *data() const {
+                        if (!_d.isValid()) return nullptr;
+                        const void *base = _d->mappedHostData();
+                        if (base == nullptr) return nullptr;
+                        return static_cast<const uint8_t *>(base) + _d->shift();
+                }
+
                 /**
-                 * @brief Returns the original allocation pointer.
+                 * @brief Returns the original allocation pointer
+                 *        (mutable view).
                  *
                  * Unlike @ref data, this always points to the base of
                  * the allocation, regardless of any shift.  Returns
                  * @c nullptr when the buffer is not host-mapped.
+                 * Const overload below returns @c const @c void*.
                  */
-                void *odata() const {
+                void *odata() {
+                        if (!_d.isValid()) return nullptr;
+                        return _d->mappedHostData();
+                }
+
+                /** @copydoc odata() — const-correct read-only view. */
+                const void *odata() const {
                         if (!_d.isValid()) return nullptr;
                         return _d->mappedHostData();
                 }

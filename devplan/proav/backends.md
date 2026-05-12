@@ -37,6 +37,14 @@ that history now lives in git. What remains here is the open work.
 - **SrcMediaIO** — audio sample-format conversion via the
   `AudioFormat::convertTo` / direct-converter registry.
 - **BurnMediaIO** — text overlay via `VideoTestPattern::applyBurn`.
+- **SubtitleBurnMediaIO** — transform-mode backend that paints the
+  active `Subtitle` cue onto video frames. Reads cues from
+  `Metadata::Subtitle` (stamped by `TpgMediaIO` SubRip path) or
+  decodes CEA-608 live from the frame's `AncPayloads` via
+  `Cea608Decoder::displayedCue()`. Source preference is configurable
+  via `MediaConfig::VideoSubtitleBurnSources` (ordered `EnumList`).
+  Uses `SubtitleRenderer` + the new multi-key `FastFont` glyph cache
+  so italic/underline/colour switches do not flush cached glyphs.
 - **FrameSyncMediaIO** — wraps `FrameSync` for cadence resync.
 - **InspectorMediaIO** — QA sink: image-data band decode, per-channel
   `AudioDataDecoder` marker decode (`InspectorTest::AudioData`,
@@ -44,6 +52,9 @@ that history now lives in git. What remains here is the open work.
   (`InspectorTest::AvSync`, default-on — cadence-free, baseline-
   anchored; per-frame `Metadata::FrameRate` relatch so NDI and other
   late-rate backends drive the cadence math against the real rate),
+  ANC data JSONL dump (`InspectorTest::AncData`, opt-in — walks
+  `Frame::ancPayloads()`, parses each packet via `AncTranslator`,
+  emits one JSON line per packet to `InspectorAncDataFile`),
   continuity checks, `--filter` queries.
   `InspectorSnapshot` gained `discontinuitiesByKind[]` (per-kind
   counters indexed by `InspectorDiscontinuity::Kind`).
@@ -80,9 +91,9 @@ that history now lives in git. What remains here is the open work.
 - **NullPacingMediaIO** — wall-clock-paced null sink.
 - **V4L2MediaIO** — Linux V4L2 capture (with ALSA pairing).
 - **SDLPlayerTask** / **SDLPlayerWidget** — SDL display sink + widget.
-- **TPG, Inspector, Burn, RawBitstream, FrameBridge, DebugMedia,
-  Mjpeg, NullPacing** all carry full describe / proposeInput /
-  proposeOutput coverage per the planner contract (see
+- **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,
+  DebugMedia, Mjpeg, NullPacing** all carry full describe /
+  proposeInput / proposeOutput coverage per the planner contract (see
   `proav/planner.md`).
 
 ---

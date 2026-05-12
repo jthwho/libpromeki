@@ -416,6 +416,8 @@ void DataStream::writeAudioFormatData(const AudioFormat &val) {
         writeStringData(val.name());
 }
 
+void DataStream::writeAncFormatData(const AncFormat &val) { writeStringData(val.name()); }
+
 void DataStream::writeEnumData(const Enum &val) {
         // Enum's qualified "TypeName::ValueName" form is the canonical
         // serialization consumed by Enum::lookup().
@@ -680,6 +682,16 @@ AudioFormat DataStream::readAudioFormatData() {
         return value(AudioFormat::lookup(s));
 }
 
+AncFormat DataStream::readAncFormatData() {
+        String s = readStringData();
+        if (_status != Ok) return AncFormat();
+        // AncFormat::idFromName returns Invalid for unknown names; the
+        // resulting wrapper is harmless (isValid() == false) so the
+        // round-trip is lossy-but-safe on unregistered names rather
+        // than triggering a stream-level read error.
+        return AncFormat(AncFormat::idFromName(s));
+}
+
 Enum DataStream::readEnumData() {
         String s = readStringData();
         if (_status != Ok) return Enum();
@@ -907,6 +919,12 @@ DataStream &DataStream::operator<<(const PixelFormat &val) {
 DataStream &DataStream::operator<<(const AudioFormat &val) {
         writeTag(TypeAudioFormat);
         writeAudioFormatData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const AncFormat &val) {
+        writeTag(TypeAncFormat);
+        writeAncFormatData(val);
         return *this;
 }
 
@@ -1338,6 +1356,15 @@ DataStream &DataStream::operator>>(AudioFormat &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(AncFormat &val) {
+        if (!readTag(TypeAncFormat)) {
+                val = AncFormat();
+                return *this;
+        }
+        val = readAncFormatData();
+        return *this;
+}
+
 DataStream &DataStream::operator>>(Enum &val) {
         if (!readTag(TypeEnum)) {
                 val = Enum();
@@ -1670,6 +1697,7 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypePixelMemLayout: val = readPixelMemLayoutData(); break;
                 case TypePixelFormat: val = readPixelFormatData(); break;
                 case TypeAudioFormat: val = readAudioFormatData(); break;
+                case TypeAncFormat: val = readAncFormatData(); break;
                 case TypeEnum: val = readEnumData(); break;
                 case TypeEnumList: val = readEnumListData(); break;
                 case TypeMediaTimeStamp: {
@@ -2050,6 +2078,40 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = std::move(doc);
                         break;
                 }
+                case TypeCea708Cdp: {
+                        // operator<<(DataStream&, const Cea708Cdp&) writes the
+                        // body as a tagged Buffer.  Consume the inner Buffer tag
+                        // and reconstruct via Cea708Cdp::fromBuffer.
+                        Buffer buf;
+                        *this >> buf;
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(buf);
+                        if (r.second().isError()) {
+                                setError(ReadCorruptData,
+                                         String("Cea708Cdp::fromBuffer failed: ") + r.second().desc());
+                                val = Variant();
+                                break;
+                        }
+                        val = std::move(r.first());
+                        break;
+                }
+                case TypeSubtitle: {
+                        // The dedicated Subtitle DataStream operators
+                        // consume the field-by-field payload; the tag
+                        // was already eaten by readAnyTag() upstream,
+                        // so we drop directly into the field reader.
+                        extern Subtitle readSubtitleData(DataStream &);
+                        Subtitle        sub = readSubtitleData(*this);
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = std::move(sub);
+                        break;
+                }
                 default:
                         setError(ReadCorruptData,
                                  String::sprintf("Variant::read: tag 0x%04X is not Variant-representable",
@@ -2149,6 +2211,10 @@ namespace {
         template <> struct has_free_read<VariantMap> : std::true_type {};
         template <> struct has_free_write<XmlDocument> : std::true_type {};
         template <> struct has_free_read<XmlDocument> : std::true_type {};
+        template <> struct has_free_write<Cea708Cdp> : std::true_type {};
+        template <> struct has_free_read<Cea708Cdp> : std::true_type {};
+        template <> struct has_free_write<Subtitle> : std::true_type {};
+        template <> struct has_free_read<Subtitle> : std::true_type {};
 
         template <typename T>
         inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;

@@ -8,9 +8,10 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/colormodel.h>
+#include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/colormodel.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -461,6 +462,49 @@ class Color {
 
                 /** @brief Inequality operator. */
                 bool operator!=(const Color &other) const { return !(*this == other); }
+
+                /// @brief Convenience alias for a list of colours.
+                ///        Qualified at the alias site so that
+                ///        unqualified uses of @c List inside the class
+                ///        body don't shadow the outer template.
+                using List = ::promeki::List<Color>;
+
+                /**
+                 * @brief Returns the index of the palette entry closest
+                 *        to this colour by sRGB Euclidean distance.
+                 *
+                 * Used wherever an arbitrary colour has to be matched
+                 * to a fixed palette: TUI rendering (xterm-256 / 16-colour
+                 * downscale), CEA-608 captioning (7-colour primary set),
+                 * indexed paletted image formats, etc.
+                 *
+                 * Both @c this and every @p palette entry are converted
+                 * to sRGB first; the comparison happens in 8-bit sRGB
+                 * channels so two colours that resolve to the same
+                 * 24-bit RGB land in the same slot regardless of how
+                 * they were originally constructed.  Alpha is ignored.
+                 *
+                 * Returns @p n when @p palette is empty or @p n is 0.
+                 *
+                 * @param palette Pointer to the first palette entry.
+                 * @param n       Number of palette entries.
+                 * @return The 0-based index of the closest entry, or
+                 *         @p n when the palette is empty.
+                 */
+                size_t nearestPaletteIndex(const Color *palette, size_t n) const;
+
+                /// @brief Convenience overload taking a @ref Color::List.
+                size_t nearestPaletteIndex(const List &palette) const {
+                        return nearestPaletteIndex(palette.data(), palette.size());
+                }
+
+                /// @brief Returns the palette entry closest to this
+                ///        colour, or a default-invalid @ref Color when
+                ///        @p palette is empty.
+                Color nearestPaletteColor(const List &palette) const {
+                        if (palette.isEmpty()) return Color();
+                        return palette[nearestPaletteIndex(palette)];
+                }
 
         private:
                 float      _c[4] = {0.0f, 0.0f, 0.0f, 0.0f};

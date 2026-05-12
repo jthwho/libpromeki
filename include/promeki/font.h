@@ -206,8 +206,24 @@ class Font {
                  * @note This is not called when setPaintEngine() is invoked
                  *       with an engine that has the same pixel format pointer
                  *       as the current one.
+                 * @note Colour changes route through
+                 *       @ref onColorChanged so subclasses that key their
+                 *       caches on colour can stay valid across switches.
                  */
                 virtual void onStateChanged();
+
+                /**
+                 * @brief Called when the default foreground or background
+                 *        colour changes.
+                 *
+                 * Distinct from @ref onStateChanged so subclasses whose
+                 * caches are keyed on colour (and therefore stay valid
+                 * across colour switches) can opt out of the expensive
+                 * full-cache invalidation.  The default implementation
+                 * forwards to @ref onStateChanged for back-compat with
+                 * subclasses that haven't been migrated.
+                 */
+                virtual void onColorChanged();
 
                 /**
                  * @brief Returns the filename subclasses should actually load.

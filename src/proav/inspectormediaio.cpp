@@ -35,6 +35,13 @@
 #include <promeki/timestamp.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
+#include <promeki/ancmeta.h>
+#include <promeki/ancpacket.h>
+#include <promeki/ancpayload.h>
+#include <promeki/anctranslator.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/json.h>
+#include <promeki/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -260,6 +267,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _checkTimestamp = false;
         _checkAudioSamples = false;
         _checkCaptureStats = false;
+        _checkAncData = false;
         const EnumList testsCfg = cfg.get(MediaConfig::InspectorTests).get<EnumList>();
         for (size_t i = 0; i < testsCfg.size(); ++i) {
                 const int v = testsCfg.at(i).value();
@@ -279,6 +287,8 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         _checkCaptureStats = true;
                 else if (v == InspectorTest::AudioData.value())
                         _decodeAudioData = true;
+                else if (v == InspectorTest::AncData.value())
+                        _checkAncData = true;
         }
         if (_checkAvSync) {
                 // Marker-based A/V sync: compares the picture data
@@ -307,6 +317,12 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 if (ferr.isError()) return ferr;
         }
 
+        if (_checkAncData) {
+                String configured = cfg.getAs<String>(MediaConfig::InspectorAncDataFile, String());
+                Error  ferr = openAncDataFile(configured);
+                if (ferr.isError()) return ferr;
+        }
+
         _isOpen = true;
 
         // Dump the resolved configuration into the log so any later
@@ -324,6 +340,8 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         promekiInfo("Audio samples check   = %s", _checkAudioSamples ? "enabled" : "disabled");
         promekiInfo("Capture stats check   = %s%s%s", _checkCaptureStats ? "enabled (writing " : "disabled",
                     _checkCaptureStats ? _statsFilePath.cstr() : "", _checkCaptureStats ? ")" : "");
+        promekiInfo("ANC data check        = %s%s%s", _checkAncData ? "enabled (writing " : "disabled",
+                    _checkAncData ? _ancDataFilePath.cstr() : "", _checkAncData ? ")" : "");
         promekiInfo("Image data band       = %d scan lines per item", _imageDataRepeatLines);
         promekiInfo("Audio PTS tolerance   = %lld ns (%.3f ms)",
                     static_cast<long long>(_audioPtsToleranceNs),
@@ -350,6 +368,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         _isOpen = false;
         closeCaptureStatsFile();
+        closeAncDataFile();
 
         // Emit a final summary so the log contains a complete record
         // of the inspector's lifetime.  We snapshot under the mutex
@@ -1935,6 +1954,132 @@ void InspectorMediaIO::runCaptureStats(const Frame &frame, const InspectorEvent 
         }
 }
 
+// ---------------------------------------------------------------------------
+// AncData output file
+// ---------------------------------------------------------------------------
+
+Error InspectorMediaIO::openAncDataFile(const String &configured) {
+        closeAncDataFile();
+
+        if (configured.isEmpty()) {
+                const int64_t ns = TimeStamp::now().nanoseconds();
+                FilePath      p = Dir::temp().path() /
+                             String::sprintf("promeki_inspector_anc_%d_%lld.jsonl",
+                                             static_cast<int>(getpid()), static_cast<long long>(ns));
+                _ancDataFilePath = p.toString();
+        } else {
+                _ancDataFilePath = configured;
+        }
+
+        _ancDataFile = std::fopen(_ancDataFilePath.cstr(), "w");
+        if (_ancDataFile == nullptr) {
+                promekiErr("InspectorMediaIO: failed to open AncData file '%s': %s",
+                           _ancDataFilePath.cstr(), std::strerror(errno));
+                _ancDataFilePath = String();
+                return Error::OpenFailed;
+        }
+        std::setvbuf(_ancDataFile, nullptr, _IOLBF, 0);
+        promekiInfo("InspectorMediaIO: AncData writing to %s", _ancDataFilePath.cstr());
+        _ancDataWriteError = false;
+        _ancDataFrameIndex = FrameCount{0};
+        return Error::Ok;
+}
+
+void InspectorMediaIO::closeAncDataFile() {
+        if (_ancDataFile != nullptr) {
+                std::fclose(_ancDataFile);
+                _ancDataFile = nullptr;
+        }
+        _ancDataFilePath = String();
+        _ancDataWriteError = false;
+}
+
+namespace {
+
+        // Build a parsed-payload JSON object for a single AncPacket.
+        // Uses AncTranslator to decode the wire bytes; falls back to a
+        // raw hex dump when no parser is registered for the format /
+        // transport pair.
+        JsonObject jsonForAncPacket(const AncPacket &pkt, AncTranslator &t) {
+                JsonObject obj;
+                obj.set("format", pkt.format().name());
+                obj.set("formatId", static_cast<int64_t>(pkt.format().id()));
+                obj.set("transport", pkt.transport().valueName());
+                obj.set("dataSize", static_cast<int64_t>(pkt.data().size()));
+                // Surface the relevant AncMeta sidecar keys when present
+                // — the user inspecting captured ANC almost always wants
+                // the VANC line / field flag for ST 291 packets, etc.
+                if (pkt.transport() == AncTransport::St291) {
+                        const Metadata &m = pkt.meta();
+                        if (m.contains(AncMeta::St291::Line)) {
+                                obj.set("line", static_cast<int64_t>(m.getAs<uint16_t>(AncMeta::St291::Line)));
+                        }
+                        if (m.contains(AncMeta::St291::FieldB)) {
+                                obj.set("fieldB", m.getAs<bool>(AncMeta::St291::FieldB));
+                        }
+                }
+
+                // Try to parse via the registered handler.
+                Result<Variant> parsed = t.parse(pkt);
+                if (parsed.second().isOk()) {
+                        const Variant &v = parsed.first();
+                        // Cea708Cdp has a structured toJson(); other
+                        // typed payloads (Timecode, uint8_t, etc.) fall
+                        // through to setFromVariant which lands a
+                        // string / scalar form into the JSON.
+                        if (v.type() == Variant::TypeCea708Cdp) {
+                                obj.set("parsed", v.get<Cea708Cdp>().toJson());
+                        } else {
+                                obj.setFromVariant("parsed", v);
+                        }
+                } else {
+                        // No parser registered (or parse failed): hex-dump
+                        // the wire bytes so the row is still self-contained.
+                        const Buffer &buf = pkt.data();
+                        String        hex;
+                        const uint8_t *b = static_cast<const uint8_t *>(buf.data());
+                        for (size_t i = 0; i < buf.size(); ++i) {
+                                hex += String::sprintf("%02x", static_cast<unsigned>(b[i]));
+                        }
+                        obj.set("hex", hex);
+                }
+                return obj;
+        }
+
+} // namespace
+
+void InspectorMediaIO::runAncDataCheck(const Frame &frame, InspectorEvent &event) {
+        if (_ancDataFile == nullptr || _ancDataWriteError) return;
+        (void)event;
+
+        AncPayload::PtrList ancList = frame.ancPayloads();
+
+        JsonObject row;
+        row.set("frame", static_cast<int64_t>(_ancDataFrameIndex.value()));
+        row.set("payloadCount", static_cast<int64_t>(ancList.size()));
+
+        JsonArray packetsArr;
+        for (size_t i = 0; i < ancList.size(); ++i) {
+                if (!ancList[i].isValid()) continue;
+                const AncPayload      &pl = *ancList[i];
+                const AncPacket::List &pkts = pl.packets();
+                for (size_t j = 0; j < pkts.size(); ++j) {
+                        packetsArr.add(jsonForAncPacket(pkts[j], _ancTranslator));
+                }
+        }
+        row.set("packets", packetsArr);
+
+        // One JSON object per line (JSONL convention).
+        String line = row.toString(0);
+        int    rc = std::fprintf(_ancDataFile, "%s\n", line.cstr());
+        if (rc < 0) {
+                promekiErr("InspectorMediaIO: AncData write failed on frame %lld (%s)",
+                           static_cast<long long>(_ancDataFrameIndex.value()), std::strerror(errno));
+                _ancDataWriteError = true;
+        }
+        ++_ancDataFrameIndex;
+}
+
 Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (!_isOpen) return Error::NotOpen;
         if (!cmd.frame.isValid()) return Error::InvalidArgument;
@@ -1969,6 +2114,7 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (_checkTimestamp) runTimestampCheck(work, event);
         if (_checkAudioSamples) runAudioSamplesCheck(work, event);
         if (_checkCaptureStats) runCaptureStats(work, event);
+        if (_checkAncData) runAncDataCheck(work, event);
 
         // Update stats accumulator under the mutex.
         {

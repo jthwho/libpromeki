@@ -985,3 +985,50 @@ TEST_CASE("Color: fromNative passes alpha through") {
         Color c = Color::fromNative(ColorModel::HSV_sRGB, 90.0f, 1.0f, 1.0f, 0.3f);
         CHECK(c.alpha() == 0.3f);
 }
+
+// ── nearestPaletteIndex ──────────────────────────────────────────
+
+TEST_CASE("Color: nearestPaletteIndex empty palette returns n") {
+        Color c = Color::Red;
+        CHECK(c.nearestPaletteIndex(nullptr, 0) == 0);
+        Color::List empty;
+        CHECK(c.nearestPaletteIndex(empty) == 0);
+}
+
+TEST_CASE("Color: nearestPaletteIndex finds exact matches") {
+        Color::List palette;
+        palette.pushToBack(Color::White);
+        palette.pushToBack(Color::Red);
+        palette.pushToBack(Color::Green);
+        palette.pushToBack(Color::Blue);
+        CHECK(Color::Red.nearestPaletteIndex(palette) == 1);
+        CHECK(Color::Green.nearestPaletteIndex(palette) == 2);
+        CHECK(Color::Blue.nearestPaletteIndex(palette) == 3);
+        CHECK(Color::White.nearestPaletteIndex(palette) == 0);
+}
+
+TEST_CASE("Color: nearestPaletteIndex picks the closest entry by sRGB distance") {
+        Color::List palette;
+        palette.pushToBack(Color::White);
+        palette.pushToBack(Color::Red);
+        palette.pushToBack(Color::Green);
+        palette.pushToBack(Color::Blue);
+        // Dark red — should still match red.
+        Color darkRed = Color::srgb(0.6f, 0.0f, 0.0f);
+        CHECK(darkRed.nearestPaletteIndex(palette) == 1);
+        // Pinkish — closest to red (palette has no pink).
+        Color pink = Color::srgb(1.0f, 0.4f, 0.4f);
+        CHECK(pink.nearestPaletteIndex(palette) == 1);
+        // Deep blue with a hint of green — closest to blue.
+        Color deepBlue = Color::srgb(0.2f, 0.3f, 1.0f);
+        CHECK(deepBlue.nearestPaletteIndex(palette) == 3);
+}
+
+TEST_CASE("Color: nearestPaletteColor returns palette entry") {
+        Color::List palette;
+        palette.pushToBack(Color::White);
+        palette.pushToBack(Color::Red);
+        palette.pushToBack(Color::Green);
+        Color darkGreen = Color::srgb(0.0f, 0.5f, 0.0f);
+        CHECK(darkGreen.nearestPaletteColor(palette) == Color::Green);
+}

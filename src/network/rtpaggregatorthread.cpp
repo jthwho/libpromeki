@@ -10,6 +10,7 @@
 #include <cstring>
 #include <utility>
 
+#include <promeki/ancpayload.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/error.h>
@@ -44,6 +45,9 @@ void RtpAggregatorThread::requestStop() {
         if (_ctx.data.payloadQueue != nullptr) {
                 _ctx.data.payloadQueue->cancelWaiters();
         }
+        if (_ctx.anc.payloadQueue != nullptr) {
+                _ctx.anc.payloadQueue->cancelWaiters();
+        }
         if (_ctx.readerQueue != nullptr) {
                 _ctx.readerQueue->cancelWaiters();
         }
@@ -54,6 +58,7 @@ void RtpAggregatorThread::run() {
                 case Mode::Video:     runVideoMode(); break;
                 case Mode::AudioOnly: runAudioOnlyMode(); break;
                 case Mode::DataOnly:  runDataOnlyMode(); break;
+                case Mode::AncOnly:   runAncOnlyMode(); break;
         }
 }
 
@@ -62,6 +67,7 @@ void RtpAggregatorThread::runOnce(unsigned int popMs) {
                 case Mode::Video:     stepVideoMode(popMs); break;
                 case Mode::AudioOnly: stepAudioOnlyMode(popMs); break;
                 case Mode::DataOnly:  stepDataOnlyMode(popMs); break;
+                case Mode::AncOnly:   stepAncOnlyMode(popMs); break;
         }
 }
 
@@ -138,6 +144,42 @@ void RtpAggregatorThread::drainAudioIntoFifoBefore(const TimeStamp &windowEnd) {
                         break;
                 }
         }
+}
+
+bool RtpAggregatorThread::drainAncBefore(const TimeStamp &windowEnd,
+                                         RxAncFrame &out) {
+        bool have = false;
+        if (_hasPendingAnc) {
+                const bool windowOpen = windowEnd.nanoseconds() == 0;
+                const bool pendingUnstamped =
+                        _pendingAnc.captureTime.nanoseconds() == 0;
+                const bool pendingFitsWindow =
+                        windowOpen || pendingUnstamped ||
+                        (_pendingAnc.captureTime - windowEnd).nanoseconds() < 0;
+                if (pendingFitsWindow) {
+                        out = std::move(_pendingAnc);
+                        have = true;
+                        _hasPendingAnc = false;
+                } else {
+                        return false;
+                }
+        }
+        if (_ctx.anc.payloadQueue == nullptr) return have;
+        if (!_ctx.anc.active) return have;
+        for (;;) {
+                Result<RxAncFrame> r = _ctx.anc.payloadQueue->tryPop();
+                if (r.second().isError()) break;
+                if (windowEnd.nanoseconds() != 0 &&
+                    r.first().captureTime.nanoseconds() != 0 &&
+                    (r.first().captureTime - windowEnd).nanoseconds() >= 0) {
+                        _pendingAnc = std::move(r.first());
+                        _hasPendingAnc = true;
+                        break;
+                }
+                out = std::move(r.first());
+                have = true;
+        }
+        return have;
 }
 
 bool RtpAggregatorThread::drainDataBefore(const TimeStamp &windowEnd,
@@ -301,6 +343,11 @@ void RtpAggregatorThread::emitFrameForVideo(RxVideoFrame video,
         if (drainDataBefore(windowEnd, data)) {
                 frame.metadata() = data.metadata;
         }
+        RxAncFrame anc;
+        if (drainAncBefore(windowEnd, anc) && !anc.packets.isEmpty()) {
+                auto ap = AncPayload::Ptr::create(anc.desc, std::move(anc.packets));
+                frame.addPayload(ap);
+        }
         _emittedFrameCursor = video.captureTime;
         if (_ctx.pushFrame) _ctx.pushFrame(std::move(frame));
 }
@@ -350,6 +397,11 @@ void RtpAggregatorThread::emitWatchdogFrame(const Duration &fd) {
         RxDataMessage data;
         if (drainDataBefore(windowEnd, data)) {
                 frame.metadata() = data.metadata;
+        }
+        RxAncFrame anc;
+        if (drainAncBefore(windowEnd, anc) && !anc.packets.isEmpty()) {
+                auto ap = AncPayload::Ptr::create(anc.desc, std::move(anc.packets));
+                frame.addPayload(ap);
         }
         if (_ctx.pushFrame) _ctx.pushFrame(std::move(frame));
 }
@@ -471,6 +523,32 @@ bool RtpAggregatorThread::stepDataOnlyMode(unsigned int popMs) {
         frame.metadata() = r.first().metadata;
         frame.setCaptureTime(MediaTimeStamp(r.first().captureTime,
                                             _ctx.data.clockDomain));
+        if (_ctx.pushFrame) _ctx.pushFrame(std::move(frame));
+        return true;
+}
+
+void RtpAggregatorThread::runAncOnlyMode() {
+        if (_ctx.anc.payloadQueue == nullptr) return;
+        while (!_stopRequested.value()) {
+                if (!stepAncOnlyMode(kPopCapMs)) {
+                        if (_stopRequested.value()) break;
+                }
+        }
+}
+
+bool RtpAggregatorThread::stepAncOnlyMode(unsigned int popMs) {
+        if (_ctx.anc.payloadQueue == nullptr) return false;
+        Result<RxAncFrame> r = _ctx.anc.payloadQueue->pop(popMs);
+        if (r.second() == Error::Cancelled) return false;
+        if (r.second() == Error::Timeout) return false;
+        if (r.second() != Error::Ok) return false;
+        RxAncFrame &anc = r.first();
+        Frame       frame = Frame();
+        frame.setCaptureTime(MediaTimeStamp(anc.captureTime, _ctx.anc.clockDomain));
+        if (!anc.packets.isEmpty()) {
+                auto ap = AncPayload::Ptr::create(anc.desc, std::move(anc.packets));
+                frame.addPayload(ap);
+        }
         if (_ctx.pushFrame) _ctx.pushFrame(std::move(frame));
         return true;
 }

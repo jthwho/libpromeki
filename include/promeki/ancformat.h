@@ -1,0 +1,333 @@
+/**
+ * @file      ancformat.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#pragma once
+
+#include <cstdint>
+#include <promeki/namespace.h>
+#include <promeki/string.h>
+#include <promeki/list.h>
+#include <promeki/enums.h>
+#include <promeki/result.h>
+#include <promeki/error.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief First-class identifier for an ancillary-data format family.
+ * @ingroup proav
+ *
+ * Uses the @ref typeregistry "TypeRegistry pattern": a lightweight
+ * inline wrapper around an immutable @ref Data record, identified by
+ * an integer @ref ID.  Well-known formats are provided as named
+ * enumerators; applications can register additional formats at runtime
+ * via @ref registerType and @ref registerData.  Mirrors the shape of
+ * @ref PixelFormat and @ref AudioFormat exactly.
+ *
+ * An @c AncFormat answers the logical question "what kind of ancillary
+ * data is this?" (CEA-708 closed captions, AFD, ATC LTC timecode,
+ * SCTE-104 splice markers, …) independent of the wire transport the
+ * payload is currently riding on — the latter is captured by
+ * @ref AncTransport on @ref AncPacket.  An @c AncFormat is therefore
+ * preserved across translation: an @c AncPacket carrying
+ * @c AncFormat::Cea708 keeps the same @c AncFormat whether it is on
+ * @c AncTransport::St291, @c AncTransport::NdiXml, or any other
+ * registered transport.
+ *
+ * @par Per-transport identity keys
+ *
+ * Each well-known format carries one or more transport-specific
+ * identity bytes — the ST 291 DID/SDID pair, the HDMI InfoFrame type
+ * byte, the MPEG-TS table_id — that the registry uses to recognise a
+ * raw wire packet on its canonical transport.  The
+ * @ref fromSt291DidSdid, @ref fromHdmiInfoFrameType, and
+ * @ref fromMpegTsTableId static helpers perform that lookup; backends
+ * use them on the capture path to label a freshly received packet
+ * with the matching @c AncFormat.
+ *
+ * @par Wildcard SDID lookup
+ *
+ * Some formats span an SDID range under a single DID — SMPTE 2020
+ * Dolby-metadata uses DID 0x45 with SDIDs 0x01-0x09 to carry different
+ * sub-flavours, but the library represents them as one
+ * @c Smpte2020Audio format ID.  Such formats register with
+ * @c st291Sdid == 0; @ref fromSt291DidSdid then matches first by
+ * exact (DID, SDID) and falls back to (DID, 0) when no exact entry
+ * exists.  The actual SDID byte is recovered from the packet's wire
+ * data when a caller needs the sub-flavour discriminator.
+ *
+ * @par Naming convention
+ *
+ * C++ identifiers and string names use a short CamelCase tag for the
+ * format (e.g. @c "Cea708", @c "Afd", @c "AtcLtc",
+ * @c "HdrStatic2086").  Vendor-specific HDMI InfoFrames sharing
+ * type 0x81 are discriminated by their 3-byte OUI; the registry's
+ * @ref fromHdmiInfoFrameType returns the catch-all
+ * @c VendorInfoFrame and codecs that decode the OUI promote to the
+ * specific ID via @c AncFormat(id) at parse time.
+ *
+ * @par Example
+ * @code
+ * AncFormat fmt(AncFormat::Cea708);
+ * if(fmt.isValid()) {
+ *         printf("%s on %s\n", fmt.name().cstr(),
+ *                              fmt.canonicalTransport().name().cstr());
+ * }
+ *
+ * AncFormat afmt = AncFormat::fromSt291DidSdid(0x60, 0x60);
+ * assert(afmt.id() == AncFormat::AtcLtc);
+ * @endcode
+ *
+ * @par Thread Safety
+ * Fully thread-safe.  The handle wraps an integer ID and is safe to
+ * share by value across threads.  Registrations are expected at
+ * static-init time and the registry is internally synchronized;
+ * thereafter @ref registeredIDs and the @c from* lookups are
+ * lock-free.
+ *
+ * @see AncTransport, AncCategory, AncPacket, AncTranslator,
+ *      @ref typeregistry "TypeRegistry Pattern"
+ */
+class AncFormat {
+        public:
+                /**
+                 * @brief Identifies an ancillary-data format family.
+                 *
+                 * Well-known formats have named enumerators.  User-defined
+                 * formats obtain IDs from @ref registerType starting at
+                 * @c UserDefined.
+                 */
+                enum ID {
+                        Invalid = 0,             ///< Default / uninitialised.
+                        Cea708 = 1,              ///< SMPTE 334-2 CDP carrying CEA-708 closed captions.
+                        Cea608 = 2,              ///< SMPTE 334-1 CEA-608 line-21 captions.
+                        Afd = 3,                 ///< SMPTE 2016-3 Active Format Description.
+                        BarData = 4,             ///< SMPTE 2016-3 Bar Data.
+                        Scte104 = 5,             ///< SCTE-104 splice-information signal.
+                        Scte35 = 6,              ///< SCTE-35 splice_info_section (MPEG-TS).
+                        AtcLtc = 7,              ///< SMPTE 12M-2 ATC LTC.
+                        AtcVitc1 = 8,            ///< SMPTE 12M-2 ATC VITC 1.
+                        AtcVitc2 = 9,            ///< SMPTE 12M-2 ATC VITC 2.
+                        Smpte2020Audio = 10,     ///< SMPTE 2020 Dolby metadata family (DID 0x45, SDIDs 0x01–0x09).
+                        HdrStatic2086 = 11,      ///< SMPTE 2086 static HDR mastering metadata.
+                        HdrDynamic2094_40 = 12,  ///< SMPTE ST 2094-40 dynamic HDR (HDR10+).
+                        DvRpu = 13,              ///< Dolby Vision RPU metadata.
+                        AviInfoFrame = 14,       ///< HDMI AVI InfoFrame (CEA-861).
+                        AudioInfoFrame = 15,     ///< HDMI Audio InfoFrame.
+                        SpdInfoFrame = 16,       ///< HDMI SPD (Source Product Description) InfoFrame.
+                        VendorInfoFrame = 17,    ///< HDMI Vendor-Specific InfoFrame (OUI-agnostic catch-all).
+                        Klv0601 = 18,            ///< MISB ST 0601 KLV (geolocation, sensor data).
+                        UserDefined = 1024       ///< First ID available for user-registered formats.
+                };
+
+                /** @brief List of AncFormat IDs. */
+                using IDList = ::promeki::List<ID>;
+
+                /**
+                 * @brief Immutable descriptor for an ancillary-data format.
+                 *
+                 * Populated by the library for well-known formats, or by
+                 * applications via @ref registerData for custom formats.
+                 * Captures format-family identity (name, description,
+                 * category) plus the per-transport identity bytes the
+                 * registry uses to recognise raw packets on each transport.
+                 */
+                struct Data {
+                                ID          id = Invalid; ///< Unique format identifier.
+                                String      name;         ///< Short canonical name (e.g. @c "Cea708").
+                                String      desc;         ///< Human-readable description.
+                                AncCategory category;     ///< Broad content classification (Captions, Timecode, ...).
+                                AncTransport canonicalTransport; ///< Primary "where this format lives" wire transport.
+                                uint8_t      st291Did = 0;       ///< ST 291 DID (0 = no ST 291 carriage).
+                                uint8_t st291Sdid = 0;           ///< ST 291 SDID (0 with non-zero @c st291Did =
+                                                                 ///< wildcard SDID match — see class doc).
+                                uint8_t hdmiInfoFrameType = 0;   ///< HDMI InfoFrame type byte (0 = no HDMI carriage).
+                                uint8_t mpegTsTableId = 0; ///< MPEG-TS private-section table_id (0 = no MPEG-TS carriage).
+                };
+
+                // -- Registry ----------------------------------------------
+
+                /**
+                 * @brief Allocates and returns a unique ID for a user-defined format.
+                 * @return A unique ID at @c UserDefined or higher.
+                 */
+                static ID registerType();
+
+                /**
+                 * @brief Registers a Data record in the registry.
+                 *
+                 * After this call, constructing an @c AncFormat from
+                 * @c data.id resolves to the registered data.
+                 *
+                 * @param data The populated Data struct with @c id set
+                 *             to a value from @ref registerType or one of
+                 *             the well-known enumerators.
+                 */
+                static void registerData(Data &&data);
+
+                /**
+                 * @brief Returns the list of every registered format's ID.
+                 * @return IDs of every registered format, excluding @c Invalid.
+                 */
+                static IDList registeredIDs();
+
+                /**
+                 * @brief Returns IDs of every registered format in @p category.
+                 * @param category The category to filter by.
+                 * @return Matching IDs in registration order.  Empty when
+                 *         no registered format matches.
+                 */
+                static IDList registeredIDsForCategory(const AncCategory &category);
+
+                /**
+                 * @brief Returns IDs of every registered format with a
+                 *        non-zero key for @p transport (i.e. that can ride
+                 *        natively on it).
+                 *
+                 * Used by sinks and SDP emit paths that need to enumerate
+                 * formats permissible on a specific wire transport.  The
+                 * canonical-transport hint is also honoured: a format
+                 * whose @c canonicalTransport matches @p transport is
+                 * always included even if no per-transport key byte is
+                 * registered for it (the format simply has no DID/SDID-
+                 * style identity on that transport, but the canonical
+                 * association still counts).
+                 *
+                 * @param transport The transport to filter by.
+                 * @return Matching IDs.  Empty when no registered format
+                 *         carries on the transport.
+                 */
+                static IDList registeredIDsForTransport(const AncTransport &transport);
+
+                /**
+                 * @brief Looks up an @c AncFormat by registered name.
+                 * @param name The format name to search for.
+                 * @return The matching format on success, or
+                 *         @c Error::IdNotFound if not registered.
+                 */
+                static Result<AncFormat> fromName(const String &name);
+
+                /**
+                 * @brief Returns the ID for @p name, or @c Invalid when unknown.
+                 *
+                 * Convenience non-Result variant of @ref fromName for
+                 * call sites that prefer a bare ID lookup.
+                 */
+                static ID idFromName(const String &name);
+
+                /**
+                 * @brief Looks up the @c AncFormat for a raw ST 291 (DID,
+                 *        SDID) pair.
+                 *
+                 * Matches by exact (DID, SDID) first.  If no exact entry
+                 * exists, falls back to a wildcard match where a
+                 * registered format with @c st291Sdid == 0 and matching
+                 * @c st291Did absorbs every SDID under that DID
+                 * (e.g. @c Smpte2020Audio across SDIDs 0x01-0x09).  Used
+                 * by capture paths to label a freshly received ST 291
+                 * packet with the matching @c AncFormat.
+                 *
+                 * @param did  The DID byte from the packet.
+                 * @param sdid The SDID byte from the packet.
+                 * @return The matching format, or an invalid @c AncFormat
+                 *         when the (DID, SDID) pair has no registered
+                 *         mapping.
+                 */
+                static AncFormat fromSt291DidSdid(uint8_t did, uint8_t sdid);
+
+                /**
+                 * @brief Looks up the @c AncFormat for an HDMI InfoFrame
+                 *        type byte.
+                 *
+                 * Returns the format registered for @p type.  Type 0x81
+                 * (Vendor-Specific) returns the OUI-agnostic
+                 * @c VendorInfoFrame catch-all; consumers that decode the
+                 * OUI and want a specific ID
+                 * (@c HdrDynamic2094_40 / @c DvRpu / …) call
+                 * @c AncFormat(id) explicitly after parsing the OUI.
+                 *
+                 * @param type The InfoFrame type byte.
+                 * @return The matching format, or invalid when the type
+                 *         is not registered.
+                 */
+                static AncFormat fromHdmiInfoFrameType(uint8_t type);
+
+                /**
+                 * @brief Looks up the @c AncFormat for an MPEG-TS
+                 *        private-section table_id.
+                 *
+                 * @param tableId The first byte of an MPEG-TS private
+                 *                section.
+                 * @return The matching format, or invalid when the
+                 *         table_id is not registered.
+                 */
+                static AncFormat fromMpegTsTableId(uint8_t tableId);
+
+                // -- Construction / accessors ------------------------------
+
+                /** @brief Constructs an @c AncFormat from an ID (default @c Invalid). */
+                inline AncFormat(ID id = Invalid);
+
+                /**
+                 * @brief Constructs by registered name.
+                 * @throws Nothing.  Resolves to @c Invalid when the name
+                 *         is not registered.
+                 */
+                explicit AncFormat(const String &name);
+
+                /** @brief Returns true when this wrapper references a registered, non-invalid format. */
+                bool isValid() const { return d != nullptr && d->id != Invalid; }
+
+                /** @brief Returns the unique ID. */
+                ID id() const { return d->id; }
+
+                /** @brief Returns the format's short registered name. */
+                const String &name() const { return d->name; }
+
+                /** @brief Returns the format's human-readable description. */
+                const String &desc() const { return d->desc; }
+
+                /** @brief Returns the format's broad content category. */
+                const AncCategory &category() const { return d->category; }
+
+                /** @brief Returns the format's primary wire transport. */
+                const AncTransport &canonicalTransport() const { return d->canonicalTransport; }
+
+                /** @brief Returns the ST 291 DID byte (0 = no ST 291 carriage). */
+                uint8_t st291Did() const { return d->st291Did; }
+
+                /** @brief Returns the ST 291 SDID byte (0 = wildcard when @ref st291Did is non-zero, else no carriage). */
+                uint8_t st291Sdid() const { return d->st291Sdid; }
+
+                /** @brief Returns the HDMI InfoFrame type byte (0 = no HDMI carriage). */
+                uint8_t hdmiInfoFrameType() const { return d->hdmiInfoFrameType; }
+
+                /** @brief Returns the MPEG-TS private-section table_id (0 = no MPEG-TS carriage). */
+                uint8_t mpegTsTableId() const { return d->mpegTsTableId; }
+
+                /** @brief Returns the underlying immutable Data pointer. */
+                const Data *data() const { return d; }
+
+                /** @brief Returns the canonical string form — same as @ref name. */
+                const String &toString() const { return d->name; }
+
+                // -- Comparison --------------------------------------------
+
+                /** @brief Equality compares the underlying Data pointer. */
+                bool operator==(const AncFormat &o) const { return d == o.d; }
+
+                /** @brief Inequality. */
+                bool operator!=(const AncFormat &o) const { return d != o.d; }
+
+        private:
+                const Data        *d = nullptr;
+                static const Data *lookupData(ID id);
+};
+
+inline AncFormat::AncFormat(ID id) : d(lookupData(id)) {}
+
+PROMEKI_NAMESPACE_END

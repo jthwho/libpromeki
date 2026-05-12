@@ -144,7 +144,7 @@ TEST_CASE("NdiMediaIO: open as Sink, write a synthetic UYVY frame, close") {
         REQUIRE(vp.isValid());
         REQUIRE(vp->data().count() == 1);
         // UYVY mid-gray: U=128, Y=128, V=128, Y=128.
-        uint8_t *bytes = vp->data().data();
+        uint8_t *bytes = vp.modify()->data().data();
         const size_t  total = vp->data().size();
         for (size_t i = 0; i + 3 < total; i += 4) {
                 bytes[i + 0] = 128;
@@ -347,7 +347,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         UncompressedVideoPayload::Ptr vp = UncompressedVideoPayload::allocate(imgDesc);
         REQUIRE(vp.isValid());
         // Distinctive UYVY pattern for content verification.
-        uint8_t *bytes = vp->data().data();
+        uint8_t *bytes = vp.modify()->data().data();
         const size_t total = vp->data().size();
         for (size_t i = 0; i + 3 < total; i += 4) {
                 bytes[i + 0] = 100; // Cb

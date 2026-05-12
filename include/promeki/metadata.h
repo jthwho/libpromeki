@@ -68,6 +68,23 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setDefault(promeki::Timecode())
                                            .setDescription("SMPTE timecode associated with this media unit."));
 
+                /// @brief Subtitle cue active at this media unit.
+                ///
+                /// Frame-level attribution of the (single) subtitle that
+                /// should be displayed concurrently with this media unit
+                /// — typically stamped by a subtitle source / SubRip
+                /// player onto the Frame whose timestamp matches the
+                /// cue's @ref Subtitle::start.  Downstream consumers
+                /// (renderer, MediaIO sinks that re-emit subtitles to
+                /// a different transport) can read the cue without
+                /// touching the source file or the ANC pipeline.
+                PROMEKI_DECLARE_ID(Subtitle,
+                                   VariantSpec()
+                                           .setType(Variant::TypeSubtitle)
+                                           .setDefault(promeki::Subtitle())
+                                           .setDescription(
+                                                   "Subtitle cue active at this media unit (start <= ts < end)."));
+
                 /// @brief Gamma / transfer-function exponent.
                 PROMEKI_DECLARE_ID(Gamma, VariantSpec()
                                                   .setType(Variant::TypeDouble)
@@ -916,6 +933,42 @@ class Metadata : public VariantDatabase<"Metadata"> {
                  * @return The deserialized Metadata.
                  */
                 static Metadata fromJson(const JsonObject &json, Error *err = nullptr);
+
+                /**
+                 * @brief Serializes this Metadata to a JSON-encoded string.
+                 *
+                 * Equivalent to @c toJson().toString(indent) — a thin
+                 * convenience wrapper that lets a Metadata round-trip
+                 * through a plain @ref String without the caller having
+                 * to know about @ref JsonObject.  Used by
+                 * @ref AncTranslateConfig and any other config object
+                 * that needs a single-call serialization for log
+                 * messages, command-line tools, or
+                 * @ref MediaConfig string forms.
+                 *
+                 * @param indent JSON indentation (0 = compact, default).
+                 * @return The encoded JSON document.
+                 */
+                String toString(unsigned int indent = 0) const;
+
+                /**
+                 * @brief Parses a JSON-encoded Metadata document.
+                 *
+                 * Inverse of @ref toString.  Equivalent to
+                 * @c fromJson(JsonObject::parse(str)) but propagates
+                 * parse-time errors (malformed JSON) via @p err in
+                 * addition to the spec-validation errors already
+                 * surfaced by @ref fromJson.
+                 *
+                 * @param str The JSON document to parse.
+                 * @param err Optional error output: @c Ok on full
+                 *            success, @c Error::Invalid when the JSON
+                 *            failed to parse or one or more keys
+                 *            rejected spec coercion.
+                 * @return The reconstructed Metadata; default-constructed
+                 *         when @p str fails to parse as a JSON object.
+                 */
+                static Metadata fromString(const String &str, Error *err = nullptr);
 
                 /** @brief Constructs an empty Metadata object. */
                 Metadata() = default;

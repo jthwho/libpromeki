@@ -43,6 +43,17 @@ AudioPayload::PtrList Frame::audioPayloads() const {
         return out;
 }
 
+AncPayload::PtrList Frame::ancPayloads() const {
+        AncPayload::PtrList out;
+        for (const MediaPayload::Ptr &p : _d->_payloads) {
+                if (!p.isValid()) continue;
+                if (p->kind() != MediaPayloadKind::AncillaryData) continue;
+                AncPayload::Ptr ap = sharedPointerCast<AncPayload>(p);
+                if (ap.isValid()) out.pushToBack(std::move(ap));
+        }
+        return out;
+}
+
 bool Frame::isSafeCutPoint(CutPointScope scope) const {
         const bool wantVideo = (scope == CutPointVideoOnly || scope == CutPointAudioVideo);
         const bool wantAudio = (scope == CutPointAudioOnly || scope == CutPointAudioVideo);
@@ -85,6 +96,8 @@ MediaDesc Frame::mediaDesc() const {
                         md.imageList().pushToBack(vp->desc());
                 } else if (const auto *ap = p->as<AudioPayload>()) {
                         md.audioList().pushToBack(ap->desc());
+                } else if (const auto *anc = p->as<AncPayload>()) {
+                        md.ancList().pushToBack(anc->desc());
                 }
         }
         md.metadata() = _d->_metadata;
@@ -155,6 +168,25 @@ StringList Frame::dump(const String &indent) const {
         return out;
 }
 
+namespace {
+
+        // Walks the payload list once and accumulates an AncPayload
+        // predicate.  Shared by every frame-level @c Has<Category>
+        // aggregate so the registration block reads as a list of
+        // category predicates instead of repeating the loop body.
+        template <typename Pred> bool anyAnc(const Frame &f, Pred pred) {
+                for (const MediaPayload::Ptr &p : f.payloadList()) {
+                        if (!p.isValid()) continue;
+                        if (p->kind() != MediaPayloadKind::AncillaryData) continue;
+                        const auto *anc = p->as<AncPayload>();
+                        if (anc == nullptr) continue;
+                        if (pred(*anc)) return true;
+                }
+                return false;
+        }
+
+} // namespace
+
 PROMEKI_LOOKUP_REGISTER(Frame)
         .scalar("PayloadCount",
                 [](const Frame &f) -> std::optional<Variant> {
@@ -167,6 +199,47 @@ PROMEKI_LOOKUP_REGISTER(Frame)
         .scalar("AudioCount",
                 [](const Frame &f) -> std::optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.audioPayloads().size()));
+                })
+        .scalar("AncCount",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(static_cast<uint64_t>(f.ancPayloads().size()));
+                })
+        .scalar("AncPacketCount",
+                [](const Frame &f) -> std::optional<Variant> {
+                        uint64_t total = 0;
+                        for (const MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid()) continue;
+                                if (p->kind() != MediaPayloadKind::AncillaryData) continue;
+                                const auto *anc = p->as<AncPayload>();
+                                if (anc == nullptr) continue;
+                                total += anc->packets().size();
+                        }
+                        return Variant(total);
+                })
+        .scalar("HasCaptions",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(
+                                anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Captions); }));
+                })
+        .scalar("HasTimecode",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(
+                                anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Timecode); }));
+                })
+        .scalar("HasAfd",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(
+                                anyAnc(f, [](const AncPayload &a) { return a.hasFormat(AncFormat(AncFormat::Afd)); }));
+                })
+        .scalar("HasHdr",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(
+                                anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Hdr); }));
+                })
+        .scalar("HasSplice",
+                [](const Frame &f) -> std::optional<Variant> {
+                        return Variant(
+                                anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Splice); }));
                 })
         .scalar("VideoFormat", [](const Frame &f) -> std::optional<Variant> { return Variant(f.videoFormat(0)); })
         .indexedScalar("VideoFormat",
@@ -226,6 +299,26 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                                 if (!p.isValid() || p->kind() != MediaPayloadKind::Audio) continue;
                                 if (idx++ != i) continue;
                                 return p.modify()->as<AudioPayload>();
+                        }
+                        return nullptr;
+                })
+        .indexedChild<AncPayload>(
+                "Anc",
+                [](const Frame &f, size_t i) -> const AncPayload * {
+                        size_t idx = 0;
+                        for (const MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::AncillaryData) continue;
+                                if (idx++ != i) continue;
+                                return p->as<AncPayload>();
+                        }
+                        return nullptr;
+                },
+                [](Frame &f, size_t i) -> AncPayload * {
+                        size_t idx = 0;
+                        for (MediaPayload::Ptr &p : f.payloadList()) {
+                                if (!p.isValid() || p->kind() != MediaPayloadKind::AncillaryData) continue;
+                                if (idx++ != i) continue;
+                                return p.modify()->as<AncPayload>();
                         }
                         return nullptr;
                 })

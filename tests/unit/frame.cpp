@@ -10,6 +10,11 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/pcmaudiopayload.h>
+#include <promeki/ancpayload.h>
+#include <promeki/ancpacket.h>
+#include <promeki/ancdesc.h>
+#include <promeki/ancformat.h>
+#include <promeki/st291packet.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audioformat.h>
 #include <promeki/audiocodec.h>
@@ -648,4 +653,149 @@ TEST_CASE("Frame::captureTime: mutation triggers CoW detach") {
         // After mutation, a is unchanged; b carries the new timestamp.
         CHECK(a.captureTime() == mtsA);
         CHECK(b.captureTime() == mtsB);
+}
+
+// ============================================================================
+// Frame VariantLookup — ANC payload surface
+// ============================================================================
+
+namespace {
+
+        // Builds a small St291 packet for the requested well-known format.
+        // Returns the AncPacket form so callers can drop it straight into
+        // an AncPayload.
+        AncPacket makeSt291(AncFormat::ID fmtId, uint16_t line) {
+                List<uint16_t> udw;
+                udw.pushToBack(uint16_t(0x10));
+                udw.pushToBack(uint16_t(0x20));
+                return St291Packet::build(AncFormat(fmtId), udw, line);
+        }
+
+        // Returns a fresh AncPayload::Ptr carrying one packet of every
+        // requested format on VANC line 11.
+        AncPayload::Ptr makeAncPayload(std::initializer_list<AncFormat::ID> formats) {
+                AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_30);
+                AncPayload::Ptr ap = AncPayload::Ptr::create(desc);
+                for (AncFormat::ID id : formats) ap.modify()->addPacket(makeSt291(id, 11));
+                return ap;
+        }
+
+} // namespace
+
+TEST_CASE("Frame VariantLookup: AncCount is zero on a frame with no ANC payload") {
+        Frame f = Frame();
+        f.addPayload(makeVideoPayload());
+        auto v = VariantLookup<Frame>::resolve(f, "AncCount");
+        REQUIRE(v.has_value());
+        CHECK(v->get<uint64_t>() == 0u);
+}
+
+TEST_CASE("Frame VariantLookup: AncCount counts AncPayload entries") {
+        Frame f = Frame();
+        f.addPayload(makeVideoPayload());
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+        f.addPayload(makeAncPayload({AncFormat::AtcLtc}));
+        auto v = VariantLookup<Frame>::resolve(f, "AncCount");
+        REQUIRE(v.has_value());
+        CHECK(v->get<uint64_t>() == 2u);
+}
+
+TEST_CASE("Frame VariantLookup: AncPacketCount sums packets across all ANC payloads") {
+        Frame f = Frame();
+        f.addPayload(makeAncPayload({AncFormat::Cea708, AncFormat::Afd}));
+        f.addPayload(makeAncPayload({AncFormat::AtcLtc}));
+        auto v = VariantLookup<Frame>::resolve(f, "AncPacketCount");
+        REQUIRE(v.has_value());
+        CHECK(v->get<uint64_t>() == 3u);
+}
+
+TEST_CASE("Frame VariantLookup: HasCaptions / HasTimecode / HasAfd predicates union ANC payloads") {
+        Frame f = Frame();
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+        f.addPayload(makeAncPayload({AncFormat::AtcLtc, AncFormat::Afd}));
+
+        auto captions = VariantLookup<Frame>::resolve(f, "HasCaptions");
+        REQUIRE(captions.has_value());
+        CHECK(captions->get<bool>() == true);
+
+        auto timecode = VariantLookup<Frame>::resolve(f, "HasTimecode");
+        REQUIRE(timecode.has_value());
+        CHECK(timecode->get<bool>() == true);
+
+        auto afd = VariantLookup<Frame>::resolve(f, "HasAfd");
+        REQUIRE(afd.has_value());
+        CHECK(afd->get<bool>() == true);
+
+        // Hdr / Splice predicates report false when nothing in that
+        // category was added.
+        auto hdr = VariantLookup<Frame>::resolve(f, "HasHdr");
+        REQUIRE(hdr.has_value());
+        CHECK(hdr->get<bool>() == false);
+
+        auto splice = VariantLookup<Frame>::resolve(f, "HasSplice");
+        REQUIRE(splice.has_value());
+        CHECK(splice->get<bool>() == false);
+}
+
+TEST_CASE("Frame VariantLookup: HasCaptions is false on a frame with only AFD / Timecode ANC") {
+        Frame f = Frame();
+        f.addPayload(makeAncPayload({AncFormat::AtcLtc, AncFormat::Afd}));
+        auto v = VariantLookup<Frame>::resolve(f, "HasCaptions");
+        REQUIRE(v.has_value());
+        CHECK(v->get<bool>() == false);
+}
+
+TEST_CASE("Frame VariantLookup: Anc[N].PacketCount delegates into AncPayload's lookup") {
+        Frame f = Frame();
+        f.addPayload(makeVideoPayload());
+        f.addPayload(makeAncPayload({AncFormat::Cea708, AncFormat::AtcLtc, AncFormat::Afd}));
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+
+        auto first = VariantLookup<Frame>::resolve(f, "Anc[0].PacketCount");
+        REQUIRE(first.has_value());
+        CHECK(first->get<uint64_t>() == 3u);
+
+        auto second = VariantLookup<Frame>::resolve(f, "Anc[1].PacketCount");
+        REQUIRE(second.has_value());
+        CHECK(second->get<uint64_t>() == 1u);
+}
+
+TEST_CASE("Frame VariantLookup: Anc[N].HasCaptions reaches the AncPayload predicate") {
+        Frame f = Frame();
+        f.addPayload(makeAncPayload({AncFormat::AtcLtc}));
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+
+        auto first = VariantLookup<Frame>::resolve(f, "Anc[0].HasCaptions");
+        REQUIRE(first.has_value());
+        CHECK(first->get<bool>() == false);
+
+        auto second = VariantLookup<Frame>::resolve(f, "Anc[1].HasCaptions");
+        REQUIRE(second.has_value());
+        CHECK(second->get<bool>() == true);
+}
+
+TEST_CASE("Frame VariantLookup: Anc[N] out-of-range yields no value") {
+        Frame f = Frame();
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+
+        Error err = Error::Ok;
+        auto missing = VariantLookup<Frame>::resolve(f, "Anc[1].PacketCount", &err);
+        CHECK_FALSE(missing.has_value());
+        CHECK(err == Error::OutOfRange);
+}
+
+TEST_CASE("Frame::dump: ANC payload section surfaces ANC scalars") {
+        Frame f = Frame();
+        f.metadata().set(Metadata::FrameRate, FrameRate(FrameRate::FPS_30));
+        f.addPayload(makeAncPayload({AncFormat::Cea708}));
+
+        const StringList lines = f.dump();
+        // Frame-level aggregate scalar comes through the new
+        // registration block.
+        CHECK(containsKeyLine(lines, String("AncCount")));
+        CHECK(containsKeyLine(lines, String("HasCaptions")));
+        // AncPayload's own scalar block lands under the indexed-child
+        // dump (header label is the enum's value name —
+        // "AncillaryData[0]" — not the variant-lookup name).
+        CHECK(containsKeyLine(lines, String("PacketCount")));
 }

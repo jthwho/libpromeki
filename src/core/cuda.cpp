@@ -324,7 +324,13 @@ Error CudaBootstrap::ensureRegistered() {
                                 if (base == nullptr) return nullptr;
                                 return static_cast<uint8_t *>(base) + dimpl->shift();
                         }
-                        return b.data();
+                        // Buffer is a CoW value-handle; the caller of
+                        // endpointPtr supplies @c const Buffer& for
+                        // ergonomic shape but the dst endpoint needs a
+                        // mutable pointer for cudaMemcpy.  Const-cast
+                        // here matches the value-handle idiom used by
+                        // every other Buffer mutator entry point.
+                        return const_cast<Buffer &>(b).data();
                 };
                 void *srcBase = endpointPtr(src);
                 void *dstBase = endpointPtr(dst);

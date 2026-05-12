@@ -12,6 +12,7 @@
 #include <promeki/list.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
+#include <promeki/ancdesc.h>
 #include <promeki/metadata.h>
 #include <promeki/framerate.h>
 #include <promeki/videoformat.h>
@@ -92,9 +93,19 @@ class MediaDesc {
          */
                 SdpSession toSdp(uint8_t videoPayloadType = 96) const;
 
-                /** @brief Returns true if the media description is valid (has a valid frame rate and at least one image or audio description). */
+                /**
+                 * @brief Returns true when the media description is
+                 *        valid.
+                 *
+                 * A valid descriptor has a valid frame rate and at
+                 * least one image, audio, or ancillary-data
+                 * description.  Metadata-only streams (an ST 2110-40
+                 * receiver with no paired video) qualify thanks to
+                 * the ANC list.
+                 */
                 bool isValid() const {
-                        return _frameRate.isValid() && (_imageList.size() > 0 || _audioList.size() > 0);
+                        return _frameRate.isValid() &&
+                               (_imageList.size() > 0 || _audioList.size() > 0 || _ancList.size() > 0);
                 }
 
                 /** @brief Returns the frame rate. */
@@ -131,6 +142,18 @@ class MediaDesc {
                 /** @brief Returns a mutable reference to the list of audio descriptions. */
                 AudioDesc::List &audioList() { return _audioList; }
 
+                /**
+                 * @brief Returns a const reference to the list of
+                 *        ancillary-data stream descriptions.
+                 */
+                const AncDesc::List &ancList() const { return _ancList; }
+
+                /**
+                 * @brief Returns a mutable reference to the list of
+                 *        ancillary-data stream descriptions.
+                 */
+                AncDesc::List &ancList() { return _ancList; }
+
                 /** @brief Returns a const reference to the metadata. */
                 const Metadata &metadata() const { return _metadata; }
                 /** @brief Returns a mutable reference to the metadata. */
@@ -139,7 +162,8 @@ class MediaDesc {
                 /** @brief Returns true if every member of both descriptors is equal. */
                 bool operator==(const MediaDesc &other) const {
                         return _frameRate == other._frameRate && _imageList == other._imageList &&
-                               _audioList == other._audioList && _metadata == other._metadata;
+                               _audioList == other._audioList && _ancList == other._ancList &&
+                               _metadata == other._metadata;
                 }
 
                 /** @brief Returns true if any member differs. */
@@ -164,11 +188,15 @@ class MediaDesc {
                         if (_frameRate != other._frameRate) return false;
                         if (_imageList.size() != other._imageList.size()) return false;
                         if (_audioList.size() != other._audioList.size()) return false;
+                        if (_ancList.size() != other._ancList.size()) return false;
                         for (size_t i = 0; i < _imageList.size(); ++i) {
                                 if (!_imageList[i].formatEquals(other._imageList[i])) return false;
                         }
                         for (size_t i = 0; i < _audioList.size(); ++i) {
                                 if (!_audioList[i].formatEquals(other._audioList[i])) return false;
+                        }
+                        for (size_t i = 0; i < _ancList.size(); ++i) {
+                                if (!_ancList[i].formatEquals(other._ancList[i])) return false;
                         }
                         return true;
                 }
@@ -177,6 +205,7 @@ class MediaDesc {
                 FrameRate       _frameRate;
                 ImageDesc::List _imageList;
                 AudioDesc::List _audioList;
+                AncDesc::List   _ancList;
                 Metadata        _metadata;
 };
 
@@ -191,6 +220,7 @@ inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
         stream << desc.frameRate();
         stream << desc.imageList();
         stream << desc.audioList();
+        stream << desc.ancList();
         stream << desc.metadata();
         return stream;
 }
@@ -209,8 +239,9 @@ inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
         FrameRate       fr;
         ImageDesc::List imgs;
         AudioDesc::List auds;
+        AncDesc::List   ancs;
         Metadata        meta;
-        stream >> fr >> imgs >> auds >> meta;
+        stream >> fr >> imgs >> auds >> ancs >> meta;
         if (stream.status() != DataStream::Ok) {
                 desc = MediaDesc();
                 return stream;
@@ -219,6 +250,7 @@ inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
         desc.setFrameRate(fr);
         desc.imageList() = std::move(imgs);
         desc.audioList() = std::move(auds);
+        desc.ancList() = std::move(ancs);
         desc.metadata() = std::move(meta);
         return stream;
 }

@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include <memory>
 #include <promeki/namespace.h>
+#include <promeki/ancdesc.h>
+#include <promeki/anctranslator.h>
+#include <promeki/cea608encoder.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/mediaiofactory.h>
 #include <promeki/videotestpattern.h>
@@ -17,6 +21,7 @@
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
+#include <promeki/subtitle.h>
 #include <promeki/videoformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -160,6 +165,26 @@ class TpgMediaIO : public SharedThreadMediaIO {
                 // Timecode state
                 TimecodeGenerator _tcGen;
                 bool              _timecodeEnabled = false;
+
+                // CEA-708 caption ANC state
+                bool                           _ancCaptionsEnabled = false;
+                String                         _ancCaptionsFile;
+                Duration                       _ancCaptionsOffset;
+                uint16_t                       _ancCaptionsLine = 11;
+                uint16_t                       _ancSequenceCounter = 0;
+                uint8_t                        _ancFrameRateCode = 0;
+                AncTranslator                  _ancTranslator;
+                AncDesc                        _ancDesc;
+                /// @brief SubRip cues loaded from @c _ancCaptionsFile,
+                ///        shifted by @c _ancCaptionsOffset.  Kept around
+                ///        so per-frame metadata stamping can query
+                ///        @c findActiveAt without re-parsing each frame.
+                SubtitleList                   _ancCaptions;
+                /// @brief @ref Cea608Encoder driven against @ref _ancCaptions
+                ///        at the configured frame rate.  Held as a
+                ///        @c std::unique_ptr because the encoder is
+                ///        copy/move-deleted (stateful worker).
+                std::unique_ptr<Cea608Encoder> _ancCaptionEncoder;
 
                 // General state
                 FrameRate  _frameRate;

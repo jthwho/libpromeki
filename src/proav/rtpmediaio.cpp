@@ -40,9 +40,14 @@
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/pcmsilencefiller.h>
 #include <promeki/pixelformat.h>
+#include <promeki/ancdesc.h>
+#include <promeki/ancpayload.h>
+#include <promeki/rtpancdepacketizerthread.h>
+#include <promeki/rtpancpacketizerthread.h>
 #include <promeki/rtpmediaio.h>
 #include <promeki/rtppacketbatch.h>
 #include <promeki/rtppayload.h>
+#include <promeki/rtppayloadanc.h>
 #include <promeki/rtpsession.h>
 #include <promeki/rtpstreamclock.h>
 #include <promeki/mutex.h>
@@ -1068,12 +1073,30 @@ Error RtpMediaIO::openStream(WriterStream &s, bool enableMulticastLoopback) {
                 pkt->start();
         } else if (s.mediaType == "application") {
                 auto *tx = new DataTxThread(this);
-                auto *pkt = new DataPacketizerThread(this);
-                pkt->setTx(tx);
                 s.tx = tx;
-                s.packetizer = pkt;
-                tx->start();
-                pkt->start();
+                if (dynamic_cast<RtpPayloadAnc *>(s.payload) != nullptr) {
+                        // RFC 8331 ANC packetizer — produces
+                        // RtpPacketBatch directly from the Frame's
+                        // AncPayload via @c RtpPayloadAnc::packAncFrame.
+                        // DataTxThread's RtpPacketBatch sink is reused
+                        // (the TX side is payload-agnostic — it just
+                        // stamps RTP TS + marker and writes the wire).
+                        RtpAncPacketizerContext ctx;
+                        ctx.streamIdx = 0;
+                        ctx.clockRateHz = s.clockRate;
+                        ctx.payload = static_cast<RtpPayloadAnc *>(s.payload);
+                        ctx.txPacketQueue = &tx->packetQueue();
+                        auto *pkt = new RtpAncPacketizerThread(std::move(ctx));
+                        s.packetizer = pkt;
+                        tx->start();
+                        pkt->start();
+                } else {
+                        auto *pkt = new DataPacketizerThread(this);
+                        pkt->setTx(tx);
+                        s.packetizer = pkt;
+                        tx->start();
+                        pkt->start();
+                }
         }
 
         // Name the diagnostic histograms so toString() / log dumps
@@ -1275,26 +1298,54 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                         std::move(ctx), String("RtpAudDepkt"), ars->clockRate);
         } else {
                 auto *drs = static_cast<DataReaderStream *>(&s);
-                drs->payloadQueue = UniquePtr<Queue<RxDataMessage>>::create();
-                drs->payloadQueue->setMaxSize(DataPayloadQueueDepth);
-                RtpDataDepacketizerContext ctx;
-                ctx.payloadQueue = drs->payloadQueue.get();
-                ctx.resetEpoch = &drs->resetEpoch;
-                ctx.active = &drs->active;
-                ctx.payload = drs->payload;
-                ctx.clockDomain = drs->clockDomain;
-                ctx.hasSr = &drs->hasSr;
-                ctx.streamClock = &drs->streamClock;
-                ctx.packetsReceived = &drs->packetsReceived;
-                ctx.bytesReceived = &drs->bytesReceived;
-                ctx.lastPacketArrivalNs = &drs->lastPacketArrivalNs;
-                ctx.framesReassembled = &drs->framesReassembled;
-                ctx.framesDroppedSsrcReset = &drs->framesDroppedSsrcReset;
-                ctx.noteFrameReceived = [drs]() { drs->framesReceived++; };
-                ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
-                ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
-                depkt = UniquePtr<RtpDataDepacketizerThread>::create(
-                        std::move(ctx), String("RtpDatDepkt"), drs->clockRate);
+                if (auto *ancPayload = dynamic_cast<RtpPayloadAnc *>(drs->payload)) {
+                        drs->ancPayloadQueue = UniquePtr<Queue<RxAncFrame>>::create();
+                        drs->ancPayloadQueue->setMaxSize(DataPayloadQueueDepth);
+                        RtpAncDepacketizerContext ctx;
+                        ctx.payloadQueue = drs->ancPayloadQueue.get();
+                        ctx.resetEpoch = &drs->resetEpoch;
+                        ctx.active = &drs->active;
+                        ctx.payload = ancPayload;
+                        ctx.clockDomain = drs->clockDomain;
+                        // The static per-stream descriptor — Phase 1
+                        // leaves @c desc empty (no paired-video
+                        // raster plumbing yet); the aggregator
+                        // forwards whatever it carries onto each
+                        // produced AncPayload.
+                        ctx.hasSr = &drs->hasSr;
+                        ctx.streamClock = &drs->streamClock;
+                        ctx.packetsReceived = &drs->packetsReceived;
+                        ctx.bytesReceived = &drs->bytesReceived;
+                        ctx.lastPacketArrivalNs = &drs->lastPacketArrivalNs;
+                        ctx.framesReassembled = &drs->framesReassembled;
+                        ctx.framesDroppedSsrcReset = &drs->framesDroppedSsrcReset;
+                        ctx.noteFrameReceived = [drs]() { drs->framesReceived++; };
+                        ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
+                        ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
+                        depkt = UniquePtr<RtpAncDepacketizerThread>::create(
+                                std::move(ctx), String("RtpAncDepkt"), drs->clockRate);
+                } else {
+                        drs->payloadQueue = UniquePtr<Queue<RxDataMessage>>::create();
+                        drs->payloadQueue->setMaxSize(DataPayloadQueueDepth);
+                        RtpDataDepacketizerContext ctx;
+                        ctx.payloadQueue = drs->payloadQueue.get();
+                        ctx.resetEpoch = &drs->resetEpoch;
+                        ctx.active = &drs->active;
+                        ctx.payload = drs->payload;
+                        ctx.clockDomain = drs->clockDomain;
+                        ctx.hasSr = &drs->hasSr;
+                        ctx.streamClock = &drs->streamClock;
+                        ctx.packetsReceived = &drs->packetsReceived;
+                        ctx.bytesReceived = &drs->bytesReceived;
+                        ctx.lastPacketArrivalNs = &drs->lastPacketArrivalNs;
+                        ctx.framesReassembled = &drs->framesReassembled;
+                        ctx.framesDroppedSsrcReset = &drs->framesDroppedSsrcReset;
+                        ctx.noteFrameReceived = [drs]() { drs->framesReceived++; };
+                        ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
+                        ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
+                        depkt = UniquePtr<RtpDataDepacketizerThread>::create(
+                                std::move(ctx), String("RtpDatDepkt"), drs->clockRate);
+                }
         }
         s.depacketizer = std::move(depkt);
 
@@ -1787,6 +1838,33 @@ Error RtpMediaIO::configureDataStream(const MediaIO::Config &cfg) {
                 auto *p = new RtpPayloadJson(d.payloadType, d.clockRate);
                 d.payload = p;
                 d.rtpmap = String("x-promeki-metadata-json/") + String::number(d.clockRate);
+        } else if (fmt.value() == MetadataRtpFormat::St2110_40.value()) {
+                // RFC 8331 / SMPTE ST 2110-40 ANC.  Clock rate is fixed
+                // at 90 kHz per the RFC; accept whatever the config
+                // says but log if it disagrees so the operator
+                // notices a mistake before it hits the wire.
+                if (d.clockRate != RtpPayloadAnc::ClockRate) {
+                        promekiWarn("RtpMediaIO: ANC stream clock rate %u overridden to %u "
+                                    "(RFC 8331 §3.2 fixes ANC at 90 kHz)",
+                                    d.clockRate, RtpPayloadAnc::ClockRate);
+                        d.clockRate = RtpPayloadAnc::ClockRate;
+                }
+                auto *p = new RtpPayloadAnc(d.payloadType);
+                d.payload = p;
+                d.rtpmap = String("smpte291/") + String::number(d.clockRate);
+                // RFC 8331 §6.2 DID_SDID fmtp.  An empty AncDesc emits
+                // the full St291 registry — the writer side has no
+                // per-format restriction by default, so receivers
+                // negotiating against this SDP see every well-known
+                // ST 291 format as acceptable.  AncDesc::toSdp returns
+                // a complete m=application section; we strip the
+                // payload-type prefix off the fmtp value so
+                // @ref buildSdp 's standard fmtp emit logic can prefix
+                // its own PT.
+                SdpMediaDescription ancMd = AncDesc().toSdp(d.payloadType);
+                const String        fmtpRaw = ancMd.attribute(String("fmtp"));
+                const size_t        sp = fmtpRaw.find(' ');
+                d.fmtp = sp != String::npos ? fmtpRaw.substr(sp + 1) : String();
         } else {
                 promekiErr("RtpMediaIO: metadata format %s is not yet implemented", fmt.toString().cstr());
                 return Error::NotSupported;
@@ -2147,6 +2225,17 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                                 }
                                 if (cfg.getAs<int>(MediaConfig::AudioChannels, 0) <= 0) {
                                         cfg.set(MediaConfig::AudioChannels, static_cast<int>(rm.channels));
+                                }
+                        } else if (md.mediaType() == "application") {
+                                // RFC 8331 / ST 2110-40 announces itself
+                                // via @c smpte291 on the application
+                                // m=section; flip @c DataRtpFormat so the
+                                // reader-side configureDataStream creates
+                                // an @ref RtpPayloadAnc rather than the
+                                // JSON metadata payload.
+                                if (rm.encoding == "smpte291") {
+                                        cfg.set(MediaConfig::DataRtpFormat,
+                                                MetadataRtpFormat::St2110_40);
                                 }
                         }
                 }
@@ -2695,11 +2784,20 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // tears down the depacketizers, so the cancel path doesn't
         // lose any in-flight bundles.
         if (_readerMode) {
+                // ANC mode only applies on the m=application section
+                // and only when the data stream is configured as ANC
+                // (DataRtpFormat::St2110_40 wired a Queue<RxAncFrame>
+                // instead of Queue<RxDataMessage>).
+                const bool anyAncActive =
+                        !_dataReaders.isEmpty() &&
+                        _dataReaders[0].ancPayloadQueue.isValid();
                 RtpAggregatorThread::Mode mode = RtpAggregatorThread::Mode::Video;
                 if (anyVideoActive) {
                         mode = RtpAggregatorThread::Mode::Video;
                 } else if (anyAudioActive) {
                         mode = RtpAggregatorThread::Mode::AudioOnly;
+                } else if (anyAncActive) {
+                        mode = RtpAggregatorThread::Mode::AncOnly;
                 } else {
                         mode = RtpAggregatorThread::Mode::DataOnly;
                 }
@@ -2722,9 +2820,15 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 }
                 if (!_dataReaders.isEmpty()) {
                         DataReaderStream &d = _dataReaders[0];
-                        ctx.data.payloadQueue = d.payloadQueue.get();
-                        ctx.data.active = d.active;
-                        ctx.data.clockDomain = d.clockDomain;
+                        if (d.ancPayloadQueue.isValid()) {
+                                ctx.anc.payloadQueue = d.ancPayloadQueue.get();
+                                ctx.anc.active = d.active;
+                                ctx.anc.clockDomain = d.clockDomain;
+                        } else {
+                                ctx.data.payloadQueue = d.payloadQueue.get();
+                                ctx.data.active = d.active;
+                                ctx.data.clockDomain = d.clockDomain;
+                        }
                 }
                 ctx.readerQueue = &_readerQueue;
                 ctx.pushFrame = [this](Frame frame) {

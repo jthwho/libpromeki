@@ -28,6 +28,7 @@
 #include <promeki/queue.h>
 #include <promeki/rtcpscheduler.h>
 #include <promeki/rtpaggregatorthread.h>
+#include <promeki/rtpancdepacketizerthread.h>
 #include <promeki/rtpaudiodepacketizerthread.h>
 #include <promeki/rtpaudiopacketizerthread.h>
 #include <promeki/rtpaudiotxthread.h>
@@ -1199,22 +1200,37 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 /**
                  * @brief Reader-mode data stream state.
                  *
-                 * Inherits @ref ReaderStream with no kind-specific
-                 * fields today — JSON metadata reassembly + parsing
-                 * lives entirely on the base.
+                 * Inherits @ref ReaderStream and carries the typed
+                 * bundle queues for both wire formats the
+                 * @c m=application section can choose between:
+                 *  - JSON metadata (@ref MetadataRtpFormat::JsonMetadata)
+                 *    feeds @ref payloadQueue;
+                 *  - RFC 8331 ANC (@ref MetadataRtpFormat::St2110_40)
+                 *    feeds @ref ancPayloadQueue.
+                 * Exactly one is populated for a given session — the
+                 * configure step picks based on @c DataRtpFormat.
                  */
                 struct DataReaderStream : ReaderStream {
                                 DataReaderStream() = default;
                                 DataReaderStream(DataReaderStream &&o) noexcept
                                     : ReaderStream(std::move(o)),
-                                      payloadQueue(std::move(o.payloadQueue)) {}
+                                      payloadQueue(std::move(o.payloadQueue)),
+                                      ancPayloadQueue(std::move(o.ancPayloadQueue)) {}
                                 DataReaderStream(const DataReaderStream &) = delete;
                                 DataReaderStream &operator=(const DataReaderStream &) = delete;
                                 DataReaderStream &operator=(DataReaderStream &&) = delete;
                                 /// @brief Typed bundle queue between the
                                 ///        @c DataDepacketizerThread
-                                ///        and @c RtpAggregatorThread.
+                                ///        and @c RtpAggregatorThread —
+                                ///        populated for the JSON
+                                ///        metadata format.
                                 UniquePtr<Queue<RxDataMessage>> payloadQueue;
+                                /// @brief Typed bundle queue between the
+                                ///        @c RtpAncDepacketizerThread
+                                ///        and @c RtpAggregatorThread —
+                                ///        populated for the RFC 8331
+                                ///        ANC format.
+                                UniquePtr<Queue<RxAncFrame>> ancPayloadQueue;
                 };
 
                 /// @brief Per-stream payload queue depths.  Sized by

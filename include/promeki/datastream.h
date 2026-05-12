@@ -62,6 +62,7 @@ class MemSpace;
 class PixelMemLayout;
 class PixelFormat;
 class AudioFormat;
+class AncFormat;
 class Enum;
 class EnumList;
 class StringList;
@@ -337,6 +338,12 @@ class DataStream {
                         TypeXmlDocument = 0x55, ///< @brief XmlDocument (length-prefixed serialized XML form)
                         TypeXmlElement = 0x56,  ///< @brief XmlElement (length-prefixed serialized XML form)
                         TypeSslContext = 0x57,  ///< @brief SslContext::Ptr — opaque, only the tag round-trips (read yields a null Ptr).
+                        TypeAncFormat = 0x58,   ///< @brief AncFormat (length-prefixed name round-trip)
+                        TypeAncPacket = 0x59,   ///< @brief AncPacket (tagged format + transport + Buffer + Metadata round-trip)
+                        TypeAncDesc = 0x5A,     ///< @brief AncDesc (tagged raster + scan + rate + filter lists + metadata)
+                        TypeCea708Cdp = 0x5B,   ///< @brief Cea708Cdp (tagged Buffer holding the SMPTE 334-2 CDP wire bytes)
+                        TypeSubtitle = 0x5C,    ///< @brief Subtitle (start/end TimeStamps + anchor + region + speaker + Metadata + List<SubtitleSpan>)
+                        TypeSubtitleSpan = 0x5D, ///< @brief SubtitleSpan (length-prefixed text + style flags + Color)
                 };
 
                 /**
@@ -555,6 +562,8 @@ class DataStream {
                 DataStream &operator<<(const PixelFormat &val);
                 /** @brief Writes an AudioFormat as its name. */
                 DataStream &operator<<(const AudioFormat &val);
+                /** @brief Writes an AncFormat as its name. */
+                DataStream &operator<<(const AncFormat &val);
                 /** @brief Writes an Enum as its qualified "TypeName::ValueName" string. */
                 DataStream &operator<<(const Enum &val);
                 /** @brief Writes an EnumList as its type name + tagged count + tagged int32 values. */
@@ -663,6 +672,8 @@ class DataStream {
                 DataStream &operator>>(PixelFormat &val);
                 /** @brief Reads an AudioFormat by name. */
                 DataStream &operator>>(AudioFormat &val);
+                /** @brief Reads an AncFormat by name. */
+                DataStream &operator>>(AncFormat &val);
                 /** @brief Reads an Enum from its qualified "TypeName::ValueName" string. */
                 DataStream &operator>>(Enum &val);
                 /** @brief Reads an EnumList from type name + tagged count + tagged int32 values. */
@@ -864,6 +875,7 @@ class DataStream {
                 void writePixelMemLayoutData(const PixelMemLayout &val);
                 void writePixelFormatData(const PixelFormat &val);
                 void writeAudioFormatData(const AudioFormat &val);
+                void writeAncFormatData(const AncFormat &val);
                 void writeEnumData(const Enum &val);
                 void writeEnumListData(const EnumList &val);
                 void writeStringListData(const StringList &val);
@@ -895,6 +907,7 @@ class DataStream {
                 PixelMemLayout readPixelMemLayoutData();
                 PixelFormat    readPixelFormatData();
                 AudioFormat    readAudioFormatData();
+                AncFormat      readAncFormatData();
                 Enum           readEnumData();
                 EnumList       readEnumListData();
                 StringList     readStringListData();

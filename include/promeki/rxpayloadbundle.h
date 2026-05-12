@@ -8,6 +8,8 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/ancdesc.h>
+#include <promeki/ancpacket.h>
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/framenumber.h>
@@ -219,6 +221,73 @@ struct RxDataMessage {
                 /// @brief Resolved local-steady presentation
                 ///        instant for the message.  Always valid
                 ///        when dispatched.
+                TimeStamp captureTime;
+
+                /// @brief @c TimeStamp::now() snapshot taken at
+                ///        @c recvfrom() return on the FIRST RTP
+                ///        packet that participated in the
+                ///        reassembly.
+                TimeStamp firstPacketArrival;
+};
+
+/**
+ * @brief One reassembled ANC frame en route from
+ *        @c RtpAncDepacketizerThread to @c RtpAggregatorThread.
+ * @ingroup network
+ *
+ * RFC 8331 ANC packets ride through the pipeline in their canonical
+ * ST 291 form (@ref AncTransport::St291).  The depacketizer thread
+ * accumulates RTP packets across the marker bit / timestamp boundary,
+ * runs @c RtpPayloadAnc::unpackAncPackets, and emits one
+ * @ref RxAncFrame carrying every ANC packet in that timestamp.  The
+ * aggregator merges the frame's ANC packets into the outgoing
+ * @c Frame's @ref AncPayload at the same RTP-TS slot as the paired
+ * video / audio.
+ *
+ * @par Stream descriptor
+ *
+ * @ref desc captures the per-stream @ref AncDesc the depacketizer
+ * stamped onto this frame — typically the static descriptor configured
+ * at SDP-apply time (raster + scan mode inherited from the paired
+ * video, allowedFormats from the fmtp DID_SDID list).  The aggregator
+ * forwards it onto the @ref AncPayload it builds.
+ *
+ * @par Thread safety
+ *
+ * Plain value type — same producer/consumer ordering rules as
+ * @ref RxVideoFrame, @ref RxAudioChunk, @ref RxDataMessage.
+ * @ref AncPacket is a CoW value-handle so the contained @ref packets
+ * list is cheap to move / copy across the queue handoff.
+ */
+struct RxAncFrame {
+                /// @brief Per-stream descriptor.  Carries the
+                ///        configured @ref AncDesc::allowedFormats list
+                ///        and any paired-video raster context the
+                ///        configure step populated; the aggregator
+                ///        forwards it onto the produced
+                ///        @ref AncPayload without modification.
+                AncDesc desc;
+
+                /// @brief Every ANC packet on this frame, in arrival
+                ///        order.
+                AncPacket::List packets;
+
+                /// @brief 32-bit RTP timestamp shared by every packet
+                ///        in this frame.
+                uint32_t rtpTimestamp = 0;
+
+                /// @brief Number of RTP packets that participated in
+                ///        the reassembly.
+                int32_t packetCount = 0;
+
+                /// @brief NTP wallclock for the frame's capture
+                ///        instant when an SR has been observed.
+                ///        Invalid pre-SR.
+                NtpTime wallclockNtp;
+
+                /// @brief Resolved local-steady presentation instant
+                ///        for the frame.  Always valid when
+                ///        dispatched.
                 TimeStamp captureTime;
 
                 /// @brief @c TimeStamp::now() snapshot taken at

@@ -118,8 +118,15 @@ class BufferView {
                                 /**
                                  * @brief Returns a pointer to this slice's data.
                                  * @return Pointer to the data, or @c nullptr if no buffer.
+                                 *
+                                 * Non-const proxy → mutable view;
+                                 * const proxy → read-only view (overload below).
+                                 * Mirrors @ref Buffer::data const-correctness.
                                  */
-                                uint8_t *data() const;
+                                uint8_t *data();
+
+                                /** @copydoc data() — const-correct read-only view. */
+                                const uint8_t *data() const;
 
                                 /** @brief Returns @c true when the slice has a non-null buffer. */
                                 bool isValid() const;
@@ -224,8 +231,17 @@ class BufferView {
                 /** @brief Returns the byte offset of the first slice. */
                 size_t offset() const;
 
-                /** @brief Returns a pointer to the first slice's data. */
-                uint8_t *data() const;
+                /**
+                 * @brief Returns a mutable pointer to the first
+                 *        slice's data.
+                 *
+                 * Non-const handle → mutable view; const handle →
+                 * read-only (overload below).
+                 */
+                uint8_t *data();
+
+                /** @copydoc data() — const-correct read-only view. */
+                const uint8_t *data() const;
 
                 /**
                  * @brief Returns @c true when the list holds at least

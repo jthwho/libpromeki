@@ -134,6 +134,31 @@ struct RtpAggregatorDataStream {
 };
 
 /**
+ * @brief View of one ANC reader stream the aggregator consumes.
+ * @ingroup network
+ *
+ * Mirrors @ref RtpAggregatorDataStream for RFC 8331 / ST 2110-40 ANC
+ * streams.  When populated, the aggregator drains @ref RxAncFrame
+ * bundles whose @c captureTime falls inside the current video
+ * window (@c Mode::Video) and attaches their packet list to the
+ * outgoing @c Frame as an @ref AncPayload.  @c Mode::AncOnly emits
+ * one Frame per ANC bundle.
+ */
+struct RtpAggregatorAncStream {
+                /// @brief ANC bundle queue the aggregator pops.
+                Queue<RxAncFrame> *payloadQueue = nullptr;
+
+                /// @brief @c true once the surrounding
+                ///        RtpMediaIO has activated this stream.
+                bool active = false;
+
+                /// @brief SDP-derived clock domain for any
+                ///        @c MediaTimeStamp produced in
+                ///        @ref RtpAggregatorThread::Mode::AncOnly.
+                ClockDomain clockDomain;
+};
+
+/**
  * @brief Static dependencies handed to @ref RtpAggregatorThread at
  *        construction time.
  * @ingroup network
@@ -189,6 +214,7 @@ struct RtpAggregatorContext {
                 RtpAggregatorVideoStream video;
                 RtpAggregatorAudioStream audio;
                 RtpAggregatorDataStream  data;
+                RtpAggregatorAncStream   anc;
 
                 /// @brief Pointer to the consumer-side reader
                 ///        queue.  Used only by
@@ -273,7 +299,9 @@ class RtpAggregatorThread : public Thread {
                 enum class Mode {
                         Video,      ///< Video-clocked aggregation.
                         AudioOnly,  ///< Audio-clocked aggregation.
-                        DataOnly    ///< Data-clocked aggregation.
+                        DataOnly,   ///< Data-clocked aggregation.
+                        AncOnly     ///< ANC-clocked aggregation (one
+                                    ///<  Frame per RxAncFrame).
                 };
 
                 /// @brief Watchdog activation threshold expressed
@@ -385,6 +413,7 @@ class RtpAggregatorThread : public Thread {
                 void runVideoMode();
                 void runAudioOnlyMode();
                 void runDataOnlyMode();
+                void runAncOnlyMode();
 
                 /**
                  * @brief Pulls audio chunks whose @c captureTime
@@ -402,6 +431,14 @@ class RtpAggregatorThread : public Thread {
                  */
                 bool drainDataBefore(const TimeStamp &windowEnd, RxDataMessage &out);
 
+                /**
+                 * @brief Returns @c true and sets @p out to the most
+                 *        recent ANC frame inside
+                 *        @c [-∞, windowEnd).  Frames popped past the
+                 *        window are parked in @ref _pendingAnc.
+                 */
+                bool drainAncBefore(const TimeStamp &windowEnd, RxAncFrame &out);
+
                 /// @brief One iteration of @c Mode::Video — pops
                 ///        one video bundle (with the configured
                 ///        pop timeout), assembles + emits the
@@ -414,6 +451,9 @@ class RtpAggregatorThread : public Thread {
 
                 /// @brief One iteration of @c Mode::DataOnly.
                 bool stepDataOnlyMode(unsigned int popMs);
+
+                /// @brief One iteration of @c Mode::AncOnly.
+                bool stepAncOnlyMode(unsigned int popMs);
 
                 void emitFrameForVideo(RxVideoFrame video, const Duration &fd);
                 void emitWatchdogFrame(const Duration &fd);
@@ -479,6 +519,14 @@ class RtpAggregatorThread : public Thread {
                 /// @brief @c true while @ref _pendingData holds a
                 ///        deferred message.
                 bool _hasPendingData = false;
+
+                /// @brief Pending ANC frame — same put-back pattern
+                ///        as @ref _pendingData.
+                RxAncFrame _pendingAnc;
+
+                /// @brief @c true while @ref _pendingAnc holds a
+                ///        deferred ANC frame.
+                bool _hasPendingAnc = false;
 
                 /// @brief Tracks whether @c Mode::Video has seen
                 ///        at least one successful video pop.  The

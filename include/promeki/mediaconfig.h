@@ -254,6 +254,114 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("Draw background rectangle behind burn-in text."));
 
                 // ============================================================
+                // Subtitle burn-in — Metadata::Subtitle / CEA-608 ANC overlay
+                // ============================================================
+
+                /// @brief bool — enable subtitle burn-in (renders the
+                ///        active @ref Subtitle cue onto the video).
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnEnabled,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Enable subtitle burn-in overlay rendering the active "
+                                                           "Metadata::Subtitle cue (or a CEA-608 decoded cue when "
+                                                           "VideoSubtitleBurnDecodeAnc is set) onto the video."));
+
+                /// @brief String — TrueType / OpenType font path for subtitle burn-in.
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnFontPath,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("TrueType or OpenType font path for subtitle burn-in. "
+                                                           "Empty = the library's bundled default font."));
+
+                /// @brief int — subtitle burn-in font size in pixels.
+                ///        @c 0 (default) auto-scales from frame height.
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnFontSize,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Subtitle burn-in font size in pixels (0 = auto from "
+                                                           "frame height)."));
+
+                /// @brief Color — subtitle text colour (fallback when a
+                ///        span carries no explicit colour).
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnTextColor,
+                                   VariantSpec()
+                                           .setType(Variant::TypeColor)
+                                           .setDefault(Color::White)
+                                           .setDescription("Default subtitle text colour; spans with an explicit "
+                                                           "SubtitleSpan::color override this."));
+
+                /// @brief Color — subtitle background colour.
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnBgColor,
+                                   VariantSpec()
+                                           .setType(Variant::TypeColor)
+                                           .setDefault(Color::Black)
+                                           .setDescription("Subtitle background colour (used behind the cue "
+                                                           "when VideoSubtitleBurnDrawBg is set)."));
+
+                /// @brief bool — draw a background rectangle behind the subtitle.
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnDrawBg,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Draw a solid background rectangle behind the subtitle "
+                                                           "cue for legibility."));
+
+                /// @brief Enum @ref SubtitleAnchor — override the cue's
+                ///        anchor.  @c Default honours the cue's own
+                ///        @ref Subtitle::anchor (which itself falls
+                ///        back to @c BottomCenter when @c Default).
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnAnchor,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnum)
+                                           .setDefault(SubtitleAnchor::Default)
+                                           .setEnumType(SubtitleAnchor::Type)
+                                           .setDescription("Anchor override for subtitle burn-in.  Default = "
+                                                           "honour the cue's Subtitle::anchor (which falls back "
+                                                           "to BottomCenter when itself Default)."));
+
+                /// @brief EnumList @ref SubtitleSource — ordered
+                ///        preference list of cue sources for subtitle
+                ///        burn-in.
+                ///
+                /// The renderer queries each source in turn and paints
+                /// the first cue it finds.  An empty list disables
+                /// rendering entirely (effectively the same as
+                /// @ref VideoSubtitleBurnEnabled @c = @c false).
+                ///
+                /// Default is @c [Metadata] — frame-stamped cues only,
+                /// which is what producers like @c TpgMediaIO emit
+                /// today.  Add @c Cea608Anc to fall back to (or prefer)
+                /// CEA-608 decoded from the frame's @c AncPayloads.
+                ///
+                /// @par Example
+                /// @code
+                /// // Prefer the in-band ANC decode, fall back to
+                /// // any metadata-stamped cue.
+                /// EnumList sources = EnumList::forType<SubtitleSource>();
+                /// sources.append(SubtitleSource::Cea608Anc);
+                /// sources.append(SubtitleSource::Metadata);
+                /// cfg.set(MediaConfig::VideoSubtitleBurnSources, sources);
+                /// // Equivalent string form on the command line:
+                /// //   VideoSubtitleBurnSources=Cea608Anc,Metadata
+                /// @endcode
+                PROMEKI_DECLARE_ID(VideoSubtitleBurnSources,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnumList)
+                                           .setDefault([] {
+                                                   EnumList l = EnumList::forType<SubtitleSource>();
+                                                   l.append(SubtitleSource::Metadata);
+                                                   return l;
+                                           }())
+                                           .setEnumType(SubtitleSource::Type)
+                                           .setDescription("Ordered preference list of subtitle cue sources for "
+                                                           "burn-in.  Queries each source in turn and paints the "
+                                                           "first cue it finds.  Empty list disables rendering."));
+
+                // ============================================================
                 // Video motion band — scrolling marker for stutter detection
                 // ============================================================
 
@@ -505,6 +613,62 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(1))
                                            .setDescription("Scan lines per ImageDataEncoder item in TPG."));
 
+                /// @brief bool — enable CEA-708 caption injection on TPG.
+                /// When true, the TPG parses @ref TpgAncCaptionsFile,
+                /// drives a @ref Cea608Encoder against the cue timeline at
+                /// the configured frame rate, wraps the per-frame
+                /// @c CcDataList into a @ref Cea708Cdp, and attaches the
+                /// resulting @ref AncPacket to a fresh @ref AncPayload on
+                /// the produced Frame.  When no file is configured (or the
+                /// file is empty) the TPG still emits per-frame CDPs
+                /// carrying null caption pairs so the receiver sees a
+                /// steady stream.
+                PROMEKI_DECLARE_ID(TpgAncCaptionsEnabled,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Enable CEA-708 caption ANC injection on TPG frames."));
+
+                /// @brief String — path to a SubRip (`.srt`) file whose
+                /// cues drive the per-frame caption byte stream.  Path
+                /// resolution goes through @ref File so `:/...` resource
+                /// paths and @ref Dir::temp-relative paths both work.
+                /// Empty (default) means "no file" — the TPG still emits
+                /// per-frame null CDPs when @ref TpgAncCaptionsEnabled is
+                /// true.
+                PROMEKI_DECLARE_ID(TpgAncCaptionsFile,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Path to SubRip file driving CEA-608 captions on TPG."));
+
+                /// @brief Duration — offset added to every cue's
+                /// @c start / @c end before scheduling.  Positive values
+                /// delay captions relative to the TPG's frame timeline
+                /// (which always starts at t=0 at TPG open); negative
+                /// values advance them.  Use this when the SubRip file
+                /// was authored against a different reference point
+                /// (e.g. a broadcast hour-of-day TC) and needs to be
+                /// re-anchored to the TPG's t=0.  Default zero —
+                /// SubRip cue times are interpreted directly as media-
+                /// relative offsets from TPG frame 0.
+                PROMEKI_DECLARE_ID(TpgAncCaptionsOffset,
+                                   VariantSpec()
+                                           .setType(Variant::TypeDuration)
+                                           .setDefault(Duration())
+                                           .setDescription("Offset applied to SubRip cue times before scheduling."));
+
+                /// @brief int — VANC line number the TPG stamps on emitted
+                /// CEA-708 ANC packets (via @c AncMeta::St291::Line).
+                /// Default 11, which is the canonical VANC line for HD
+                /// CEA-708 carriage.
+                PROMEKI_DECLARE_ID(TpgAncCaptionsLine,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(11))
+                                           .setMin(int32_t(0))
+                                           .setDescription("VANC line number stamped on TPG CEA-708 ANC packets."));
+
                 // ============================================================
                 // Inspector sink (InspectorMediaIO)
                 // ============================================================
@@ -666,6 +830,23 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(String())
                                            .setDescription("Output file for Inspector CaptureStats test "
                                                            "(TSV, one row per frame).  Empty = auto-name "
+                                                           "in Dir::temp()."));
+
+                /// @brief String — output JSON-Lines file for the
+                /// Inspector @c AncData test.  One JSON object per
+                /// frame, each carrying the frame index plus the array
+                /// of decoded ANC packets ({format, transport, line,
+                /// meta, parsed: <typed JSON>}).  Empty = auto-name in
+                /// @c Dir::temp() (form:
+                /// @c promeki_inspector_anc_<pid>_<epoch_ns>.jsonl).
+                /// The resolved path is logged at @c Info level when
+                /// the file is opened.
+                PROMEKI_DECLARE_ID(InspectorAncDataFile,
+                                   VariantSpec()
+                                           .setType(Variant::TypeString)
+                                           .setDefault(String())
+                                           .setDescription("Output JSONL file for Inspector AncData test "
+                                                           "(one JSON object per frame).  Empty = auto-name "
                                                            "in Dir::temp()."));
 
                 // ============================================================

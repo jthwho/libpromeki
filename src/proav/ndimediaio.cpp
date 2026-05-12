@@ -699,7 +699,10 @@ Error NdiMediaIO::sendVideo(const UncompressedVideoPayload &vp) {
         // For uncompressed formats the SDK expects the luma-plane line
         // stride (chroma stride is derived from the FourCC's geometry).
         f.line_stride_in_bytes = static_cast<int>(desc.pixelFormat().lineStride(0, desc));
-        f.p_data               = bv.data();
+        // NDI's p_data is non-const uint8_t* but the SDK only reads
+        // from it on send; the const_cast bridges its un-const-correct
+        // C API to our const-correct BufferView::data().
+        f.p_data               = const_cast<uint8_t *>(bv.data());
         f.p_metadata           = nullptr;
         f.timestamp            = NDIlib_recv_timestamp_undefined;
 
@@ -791,7 +794,8 @@ Error NdiMediaIO::sendAudio(const PcmAudioPayload &ap) {
         // payload that doesn't carry the source's PTS forward.
         f.timecode               = senderTimecodeFor(ap.pts());
         f.FourCC                 = NDIlib_FourCC_audio_type_FLTP;
-        f.p_data                  = bv.data();
+        // Same NDI un-const-correctness as in @ref sendVideo above.
+        f.p_data                  = const_cast<uint8_t *>(bv.data());
         f.channel_stride_in_bytes = static_cast<int>(samples * sizeof(float));
         f.p_metadata             = nullptr;
         f.timestamp              = NDIlib_recv_timestamp_undefined;

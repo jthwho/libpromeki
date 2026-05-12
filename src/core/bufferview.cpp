@@ -50,10 +50,23 @@ size_t BufferView::Entry::size() const {
         return _list->_views[_idx].size;
 }
 
-uint8_t *BufferView::Entry::data() const {
+uint8_t *BufferView::Entry::data() {
         const Buffer &b = buffer();
         if (!b.isValid()) return nullptr;
-        return static_cast<uint8_t *>(b.data()) + offset();
+        // Entry stores a `const BufferView *` internally; the
+        // const_cast here promotes that to a mutable Buffer so the
+        // mutable @c data() overload can be picked.  The non-const
+        // overload of this function is only reachable through a
+        // non-const Entry, which in turn is only obtainable from a
+        // non-const BufferView, so the cast does not synthesise
+        // mutability from a const path.
+        return static_cast<uint8_t *>(const_cast<Buffer &>(b).data()) + offset();
+}
+
+const uint8_t *BufferView::Entry::data() const {
+        const Buffer &b = buffer();
+        if (!b.isValid()) return nullptr;
+        return static_cast<const uint8_t *>(b.data()) + offset();
 }
 
 bool BufferView::Entry::isValid() const {
@@ -147,10 +160,19 @@ size_t BufferView::offset() const {
         return _views[0].offset;
 }
 
-uint8_t *BufferView::data() const {
+uint8_t *BufferView::data() {
         const Buffer &b = buffer();
         if (!b.isValid()) return nullptr;
-        return static_cast<uint8_t *>(b.data()) + offset();
+        // Same const_cast rationale as BufferView::Entry::data — Buffer
+        // is a CoW value-handle and the non-const proxy grants mutation
+        // rights through the internal shared-pointer storage.
+        return static_cast<uint8_t *>(const_cast<Buffer &>(b).data()) + offset();
+}
+
+const uint8_t *BufferView::data() const {
+        const Buffer &b = buffer();
+        if (!b.isValid()) return nullptr;
+        return static_cast<const uint8_t *>(b.data()) + offset();
 }
 
 bool BufferView::isValid() const {

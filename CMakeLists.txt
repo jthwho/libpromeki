@@ -1939,6 +1939,8 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtmpmessage.h
         include/promeki/rtmpsession.h
         include/promeki/rtpaggregatorthread.h
+        include/promeki/rtpancdepacketizerthread.h
+        include/promeki/rtpancpacketizerthread.h
         include/promeki/rtpaudiodepacketizerthread.h
         include/promeki/rtpaudiopacketizerthread.h
         include/promeki/rtpaudiotxthread.h
@@ -1948,6 +1950,7 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtppacketbatch.h
         include/promeki/rtppacketizerthread.h
         include/promeki/rtppayload.h
+        include/promeki/rtppayloadanc.h
         include/promeki/rtpseqreorderbuffer.h
         include/promeki/rtpseqtracker.h
         include/promeki/rtpsession.h
@@ -1997,6 +2000,8 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/rtmphandshake.cpp
         src/network/rtmpsession.cpp
         src/network/rtpaggregatorthread.cpp
+        src/network/rtpancdepacketizerthread.cpp
+        src/network/rtpancpacketizerthread.cpp
         src/network/rtpaudiodepacketizerthread.cpp
         src/network/rtpaudiopacketizerthread.cpp
         src/network/rtpaudiotxthread.cpp
@@ -2004,6 +2009,7 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/rtpdepacketizerthread.cpp
         src/network/rtppacketizerthread.cpp
         src/network/rtppayload.cpp
+        src/network/rtppayloadanc.cpp
         src/network/rtpseqreorderbuffer.cpp
         src/network/rtpseqtracker.cpp
         src/network/rtpsession.cpp
@@ -2094,6 +2100,21 @@ endif()
 # ProAV sources
 if(PROMEKI_ENABLE_PROAV)
     list(APPEND PROMEKI_HEADERS
+        include/promeki/ancdesc.h
+        include/promeki/ancformat.h
+        include/promeki/ancmeta.h
+        include/promeki/ancpacket.h
+        include/promeki/ancpayload.h
+        include/promeki/anctranslateconfig.h
+        include/promeki/anctranslator.h
+        include/promeki/cea608.h
+        include/promeki/cea608decoder.h
+        include/promeki/cea608encoder.h
+        include/promeki/cea708cdp.h
+        include/promeki/hdmiinfoframe.h
+        include/promeki/st291packet.h
+        include/promeki/subrip.h
+        include/promeki/subtitle.h
         include/promeki/audioblock.h
         include/promeki/audiobuffer.h
         include/promeki/audiodecoder.h
@@ -2158,6 +2179,24 @@ if(PROMEKI_ENABLE_PROAV)
     )
     list(APPEND PROMEKI_SOURCES
         src/proav/aacbitstream.cpp
+        src/proav/anccodec_afd.cpp
+        src/proav/anccodec_atc.cpp
+        src/proav/anccodec_cea708.cpp
+        src/proav/ancdesc.cpp
+        src/proav/ancformat.cpp
+        src/proav/ancpacket.cpp
+        src/proav/ancpayload.cpp
+        src/proav/anctranslator.cpp
+        src/proav/cea608.cpp
+        src/proav/cea608decoder.cpp
+        src/proav/cea608encoder.cpp
+        src/proav/cea708cdp.cpp
+        src/proav/hdmiinfoframe.cpp
+        src/proav/st291packet.cpp
+        src/proav/subrip.cpp
+        src/proav/subtitle.cpp
+        src/proav/subtitleburnmediaio.cpp
+        src/proav/subtitlerenderer.cpp
         src/proav/audioblock.cpp
         src/proav/audiobuffer.cpp
         src/proav/audiodecoder.cpp
@@ -2935,6 +2974,23 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/doctest_main.cpp
         tests/unit/algorithm.cpp
         tests/unit/amf0.cpp
+        tests/unit/anccodec_afd.cpp
+        tests/unit/anccodec_atc.cpp
+        tests/unit/anccodec_cea708.cpp
+        tests/unit/ancdesc.cpp
+        tests/unit/ancformat.cpp
+        tests/unit/ancpacket.cpp
+        tests/unit/ancpayload.cpp
+        tests/unit/anctranslateconfig.cpp
+        tests/unit/anctranslator.cpp
+        tests/unit/cea608.cpp
+        tests/unit/cea608decoder.cpp
+        tests/unit/cea608encoder.cpp
+        tests/unit/cea708cdp.cpp
+        tests/unit/inspector_ancdata.cpp
+        tests/unit/subrip.cpp
+        tests/unit/subtitlerenderer.cpp
+        tests/unit/tpg_anc_captions.cpp
         tests/unit/ansistream.cpp
         tests/unit/application.cpp
         tests/unit/array.cpp
@@ -3001,6 +3057,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/future.cpp
         tests/unit/h264bitstream.cpp
         tests/unit/hashmap.cpp
+        tests/unit/hdmiinfoframe.cpp
         tests/unit/hashset.cpp
         tests/unit/hevcbitstream.cpp
         tests/unit/histogram.cpp
@@ -3059,6 +3116,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/size2d.cpp
         tests/unit/span.cpp
         tests/unit/stack.cpp
+        tests/unit/st291packet.cpp
         tests/unit/statsaccumulator.cpp
         tests/unit/streamstring.cpp
         tests/unit/string.cpp
@@ -3119,6 +3177,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/rtmpmediaio.cpp
             tests/unit/network/rtmpsession.cpp
             tests/unit/network/rtpaggregatorthread.cpp
+            tests/unit/network/rtpancdepacketizerthread.cpp
+            tests/unit/network/rtpancpacketizerthread.cpp
             tests/unit/network/rtpaudiodepacketizerthread.cpp
             tests/unit/network/rtpaudiopacketizerthread.cpp
             tests/unit/network/rtpaudiotxthread.cpp
@@ -3127,6 +3187,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/rtppacket.cpp
             tests/unit/network/rtppacketbatch.cpp
             tests/unit/network/rtppayload.cpp
+            tests/unit/network/rtppayloadanc.cpp
             tests/unit/network/rtpseqreorderbuffer.cpp
             tests/unit/network/rtpseqtracker.cpp
             tests/unit/network/rtpsession.cpp

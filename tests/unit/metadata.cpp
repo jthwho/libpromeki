@@ -171,6 +171,61 @@ TEST_CASE("Metadata_JsonRoundTrip") {
         CHECK(m2.get(Metadata::TrackNumber).get<int32_t>() == 7);
 }
 
+TEST_CASE("Metadata_ToStringEmpty") {
+        Metadata m;
+        // An empty metadata serializes to the canonical empty JSON object.
+        CHECK(m.toString() == "{}");
+}
+
+TEST_CASE("Metadata_StringRoundTrip") {
+        Metadata m1;
+        m1.set(Metadata::Title, String("Round-Trip"));
+        m1.set(Metadata::Artist, String("doctest"));
+        m1.set(Metadata::Gamma, 2.4);
+        m1.set(Metadata::TrackNumber, 11);
+        m1.set(Metadata::EnableBWF, true);
+
+        const String encoded = m1.toString();
+        CHECK(!encoded.isEmpty());
+        CHECK(encoded != "{}");
+
+        Error    err;
+        Metadata m2 = Metadata::fromString(encoded, &err);
+        CHECK(err.isOk());
+        CHECK(m2.size() == m1.size());
+        CHECK(m2.get(Metadata::Title).get<String>() == "Round-Trip");
+        CHECK(m2.get(Metadata::Artist).get<String>() == "doctest");
+        CHECK(m2.get(Metadata::Gamma).get<double>() > 2.3);
+        CHECK(m2.get(Metadata::Gamma).get<double>() < 2.5);
+        CHECK(m2.get(Metadata::TrackNumber).get<int32_t>() == 11);
+        CHECK(m2.get(Metadata::EnableBWF).get<bool>() == true);
+        CHECK(m1 == m2);
+}
+
+TEST_CASE("Metadata_FromStringMalformed") {
+        Error    err;
+        Metadata m = Metadata::fromString(String("{not valid json"), &err);
+        CHECK(err.isError());
+        CHECK(m.isEmpty());
+}
+
+TEST_CASE("Metadata_ToStringIndentedIsValid") {
+        Metadata m;
+        m.set(Metadata::Title, String("Pretty"));
+        m.set(Metadata::Gamma, 1.8);
+
+        const String pretty = m.toString(2);
+        CHECK(!pretty.isEmpty());
+        // The pretty form should differ from the compact form on a
+        // non-empty metadata (it contains newlines and indentation).
+        CHECK(pretty != m.toString(0));
+
+        Error    err;
+        Metadata m2 = Metadata::fromString(pretty, &err);
+        CHECK(err.isOk());
+        CHECK(m == m2);
+}
+
 // ============================================================================
 // Equality
 // ============================================================================

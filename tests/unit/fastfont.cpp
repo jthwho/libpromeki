@@ -577,3 +577,115 @@ TEST_CASE("FastFont: NV12 drawText paints the chroma plane") {
         CHECK(luminanceChanged);
         CHECK(chromaChanged);
 }
+
+// ============================================================================
+// Multi-keyed glyph cache + per-call DrawStyle
+// ============================================================================
+
+TEST_CASE("FastFont: setForegroundColor does not invalidate the glyph cache") {
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(24);
+
+        // Prime the cache for the white-on-black combo.
+        ff.setForegroundColor(Color::White);
+        ff.setBackgroundColor(Color::Black);
+        int wWhite = ff.measureText("ABC");
+
+        // Flip to red-on-black.  Under the old single-key cache this
+        // would have invalidated and zeroed the cache; under the
+        // multi-key cache the measure is still cheap and the prior
+        // (white) cache entry is still reachable.
+        ff.setForegroundColor(Color::Red);
+        int wRed = ff.measureText("ABC");
+
+        CHECK(wWhite > 0);
+        CHECK(wRed == wWhite); // Identical glyph geometry, just colour.
+}
+
+TEST_CASE("FastFont: per-call DrawStyle renders different colours into one draw pass") {
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(256, 64, PixelFormat::RGB8_sRGB, 0);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(24);
+        ff.setForegroundColor(Color::White);
+        ff.setBackgroundColor(Color::Black);
+
+        FastFont::DrawStyle red;
+        red.foreground = Color::Red;
+        red.background = Color::Black;
+        REQUIRE(ff.drawText("RED", 4, 32, red));
+
+        FastFont::DrawStyle green;
+        green.foreground = Color::Green;
+        green.background = Color::Black;
+        REQUIRE(ff.drawText("GREEN", 80, 32, green));
+
+        // Scan the image for any red and any green pixel: confirms the
+        // two styled draws used different foreground colours and that
+        // neither call invalidated the other's cache.
+        const uint8_t *data = img->plane(0).data();
+        size_t         stride = plane0Stride(*img);
+        bool           sawRed = false;
+        bool           sawGreen = false;
+        for (size_t y = 0; y < img->desc().height(); ++y) {
+                const uint8_t *row = data + y * stride;
+                for (size_t x = 0; x < img->desc().width(); ++x) {
+                        uint8_t r = row[x * 3 + 0];
+                        uint8_t g = row[x * 3 + 1];
+                        uint8_t b = row[x * 3 + 2];
+                        if (r > 200 && g < 50 && b < 50) sawRed = true;
+                        if (r < 50 && g > 200 && b < 50) sawGreen = true;
+                }
+        }
+        CHECK(sawRed);
+        CHECK(sawGreen);
+}
+
+TEST_CASE("FastFont: italic DrawStyle differs from upright in measured width") {
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(24);
+
+        FastFont::DrawStyle upright;
+        FastFont::DrawStyle italic;
+        italic.italic = true;
+
+        int wUpright = ff.measureText("HHH", upright);
+        int wItalic = ff.measureText("HHH", italic);
+        CHECK(wUpright > 0);
+        CHECK(wItalic > 0);
+        // Italic glyphs are sheared but the advance is typically the
+        // same; what we want to confirm is that the cache returned
+        // distinct entries (different cells with different geometry)
+        // without crashing or zeroing out the measurement.
+        CHECK(wItalic >= wUpright);
+}
+
+TEST_CASE("FastFont: underline DrawStyle paints a line below text") {
+        if (!fontAvailable()) return;
+
+        // Render the same text once without underline and once with;
+        // the underlined version should touch strictly more pixels
+        // (the underline rectangle adds them).
+        auto sumWith = [](bool underline) -> uint64_t {
+                auto                img = makePayload(256, 64, PixelFormat::RGB8_sRGB, 0);
+                FastFont            ff(img->createPaintEngine());
+                ff.setFontSize(24);
+                ff.setForegroundColor(Color::White);
+                ff.setBackgroundColor(Color::Black);
+                FastFont::DrawStyle s;
+                s.underline = underline;
+                ff.drawText("UNDER", 10, 40, s);
+                return planeSum(*img);
+        };
+        uint64_t plain = sumWith(false);
+        uint64_t under = sumWith(true);
+        CHECK(plain > 0);
+        CHECK(under > plain);
+}

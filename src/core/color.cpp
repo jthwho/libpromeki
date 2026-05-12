@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <climits>
 #include <cmath>
 #include <promeki/color.h>
 #include <promeki/error.h>
@@ -310,6 +311,30 @@ Color Color::complementary() const {
         if (newH >= 1.0f) newH -= 1.0f;
         Color rotated(ColorModel::HSL_sRGB, newH, hslColor._c[1], hslColor._c[2], hslColor._c[3]);
         return rotated.convert(_model);
+}
+
+size_t Color::nearestPaletteIndex(const Color *palette, size_t n) const {
+        if (palette == nullptr || n == 0) return n;
+        // Compare in 8-bit sRGB so colours that resolve to the same
+        // wire bytes land in the same slot regardless of original
+        // model.  Alpha is ignored — the palette match is a
+        // chromatic question, not an opacity one.
+        const int tr = static_cast<int>(r8());
+        const int tg = static_cast<int>(g8());
+        const int tb = static_cast<int>(b8());
+        size_t bestIdx = 0;
+        int    bestDistSq = INT_MAX;
+        for (size_t i = 0; i < n; ++i) {
+                const int dr = static_cast<int>(palette[i].r8()) - tr;
+                const int dg = static_cast<int>(palette[i].g8()) - tg;
+                const int db = static_cast<int>(palette[i].b8()) - tb;
+                const int d  = dr * dr + dg * dg + db * db;
+                if (d < bestDistSq) {
+                        bestDistSq = d;
+                        bestIdx = i;
+                }
+        }
+        return bestIdx;
 }
 
 float Color::toNative(size_t comp) const {

@@ -1152,7 +1152,7 @@ class InspectorTest : public TypedEnum<InspectorTest> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0, {"ImageData", 0}, {"Ltc", 1}, {"AvSync", 2},
                                            {"Continuity", 3}, {"Timestamp", 4}, {"AudioSamples", 5},
-                                           {"CaptureStats", 6}, {"AudioData", 7});
+                                           {"CaptureStats", 6}, {"AudioData", 7}, {"AncData", 8});
 
                 using TypedEnum<InspectorTest>::TypedEnum;
 
@@ -1164,6 +1164,7 @@ class InspectorTest : public TypedEnum<InspectorTest> {
                 static const InspectorTest AudioSamples;
                 static const InspectorTest CaptureStats;
                 static const InspectorTest AudioData;
+                static const InspectorTest AncData;
 };
 
 inline const InspectorTest InspectorTest::ImageData{0};
@@ -1174,6 +1175,7 @@ inline const InspectorTest InspectorTest::Timestamp{4};
 inline const InspectorTest InspectorTest::AudioSamples{5};
 inline const InspectorTest InspectorTest::CaptureStats{6};
 inline const InspectorTest InspectorTest::AudioData{7};
+inline const InspectorTest InspectorTest::AncData{8};
 
 /**
  * @brief Well-known Enum type for codec rate-control modes (audio + video).
@@ -1919,6 +1921,285 @@ class RtmpVideoPacing : public TypedEnum<RtmpVideoPacing> {
 inline const RtmpVideoPacing RtmpVideoPacing::Internal{0};
 inline const RtmpVideoPacing RtmpVideoPacing::External{1};
 inline const RtmpVideoPacing RtmpVideoPacing::None{2};
+
+/**
+ * @brief Well-known Enum classifying an @ref AncFormat by broad
+ *        content category.
+ *
+ * Lets sinks declare "I carry Captions + Timecode only" by category
+ * rather than enumerating every format ID, and drives inspector
+ * grouping and metadata-stamping rules.
+ *
+ * - @c Unknown        — Default / uninitialised.
+ * - @c Captions       — CEA-708, CEA-608 closed captions.
+ * - @c Timecode       — ATC LTC / VITC, future HDMI / NDI timecode.
+ * - @c Splice         — SCTE-104, SCTE-35 ad / program markers.
+ * - @c Aspect         — AFD, Bar Data, AVI InfoFrame aspect bits.
+ * - @c Hdr            — SMPTE 2086 static, HDR10+ (ST 2094-40)
+ *                       dynamic, Dolby Vision RPU.
+ * - @c AudioMetadata  — SMPTE 2020 Dolby metadata, HDMI Audio
+ *                       InfoFrame.
+ * - @c Display        — Non-HDR display hints (HDMI AVI / SPD).
+ * - @c Geolocation    — MISB ST 0601 KLV and friends.
+ * - @c UserDefined    — Application-supplied category.
+ */
+class AncCategory : public TypedEnum<AncCategory> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncCategory", 0, {"Unknown", 0}, {"Captions", 1}, {"Timecode", 2},
+                                           {"Splice", 3}, {"Aspect", 4}, {"Hdr", 5}, {"AudioMetadata", 6},
+                                           {"Display", 7}, {"Geolocation", 8},
+                                           {"UserDefined", 9}); // default: Unknown
+
+                using TypedEnum<AncCategory>::TypedEnum;
+
+                static const AncCategory Unknown;
+                static const AncCategory Captions;
+                static const AncCategory Timecode;
+                static const AncCategory Splice;
+                static const AncCategory Aspect;
+                static const AncCategory Hdr;
+                static const AncCategory AudioMetadata;
+                static const AncCategory Display;
+                static const AncCategory Geolocation;
+                static const AncCategory UserDefined;
+};
+
+inline const AncCategory AncCategory::Unknown{0};
+inline const AncCategory AncCategory::Captions{1};
+inline const AncCategory AncCategory::Timecode{2};
+inline const AncCategory AncCategory::Splice{3};
+inline const AncCategory AncCategory::Aspect{4};
+inline const AncCategory AncCategory::Hdr{5};
+inline const AncCategory AncCategory::AudioMetadata{6};
+inline const AncCategory AncCategory::Display{7};
+inline const AncCategory AncCategory::Geolocation{8};
+inline const AncCategory AncCategory::UserDefined{9};
+
+/**
+ * @brief Well-known Enum naming the wire transport an @ref AncPacket
+ *        currently rides on.
+ *
+ * Distinct from @ref AncCategory and @ref AncFormat (the logical
+ * "what kind of data is this"): @c AncFormat::Cea708 is closed-
+ * caption content regardless of whether it is currently riding
+ * inside an ST 291 packet, an NDI XML metadata frame, or an AMF0
+ * script tag.
+ *
+ * - @c Invalid        — Default / uninitialised.
+ * - @c St291          — ST 291 ancillary packet.  SDI VANC / HANC
+ *                       and RFC 8331 ST 2110-40 both consume this
+ *                       transport directly.
+ * - @c NdiXml         — NDI metadata frame body (UTF-8 XML).
+ * - @c RtmpAmf        — RTMP AMF0 script tag value
+ *                       (@c onCaptionInfo, @c onCuePoint,
+ *                       @c onMetaData, …).
+ * - @c HdmiInfoFrame  — HDMI InfoFrame body.
+ * - @c MpegTsPrivate  — MPEG-TS private section / table
+ *                       (SCTE-35 splice_info, KLV, ARIB).
+ * - @c HlsSei         — H.264 / HEVC SEI user-data registered
+ *                       message (CEA-708 NAL fragments for HLS
+ *                       muxers).
+ */
+class AncTransport : public TypedEnum<AncTransport> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncTransport", 0, {"Invalid", 0}, {"St291", 1}, {"NdiXml", 2},
+                                           {"RtmpAmf", 3}, {"HdmiInfoFrame", 4}, {"MpegTsPrivate", 5},
+                                           {"HlsSei", 6}); // default: Invalid
+
+                using TypedEnum<AncTransport>::TypedEnum;
+
+                static const AncTransport Invalid;
+                static const AncTransport St291;
+                static const AncTransport NdiXml;
+                static const AncTransport RtmpAmf;
+                static const AncTransport HdmiInfoFrame;
+                static const AncTransport MpegTsPrivate;
+                static const AncTransport HlsSei;
+};
+
+inline const AncTransport AncTransport::Invalid{0};
+inline const AncTransport AncTransport::St291{1};
+inline const AncTransport AncTransport::NdiXml{2};
+inline const AncTransport AncTransport::RtmpAmf{3};
+inline const AncTransport AncTransport::HdmiInfoFrame{4};
+inline const AncTransport AncTransport::MpegTsPrivate{5};
+inline const AncTransport AncTransport::HlsSei{6};
+
+/**
+ * @brief Well-known Enum controlling ANC translator output verbosity.
+ *
+ * Used as the value of the
+ * @c AncTranslateConfig::Fidelity key.  Honoured by translators
+ * emitting onto transports with multiple valid representations
+ * (NDI XML, RTMP AMF, JSON sidecars).
+ *
+ * - @c Default — Translator picks its preferred form (normally
+ *                equivalent to @c Strict).
+ * - @c Strict  — Minimum required fields for a valid emit.
+ * - @c Full    — Every optional field, most verbose form.
+ */
+class AncFidelity : public TypedEnum<AncFidelity> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncFidelity", 0, {"Default", 0}, {"Strict", 1},
+                                           {"Full", 2}); // default: Default
+
+                using TypedEnum<AncFidelity>::TypedEnum;
+
+                static const AncFidelity Default;
+                static const AncFidelity Strict;
+                static const AncFidelity Full;
+};
+
+inline const AncFidelity AncFidelity::Default{0};
+inline const AncFidelity AncFidelity::Strict{1};
+inline const AncFidelity AncFidelity::Full{2};
+
+/**
+ * @brief Well-known Enum governing how @ref AncTransport::St291
+ *        builders handle the per-packet checksum.
+ *
+ * Used as the value of the @c AncTranslateConfig::Checksum key.
+ *
+ * - @c PreserveOrRecompute — Use the stored checksum when it is
+ *                            valid; recompute when missing or
+ *                            wrong.  Default; preserves byte-exact
+ *                            replay for captured packets.
+ * - @c AlwaysRecompute     — Recompute on every output.
+ * - @c StrictValidate      — Fail with @c Error::InvalidChecksum
+ *                            when the stored checksum does not
+ *                            match the recomputed one.
+ */
+class AncChecksumPolicy : public TypedEnum<AncChecksumPolicy> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncChecksumPolicy", 0, {"PreserveOrRecompute", 0}, {"AlwaysRecompute", 1},
+                                           {"StrictValidate", 2}); // default: PreserveOrRecompute
+
+                using TypedEnum<AncChecksumPolicy>::TypedEnum;
+
+                static const AncChecksumPolicy PreserveOrRecompute;
+                static const AncChecksumPolicy AlwaysRecompute;
+                static const AncChecksumPolicy StrictValidate;
+};
+
+inline const AncChecksumPolicy AncChecksumPolicy::PreserveOrRecompute{0};
+inline const AncChecksumPolicy AncChecksumPolicy::AlwaysRecompute{1};
+inline const AncChecksumPolicy AncChecksumPolicy::StrictValidate{2};
+
+/**
+ * @brief Well-known Enum controlling ANC translator behaviour when
+ *        the input cannot be represented in the target transport.
+ *
+ * Used as the value of the @c AncTranslateConfig::OnUnsupported key.
+ *
+ * - @c Skip       — Return @c Error::NotSupported; the caller
+ *                   (sink backend) drops the packet and logs once
+ *                   per format.
+ * - @c BestEffort — Default.  Emit what can be represented and
+ *                   return OK; the translator documents what was
+ *                   preserved.
+ * - @c Fail       — Hard error with a descriptive message.
+ */
+class AncOnUnsupported : public TypedEnum<AncOnUnsupported> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncOnUnsupported", 1, {"Skip", 0}, {"BestEffort", 1},
+                                           {"Fail", 2}); // default: BestEffort
+
+                using TypedEnum<AncOnUnsupported>::TypedEnum;
+
+                static const AncOnUnsupported Skip;
+                static const AncOnUnsupported BestEffort;
+                static const AncOnUnsupported Fail;
+};
+
+inline const AncOnUnsupported AncOnUnsupported::Skip{0};
+inline const AncOnUnsupported AncOnUnsupported::BestEffort{1};
+inline const AncOnUnsupported AncOnUnsupported::Fail{2};
+
+/**
+ * @brief Well-known nine-position anchor for subtitle placement.
+ *
+ * The displayed-block anchor used by every subtitle format that
+ * exposes positioning.  Values 1..9 match the ASS / SSA
+ * @c {\anN} numpad convention exactly so SRT files carrying the
+ * ASS extension can value-cast directly:
+ *
+ * @code
+ * 1 = BottomLeft   2 = BottomCenter   3 = BottomRight
+ * 4 = MiddleLeft   5 = MiddleCenter   6 = MiddleRight
+ * 7 = TopLeft      8 = TopCenter      9 = TopRight
+ * @endcode
+ *
+ * @c Default (0) means "no anchor explicitly specified by the
+ * source file" — renderers fall back to their own default (almost
+ * universally @c BottomCenter for caption-style subtitles).  Used
+ * by @ref Subtitle::anchor.
+ */
+class SubtitleAnchor : public TypedEnum<SubtitleAnchor> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleAnchor", 0, {"Default", 0}, {"BottomLeft", 1},
+                                           {"BottomCenter", 2}, {"BottomRight", 3}, {"MiddleLeft", 4},
+                                           {"MiddleCenter", 5}, {"MiddleRight", 6}, {"TopLeft", 7},
+                                           {"TopCenter", 8}, {"TopRight", 9}); // default: Default
+
+                using TypedEnum<SubtitleAnchor>::TypedEnum;
+
+                static const SubtitleAnchor Default;
+                static const SubtitleAnchor BottomLeft;
+                static const SubtitleAnchor BottomCenter;
+                static const SubtitleAnchor BottomRight;
+                static const SubtitleAnchor MiddleLeft;
+                static const SubtitleAnchor MiddleCenter;
+                static const SubtitleAnchor MiddleRight;
+                static const SubtitleAnchor TopLeft;
+                static const SubtitleAnchor TopCenter;
+                static const SubtitleAnchor TopRight;
+};
+
+inline const SubtitleAnchor SubtitleAnchor::Default{0};
+inline const SubtitleAnchor SubtitleAnchor::BottomLeft{1};
+inline const SubtitleAnchor SubtitleAnchor::BottomCenter{2};
+inline const SubtitleAnchor SubtitleAnchor::BottomRight{3};
+inline const SubtitleAnchor SubtitleAnchor::MiddleLeft{4};
+inline const SubtitleAnchor SubtitleAnchor::MiddleCenter{5};
+inline const SubtitleAnchor SubtitleAnchor::MiddleRight{6};
+inline const SubtitleAnchor SubtitleAnchor::TopLeft{7};
+inline const SubtitleAnchor SubtitleAnchor::TopCenter{8};
+inline const SubtitleAnchor SubtitleAnchor::TopRight{9};
+
+/**
+ * @brief Where a subtitle renderer should look for the active cue.
+ *
+ * Used by @ref SubtitleBurnMediaIO's
+ * @c MediaConfig::VideoSubtitleBurnSources key as an *ordered*
+ * preference list — the renderer queries each source in turn and
+ * paints the first cue it finds.  An empty list disables rendering
+ * entirely.
+ *
+ *  - @c Metadata — read @c Metadata::Subtitle off the frame.  Cheap
+ *    and zero-coupling; works for any upstream that stamps cues
+ *    (the TPG SubRip path, future file readers, etc.).
+ *  - @c Cea608Anc — decode CEA-608 captions from the frame's
+ *    @c AncPayloads via the stateful @ref Cea608Decoder.  Useful
+ *    when subtitles arrive embedded in ANC (broadcast capture,
+ *    RTP-40, NDI).  v1 supports the @c CC1 pop-on subset that
+ *    @ref Cea608Decoder implements.
+ *
+ * Future sources (@c Cea708Anc, @c HlsSei, @c RtmpAmf, @c NdiXml,
+ * file-driven SubRip side-channel) slot in by adding new enum
+ * values and matching handlers in @ref SubtitleBurnMediaIO.
+ */
+class SubtitleSource : public TypedEnum<SubtitleSource> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleSource", 1, {"Metadata", 1}, {"Cea608Anc", 2});
+
+                using TypedEnum<SubtitleSource>::TypedEnum;
+
+                static const SubtitleSource Metadata;
+                static const SubtitleSource Cea608Anc;
+};
+
+inline const SubtitleSource SubtitleSource::Metadata{1};
+inline const SubtitleSource SubtitleSource::Cea608Anc{2};
 
 /** @} */
 

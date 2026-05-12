@@ -71,6 +71,20 @@ Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
         return ret;
 }
 
+String Metadata::toString(unsigned int indent) const {
+        return toJson().toString(indent);
+}
+
+Metadata Metadata::fromString(const String &str, Error *err) {
+        Error      parseErr;
+        JsonObject obj = JsonObject::parse(str, &parseErr);
+        if (parseErr.isError()) {
+                if (err) *err = parseErr;
+                return Metadata();
+        }
+        return fromJson(obj, err);
+}
+
 StringList Metadata::dump() const {
         StringList ret;
         forEach([&ret](ID id, const Variant &value) {

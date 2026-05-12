@@ -1,0 +1,99 @@
+1
+00:00:01,000 --> 00:00:04,000
+Welcome to the libpromeki SubRip test file!
+
+2
+00:00:05,000 --> 00:00:08,000
+This cue has two lines (this one):
+and one more (this other one)
+
+3
+00:00:10,000 --> 00:00:13,000
+{\an8}Top-centered using \an8 anchor.
+
+4
+00:00:15,000 --> 00:00:18,000
+{\an5}Middle-center using \an5 anchor.
+
+5
+00:00:20,000 --> 00:00:23,000
+{\an1}Bottom-left using \an1 anchor.
+
+6
+00:00:25,000 --> 00:00:28,000 X1:40 X2:680 Y1:50 Y2:80
+Bounded by the X1/X2/Y1/Y2 coordinate hint.
+
+7
+00:00:30,000 --> 00:00:33,000
+<i>This text should display italic.</i>
+
+8
+00:00:35,000 --> 00:00:38,000
+<b>Bold</b> and <u>underlined</u> mixed inline.
+
+9
+00:00:40,000 --> 00:00:43,000
+<font color="#FF0000">Red text</font> via inline font tag.
+
+10
+00:00:45,000 --> 00:00:48,000
+It <font color="#00FF00"><i>flies</i></font> like a truck.
+What's a truck?
+
+11
+00:00:50,000 --> 00:00:53,000
+Café — naïve façade — résumé. UTF-8 round-trip.
+
+12
+00:00:55,000 --> 00:00:58,000
+Google tells me this is how you say Hello World in Japanese:
+こんにちは世界
+
+13
+00:01:00,000 --> 00:01:03,000
+<v John Bigboote>Big-boo-tay! Tay! Tay!</v>
+
+14
+00:01:05,000 --> 00:01:08,000
+Numbers: 0123456789. Punctuation: .,;:!?"'()[]{}+-*/=<>@#$%^&
+
+15
+00:01:10,000 --> 00:01:13,000
+A longer single line that exercises the encoder's char-pair scheduler more thoroughly than a short cue.
+
+16
+00:01:15.500 --> 00:01:18.500
+This cue uses a period for the millisecond separator (WebVTT style).
+
+17
+00:01:20,000 --> 00:01:23,000
+Three-line cue body:
+middle line, neither short nor long
+bottom line wraps the block
+
+18
+00:01:25,000 --> 00:01:28,000
+  Leading and trailing spaces in this cue.
+
+19
+00:01:30,000 --> 00:01:33,000
+<font color="#FF00FF">Remember: No matter where you go, there you are.</font>
+
+20
+00:01:35,000 --> 00:01:38,000
+{\an2}Bottom-center anchor (the SubRip default for captioning).
+
+21
+00:01:40,000 --> 00:01:43,000
+{\an9}Top-right anchor with X1:200 Y1:30 marker context.
+
+22
+00:01:45,000 --> 00:01:48,000
+Plain cue, no anchor, no markup, no special characters.
+
+23
+00:01:50,000 --> 00:02:10,000
+End of test file, this is the last subtitle.
+History is-a made at night. Character is what you are in the dark.
+
+

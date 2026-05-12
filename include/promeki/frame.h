@@ -15,6 +15,7 @@
 #include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
+#include <promeki/ancpayload.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
@@ -140,6 +141,22 @@ class Frame {
                  * @sa videoPayloads
                  */
                 AudioPayload::PtrList audioPayloads() const;
+
+                /**
+                 * @brief Returns the AncillaryData-kind entries from
+                 *        @ref payloadList as typed @ref AncPayload pointers.
+                 *
+                 * Mirrors @ref videoPayloads / @ref audioPayloads:
+                 * walks the payload list, filters by @c kind() ==
+                 * @c MediaPayloadKind::AncillaryData, and downcasts
+                 * each match to an @ref AncPayload::Ptr.  Null
+                 * payload entries are skipped.
+                 *
+                 * @return A fresh @ref AncPayload::PtrList of every
+                 *         ANC payload on this frame, in payload-list
+                 *         order.
+                 */
+                AncPayload::PtrList ancPayloads() const;
 
                 /**
                  * @brief Returns a const reference to the frame metadata.

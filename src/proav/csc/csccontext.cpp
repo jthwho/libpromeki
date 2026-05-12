@@ -23,7 +23,7 @@ CSCContext::CSCContext(size_t maxWidth) : _maxWidth(maxWidth) {
         return;
 }
 
-float *CSCContext::buffer(int index) const {
+float *CSCContext::buffer(int index) {
         if (index < 0 || index >= BufferCount || !_buffers[index].isValid()) return nullptr;
         return static_cast<float *>(_buffers[index].data());
 }

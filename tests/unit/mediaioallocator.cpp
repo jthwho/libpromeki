@@ -93,7 +93,7 @@ TEST_CASE("MediaIOAllocator: per-plane override flows through default allocateVi
         CHECK(payload->data().count() >= 1);
         const auto &slice = payload->data()[0];
         REQUIRE(slice.buffer().isValid());
-        CHECK(static_cast<unsigned char *>(slice.buffer().data())[0] == 0xAA);
+        CHECK(static_cast<const unsigned char *>(slice.buffer().data())[0] == 0xAA);
 }
 
 // ============================================================================

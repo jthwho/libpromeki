@@ -17,6 +17,7 @@
 #include <promeki/imagedatadecoder.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
+#include <promeki/anctranslator.h>
 #include <promeki/array.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/buffer.h>
@@ -665,8 +666,11 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 void  runTimestampCheck(const Frame &frame, InspectorEvent &event);
                 void  runAudioSamplesCheck(const Frame &frame, InspectorEvent &event);
                 void  runCaptureStats(const Frame &frame, const InspectorEvent &event);
+                void  runAncDataCheck(const Frame &frame, InspectorEvent &event);
                 Error openCaptureStatsFile(const String &configured);
                 void  closeCaptureStatsFile();
+                Error openAncDataFile(const String &configured);
+                void  closeAncDataFile();
                 void  emitPeriodicLogIfDue();
                 void  resetState();
 
@@ -679,6 +683,7 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 bool    _checkTimestamp = false;
                 bool    _checkAudioSamples = false;
                 bool    _checkCaptureStats = false;
+                bool    _checkAncData = false;
                 bool    _dropFrames = true;
                 int     _imageDataRepeatLines = 16;
                 int     _ltcChannel = 0;
@@ -918,6 +923,29 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 FILE  *_statsFile = nullptr;
                 String _statsFilePath;
                 bool   _statsWriteError = false;
+
+                // ---- AncData test output ----
+                //
+                // JSON Lines (one self-contained JSON object per frame)
+                // covering every ANC packet on each incoming Frame.  Same
+                // lifecycle and error-latching semantics as the
+                // @c CaptureStats file.  Each row records the frame
+                // index, per-packet format / transport / line / parsed
+                // payload (via @ref AncTranslator) when a parser is
+                // registered, plus an opaque hex dump fallback when not.
+                FILE  *_ancDataFile = nullptr;
+                String _ancDataFilePath;
+                bool   _ancDataWriteError = false;
+                /// Persistent frame counter for the AncData output —
+                /// independent of the inspector's other per-frame
+                /// counters so dropped / skipped frames do not affect
+                /// the indexing in the JSONL file.
+                FrameCount _ancDataFrameIndex{0};
+                /// Translator used by @ref runAncDataCheck to decode
+                /// ANC packets into their typed Variant form for JSON
+                /// dump.  Default-config; per-packet behaviour is the
+                /// universal defaults.
+                AncTranslator _ancTranslator;
 };
 
 /**

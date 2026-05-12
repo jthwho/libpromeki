@@ -72,8 +72,12 @@ class CSCContext {
                  * @brief Returns a pointer to the specified float buffer.
                  * @param index Buffer index (0 to BufferCount-1).
                  * @return Aligned float pointer, or nullptr if invalid.
+                 *
+                 * Non-const: every caller pipes results into the scratch
+                 * buffer, so a "const context giving a mutable view"
+                 * pretence is misleading.
                  */
-                float *buffer(int index) const;
+                float *buffer(int index);
 
         private:
                 size_t      _maxWidth = 0;

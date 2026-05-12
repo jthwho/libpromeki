@@ -395,7 +395,12 @@ namespace {
                         if (base == nullptr) return nullptr;
                         return static_cast<uint8_t *>(base) + dimpl->shift() + e.offset();
                 }
-                return e.data();
+                // cudaMemcpy takes void* for both src and dst; the caller
+                // (cudaCopy below) supplies the same endpoint resolver
+                // for both directions, so we strip const here and let
+                // the CUDA runtime API enforce direction via its
+                // @c cudaMemcpyKind argument.
+                return const_cast<uint8_t *>(e.data());
         }
 
         // Allocator that hands out CudaDevice-resident planes for NVDEC's

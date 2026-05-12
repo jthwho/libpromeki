@@ -37,6 +37,9 @@
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/uniqueptr.h>
+#include <promeki/ancformat.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/subtitle.h>
 #include <promeki/audiochannelmap.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
@@ -199,6 +202,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeVideoCodec, VideoCodec)                                                                                  \
         X(TypeAudioCodec, AudioCodec)                                                                                  \
         X(TypeAudioFormat, AudioFormat)                                                                                \
+        X(TypeAncFormat, AncFormat)                                                                                    \
         X(TypeAudioStreamDesc, AudioStreamDesc)                                                                        \
         X(TypeAudioChannelMap, AudioChannelMap)                                                                        \
         X(TypeAudioMarkerList, AudioMarkerList)                                                                        \
@@ -211,6 +215,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeVariantList, VariantList)                                                                                \
         X(TypeVariantMap, VariantMap)                                                                                  \
         X(TypeXmlDocument, XmlDocument)                                                                                \
+        X(TypeCea708Cdp, Cea708Cdp)                                                                                    \
+        X(TypeSubtitle, Subtitle)                                                                                      \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
@@ -222,6 +228,7 @@ namespace detail {
 
         /** @brief True for TypeRegistry wrapper types that have an integer ID. */
         template <typename T> struct is_type_registry : std::false_type {};
+        template <> struct is_type_registry<AncFormat> : std::true_type {};
         template <> struct is_type_registry<AudioCodec> : std::true_type {};
         template <> struct is_type_registry<AudioFormat> : std::true_type {};
         template <> struct is_type_registry<ColorModel> : std::true_type {};
