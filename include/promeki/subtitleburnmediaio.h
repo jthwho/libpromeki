@@ -8,7 +8,7 @@
 #pragma once
 
 #include <promeki/anctranslator.h>
-#include <promeki/cea608decoder.h>
+#include <promeki/captiondecoder.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/list.h>
@@ -43,14 +43,23 @@ PROMEKI_NAMESPACE_BEGIN
  *    frame.  Producers like @ref TpgMediaIO stamp this every frame
  *    a cue is active.
  *  - @ref SubtitleSource::Cea608Anc — CEA-608 in @c AncPayloads.
- *    Each frame's CEA-708 CDP packets are walked, @c cc_data triples
- *    fed into a stateful @ref Cea608Decoder, and the resulting
- *    @c displayedText painted as a single unstyled span.
+ *    Each frame's CEA-708 CDP packets are walked and the
+ *    @c cc_data triples fed into a stateful @ref CaptionDecoder for
+ *    @ref CaptionCodec::Cea608.  The decoder's @c displayedCue is
+ *    painted with its style + anchor recovered from PAC + mid-row
+ *    codes.
+ *  - @ref SubtitleSource::Cea708Anc — CEA-708 DTVCC in
+ *    @c AncPayloads.  Each frame's CDP packets are walked and the
+ *    @c cc_data triples fed into a stateful @ref CaptionDecoder for
+ *    @ref CaptionCodec::Cea708 targeting the primary service (1).
+ *    Coexists with @c Cea608Anc — both decoders ride in the same
+ *    @ref CaptionDecoder::PtrList and the first one to surface a
+ *    non-empty cue wins (per the ordered preference rule).
  *
  * The default value is @c [Metadata] — frame-stamped cues only.
  * To prefer in-band ANC captions and fall back to frame metadata:
  * @code
- * VideoSubtitleBurnSources=Cea608Anc,Metadata
+ * VideoSubtitleBurnSources=Cea708Anc,Cea608Anc,Metadata
  * @endcode
  *
  * @par Mode support
@@ -125,7 +134,14 @@ class SubtitleBurnMediaIO : public SharedThreadMediaIO {
                 /// @brief Tries one specific cue source.  Returns an
                 ///        invalid (empty) Subtitle when nothing fires.
                 Subtitle tryMetadataSource(const Frame &input);
-                Subtitle tryCea608AncSource(const Frame &input);
+
+                /// @brief Pushes the frame's CDP @c cc_data into the
+                ///        @ref _ancDecoders entry whose @ref
+                ///        CaptionDecoder::codec matches @p codec, and
+                ///        returns that decoder's @c displayedCue.
+                ///        Returns an empty @ref Subtitle when no
+                ///        decoder for @p codec is configured.
+                Subtitle tryAncSource(const Frame &input, CaptionCodec codec);
 
                 SubtitleRenderer _renderer;
                 bool             _enabled = false;
@@ -139,11 +155,15 @@ class SubtitleBurnMediaIO : public SharedThreadMediaIO {
                 bool        _capacityWarned = false;
                 bool        _notPaintableWarned = false;
 
-                // Lazily-constructed ANC helpers (only used when
-                // @c VideoSubtitleBurnDecodeAnc is set).  Translator is
-                // a plain value; the decoder is stateful and pimpl'd.
-                AncTranslator                  _ancTranslator;
-                UniquePtr<Cea608Decoder>       _ancDecoder;
+                // Lazily-constructed ANC helpers (only used when the
+                // corresponding @c SubtitleSource is listed in
+                // @c VideoSubtitleBurnSources).  Translator is a plain
+                // value shared across both decoders; each decoder is
+                // stateful and pimpl'd.  One @ref CaptionDecoder per
+                // codec rides in @c _ancDecoders, looked up by
+                // @ref CaptionDecoder::codec.
+                AncTranslator           _ancTranslator;
+                CaptionDecoder::PtrList _ancDecoders;
 };
 
 /**

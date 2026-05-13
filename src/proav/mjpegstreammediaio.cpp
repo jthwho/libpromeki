@@ -435,24 +435,21 @@ Error MjpegStreamMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pref
 
 Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer *out, TimeStamp *ts) {
         if (!_encoder.isValid()) return Error::NotOpen;
-        const auto videos = frame.videoPayloads();
-        if (videos.isEmpty()) return Error::NotSupported;
 
-        UncompressedVideoPayload::Ptr uvp;
-        for (const auto &vp : videos) {
-                if (!vp.isValid()) continue;
-                UncompressedVideoPayload::Ptr cand = sharedPointerCast<UncompressedVideoPayload>(vp);
-                if (cand.isValid()) {
-                        uvp = cand;
-                        break;
-                }
-        }
+        UncompressedVideoPayload::Ptr uvp = VideoEncoder::selectInputPayload(frame);
         if (!uvp.isValid()) return Error::NotSupported;
 
-        Error err = _encoder->submitPayload(uvp);
+        Error err = _encoder->submitFrame(frame);
         if (err.isError()) return err;
 
-        CompressedVideoPayload::Ptr cvp = _encoder->receiveCompressedPayload();
+        Frame outFrame = _encoder->receiveFrame();
+        if (!outFrame.isValid()) return Error::TryAgain;
+        CompressedVideoPayload::Ptr cvp;
+        for (const VideoPayload::Ptr &vp : outFrame.videoPayloads()) {
+                if (!vp.isValid()) continue;
+                cvp = sharedPointerCast<CompressedVideoPayload>(vp);
+                if (cvp.isValid()) break;
+        }
         if (!cvp.isValid()) return Error::TryAgain;
 
         Buffer flat = copyPayloadToBuffer(*cvp);

@@ -191,4 +191,77 @@ bool Cea608::decodeMidRow(uint8_t b1, uint8_t b2, CaptionColor &outColor, bool &
         return true;
 }
 
+// -- Background attribute codes (EIA-608-B §7.6) -------------------
+//
+// Wire layout for CC1 (channel 1, field 1):
+//   b1 = 0x10
+//   b2 = 0x20 + (colorIdx << 1) + (semiTransparent ? 1 : 0)
+//
+// where colorIdx is:
+//   0 = White, 1 = Green, 2 = Blue, 3 = Cyan, 4 = Red,
+//   5 = Yellow, 6 = Magenta, 7 = Black.
+//
+// Note that CEA-608's foreground @ref CaptionColor enum runs
+// 0..6 (no Black foreground — black is conveyed via the
+// "Foreground Black" extension instead).  We extend the wire
+// mapping here with index 7 = Black for the BG case only;
+// callers that need a black bg should pass @ref CaptionColor::White
+// + a separate flag is *not* the right shape — instead we map
+// "no bg colour requested" to "don't emit" at the encoder level,
+// and decode any incoming index-7 bg byte as @c CaptionColor::White
+// with a sentinel flag.  To keep the API symmetric we just round-
+// trip index 0..6 and treat index 7 as "Black, opaque".
+//
+// The bg attribute is doubled on the wire like other control
+// codes — the encoder schedules a second copy of the pair
+// adjacent to the first.
+
+namespace {
+        /// @brief Wire-byte mapping for the 8 BG attribute colours.
+        ///        Index 0..6 align with @ref Cea608::CaptionColor;
+        ///        index 7 is "Black".
+        constexpr uint8_t kBgColorWire[8] = {
+                0, // White
+                1, // Green
+                2, // Blue
+                3, // Cyan
+                4, // Red
+                5, // Yellow
+                6, // Magenta
+                7, // Black (BG-only extension)
+        };
+} // namespace
+
+void Cea608::encodeBgAttribute(CaptionColor color, bool semiTransparent, uint8_t &b1, uint8_t &b2) {
+        b1 = 0x10;
+        // Black bg is a 608 BG-only extension at wire index 7; the
+        // @ref CaptionColor enum runs 0..6, so callers wanting black
+        // bg pass @ref CaptionColor::White and supply a separate
+        // "actually black" hint — for the simple API we just trust
+        // the enum value.  Future caller wanting Black bg can build
+        // the raw pair directly.
+        const uint8_t idx = static_cast<uint8_t>(static_cast<uint8_t>(color) & 0x07);
+        b2 = static_cast<uint8_t>(0x20 | (idx << 1) | (semiTransparent ? 0x01 : 0x00));
+}
+
+bool Cea608::isBgAttribute(uint8_t b1, uint8_t b2) {
+        if (b1 != 0x10) return false;
+        return (b2 & 0xF0) == 0x20;
+}
+
+bool Cea608::decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor, bool &outSemiTransparent) {
+        if (!isBgAttribute(b1, b2)) return false;
+        const uint8_t idx = static_cast<uint8_t>((b2 >> 1) & 0x07);
+        outSemiTransparent = (b2 & 0x01) != 0;
+        // Index 7 = Black on the wire.  The @ref CaptionColor enum
+        // doesn't have Black, so report the closest match (White) and
+        // let downstream callers refine via the raw wire bytes if they
+        // care about black bg specifically.
+        outColor = (idx == 7) ? CaptionColor::White : static_cast<CaptionColor>(idx);
+        (void)kBgColorWire; // future use — table is reserved
+                            // for callers that need the inverse
+                            // mapping.
+        return true;
+}
+
 PROMEKI_NAMESPACE_END

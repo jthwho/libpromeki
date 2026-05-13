@@ -16,7 +16,6 @@
  */
 
 #include <doctest/doctest.h>
-#include <deque>
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
 #include <promeki/videocodec.h>
@@ -27,10 +26,18 @@
 #include <promeki/size2d.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/frame.h>
+#include <promeki/deque.h>
+#include <promeki/pair.h>
+#include "codectesthelpers.h"
 
 using namespace promeki;
 
 namespace {
+
+        using ::promeki::tests::frameWith;
+        using ::promeki::tests::firstCompressedVideo;
+        using ::promeki::tests::firstUncompressedVideo;
 
         // Slot for the Passthrough codec's typed VideoCodec::ID — populated at
         // static-init time by PassthroughRegistrar and read by every test that
@@ -39,15 +46,16 @@ namespace {
 
         class PassthroughVideoEncoder : public VideoEncoder {
                 public:
-                        void configure(const MediaConfig &config) override {
+                        void onConfigure(const MediaConfig &config) override {
                                 _cfgBitrate = config.getAs<int32_t>(MediaConfig::BitrateKbps);
                                 _cfgGop = config.getAs<int32_t>(MediaConfig::GopLength);
                         }
 
-                        Error submitPayload(const UncompressedVideoPayload::Ptr &payload) override {
+                        Error submitFrame(const Frame &frame) override {
                                 clearError();
+                                UncompressedVideoPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
-                                        setError(Error::Invalid, "invalid payload");
+                                        setError(Error::Invalid, "no uncompressed video payload on frame");
                                         return _lastError;
                                 }
                                 // Build a CompressedVideoPayload that shares
@@ -66,25 +74,25 @@ namespace {
                                         cvp.modify()->addFlag(MediaPayload::Keyframe);
                                         _forceKey = false;
                                 }
-                                _queue.push_back(cvp);
+                                _queue.pushToBack(buildOutputFrame(frame, std::move(cvp)));
                                 ++_frameIdx;
                                 return Error::Ok;
                         }
 
-                        CompressedVideoPayload::Ptr receiveCompressedPayload() override {
-                                if (_queue.empty()) {
+                        Frame receiveFrame() override {
+                                if (_queue.isEmpty()) {
                                         if (_flushed && !_eosEmitted) {
                                                 _eosEmitted = true;
                                                 ImageDesc desc(Size2Du32(0, 0), PixelFormat(PixelFormat::H264));
                                                 auto      eos = CompressedVideoPayload::Ptr::create(desc);
                                                 eos.modify()->markEndOfStream();
-                                                return eos;
+                                                Frame f;
+                                                f.addPayload(eos);
+                                                return f;
                                         }
-                                        return CompressedVideoPayload::Ptr();
+                                        return Frame();
                                 }
-                                auto pkt = _queue.front();
-                                _queue.pop_front();
-                                return pkt;
+                                return _queue.popFromFront();
                         }
 
                         Error flush() override {
@@ -107,13 +115,13 @@ namespace {
                         int32_t configuredGop() const { return _cfgGop; }
 
                 private:
-                        std::deque<CompressedVideoPayload::Ptr> _queue;
-                        int32_t                                 _cfgBitrate = 0;
-                        int32_t                                 _cfgGop = 0;
-                        uint64_t                                _frameIdx = 0;
-                        bool                                    _forceKey = false;
-                        bool                                    _flushed = false;
-                        bool                                    _eosEmitted = false;
+                        Deque<Frame> _queue;
+                        int32_t      _cfgBitrate = 0;
+                        int32_t      _cfgGop = 0;
+                        uint64_t     _frameIdx = 0;
+                        bool         _forceKey = false;
+                        bool         _flushed = false;
+                        bool         _eosEmitted = false;
         };
 
         class PassthroughVideoDecoder : public VideoDecoder {
@@ -123,34 +131,35 @@ namespace {
                         // whole MediaIO config to configure(), so the generic
                         // backend tests can drive this decoder without having
                         // to reach in and call setOutput() themselves.
-                        void configure(const MediaConfig &cfg) override {
+                        void onConfigure(const MediaConfig &cfg) override {
                                 Size2Du32 sz = cfg.getAs<Size2Du32>(MediaConfig::VideoSize);
                                 if (sz.isValid()) _outSize = sz;
                                 PixelFormat pd = cfg.getAs<PixelFormat>(MediaConfig::OutputPixelFormat);
                                 if (pd.isValid()) _outDesc = pd;
                         }
 
-                        Error submitPayload(const CompressedVideoPayload::Ptr &payload) override {
+                        Error submitFrame(const Frame &frame) override {
                                 clearError();
+                                CompressedVideoPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid()) {
-                                        setError(Error::Invalid, "invalid payload");
+                                        setError(Error::Invalid, "no compressed video payload on frame");
                                         return _lastError;
                                 }
-                                _pending.push_back(payload);
+                                _pending.pushToBack(PendingEntry(frame, std::move(payload)));
                                 return Error::Ok;
                         }
 
-                        UncompressedVideoPayload::Ptr receiveVideoPayload() override {
-                                if (_pending.empty()) return UncompressedVideoPayload::Ptr();
-                                CompressedVideoPayload::Ptr in = std::move(_pending.front());
-                                _pending.pop_front();
-                                if (in->planeCount() == 0) return UncompressedVideoPayload::Ptr();
+                        Frame receiveFrame() override {
+                                if (_pending.isEmpty()) return Frame();
+                                PendingEntry                entry = _pending.popFromFront();
+                                CompressedVideoPayload::Ptr in = std::move(entry.second());
+                                if (in->planeCount() == 0) return Frame();
                                 ImageDesc outDesc(_outSize, _outDesc);
                                 auto      out = UncompressedVideoPayload::Ptr::create(outDesc);
-                                auto      entry = in->plane(0);
-                                out.modify()->data().pushToBack(entry.buffer(), entry.offset(), entry.size());
+                                auto      planeEntry = in->plane(0);
+                                out.modify()->data().pushToBack(planeEntry.buffer(), planeEntry.offset(), planeEntry.size());
                                 out.modify()->setPts(in->pts());
-                                return out;
+                                return buildOutputFrame(entry.first(), std::move(out));
                         }
 
                         Error flush() override { return Error::Ok; }
@@ -166,9 +175,10 @@ namespace {
                         }
 
                 private:
-                        std::deque<CompressedVideoPayload::Ptr> _pending;
-                        Size2Du32                               _outSize;
-                        PixelFormat                             _outDesc;
+                        using PendingEntry = Pair<Frame, CompressedVideoPayload::Ptr>;
+                        Deque<PendingEntry> _pending;
+                        Size2Du32           _outSize;
+                        PixelFormat         _outDesc;
         };
 
         // Registers the passthrough codec exactly once per process so the
@@ -294,19 +304,19 @@ TEST_CASE("VideoEncoder: first frame is keyframe; requestKeyframe forces next") 
         auto f1 = makeTestPayload(4, 4, 0xBB);
         auto f2 = makeTestPayload(4, 4, 0xCC);
 
-        CHECK(enc->submitPayload(f0) == Error::Ok);
-        auto p0 = enc->receiveCompressedPayload();
+        CHECK(enc->submitFrame(frameWith(f0)) == Error::Ok);
+        auto p0 = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(p0);
         CHECK(p0->isKeyframe());
 
-        CHECK(enc->submitPayload(f1) == Error::Ok);
-        auto p1 = enc->receiveCompressedPayload();
+        CHECK(enc->submitFrame(frameWith(f1)) == Error::Ok);
+        auto p1 = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(p1);
         CHECK_FALSE(p1->isKeyframe());
 
         enc->requestKeyframe();
-        CHECK(enc->submitPayload(f2) == Error::Ok);
-        auto p2 = enc->receiveCompressedPayload();
+        CHECK(enc->submitFrame(frameWith(f2)) == Error::Ok);
+        auto p2 = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(p2);
         CHECK(p2->isKeyframe());
 
@@ -318,24 +328,24 @@ TEST_CASE("VideoEncoder: flush emits EndOfStream packet") {
         REQUIRE(enc != nullptr);
 
         auto f = makeTestPayload(2, 2, 0x42);
-        REQUIRE(enc->submitPayload(f) == Error::Ok);
-        CHECK(enc->receiveCompressedPayload());
+        REQUIRE(enc->submitFrame(frameWith(f)) == Error::Ok);
+        CHECK(firstCompressedVideo(enc->receiveFrame()));
 
         CHECK(enc->flush() == Error::Ok);
-        auto eos = enc->receiveCompressedPayload();
+        auto eos = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(eos);
         CHECK(eos->isEndOfStream());
 
-        CHECK_FALSE(enc->receiveCompressedPayload());
+        CHECK_FALSE(enc->receiveFrame().isValid());
         delete enc;
 }
 
-TEST_CASE("VideoEncoder: submitPayload rejects invalid input") {
+TEST_CASE("VideoEncoder: submitFrame rejects invalid input") {
         auto *enc = makePassthroughEncoder();
         REQUIRE(enc != nullptr);
 
-        UncompressedVideoPayload::Ptr empty;
-        Error                         err = enc->submitPayload(empty);
+        Frame empty;
+        Error err = enc->submitFrame(empty);
         CHECK(err == Error::Invalid);
         CHECK(enc->lastError() == Error::Invalid);
         CHECK_FALSE(enc->lastErrorMessage().isEmpty());
@@ -353,12 +363,12 @@ TEST_CASE("Video codec: encoder -> packet -> decoder round-trip") {
 
         auto src = makeTestPayload(w, h, 0x37);
 
-        CHECK(enc->submitPayload(src) == Error::Ok);
-        auto pkt = enc->receiveCompressedPayload();
+        CHECK(enc->submitFrame(frameWith(src)) == Error::Ok);
+        auto pkt = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(pkt);
 
-        CHECK(dec->submitPayload(pkt) == Error::Ok);
-        UncompressedVideoPayload::Ptr out = dec->receiveVideoPayload();
+        CHECK(dec->submitFrame(frameWith(pkt)) == Error::Ok);
+        UncompressedVideoPayload::Ptr out = firstUncompressedVideo(dec->receiveFrame());
         REQUIRE(out.isValid());
 
         auto srcPlane = src->plane(0);
@@ -566,10 +576,10 @@ TEST_CASE("VideoCodec::createDecoder: CodecBackend override naming an unattached
 // VideoDecoder rejects invalid input + reset
 // ---------------------------------------------------------------------------
 
-TEST_CASE("VideoDecoder: submitPayload rejects null Ptr") {
+TEST_CASE("VideoDecoder: submitFrame rejects empty frame") {
         auto *dec = makePassthroughDecoder();
         REQUIRE(dec != nullptr);
-        Error err = dec->submitPayload(CompressedVideoPayload::Ptr());
+        Error err = dec->submitFrame(Frame());
         CHECK(err == Error::Invalid);
         CHECK_FALSE(dec->lastErrorMessage().isEmpty());
         delete dec;
@@ -579,15 +589,15 @@ TEST_CASE("VideoEncoder: reset clears pending packets and restores flush state")
         auto *enc = makePassthroughEncoder();
         REQUIRE(enc != nullptr);
         auto f = makeTestPayload(2, 2, 0x55);
-        REQUIRE(enc->submitPayload(f) == Error::Ok);
+        REQUIRE(enc->submitFrame(frameWith(f)) == Error::Ok);
         REQUIRE(enc->reset() == Error::Ok);
         // After reset there should be nothing queued.
-        CHECK_FALSE(enc->receiveCompressedPayload());
+        CHECK_FALSE(enc->receiveFrame().isValid());
 
         // Reset's behaviour also implies the next submit's first frame
         // is once again marked Keyframe (frameIdx == 0).
-        REQUIRE(enc->submitPayload(f) == Error::Ok);
-        auto p = enc->receiveCompressedPayload();
+        REQUIRE(enc->submitFrame(frameWith(f)) == Error::Ok);
+        auto p = firstCompressedVideo(enc->receiveFrame());
         REQUIRE(p);
         CHECK(p->isKeyframe());
         delete enc;
@@ -603,9 +613,9 @@ TEST_CASE("VideoDecoder: reset clears pending packets") {
         auto      fPlane = f->plane(0);
         auto      pkt =
                 CompressedVideoPayload::Ptr::create(cdesc, BufferView(fPlane.buffer(), fPlane.offset(), fPlane.size()));
-        REQUIRE(dec->submitPayload(pkt) == Error::Ok);
+        REQUIRE(dec->submitFrame(frameWith(pkt)) == Error::Ok);
         REQUIRE(dec->reset() == Error::Ok);
-        CHECK_FALSE(dec->receiveVideoPayload().isValid());
+        CHECK_FALSE(dec->receiveFrame().isValid());
         delete dec;
 }
 

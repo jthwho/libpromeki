@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #include <promeki/videodecoder.h>
 #include <promeki/mediaioallocator.h>
+#include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
 #if PROMEKI_ENABLE_NVDEC
@@ -125,11 +126,11 @@ class NvdecVideoDecoder : public VideoDecoder {
                  */
                 static MediaIOAllocator::Ptr makeDeviceResidentAllocator();
 
-                void                          configure(const MediaConfig &config) override;
-                Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;
-                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
-                Error                         flush() override;
-                Error                         reset() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
 
         private:
                 class Impl;

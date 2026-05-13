@@ -669,6 +669,33 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(0))
                                            .setDescription("VANC line number stamped on TPG CEA-708 ANC packets."));
 
+                /// @brief Enum @ref CaptionCodec — selects which caption
+                /// codec(s) the TPG drives into the per-frame @c CcDataList.
+                /// Default @c Cea608 (line-21 byte pairs).  @c Cea708 drives
+                /// @ref Cea708Encoder for DTVCC pop-on transactions.
+                /// @c Both runs the 608 and 708 encoders side-by-side so the
+                /// emitted CDP carries both wire forms (mirrors real SDI
+                /// broadcast practice).  Ignored when @ref TpgAncCaptionsScc
+                /// is set (SCC bypass is 608-only).
+                PROMEKI_DECLARE_ID(TpgAncCaptionsCodec,
+                                   VariantSpec()
+                                           .setType(Variant::TypeEnum)
+                                           .setDefault(promeki::CaptionCodec::Cea608)
+                                           .setEnumType(promeki::CaptionCodec::Type)
+                                           .setDescription("CEA caption codec(s) the TPG emits into the CDP cc_data."));
+
+                /// @brief int — DTVCC service number (1..63) the TPG's
+                /// @ref Cea708Encoder targets when @ref TpgAncCaptionsCodec
+                /// is @c Cea708 or @c Both.  Default 1 (the primary English
+                /// caption service).
+                PROMEKI_DECLARE_ID(TpgAncCaptions708Service,
+                                   VariantSpec()
+                                           .setType(Variant::TypeS32)
+                                           .setDefault(int32_t(1))
+                                           .setMin(int32_t(1))
+                                           .setMax(int32_t(63))
+                                           .setDescription("DTVCC service number for TPG CEA-708 caption emission."));
+
                 /// @brief String — path to a Scenarist SCC (`.scc`) file
                 /// whose byte-pair rows drive the TPG's per-frame caption
                 /// payload directly, bypassing the @ref Cea608Encoder.
@@ -1489,6 +1516,41 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                  .setType(Variant::TypeContentLightLevel)
                                                                  .setDescription("Stream-level content light level "
                                                                                  "(MaxCLL / MaxFALL)."));
+
+                /// @brief bool — emit closed-caption SEI (ATSC A/53
+                /// @c user_data_registered_itu_t_t35) on every encoded
+                /// H.264 / HEVC picture that the source @ref Frame
+                /// carries CEA-708 ANC for.
+                ///
+                /// When enabled, the encoder walks the source Frame's
+                /// @ref AncPayload list via
+                /// @ref VideoEncoder::selectAncForSei, translates each
+                /// CEA-708 packet through @ref AncTranslator to the
+                /// @c HlsSei wire transport, and injects the resulting
+                /// SEI payload bytes alongside any HDR / timecode SEI
+                /// the encoder is already producing.  This is the
+                /// practical caption delivery path for YouTube Live,
+                /// Twitch, and any modern CDN that ingests H.264 over
+                /// RTMP / HLS / SRT / DASH.
+                ///
+                /// Default @c true — the feature is silent passthrough
+                /// when no matching ANC is on the source Frame, so
+                /// pipelines that never carry captions pay nothing.
+                /// Set to @c false to suppress caption SEI even when
+                /// the source has CEA-708 ANC available (rarely useful
+                /// — typical reason is feeding a downstream that
+                /// already injects its own caption track).
+                ///
+                /// AV1 has no direct SEI mechanism (captions ride as
+                /// metadata OBUs instead) so this key is currently
+                /// honoured only by H.264 and HEVC encodes; AV1
+                /// requests warn-once and emit no caption metadata.
+                PROMEKI_DECLARE_ID(VideoSeiCaptionsEnabled,
+                                   VariantSpec()
+                                           .setType(Variant::TypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Emit ATSC A/53 closed-caption SEI carrying CEA-708 "
+                                                           "from the source Frame's ANC payloads."));
 
                 /// @brief @ref VideoCodec — typed codec identity used by
                 /// the generic video encoder / decoder @ref MediaIO subclasses

@@ -18,13 +18,30 @@
 #include <promeki/map.h>
 #include <promeki/set.h>
 #include <promeki/readwritelock.h>
+#include <promeki/frame.h>
+#include <promeki/ancpayload.h>
+#include <promeki/ancdesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 VideoDecoder::~VideoDecoder() = default;
 
 void VideoDecoder::configure(const MediaConfig &config) {
+        if (!_stashedConfig.isValid()) {
+                _stashedConfig = UniquePtr<MediaConfig>::create(config);
+        } else {
+                *_stashedConfig = config;
+        }
+        onConfigure(config);
+}
+
+void VideoDecoder::onConfigure(const MediaConfig &config) {
         (void)config;
+}
+
+const MediaConfig &VideoDecoder::config() const {
+        static const MediaConfig empty;
+        return _stashedConfig.isValid() ? *_stashedConfig : empty;
 }
 
 void VideoDecoder::setError(Error err, const String &msg) {
@@ -35,6 +52,60 @@ void VideoDecoder::setError(Error err, const String &msg) {
 void VideoDecoder::clearError() {
         _lastError = Error::Ok;
         _lastErrorMessage = String();
+}
+
+// ---------------------------------------------------------------------------
+// Frame-shaped helpers — shared algorithms for concrete backends.
+// ---------------------------------------------------------------------------
+
+CompressedVideoPayload::Ptr VideoDecoder::selectInputPayload(const Frame &frame, int streamIndex) {
+        if (!frame.isValid()) return CompressedVideoPayload::Ptr();
+        for (const VideoPayload::Ptr &vp : frame.videoPayloads()) {
+                if (!vp.isValid()) continue;
+                if (streamIndex >= 0 && vp->streamIndex() != streamIndex) continue;
+                CompressedVideoPayload::Ptr cvp = sharedPointerCast<CompressedVideoPayload>(vp);
+                if (cvp.isNull()) continue;
+                return cvp;
+        }
+        return CompressedVideoPayload::Ptr();
+}
+
+void VideoDecoder::attachExtractedAnc(Frame &frame, AncPacket pkt, int pairedVideoStreamIndex) {
+        if (!pkt.isValid()) return;
+        // Walk the frame's payload list directly — frame.ancPayloads()
+        // returns a transient PtrList whose entries' .modify() would
+        // detach the wrong copy.  Iterating payloadList() by reference
+        // gives us the stored Ptr to mutate in place.
+        MediaPayload::PtrList &payloads = frame.payloadList();
+        for (MediaPayload::Ptr &mp : payloads) {
+                if (!mp.isValid()) continue;
+                const auto *probe = mp->as<const AncPayload>();
+                if (probe == nullptr) continue;
+                if (probe->desc().pairedVideoStreamIndex() != pairedVideoStreamIndex) continue;
+                AncPayload *target = mp.modify()->as<AncPayload>();
+                if (target == nullptr) continue;
+                target->addPacket(std::move(pkt));
+                return;
+        }
+        // No matching payload yet — create one keyed to the paired stream.
+        AncDesc desc;
+        desc.setPairedVideoStreamIndex(pairedVideoStreamIndex);
+        AncPayload::Ptr ap = AncPayload::Ptr::create(desc);
+        ap.modify()->addPacket(std::move(pkt));
+        frame.addPayload(ap);
+}
+
+Frame VideoDecoder::buildOutputFrame(const Frame &source, UncompressedVideoPayload::Ptr emitted) {
+        Frame out;
+        if (source.isValid()) {
+                out.metadata() = source.metadata();
+                out.setCaptureTime(source.captureTime());
+                for (const AudioPayload::Ptr &ap : source.audioPayloads()) {
+                        if (ap.isValid()) out.addPayload(ap);
+                }
+        }
+        if (emitted.isValid()) out.addPayload(emitted);
+        return out;
 }
 
 MediaIOAllocator::Ptr VideoDecoder::allocator() const {

@@ -25,6 +25,12 @@
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
 #include <promeki/timecode.h>
+#include <promeki/deque.h>
+#include <promeki/pair.h>
+#include <promeki/ancformat.h>
+#include <promeki/ancpacket.h>
+#include <promeki/anctranslator.h>
+#include <promeki/anctranslateconfig.h>
 
 #include <deque>
 #include <mutex>
@@ -455,10 +461,25 @@ class NvencVideoEncoder::Impl {
                         _videoRange = static_cast<uint32_t>(readEnum(MediaConfig::VideoRange).value());
                         _cfgScanMode = VideoScanMode(readEnum(MediaConfig::VideoScanMode).value());
                         _enableRCStats = cfg.getAs<bool>(MediaConfig::VideoEncoderStats, false);
+                        _seiCaptionsEnabled = cfg.getAs<bool>(MediaConfig::VideoSeiCaptionsEnabled, true);
+                        if (_seiCaptionsEnabled && _codec == Codec_AV1) {
+                                // One-shot warn: AV1 captions ride as
+                                // metadata OBUs (ITUT_T35) which NVENC does
+                                // not currently expose.  The H.264 / HEVC
+                                // SEI path doesn't apply, so the flag is
+                                // effectively ignored; warn here at
+                                // configure time so callers notice during
+                                // setup rather than wondering why their AV1
+                                // YouTube stream lacks captions.
+                                promekiWarn("NvencVideoEncoder: VideoSeiCaptionsEnabled requested for AV1 "
+                                            "but NVENC does not expose an AV1 caption-OBU path; "
+                                            "no caption metadata will be emitted on the bitstream.");
+                        }
                         _needReconfigure = _sessionOpen;
                 }
 
-                Error submitFrame(const UncompressedVideoPayload &frame, const MediaTimeStamp &pts, bool forceKey) {
+                Error submitFrame(const Frame &source, const UncompressedVideoPayload &frame,
+                                  const MediaTimeStamp &pts, bool forceKey) {
                         if (!frame.isValid() || frame.planeCount() == 0) {
                                 return setError(Error::Invalid, "invalid frame");
                         }
@@ -483,6 +504,7 @@ class NvencVideoEncoder::Impl {
                                 return err;
                         }
                         slot->imageMeta = idesc.metadata();
+                        slot->sourceFrame = source;
 
                         NV_ENC_PIC_PARAMS pic{};
                         pic.version = NV_ENC_PIC_PARAMS_VER;
@@ -588,6 +610,78 @@ class NvencVideoEncoder::Impl {
                                 }
                         }
 
+                        // Per-frame closed-caption SEI injection.  Walks the
+                        // source Frame's ANC payloads, translates each
+                        // CEA-708 packet onto the H.264 / HEVC HlsSei wire
+                        // transport (ATSC A/53
+                        // user_data_registered_itu_t_t35), and stashes the
+                        // resulting payload bytes on the slot for NVENC to
+                        // wrap with the SEI message header + emulation
+                        // prevention.  Display-order pairing is automatic:
+                        // NVENC attaches @c seiPayloadArray to the encoded
+                        // picture for *this* input frame regardless of
+                        // B-frame reordering.
+                        //
+                        // The @c selectAncForSei stream-index argument is 0
+                        // — the NVENC backend is single-stream so any ANC
+                        // payload paired to video stream 0 (TPG's default)
+                        // or unbound (-1) is in scope.  When the source
+                        // Frame has no matching ANC the call returns an
+                        // empty list and the feature is silent.
+                        slot->captionSeiPayloads.clear();
+                        slot->captionSeiArray.clear();
+                        if (_seiCaptionsEnabled && _codec != Codec_AV1) {
+                                static const AncFormat::IDList kCaptionFormats{AncFormat::Cea708};
+                                AncPacket::List ancPackets =
+                                        VideoEncoder::selectAncForSei(source, /*pairedVideoStreamIndex=*/0,
+                                                                       kCaptionFormats);
+                                for (const AncPacket &pkt : ancPackets) {
+                                        Result<AncPacket> r = _ancTranslator.translate(pkt, AncTransport::HlsSei);
+                                        if (error(r).isError()) {
+                                                promekiWarn("NvencVideoEncoder: AncTranslator::translate("
+                                                            "Cea708, %s → HlsSei) failed: %s",
+                                                            pkt.transport().toString().cstr(),
+                                                            error(r).name().cstr());
+                                                continue;
+                                        }
+                                        const AncPacket &out = value(r);
+                                        const Buffer    &b = out.data();
+                                        if (b.size() == 0) continue;
+                                        std::vector<uint8_t> bytes(b.size());
+                                        std::memcpy(bytes.data(), b.data(), b.size());
+                                        slot->captionSeiPayloads.push_back(std::move(bytes));
+                                }
+                                if (!slot->captionSeiPayloads.empty()) {
+                                        slot->captionSeiArray.reserve(slot->captionSeiPayloads.size());
+                                        for (auto &p : slot->captionSeiPayloads) {
+                                                NV_ENC_SEI_PAYLOAD entry{};
+                                                // SEI payloadType 4 =
+                                                // user_data_registered_itu_t_t35
+                                                // (ITU-T H.264 / H.265 Annex D).
+                                                // NVENC writes the SEI message
+                                                // header + emulation-prevention
+                                                // bytes; we supply the
+                                                // application-layer payload
+                                                // bytes only.
+                                                entry.payloadType = 4;
+                                                entry.payloadSize = static_cast<uint32_t>(p.size());
+                                                entry.payload = p.data();
+                                                slot->captionSeiArray.push_back(entry);
+                                        }
+                                        if (_codec == Codec_H264) {
+                                                pic.codecPicParams.h264PicParams.seiPayloadArray =
+                                                        slot->captionSeiArray.data();
+                                                pic.codecPicParams.h264PicParams.seiPayloadArrayCnt =
+                                                        static_cast<uint32_t>(slot->captionSeiArray.size());
+                                        } else {
+                                                pic.codecPicParams.hevcPicParams.seiPayloadArray =
+                                                        slot->captionSeiArray.data();
+                                                pic.codecPicParams.hevcPicParams.seiPayloadArrayCnt =
+                                                        static_cast<uint32_t>(slot->captionSeiArray.size());
+                                        }
+                                }
+                        }
+
                         NVENCSTATUS st = gNvenc.nvEncEncodePicture(_encoder, &pic);
                         if (st != NV_ENC_SUCCESS && st != NV_ENC_ERR_NEED_MORE_INPUT) {
                                 _freeSlots.push_back(slot);
@@ -602,19 +696,21 @@ class NvencVideoEncoder::Impl {
                         return Error::Ok;
                 }
 
-                CompressedVideoPayload::Ptr receivePacket() {
-                        if (!_pendingPackets.empty()) {
-                                auto pkt = _pendingPackets.front();
-                                _pendingPackets.pop_front();
-                                return pkt;
+                Frame receiveFrame() {
+                        if (!_pendingPackets.isEmpty()) {
+                                PendingPacketEntry entry = _pendingPackets.popFromFront();
+                                return VideoEncoder::buildOutputFrame(entry.first(), std::move(entry.second()));
                         }
 
                         if (!_inFlight.empty() && _inFlight.front()->hasOutput) {
                                 Slot *slot = _inFlight.front();
                                 _inFlight.pop_front();
+                                Frame source = std::move(slot->sourceFrame);
+                                slot->sourceFrame = Frame();
                                 auto pkt = lockAndBuildPacket(slot);
                                 _freeSlots.push_back(slot);
-                                return pkt;
+                                if (!pkt.isValid()) return Frame();
+                                return VideoEncoder::buildOutputFrame(source, std::move(pkt));
                         }
 
                         if (_eosPending && _inFlight.empty()) {
@@ -622,10 +718,12 @@ class NvencVideoEncoder::Impl {
                                 ImageDesc cdesc(Size2Du32(0, 0), outputPixelFormat());
                                 auto      pkt = CompressedVideoPayload::Ptr::create(cdesc);
                                 pkt.modify()->markEndOfStream();
-                                return pkt;
+                                Frame out;
+                                out.addPayload(pkt);
+                                return out;
                         }
 
-                        return CompressedVideoPayload::Ptr();
+                        return Frame();
                 }
 
                 Error flush() {
@@ -680,6 +778,11 @@ class NvencVideoEncoder::Impl {
                                 NV_ENC_OUTPUT_PTR out = nullptr;
                                 MediaTimeStamp    pts;
                                 Metadata          imageMeta;
+                                // Source Frame the slot was submitted for —
+                                // carries the audio / ANC / metadata that
+                                // the emitted output Frame echoes through.
+                                // Default-constructed when the slot is free.
+                                Frame             sourceFrame;
                                 uint32_t          pitch = 0;
                                 bool              hasOutput = false;
                                 // Per-frame HDR SEI payload.  Storage lives on
@@ -694,6 +797,25 @@ class NvencVideoEncoder::Impl {
                                 CONTENT_LIGHT_LEVEL    nvCll{};
                                 bool                   hasMd = false;
                                 bool                   hasCll = false;
+
+                                // Per-frame closed-caption SEI payloads.  Each
+                                // entry holds the @c user_data_registered_itu_t_t35
+                                // body bytes produced by
+                                // @c AncTranslator::translate(pkt, AncTransport::HlsSei)
+                                // — i.e. the bytes that go inside the SEI
+                                // payload (NVENC adds the SEI NAL framing,
+                                // payloadType, and emulation prevention).
+                                // Storage lives on the Slot so it outlives
+                                // the @c nvEncEncodePicture call (NVENC may
+                                // defer reading these across NEED_MORE_INPUT
+                                // returns when B-frames or lookahead are
+                                // active).  The parallel
+                                // @c captionSeiArray of NV_ENC_SEI_PAYLOAD
+                                // descriptors is rebuilt on every submit so
+                                // its @c payload pointers always reference
+                                // the current @c captionSeiPayloads vector.
+                                std::vector<std::vector<uint8_t>> captionSeiPayloads;
+                                std::vector<NV_ENC_SEI_PAYLOAD>   captionSeiArray;
                 };
 
                 struct Caps {
@@ -711,6 +833,28 @@ class NvencVideoEncoder::Impl {
                 MediaConfig _cfg;
                 bool        _needReconfigure = false;
                 bool        _timecodeSEI = false;
+                // Caption-SEI feature gate, read from
+                // @ref MediaConfig::VideoSeiCaptionsEnabled in
+                // @c configure.  When true and the codec is H.264 or
+                // HEVC, @c submitFrame walks the source Frame's ANC
+                // payloads via @ref VideoEncoder::selectAncForSei,
+                // translates each CEA-708 packet through
+                // @c _ancTranslator to the @c HlsSei wire transport,
+                // and stashes the resulting payload bytes on the slot
+                // for injection alongside any HDR / timecode SEI on
+                // the matching @c nvEncEncodePicture call.
+                //
+                // AV1 has no NVENC SEI path (captions ride as metadata
+                // OBUs which the SDK does not expose) — the flag is
+                // honoured only by H.264 and HEVC.
+                bool _seiCaptionsEnabled = false;
+                // Free-standing translator session used to convert
+                // source-Frame ANC packets onto the H.264 / HEVC
+                // @c HlsSei carrier.  Default-constructed config is
+                // fine here — the @c Cea708 → @c HlsSei builder is
+                // pure (cc_data triples → ATSC A/53 wrapper) and
+                // doesn't read any tunable config keys.
+                AncTranslator _ancTranslator;
                 // When true, lockBitstream is called with getRCStats=1
                 // so NVENC aggregates intra/inter block counts and
                 // average motion vectors for the emitted frame.  This
@@ -1382,8 +1526,11 @@ class NvencVideoEncoder::Impl {
                                 while (!_inFlight.empty() && _inFlight.front()->hasOutput) {
                                         Slot *head = _inFlight.front();
                                         _inFlight.pop_front();
+                                        Frame source = std::move(head->sourceFrame);
+                                        head->sourceFrame = Frame();
                                         if (auto pkt = lockAndBuildPacket(head)) {
-                                                _pendingPackets.push_back(pkt);
+                                                _pendingPackets.pushToBack(
+                                                        PendingPacketEntry(std::move(source), std::move(pkt)));
                                         }
                                         _freeSlots.push_back(head);
                                 }
@@ -1629,7 +1776,14 @@ class NvencVideoEncoder::Impl {
                         _paramSetsBlob = String();
                 }
 
-                std::deque<CompressedVideoPayload::Ptr> _pendingPackets;
+                // Pending output entries — each pair is (source Frame, emitted
+                // compressed packet) so the matching audio / ANC / metadata can
+                // be echoed onto the output Frame via VideoEncoder::buildOutputFrame
+                // when receiveFrame() pops the entry.  Populated opportunistically
+                // by acquireFreeSlot() when it drains completed slots ahead of
+                // the next submit; consumed by receiveFrame().
+                using PendingPacketEntry = Pair<Frame, CompressedVideoPayload::Ptr>;
+                Deque<PendingPacketEntry> _pendingPackets;
 };
 
 // ---------------------------------------------------------------------------
@@ -1648,26 +1802,27 @@ List<int> NvencVideoEncoder::supportedInputList() {
         return ret;
 }
 
-void NvencVideoEncoder::configure(const MediaConfig &config) {
+void NvencVideoEncoder::onConfigure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvencVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &payload) {
+Error NvencVideoEncoder::submitFrame(const Frame &frame) {
         _impl->clearError();
+        UncompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid()) {
                 _lastError = Error::Invalid;
-                _lastErrorMessage = "NvencVideoEncoder: null payload Ptr";
+                _lastErrorMessage = "NvencVideoEncoder: no uncompressed video payload on frame";
                 return _lastError;
         }
-        Error err = _impl->submitFrame(*payload, payload->pts(), _requestKey);
+        Error err = _impl->submitFrame(frame, *payload, payload->pts(), _requestKey);
         _requestKey = false;
         _lastError = _impl->lastError();
         _lastErrorMessage = _impl->lastErrorMessage();
         return err;
 }
 
-CompressedVideoPayload::Ptr NvencVideoEncoder::receiveCompressedPayload() {
-        return _impl->receivePacket();
+Frame NvencVideoEncoder::receiveFrame() {
+        return _impl->receiveFrame();
 }
 
 Error NvencVideoEncoder::flush() {

@@ -73,6 +73,9 @@ namespace {
                         Cea608::CaptionColor color = Cea608::CaptionColor::White;
                         bool                 italic = false;
                         bool                 underline = false;
+                        bool                 hasBg = false;
+                        Cea608::CaptionColor bgColor = Cea608::CaptionColor::White;
+                        bool                 bgSemiTransparent = false;
         };
 
 } // namespace
@@ -214,8 +217,15 @@ struct Cea608DecoderImpl {
                         if (loadingStyle.color != Cea608::CaptionColor::White) {
                                 c = paletteColor(loadingStyle.color);
                         }
-                        return SubtitleSpan(text, false /* bold not representable */,
-                                            loadingStyle.italic, loadingStyle.underline, c);
+                        SubtitleSpan s(text, false /* bold not representable */,
+                                       loadingStyle.italic, loadingStyle.underline, c);
+                        if (loadingStyle.hasBg) {
+                                s.setBackgroundColor(paletteColor(loadingStyle.bgColor));
+                                s.setBackgroundOpacity(loadingStyle.bgSemiTransparent
+                                                              ? SubtitleOpacity::Translucent
+                                                              : SubtitleOpacity::Solid);
+                        }
+                        return s;
                 }
 
                 /// @brief Flushes @ref loadingText into a span (when
@@ -233,12 +243,30 @@ struct Cea608DecoderImpl {
                         return out;
                 }
 
+                /// @brief Maps the decoder's internal mode tracking onto
+                ///        the codec-agnostic @ref CaptionMode that
+                ///        @ref Subtitle::mode carries.  Pop-on cues land
+                ///        through emitDisplayed (EOC committed); paint-on
+                ///        and roll-up cues land through emitLoading.
+                CaptionMode currentCaptionMode() const {
+                        switch (currentMode) {
+                        case CurrentMode::PopOn:  return CaptionMode::PopOn;
+                        case CurrentMode::PaintOn: return CaptionMode::PaintOn;
+                        case CurrentMode::RollUp: return CaptionMode::RollUp;
+                        }
+                        return CaptionMode::Default;
+                }
+
                 /// @brief Commits the currently @ref displayed cue
                 ///        as a finalized @ref Subtitle.
                 void emitDisplayed(const TimeStamp &end) {
                         if (!cueDisplayed) return;
                         Subtitle s(displayedStart, end, displayedSpans, displayedAnchor, Rect2Di32(),
                                    String(), Metadata());
+                        // emitDisplayed only fires for pop-on (EOC swaps
+                        // loading → displayed); stamp the mode so the
+                        // recovered cue round-trips.
+                        s.setMode(CaptionMode::PopOn);
                         cues.append(s);
                         displayedSpans = SubtitleSpan::List();
                         displayedAnchor = SubtitleAnchor::Default;
@@ -273,6 +301,10 @@ struct Cea608DecoderImpl {
                         Subtitle s(start, end, loadingSpans,
                                    loadingHasPac ? loadingAnchor : SubtitleAnchor::Default, Rect2Di32(),
                                    String(), Metadata());
+                        // emitLoading fires for paint-on (EDM commits the
+                        // streaming chars) and roll-up (CR commits the
+                        // prior row).  Stamp the live mode.
+                        s.setMode(currentCaptionMode());
                         cues.append(s);
                         resetLoading();
                         if (currentMode == CurrentMode::PaintOn || currentMode == CurrentMode::RollUp) {
@@ -328,12 +360,17 @@ struct Cea608DecoderImpl {
 
                 void doPac(const Cea608::PacAttr &pac, const TimeStamp &ts) {
                         // PAC at the start of a line sets row + style.
-                        // Mid-line PACs nominally move the cursor to a
-                        // new row; v1 collapses them to "anchor + style
-                        // update" without modeling cursor teleport (the
-                        // encoder only emits one PAC per cue anyway,
-                        // so this matches our round-trip contract).
+                        // Mid-cue PACs (the encoder emits one per
+                        // physical 608 row of a multi-row cue) signal
+                        // a row break — push a "\n" marker span so
+                        // the renderer breaks lines accordingly.
+                        // Without this, multi-row 608 cues decode as
+                        // a single concatenated horizontal line and
+                        // blow past the 32-col / 3-row receiver grid.
                         flushCurrentText();
+                        if (loadingHasPac && !loadingSpans.isEmpty()) {
+                                loadingSpans.pushToBack(SubtitleSpan(String("\n")));
+                        }
                         loadingAnchor = rowToAnchor(pac.row);
                         loadingStyle.color = pac.color;
                         loadingStyle.italic = pac.italic;
@@ -347,11 +384,70 @@ struct Cea608DecoderImpl {
                         }
                 }
 
+                /// @brief Returns @c true when the last accumulated
+                ///        span already ends with a space character, so
+                ///        a freshly-arrived control code's display-cell
+                ///        space would be redundant.  Used by
+                ///        @ref doMidRow / @ref doBgAttribute to avoid
+                ///        emitting a double inter-run gap when the
+                ///        prior run was odd-length and the encoder
+                ///        appended a pad-space to even out the byte
+                ///        pair before the control code.
+                bool lastSpanEndsWithSpace() const {
+                        if (loadingSpans.isEmpty()) return false;
+                        const SubtitleSpan &last = loadingSpans[loadingSpans.size() - 1];
+                        const String       &t    = last.text();
+                        if (t.isEmpty()) return false;
+                        return t.cstr()[t.byteCount() - 1] == ' ';
+                }
+
                 void doMidRow(Cea608::CaptionColor c, bool italic, bool underline) {
                         flushCurrentText();
+                        // The mid-row control code consumes one cell
+                        // on screen, displayed as a styled space.
+                        // The encoder (cea608encoder.cpp emitRowBytes)
+                        // strips one leading space from the next run
+                        // at this boundary so the MR cell serves as
+                        // the inter-run visual separator.  Mirror
+                        // that here by inserting a neutral (no-style)
+                        // single-space span between the styled spans
+                        // — keeps the underline / colour / italic
+                        // exactly under the styled text without
+                        // bleeding one cell into each neighbour.
+                        //
+                        // If the previous run was odd-length, the
+                        // encoder already appended a pad-space to the
+                        // last byte pair before this control code —
+                        // that pad serves as the separator, so don't
+                        // emit a second neutral span on top.
+                        if (loadingHasPac && !loadingSpans.isEmpty() && !lastSpanEndsWithSpace()) {
+                                loadingSpans.pushToBack(SubtitleSpan(String(" ")));
+                        }
                         loadingStyle.color = c;
                         loadingStyle.italic = italic;
                         loadingStyle.underline = underline;
+                }
+
+                /// @brief Apply a CC1 background-attribute (EIA-608-B
+                ///        §7.6) receipt: flush the current run and
+                ///        switch the loading style's bg slot.  Future
+                ///        @c flushCurrentText calls stamp the new bg on
+                ///        every emitted span until the next bg /
+                ///        carriage-return / PAC.
+                void doBgAttribute(Cea608::CaptionColor c, bool semiTransparent) {
+                        flushCurrentText();
+                        // Bg-attribute also consumes one cell as a
+                        // styled space — mirror the doMidRow handling
+                        // so a bg-colour transition produces a
+                        // neutral inter-run separator (or absorbs an
+                        // existing pad-space) instead of baking a
+                        // styled space into either neighbour.
+                        if (loadingHasPac && !loadingSpans.isEmpty() && !lastSpanEndsWithSpace()) {
+                                loadingSpans.pushToBack(SubtitleSpan(String(" ")));
+                        }
+                        loadingStyle.hasBg = true;
+                        loadingStyle.bgColor = c;
+                        loadingStyle.bgSemiTransparent = semiTransparent;
                 }
 
                 void doEOC(const TimeStamp &ts) {
@@ -439,6 +535,10 @@ struct Cea608DecoderImpl {
                                         Cea608::CaptionColor c;
                                         bool                 it = false, ul = false;
                                         if (Cea608::decodeMidRow(b1, b2, c, it, ul)) doMidRow(c, it, ul);
+                                } else if (Cea608::isBgAttribute(b1, b2)) {
+                                        Cea608::CaptionColor c;
+                                        bool                 semi = false;
+                                        if (Cea608::decodeBgAttribute(b1, b2, c, semi)) doBgAttribute(c, semi);
                                 } else if (b1 == 0x14) {
                                         switch (b2) {
                                                 case Cea608::MiscRCL: doRCL(); break;
@@ -508,7 +608,7 @@ void Cea608Decoder::reset() {
         d->cues = SubtitleList();
 }
 
-const String &Cea608Decoder::displayedText() const {
+String Cea608Decoder::displayedText() const {
         // For pop-on, the live display is the swapped-in cue
         // (displayedFlat).  For paint-on and roll-up, the loading
         // buffer is the live display — return its flat text on the

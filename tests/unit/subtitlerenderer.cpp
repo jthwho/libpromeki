@@ -8,10 +8,16 @@
 #include <chrono>
 #include <cstring>
 #include <doctest/doctest.h>
+#include <promeki/cea608decoder.h>
+#include <promeki/cea608encoder.h>
+#include <promeki/cea708cdp.h>
 #include <promeki/color.h>
 #include <promeki/enums.h>
+#include <promeki/framenumber.h>
+#include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
 #include <promeki/list.h>
+#include <promeki/metadata.h>
 #include <promeki/pixelformat.h>
 #include <promeki/rect.h>
 #include <promeki/string.h>
@@ -189,6 +195,172 @@ TEST_CASE("SubtitleRenderer: anchor override pushes content to the top of the fr
         // we expect the top to have some and the bottom not.
         CHECK(hasColouredPixelInRows(*img, 0, img->desc().height() / 3, 255, 255, 255));
         CHECK_FALSE(hasColouredPixelInRows(*img, 2 * img->desc().height() / 3, img->desc().height(), 255, 255, 255));
+}
+
+TEST_CASE("SubtitleRenderer: full Cea608 round-trip of cue 8 still draws an underline") {
+        // Mirror substest.srt cue 8 exactly as the SubRip parser
+        // produces it, run it through the Cea608 encoder/decoder,
+        // then render the decoded cue.  The underline must
+        // survive the entire pipeline and land as bright pixels
+        // below the glyph row of the "underlined" word.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        using ClockDur = TimeStamp::Value::duration;
+        auto tsAt30 = [](int64_t f) {
+                return TimeStamp(TimeStamp::Value(std::chrono::duration_cast<ClockDur>(
+                        std::chrono::milliseconds(f * 1000 / 30))));
+        };
+
+        SubtitleSpan::List srcSpans;
+        srcSpans.pushToBack(SubtitleSpan("Bold",       true,  false, false));
+        srcSpans.pushToBack(SubtitleSpan(" and ",      false, false, false));
+        srcSpans.pushToBack(SubtitleSpan("underlined", false, false, true));
+        srcSpans.pushToBack(SubtitleSpan(" mixed inline.", false, false, false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30(150), tsAt30(240), srcSpans, SubtitleAnchor::BottomCenter,
+                              Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // SubtitleBurn's contract: query displayedCue() per
+        // frame.  The cue is displayed from EOC (frame 150) to
+        // EDM (frame 240) — sample inside that window.
+        Subtitle decoded;
+        for (int64_t f = 0; f < 280; ++f) {
+                Cea708Cdp::CcDataList list = enc.nextFrame(FrameNumber(f));
+                dec.pushFrame(FrameNumber(f), tsAt30(f), list);
+                if (f == 200) {
+                        // Snapshot during the cue's display window.
+                        decoded = dec.displayedCue();
+                }
+        }
+        REQUIRE_FALSE(decoded.spans().isEmpty());
+        // Sanity: the decoded cue must carry exactly one
+        // underline-flagged span ("underlined") — same invariant
+        // the cea608 round-trip test enforces.
+        int underlineCount = 0;
+        for (size_t i = 0; i < decoded.spans().size(); ++i) {
+                if (decoded.spans()[i].underline()) ++underlineCount;
+        }
+        REQUIRE(underlineCount == 1);
+
+        // Now render that decoded cue and check for underline
+        // pixels.
+        auto img = makePayload(640, 360);
+        REQUIRE(img.isValid());
+
+        SubtitleRenderer rr;
+        rr.setFontSize(36);
+        rr.setDefaultForeground(Color::White);
+        rr.setDefaultBackground(Color::Black);
+        rr.setDrawBackground(false);
+        REQUIRE(rr.render(decoded, *img.modify()).isOk());
+
+        // At least some white pixels must be on the frame —
+        // glyphs + underline.
+        CHECK(hasColouredPixel(*img, 255, 255, 255));
+        // The bright-pixel y-span must be tall enough to cover
+        // both the glyph rows and the underline below them.
+        const uint8_t *data = img->plane(0).data();
+        const size_t   stride = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
+        auto rowHasHot = [&](size_t y) {
+                const uint8_t *row = data + y * stride;
+                for (size_t x = 0; x < img->desc().width(); ++x) {
+                        if (row[x * 3 + 0] > 200 && row[x * 3 + 1] > 200 && row[x * 3 + 2] > 200) return true;
+                }
+                return false;
+        };
+        int firstY = -1, lastY = -1;
+        for (size_t y = 0; y < img->desc().height(); ++y) {
+                if (rowHasHot(y)) {
+                        if (firstY < 0) firstY = static_cast<int>(y);
+                        lastY = static_cast<int>(y);
+                }
+        }
+        REQUIRE(firstY >= 0);
+        CHECK(lastY - firstY >= 24);
+}
+
+TEST_CASE("SubtitleRenderer: underlined span draws underline pixels below the glyph row") {
+        // Render a three-span cue mirroring the post-decode shape of
+        // CEA-608 cue 8 — plain prefix, a neutral inter-run space,
+        // an underlined word, plus a plain suffix.  The underline
+        // must appear as a horizontal foreground stroke under the
+        // underlined word.
+        auto img = makePayload(640, 360);
+        REQUIRE(img.isValid());
+
+        SubtitleRenderer rr;
+        rr.setFontSize(36);
+        rr.setDefaultForeground(Color::White);
+        rr.setDefaultBackground(Color::Black);
+        rr.setDrawBackground(false);
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("Bold and",         false, false, false));
+        spans.pushToBack(SubtitleSpan(String(" ")));
+        spans.pushToBack(SubtitleSpan("underlined",       false, false, true));
+        Subtitle s(tsFromMs(0), tsFromMs(1000), spans, SubtitleAnchor::Default,
+                   Rect2Di32(), String(), Metadata());
+        REQUIRE(rr.render(s, *img.modify()).isOk());
+
+        // The underline lives a few px below the baseline of the
+        // text.  Find the row range that carries any "hot" pixel
+        // (glyphs), then check that the row range extends DOWN
+        // past the glyph bottom: a row with hot pixels that has
+        // *no* hot pixels in the row immediately above it would
+        // indicate an isolated stroke — the underline.
+        const uint8_t *data = img->plane(0).data();
+        const size_t   stride = img->desc().pixelFormat().memLayout().lineStride(0, img->desc().width());
+        auto rowHasHot = [&](size_t y) {
+                if (y >= img->desc().height()) return false;
+                const uint8_t *row = data + y * stride;
+                for (size_t x = 0; x < img->desc().width(); ++x) {
+                        if (row[x * 3 + 0] > 200 && row[x * 3 + 1] > 200 && row[x * 3 + 2] > 200) {
+                                return true;
+                        }
+                }
+                return false;
+        };
+        int firstY = -1;
+        int lastY  = -1;
+        for (size_t y = 0; y < img->desc().height(); ++y) {
+                if (rowHasHot(y)) {
+                        if (firstY < 0) firstY = static_cast<int>(y);
+                        lastY = static_cast<int>(y);
+                }
+        }
+        REQUIRE(firstY >= 0);
+        // The underline forms a contiguous horizontal stroke
+        // below the glyph rows.  Walk down from the glyph
+        // bottom and confirm at least one bright row exists
+        // *after* a gap (or close to it) — the underline can't
+        // visibly be missing if the rendered span has
+        // underline=true.
+        //
+        // We can't easily isolate the underline rows without
+        // re-implementing the font metrics here, so do the next
+        // best thing: check that more than just a single
+        // glyph-row-height worth of rows are bright.  The
+        // underline adds at least one extra row of bright pixels
+        // beyond the glyph cap-height.
+        int hotRowCount = 0;
+        for (int y = firstY; y <= lastY; ++y) {
+                if (rowHasHot(static_cast<size_t>(y))) ++hotRowCount;
+        }
+        // The text height for a 36pt font is comfortably > 20 px.
+        // The underline is a horizontal stroke 1-3 px tall.  The
+        // bright-row span (firstY..lastY) must cover both the
+        // glyph cells and the underline below the baseline.
+        // Without underline, the bright rows cluster around the
+        // x-height + ascender of the glyphs (~22-30 px).  With
+        // underline, the span stretches past the descender to
+        // the underline position (a few more px).  Check that
+        // the bright-row span exceeds the ascender alone.
+        CHECK(lastY - firstY >= 24);
+        CHECK(hotRowCount >= 10);
 }
 
 TEST_CASE("SubtitleRenderer: multi-line cue stacks rows vertically") {

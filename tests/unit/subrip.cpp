@@ -406,6 +406,26 @@ TEST_CASE("SubRip: <v Speaker>...</v> captures into Subtitle::speaker") {
         CHECK(r.first()[0].text() == "hello there");
 }
 
+TEST_CASE("SubRip: <font color=... background=...> picks up both fg and bg") {
+        // SubRip's <font> tag commonly carries a `background` attribute
+        // (libass / Aegisub convention).  Parser captures both into
+        // the styled span; emit round-trips them in canonical form.
+        const char *src = "1\r\n"
+                          "00:00:01,000 --> 00:00:02,000\r\n"
+                          "<font color=\"#FFFFFF\" background=\"#000080\">white on blue</font>\r\n"
+                          "\r\n";
+        Result<SubtitleList> r = SubRip::parse(String(src));
+        REQUIRE(r.second().isOk());
+        REQUIRE(r.first().size() == 1);
+        const SubtitleSpan::List &spans = r.first()[0].spans();
+        REQUIRE(spans.size() == 1);
+        CHECK(spans[0].text() == "white on blue");
+        CHECK(spans[0].color().isValid());
+        CHECK(spans[0].color().r8() == 255);
+        CHECK(spans[0].backgroundColor().isValid());
+        CHECK(spans[0].backgroundColor().b8() == 128);
+}
+
 TEST_CASE("SubRip: styled spans round-trip parse -> emit -> parse") {
         SubtitleList sl;
         SubtitleSpan::List spans;
@@ -441,6 +461,53 @@ TEST_CASE("Subtitle: round-trips through Variant") {
         CHECK(got->text() == "via Variant");
         CHECK(got->start() == tsFromMs(1000));
         CHECK(got->end() == tsFromMs(2500));
+}
+
+TEST_CASE("Subtitle: mode round-trips through Variant + DataStream") {
+        Subtitle s(tsFromMs(1000), tsFromMs(2000), "rollup");
+        s.setMode(CaptionMode::RollUp);
+        Variant         v(s);
+        const Subtitle *got = v.peek<Subtitle>();
+        REQUIRE(got != nullptr);
+        CHECK(got->mode().value() == CaptionMode::RollUp.value());
+}
+
+TEST_CASE("SubtitleSpan: full styling fields round-trip via Subtitle/Variant") {
+        // SubtitleSpan isn't a top-level Variant payload type — it rides
+        // inside a Subtitle's spans list.  Wrap a maximally-styled span
+        // in a Subtitle, round-trip via Variant (which uses the same
+        // DataStream operators internally), and verify every new field
+        // survives.
+        SubtitleSpan span("styled", true, true, true, Color::Red);
+        span.setBackgroundColor(Color::Blue);
+        span.setEdgeColor(Color::Green);
+        span.setEdgeStyle(SubtitleEdgeStyle::Raised);
+        span.setFontFace(SubtitleFontFace::MonoSerif);
+        span.setForegroundOpacity(SubtitleOpacity::Translucent);
+        span.setBackgroundOpacity(SubtitleOpacity::Flash);
+        span.setEdgeOpacity(SubtitleOpacity::Transparent);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        Subtitle in(tsFromMs(0), tsFromMs(1000), spans, SubtitleAnchor::Default, Rect2Di32(),
+                    String(), Metadata());
+
+        Variant         v(in);
+        const Subtitle *got = v.peek<Subtitle>();
+        REQUIRE(got != nullptr);
+        REQUIRE(got->spans().size() == 1);
+        const SubtitleSpan &gotSpan = got->spans()[0];
+        CHECK(gotSpan.text() == "styled");
+        CHECK(gotSpan.bold());
+        CHECK(gotSpan.italic());
+        CHECK(gotSpan.underline());
+        CHECK(gotSpan.color() == Color::Red);
+        CHECK(gotSpan.backgroundColor() == Color::Blue);
+        CHECK(gotSpan.edgeColor() == Color::Green);
+        CHECK(gotSpan.edgeStyle().value() == SubtitleEdgeStyle::Raised.value());
+        CHECK(gotSpan.fontFace().value() == SubtitleFontFace::MonoSerif.value());
+        CHECK(gotSpan.foregroundOpacity().value() == SubtitleOpacity::Translucent.value());
+        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Flash.value());
+        CHECK(gotSpan.edgeOpacity().value() == SubtitleOpacity::Transparent.value());
 }
 
 // ============================================================================

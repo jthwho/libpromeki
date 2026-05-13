@@ -30,6 +30,7 @@ int main() {
 
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
+#include <promeki/frame.h>
 #include <promeki/color.h>
 #include <promeki/cuda.h>
 #include <promeki/enums.h>
@@ -85,7 +86,23 @@ namespace {
         }
 
         Error submitImage(VideoEncoder *enc, Img img) {
-                return enc->submitPayload(std::move(img));
+                Frame f;
+                if (img.isValid()) f.addPayload(std::move(img));
+                return enc->submitFrame(f);
+        }
+
+        // Pull the next compressed packet out of the encoder's emitted
+        // Frame, threading through the Frame-based codec API the same
+        // way the encoder MediaIO does.
+        CompressedVideoPayload::Ptr receivePacket(VideoEncoder *enc) {
+                Frame f = enc->receiveFrame();
+                if (!f.isValid()) return CompressedVideoPayload::Ptr();
+                for (const VideoPayload::Ptr &vp : f.videoPayloads()) {
+                        if (!vp.isValid()) continue;
+                        CompressedVideoPayload::Ptr cvp = sharedPointerCast<CompressedVideoPayload>(vp);
+                        if (cvp.isValid()) return cvp;
+                }
+                return CompressedVideoPayload::Ptr();
         }
 
         struct Options {
@@ -280,7 +297,7 @@ namespace {
                                 delete enc;
                                 return r;
                         }
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) {
                                         r.gotEos = true;
                                         break;
@@ -299,7 +316,7 @@ namespace {
                 }
 
                 enc->flush();
-                while (auto pkt = enc->receiveCompressedPayload()) {
+                while (auto pkt = receivePacket(enc)) {
                         if (pkt->isEndOfStream()) {
                                 r.gotEos = true;
                                 break;
@@ -434,13 +451,13 @@ namespace {
                                         submitOk = false;
                                         break;
                                 }
-                                while (auto pkt = enc->receiveCompressedPayload()) {
+                                while (auto pkt = receivePacket(enc)) {
                                         if (pkt->isEndOfStream()) break;
                                         packets.pushToBack(pkt);
                                 }
                         }
                         enc->flush();
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) break;
                                 packets.pushToBack(pkt);
                         }
@@ -635,14 +652,14 @@ namespace {
                                         submitOk = false;
                                         break;
                                 }
-                                while (auto pkt = enc->receiveCompressedPayload()) {
+                                while (auto pkt = receivePacket(enc)) {
                                         if (pkt->isEndOfStream()) break;
                                         if (pkt->isKeyframe()) ++keyCount;
                                         ++pktCount;
                                 }
                         }
                         enc->flush();
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) break;
                                 if (pkt->isKeyframe()) ++keyCount;
                                 ++pktCount;
@@ -1226,14 +1243,14 @@ namespace {
                                         break;
                                 }
                                 ++tc;
-                                while (auto pkt = enc->receiveCompressedPayload()) {
+                                while (auto pkt = receivePacket(enc)) {
                                         if (pkt->isEndOfStream()) break;
                                         totalBytes += pkt->plane(0).size();
                                         ++packets;
                                 }
                         }
                         enc->flush();
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) break;
                                 totalBytes += pkt->plane(0).size();
                                 ++packets;
@@ -1308,14 +1325,14 @@ namespace {
                                         submitOk = false;
                                         break;
                                 }
-                                while (auto pkt = enc->receiveCompressedPayload()) {
+                                while (auto pkt = receivePacket(enc)) {
                                         if (pkt->isEndOfStream()) break;
                                         totalBytes += pkt->plane(0).size();
                                         ++packets;
                                 }
                         }
                         enc->flush();
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) break;
                                 totalBytes += pkt->plane(0).size();
                                 ++packets;
@@ -1358,13 +1375,13 @@ namespace {
                                 delete enc;
                                 return {};
                         }
-                        while (auto pkt = enc->receiveCompressedPayload()) {
+                        while (auto pkt = receivePacket(enc)) {
                                 if (pkt->isEndOfStream()) break;
                                 packets.pushToBack(pkt);
                         }
                 }
                 enc->flush();
-                while (auto pkt = enc->receiveCompressedPayload()) {
+                while (auto pkt = receivePacket(enc)) {
                         if (pkt->isEndOfStream()) break;
                         packets.pushToBack(pkt);
                 }

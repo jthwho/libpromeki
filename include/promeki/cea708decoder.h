@@ -8,9 +8,11 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/captiondecoder.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708service.h>
 #include <promeki/cea708windowstate.h>
+#include <promeki/enums.h>
 #include <promeki/framenumber.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
@@ -73,7 +75,7 @@ struct Cea708DecoderImpl; // Pimpl — defined in cea708decoder.cpp.
  *
  * @see Cea708Cdp, Cea708Service, Cea708DtvccPacket, Cea708WindowState
  */
-class Cea708Decoder {
+class Cea708Decoder : public CaptionDecoder {
         public:
                 /** @brief Decoder configuration. */
                 struct Config {
@@ -84,12 +86,10 @@ class Cea708Decoder {
 
                 Cea708Decoder();
                 explicit Cea708Decoder(Config cfg);
-                ~Cea708Decoder();
+                ~Cea708Decoder() override;
 
-                Cea708Decoder(const Cea708Decoder &) = delete;
-                Cea708Decoder &operator=(const Cea708Decoder &) = delete;
-                Cea708Decoder(Cea708Decoder &&) = delete;
-                Cea708Decoder &operator=(Cea708Decoder &&) = delete;
+                /// @copydoc CaptionDecoder::codec
+                CaptionCodec codec() const override { return CaptionCodec(CaptionCodec::Cea708); }
 
                 /** @brief Returns the configuration this decoder was constructed with. */
                 const Config &config() const;
@@ -113,7 +113,7 @@ class Cea708Decoder {
                  * @param data  The frame's CcData list (typically the
                  *              @c ccData member of a @ref Cea708Cdp).
                  */
-                void pushFrame(FrameNumber frame, TimeStamp ts, const Cea708Cdp::CcDataList &data);
+                void pushFrame(FrameNumber frame, TimeStamp ts, const Cea708Cdp::CcDataList &data) override;
 
                 /**
                  * @brief Returns the currently visible text (the
@@ -121,7 +121,7 @@ class Cea708Decoder {
                  *        @c visibleText).  Empty when no cue is on
                  *        screen.
                  */
-                String displayedText() const;
+                String displayedText() const override;
 
                 /**
                  * @brief Returns the currently displayed cue as a
@@ -134,7 +134,7 @@ class Cea708Decoder {
                  * Empty (@ref Subtitle::isEmpty returns @c true) when
                  * no cue is on screen.
                  */
-                Subtitle displayedCue() const;
+                Subtitle displayedCue() const override;
 
                 /**
                  * @brief Read-only access to the underlying window
@@ -152,14 +152,14 @@ class Cea708Decoder {
                  * @ref pushFrame timestamp.  After finalize, the
                  * decoder is reset to its initial state.
                  */
-                SubtitleList finalize();
+                SubtitleList finalize() override;
 
                 /**
                  * @brief Resets the decoder without emitting anything.
                  *
                  * Drops any in-flight cue + clears every window.
                  */
-                void reset();
+                void reset() override;
 
         private:
                 SharedPtr<Cea708DecoderImpl> _d;

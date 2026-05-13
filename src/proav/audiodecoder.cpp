@@ -17,13 +17,28 @@
 #include <promeki/map.h>
 #include <promeki/set.h>
 #include <promeki/readwritelock.h>
+#include <promeki/frame.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 AudioDecoder::~AudioDecoder() = default;
 
 void AudioDecoder::configure(const MediaConfig &config) {
+        if (!_stashedConfig.isValid()) {
+                _stashedConfig = UniquePtr<MediaConfig>::create(config);
+        } else {
+                *_stashedConfig = config;
+        }
+        onConfigure(config);
+}
+
+void AudioDecoder::onConfigure(const MediaConfig &config) {
         (void)config;
+}
+
+const MediaConfig &AudioDecoder::config() const {
+        static const MediaConfig empty;
+        return _stashedConfig.isValid() ? *_stashedConfig : empty;
 }
 
 void AudioDecoder::setError(Error err, const String &msg) {
@@ -34,6 +49,38 @@ void AudioDecoder::setError(Error err, const String &msg) {
 void AudioDecoder::clearError() {
         _lastError = Error::Ok;
         _lastErrorMessage = String();
+}
+
+// ---------------------------------------------------------------------------
+// Frame-shaped helpers — shared algorithms for concrete backends.
+// ---------------------------------------------------------------------------
+
+CompressedAudioPayload::Ptr AudioDecoder::selectInputPayload(const Frame &frame, int streamIndex) {
+        if (!frame.isValid()) return CompressedAudioPayload::Ptr();
+        for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                if (!ap.isValid()) continue;
+                if (streamIndex >= 0 && ap->streamIndex() != streamIndex) continue;
+                CompressedAudioPayload::Ptr cap = sharedPointerCast<CompressedAudioPayload>(ap);
+                if (cap.isNull()) continue;
+                return cap;
+        }
+        return CompressedAudioPayload::Ptr();
+}
+
+Frame AudioDecoder::buildOutputFrame(const Frame &source, PcmAudioPayload::Ptr emitted) {
+        Frame out;
+        if (source.isValid()) {
+                out.metadata() = source.metadata();
+                out.setCaptureTime(source.captureTime());
+                for (const VideoPayload::Ptr &vp : source.videoPayloads()) {
+                        if (vp.isValid()) out.addPayload(vp);
+                }
+                for (const AncPayload::Ptr &anc : source.ancPayloads()) {
+                        if (anc.isValid()) out.addPayload(anc);
+                }
+        }
+        if (emitted.isValid()) out.addPayload(emitted);
+        return out;
 }
 
 namespace {

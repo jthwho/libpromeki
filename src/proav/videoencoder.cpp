@@ -28,17 +28,34 @@
 #include <promeki/map.h>
 #include <promeki/set.h>
 #include <promeki/readwritelock.h>
+#include <promeki/frame.h>
+#include <promeki/ancpayload.h>
+#include <promeki/ancdesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 // ---------------------------------------------------------------------------
-// VideoEncoder base — destructor, configure default, error plumbing.
+// VideoEncoder base — destructor, configure plumbing, error plumbing.
 // ---------------------------------------------------------------------------
 
 VideoEncoder::~VideoEncoder() = default;
 
 void VideoEncoder::configure(const MediaConfig &config) {
+        if (!_stashedConfig.isValid()) {
+                _stashedConfig = UniquePtr<MediaConfig>::create(config);
+        } else {
+                *_stashedConfig = config;
+        }
+        onConfigure(config);
+}
+
+void VideoEncoder::onConfigure(const MediaConfig &config) {
         (void)config;
+}
+
+const MediaConfig &VideoEncoder::config() const {
+        static const MediaConfig empty;
+        return _stashedConfig.isValid() ? *_stashedConfig : empty;
 }
 
 void VideoEncoder::requestKeyframe() {
@@ -54,6 +71,64 @@ void VideoEncoder::setError(Error err, const String &msg) {
 void VideoEncoder::clearError() {
         _lastError = Error::Ok;
         _lastErrorMessage = String();
+}
+
+// ---------------------------------------------------------------------------
+// Frame-shaped helpers — shared algorithms for concrete backends.
+// ---------------------------------------------------------------------------
+
+UncompressedVideoPayload::Ptr VideoEncoder::selectInputPayload(const Frame &frame, int streamIndex) {
+        if (!frame.isValid()) return UncompressedVideoPayload::Ptr();
+        for (const VideoPayload::Ptr &vp : frame.videoPayloads()) {
+                if (!vp.isValid()) continue;
+                if (streamIndex >= 0 && vp->streamIndex() != streamIndex) continue;
+                UncompressedVideoPayload::Ptr uvp = sharedPointerCast<UncompressedVideoPayload>(vp);
+                if (uvp.isNull()) continue;
+                return uvp;
+        }
+        return UncompressedVideoPayload::Ptr();
+}
+
+AncPacket::List VideoEncoder::selectAncForSei(const Frame &frame, int pairedVideoStreamIndex,
+                                              const AncFormat::IDList &allowedFormats) {
+        AncPacket::List out;
+        if (allowedFormats.isEmpty()) return out;
+        if (!frame.isValid()) return out;
+        for (const AncPayload::Ptr &ap : frame.ancPayloads()) {
+                if (!ap.isValid()) continue;
+                const int paired = ap->desc().pairedVideoStreamIndex();
+                // Unbound (-1) ANC payloads are accepted as "global" — i.e. the
+                // producer didn't attribute the stream to a specific video.
+                if (paired != -1 && paired != pairedVideoStreamIndex) continue;
+                for (const AncPacket &pkt : ap->packets()) {
+                        if (!pkt.isValid()) continue;
+                        bool ok = false;
+                        for (auto id : allowedFormats) {
+                                if (pkt.format().id() == id) {
+                                        ok = true;
+                                        break;
+                                }
+                        }
+                        if (ok) out.pushToBack(pkt);
+                }
+        }
+        return out;
+}
+
+Frame VideoEncoder::buildOutputFrame(const Frame &source, CompressedVideoPayload::Ptr emitted) {
+        Frame out;
+        if (source.isValid()) {
+                out.metadata() = source.metadata();
+                out.setCaptureTime(source.captureTime());
+                for (const AudioPayload::Ptr &ap : source.audioPayloads()) {
+                        if (ap.isValid()) out.addPayload(ap);
+                }
+                for (const AncPayload::Ptr &anc : source.ancPayloads()) {
+                        if (anc.isValid()) out.addPayload(anc);
+                }
+        }
+        if (emitted.isValid()) out.addPayload(emitted);
+        return out;
 }
 
 // ---------------------------------------------------------------------------

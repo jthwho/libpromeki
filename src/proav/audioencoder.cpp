@@ -21,17 +21,32 @@
 #include <promeki/map.h>
 #include <promeki/set.h>
 #include <promeki/readwritelock.h>
+#include <promeki/frame.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 // ---------------------------------------------------------------------------
-// AudioEncoder base — destructor, configure default, error plumbing.
+// AudioEncoder base — destructor, configure plumbing, error plumbing.
 // ---------------------------------------------------------------------------
 
 AudioEncoder::~AudioEncoder() = default;
 
 void AudioEncoder::configure(const MediaConfig &config) {
+        if (!_stashedConfig.isValid()) {
+                _stashedConfig = UniquePtr<MediaConfig>::create(config);
+        } else {
+                *_stashedConfig = config;
+        }
+        onConfigure(config);
+}
+
+void AudioEncoder::onConfigure(const MediaConfig &config) {
         (void)config;
+}
+
+const MediaConfig &AudioEncoder::config() const {
+        static const MediaConfig empty;
+        return _stashedConfig.isValid() ? *_stashedConfig : empty;
 }
 
 void AudioEncoder::requestKeyframe() {
@@ -47,6 +62,38 @@ void AudioEncoder::setError(Error err, const String &msg) {
 void AudioEncoder::clearError() {
         _lastError = Error::Ok;
         _lastErrorMessage = String();
+}
+
+// ---------------------------------------------------------------------------
+// Frame-shaped helpers — shared algorithms for concrete backends.
+// ---------------------------------------------------------------------------
+
+PcmAudioPayload::Ptr AudioEncoder::selectInputPayload(const Frame &frame, int streamIndex) {
+        if (!frame.isValid()) return PcmAudioPayload::Ptr();
+        for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                if (!ap.isValid()) continue;
+                if (streamIndex >= 0 && ap->streamIndex() != streamIndex) continue;
+                PcmAudioPayload::Ptr pp = sharedPointerCast<PcmAudioPayload>(ap);
+                if (pp.isNull()) continue;
+                return pp;
+        }
+        return PcmAudioPayload::Ptr();
+}
+
+Frame AudioEncoder::buildOutputFrame(const Frame &source, CompressedAudioPayload::Ptr emitted) {
+        Frame out;
+        if (source.isValid()) {
+                out.metadata() = source.metadata();
+                out.setCaptureTime(source.captureTime());
+                for (const VideoPayload::Ptr &vp : source.videoPayloads()) {
+                        if (vp.isValid()) out.addPayload(vp);
+                }
+                for (const AncPayload::Ptr &anc : source.ancPayloads()) {
+                        if (anc.isValid()) out.addPayload(anc);
+                }
+        }
+        if (emitted.isValid()) out.addPayload(emitted);
+        return out;
 }
 
 // ---------------------------------------------------------------------------

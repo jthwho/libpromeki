@@ -25,11 +25,12 @@ PROMEKI_NAMESPACE_BEGIN
  * @c VideoDecoderMediaIO is the symmetric counterpart of
  * @ref VideoEncoderMediaIO.  It accepts a Frame whose
  * @ref CompressedVideoPayload entries carry the encoded bitstream,
- * hands each payload to a concrete @ref VideoDecoder via
- * @c submitPayload, and drains @c receiveVideoPayload producing one
- * output Frame per decoded @ref UncompressedVideoPayload.  Audio on
- * the input Frame is forwarded unchanged so it stays synchronised on
- * the same PTS.
+ * hands the whole Frame to a concrete @ref VideoDecoder via
+ * @c submitFrame, and drains @c receiveFrame, pushing the output
+ * Frames the decoder produces onto its output queue.  The decoder is
+ * responsible for echoing the source Frame's audio / metadata through
+ * onto each emitted output Frame (the
+ * @ref VideoDecoder::buildOutputFrame helper handles this).
  *
  * The registered backend name is @c "VideoDecoder"; callers select a
  * concrete codec in one of two ways:
@@ -112,14 +113,12 @@ class VideoDecoderMediaIO : public SharedThreadMediaIO {
                 void  configChanged(const MediaConfig &delta) override;
 
         private:
-                // Drains every currently-available image out of the
-                // underlying decoder and pushes one Frame per image
-                // onto @c _outputQueue.  Each emitted image is paired
-                // with the oldest queued source packet Frame (see
-                // @c _pendingSrcFrames) so its audio / frame-level
-                // metadata travel with the right input even across
-                // the DPB / reorder buffering delay every H.264 /
-                // HEVC decoder has on startup.
+                // Drains every currently-available output Frame out of
+                // the underlying decoder and pushes them onto
+                // @c _outputQueue.  The decoder is responsible for
+                // echoing the source Frame's audio / metadata through
+                // onto each emitted Frame via the base
+                // @ref VideoDecoder::buildOutputFrame helper.
                 void  drainDecoderInto();
                 Error createDecoder(const VideoCodec &codec);
 
@@ -129,22 +128,13 @@ class VideoDecoderMediaIO : public SharedThreadMediaIO {
                 PixelFormat        _outputPixelFormat;
                 bool               _outputPixelFormatSet = false;
                 int                _capacity = 8;
-                Frame::List   _outputQueue;
-
-                // FIFO of source Frames awaiting a decoded image.  One
-                // entry is pushed per packet handed to @c submitPacket
-                // and popped per image emitted by the decoder.  Without
-                // this, images emerging from the DPB warmup / reorder
-                // buffer are stamped with the wrong input Frame's
-                // metadata, which shows up as off-by-N timecode /
-                // audio after an encode/decode round trip.
-                Frame::List _pendingSrcFrames;
-                FrameCount       _frameCount{0};
-                int64_t          _readCount = 0;
-                int64_t          _packetsDecoded = 0;
-                int64_t          _imagesOut = 0;
-                bool             _capacityWarned = false;
-                bool             _closed = false;
+                Frame::List        _outputQueue;
+                FrameCount         _frameCount{0};
+                int64_t            _readCount = 0;
+                int64_t            _packetsDecoded = 0;
+                int64_t            _imagesOut = 0;
+                bool               _capacityWarned = false;
+                bool               _closed = false;
 };
 
 /**

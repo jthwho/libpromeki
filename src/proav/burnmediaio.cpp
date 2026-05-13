@@ -121,16 +121,12 @@ Error BurnMediaIO::burnFrame(const Frame &input, Frame &output) {
                 return Error::Ok;
         }
 
-        Frame outFrame = Frame();
-        outFrame.metadata() = input.metadata();
-
-        // Pass every payload through by reference; the burn loop below
-        // calls modify() on each UncompressedVideoPayload slot to
-        // CoW-clone before painting, so upstream frames sharing the
-        // same Ptr stay unpainted.
-        for (const MediaPayload::Ptr &srcP : input.payloadList()) {
-                if (srcP.isValid()) outFrame.addPayload(srcP);
-        }
+        // CoW copy: preserves payloads (video, audio, ANC), metadata,
+        // captureTime, and configUpdate.  The burn loop below calls
+        // modify() on each UncompressedVideoPayload slot, which
+        // CoW-clones just that one payload's impl — every other
+        // payload (notably ANC) stays shared with the upstream Frame.
+        Frame outFrame = input;
 
         String burnText = VariantLookup<Frame>::format(outFrame, _burnTextTemplate);
         if (!burnText.isEmpty()) {

@@ -22,11 +22,18 @@ namespace {
 
         /// @brief Returns the wire size in bytes a service block would
         ///        occupy: header (1 byte for service 1..6, 2 bytes for
-        ///        the extended form 7..63) + data length.
+        ///        the extended form 7..63) + data length.  Data length
+        ///        is capped at 31 bytes (the spec's 5-bit @c block_size
+        ///        limit) — matches the truncation @ref
+        ///        Cea708DtvccPacket::toPayloadBytes performs when a
+        ///        caller pushes oversized block data.
         size_t blockWireSize(const Cea708Service &block) {
                 if (block.isNull()) return 1;
-                size_t header = block.isExtended() ? 2 : 1;
-                return header + block.data().size();
+                constexpr size_t kMaxBlockData = 31;
+                size_t           header = block.isExtended() ? 2 : 1;
+                size_t           data = block.data().size();
+                if (data > kMaxBlockData) data = kMaxBlockData;
+                return header + data;
         }
 
 } // namespace
@@ -112,12 +119,16 @@ size_t Cea708DtvccPacket::payloadByteCount() const {
 }
 
 Buffer Cea708DtvccPacket::toPayloadBytes() const {
-        const size_t total = payloadByteCount();
-        Buffer       out(total);
-        out.setSize(total);
-        if (total == 0) return out;
-        std::vector<uint8_t> bytes;
-        bytes.reserve(total);
+        // Per CEA-708 the @c block_size header field is 5 bits, so a
+        // single service block can carry at most 31 data bytes.  The
+        // encoder's chunker (Cea708Encoder::wrapInDtvccPacket) is
+        // expected to enforce this; we additionally cap here so that
+        // a caller building a packet by hand can't silently corrupt
+        // the wire by pushing oversized data — the parser would read
+        // a wrapped (mod-32) block size and misinterpret subsequent
+        // data bytes as a fresh block header.
+        constexpr size_t       kMaxBlockData = 31;
+        std::vector<uint8_t>   bytes;
         for (size_t i = 0; i < _serviceBlocks.size(); ++i) {
                 const Cea708Service &b = _serviceBlocks[i];
                 if (b.isNull()) {
@@ -125,21 +136,31 @@ Buffer Cea708DtvccPacket::toPayloadBytes() const {
                         bytes.push_back(0x00);
                         continue;
                 }
+                size_t blockBytes = b.data().size();
+                if (blockBytes > kMaxBlockData) {
+                        promekiWarn("Cea708DtvccPacket::toPayloadBytes: service %u block has "
+                                    "%zu data bytes; max is %zu — truncating",
+                                    static_cast<unsigned>(b.serviceNumber()), blockBytes,
+                                    kMaxBlockData);
+                        blockBytes = kMaxBlockData;
+                }
                 if (b.isExtended()) {
                         // Extended form:
                         //   byte 0: 0b111 (service_number==7) + block_size (5 bits)
                         //   byte 1: 0b00 + service_number_ext (6 bits)
-                        const uint8_t bsz = static_cast<uint8_t>(b.data().size() & 0x1F);
+                        const uint8_t bsz = static_cast<uint8_t>(blockBytes & 0x1F);
                         bytes.push_back(static_cast<uint8_t>((7u << 5) | bsz));
                         bytes.push_back(static_cast<uint8_t>(b.serviceNumber() & 0x3F));
                 } else {
-                        const uint8_t bsz = static_cast<uint8_t>(b.data().size() & 0x1F);
+                        const uint8_t bsz = static_cast<uint8_t>(blockBytes & 0x1F);
                         bytes.push_back(static_cast<uint8_t>(((b.serviceNumber() & 0x07) << 5) | bsz));
                 }
                 const auto *dp = static_cast<const uint8_t *>(b.data().data());
-                for (size_t k = 0; k < b.data().size(); ++k) bytes.push_back(dp[k]);
+                for (size_t k = 0; k < blockBytes; ++k) bytes.push_back(dp[k]);
         }
+        Buffer out(bytes.size());
         out.setSize(bytes.size());
+        if (bytes.empty()) return out;
         Error err = out.copyFrom(bytes.data(), bytes.size(), 0);
         if (err.isError()) {
                 promekiWarn("Cea708DtvccPacket::toPayloadBytes: buffer copy failed: %s",

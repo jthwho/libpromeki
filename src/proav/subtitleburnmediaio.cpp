@@ -9,7 +9,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/ancpayload.h>
 #include <promeki/anctranslator.h>
-#include <promeki/cea608decoder.h>
+#include <promeki/captiondecoder.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/colormodel.h>
 #include <promeki/enumlist.h>
@@ -115,16 +115,30 @@ Error SubtitleBurnMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _framesPainted = 0;
         _outputQueue.clear();
 
-        // Lazy-initialise the CEA-608 decoder when the ANC source is
-        // listed in the preferences.  The decoder is stateful across
-        // frames, so we hold one instance for the lifetime of this
-        // open() session.
+        // Lazy-initialise the ANC decoders when their source is listed
+        // in the preferences.  Each decoder is stateful across frames,
+        // so we hold one instance for the lifetime of this open()
+        // session.  The translator is plain and shared between them.
+        _ancTranslator = AncTranslator();
+        _ancDecoders.clear();
         if (sourceEnabled(SubtitleSource::Cea608Anc)) {
-                _ancDecoder = UniquePtr<Cea608Decoder>::create();
-                _ancTranslator = AncTranslator();
-        } else {
-                _ancDecoder = UniquePtr<Cea608Decoder>();
-                _ancTranslator = AncTranslator();
+                CaptionDecoder::Config       cfg;
+                UniquePtr<CaptionDecoder> dec = CaptionDecoder::create(CaptionCodec(CaptionCodec::Cea608), cfg);
+                if (dec.isNull()) {
+                        promekiErr("SubtitleBurnMediaIO: CaptionDecoder::create failed for Cea608");
+                        return Error::Invalid;
+                }
+                _ancDecoders.pushToBack(std::move(dec));
+        }
+        if (sourceEnabled(SubtitleSource::Cea708Anc)) {
+                CaptionDecoder::Config       cfg;
+                cfg.serviceNumber             = 1;
+                UniquePtr<CaptionDecoder> dec = CaptionDecoder::create(CaptionCodec(CaptionCodec::Cea708), cfg);
+                if (dec.isNull()) {
+                        promekiErr("SubtitleBurnMediaIO: CaptionDecoder::create failed for Cea708");
+                        return Error::Invalid;
+                }
+                _ancDecoders.pushToBack(std::move(dec));
         }
 
         MediaIOPortGroup *group = addPortGroup("subtitleburn");
@@ -149,7 +163,7 @@ Error SubtitleBurnMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _framesPainted = 0;
         _capacityWarned = false;
         _notPaintableWarned = false;
-        _ancDecoder = UniquePtr<Cea608Decoder>();
+        _ancDecoders.clear();
         _ancTranslator = AncTranslator();
         return Error::Ok;
 }
@@ -172,8 +186,21 @@ Subtitle SubtitleBurnMediaIO::tryMetadataSource(const Frame &input) {
         return s;
 }
 
-Subtitle SubtitleBurnMediaIO::tryCea608AncSource(const Frame &input) {
-        if (_ancDecoder.isNull()) return Subtitle();
+Subtitle SubtitleBurnMediaIO::tryAncSource(const Frame &input, CaptionCodec codec) {
+        // Locate the decoder for @p codec inside the configured
+        // @ref _ancDecoders list.  The list has at most one decoder
+        // per codec (see @ref executeCmd(MediaIOCommandOpen&)), so a
+        // linear scan is fine.
+        CaptionDecoder *dec = nullptr;
+        for (size_t i = 0; i < _ancDecoders.size(); ++i) {
+                if (_ancDecoders[i].isNull()) continue;
+                if (_ancDecoders[i]->codec().value() == codec.value()) {
+                        dec = _ancDecoders[i].get();
+                        break;
+                }
+        }
+        if (dec == nullptr) return Subtitle();
+
         const AncPayload::PtrList ancList = input.ancPayloads();
         if (ancList.isEmpty()) return Subtitle();
 
@@ -197,15 +224,16 @@ Subtitle SubtitleBurnMediaIO::tryCea608AncSource(const Frame &input) {
                         if (parsed.first().type() != Variant::TypeCea708Cdp) continue;
                         const Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                         if (cdp.ccData.isEmpty()) continue;
-                        _ancDecoder->pushFrame(frameNumber, ts, cdp.ccData);
+                        dec->pushFrame(frameNumber, ts, cdp.ccData);
                 }
         }
-        // Pull the styled cue (spans + anchor recovered from PAC +
-        // mid-row codes), not just the flat displayedText() — the
-        // renderer wants the SubtitleSpan list with bold/italic/
-        // underline/colour and the SubtitleAnchor so the wire-
-        // carried attributes actually paint.
-        return _ancDecoder->displayedCue();
+        // Pull the styled cue (spans + anchor recovered from
+        // codec-specific style codes), not just the flat
+        // @ref CaptionDecoder::displayedText — the renderer wants
+        // the @ref SubtitleSpan list with bold/italic/underline/colour
+        // and the @ref SubtitleAnchor so the wire-carried attributes
+        // actually paint.
+        return dec->displayedCue();
 }
 
 Subtitle SubtitleBurnMediaIO::pickCue(const Frame &input) {
@@ -229,7 +257,9 @@ Subtitle SubtitleBurnMediaIO::pickCue(const Frame &input) {
                 if (values[i] == SubtitleSource::Metadata.value()) {
                         cue = tryMetadataSource(input);
                 } else if (values[i] == SubtitleSource::Cea608Anc.value()) {
-                        cue = tryCea608AncSource(input);
+                        cue = tryAncSource(input, CaptionCodec(CaptionCodec::Cea608));
+                } else if (values[i] == SubtitleSource::Cea708Anc.value()) {
+                        cue = tryAncSource(input, CaptionCodec(CaptionCodec::Cea708));
                 }
                 if (!cue.isEmpty()) return cue;
         }
@@ -239,11 +269,15 @@ Subtitle SubtitleBurnMediaIO::pickCue(const Frame &input) {
 Error SubtitleBurnMediaIO::burnFrame(const Frame &input, Frame &output) {
         if (!input.isValid()) return Error::Invalid;
 
-        Frame outFrame = Frame();
-        outFrame.metadata() = input.metadata();
-        for (const MediaPayload::Ptr &srcP : input.payloadList()) {
-                if (srcP.isValid()) outFrame.addPayload(srcP);
-        }
+        // CoW copy: preserves payloads (video, audio, ANC), metadata
+        // (including Metadata::Subtitle), captureTime, and
+        // configUpdate.  The paint loop below calls modify() on each
+        // UncompressedVideoPayload slot, which CoW-clones that one
+        // payload's impl — every other payload (notably ANC) stays
+        // shared with the upstream Frame so downstream consumers can
+        // still inspect the source subtitle data and compare it
+        // against the burned-in pixels.
+        Frame outFrame = input;
 
         if (!_enabled) {
                 output = std::move(outFrame);

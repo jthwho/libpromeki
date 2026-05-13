@@ -25,6 +25,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audioencoder.h>
 #include <promeki/audioformat.h>
+#include <promeki/frame.h>
 #include <promeki/buffer.h>
 #include <promeki/deque.h>
 #include <promeki/duration.h>
@@ -98,17 +99,20 @@ namespace {
                                 }
                         }
 
-                        void configure(const MediaConfig &config) override {
+                        void onConfigure(const MediaConfig &config) override {
                                 int32_t kbps = config.getAs<int32_t>(MediaConfig::BitrateKbps);
                                 if (kbps > 0) _bitrateBps = kbps * 1000;
                         }
 
-                        Error submitPayload(const PcmAudioPayload::Ptr &payload) override {
+                        Error submitFrame(const Frame &frame) override {
                                 clearError();
+                                PcmAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
-                                        setError(Error::Invalid, "invalid audio payload");
+                                        setError(Error::Invalid, "no PCM audio payload on frame");
                                         return _lastError;
                                 }
+                                _currentSource = frame;
+                                _videoEchoDone = false;
                                 if (!ensureEncoder(payload->desc())) return _lastError;
                                 if (payload->desc().sampleRate() != _sampleRate ||
                                     payload->desc().channels() != _channels) {
@@ -142,10 +146,28 @@ namespace {
                                 }
 
                                 flushFullFrames();
+
+                                // No AAC packet fired for this submit (the
+                                // encoder is buffering samples for a future
+                                // packet boundary) — emit a video-only
+                                // passthrough Frame so the input's video /
+                                // ANC / metadata still reaches the
+                                // downstream sink.  Without this the video
+                                // for this submit would be stranded in the
+                                // encoder's _currentSource until the next
+                                // submit's first emit re-attaches it,
+                                // dropping the original video frame.
+                                if (!_videoEchoDone && _currentSource.isValid()
+                                    && (!_currentSource.videoPayloads().isEmpty()
+                                        || !_currentSource.ancPayloads().isEmpty())) {
+                                        _outQueue.pushToBack(buildOutputFrame(_currentSource,
+                                                                              CompressedAudioPayload::Ptr()));
+                                        _videoEchoDone = true;
+                                }
                                 return Error::Ok;
                         }
 
-                        CompressedAudioPayload::Ptr receiveCompressedPayload() override {
+                        Frame receiveFrame() override {
                                 if (_outQueue.isEmpty()) {
                                         if (_flushed && !_eosEmitted) {
                                                 _eosEmitted = true;
@@ -153,9 +175,11 @@ namespace {
                                                                   _channels);
                                                 auto      eos = CompressedAudioPayload::Ptr::create(eosDesc);
                                                 eos.modify()->markEndOfStream();
-                                                return eos;
+                                                Frame f;
+                                                f.addPayload(eos);
+                                                return f;
                                         }
-                                        return CompressedAudioPayload::Ptr();
+                                        return Frame();
                                 }
                                 return _outQueue.popFromFront();
                         }
@@ -188,6 +212,8 @@ namespace {
                                 _eosEmitted    = false;
                                 _havePts       = false;
                                 _samplesEmitted = 0;
+                                _currentSource = Frame();
+                                _videoEchoDone = false;
                                 if (_enc != nullptr) {
                                         // fdk-aac has no in-place reset call; close + reopen.
                                         aacEncClose(&_enc);
@@ -391,7 +417,27 @@ namespace {
                                 BufferView view(buf, 0, buf.size());
                                 auto       cap = CompressedAudioPayload::Ptr::create(desc, view, framePcmSamples);
                                 cap.modify()->setPts(ptsForCurrentFrame());
-                                _outQueue.pushToBack(cap);
+                                // The first emit per submitFrame echoes the
+                                // input's video / ANC / metadata via
+                                // buildOutputFrame so downstream sinks see
+                                // the matching essence.  Subsequent emits
+                                // for the same submit (the AAC frame size
+                                // doesn't divide the input's per-frame PCM
+                                // count, so 2 packets sometimes fire from
+                                // one submit at common rates like 29.97 fps
+                                // / 48 kHz) are audio-only — re-echoing the
+                                // same video would deliver the matching
+                                // compressed video twice over RTMP / RTP /
+                                // MP4 and crash the decoder's reference
+                                // chain.
+                                if (_videoEchoDone) {
+                                        Frame audioOnly;
+                                        audioOnly.addPayload(cap);
+                                        _outQueue.pushToBack(std::move(audioOnly));
+                                } else {
+                                        _outQueue.pushToBack(buildOutputFrame(_currentSource, std::move(cap)));
+                                        _videoEchoDone = true;
+                                }
                                 _samplesEmitted += framePcmSamples;
                         }
 
@@ -402,13 +448,25 @@ namespace {
                         uint32_t           _maxOutBytes  = 0;
                         int32_t            _bitrateBps   = 0;     // 0 = pick at ensureEncoder
                         int32_t            _aot          = 2;     // AOT_AAC_LC
-                        List<int16_t>      _pendingS16;
-                        Deque<CompressedAudioPayload::Ptr> _outQueue;
+                        List<int16_t> _pendingS16;
+                        // Output queue holds pre-paired Frames (built via
+                        // buildOutputFrame(_currentSource, pkt) at emission
+                        // time) so the most-recent source Frame's video /
+                        // ANC / metadata echo through downstream.
+                        Deque<Frame> _outQueue;
+                        Frame        _currentSource;
                         MediaTimeStamp     _basePts;
                         bool               _havePts     = false;
                         size_t             _samplesEmitted = 0;
                         bool               _flushed     = false;
                         bool               _eosEmitted  = false;
+                        // Latches when the first AAC packet of the current
+                        // submitFrame's input has been emitted with the
+                        // input's video / ANC / metadata echoed onto its
+                        // output Frame.  Reset to @c false at the top of
+                        // every @c submitFrame.  See the rationale in
+                        // @c emitPacket.
+                        bool               _videoEchoDone = false;
         };
 
         // =============================================================================
@@ -426,19 +484,21 @@ namespace {
                                 }
                         }
 
-                        void configure(const MediaConfig &cfg) override {
+                        void onConfigure(const MediaConfig &cfg) override {
                                 float sr = cfg.getAs<float>(MediaConfig::AudioRate);
                                 if (sr > 0.0f) _outRate = sr;
                                 int32_t ch = cfg.getAs<int32_t>(MediaConfig::AudioChannels);
                                 if (ch > 0) _outChannels = static_cast<unsigned int>(ch);
                         }
 
-                        Error submitPayload(const CompressedAudioPayload::Ptr &payload) override {
+                        Error submitFrame(const Frame &frame) override {
                                 clearError();
+                                CompressedAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid()) {
-                                        setError(Error::Invalid, "invalid payload");
+                                        setError(Error::Invalid, "no compressed audio payload on frame");
                                         return _lastError;
                                 }
+                                _currentSource = frame;
                                 if (!ensureDecoder(payload->desc())) return _lastError;
 
                                 if (payload->planeCount() == 0) return Error::Ok;
@@ -487,8 +547,8 @@ namespace {
                                 return Error::Ok;
                         }
 
-                        PcmAudioPayload::Ptr receiveAudioPayload() override {
-                                if (_outQueue.isEmpty()) return PcmAudioPayload::Ptr();
+                        Frame receiveFrame() override {
+                                if (_outQueue.isEmpty()) return Frame();
                                 return _outQueue.popFromFront();
                         }
 
@@ -552,14 +612,18 @@ namespace {
                                 BufferView view(buf, 0, buf.size());
                                 auto       pcm = PcmAudioPayload::Ptr::create(desc, static_cast<size_t>(frameSize),
                                                                               view);
-                                _outQueue.pushToBack(pcm);
+                                _outQueue.pushToBack(buildOutputFrame(_currentSource, std::move(pcm)));
                         }
 
-                        HANDLE_AACDECODER             _dec       = nullptr;
-                        float                         _outRate   = 48000.0f;
-                        unsigned int                  _outChannels = 2;
-                        Deque<PcmAudioPayload::Ptr>   _outQueue;
-                        bool                          _flushed   = false;
+                        HANDLE_AACDECODER _dec = nullptr;
+                        float             _outRate = 48000.0f;
+                        unsigned int      _outChannels = 2;
+                        // Output queue holds pre-paired Frames (built via
+                        // buildOutputFrame at emit time) so source-side
+                        // video / ANC / metadata echo through.
+                        Deque<Frame>      _outQueue;
+                        Frame             _currentSource;
+                        bool              _flushed = false;
         };
 
         // =============================================================================

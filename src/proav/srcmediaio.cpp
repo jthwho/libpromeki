@@ -9,6 +9,7 @@
 #include <promeki/mediaioportgroup.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
+#include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/pcmaudiopayload.h>
@@ -154,20 +155,22 @@ Error SrcMediaIO::convertFrame(const Frame &input, Frame &output) {
                 return Error::Invalid;
         }
 
-        Frame outFrame = Frame();
-        outFrame.metadata() = input.metadata();
-
-        // Video is pass-through — just forward the payload pointers.
-        for (const VideoPayload::Ptr &srcVp : input.videoPayloads()) {
-                if (srcVp.isValid()) outFrame.addPayload(srcVp);
-        }
-
-        // Audio processing runs through the payload-native
-        // @ref PcmAudioPayload::convert; push the converted
-        // payload directly, no legacy bridge round-trip.
-        for (const AudioPayload::Ptr &srcAp : input.audioPayloads()) {
-                if (!srcAp.isValid()) continue;
-                const auto *srcUap = srcAp->as<PcmAudioPayload>();
+        // CoW copy: preserves metadata, captureTime, configUpdate, and
+        // every non-audio payload (video, ANC) verbatim.  We then walk
+        // the payload list and replace each PCM audio slot with its
+        // converted form — CoW detaches the payload list before the
+        // assignment, so the upstream Frame is not mutated.  Keeping
+        // ANC payloads shared with the upstream Frame is what lets
+        // the downstream caption-emitting encoders still see the
+        // source ANC packets when an SRC bridge is spliced into the
+        // pipeline.
+        Frame                  outFrame = input;
+        MediaPayload::PtrList &plist = outFrame.payloadList();
+        for (size_t i = 0; i < plist.size(); ++i) {
+                MediaPayload::Ptr &slot = plist[i];
+                if (!slot.isValid()) continue;
+                if (slot->kind() != MediaPayloadKind::Audio) continue;
+                const auto *srcUap = slot->as<PcmAudioPayload>();
                 if (srcUap == nullptr) {
                         promekiErr("SrcMediaIO: compressed audio payload "
                                    "reached SRC — expected uncompressed PCM");
@@ -184,7 +187,7 @@ Error SrcMediaIO::convertFrame(const Frame &input, Frame &output) {
                 } else {
                         dstPayload = PcmAudioPayload::Ptr::create(*srcUap);
                 }
-                outFrame.addPayload(dstPayload);
+                slot = MediaPayload::Ptr(dstPayload);
         }
 
         output = std::move(outFrame);

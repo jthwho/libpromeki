@@ -47,6 +47,82 @@ TEST_CASE("AncDesc: unbound raster but with allowedCategories is valid") {
 }
 
 // ============================================================================
+// Paired stream indices
+// ============================================================================
+
+TEST_CASE("AncDesc: paired stream indices default to -1 (unbound)") {
+        AncDesc d;
+        CHECK(d.pairedVideoStreamIndex() == -1);
+        CHECK(d.pairedAudioStreamIndex() == -1);
+
+        AncDesc bound(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        CHECK(bound.pairedVideoStreamIndex() == -1);
+        CHECK(bound.pairedAudioStreamIndex() == -1);
+}
+
+TEST_CASE("AncDesc: paired stream indices round-trip through setters") {
+        AncDesc d;
+        d.setPairedVideoStreamIndex(2);
+        d.setPairedAudioStreamIndex(1);
+        CHECK(d.pairedVideoStreamIndex() == 2);
+        CHECK(d.pairedAudioStreamIndex() == 1);
+        d.setPairedVideoStreamIndex(-1);
+        CHECK(d.pairedVideoStreamIndex() == -1);
+        CHECK(d.pairedAudioStreamIndex() == 1);
+}
+
+TEST_CASE("AncDesc: paired stream indices participate in formatEquals / operator==") {
+        AncDesc a(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        AncDesc b = a;
+        CHECK(a == b);
+        CHECK(a.formatEquals(b));
+
+        b.setPairedVideoStreamIndex(0);
+        CHECK_FALSE(a.formatEquals(b));
+        CHECK(a != b);
+
+        a.setPairedVideoStreamIndex(0);
+        CHECK(a.formatEquals(b));
+        CHECK(a == b);
+
+        b.setPairedAudioStreamIndex(1);
+        CHECK_FALSE(a.formatEquals(b));
+        a.setPairedAudioStreamIndex(1);
+        CHECK(a.formatEquals(b));
+}
+
+// ============================================================================
+// CoW detach — mutators on a shared handle don't bleed into the source
+// ============================================================================
+
+TEST_CASE("AncDesc: copying a handle shares storage, mutation detaches") {
+        AncDesc original(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        original.setPairedVideoStreamIndex(0);
+        AncDesc copy = original;
+
+        // Both observe the same fields prior to any mutation.
+        CHECK(copy == original);
+        CHECK(copy.pairedVideoStreamIndex() == 0);
+
+        // Mutate the copy; original must not change.
+        copy.setPairedVideoStreamIndex(1);
+        CHECK(copy.pairedVideoStreamIndex() == 1);
+        CHECK(original.pairedVideoStreamIndex() == 0);
+
+        // Mutate via metadata() &; original metadata must be untouched.
+        copy.metadata().set(Metadata::Title, String("Copy"));
+        CHECK(copy.metadata().get(Metadata::Title).get<String>() == "Copy");
+        CHECK_FALSE(original.metadata().contains(Metadata::Title));
+
+        // setAllowedFormats also detaches.
+        AncFormat::IDList fmts;
+        fmts.pushToBack(AncFormat::Cea708);
+        copy.setAllowedFormats(fmts);
+        CHECK(copy.allowedFormats().size() == 1);
+        CHECK(original.allowedFormats().isEmpty());
+}
+
+// ============================================================================
 // acceptsFormat — filter logic
 // ============================================================================
 
@@ -136,6 +212,8 @@ TEST_CASE("AncDesc: DataStream round-trip preserves every field") {
         cats.pushToBack(AncCategory::Timecode);
         original.setAllowedCategories(std::move(cats));
 
+        original.setPairedVideoStreamIndex(0);
+        original.setPairedAudioStreamIndex(2);
         original.metadata().set(Metadata::Title, String("Test ANC stream"));
 
         Buffer         storage(8192);
@@ -157,6 +235,8 @@ TEST_CASE("AncDesc: DataStream round-trip preserves every field") {
         CHECK(round == original);
         CHECK(round.allowedFormats().size() == 2);
         CHECK(round.allowedCategories().size() == 2);
+        CHECK(round.pairedVideoStreamIndex() == 0);
+        CHECK(round.pairedAudioStreamIndex() == 2);
         CHECK(round.metadata().get(Metadata::Title).get<String>() == "Test ANC stream");
 }
 

@@ -83,7 +83,14 @@ class SubtitleSpan {
                 /** @brief Constructs an unstyled span carrying @p text. */
                 explicit SubtitleSpan(String text);
 
-                /** @brief Full-style constructor. */
+                /** @brief Style constructor — bold / italic / underline + foreground colour.
+                 *
+                 * The richer 708-shaped fields (@ref backgroundColor,
+                 * @ref edgeStyle, @ref edgeColor, @ref fontFace,
+                 * @ref foregroundOpacity, @ref backgroundOpacity,
+                 * @ref edgeOpacity) default to their codec-neutral
+                 * "inherit / no override" values and can be applied
+                 * with the matching mutators after construction. */
                 SubtitleSpan(String text, bool bold, bool italic, bool underline, Color color = Color());
 
                 SubtitleSpan(const SubtitleSpan &);
@@ -116,6 +123,35 @@ class SubtitleSpan {
                  */
                 const Color &color() const;
 
+                /** @brief Background colour override (CEA-708 SetPenColor
+                 *         @c bg_color).  Default-invalid means
+                 *         "inherit". */
+                const Color &backgroundColor() const;
+
+                /** @brief Edge colour (CEA-708 SetPenColor
+                 *         @c edge_color).  Default-invalid means
+                 *         "inherit". */
+                const Color &edgeColor() const;
+
+                /** @brief Edge effect style (CEA-708 SetPenAttributes
+                 *         @c edge_type).  Default @c None. */
+                const SubtitleEdgeStyle &edgeStyle() const;
+
+                /** @brief Font face tag (CEA-708 SetPenAttributes
+                 *         @c font_tag).  Default @c Default — renderer
+                 *         picks. */
+                const SubtitleFontFace &fontFace() const;
+
+                /** @brief Foreground component opacity (CEA-708 SetPenColor
+                 *         @c fg_opacity).  Default @c Solid. */
+                const SubtitleOpacity &foregroundOpacity() const;
+
+                /** @brief Background component opacity.  Default @c Solid. */
+                const SubtitleOpacity &backgroundOpacity() const;
+
+                /** @brief Edge component opacity.  Default @c Solid. */
+                const SubtitleOpacity &edgeOpacity() const;
+
                 /// @brief @c true when this span carries any style override.
                 bool hasStyle() const;
 
@@ -129,6 +165,13 @@ class SubtitleSpan {
                 void setItalic(bool v);
                 void setUnderline(bool v);
                 void setColor(const Color &v);
+                void setBackgroundColor(const Color &v);
+                void setEdgeColor(const Color &v);
+                void setEdgeStyle(const SubtitleEdgeStyle &v);
+                void setFontFace(const SubtitleFontFace &v);
+                void setForegroundOpacity(const SubtitleOpacity &v);
+                void setBackgroundOpacity(const SubtitleOpacity &v);
+                void setEdgeOpacity(const SubtitleOpacity &v);
 
                 // -- Comparison + diagnostics -----------------------------
 
@@ -301,6 +344,13 @@ class Subtitle {
                 /** @brief 9-position anchor. */
                 const SubtitleAnchor &anchor() const;
 
+                /** @brief Display mode (per-cue PopOn / PaintOn / RollUp,
+                 *         or @c Default to let the encoder pick).  Honoured
+                 *         by @ref Cea608Encoder and @ref Cea708Encoder
+                 *         when emitting the wire transaction for this
+                 *         cue. */
+                const CaptionMode &mode() const;
+
                 /** @brief Pixel-space bounding-box hint; @c isValid() false when unset. */
                 const Rect2Di32 &region() const;
 
@@ -327,9 +377,49 @@ class Subtitle {
                 void setSpans(SubtitleSpan::List v);
 
                 void setAnchor(const SubtitleAnchor &v);
+                void setMode(const CaptionMode &v);
                 void setRegion(const Rect2Di32 &v);
                 void setSpeaker(const String &v);
                 void setMetadata(const Metadata &v);
+
+                // -- Layout helpers ---------------------------------------
+
+                /**
+                 * @brief Returns a copy of this cue whose spans have
+                 *        been re-laid out as multiple rows that each
+                 *        fit within @p maxCols codepoints, with hard
+                 *        @c '\n' boundaries marking each row break.
+                 *
+                 * The layout honours explicit @c '\n' breaks in the
+                 * source text first (accept the author's row layout
+                 * when it fits); when it doesn't, falls back to
+                 * balanced minimax word-wrap via @ref TextWrap.
+                 * Style is preserved per span: a styled span that
+                 * crosses a wrap boundary becomes two consecutive
+                 * spans with the same style.  Row breaks are emitted
+                 * as a dedicated unstyled @c "\n" span between rows.
+                 *
+                 * Used by the CEA-608 and CEA-708 encoders to fit cue
+                 * text inside their fixed-width caption windows.
+                 * Caption codecs walk the returned cue's spans and
+                 * treat literal @c '\n' as a row break.
+                 *
+                 * @param maxCols Maximum codepoint width per row.
+                 *                Non-positive values disable
+                 *                wrapping (one row).
+                 * @param maxRows Soft target row count.  When set,
+                 *                the explicit-breaks attempt only
+                 *                accepts a layout whose row count
+                 *                fits this cap; otherwise it falls
+                 *                through to balanced re-flow.
+                 *                Non-positive means no preference.
+                 * @return Wrapped cue.  All non-text fields (start,
+                 *         end, anchor, mode, region, speaker,
+                 *         metadata) carry over unchanged.  When this
+                 *         cue's text is empty, the wrapped cue is
+                 *         this cue.
+                 */
+                Subtitle wrapped(int maxCols, int maxRows) const;
 
                 // -- Predicates -------------------------------------------
 

@@ -12,6 +12,7 @@
 #include <promeki/videodecoder.h>
 #include <promeki/pixelformat.h>
 #include <promeki/deque.h>
+#include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -22,9 +23,11 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar,
  * YCbCr 4:2:0 planar/NV12) to JPEG compressed form.  Each call to
- * @c submitFrame runs one JPEG encode through libjpeg-turbo and
- * queues the resulting compressed bytes as a @ref CompressedVideoPayload;
- * @ref receiveCompressedPayload pops the head of that queue.
+ * @ref submitFrame runs one JPEG encode through libjpeg-turbo and
+ * queues an output @ref Frame whose @ref CompressedVideoPayload carries
+ * the resulting bytes (plus the source Frame's audio / ANC / metadata
+ * echoed through via the base helper); @ref receiveFrame pops the head
+ * of that queue.
  *
  * Default subsampling is 4:2:2 for RFC 2435 RTP compatibility.
  *
@@ -65,11 +68,11 @@ class JpegVideoEncoder : public VideoEncoder {
                  */
                 static List<int> supportedInputList();
 
-                void                        configure(const MediaConfig &config) override;
-                Error                       submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
-                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
-                Error                       flush() override;
-                Error                       reset() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
 
                 /** @brief Returns the JPEG quality (1-100). */
                 int quality() const { return _quality; }
@@ -82,24 +85,27 @@ class JpegVideoEncoder : public VideoEncoder {
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
 
-                int                                _quality = 85;
-                Subsampling                        _subsampling = Subsampling422;
-                PixelFormat                        _outputPd;
-                int                                _capacity = 8;
-                Deque<CompressedVideoPayload::Ptr> _queue;
-                bool                               _capacityWarned = false;
+                int           _quality = 85;
+                Subsampling   _subsampling = Subsampling422;
+                PixelFormat   _outputPd;
+                int           _capacity = 8;
+                Deque<Frame>  _queue;
+                bool          _capacityWarned = false;
 };
 
 /**
  * @brief JPEG @ref VideoDecoder built on libjpeg-turbo.
  * @ingroup proav
  *
- * Symmetric counterpart to @ref JpegVideoEncoder — incoming
- * @ref CompressedVideoPayload bytes are handed to libjpeg-turbo for decode and
- * the resulting @ref UncompressedVideoPayload is queued for @ref receiveVideoPayload.
- * The decoder's target uncompressed pixel description is set via
- * @ref MediaConfig::OutputPixelFormat; when unset, the first
- * declared decode target for the input JPEG sub-format is used.
+ * Symmetric counterpart to @ref JpegVideoEncoder — incoming compressed
+ * bytes are extracted from the submitted Frame's
+ * @ref CompressedVideoPayload, handed to libjpeg-turbo for decode, and
+ * the resulting @ref UncompressedVideoPayload rides on the output
+ * @ref Frame that @ref receiveFrame returns (with the source Frame's
+ * audio / metadata echoed through via the base helper).  The decoder's
+ * target uncompressed pixel description is set via
+ * @ref MediaConfig::OutputPixelFormat; when unset, the first declared
+ * decode target for the input JPEG sub-format is used.
  *
  * Registered against @ref VideoCodec::JPEG.
  *
@@ -118,21 +124,21 @@ class JpegVideoDecoder : public VideoDecoder {
                  */
                 static List<int> supportedOutputList();
 
-                void                          configure(const MediaConfig &config) override;
-                Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;
-                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
-                Error                         flush() override;
-                Error                         reset() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
 
         private:
                 struct Impl; ///< pImpl shielding consumers from @c \<jpeglib.h\>.
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
 
-                PixelFormat                          _outputPd;
-                int                                  _capacity = 8;
-                Deque<UncompressedVideoPayload::Ptr> _queue;
-                bool                                 _capacityWarned = false;
+                PixelFormat  _outputPd;
+                int          _capacity = 8;
+                Deque<Frame> _queue;
+                bool         _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

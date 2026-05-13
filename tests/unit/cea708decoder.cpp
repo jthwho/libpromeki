@@ -112,6 +112,49 @@ TEST_CASE("Cea708Decoder: cc_valid=false triples are skipped") {
 // Single-packet decode
 // ============================================================================
 
+TEST_CASE("Cea708Decoder: multi-block packet concatenates same-service bytes before parsing") {
+        // The wire @c block_size field is 5 bits — long command streams
+        // (DefineWindow + many chars + DSW) MUST be split across
+        // multiple service blocks for the same service.  The decoder
+        // must concatenate them before parsing, otherwise the 7-byte
+        // DefineWindow command split across the 31-byte boundary would
+        // be misinterpreted.  This test forges a packet where DFW0
+        // straddles two blocks and verifies the cue still decodes.
+        std::vector<uint8_t> bytes = dfw0(40, true);
+        // Pad with characters so the total stream crosses 31 bytes.
+        for (char c = 'A'; c <= 'Z'; ++c) bytes.push_back(static_cast<uint8_t>(c));
+        // Split into two blocks at offset 5 — splits DFW0 mid-command.
+        std::vector<uint8_t> chunk1(bytes.begin(), bytes.begin() + 5);
+        std::vector<uint8_t> chunk2(bytes.begin() + 5, bytes.end());
+
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(makeService(1, chunk1));
+        pkt.serviceBlocks().pushToBack(makeService(1, chunk2));
+        Cea708Cdp::CcDataList triples = pkt.toCcData();
+
+        Cea708Decoder dec;
+        dec.pushFrame(FrameNumber(0), tsFromMs(0), triples);
+        CHECK(dec.displayedText() == "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+}
+
+TEST_CASE("Cea708Decoder: blocks for other services are not mixed into the configured service stream") {
+        // Two service blocks in one packet: service 1 carries a full
+        // DefineWindow + "AB", service 2 carries a stray byte.  The
+        // decoder's same-service concatenation must skip service 2
+        // entirely when configured for service 1.
+        std::vector<uint8_t> svc1 = dfw0(4, true);
+        svc1.push_back('A');
+        svc1.push_back('B');
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(makeService(1, svc1));
+        pkt.serviceBlocks().pushToBack(makeService(2, {'Z'}));
+        Cea708Cdp::CcDataList triples = pkt.toCcData();
+
+        Cea708Decoder dec; // default service 1
+        dec.pushFrame(FrameNumber(0), tsFromMs(0), triples);
+        CHECK(dec.displayedText() == "AB");
+}
+
 TEST_CASE("Cea708Decoder: DefineWindow(0) + 'HELLO' yields visible text") {
         std::vector<uint8_t> bytes = dfw0(8, true);
         bytes.push_back('H');

@@ -272,6 +272,47 @@ struct Cea608 {
                 static bool decodeMidRow(uint8_t b1, uint8_t b2, CaptionColor &outColor, bool &outItalic,
                                          bool &outUnderline);
 
+                // -- Background attribute codes -----------------------------
+                //
+                // CEA-608-B background attribute codes (EIA-608-B §7.6) live
+                // at @c b1=0x10 (CC1 channel 1) with @c b2 in @c [0x20, 0x2F].
+                // They set the background colour and opacity for subsequent
+                // characters on the row.  Doubled per spec like other
+                // control codes.  This is a *post-EIA-608* extension —
+                // older 608 decoders that don't recognise them treat the
+                // bytes as no-ops, so emitting them is safe.
+
+                /**
+                 * @brief Encodes a CC1 background attribute code.
+                 *
+                 * @param color           Background colour.
+                 * @param semiTransparent @c true for the spec's
+                 *                        "semi-transparent" variant (50%
+                 *                        alpha); @c false for opaque.
+                 * @param[out] b1         First wire byte (pre-parity).
+                 *                        Always @c 0x10 for CC1.
+                 * @param[out] b2         Second wire byte (pre-parity).
+                 *
+                 * Always succeeds.
+                 */
+                static void encodeBgAttribute(CaptionColor color, bool semiTransparent, uint8_t &b1,
+                                              uint8_t &b2);
+
+                /**
+                 * @brief Returns @c true when @c (b1, b2) is a CC1
+                 *        background-attribute code.
+                 */
+                static bool isBgAttribute(uint8_t b1, uint8_t b2);
+
+                /**
+                 * @brief Decodes a CC1 background-attribute code.
+                 *
+                 * @return @c true on success; @c false when @c (b1, b2)
+                 *         is not a recognised background-attribute code.
+                 */
+                static bool decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor,
+                                              bool &outSemiTransparent);
+
                 // -- Null pair (no-op filler) -------------------------------
 
                 /// @brief CEA-608 null filler.  Pre-parity @c (0x00, 0x00);

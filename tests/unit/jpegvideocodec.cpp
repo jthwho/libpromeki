@@ -109,12 +109,12 @@ static CompressedVideoPayload::Ptr encodeOneFrame(const UncompressedVideoPayload
         auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(&sessionCfg);
         if (error(encResult).isError()) return CompressedVideoPayload::Ptr();
         VideoEncoder *enc = value(encResult);
-        Error         err = enc->submitPayload(src);
+        Error err = enc->submitFrame(tests::frameWith(src));
         if (err.isError()) {
                 delete enc;
                 return CompressedVideoPayload::Ptr();
         }
-        CompressedVideoPayload::Ptr pkt = enc->receiveCompressedPayload();
+        CompressedVideoPayload::Ptr pkt = tests::firstCompressedVideo(enc->receiveFrame());
         delete enc;
         return pkt;
 }
@@ -127,12 +127,12 @@ static UncompressedVideoPayload::Ptr decodeOneFrame(const CompressedVideoPayload
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(&cfg);
         if (error(decResult).isError()) return UncompressedVideoPayload::Ptr();
         VideoDecoder *dec = value(decResult);
-        Error         err = dec->submitPayload(pkt);
+        Error err = dec->submitFrame(tests::frameWith(pkt));
         if (err.isError()) {
                 delete dec;
                 return UncompressedVideoPayload::Ptr();
         }
-        UncompressedVideoPayload::Ptr out = dec->receiveVideoPayload();
+        UncompressedVideoPayload::Ptr out = tests::firstUncompressedVideo(dec->receiveFrame());
         delete dec;
         return out;
 }
@@ -263,13 +263,13 @@ TEST_CASE("JpegVideoEncoder_InvalidInput") {
         auto encResult = VideoCodec(VideoCodec::JPEG).createEncoder(nullptr);
         REQUIRE_FALSE(error(encResult).isError());
         VideoEncoder *enc = value(encResult);
-        CHECK(enc->submitPayload(UncompressedVideoPayload::Ptr()).isError());
+        CHECK(enc->submitFrame(Frame()).isError());
         delete enc;
 
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(nullptr);
         REQUIRE_FALSE(error(decResult).isError());
         VideoDecoder *dec = value(decResult);
-        CHECK(dec->submitPayload(CompressedVideoPayload::Ptr()).isError());
+        CHECK(dec->submitFrame(Frame()).isError());
         delete dec;
 }
 
@@ -438,8 +438,8 @@ TEST_CASE("JpegVideoCodec_DecodeDefaultFormat") {
         auto decResult = VideoCodec(VideoCodec::JPEG).createDecoder(&decCfg);
         REQUIRE_FALSE(error(decResult).isError());
         VideoDecoder *dec = value(decResult);
-        CHECK(dec->submitPayload(pkt) == Error::Ok);
-        UncompressedVideoPayload::Ptr decoded = dec->receiveVideoPayload();
+        CHECK(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
+        UncompressedVideoPayload::Ptr decoded = tests::firstUncompressedVideo(dec->receiveFrame());
         delete dec;
         CHECK(decoded.isValid());
         CHECK(decoded->isValid());

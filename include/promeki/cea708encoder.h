@@ -8,7 +8,9 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/captionencoder.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/enums.h>
 #include <promeki/error.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
@@ -69,7 +71,7 @@ struct Cea708EncoderImpl; // Pimpl — defined in cea708encoder.cpp.
  *
  * @see Cea708Cdp, Cea708Service, Cea708DtvccPacket, Cea708Decoder
  */
-class Cea708Encoder {
+class Cea708Encoder : public CaptionEncoder {
         public:
                 /** @brief Encoder configuration. */
                 struct Config {
@@ -88,15 +90,16 @@ class Cea708Encoder {
 
                 Cea708Encoder();
                 explicit Cea708Encoder(Config cfg);
-                ~Cea708Encoder();
-
-                Cea708Encoder(const Cea708Encoder &) = delete;
-                Cea708Encoder &operator=(const Cea708Encoder &) = delete;
-                Cea708Encoder(Cea708Encoder &&) = delete;
-                Cea708Encoder &operator=(Cea708Encoder &&) = delete;
+                ~Cea708Encoder() override;
 
                 /** @brief Returns the configuration this encoder was constructed with. */
                 const Config &config() const;
+
+                /// @copydoc CaptionEncoder::codec
+                CaptionCodec codec() const override { return CaptionCodec(CaptionCodec::Cea708); }
+
+                /// @copydoc CaptionEncoder::frameRate
+                FrameRate frameRate() const override;
 
                 /**
                  * @brief Loads the timeline.  Computes the per-frame
@@ -109,10 +112,10 @@ class Cea708Encoder {
                  *         character payload exceeds the wire-packet
                  *         maximum (one frame's worth of DTVCC bytes).
                  */
-                Error setSubtitles(const SubtitleList &subs);
+                Error setSubtitles(const SubtitleList &subs) override;
 
                 /** @brief Clears the schedule. */
-                void reset();
+                void reset() override;
 
                 /**
                  * @brief Returns the @c CcData triples for frame
@@ -122,7 +125,7 @@ class Cea708Encoder {
                  * Frame numbers are interpreted in the configured
                  * @ref FrameRate.  Calling out of order is allowed.
                  */
-                Cea708Cdp::CcDataList nextFrame(FrameNumber frame) const;
+                Cea708Cdp::CcDataList nextFrame(FrameNumber frame) const override;
 
         private:
                 SharedPtr<Cea708EncoderImpl> _d;

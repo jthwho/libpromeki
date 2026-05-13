@@ -234,10 +234,8 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _framesEncoded = 0;
         _packetsOut = 0;
         _capacityWarned = false;
-        _multiImageWarned = false;
         _closed = false;
         _outputQueue.clear();
-        _pendingSrcFrames.clear();
 
         MediaIOPortGroup *group = addPortGroup("vencoder");
         if (group == nullptr) return Error::Invalid;
@@ -263,7 +261,6 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                 drainEncoderInto();
                 _encoder.clear();
         }
-        _pendingSrcFrames.clear();
         _config = MediaConfig();
         _codec = VideoCodec();
         _capacity = 0;
@@ -272,7 +269,6 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _framesEncoded = 0;
         _packetsOut = 0;
         _capacityWarned = false;
-        _multiImageWarned = false;
         _closed = true;
         return Error::Ok;
 }
@@ -300,54 +296,30 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = cmd.frame;
 
-        // The payload's native pts threads through to the encoded
-        // packet — most encoders record the input pts and stamp it
-        // back on the matching output.  An invalid pts is fine:
-        // downstream callers treat it as "producer didn't set one"
-        // and the codec falls back to its internal frame indexing.
-        auto vids = frame.videoPayloads();
+        // If the source Frame has an uncompressed video payload whose
+        // metadata requests an IDR/keyframe, prime the encoder before
+        // submitting.  No explicit early-return for audio-only frames:
+        // submitFrame will recognise the empty video case and
+        // emit a passthrough Frame via the base helper.
+        UncompressedVideoPayload::Ptr srcPayload = VideoEncoder::selectInputPayload(frame);
+        if (srcPayload.isValid() && srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
+                _encoder->requestKeyframe();
+        }
 
-        if (vids.isEmpty()) {
+        if (!srcPayload.isValid()) {
                 // No image to encode — let the frame pass through so
-                // audio / metadata-only inputs aren't lost.
-                Frame outFrame = Frame();
-                outFrame.metadata() = frame.metadata();
-                for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
-                        if (ap.isValid()) outFrame.addPayload(ap);
-                }
-                _outputQueue.pushToBack(std::move(outFrame));
+                // audio / metadata-only inputs aren't lost.  Build the
+                // pass-through using the base helper (echoes audio /
+                // ANC / metadata) without a compressed payload.
+                _outputQueue.pushToBack(VideoEncoder::buildOutputFrame(frame, CompressedVideoPayload::Ptr()));
                 return Error::Ok;
         }
 
-        if (vids.size() > 1 && !_multiImageWarned) {
-                promekiWarn("VideoEncoderMediaIO: Frame carries %zu video "
-                            "payloads; only payload[0] will be encoded in this cut",
-                            (size_t)vids.size());
-                _multiImageWarned = true;
-        }
-
-        // Cast the VideoPayload::Ptr down to an UncompressedVideoPayload::Ptr
-        // while preserving shared ownership — gives us a mutable
-        // payload handle the submitPayload entry can consume.
-        UncompressedVideoPayload::Ptr srcPayload = sharedPointerCast<UncompressedVideoPayload>(vids[0]);
-        if (srcPayload.isNull()) {
-                promekiErr("VideoEncoderMediaIO: input payload is not "
-                           "uncompressed video — nothing to encode");
-                return Error::InvalidArgument;
-        }
-        if (srcPayload->desc().metadata().getAs<bool>(Metadata::ForceKeyframe)) {
-                _encoder->requestKeyframe();
-        }
-        Error err = _encoder->submitPayload(srcPayload);
+        Error err = _encoder->submitFrame(frame);
         if (err.isError()) {
                 promekiErr("VideoEncoderMediaIO: submitFrame failed: %s", _encoder->lastErrorMessage().cstr());
                 return err;
         }
-        // Record the source frame so the matching packet — which may
-        // not emerge until a later submit if the encoder returned
-        // NEED_MORE_INPUT on this one — can be paired back up with its
-        // original metadata and audio in drainEncoderInto.
-        _pendingSrcFrames.pushToBack(cmd.frame);
         _frameCount++;
         _framesEncoded++;
         drainEncoderInto();
@@ -360,54 +332,25 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 void VideoEncoderMediaIO::drainEncoderInto() {
         if (_encoder.isNull()) return;
         while (true) {
-                CompressedVideoPayload::Ptr outPayload = _encoder->receiveCompressedPayload();
-                if (!outPayload.isValid()) break;
-                if (outPayload->isEndOfStream()) {
-                        // EOS is an encoder-internal signal that the
-                        // session is drained; no need to propagate it
-                        // as its own Frame (the pipeline uses the
-                        // MediaIO close/EOF path for that).
-                        continue;
-                }
+                Frame outFrame = _encoder->receiveFrame();
+                if (!outFrame.isValid()) break;
 
-                // Pair the payload with the oldest queued source
-                // Frame — that's the one that produced this access
-                // unit even if an intervening submit called
-                // drainEncoderInto too.  An empty queue is legitimate
-                // on a late flush if the caller already drained
-                // everything previously; in that case the output
-                // still carries the payload but with no audio /
-                // frame metadata.
-                Frame origin;
-                if (!_pendingSrcFrames.isEmpty()) {
-                        origin = _pendingSrcFrames.front();
-                        _pendingSrcFrames.remove(0);
-                }
-
-                Frame outFrame = Frame();
-                if (origin.isValid()) {
-                        outFrame.metadata() = origin.metadata();
-                        for (const AudioPayload::Ptr &ap : origin.audioPayloads()) {
-                                if (ap.isValid()) outFrame.addPayload(ap);
+                // EOS is an encoder-internal signal that the session
+                // is drained; no need to propagate as its own Frame
+                // (the pipeline uses the MediaIO close/EOF path for
+                // that).  Inspect the frame's compressed payloads for
+                // the marker and drop the frame if present.
+                bool eos = false;
+                for (const VideoPayload::Ptr &vp : outFrame.videoPayloads()) {
+                        if (!vp.isValid()) continue;
+                        CompressedVideoPayload::Ptr cvp = sharedPointerCast<CompressedVideoPayload>(vp);
+                        if (cvp.isValid() && cvp->isEndOfStream()) {
+                                eos = true;
+                                break;
                         }
                 }
+                if (eos) continue;
 
-                // The encoder's receiveCompressedPayload already
-                // returns the access unit as a @ref CompressedVideoPayload
-                // with the codec's pixel format + keyframe /
-                // parameter-set flags copied across.  The origin's
-                // first image supplies the display dimensions on the
-                // descriptor so downstream muxers can size their
-                // track entries correctly.
-                Size2Du32 imgSize;
-                auto      originVids = origin.isValid() ? origin.videoPayloads() : VideoPayload::PtrList();
-                if (!originVids.isEmpty() && originVids[0].isValid()) {
-                        imgSize = originVids[0]->desc().size();
-                }
-                if (imgSize.isValid()) {
-                        outPayload.modify()->desc().setSize(imgSize);
-                }
-                outFrame.addPayload(outPayload);
                 _outputQueue.pushToBack(std::move(outFrame));
                 _packetsOut++;
         }

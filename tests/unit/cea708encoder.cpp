@@ -106,18 +106,73 @@ TEST_CASE("Cea708Encoder: cue with zero-length window is skipped") {
         }
 }
 
-TEST_CASE("Cea708Encoder: oversize cue -> Error::OutOfRange") {
+TEST_CASE("Cea708Encoder: long cue is split into one packet per frame") {
+        // The CDP's 5-bit cc_count budget caps each video frame at
+        // ~31 cc_data triples, and the encoder's per-packet wire
+        // shape (1 service block of <=31 bytes per DTVCC packet)
+        // produces ~17 triples per packet — so a long cue has to be
+        // distributed across consecutive frames, one packet per
+        // frame, starting at the cue's startFrame.
         Cea708Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.windowCols = 32;
         Cea708Encoder enc(cfg);
         SubtitleList  subs;
-        // ~150 chars guarantees the service-block bytes exceed the
-        // 127-byte packet payload budget (DefineWindow 7 bytes + chars
-        // + DSW 2 bytes).
+        // 150 chars guarantees several chunk boundaries (5 chunks at
+        // 31 bytes each, plus the DefineWindow + SetPenAttr prelude
+        // and trailing DSW).  Plenty of cue duration (frames 30..120)
+        // to absorb the multi-frame show transaction.
         String        long150;
         for (int i = 0; i < 150; ++i) long150 += "A";
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), long150));
-        CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Each emitted frame must hold exactly one DTVCC packet —
+        // exactly one cc_type=2 (packet-start) triple, the rest
+        // cc_type=3 (packet-data) triples.  Count the frames that
+        // got triples; a 150-char cue must use at least two.
+        size_t framesWithTriples = 0;
+        for (int64_t f = 30; f < 60; ++f) {
+                const auto triples = enc.nextFrame(FrameNumber(f));
+                if (triples.isEmpty()) continue;
+                ++framesWithTriples;
+                size_t starts = 0;
+                for (size_t i = 0; i < triples.size(); ++i) {
+                        if (triples[i].type == 2) ++starts;
+                        else CHECK(triples[i].type == 3);
+                }
+                CHECK(starts == 1);
+        }
+        CHECK(framesWithTriples >= 2);
+}
+
+TEST_CASE("Cea708Encoder + Cea708Decoder: long cue round-trips through chunking") {
+        // End-to-end test: a cue whose service-block bytes far exceed
+        // the 31-byte block_size limit must recover correctly through
+        // the encoder's multi-block split and the decoder's
+        // same-service concatenation.  Text length is kept under
+        // Cea708Window::MaxCols (42) so single-row window scrolling
+        // doesn't truncate the visible cue independently of chunking.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.windowCols = 42;
+        Cea708Encoder enc(cfg);
+
+        // 38 chars: DefineWindow (7) + SetPenAttr (3) + 38 + DSW (2)
+        // = 50 bytes of service stream — splits into 31 + 19 byte
+        // service blocks within a single DTVCC packet.
+        const String text("Hello world this is a CEA-708 cue test");
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(120), text));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == text);
 }
 
 // ============================================================================
@@ -248,4 +303,217 @@ TEST_CASE("Cea708Encoder::reset clears the schedule") {
         CHECK(enc.nextFrame(FrameNumber(30)).size() > 0);
         enc.reset();
         CHECK(enc.nextFrame(FrameNumber(30)).size() == 0);
+}
+
+// ============================================================================
+// CaptionMode dispatch (per-cue)
+// ============================================================================
+
+TEST_CASE("Cea708Encoder: pop-on cue emits show + hide transactions") {
+        // Default mode (PopOn) emits a Define/Display at startFrame and
+        // a HideWindow at endFrame.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle      cue(tsFromMs(1000), tsFromMs(2000), "X");
+        cue.setMode(CaptionMode::PopOn);
+        subs.append(cue);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Show packet at startFrame.
+        CHECK(enc.nextFrame(FrameNumber(30)).size() > 0);
+        // Hide packet at endFrame.
+        CHECK(enc.nextFrame(FrameNumber(60)).size() > 0);
+}
+
+TEST_CASE("Cea708Encoder: paint-on cue emits show but no hide transaction") {
+        // PaintOn skips the HideWindow boundary so the window stays
+        // visible after the cue's end.  Real "live" captioning.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle      cue(tsFromMs(1000), tsFromMs(2000), "X");
+        cue.setMode(CaptionMode::PaintOn);
+        subs.append(cue);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        CHECK(enc.nextFrame(FrameNumber(30)).size() > 0);
+        // No HideWindow at endFrame for paint-on.
+        CHECK(enc.nextFrame(FrameNumber(60)).size() == 0);
+}
+
+TEST_CASE("Cea708Encoder: roll-up cue emits a multi-row window and no hide") {
+        // RollUp uses a multi-row DefineWindow (so the receiver
+        // scrolls) and skips the HideWindow boundary.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle      cue(tsFromMs(1000), tsFromMs(2000), "X");
+        cue.setMode(CaptionMode::RollUp);
+        subs.append(cue);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Show packet present.
+        const auto t30 = enc.nextFrame(FrameNumber(30));
+        REQUIRE(t30.size() > 0);
+        // No HideWindow at endFrame for roll-up.
+        CHECK(enc.nextFrame(FrameNumber(60)).size() == 0);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: roll-up cue round-trips with mode stamped") {
+        // Encode → decode and verify the decoder recovers
+        // CaptionMode::RollUp because the wire DefineWindow advertised
+        // a row_count > 1.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue(tsAt30fps(30), tsAt30fps(60), "ROLLUP");
+        cue.setMode(CaptionMode::RollUp);
+        in.append(cue);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "ROLLUP");
+        CHECK(out[0].mode().value() == CaptionMode::RollUp.value());
+}
+
+TEST_CASE("Cea708Encoder + Decoder: styled span round-trips italic/underline/edge/font via SPA") {
+        // Encode a cue whose single span carries italic + underline +
+        // edge style + font face.  Decoder must recover all four flags
+        // by parsing the SetPenAttributes (SPA) command we emit before
+        // the character bytes.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+
+        SubtitleSpan span("Q", false, true, true, Color()); // italic + underline
+        span.setEdgeStyle(SubtitleEdgeStyle::Raised);
+        span.setFontFace(SubtitleFontFace::ProportionalSans);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(60), spans, SubtitleAnchor::Default,
+                            Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "Q");
+        REQUIRE(out[0].spans().size() == 1);
+        const SubtitleSpan &gotSpan = out[0].spans()[0];
+        CHECK(gotSpan.italic());
+        CHECK(gotSpan.underline());
+        CHECK(gotSpan.edgeStyle().value() == SubtitleEdgeStyle::Raised.value());
+        CHECK(gotSpan.fontFace().value() == SubtitleFontFace::ProportionalSans.value());
+}
+
+TEST_CASE("Cea708Encoder + Decoder: styled span round-trips fg/bg/edge colour via SPC") {
+        // Colours are quantised to 2-bit-per-channel on the wire, so
+        // we encode with values that survive: pure-red fg (255/0/0),
+        // pure-green bg (0/255/0), pure-blue edge (0/0/255).
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+
+        SubtitleSpan span("X", false, false, false, Color::Red);
+        span.setBackgroundColor(Color::Green);
+        span.setEdgeColor(Color::Blue);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(60), spans, SubtitleAnchor::Default,
+                            Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() == 1);
+        const SubtitleSpan &gotSpan = out[0].spans()[0];
+        // Decoder reconstructs colour from the 2-bit wire form via the
+        // canonical {0, 85, 170, 255} expansion, so a pure-red input
+        // round-trips as r=255, g=0, b=0.
+        CHECK(gotSpan.color().isValid());
+        CHECK(gotSpan.color().r8() == 255);
+        CHECK(gotSpan.color().g8() == 0);
+        CHECK(gotSpan.color().b8() == 0);
+        CHECK(gotSpan.backgroundColor().isValid());
+        CHECK(gotSpan.backgroundColor().g8() == 255);
+        CHECK(gotSpan.edgeColor().isValid());
+        CHECK(gotSpan.edgeColor().b8() == 255);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: multi-style cue recovers separate spans") {
+        // Two spans within a single cue: red italic "RED" + green
+        // underlined "GRN".  The encoder emits SetPenAttributes and
+        // SetPenColor between the two runs; the decoder's per-cell
+        // pen tracking reconstructs both spans.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+
+        SubtitleSpan red("RED", false, true, false, Color::Red);
+        SubtitleSpan grn("GRN", false, false, true, Color::Green);
+        SubtitleSpan::List spans;
+        spans.pushToBack(red);
+        spans.pushToBack(grn);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(60), spans, SubtitleAnchor::Default,
+                            Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "REDGRN");
+        // Decoder reconstructs two spans because the two runs have
+        // different pen states.  Order matches encode.
+        REQUIRE(out[0].spans().size() == 2);
+        CHECK(out[0].spans()[0].text() == "RED");
+        CHECK(out[0].spans()[0].italic());
+        CHECK(out[0].spans()[0].color().r8() == 255);
+        CHECK(out[0].spans()[1].text() == "GRN");
+        CHECK(out[0].spans()[1].underline());
+        CHECK(out[0].spans()[1].color().g8() == 255);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: pop-on cue round-trips with mode stamped") {
+        // Single-row DefineWindow + HideWindow → decoder sees the cue
+        // boundary close on content change and recovers PopOn.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue(tsAt30fps(30), tsAt30fps(60), "POP");
+        cue.setMode(CaptionMode::PopOn);
+        in.append(cue);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "POP");
+        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
 }

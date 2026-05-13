@@ -18,6 +18,7 @@
 #include <promeki/rect.h>
 #include <promeki/string.h>
 #include <promeki/subtitle.h>
+#include <promeki/textwrap.h>
 #include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -37,8 +38,22 @@ struct SubtitleSpanImpl {
                 bool italic = false;
                 /// @brief @c true when the span is rendered with an underline.
                 bool underline = false;
-                /// @brief Per-span colour override; default-invalid means "inherit".
+                /// @brief Per-span foreground colour; default-invalid means "inherit".
                 Color color;
+                /// @brief Per-span background colour; default-invalid means "inherit".
+                Color backgroundColor;
+                /// @brief Per-span edge colour; default-invalid means "inherit".
+                Color edgeColor;
+                /// @brief Edge effect style (CEA-708 SetPenAttributes edge_type).
+                SubtitleEdgeStyle edgeStyle = SubtitleEdgeStyle::None;
+                /// @brief Font face tag (CEA-708 SetPenAttributes font_tag).
+                SubtitleFontFace fontFace = SubtitleFontFace::Default;
+                /// @brief Foreground opacity (CEA-708 SetPenColor fg_opacity).
+                SubtitleOpacity foregroundOpacity = SubtitleOpacity::Solid;
+                /// @brief Background opacity (CEA-708 SetPenColor bg_opacity).
+                SubtitleOpacity backgroundOpacity = SubtitleOpacity::Solid;
+                /// @brief Edge opacity (CEA-708 SetPenColor edge_opacity).
+                SubtitleOpacity edgeOpacity = SubtitleOpacity::Solid;
 
                 SubtitleSpanImpl() = default;
 };
@@ -57,6 +72,8 @@ struct SubtitleImpl {
                 String flatText;
                 /// @brief 9-position layout anchor.
                 SubtitleAnchor anchor;
+                /// @brief Per-cue display mode (Default = encoder picks).
+                CaptionMode mode = CaptionMode::Default;
                 /// @brief Optional pixel-space bounding-box hint.
                 Rect2Di32 region;
                 /// @brief Optional speaker / voice identifier.
@@ -99,6 +116,200 @@ namespace {
                 if (s.underline()) f |= 0x04;
                 return f;
         }
+
+        // ====================================================================
+        // Wrap helpers — used by @ref Subtitle::wrapped to lay out a cue's
+        // styled spans across multiple rows.  Both the CEA-608 and CEA-708
+        // encoders consume @ref Subtitle::wrapped so this is the single
+        // source of truth for caption-grid layout.
+        // ====================================================================
+
+        /// @brief One word inside the cue's flat text plus the index
+        ///        of the source @ref SubtitleSpan it lives in.
+        ///
+        /// Words are tokenised *per span* (not across the flat text)
+        /// so a style boundary that falls between two characters
+        /// without whitespace — e.g. @c <b>RED</b><i>BL</i> — produces
+        /// two distinct words.  @c startPos is the codepoint offset
+        /// of the word inside the cue's flat text and is used to
+        /// detect whether adjacent words in the wrap result need an
+        /// inter-word separator (true wrap boundary) or are visually
+        /// fused (style change mid-word).
+        struct StyledWord {
+                        size_t spanIdx = 0;
+                        String text;
+                        size_t startPos = 0; ///< Absolute codepoint offset in @c cue.text().
+        };
+
+        /// @brief Splits @p cue 's spans into one @ref StyledWord per
+        ///        whitespace-separated run *within each span*.
+        List<StyledWord> tokenizeStyled(const Subtitle &cue) {
+                List<StyledWord>          out;
+                const SubtitleSpan::List &spans = cue.spans();
+                size_t                    spanOffset = 0; // cumulative codepoint count
+                for (size_t s = 0; s < spans.size(); ++s) {
+                        const String &text = spans[s].text();
+                        const size_t  n = text.length();
+                        size_t        i = 0;
+                        while (i < n) {
+                                while (i < n && text.charAt(i).isSpace()) ++i;
+                                if (i >= n) break;
+                                const size_t wStart = i;
+                                while (i < n && !text.charAt(i).isSpace()) ++i;
+                                StyledWord w;
+                                w.spanIdx = s;
+                                w.text = text.substr(wStart, i - wStart);
+                                w.startPos = spanOffset + wStart;
+                                out.pushToBack(w);
+                        }
+                        spanOffset += n;
+                }
+                return out;
+        }
+
+        /// @brief Returns @c true when @p b begins at the codepoint
+        ///        immediately after @p a in the cue's flat text — i.e.
+        ///        no whitespace ran between them.
+        bool wordsAreAdjacent(const StyledWord &a, const StyledWord &b) {
+                return a.startPos + a.text.length() == b.startPos;
+        }
+
+        /// @brief Joins a half-open word range into a single
+        ///        @ref SubtitleSpan list, fusing consecutive same-
+        ///        span words and inserting single-space separators
+        ///        between true wrap-boundary adjacencies only.
+        SubtitleSpan::List rowSpansFromWords(const List<StyledWord>   &words,
+                                              const SubtitleSpan::List &srcSpans, size_t wlo,
+                                              size_t whi) {
+                SubtitleSpan::List out;
+                size_t             i = wlo;
+                bool               firstRun = true;
+                while (i < whi) {
+                        const size_t runSpan = words[i].spanIdx;
+                        String       runText;
+                        size_t       j = i;
+                        while (j < whi && words[j].spanIdx == runSpan) {
+                                if (j > i) {
+                                        if (!wordsAreAdjacent(words[j - 1], words[j])) {
+                                                runText += " ";
+                                        }
+                                }
+                                runText += words[j].text;
+                                ++j;
+                        }
+                        if (!firstRun && i > wlo) {
+                                if (!wordsAreAdjacent(words[i - 1], words[i])) {
+                                        runText = String(" ") + runText;
+                                }
+                        }
+                        firstRun = false;
+                        if (runSpan < srcSpans.size()) {
+                                const SubtitleSpan &src = srcSpans[runSpan];
+                                SubtitleSpan        wrapped(runText, src.bold(), src.italic(),
+                                                            src.underline(), src.color());
+                                wrapped.setBackgroundColor(src.backgroundColor());
+                                wrapped.setEdgeColor(src.edgeColor());
+                                wrapped.setEdgeStyle(src.edgeStyle());
+                                wrapped.setFontFace(src.fontFace());
+                                wrapped.setForegroundOpacity(src.foregroundOpacity());
+                                wrapped.setBackgroundOpacity(src.backgroundOpacity());
+                                wrapped.setEdgeOpacity(src.edgeOpacity());
+                                out.pushToBack(std::move(wrapped));
+                        } else {
+                                out.pushToBack(SubtitleSpan(runText));
+                        }
+                        i = j;
+                }
+                return out;
+        }
+
+        /// @brief Range of words belonging to one explicit
+        ///        @c '\n'-delimited line of the cue's flat text.
+        struct ExplicitRowRange {
+                        size_t startWord = 0;
+                        size_t endWord = 0;
+                        size_t width = 0;
+        };
+
+        /// @brief Groups @p words by @c '\n'-delimited lines from the
+        ///        cue's @p flat text.
+        List<ExplicitRowRange> explicitRowRanges(const List<StyledWord> &words, const String &flat) {
+                List<ExplicitRowRange> ranges;
+                const size_t           n = flat.length();
+                size_t                 wi = 0;
+                size_t                 lineStart = 0;
+                while (lineStart <= n) {
+                        size_t lineEnd = lineStart;
+                        while (lineEnd < n && flat.charAt(lineEnd) != '\n') ++lineEnd;
+                        ExplicitRowRange r;
+                        r.startWord = wi;
+                        size_t rowChars = 0;
+                        bool   firstWordInRow = true;
+                        while (wi < words.size() && words[wi].startPos < lineEnd) {
+                                if (!firstWordInRow) {
+                                        if (!wordsAreAdjacent(words[wi - 1], words[wi])) ++rowChars;
+                                }
+                                rowChars += words[wi].text.length();
+                                firstWordInRow = false;
+                                ++wi;
+                        }
+                        r.endWord = wi;
+                        r.width = rowChars;
+                        if (r.endWord > r.startWord) ranges.pushToBack(r);
+                        if (lineEnd >= n) break;
+                        lineStart = lineEnd + 1;
+                }
+                return ranges;
+        }
+
+        /// @brief Builds the per-row layout for @p cue.  Returns one
+        ///        @ref SubtitleSpan::List per physical row.  Tries
+        ///        explicit @c '\n'-break layout first; falls back to
+        ///        balanced minimax word-wrap when explicit breaks
+        ///        don't fit @p maxCols / @p maxRows.
+        List<SubtitleSpan::List> layoutRows(const Subtitle &cue, int maxCols, int maxRows) {
+                List<SubtitleSpan::List> out;
+                List<StyledWord>         words = tokenizeStyled(cue);
+                if (words.isEmpty()) return out;
+                const SubtitleSpan::List &srcSpans = cue.spans();
+
+                // -- Phase 1: explicit-break attempt -------------------
+                if (maxCols > 0) {
+                        List<ExplicitRowRange> ranges = explicitRowRanges(words, cue.text());
+                        const bool             countOk =
+                                (maxRows <= 0) || (static_cast<int>(ranges.size()) <= maxRows);
+                        bool widthOk = true;
+                        for (size_t i = 0; i < ranges.size(); ++i) {
+                                if (ranges[i].width > static_cast<size_t>(maxCols)) {
+                                        widthOk = false;
+                                        break;
+                                }
+                        }
+                        if (!ranges.isEmpty() && widthOk && countOk) {
+                                for (size_t i = 0; i < ranges.size(); ++i) {
+                                        out.pushToBack(rowSpansFromWords(words, srcSpans,
+                                                                          ranges[i].startWord,
+                                                                          ranges[i].endWord));
+                                }
+                                return out;
+                        }
+                }
+
+                // -- Phase 2: balanced re-flow over the whole cue ------
+                List<size_t> widths;
+                widths.reserve(words.size());
+                for (size_t i = 0; i < words.size(); ++i) widths.pushToBack(words[i].text.length());
+
+                TextWrap::Config cfg;
+                cfg.maxCols = maxCols;
+                cfg.maxRows = maxRows;
+                cfg.policy = TextWrap::Policy::Balanced;
+                List<size_t> breaks = TextWrap::rowBreaks(widths, cfg);
+                for (size_t r = 0; r + 1 < breaks.size(); ++r) {
+                        out.pushToBack(rowSpansFromWords(words, srcSpans, breaks[r], breaks[r + 1]));
+                }
+                return out;
+        }
 } // namespace
 
 // ============================================================================
@@ -131,13 +342,28 @@ SubtitleSpan &SubtitleSpan::operator=(SubtitleSpan &&) noexcept = default;
 // SubtitleSpan — accessors / mutators
 // ============================================================================
 
-const String &SubtitleSpan::text() const { return _d->text; }
-bool          SubtitleSpan::bold() const { return _d->bold; }
-bool          SubtitleSpan::italic() const { return _d->italic; }
-bool          SubtitleSpan::underline() const { return _d->underline; }
-const Color  &SubtitleSpan::color() const { return _d->color; }
+const String            &SubtitleSpan::text() const { return _d->text; }
+bool                     SubtitleSpan::bold() const { return _d->bold; }
+bool                     SubtitleSpan::italic() const { return _d->italic; }
+bool                     SubtitleSpan::underline() const { return _d->underline; }
+const Color             &SubtitleSpan::color() const { return _d->color; }
+const Color             &SubtitleSpan::backgroundColor() const { return _d->backgroundColor; }
+const Color             &SubtitleSpan::edgeColor() const { return _d->edgeColor; }
+const SubtitleEdgeStyle &SubtitleSpan::edgeStyle() const { return _d->edgeStyle; }
+const SubtitleFontFace  &SubtitleSpan::fontFace() const { return _d->fontFace; }
+const SubtitleOpacity   &SubtitleSpan::foregroundOpacity() const { return _d->foregroundOpacity; }
+const SubtitleOpacity   &SubtitleSpan::backgroundOpacity() const { return _d->backgroundOpacity; }
+const SubtitleOpacity   &SubtitleSpan::edgeOpacity() const { return _d->edgeOpacity; }
 
-bool SubtitleSpan::hasStyle() const { return _d->bold || _d->italic || _d->underline || _d->color.isValid(); }
+bool SubtitleSpan::hasStyle() const {
+        return _d->bold || _d->italic || _d->underline || _d->color.isValid()
+                || _d->backgroundColor.isValid() || _d->edgeColor.isValid()
+                || _d->edgeStyle.value() != SubtitleEdgeStyle::None.value()
+                || _d->fontFace.value() != SubtitleFontFace::Default.value()
+                || _d->foregroundOpacity.value() != SubtitleOpacity::Solid.value()
+                || _d->backgroundOpacity.value() != SubtitleOpacity::Solid.value()
+                || _d->edgeOpacity.value() != SubtitleOpacity::Solid.value();
+}
 bool SubtitleSpan::isEmpty() const { return _d->text.isEmpty(); }
 
 void SubtitleSpan::setText(String v) { _d.modify()->text = std::move(v); }
@@ -145,10 +371,23 @@ void SubtitleSpan::setBold(bool v) { _d.modify()->bold = v; }
 void SubtitleSpan::setItalic(bool v) { _d.modify()->italic = v; }
 void SubtitleSpan::setUnderline(bool v) { _d.modify()->underline = v; }
 void SubtitleSpan::setColor(const Color &v) { _d.modify()->color = v; }
+void SubtitleSpan::setBackgroundColor(const Color &v) { _d.modify()->backgroundColor = v; }
+void SubtitleSpan::setEdgeColor(const Color &v) { _d.modify()->edgeColor = v; }
+void SubtitleSpan::setEdgeStyle(const SubtitleEdgeStyle &v) { _d.modify()->edgeStyle = v; }
+void SubtitleSpan::setFontFace(const SubtitleFontFace &v) { _d.modify()->fontFace = v; }
+void SubtitleSpan::setForegroundOpacity(const SubtitleOpacity &v) { _d.modify()->foregroundOpacity = v; }
+void SubtitleSpan::setBackgroundOpacity(const SubtitleOpacity &v) { _d.modify()->backgroundOpacity = v; }
+void SubtitleSpan::setEdgeOpacity(const SubtitleOpacity &v) { _d.modify()->edgeOpacity = v; }
 
 bool SubtitleSpan::operator==(const SubtitleSpan &o) const {
         return _d->bold == o._d->bold && _d->italic == o._d->italic && _d->underline == o._d->underline
-                && _d->color == o._d->color && _d->text == o._d->text;
+                && _d->color == o._d->color && _d->backgroundColor == o._d->backgroundColor
+                && _d->edgeColor == o._d->edgeColor
+                && _d->edgeStyle.value() == o._d->edgeStyle.value()
+                && _d->fontFace.value() == o._d->fontFace.value()
+                && _d->foregroundOpacity.value() == o._d->foregroundOpacity.value()
+                && _d->backgroundOpacity.value() == o._d->backgroundOpacity.value()
+                && _d->edgeOpacity.value() == o._d->edgeOpacity.value() && _d->text == o._d->text;
 }
 
 // ============================================================================
@@ -162,6 +401,23 @@ JsonObject SubtitleSpan::toJson() const {
         if (_d->italic) obj.set("italic", true);
         if (_d->underline) obj.set("underline", true);
         if (_d->color.isValid()) obj.set("color", _d->color.toString());
+        if (_d->backgroundColor.isValid()) obj.set("backgroundColor", _d->backgroundColor.toString());
+        if (_d->edgeColor.isValid()) obj.set("edgeColor", _d->edgeColor.toString());
+        if (_d->edgeStyle.value() != SubtitleEdgeStyle::None.value()) {
+                obj.set("edgeStyle", _d->edgeStyle.valueName());
+        }
+        if (_d->fontFace.value() != SubtitleFontFace::Default.value()) {
+                obj.set("fontFace", _d->fontFace.valueName());
+        }
+        if (_d->foregroundOpacity.value() != SubtitleOpacity::Solid.value()) {
+                obj.set("foregroundOpacity", _d->foregroundOpacity.valueName());
+        }
+        if (_d->backgroundOpacity.value() != SubtitleOpacity::Solid.value()) {
+                obj.set("backgroundOpacity", _d->backgroundOpacity.valueName());
+        }
+        if (_d->edgeOpacity.value() != SubtitleOpacity::Solid.value()) {
+                obj.set("edgeOpacity", _d->edgeOpacity.valueName());
+        }
         return obj;
 }
 
@@ -187,10 +443,28 @@ String SubtitleSpan::toString() const {
 }
 
 DataStream &operator<<(DataStream &stream, const SubtitleSpan &span) {
+        // Wire layout:
+        //   String  text
+        //   uint8_t styleFlags          (bit 0 bold, 1 italic, 2 underline)
+        //   Color   fgColor
+        //   Color   backgroundColor
+        //   Color   edgeColor
+        //   int32_t edgeStyle           (SubtitleEdgeStyle value)
+        //   int32_t fontFace            (SubtitleFontFace value)
+        //   int32_t foregroundOpacity   (SubtitleOpacity value)
+        //   int32_t backgroundOpacity
+        //   int32_t edgeOpacity
         stream.writeTag(DataStream::TypeSubtitleSpan);
         stream << span.text();
         stream << packStyleFlags(span);
         stream << span.color();
+        stream << span.backgroundColor();
+        stream << span.edgeColor();
+        stream << static_cast<int32_t>(span.edgeStyle().value());
+        stream << static_cast<int32_t>(span.fontFace().value());
+        stream << static_cast<int32_t>(span.foregroundOpacity().value());
+        stream << static_cast<int32_t>(span.backgroundOpacity().value());
+        stream << static_cast<int32_t>(span.edgeOpacity().value());
         return stream;
 }
 
@@ -202,11 +476,32 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span) {
         String  text;
         uint8_t flags = 0;
         Color   color;
+        Color   bgColor;
+        Color   edgeColor;
+        int32_t edgeStyleVal = 0;
+        int32_t fontFaceVal = 0;
+        int32_t fgOpacityVal = 0;
+        int32_t bgOpacityVal = 0;
+        int32_t edgeOpacityVal = 0;
         stream >> text;
         stream >> flags;
         stream >> color;
+        stream >> bgColor;
+        stream >> edgeColor;
+        stream >> edgeStyleVal;
+        stream >> fontFaceVal;
+        stream >> fgOpacityVal;
+        stream >> bgOpacityVal;
+        stream >> edgeOpacityVal;
         span = SubtitleSpan(std::move(text), (flags & 0x01) != 0, (flags & 0x02) != 0, (flags & 0x04) != 0,
                             color);
+        span.setBackgroundColor(bgColor);
+        span.setEdgeColor(edgeColor);
+        span.setEdgeStyle(SubtitleEdgeStyle(edgeStyleVal));
+        span.setFontFace(SubtitleFontFace(fontFaceVal));
+        span.setForegroundOpacity(SubtitleOpacity(fgOpacityVal));
+        span.setBackgroundOpacity(SubtitleOpacity(bgOpacityVal));
+        span.setEdgeOpacity(SubtitleOpacity(edgeOpacityVal));
         return stream;
 }
 
@@ -275,6 +570,7 @@ TimeStamp::Duration       Subtitle::duration() const { return _d->end.value() - 
 const String             &Subtitle::text() const { return _d->flatText; }
 const SubtitleSpan::List &Subtitle::spans() const { return _d->spans; }
 const SubtitleAnchor     &Subtitle::anchor() const { return _d->anchor; }
+const CaptionMode        &Subtitle::mode() const { return _d->mode; }
 const Rect2Di32          &Subtitle::region() const { return _d->region; }
 const String             &Subtitle::speaker() const { return _d->speaker; }
 const Metadata           &Subtitle::metadata() const { return _d->metadata; }
@@ -297,9 +593,25 @@ void Subtitle::setSpans(SubtitleSpan::List v) {
 }
 
 void Subtitle::setAnchor(const SubtitleAnchor &v) { _d.modify()->anchor = v; }
+void Subtitle::setMode(const CaptionMode &v) { _d.modify()->mode = v; }
 void Subtitle::setRegion(const Rect2Di32 &v) { _d.modify()->region = v; }
 void Subtitle::setSpeaker(const String &v) { _d.modify()->speaker = v; }
 void Subtitle::setMetadata(const Metadata &v) { _d.modify()->metadata = v; }
+
+Subtitle Subtitle::wrapped(int maxCols, int maxRows) const {
+        if (_d->flatText.isEmpty()) return *this;
+        List<SubtitleSpan::List> rows = layoutRows(*this, maxCols, maxRows);
+        if (rows.isEmpty()) return *this;
+        SubtitleSpan::List flat;
+        for (size_t r = 0; r < rows.size(); ++r) {
+                if (r > 0) flat.pushToBack(SubtitleSpan("\n"));
+                const SubtitleSpan::List &row = rows[r];
+                for (size_t s = 0; s < row.size(); ++s) flat.pushToBack(row[s]);
+        }
+        Subtitle out = *this;
+        out.setSpans(flat);
+        return out;
+}
 
 bool Subtitle::isEmpty() const {
         return _d->flatText.isEmpty() && _d->start == TimeStamp() && _d->end == TimeStamp();
@@ -311,8 +623,9 @@ bool Subtitle::isActiveAt(const TimeStamp &t) const {
 
 bool Subtitle::operator==(const Subtitle &o) const {
         return _d->start == o._d->start && _d->end == o._d->end && _d->spans == o._d->spans
-                && _d->anchor.value() == o._d->anchor.value() && _d->region == o._d->region
-                && _d->speaker == o._d->speaker && _d->metadata == o._d->metadata;
+                && _d->anchor.value() == o._d->anchor.value() && _d->mode.value() == o._d->mode.value()
+                && _d->region == o._d->region && _d->speaker == o._d->speaker
+                && _d->metadata == o._d->metadata;
 }
 
 JsonObject Subtitle::toJson() const {
@@ -337,6 +650,9 @@ JsonObject Subtitle::toJson() const {
         }
         if (_d->anchor.value() != SubtitleAnchor::Default.value()) {
                 obj.set("anchor", _d->anchor.valueName());
+        }
+        if (_d->mode.value() != CaptionMode::Default.value()) {
+                obj.set("mode", _d->mode.valueName());
         }
         if (_d->region.isValid()) {
                 JsonObject regionObj;
@@ -391,6 +707,7 @@ void writeSubtitleData(DataStream &stream, const Subtitle &sub) {
         //   TimeStamp start          (TypeTimeStamp)
         //   TimeStamp end            (TypeTimeStamp)
         //   int32_t   anchor.value() (TypeS32)
+        //   int32_t   mode.value()   (TypeS32 — CaptionMode)
         //   Rect2Di32 region         (free-function operator<< template)
         //   String    speaker        (TypeString)
         //   Metadata  metadata       (VariantDatabase template operator<<)
@@ -401,6 +718,7 @@ void writeSubtitleData(DataStream &stream, const Subtitle &sub) {
         stream << sub.start();
         stream << sub.end();
         stream << static_cast<int32_t>(sub.anchor().value());
+        stream << static_cast<int32_t>(sub.mode().value());
         stream << sub.region();
         stream << sub.speaker();
         stream << sub.metadata();
@@ -411,6 +729,7 @@ Subtitle readSubtitleData(DataStream &stream) {
         TimeStamp          start;
         TimeStamp          end;
         int32_t            anchorValue = 0;
+        int32_t            modeValue = 0;
         Rect2Di32          region;
         String             speaker;
         Metadata           metadata;
@@ -418,12 +737,15 @@ Subtitle readSubtitleData(DataStream &stream) {
         stream >> start;
         stream >> end;
         stream >> anchorValue;
+        stream >> modeValue;
         stream >> region;
         stream >> speaker;
         stream >> metadata;
         stream >> spans;
-        return Subtitle(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
-                        std::move(metadata));
+        Subtitle s(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
+                   std::move(metadata));
+        s.setMode(CaptionMode(modeValue));
+        return s;
 }
 
 DataStream &operator<<(DataStream &stream, const Subtitle &sub) {

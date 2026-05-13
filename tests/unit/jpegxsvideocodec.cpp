@@ -113,12 +113,12 @@ static CompressedVideoPayload::Ptr encodeOneJxsFrame(const UncompressedVideoPayl
         auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(&sessionCfg);
         if (error(encResult).isError()) return CompressedVideoPayload::Ptr();
         VideoEncoder *enc = value(encResult);
-        Error         err = enc->submitPayload(src);
+        Error err = enc->submitFrame(tests::frameWith(src));
         if (err.isError()) {
                 delete enc;
                 return CompressedVideoPayload::Ptr();
         }
-        CompressedVideoPayload::Ptr pkt = enc->receiveCompressedPayload();
+        CompressedVideoPayload::Ptr pkt = tests::firstCompressedVideo(enc->receiveFrame());
         delete enc;
         return pkt;
 }
@@ -131,12 +131,12 @@ static UncompressedVideoPayload::Ptr decodeOneJxsFrame(const CompressedVideoPayl
         auto decResult = VideoCodec(VideoCodec::JPEG_XS).createDecoder(&cfg);
         if (error(decResult).isError()) return UncompressedVideoPayload::Ptr();
         VideoDecoder *dec = value(decResult);
-        Error         err = dec->submitPayload(pkt);
+        Error err = dec->submitFrame(tests::frameWith(pkt));
         if (err.isError()) {
                 delete dec;
                 return UncompressedVideoPayload::Ptr();
         }
-        UncompressedVideoPayload::Ptr out = dec->receiveVideoPayload();
+        UncompressedVideoPayload::Ptr out = tests::firstUncompressedVideo(dec->receiveFrame());
         delete dec;
         return out;
 }
@@ -202,7 +202,7 @@ TEST_CASE("JpegXsVideoEncoder_InvalidInput") {
         auto encResult = VideoCodec(VideoCodec::JPEG_XS).createEncoder(nullptr);
         REQUIRE_FALSE(error(encResult).isError());
         VideoEncoder *enc = value(encResult);
-        CHECK(enc->submitPayload(UncompressedVideoPayload::Ptr()).isError());
+        CHECK(enc->submitFrame(Frame()).isError());
         delete enc;
 }
 
@@ -217,9 +217,9 @@ TEST_CASE("JpegXsVideoEncoder_RejectsUnsupportedPixelFormat") {
         VideoEncoder *enc = value(encResult);
         // Force a configuration with a non-default OutputPixelFormat
         // for completeness; encoder still rejects the unsupported
-        // input format on submitPayload.
+        // input format on submitFrame.
         auto uvp = UncompressedVideoPayload::allocate(ImageDesc(64, 64, PixelFormat::RGB8_sRGB));
-        CHECK(enc->submitPayload(uvp).isError());
+        CHECK(enc->submitFrame(tests::frameWith(uvp)).isError());
         delete enc;
 }
 

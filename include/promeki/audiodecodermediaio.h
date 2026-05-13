@@ -113,13 +113,12 @@ class AudioDecoderMediaIO : public SharedThreadMediaIO {
                 void  configChanged(const MediaConfig &delta) override;
 
         private:
-                // Drains every currently-available PCM payload out of
-                // the underlying decoder and pushes one Frame per
-                // payload onto @c _outputQueue.  Each emitted payload
-                // is paired with the oldest queued source packet
-                // Frame (see @c _pendingSrcFrames) so its video /
-                // frame-level metadata travel with the right input
-                // even across decoder startup latency.
+                // Drains every currently-available output Frame out of
+                // the underlying decoder and pushes them onto
+                // @c _outputQueue.  The decoder is responsible for
+                // echoing the source Frame's video / metadata through
+                // onto each emitted Frame via the base
+                // @ref AudioDecoder::buildOutputFrame helper.
                 void  drainDecoderInto();
                 Error createDecoder(const AudioCodec &codec);
 
@@ -130,20 +129,12 @@ class AudioDecoderMediaIO : public SharedThreadMediaIO {
                 bool               _outputAudioDataTypeSet = false;
                 int                _capacity = 8;
                 Frame::List        _outputQueue;
-
-                // FIFO of source Frames awaiting a decoded payload.
-                // One entry pushed per packet handed to @c
-                // submitPayload and popped per payload emitted by the
-                // decoder.  Without this, payloads emerging from
-                // codec startup are stamped with the wrong input
-                // Frame's metadata.
-                Frame::List      _pendingSrcFrames;
-                FrameCount       _frameCount{0};
-                int64_t          _readCount = 0;
-                int64_t          _packetsDecoded = 0;
-                int64_t          _framesOut = 0;
-                bool             _capacityWarned = false;
-                bool             _closed = false;
+                FrameCount         _frameCount{0};
+                int64_t            _readCount = 0;
+                int64_t            _packetsDecoded = 0;
+                int64_t            _framesOut = 0;
+                bool               _capacityWarned = false;
+                bool               _closed = false;
 };
 
 /**

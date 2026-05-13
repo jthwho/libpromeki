@@ -340,18 +340,27 @@ Error SDLPlayerMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
                         }
-                        VideoDecoder                 *dec = value(decResult);
-                        UncompressedVideoPayload::Ptr decoded;
-                        if (Error de = dec->submitPayload(cvp); de.isError()) {
+                        VideoDecoder *dec = value(decResult);
+                        Frame         decoderInput;
+                        decoderInput.addPayload(cvp);
+                        if (Error de = dec->submitFrame(decoderInput); de.isError()) {
                                 delete dec;
-                                promekiWarn("SDLPlayerMediaIO: submitPayload failed — "
+                                promekiWarn("SDLPlayerMediaIO: submitFrame failed — "
                                             "dropping frame");
                                 noteFrameDropped(cmd.group);
                                 cmd.currentFrame++;
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
                         }
-                        decoded = dec->receiveVideoPayload();
+                        Frame                         decoderOutput = dec->receiveFrame();
+                        UncompressedVideoPayload::Ptr decoded;
+                        if (decoderOutput.isValid()) {
+                                for (const VideoPayload::Ptr &vp : decoderOutput.videoPayloads()) {
+                                        if (!vp.isValid()) continue;
+                                        decoded = sharedPointerCast<UncompressedVideoPayload>(vp);
+                                        if (decoded.isValid()) break;
+                                }
+                        }
                         delete dec;
                         if (!decoded.isValid()) {
                                 promekiWarn("SDLPlayerMediaIO: decode of '%s' to "

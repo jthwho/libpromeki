@@ -600,9 +600,23 @@ void InspectorMediaIO::decompressImages(Frame &frame) {
                         continue;
                 }
 
-                Error                         err = dec->submitPayload(cvpPtr);
+                // Inspector's compressed-payload decode runs as a one-shot
+                // Frame ferry: wrap the compressed payload in a transient
+                // Frame, submit it, and recover the uncompressed payload
+                // from the emitted output Frame.
+                Frame inFrame;
+                inFrame.addPayload(cvpPtr);
+                Error err = dec->submitFrame(inFrame);
                 UncompressedVideoPayload::Ptr out;
-                if (err.isOk()) out = dec->receiveVideoPayload();
+                if (err.isOk()) {
+                        Frame outFrame = dec->receiveFrame();
+                        if (outFrame.isValid()) {
+                                auto vps = outFrame.videoPayloads();
+                                if (!vps.isEmpty()) {
+                                        out = sharedPointerCast<UncompressedVideoPayload>(vps[0]);
+                                }
+                        }
+                }
                 delete dec;
 
                 if (!out.isValid()) {

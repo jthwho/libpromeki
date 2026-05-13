@@ -324,7 +324,32 @@ Error SubtitleRenderer::render(const Subtitle &subtitle, UncompressedVideoPayloa
                 for (size_t ri = 0; ri < line.size(); ++ri) {
                         const StyledRun &run = line[ri];
                         if (run.span.text().isEmpty()) continue;
-                        _font->drawText(run.span.text(), penX, cursorY, styleFor(run.span));
+                        // Per-span background paint: if the span carries
+                        // an explicit backgroundColor, draw a rectangle
+                        // covering this run's pixel range before the
+                        // glyph blits.  Lands on top of the cue's full
+                        // bg rectangle so it overrides for just this
+                        // run's pixels — useful for highlighted speakers
+                        // or CEA-708 SetPenColor bg overrides.
+                        //
+                        // Opacity handling: @c Transparent skips the bg
+                        // paint entirely (and similarly the glyph blit
+                        // for fg).  @c Translucent / @c Flash still
+                        // paint as opaque for now — full alpha-blend
+                        // support is a paint-engine enhancement.
+                        const bool bgTransparent =
+                                run.span.backgroundOpacity().value() == SubtitleOpacity::Transparent.value();
+                        const bool fgTransparent =
+                                run.span.foregroundOpacity().value() == SubtitleOpacity::Transparent.value();
+                        if (run.span.backgroundColor().isValid() && !bgTransparent) {
+                                const PaintEngine::Pixel spanBg =
+                                        pe.createPixel(run.span.backgroundColor());
+                                Rect<int32_t> rect(penX, cursorY - ascender, run.width, lineHeight);
+                                pe.fillRect(spanBg, rect);
+                        }
+                        if (!fgTransparent) {
+                                _font->drawText(run.span.text(), penX, cursorY, styleFor(run.span));
+                        }
                         penX += run.width;
                 }
                 cursorY += lineHeight + lineSpacing;

@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/videoencoder.h>
+#include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
 #if PROMEKI_ENABLE_NVENC
@@ -98,12 +99,12 @@ class NvencVideoEncoder : public VideoEncoder {
                  */
                 static List<int> supportedInputList();
 
-                void                        configure(const MediaConfig &config) override;
-                Error                       submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
-                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
-                Error                       flush() override;
-                Error                       reset() override;
-                void                        requestKeyframe() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
+                void  requestKeyframe() override;
 
         private:
                 class Impl;

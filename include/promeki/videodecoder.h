@@ -17,22 +17,26 @@
 #include <promeki/backendweight.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/ancpacket.h>
 #include <promeki/mediaioallocator.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class MediaConfig;
+class Frame;
 
 /**
  * @brief Abstract base class for stateful video decoders.
  * @ingroup proav
  *
- * A VideoDecoder is the inverse of @ref VideoEncoder. Packets submitted
- * via @ref submitPayload feed an internal decode pipeline and
- * uncompressed frames come back out of @ref receiveVideoPayload.  The decoder
- * may buffer several packets before producing its first frame (B-frame
- * reordering, reference-frame dependencies).
+ * A VideoDecoder is the inverse of @ref VideoEncoder.  Frames submitted
+ * via @ref submitFrame feed an internal decode pipeline and emitted
+ * Frames (carrying an @ref UncompressedVideoPayload, plus any ANC the
+ * decoder extracted from the bitstream and the echoed-through audio /
+ * metadata of the submitted Frame) come back out of @ref receiveFrame.
+ * The decoder may buffer several frames before producing its first
+ * output (B-frame reordering, reference-frame dependencies).
  *
  * Codec-family metadata lives on the @ref VideoCodec wrapper returned
  * by @ref codec(); per-backend facts (supported output PixelFormats,
@@ -50,11 +54,19 @@ class MediaConfig;
  *   1. Resolve a session via @ref VideoCodec::createDecoder.
  *   2. Optionally call @ref configure (most decoders infer parameters
  *      from the bitstream and need no explicit configuration).
- *   3. For each encoded packet, call @ref submitPayload.
- *   4. After each submit, drain with @ref receiveVideoPayload until it
- *      returns a null Ptr.
+ *   3. For each source Frame carrying a compressed payload, call
+ *      @ref submitFrame.
+ *   4. After each submit, drain with @ref receiveFrame until it
+ *      returns an invalid Frame.
  *   5. Call @ref flush when the input stream ends, then drain again.
  *   6. Destroy the decoder.
+ *
+ * @par Configure stash
+ *
+ * @ref configure is non-virtual.  Its body stores the most-recently-
+ * passed @ref MediaConfig on the base (reachable via @ref config())
+ * and then dispatches to the virtual @ref onConfigure hook that
+ * concrete backends override.
  *
  * @par Thread Safety
  * Conditionally thread-safe.  Each pipeline thread should own its own
@@ -97,33 +109,46 @@ class VideoDecoder {
                 /**
                  * @brief Applies decoder parameters from a @ref MediaConfig.
                  *
-                 * Same semantics as @ref VideoEncoder::configure — reads
-                 * known keys, ignores the rest.  The default implementation
-                 * is a no-op.
+                 * Non-virtual.  Stores @p config on the base (reachable
+                 * via @ref config()) and then dispatches to the virtual
+                 * @ref onConfigure hook.  Backends override
+                 * @ref onConfigure rather than this method.
                  */
-                virtual void configure(const MediaConfig &config);
+                void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one encoded payload for decoding.
+                 * @brief Submits one source @ref Frame for decoding.
                  *
-                 * @param payload Compressed access unit to decode.  Its
-                 *                @ref ImageDesc::pixelFormat should fall
-                 *                within this codec's compressed
-                 *                PixelFormat set (see
-                 *                @ref VideoCodec::compressedPixelFormats).
-                 *                A null Ptr is treated as @ref Error::Invalid.
+                 * The decoder extracts the compressed video payload it
+                 * wants from @p frame (typically via the
+                 * @ref selectInputPayload helper), and holds the source
+                 * Frame's audio / metadata so the matching emitted
+                 * output @ref Frame can echo them through.  Decoders
+                 * may additionally extract ANC riding inside the
+                 * compressed bitstream (e.g. CEA-708 SEI captions) and
+                 * attach the recovered @ref AncPacket entries to the
+                 * output Frame via @ref attachExtractedAnc.
+                 *
+                 * @param frame Compressed access unit to decode.  An
+                 *              invalid Frame is treated as
+                 *              @ref Error::Invalid.
                  * @return @c Error::Ok on success.
                  */
-                virtual Error submitPayload(const CompressedVideoPayload::Ptr &payload) = 0;
+                virtual Error submitFrame(const Frame &frame) = 0;
 
                 /**
-                 * @brief Dequeues one decoded payload.
-                 * @return A valid @ref UncompressedVideoPayload::Ptr, or
-                 *         a null Ptr when no frame is ready.
+                 * @brief Dequeues one decoded output @ref Frame, or an
+                 *        invalid Frame when none is ready.
+                 *
+                 * The returned Frame carries the decoded
+                 * @ref UncompressedVideoPayload plus whatever audio /
+                 * metadata the corresponding submitted source Frame
+                 * carried, plus any ANC the decoder extracted from the
+                 * compressed bitstream.
                  */
-                virtual UncompressedVideoPayload::Ptr receiveVideoPayload() = 0;
+                virtual Frame receiveFrame() = 0;
 
-                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveVideoPayload. */
+                /** @brief Signals end-of-stream; remaining frames can be drained with @ref receiveFrame. */
                 virtual Error flush() = 0;
 
                 /** @brief Discards any pending packets / frames. */
@@ -155,7 +180,7 @@ class VideoDecoder {
                  * Safe to call from any thread once the decoder has
                  * been constructed.  The pointer is updated only by
                  * @ref setAllocator on the user thread before the
-                 * first @ref submitPayload — readers on the decode
+                 * first @ref submitFrame — readers on the decode
                  * strand observe the most-recently-installed value.
                  */
                 MediaIOAllocator::Ptr allocator() const;
@@ -200,6 +225,22 @@ class VideoDecoder {
                 /** @brief Records the codec + backend this session implements. */
                 void setCodec(VideoCodec codec) { _codec = codec; }
 
+                /**
+                 * @brief Concrete-backend hook invoked from
+                 *        @ref configure after the base stashes @p config.
+                 *
+                 * Default implementation is a no-op.
+                 */
+                virtual void onConfigure(const MediaConfig &config);
+
+                /**
+                 * @brief Returns the most-recent @ref MediaConfig passed
+                 *        to @ref configure, or a default-constructed
+                 *        instance when @ref configure has never been
+                 *        called.
+                 */
+                const MediaConfig &config() const;
+
                 Error  _lastError;
                 String _lastErrorMessage;
 
@@ -220,8 +261,61 @@ class VideoDecoder {
                  */
                 MediaIOAllocator::Ptr _allocator;
 
+        public:
+                // ---- Frame-shaped helpers (public so nested pImpls in concrete backends can use them) ----
+
+                /**
+                 * @brief Looks up the first @ref CompressedVideoPayload
+                 *        on @p frame matching @p streamIndex.
+                 *
+                 * Walks @c frame.videoPayloads() once.  When
+                 * @p streamIndex is @c -1 (the default), returns the
+                 * first compressed video payload found regardless of
+                 * its @ref MediaPayload::streamIndex.  When
+                 * @p streamIndex is non-negative, returns the first
+                 * compressed video payload whose @c streamIndex()
+                 * matches.
+                 *
+                 * Returns a null @ref CompressedVideoPayload::Ptr when
+                 * no matching payload exists or when the candidate
+                 * payload is uncompressed.
+                 */
+                static CompressedVideoPayload::Ptr selectInputPayload(const Frame &frame, int streamIndex = -1);
+
+                /**
+                 * @brief Attaches a decoder-extracted @ref AncPacket to
+                 *        the output @p frame.
+                 *
+                 * Finds (or creates) an @ref AncPayload on @p frame
+                 * whose @ref AncDesc::pairedVideoStreamIndex matches
+                 * @p pairedVideoStreamIndex and appends @p pkt.
+                 * Convenience used by decoders that extract caption /
+                 * HDR / AFD ANC from the compressed bitstream and want
+                 * to surface it on the emitted output Frame for the
+                 * rest of the pipeline.
+                 */
+                static void attachExtractedAnc(Frame &frame, AncPacket pkt, int pairedVideoStreamIndex);
+
+                /**
+                 * @brief Constructs an output @ref Frame paired with an
+                 *        emitted uncompressed payload.
+                 *
+                 * Copies metadata from @p source, adds @p emitted to
+                 * the output's payload list, and echoes every audio
+                 * payload from @p source onto the output.  ANC
+                 * payloads from @p source are intentionally not
+                 * forwarded — the decoder may have extracted in-band
+                 * ANC from the bitstream and should attach that
+                 * (typically via @ref attachExtractedAnc) instead.
+                 *
+                 * Returns an empty (but valid) @ref Frame when
+                 * @p emitted is null.
+                 */
+                static Frame buildOutputFrame(const Frame &source, UncompressedVideoPayload::Ptr emitted);
+
         private:
-                VideoCodec _codec;
+                UniquePtr<MediaConfig> _stashedConfig;
+                VideoCodec             _codec;
 };
 
 PROMEKI_NAMESPACE_END

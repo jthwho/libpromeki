@@ -15,6 +15,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videocodec.h>
+#include <promeki/frame.h>
 #include <promeki/metadata.h>
 #include <promeki/videopayload.h>
 #include <promeki/compressedvideopayload.h>
@@ -335,15 +336,25 @@ Error ImageFileIO_JpegXS::save(ImageFile &imageFile, const MediaConfig &config) 
                 promekiErr("JPEG XS save '%s': payload build failed", filename.cstr());
                 return Error::ConversionFailed;
         }
-        if (Error e = enc->submitPayload(inPayload); e.isError()) {
+        Frame inFrame;
+        inFrame.addPayload(inPayload);
+        if (Error e = enc->submitFrame(inFrame); e.isError()) {
                 String msg = enc->lastErrorMessage();
                 delete enc;
                 promekiErr("JPEG XS save '%s': encode failed: %s", filename.cstr(),
                            msg.isEmpty() ? e.name().cstr() : msg.cstr());
                 return e;
         }
-        CompressedVideoPayload::Ptr outPayload = enc->receiveCompressedPayload();
+        Frame outFrame = enc->receiveFrame();
         delete enc;
+        CompressedVideoPayload::Ptr outPayload;
+        if (outFrame.isValid()) {
+                for (const VideoPayload::Ptr &vp : outFrame.videoPayloads()) {
+                        if (!vp.isValid()) continue;
+                        outPayload = sharedPointerCast<CompressedVideoPayload>(vp);
+                        if (outPayload.isValid()) break;
+                }
+        }
         if (!outPayload.isValid()) {
                 promekiErr("JPEG XS save '%s': encoder produced no payload", filename.cstr());
                 return Error::EncodeFailed;

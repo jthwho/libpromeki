@@ -534,6 +534,262 @@ TEST_CASE("Cea608Encoder[roll-up]: chars overrunning cue end -> OutOfRange") {
         CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
 }
 
+// ============================================================================
+// Multi-row word-wrap (smart layout)
+// ============================================================================
+
+namespace {
+
+        /// @brief Helper: pulls the row index out of an arbitrary
+        ///        PAC byte pair.  Falls back to -1 when the bytes
+        ///        do not decode as a PAC.
+        int rowFromPac(uint8_t b1, uint8_t b2) {
+                Cea608::PacAttr pac;
+                if (!Cea608::decodePac(b1, b2, pac)) return -1;
+                return pac.row;
+        }
+
+        /// @brief Helper: counts how many *distinct* PAC frames the
+        ///        encoder schedules between @p lo and @p hi
+        ///        (inclusive).  Doubled PACs at consecutive frames
+        ///        register as one logical "row PAC".
+        size_t countDistinctPacs(const Cea608Encoder &enc, int64_t lo, int64_t hi) {
+                size_t  count = 0;
+                int     prevRow = -2; // not -1 since rowFromPac returns -1 on miss
+                int64_t prevFrame = -2;
+                for (int64_t f = lo; f <= hi; ++f) {
+                        auto    list = enc.nextFrame(FrameNumber(f));
+                        if (list.size() != 1) continue;
+                        uint8_t b1 = Cea608::stripParity(list[0].b1);
+                        uint8_t b2 = Cea608::stripParity(list[0].b2);
+                        int     r = rowFromPac(b1, b2);
+                        if (r >= 1) {
+                                // Distinct row PAC fires once per (row, isolated)
+                                // — collapse the doubled emission on the next
+                                // consecutive frame.
+                                if (!(r == prevRow && f == prevFrame + 1)) {
+                                        ++count;
+                                }
+                                prevRow = r;
+                                prevFrame = f;
+                        } else {
+                                prevRow = -2;
+                        }
+                }
+                return count;
+        }
+
+} // namespace
+
+TEST_CASE("Cea608Encoder: multi-row layout (\\n in SRT honoured when both rows fit)") {
+        // SubRip-style cue with an explicit line break and both rows
+        // fitting 32 cols.  Expect TWO doubled-PAC blocks (rows 14
+        // and 15) in the schedule.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        // Long display window so the multi-row pre-roll fits.
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000), "First line\nSecond line"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // At 30 fps the cue starts at frame 90 (= 3000 ms).
+        // Pre-roll = 2 (RCL) + 2 (PAC row 14) + N0 chars + 2 (PAC row 15) + N1 chars.
+        // "First line" → 5 char pairs; "Second line" → 6 char pairs.
+        // body bytes = 4 (PACs) + 5 + 6 = 15 → pre-roll = 17 frames.
+        // firstFrame = 90 - 17 = 73.
+
+        // The first row PAC should target row 14, the second row 15.
+        // PAC bytes start with 0x10..0x17 (b1 high nibble 0x1).
+        size_t pacCount = countDistinctPacs(enc, 73, 89);
+        CHECK(pacCount == 2);
+
+        // Verify the two PAC rows are 14 then 15 by sampling the
+        // first byte of each PAC block.
+        // First row PAC is at frame 75, 76.
+        int row1 = rowFromPac(Cea608::stripParity(oneTriple(enc, 75).b1),
+                              Cea608::stripParity(oneTriple(enc, 75).b2));
+        CHECK(row1 == 14);
+        // Second row PAC sits between the chars of row 1 and the chars
+        // of row 2.  Locate it by scanning the body span.
+        bool foundRow15Pac = false;
+        for (int64_t f = 77; f < 90; ++f) {
+                int r = rowFromPac(Cea608::stripParity(oneTriple(enc, f).b1),
+                                   Cea608::stripParity(oneTriple(enc, f).b2));
+                if (r == 15) {
+                        foundRow15Pac = true;
+                        break;
+                }
+        }
+        CHECK(foundRow15Pac);
+}
+
+TEST_CASE("Cea608Encoder: long single-line cue word-wraps with balanced rows") {
+        // Cue text exceeds maxCols=32 → re-flow with balanced wrap.
+        // "Welcome to the libpromeki SubRip test file" — 42 chars,
+        // 7 words ([7,2,3,10,6,4,5]).  Balanced minimax at maxCols=32
+        // picks 2 rows: ["Welcome to the libpromeki" (25) +
+        //                "SubRip test file" (16)] — both within cap.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000),
+                             "Welcome to the libpromeki SubRip test file"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Exactly two distinct PACs (one per row) in the pre-roll window.
+        size_t pacCount = countDistinctPacs(enc, 60, 89);
+        CHECK(pacCount == 2);
+}
+
+TEST_CASE("Cea608Encoder: \\n is ignored when an explicit row overflows maxCols") {
+        // Author put a hard break, but the second line overflows
+        // maxCols=32 → the encoder ignores the '\n' entirely and
+        // re-flows the whole cue.  Expectation: every emitted PAC
+        // row's chars (concatenated through the next style boundary)
+        // fits within maxCols.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(7000),
+                             "Short line\n"
+                             "This second line is far too long for the cap of thirty two cols"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Joined text: "Short line This second line is far too long for the cap of thirty two cols"
+        // ≈ 75 chars.  At maxCols=32 the balanced wrap will produce 3
+        // rows (would never produce 2 rows since the joined text > 64
+        // chars).  3 rows → 3 distinct PACs.  The pre-roll spans more
+        // than 30 frames so scan the entire span before cue start.
+        size_t pacCount = countDistinctPacs(enc, 0, 119);
+        CHECK(pacCount == 3);
+}
+
+TEST_CASE("Cea608Encoder: cue exceeding maxRows auto-splits into time-displaced sub-cues") {
+        // Build a deliberately-long cue that needs > 3 rows at the
+        // 32-col cap.  Auto-split should produce ≥ 2 sub-cues.
+        // Detection: count the EOC pairs in the schedule — each
+        // sub-cue contributes one EOC pair.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        // ~150-char cue → 5 rows at minimax over maxCols=32 → 2 sub-cues.
+        subs.append(Subtitle(tsFromMs(4000), tsFromMs(12000),
+                             "alpha bravo charlie delta echo foxtrot golf hotel india juliet "
+                             "kilo lima mike november oscar papa quebec romeo sierra tango"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Walk the whole span counting EOC pairs (doubled at sub-cue
+        // start).  At minimum we expect 2 EOC blocks for an auto-split
+        // cue.
+        size_t eocBlocks = 0;
+        bool   prevEoc = false;
+        for (int64_t f = 0; f < 380; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                bool isEoc = (Cea608::stripParity(t.b1) == Cea608::EocB1
+                              && Cea608::stripParity(t.b2) == Cea608::EocB2);
+                if (isEoc && !prevEoc) ++eocBlocks;
+                prevEoc = isEoc;
+        }
+        CHECK(eocBlocks >= 2);
+}
+
+TEST_CASE("Cea608Encoder: 2-row layout placed at correct anchor rows") {
+        // Top-anchored cue → rows 1, 2.
+        // Middle-anchored cue → rows 7, 8.
+        // Bottom-anchored cue → rows 14, 15.
+        struct Case {
+                        SubtitleAnchor anchor;
+                        int            expectedTop;
+                        int            expectedBottom;
+        };
+        Case cases[] = {
+                {SubtitleAnchor::TopCenter, 1, 2},
+                {SubtitleAnchor::MiddleCenter, 7, 8},
+                {SubtitleAnchor::BottomCenter, 14, 15},
+        };
+        for (const auto &c : cases) {
+                Cea608Encoder::Config cfg;
+                cfg.frameRate = FrameRate(FrameRate::FPS_30);
+                Cea608Encoder enc(cfg);
+                SubtitleList  subs;
+                subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000),
+                                     "Line one\nLine two", c.anchor));
+                REQUIRE(enc.setSubtitles(subs).isOk());
+
+                // Sample the schedule: the first PAC in the pre-roll
+                // window addresses @c expectedTop; somewhere before
+                // startFrame the row-@c expectedBottom PAC fires.
+                bool foundTop = false;
+                bool foundBot = false;
+                for (int64_t f = 0; f < 90; ++f) {
+                        Cea708Cdp::CcData t = oneTriple(enc, f);
+                        int r = rowFromPac(Cea608::stripParity(t.b1), Cea608::stripParity(t.b2));
+                        if (r == c.expectedTop) foundTop = true;
+                        if (r == c.expectedBottom) foundBot = true;
+                }
+                CHECK(foundTop);
+                CHECK(foundBot);
+        }
+}
+
+TEST_CASE("Cea608Encoder: maxRows = 2 caps wrap rows even when 3 would balance better") {
+        // Same long-cue input as the "long single-line" test but with
+        // maxRows lowered to 2.  Auto-split fires.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.maxRows = 2;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        // 7-word, 42-char cue that minimaxes nicely into 2 rows at
+        // maxCols=32; with maxRows=2 it stays one sub-cue.
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000),
+                             "Welcome to the libpromeki SubRip test file"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        CHECK(countDistinctPacs(enc, 0, 89) == 2);
+}
+
+TEST_CASE("Cea608Encoder: single-row cue identical to legacy single-PAC byte stream") {
+        // Regression: even with the multi-row code path in place, a
+        // single-row cue must produce the exact byte sequence the
+        // legacy encoder emitted — verified by the existing tests for
+        // "AB" / "ABC" / etc.  This case adds an explicit guard
+        // against pre-roll length regressions for a longer plain
+        // single-row cue.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        // 13-char cue, fits one row → pre-roll = 2 (RCL) + 2 (PAC) +
+        // 7 char pairs = 11 frames.
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000), "Hello, world!"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // Cue starts at frame 90; pre-roll begins at 90 - 11 = 79.
+        CHECK(tripleHasBytes(oneTriple(enc, 79), Cea608::RclB1, Cea608::RclB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 80), Cea608::RclB1, Cea608::RclB2));
+        // Exactly one distinct PAC row in the pre-roll window.
+        CHECK(countDistinctPacs(enc, 79, 89) == 1);
+}
+
+TEST_CASE("Cea608Encoder[roll-up]: multi-row wrap falls back to single row with warning") {
+        // Roll-up is single-row by spec; a cue that would wrap to >1
+        // row must collapse to a single line at row 15.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        // 50-char cue that would normally wrap into 2 rows at maxCols 32.
+        subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000),
+                             "Long roll up cue that exceeds the 32-col cap easily"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // Exactly one distinct PAC (forced row 15 by roll-up).
+        CHECK(countDistinctPacs(enc, 0, 89) == 1);
+}
+
 TEST_CASE("Cea608Encoder[roll-up]: rollUpRows clamped to [2,4]") {
         // rollUpRows out of range should be clamped at scheduling time
         // (RU2 for <2, RU4 for >4) and still produce a valid schedule.
@@ -554,4 +810,98 @@ TEST_CASE("Cea608Encoder[roll-up]: rollUpRows clamped to [2,4]") {
         REQUIRE(enc2.setSubtitles(subs).isOk());
         // First bytes: RU4 (clamped from 10).
         CHECK(tripleHasBytes(oneTriple(enc2, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU4));
+}
+
+// ============================================================================
+// Per-cue CaptionMode override
+// ============================================================================
+
+TEST_CASE("Cea608Encoder: cue.mode=RollUp overrides Config.mode=PopOn") {
+        // Cue stamps an explicit CaptionMode::RollUp; the encoder
+        // ignores Config.mode (PopOn default) and emits the roll-up
+        // initialiser (RU2) at the matching pre-roll frame.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        // Leave Config.mode at PopOn default.
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle      cue(tsFromMs(1000), tsFromMs(2000), "X");
+        cue.setMode(CaptionMode::RollUp);
+        subs.append(cue);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // RU2 (Cc1MiscFirstByte + MiscRU2) at the roll-up first-cue
+        // pre-roll frame (startFrame=30, pre-roll=6 → frame 24).
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::Cc1MiscFirstByte, Cea608::MiscRU2));
+}
+
+TEST_CASE("Cea608Encoder: cue.mode=Default falls back to Config.mode") {
+        // No explicit cue mode → encoder uses Config.mode (PaintOn here).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "X"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // Paint-on uses RDC (Resume Direct Captioning, MiscRDC) as
+        // pre-roll, landing 4 frames before the cue's start.
+        CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+}
+
+// ============================================================================
+// Background-attribute wire codes (EIA-608-B §7.6)
+// ============================================================================
+
+TEST_CASE("Cea608::encodeBgAttribute / decodeBgAttribute round-trip") {
+        for (int ci = 0; ci < static_cast<int>(Cea608::CaptionColorCount); ++ci) {
+                for (bool semi : {false, true}) {
+                        const auto c = static_cast<Cea608::CaptionColor>(ci);
+                        uint8_t    b1 = 0, b2 = 0;
+                        Cea608::encodeBgAttribute(c, semi, b1, b2);
+                        CHECK(b1 == 0x10);
+                        CHECK(Cea608::isBgAttribute(b1, b2));
+                        Cea608::CaptionColor outColor;
+                        bool                 outSemi = false;
+                        REQUIRE(Cea608::decodeBgAttribute(b1, b2, outColor, outSemi));
+                        CHECK(outColor == c);
+                        CHECK(outSemi == semi);
+                }
+        }
+}
+
+TEST_CASE("Cea608::isBgAttribute rejects PAC and mid-row bytes") {
+        // PAC for row 11 also uses b1=0x10, but b2 is in [0x40, 0x7F].
+        // Make sure isBgAttribute doesn't fire on that.
+        CHECK_FALSE(Cea608::isBgAttribute(0x10, 0x40));
+        CHECK_FALSE(Cea608::isBgAttribute(0x10, 0x60));
+        // Mid-row codes are b1=0x11 — different first byte entirely.
+        CHECK_FALSE(Cea608::isBgAttribute(0x11, 0x20));
+}
+
+TEST_CASE("Cea608Encoder: mixed cue modes warn and fall back to Config.mode") {
+        // Two cues with different explicit modes → encoder warns and
+        // dispatches the whole batch under Config.mode (PopOn default).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle      cue1(tsFromMs(1000), tsFromMs(2000), "A");
+        cue1.setMode(CaptionMode::RollUp);
+        Subtitle cue2(tsFromMs(3000), tsFromMs(4000), "B");
+        cue2.setMode(CaptionMode::PaintOn);
+        subs.append(cue1);
+        subs.append(cue2);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // Fallback to Config.mode (PopOn) → some RCL (MiscRCL)
+        // pre-roll appears in the [20..30) window before the first
+        // cue's start.  Exact frame depends on layout; just confirm
+        // RCL is present anywhere in the pre-roll range.
+        bool sawRcl = false;
+        for (int64_t f = 20; f < 30; ++f) {
+                if (tripleHasBytes(oneTriple(enc, f), Cea608::Cc1MiscFirstByte, Cea608::MiscRCL)) {
+                        sawRcl = true;
+                        break;
+                }
+        }
+        CHECK(sawRcl);
 }

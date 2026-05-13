@@ -11,11 +11,85 @@
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/cea708service.h>
+#include <promeki/color.h>
+#include <promeki/enums.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/subtitle.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief Last-asserted pen attributes from @c SetPenAttributes (SPA)
+ *        and @c SetPenColor (SPC).
+ * @ingroup proav
+ *
+ * Mirrors the 708 wire shape exactly: italic / underline / edge style
+ * / font face from SPA; fg / bg / edge colour + opacity from SPC.
+ * @ref Cea708WindowState tracks one "current pen" globally and stamps
+ * a copy onto every character cell as it's written, so a recovered
+ * cue can reconstruct multi-style spans by grouping consecutive cells
+ * with the same pen state.
+ */
+struct Cea708PenAttr {
+                bool              italic = false;
+                bool              underline = false;
+                SubtitleEdgeStyle edgeStyle = SubtitleEdgeStyle::None;
+                SubtitleFontFace  fontFace = SubtitleFontFace::Default;
+                Color             foregroundColor;
+                Color             backgroundColor;
+                Color             edgeColor;
+                SubtitleOpacity   foregroundOpacity = SubtitleOpacity::Solid;
+                SubtitleOpacity   backgroundOpacity = SubtitleOpacity::Solid;
+                SubtitleOpacity   edgeOpacity = SubtitleOpacity::Solid;
+
+                /// @brief @c true when any field differs from the
+                ///        codec-neutral default (no style, white-solid
+                ///        fg, no bg, no edge).
+                bool hasAnyStyle() const {
+                        return italic || underline
+                                || edgeStyle.value() != SubtitleEdgeStyle::None.value()
+                                || fontFace.value() != SubtitleFontFace::Default.value()
+                                || foregroundColor.isValid() || backgroundColor.isValid()
+                                || edgeColor.isValid()
+                                || foregroundOpacity.value() != SubtitleOpacity::Solid.value()
+                                || backgroundOpacity.value() != SubtitleOpacity::Solid.value()
+                                || edgeOpacity.value() != SubtitleOpacity::Solid.value();
+                }
+
+                bool operator==(const Cea708PenAttr &o) const {
+                        return italic == o.italic && underline == o.underline
+                               && edgeStyle.value() == o.edgeStyle.value()
+                               && fontFace.value() == o.fontFace.value()
+                               && foregroundColor == o.foregroundColor
+                               && backgroundColor == o.backgroundColor
+                               && edgeColor == o.edgeColor
+                               && foregroundOpacity.value() == o.foregroundOpacity.value()
+                               && backgroundOpacity.value() == o.backgroundOpacity.value()
+                               && edgeOpacity.value() == o.edgeOpacity.value();
+                }
+                bool operator!=(const Cea708PenAttr &o) const { return !(*this == o); }
+};
+
+/**
+ * @brief One character cell in a @ref Cea708Window grid.
+ * @ingroup proav
+ *
+ * Stores a UTF-32 codepoint plus the pen attributes that were
+ * "current" when the cell was written.  Empty cells (codepoint == 0)
+ * keep a default-constructed pen so the recovered span reconstruction
+ * can group consecutive runs by matching pen state.
+ */
+struct Cea708Cell {
+                uint32_t      codepoint = 0;
+                Cea708PenAttr pen;
+
+                bool operator==(const Cea708Cell &o) const {
+                        return codepoint == o.codepoint && pen == o.pen;
+                }
+                bool operator!=(const Cea708Cell &o) const { return !(*this == o); }
+};
 
 /**
  * @brief One CEA-708 DTVCC caption window.
@@ -34,23 +108,19 @@ PROMEKI_NAMESPACE_BEGIN
  *    @c relativePos flag (per the DefineWindow command).
  *  - @c rowCount × @c colCount character grid.
  *  - @c penRow / @c penCol cursor position.
- *  - The character grid itself — UTF-32 codepoints per cell, empty
- *    cells stored as zero.
- *
- * Pen attributes (font / italic / underline / colour) and window
- * attributes (justify / fill / border) are accepted but not
- * preserved on the grid for now; only the character payload is
- * flattened into text.  The renderer-facing scaffolding can grow
- * later without disturbing the wire-level parser.
+ *  - The character grid itself — @ref Cea708Cell per cell, carrying
+ *    a UTF-32 codepoint plus the pen attributes that were current
+ *    when the character was written.  Empty cells store codepoint 0
+ *    with a default-constructed pen.
  *
  * @par Storage and copy semantics
  *
  * Plain value type.  The character grid is a value-type
- * @ref List<List<uint32_t>>; copies deep-copy the grid.  Grids
+ * @ref List<List<Cea708Cell>>; copies deep-copy the grid.  Grids
  * are typically tiny (≤ 15 × 32 cells), so the cost is
  * negligible.
  *
- * @see Cea708Service, Cea708WindowState, Cea708Decoder
+ * @see Cea708Service, Cea708WindowState, Cea708Decoder, Cea708PenAttr
  */
 struct Cea708Window {
                 /// @brief Maximum row count a single window can carry
@@ -75,9 +145,11 @@ struct Cea708Window {
                 int  penCol = 0;            ///< Cursor column (0-based).
 
                 /// @brief Character grid.  Outer index = row (0..rowCount-1);
-                ///        inner index = column (0..colCount-1).  Cells store
-                ///        UTF-32 codepoints; empty cells are 0.
-                List<List<uint32_t>> grid;
+                ///        inner index = column (0..colCount-1).  Each
+                ///        cell carries a codepoint + the pen attributes
+                ///        that were current when the cell was written.
+                ///        Empty cells store codepoint 0 with default pen.
+                List<List<Cea708Cell>> grid;
 
                 /// @brief Resizes the grid to @p rows × @p cols, clears all
                 ///        cells, and resets the pen to (0, 0).
@@ -88,11 +160,20 @@ struct Cea708Window {
                 void clearGrid();
 
                 /// @brief Writes one codepoint at the current pen position
-                ///        and advances the pen by one column.  Wraps to the
-                ///        next row when @c penCol exceeds @c colCount; rolls
-                ///        rows up when the pen advances past the last row
+                ///        with the given @p pen attributes, and advances
+                ///        the pen by one column.  Wraps to the next row
+                ///        when @c penCol exceeds @c colCount; rolls rows
+                ///        up when the pen advances past the last row
                 ///        (basic roll-up semantics).
-                void putChar(uint32_t cp);
+                void putChar(uint32_t cp, const Cea708PenAttr &pen);
+
+                /// @brief Convenience overload — writes @p cp at the
+                ///        current pen position with a default-style
+                ///        pen.  Equivalent to
+                ///        @c putChar(cp, Cea708PenAttr{}).  Useful for
+                ///        test fixtures and any caller that doesn't
+                ///        track per-character pen state.
+                void putChar(uint32_t cp) { putChar(cp, Cea708PenAttr{}); }
 
                 /// @brief Advances the pen to the start of the next row,
                 ///        rolling rows up when needed.
@@ -100,8 +181,19 @@ struct Cea708Window {
 
                 /// @brief Joins every non-empty cell into a string,
                 ///        separating rows with `\n`.  Trailing spaces /
-                ///        empty cells on each row are stripped.
+                ///        empty cells on each row are stripped.  Pen
+                ///        attributes are dropped — see @ref visibleSpans
+                ///        for the styled view.
                 String text() const;
+
+                /// @brief Reconstructs the window's visible content as
+                ///        an ordered list of styled @ref SubtitleSpan
+                ///        runs.  Consecutive cells in the same row
+                ///        whose pen state matches collapse into a
+                ///        single span; row breaks emit a span whose
+                ///        text is @c "\n" and pen state matches the
+                ///        prior run.
+                SubtitleSpan::List visibleSpans() const;
 
                 /// @brief @c true when every cell of the grid is empty.
                 bool isEmpty() const;
@@ -194,6 +286,12 @@ class Cea708WindowState {
                 const Cea708Window &currentWindow() const { return _windows[_currentWindow]; }
                 Cea708Window       &currentWindow() { return _windows[_currentWindow]; }
 
+                /// @brief Most recently asserted pen attributes (from
+                ///        @c SPA / @c SPC).  Service-wide, not per-cell —
+                ///        see @ref Cea708PenAttr for the limitation.
+                const Cea708PenAttr &currentPen() const { return _pen; }
+                Cea708PenAttr       &currentPen() { return _pen; }
+
                 /// @brief @c true when at least one window has
                 ///        @ref Cea708Window::visible set.
                 bool anyVisible() const;
@@ -204,6 +302,15 @@ class Cea708WindowState {
                 ///        order (lower priority = drawn on top, so
                 ///        emitted first).
                 String visibleText() const;
+
+                /// @brief Reconstructs the visible content of every
+                ///        currently-visible window as an ordered list
+                ///        of styled @ref SubtitleSpan runs (same
+                ///        priority order as @ref visibleText).  Windows
+                ///        are separated by a `\n` span.  Multi-style
+                ///        cues recover with full span boundaries — one
+                ///        span per run of cells that share pen state.
+                SubtitleSpan::List visibleSpans() const;
 
                 /// @brief Processes one service-block payload byte
                 ///        stream, updating window state in place.
@@ -223,6 +330,7 @@ class Cea708WindowState {
         private:
                 std::array<Cea708Window, WindowCount> _windows;
                 int                                    _currentWindow = 0;
+                Cea708PenAttr                          _pen;
 
                 static int clampId(int id) {
                         if (id < 0) return 0;

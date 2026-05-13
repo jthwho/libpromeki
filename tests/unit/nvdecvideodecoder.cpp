@@ -31,6 +31,7 @@
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/mediaioallocator.h>
+#include "codectesthelpers.h"
 #include <cstdint>
 #include <cstring>
 
@@ -64,17 +65,23 @@ namespace {
                 enc->configure(cfg);
                 for (int i = 0; i < numFrames; ++i) {
                         auto uvp = makeNv12Frame(width, height, static_cast<uint8_t>(64 + i * 4), 128);
-                        if (enc->submitPayload(uvp) != Error::Ok) {
+                        if (enc->submitFrame(tests::frameWith(uvp)) != Error::Ok) {
                                 delete enc;
                                 return List<CompressedVideoPayload::Ptr>();
                         }
-                        while (auto pkt = enc->receiveCompressedPayload()) {
-                                if (!pkt->isEndOfStream()) out.pushToBack(pkt);
+                        while (true) {
+                                auto outFrame = enc->receiveFrame();
+                                if (!outFrame.isValid()) break;
+                                auto pkt = tests::firstCompressedVideo(outFrame);
+                                if (pkt.isValid() && !pkt->isEndOfStream()) out.pushToBack(pkt);
                         }
                 }
                 enc->flush();
-                while (auto pkt = enc->receiveCompressedPayload()) {
-                        if (!pkt->isEndOfStream()) out.pushToBack(pkt);
+                while (true) {
+                        auto outFrame = enc->receiveFrame();
+                        if (!outFrame.isValid()) break;
+                        auto pkt = tests::firstCompressedVideo(outFrame);
+                        if (pkt.isValid() && !pkt->isEndOfStream()) out.pushToBack(pkt);
                 }
                 delete enc;
                 return out;
@@ -122,14 +129,14 @@ TEST_CASE("NvdecVideoDecoder: H.264 encode/decode round trip") {
 
         int decoded = 0;
         for (const auto &pkt : packets) {
-                Error err = dec->submitPayload(pkt);
+                Error err = dec->submitFrame(tests::frameWith(pkt));
                 if (err.isError()) {
                         // Decoder runtime missing — skip cleanly.
                         delete dec;
                         return;
                 }
                 while (true) {
-                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                         if (!img.isValid()) break;
                         CHECK(img->desc().width() == kWidth);
                         CHECK(img->desc().height() == kHeight);
@@ -139,7 +146,7 @@ TEST_CASE("NvdecVideoDecoder: H.264 encode/decode round trip") {
         }
         dec->flush();
         while (true) {
-                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                 if (!img.isValid()) break;
                 ++decoded;
         }
@@ -168,13 +175,13 @@ TEST_CASE("NvdecVideoDecoder: HEVC encode/decode round trip") {
 
         int decoded = 0;
         for (const auto &pkt : packets) {
-                Error err = dec->submitPayload(pkt);
+                Error err = dec->submitFrame(tests::frameWith(pkt));
                 if (err.isError()) {
                         delete dec;
                         return;
                 }
                 while (true) {
-                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                         if (!img.isValid()) break;
                         CHECK(img->desc().width() == kWidth);
                         CHECK(img->desc().height() == kHeight);
@@ -183,7 +190,7 @@ TEST_CASE("NvdecVideoDecoder: HEVC encode/decode round trip") {
         }
         dec->flush();
         while (true) {
-                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                 if (!img.isValid()) break;
                 ++decoded;
         }
@@ -292,13 +299,13 @@ TEST_CASE("NvdecVideoDecoder: device-resident allocator produces CudaDevice plan
 
         int decoded = 0;
         for (const auto &pkt : packets) {
-                Error err = dec->submitPayload(pkt);
+                Error err = dec->submitFrame(tests::frameWith(pkt));
                 if (err.isError()) {
                         delete dec;
                         return;
                 }
                 while (true) {
-                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                         if (!img.isValid()) break;
                         REQUIRE(img->planeCount() == 2);
                         // Both planes must be CudaDevice-resident — the
@@ -314,7 +321,7 @@ TEST_CASE("NvdecVideoDecoder: device-resident allocator produces CudaDevice plan
         }
         dec->flush();
         while (true) {
-                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                 if (!img.isValid()) break;
                 REQUIRE(img->planeCount() == 2);
                 CHECK(img->data()[0].buffer().memSpace().id() == MemSpace::CudaDevice);
@@ -345,13 +352,13 @@ TEST_CASE("NvdecVideoDecoder: default allocator preserves System-memory output")
 
         int decoded = 0;
         for (const auto &pkt : packets) {
-                Error err = dec->submitPayload(pkt);
+                Error err = dec->submitFrame(tests::frameWith(pkt));
                 if (err.isError()) {
                         delete dec;
                         return;
                 }
                 while (true) {
-                        UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                        UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                         if (!img.isValid()) break;
                         REQUIRE(img->planeCount() == 2);
                         CHECK(img->data()[0].buffer().memSpace().id() == MemSpace::System);
@@ -364,7 +371,7 @@ TEST_CASE("NvdecVideoDecoder: default allocator preserves System-memory output")
         }
         dec->flush();
         while (true) {
-                UncompressedVideoPayload::Ptr img = dec->receiveVideoPayload();
+                UncompressedVideoPayload::Ptr img = tests::firstUncompressedVideo(dec->receiveFrame());
                 if (!img.isValid()) break;
                 ++decoded;
         }

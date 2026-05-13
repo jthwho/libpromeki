@@ -214,6 +214,36 @@ TEST_CASE("Cea708DtvccPacket::fromCcData rejects a first triple with wrong cc_ty
         CHECK(err.code() == Error::ParseFailed);
 }
 
+TEST_CASE("Cea708DtvccPacket::toPayloadBytes: oversized block data is truncated to 31 bytes") {
+        // The wire @c block_size field is 5 bits — anything > 31 must
+        // be truncated by toPayloadBytes so the parser can't be
+        // tricked into reading wrapped sizes and misinterpreting the
+        // overflow bytes as a fresh block header.
+        std::initializer_list<uint8_t> oversize = {
+                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
+                '4', '5', '6', '7', '8'  // 35 bytes total
+        };
+        Cea708DtvccPacket pkt;
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf(oversize)));
+        Buffer payload = pkt.toPayloadBytes();
+        // Header byte (1) + truncated data (31) = 32 bytes.
+        REQUIRE(payload.size() == 32);
+        const auto *p = static_cast<const uint8_t *>(payload.data());
+        // Header carries block_size = 31 (0x1F), service 1 → 0x3F.
+        CHECK(p[0] == ((1u << 5) | 31u));
+        // First 31 data bytes preserved verbatim.
+        for (size_t i = 0; i < 31; ++i) CHECK(p[1 + i] == *(oversize.begin() + i));
+
+        // And it must round-trip as exactly one block of 31 bytes.
+        auto [blocks, err] = Cea708DtvccPacket::parsePayloadBytes(payload.data(), payload.size());
+        REQUIRE(err.isOk());
+        REQUIRE(blocks.size() == 1);
+        CHECK(blocks[0].serviceNumber() == 1);
+        CHECK(blocks[0].data().size() == 31);
+}
+
 TEST_CASE("Cea708DtvccPacket: triple count matches the spec formula") {
         // Payload size = 1 (header byte) + service block bytes.
         // Triple count = ceil((1 + payload) / 2) = ceil(packet_size / 2).

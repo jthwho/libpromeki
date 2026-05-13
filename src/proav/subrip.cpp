@@ -300,14 +300,18 @@ namespace {
         }
 
         struct StyleState {
-                        int                bold = 0;
-                        int                italic = 0;
-                        int                underline = 0;
+                        int         bold = 0;
+                        int         italic = 0;
+                        int         underline = 0;
                         Color::List colorStack;
+                        Color::List bgColorStack;
 
                         SubtitleSpan makeSpan(String text) const {
-                                Color c = colorStack.isEmpty() ? Color() : colorStack[colorStack.size() - 1];
-                                return SubtitleSpan(std::move(text), bold > 0, italic > 0, underline > 0, c);
+                                Color fg = colorStack.isEmpty() ? Color() : colorStack[colorStack.size() - 1];
+                                Color bg = bgColorStack.isEmpty() ? Color() : bgColorStack[bgColorStack.size() - 1];
+                                SubtitleSpan s(std::move(text), bold > 0, italic > 0, underline > 0, fg);
+                                if (bg.isValid()) s.setBackgroundColor(bg);
+                                return s;
                         }
         };
 
@@ -423,8 +427,19 @@ namespace {
                                 String val = extractAttr(rest, restLen, "color");
                                 Color  c = val.isEmpty() ? Color() : Color::fromString(val);
                                 state.colorStack.pushToBack(c);
+                                // SubRip's <font> tag is also commonly extended
+                                // with a `background` attribute (Aegisub /
+                                // libass convention).  Parsed in lockstep with
+                                // colorStack so a single <font color=... background=...>
+                                // pushes both stacks and the matching </font>
+                                // pops both.
+                                String bgVal = extractAttr(rest, restLen, "background");
+                                Color  bg = bgVal.isEmpty() ? Color() : Color::fromString(bgVal);
+                                state.bgColorStack.pushToBack(bg);
                         } else if (iEquals(name, nameLen, "/font")) {
                                 if (!state.colorStack.isEmpty()) state.colorStack.remove(state.colorStack.size() - 1);
+                                if (!state.bgColorStack.isEmpty())
+                                        state.bgColorStack.remove(state.bgColorStack.size() - 1);
                         } else if (iEquals(name, nameLen, "v")) {
                                 // <v Speaker>... — capture speaker name
                                 // (the remainder after the tag-name
@@ -459,17 +474,34 @@ namespace {
                 String body;
                 for (size_t i = 0; i < spans.size(); ++i) {
                         const SubtitleSpan &s = spans[i];
-                        bool hasFont = s.color().isValid();
+                        bool hasFg = s.color().isValid();
+                        bool hasBg = s.backgroundColor().isValid();
+                        bool hasFont = hasFg || hasBg;
                         if (hasFont) {
-                                // SubRip's <font> tag expects an HTML-style
-                                // hex colour.  Include alpha only when it
-                                // isn't fully opaque — keeps the canonical
-                                // round-trip compact for the (overwhelmingly
-                                // common) opaque-colour case.
-                                const bool includeAlpha = s.color().a() < 1.0f;
-                                body += "<font color=\"";
-                                body += s.color().toHex(includeAlpha);
-                                body += "\">";
+                                // SubRip's <font> tag expects HTML-style
+                                // hex colours.  Include alpha only when
+                                // it isn't fully opaque — keeps the
+                                // canonical round-trip compact for the
+                                // common opaque-colour case.  The
+                                // @c background attribute is a libass /
+                                // Aegisub extension we round-trip
+                                // ourselves; readers that don't recognise
+                                // it ignore the attribute and still get
+                                // the foreground.
+                                body += "<font";
+                                if (hasFg) {
+                                        const bool includeAlpha = s.color().a() < 1.0f;
+                                        body += " color=\"";
+                                        body += s.color().toHex(includeAlpha);
+                                        body += "\"";
+                                }
+                                if (hasBg) {
+                                        const bool includeAlpha = s.backgroundColor().a() < 1.0f;
+                                        body += " background=\"";
+                                        body += s.backgroundColor().toHex(includeAlpha);
+                                        body += "\"";
+                                }
+                                body += ">";
                         }
                         if (s.bold()) body += "<b>";
                         if (s.italic()) body += "<i>";

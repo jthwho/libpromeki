@@ -18,6 +18,7 @@
 #include <promeki/framerate.h>
 #include <promeki/metadata.h>
 #include <promeki/rect.h>
+#include <promeki/stringlist.h>
 #include <promeki/subtitle.h>
 #include <promeki/timestamp.h>
 
@@ -407,13 +408,224 @@ TEST_CASE("Cea608: round-trip preserves mid-row colour change between spans") {
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         const SubtitleSpan::List &gotSpans = out[0].spans();
-        REQUIRE(gotSpans.size() == 2);
+        // Three spans: the two styled runs plus a neutral
+        // single-space separator span injected by the decoder for
+        // the mid-row code's display cell (the encoder strips one
+        // leading space at MR boundaries so the styled regions
+        // contain only the styled text — no one-cell bleed).
+        REQUIRE(gotSpans.size() == 3);
         CHECK(gotSpans[0].text() == "REDX");
         CHECK(gotSpans[0].color() == Color::Red);
-        CHECK(gotSpans[1].text() == "BL");
-        CHECK(gotSpans[1].color() == Color::Blue);
-        // Flat text concatenation also survives.
-        CHECK(out[0].text() == "REDXBL");
+        CHECK(gotSpans[1].text() == " ");
+        CHECK_FALSE(gotSpans[1].color().isValid());
+        CHECK(gotSpans[2].text() == "BL");
+        CHECK(gotSpans[2].color() == Color::Blue);
+        // Flat text now reads as "REDX BL" thanks to the inter-run
+        // separator the decoder synthesises for the MR-space cell.
+        CHECK(out[0].text() == "REDX BL");
+}
+
+TEST_CASE("Cea608: round-trip preserves multi-row layout via PAC row breaks") {
+        // A cue whose source already breaks into two SRT lines and
+        // fits both rows inside the 32-col cap.  The encoder takes
+        // the explicit-break path (one PAC per source line); the
+        // decoder must surface the row break as a "\n" marker span
+        // so the renderer stacks the two lines vertically instead
+        // of concatenating them horizontally.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("Line one\nLine two", false, false, false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(60), tsAt30fps(120), spans, SubtitleAnchor::BottomCenter,
+                             Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 140);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // Flat text round-trips with the row break intact.  Note
+        // the trailing pad-space on the second row (odd-length
+        // "Line two" → 8 chars even, no pad; but "Line one" is 8
+        // chars even too, no pad — both rows round-trip exactly).
+        CHECK(out[0].text() == "Line one\nLine two");
+}
+
+TEST_CASE("Cea608: round-trip wraps over-cap text into multiple rows") {
+        // A single-line cue that exceeds the 32-col cap.  Encoder
+        // re-flows into multiple physical 608 rows; decoder
+        // surfaces row breaks as "\n" markers so the rendered text
+        // doesn't overflow the receiver's grid.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        // 40-char cue, exceeds maxCols=32; balanced re-flow lands
+        // it in 2 rows.
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("aaaa bbbb cccc dddd eeee ffff gggg hhhh!", false, false,
+                                       false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(60), tsAt30fps(180), spans, SubtitleAnchor::BottomCenter,
+                             Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 220);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // The decoded flat text contains at least one row break.
+        // We don't pin the exact split point (the balanced wrap is
+        // free to pick the tightest minimax), only that the text
+        // is broken across rows rather than emitted on one line.
+        const String flat = out[0].text();
+        const bool   hasRowBreak = flat.contains(String("\n"));
+        CHECK(hasRowBreak);
+        // Each row stays inside maxCols=32 chars.
+        const StringList rows = flat.split("\n");
+        for (size_t i = 0; i < rows.size(); ++i) {
+                CHECK(rows[i].length() <= 32);
+        }
+}
+
+TEST_CASE("Cea608: SubRip-style cue with <b>/<u> markup preserves underline") {
+        // Mirror exactly what subrip.cpp produces for substest.srt
+        // cue 8: "<b>Bold</b> and <u>underlined</u> mixed inline."
+        // — four spans with their styling flags.  Verify that
+        // after a full encode/decode round-trip the underlined
+        // span survives with underline=true.  Bold is expected
+        // to be dropped (the wire format can't carry it).
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("Bold",       true,  false, false));
+        spans.pushToBack(SubtitleSpan(" and ",      false, false, false));
+        spans.pushToBack(SubtitleSpan("underlined", false, false, true));
+        spans.pushToBack(SubtitleSpan(" mixed inline.", false, false, false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(150), tsAt30fps(240), spans, SubtitleAnchor::BottomCenter,
+                             Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 280);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        const SubtitleSpan::List &gotSpans = out[0].spans();
+
+        // Exactly one span must carry underline=true, and its text
+        // must be exactly "underlined" (no bleed).  Every other
+        // span must have underline=false.
+        int  underlineCount  = 0;
+        bool underlineExact  = false;
+        for (size_t i = 0; i < gotSpans.size(); ++i) {
+                if (gotSpans[i].underline()) {
+                        ++underlineCount;
+                        if (gotSpans[i].text() == "underlined") underlineExact = true;
+                }
+        }
+        CHECK(underlineCount == 1);
+        CHECK(underlineExact);
+
+        // No span carries bold (608 limitation).
+        for (size_t i = 0; i < gotSpans.size(); ++i) {
+                CHECK_FALSE(gotSpans[i].bold());
+        }
+}
+
+TEST_CASE("Cea608: re-flow across a source '\\n' inserts a separator space") {
+        // Source cue with two short lines whose combined length
+        // forces a re-flow when maxCols is tight enough that the
+        // explicit-break attempt (2 source rows) won't pass.  The
+        // '\n' between source rows is whitespace to the tokenizer,
+        // so the re-flow's `wordsAreAdjacent` check sees a gap and
+        // adds a separator space.  Net: the re-flowed text never
+        // concatenates "1This" — there's always whitespace between
+        // the last word of line 1 and the first word of line 2.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        // Tight cap so the encoder is forced into balanced re-flow
+        // rather than honouring the source '\n' break.
+        eCfg.maxCols = 32;
+        eCfg.maxRows = 1; // single row → must re-flow into one line
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("aa bb cc\ndd ee ff", false, false, false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(60), tsAt30fps(180), spans, SubtitleAnchor::BottomCenter,
+                             Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 220);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // The decoded text has the source '\n' collapsed to a
+        // single space — never the bare concatenation "cc"+"dd".
+        const String flat = out[0].text();
+        CHECK_FALSE(flat.contains(String("ccdd")));
+        CHECK(flat.contains(String("cc dd")));
+}
+
+TEST_CASE("Cea608: underline span round-trips with no leading or trailing bleed") {
+        // Three-run cue mirroring substest.srt cue 8: plain prefix,
+        // an even-length underlined word, plain suffix.  The
+        // encoder strips the runs' leading spaces at the MR
+        // boundaries (so the styled region carries only
+        // "underlined"); the decoder reconstructs neutral inter-run
+        // separators.  Net: the decoded underlined span's text is
+        // exactly the underlined word, with no one-cell leakage of
+        // the underline into adjacent spaces.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("and ",       false, false, false));
+        spans.pushToBack(SubtitleSpan("underlined", false, false, true));
+        spans.pushToBack(SubtitleSpan(" mixed",     false, false, false));
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(60), tsAt30fps(180), spans, SubtitleAnchor::BottomCenter,
+                             Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 220);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        const SubtitleSpan::List &gotSpans = out[0].spans();
+        // Find the underlined span — it must carry "underlined"
+        // exactly, with no leading or trailing space.  Adjacent
+        // spans must not carry the underline flag.
+        bool foundUnderlined = false;
+        for (size_t i = 0; i < gotSpans.size(); ++i) {
+                if (!gotSpans[i].underline()) continue;
+                CHECK(gotSpans[i].text() == "underlined");
+                foundUnderlined = true;
+        }
+        CHECK(foundUnderlined);
+        // Flat text reads as the original sentence with single
+        // spaces between words.  Two kinds of inter-run space
+        // appear:
+        //   - "and " has a trailing pad-space (the encoder padded
+        //     an odd-length 3-char run to 4 bytes for the wire's
+        //     byte-pair cadence); the decoder absorbs the MR-cell
+        //     into that existing space, so no second separator is
+        //     synthesised here.
+        //   - "underlined" is even-length and has no trailing
+        //     pad; the decoder synthesises a neutral " " separator
+        //     for the MR cell before "mixed".
+        //
+        // The cue ends with a single pad-space from the encoder
+        // having had to round "mixed" (5 chars) up to a 6-char
+        // byte-pair count.
+        CHECK(out[0].text() == "and underlined mixed ");
 }
 
 TEST_CASE("Cea608: bold span emits a warning but encodes the non-bold attributes") {
@@ -577,4 +789,39 @@ TEST_CASE("Cea608Decoder[roll-up]: round-trips with Cea608Encoder") {
         // exact timestamps.
         CHECK(out[0].start().value() <= out[0].end().value());
         CHECK(out[1].start().value() <= out[1].end().value());
+}
+
+TEST_CASE("Cea608Decoder: span background colour round-trips via EIA-608-B BG codes") {
+        // Encode a cue with a Red opaque background and verify the
+        // decoder recovers the bg colour on the cue's span.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan span("HI", false, false, false, Color::White);
+        span.setBackgroundColor(Color::Red);
+        span.setBackgroundOpacity(SubtitleOpacity::Solid);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(60), spans, SubtitleAnchor::Default,
+                            Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        // The decoded bg colour quantises through the same 608
+        // palette the encoder used, so a Red input rebuilds as
+        // exact Cea608 Red sRGB(1,0,0).
+        const SubtitleSpan &gotSpan = out[0].spans()[0];
+        CHECK(gotSpan.backgroundColor().isValid());
+        CHECK(gotSpan.backgroundColor().r8() == 255);
+        CHECK(gotSpan.backgroundColor().g8() == 0);
+        CHECK(gotSpan.backgroundColor().b8() == 0);
+        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Solid.value());
 }

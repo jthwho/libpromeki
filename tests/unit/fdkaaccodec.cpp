@@ -21,6 +21,7 @@
 #include <promeki/mediaconfig.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/pcmaudiopayload.h>
+#include "codectesthelpers.h"
 
 using namespace promeki;
 
@@ -105,20 +106,20 @@ TEST_CASE("FdkAac: encoder/decoder round-trip preserves a sine wave within toler
                     makeSineFrame(chunk, sr, ch, freq, i * chunk * 2.0 * M_PI * freq / sr);
                 const auto *p = reinterpret_cast<const int16_t *>(frame->plane(0).data());
                 original.insert(original.end(), p, p + chunk * ch);
-                CHECK(enc->submitPayload(frame) == Error::Ok);
-                while (auto pkt = enc->receiveCompressedPayload()) {
+                CHECK(enc->submitFrame(tests::frameWith(frame)) == Error::Ok);
+                while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
                         CHECK(pkt->desc().format().id() == AudioFormat::AAC);
-                        CHECK(dec->submitPayload(pkt) == Error::Ok);
+                        CHECK(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
                 }
         }
         REQUIRE(enc->flush() == Error::Ok);
-        while (auto pkt = enc->receiveCompressedPayload()) {
+        while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
                 if (pkt->isEndOfStream()) break;
-                CHECK(dec->submitPayload(pkt) == Error::Ok);
+                CHECK(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
         }
 
         std::vector<int16_t> decoded;
-        while (auto out = dec->receiveAudioPayload()) {
+        while (auto out = tests::firstPcmAudio(dec->receiveFrame())) {
                 const auto *p = reinterpret_cast<const int16_t *>(out->plane(0).data());
                 decoded.insert(decoded.end(), p, p + out->sampleCount() * ch);
         }
@@ -161,7 +162,7 @@ TEST_CASE("FdkAac: encoder rejects unsupported channel layout") {
         BufferView planes;
         planes.pushToBack(buf, 0, bytes);
         auto payload = PcmAudioPayload::Ptr::create(desc, static_cast<size_t>(1024), planes);
-        Error err = enc->submitPayload(payload);
+        Error err = enc->submitFrame(tests::frameWith(payload));
         CHECK(err.isError());
 }
 
@@ -172,11 +173,11 @@ TEST_CASE("FdkAac: encoder + decoder can be reset cleanly") {
         REQUIRE(dec != nullptr);
 
         auto frame = makeSineFrame(1024, 48000.0f, 2, 440.0f, 0.0);
-        CHECK(enc->submitPayload(frame) == Error::Ok);
+        CHECK(enc->submitFrame(tests::frameWith(frame)) == Error::Ok);
         CHECK(enc->reset() == Error::Ok);
 
         // Re-using after reset must work — submit again and observe an emit.
-        CHECK(enc->submitPayload(frame) == Error::Ok);
+        CHECK(enc->submitFrame(tests::frameWith(frame)) == Error::Ok);
         // The decoder reset path is symmetrical.
         CHECK(dec->reset() == Error::Ok);
 }
@@ -201,17 +202,17 @@ TEST_CASE("FdkAac: 44.1 kHz mono round-trip works") {
         // Push 30 frames and confirm we get at least some decoded output back.
         for (size_t i = 0; i < 30; ++i) {
                 auto frame = makeSineFrame(1024, sr, ch, 440.0f, i * 1024.0);
-                CHECK(enc->submitPayload(frame) == Error::Ok);
-                while (auto pkt = enc->receiveCompressedPayload()) {
-                        CHECK(dec->submitPayload(pkt) == Error::Ok);
+                CHECK(enc->submitFrame(tests::frameWith(frame)) == Error::Ok);
+                while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
+                        CHECK(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
                 }
         }
         enc->flush();
-        while (auto pkt = enc->receiveCompressedPayload()) {
+        while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
                 if (pkt->isEndOfStream()) break;
-                dec->submitPayload(pkt);
+                dec->submitFrame(tests::frameWith(pkt));
         }
         size_t decodedSamples = 0;
-        while (auto out = dec->receiveAudioPayload()) decodedSamples += out->sampleCount();
+        while (auto out = tests::firstPcmAudio(dec->receiveFrame())) decodedSamples += out->sampleCount();
         CHECK(decodedSamples > 0);
 }

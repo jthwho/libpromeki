@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <memory>
 #include <promeki/namespace.h>
 #include <promeki/ancdesc.h>
 #include <promeki/anctranslator.h>
-#include <promeki/cea608encoder.h>
+#include <promeki/captionencoder.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/enums.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/map.h>
 #include <promeki/mediaiofactory.h>
@@ -22,9 +22,11 @@
 #include <promeki/timecodegenerator.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/imagedesc.h>
+#include <promeki/list.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/subtitle.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/videoformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -183,11 +185,22 @@ class TpgMediaIO : public SharedThreadMediaIO {
                 ///        so per-frame metadata stamping can query
                 ///        @c findActiveAt without re-parsing each frame.
                 SubtitleList                   _ancCaptions;
-                /// @brief @ref Cea608Encoder driven against @ref _ancCaptions
-                ///        at the configured frame rate.  Held as a
-                ///        @c std::unique_ptr because the encoder is
-                ///        copy/move-deleted (stateful worker).
-                std::unique_ptr<Cea608Encoder> _ancCaptionEncoder;
+                /// @brief Ordered list of caption encoders driving the
+                ///        per-frame @c CcDataList.  Populated from
+                ///        @c _ancCaptionsCodec at open time (0, 1, or
+                ///        2 entries); each frame appends every
+                ///        encoder's @c nextFrame triples into the same
+                ///        CDP, so codec=Both rides both 608 and 708 on
+                ///        the wire simultaneously.  SCC bypass leaves
+                ///        the list empty and consults
+                ///        @ref _ancSccByFrame directly.
+                List<UniquePtr<CaptionEncoder>> _ancCaptionEncoders;
+
+                /// @brief Selected caption codec(s) — drives the shape
+                ///        of @ref _ancCaptionEncoders at open time.
+                ///        Forced to @c Cea608 when SCC bypass is
+                ///        active.
+                CaptionCodec                    _ancCaptionsCodec = CaptionCodec::Cea608;
 
                 /// @brief Optional SCC bypass path — when set via
                 ///        @ref MediaConfig::TpgAncCaptionsScc, the per-

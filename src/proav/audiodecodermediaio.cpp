@@ -163,7 +163,6 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _capacityWarned = false;
         _closed = false;
         _outputQueue.clear();
-        _pendingSrcFrames.clear();
 
         AudioCodec codec = cfg.getAs<AudioCodec>(MediaConfig::AudioCodec);
         if (codec.isValid()) {
@@ -206,7 +205,6 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                 drainDecoderInto();
                 _decoder.clear();
         }
-        _pendingSrcFrames.clear();
         _config = MediaConfig();
         _codec = AudioCodec();
         _outputAudioDataType = AudioFormat::Invalid;
@@ -229,21 +227,11 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = cmd.frame;
 
-        // Collect every compressed audio payload on the Frame.  The
-        // decoder's payload-native @ref submitPayload entry delivers
-        // each CompressedAudioPayload straight to the backend, so we
-        // forward payloads directly without any packet-style bridge
-        // at this layer.
-        List<CompressedAudioPayload::Ptr> payloads;
-        for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
-                if (!ap.isValid()) continue;
-                CompressedAudioPayload::Ptr cap = sharedPointerCast<CompressedAudioPayload>(ap);
-                if (cap.isValid() && cap->isValid()) {
-                        payloads.pushToBack(std::move(cap));
-                }
-        }
-
-        if (payloads.isEmpty()) {
+        // Resolve the compressed payload via the base helper for
+        // codec auto-detection.  The decoder will re-select
+        // internally on submitFrame.
+        CompressedAudioPayload::Ptr probe = AudioDecoder::selectInputPayload(frame);
+        if (!probe.isValid() || !probe->isValid()) {
                 promekiErr("AudioDecoderMediaIO: write frame carries no "
                            "CompressedAudioPayload; upstream must emit a "
                            "compressed audio payload for every frame that "
@@ -252,7 +240,7 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         }
 
         if (_decoder.isNull()) {
-                const AudioFormat &fmt = payloads[0]->desc().format();
+                const AudioFormat &fmt = probe->desc().format();
                 AudioCodec         codec = fmt.audioCodec();
                 if (!codec.isValid()) {
                         promekiErr("AudioDecoderMediaIO: cannot resolve "
@@ -276,17 +264,14 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        for (const CompressedAudioPayload::Ptr &payload : payloads) {
-                _pendingSrcFrames.pushToBack(cmd.frame);
-                Error err = _decoder->submitPayload(payload);
-                if (err.isError()) {
-                        promekiErr("AudioDecoderMediaIO: submitPayload failed: %s",
-                                   _decoder->lastErrorMessage().cstr());
-                        return err;
-                }
-                _packetsDecoded++;
-                drainDecoderInto();
+        Error err = _decoder->submitFrame(frame);
+        if (err.isError()) {
+                promekiErr("AudioDecoderMediaIO: submitFrame failed: %s",
+                           _decoder->lastErrorMessage().cstr());
+                return err;
         }
+        _packetsDecoded++;
+        drainDecoderInto();
 
         _frameCount++;
         cmd.currentFrame = toFrameNumber(_frameCount);
@@ -297,30 +282,8 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 void AudioDecoderMediaIO::drainDecoderInto() {
         if (_decoder.isNull()) return;
         while (true) {
-                PcmAudioPayload::Ptr outPayload = _decoder->receiveAudioPayload();
-                if (!outPayload.isValid()) break;
-
-                // Pair this payload with the oldest queued source
-                // Frame — that's the packet Frame that produced it
-                // even when codec startup delays a few frames.
-                // Empty queue is a best-effort fallback for codecs
-                // that emit more payloads than there were inputs
-                // (decoder breaking a long packet into per-frame
-                // chunks).
-                Frame origin;
-                if (!_pendingSrcFrames.isEmpty()) {
-                        origin = _pendingSrcFrames.front();
-                        _pendingSrcFrames.remove(0);
-                }
-
-                Frame outFrame = Frame();
-                if (origin.isValid()) {
-                        outFrame.metadata() = origin.metadata();
-                        for (const VideoPayload::Ptr &vp : origin.videoPayloads()) {
-                                if (vp.isValid()) outFrame.addPayload(vp);
-                        }
-                }
-                outFrame.addPayload(outPayload);
+                Frame outFrame = _decoder->receiveFrame();
+                if (!outFrame.isValid()) break;
                 _outputQueue.pushToBack(std::move(outFrame));
                 _framesOut++;
         }

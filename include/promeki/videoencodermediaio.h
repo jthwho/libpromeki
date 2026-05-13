@@ -23,12 +23,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @c VideoEncoderMediaIO wires a @ref VideoEncoder session into
  * the MediaIO command/signal model.  It accepts a Frame on
- * @c writeFrame(), feeds the first @ref UncompressedVideoPayload into
- * the encoder via @ref VideoEncoder::submitPayload, and drains
- * @ref VideoEncoder::receiveCompressedPayload producing one output
- * Frame per emitted @ref CompressedVideoPayload.  Audio tracks on the
- * source Frame are forwarded alongside each output payload so
- * downstream stages still see them on the same PTS.
+ * @c writeFrame(), hands the whole Frame to the encoder via
+ * @ref VideoEncoder::submitFrame, and drains
+ * @ref VideoEncoder::receiveFrame, pushing the output Frames the
+ * encoder produces onto its output queue.  The encoder is responsible
+ * for echoing the source Frame's audio / ANC / metadata through onto
+ * each emitted output Frame (the @ref VideoEncoder::buildOutputFrame
+ * helper handles this).
  *
  * The registered backend name is @c "VideoEncoder"; callers pick a
  * concrete codec via the @ref MediaConfig::VideoCodec key (e.g.
@@ -124,38 +125,24 @@ class VideoEncoderMediaIO : public SharedThreadMediaIO {
                 void  configChanged(const MediaConfig &delta) override;
 
         private:
-                // Drains the underlying encoder's ready packets into
-                // per-packet output frames, appending each to
-                // @c _outputQueue.  Each drained packet is paired with
-                // the source Frame that produced it via
-                // @c _pendingSrcFrames so audio / metadata travel with
-                // the correct input even when NVENC buffers an earlier
-                // frame and emits it on a later submit.
+                // Drains the underlying encoder's ready Frames into
+                // @c _outputQueue.  The encoder is responsible for
+                // echoing the source Frame's audio / ANC / metadata
+                // through onto each emitted Frame via the base
+                // @ref VideoEncoder::buildOutputFrame helper.
                 void drainEncoderInto();
 
                 MediaConfig        _config;
                 VideoCodec         _codec;
                 VideoEncoder::UPtr _encoder;
                 int                _capacity = 8;
-                Frame::List   _outputQueue;
-
-                // FIFO of submitted source Frames awaiting a matching
-                // packet from the encoder.  One entry is pushed per
-                // successful submitPayload() and popped per emitted
-                // CompressedVideoPayload; the pairing is order-preserving because
-                // the encoder runs in 1-in / 1-out sync mode (no
-                // B-frames, no look-ahead).  Needed to preserve the
-                // source frame's metadata + audio across the
-                // NEED_MORE_INPUT case where submit N's packet emerges
-                // during submit N+1.
-                Frame::List _pendingSrcFrames;
-                FrameCount       _frameCount{0};
-                int64_t          _readCount = 0;
-                FrameCount       _framesEncoded{0};
-                int64_t          _packetsOut = 0;
-                bool             _capacityWarned = false;
-                bool             _multiImageWarned = false;
-                bool             _closed = false;
+                Frame::List        _outputQueue;
+                FrameCount         _frameCount{0};
+                int64_t            _readCount = 0;
+                FrameCount         _framesEncoded{0};
+                int64_t            _packetsOut = 0;
+                bool               _capacityWarned = false;
+                bool               _closed = false;
 };
 
 /**

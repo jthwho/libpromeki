@@ -152,7 +152,6 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _capacityWarned = false;
         _closed = false;
         _outputQueue.clear();
-        _pendingSrcFrames.clear();
 
         VideoCodec codec = cfg.getAs<VideoCodec>(MediaConfig::VideoCodec);
         if (codec.isValid()) {
@@ -191,7 +190,6 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                 drainDecoderInto();
                 _decoder.clear();
         }
-        _pendingSrcFrames.clear();
         _config = MediaConfig();
         _codec = VideoCodec();
         _outputPixelFormat = PixelFormat();
@@ -214,21 +212,11 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 
         const Frame &frame = cmd.frame;
 
-        // Collect every compressed video payload on the Frame.  The
-        // decoder's payload-native @ref submitPayload entry delivers
-        // each CompressedVideoPayload straight to the backend, so we
-        // forward payloads directly without any packet-style bridge
-        // at this layer.
-        List<CompressedVideoPayload::Ptr> payloads;
-        for (const VideoPayload::Ptr &vp : frame.videoPayloads()) {
-                if (!vp.isValid()) continue;
-                CompressedVideoPayload::Ptr cvp = sharedPointerCast<CompressedVideoPayload>(vp);
-                if (cvp.isValid() && cvp->isValid()) {
-                        payloads.pushToBack(std::move(cvp));
-                }
-        }
-
-        if (payloads.isEmpty()) {
+        // Resolve the compressed payload via the base helper.  The
+        // decoder will re-select internally — we only need it here for
+        // codec auto-detection and shape validation.
+        CompressedVideoPayload::Ptr probe = VideoDecoder::selectInputPayload(frame);
+        if (!probe.isValid() || !probe->isValid()) {
                 promekiErr("VideoDecoderMediaIO: write frame carries no "
                            "CompressedVideoPayload; upstream must emit a "
                            "compressed video payload for every frame that "
@@ -237,7 +225,7 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         }
 
         if (_decoder.isNull()) {
-                const PixelFormat &pf = payloads[0]->desc().pixelFormat();
+                const PixelFormat &pf = probe->desc().pixelFormat();
                 VideoCodec         codec = VideoCodec::fromPixelFormat(pf);
                 if (!codec.isValid()) {
                         promekiErr("VideoDecoderMediaIO: cannot resolve "
@@ -261,17 +249,14 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        for (const CompressedVideoPayload::Ptr &payload : payloads) {
-                _pendingSrcFrames.pushToBack(cmd.frame);
-                Error err = _decoder->submitPayload(payload);
-                if (err.isError()) {
-                        promekiErr("VideoDecoderMediaIO: submitPayload failed: %s",
-                                   _decoder->lastErrorMessage().cstr());
-                        return err;
-                }
-                _packetsDecoded++;
-                drainDecoderInto();
+        Error err = _decoder->submitFrame(frame);
+        if (err.isError()) {
+                promekiErr("VideoDecoderMediaIO: submitFrame failed: %s",
+                           _decoder->lastErrorMessage().cstr());
+                return err;
         }
+        _packetsDecoded++;
+        drainDecoderInto();
 
         _frameCount++;
         cmd.currentFrame = toFrameNumber(_frameCount);
@@ -282,29 +267,8 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 void VideoDecoderMediaIO::drainDecoderInto() {
         if (_decoder.isNull()) return;
         while (true) {
-                UncompressedVideoPayload::Ptr outPayload = _decoder->receiveVideoPayload();
-                if (!outPayload.isValid()) break;
-
-                // Pair this payload with the oldest queued source
-                // Frame — that's the packet Frame that produced it
-                // even when DPB warmup delays a few frames.  Empty
-                // queue is a best-effort fallback (shouldn't happen
-                // for I/P-only streams but leaves the payload intact
-                // for any other).
-                Frame origin;
-                if (!_pendingSrcFrames.isEmpty()) {
-                        origin = _pendingSrcFrames.front();
-                        _pendingSrcFrames.remove(0);
-                }
-
-                Frame outFrame = Frame();
-                if (origin.isValid()) {
-                        outFrame.metadata() = origin.metadata();
-                        for (const AudioPayload::Ptr &ap : origin.audioPayloads()) {
-                                if (ap.isValid()) outFrame.addPayload(ap);
-                        }
-                }
-                outFrame.addPayload(outPayload);
+                Frame outFrame = _decoder->receiveFrame();
+                if (!outFrame.isValid()) break;
                 _outputQueue.pushToBack(std::move(outFrame));
                 _imagesOut++;
         }

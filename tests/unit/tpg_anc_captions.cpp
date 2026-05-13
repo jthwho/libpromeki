@@ -24,7 +24,10 @@
 #include <promeki/buffer.h>
 #include <promeki/cea608.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/cea708decoder.h>
 #include <promeki/dir.h>
+#include <promeki/enums.h>
+#include <promeki/framenumber.h>
 #include <promeki/duration.h>
 #include <promeki/file.h>
 #include <promeki/frame.h>
@@ -422,6 +425,179 @@ TEST_CASE("TPG: VANC line config carries through to the emitted ST 291 packet") 
         Result<St291Packet> rp = St291Packet::from(ancs[0]->packets()[0]);
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().line() == 13);
+
+        io->close().wait();
+        delete io;
+}
+
+// ============================================================================
+// CEA-708 codec selector
+// ============================================================================
+//
+// The TPG's TpgAncCaptionsCodec key flips the per-frame encoder
+// between Cea608Encoder (cc_type=0 line-21 byte pairs), Cea708Encoder
+// (cc_type=2/3 DTVCC triples), or Both.  These tests verify each
+// shape lands in the CDP's @c cc_data list and that the 708 path
+// round-trips a SubRip cue through @ref Cea708Decoder.
+
+TEST_CASE("TPG[708]: codec=Cea708 emits DTVCC triples; Cea708Decoder round-trips the cue") {
+        // Cue "HELLO" at 1.0s..2.0s.  At default 29.97 fps this rounds
+        // to frame 30..60.  The 708 encoder emits the show packet
+        // (DF0 + chars + DSW) at frame 30 and the hide packet (HDW)
+        // at frame 60; all other frames carry no DTVCC payload.
+        const String srtPath = writeSrtFixture(
+                "1\r\n00:00:01,000 --> 00:00:02,000\r\nHELLO\r\n\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+        cfg.set(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Cea708);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open().wait().isOk());
+
+        AncTranslator t;
+        Cea708Decoder dec;
+        bool          sawDtvccStartAt30 = false;
+        bool          sawDtvccStartAt60 = false;
+        bool          saw608TripleAnywhere = false;
+        for (int64_t f = 0; f < 80; ++f) {
+                Frame               frame = readOneFrame(io);
+                AncPayload::PtrList ancs = frame.ancPayloads();
+                REQUIRE(ancs.size() == 1);
+                Result<Variant> parsed = t.parse(ancs[0]->packets()[0]);
+                REQUIRE(parsed.second().isOk());
+                Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
+                for (size_t i = 0; i < cdp.ccData.size(); ++i) {
+                        const auto &cc = cdp.ccData[i];
+                        if (cc.type == 0 || cc.type == 1) saw608TripleAnywhere = true;
+                        if (f == 30 && cc.type == 2) sawDtvccStartAt30 = true;
+                        if (f == 60 && cc.type == 2) sawDtvccStartAt60 = true;
+                }
+                // Use the frame's media timestamp (rational tick conversion
+                // mirrors the TPG's own clock).  TimeStamp here is just
+                // the cue boundary; the decoder doesn't care about absolute
+                // value, only ordering.
+                dec.pushFrame(FrameNumber(f),
+                              TimeStamp(TimeStamp::Value(
+                                      std::chrono::duration_cast<TimeStamp::Value::duration>(
+                                              std::chrono::nanoseconds(f * 1001 * 1000000 / 30)))),
+                              cdp.ccData);
+        }
+        CHECK(sawDtvccStartAt30);
+        CHECK(sawDtvccStartAt60);
+        CHECK_FALSE(saw608TripleAnywhere);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "HELLO");
+
+        io->close().wait();
+        delete io;
+}
+
+TEST_CASE("TPG[708]: codec=Both packs 608 byte pair and 708 triples into the same CDP") {
+        // Same cue, codec=Both.  The CDP at frame 30 (the cue's show
+        // boundary) must carry the 608 byte pair AND at least one
+        // cc_type=2 triple from the 708 encoder.
+        const String srtPath = writeSrtFixture(
+                "1\r\n00:00:01,000 --> 00:00:02,000\r\nHELLO\r\n\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+        cfg.set(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Both);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open().wait().isOk());
+
+        AncTranslator t;
+        bool          sawBothShapesAt30 = false;
+        // Every frame should have the 608 byte pair (the 608 encoder
+        // emits the null pair between cues and real bytes during).
+        bool          every608Present = true;
+        for (int64_t f = 0; f < 70; ++f) {
+                Frame               frame = readOneFrame(io);
+                AncPayload::PtrList ancs = frame.ancPayloads();
+                REQUIRE(ancs.size() == 1);
+                Cea708Cdp cdp = t.parse(ancs[0]->packets()[0]).first().get<Cea708Cdp>();
+                bool has608 = false;
+                bool has708Start = false;
+                for (size_t i = 0; i < cdp.ccData.size(); ++i) {
+                        if (cdp.ccData[i].type == 0 || cdp.ccData[i].type == 1) has608 = true;
+                        if (cdp.ccData[i].type == 2) has708Start = true;
+                }
+                if (!has608) every608Present = false;
+                if (f == 30 && has608 && has708Start) sawBothShapesAt30 = true;
+        }
+        CHECK(sawBothShapesAt30);
+        CHECK(every608Present);
+
+        io->close().wait();
+        delete io;
+}
+
+TEST_CASE("TPG[708]: codec=Cea708 with no file emits no DTVCC payload (no per-frame filler)") {
+        // DTVCC has no equivalent of the line-21 null pair — between
+        // cue transactions there is simply no service-block traffic.
+        // So a 708-only TPG with no SubRip file must produce an empty
+        // cc_data list on every frame.
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsFile, String());
+        cfg.set(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Cea708);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open().wait().isOk());
+
+        AncTranslator t;
+        for (int64_t f = 0; f < 5; ++f) {
+                Frame               frame = readOneFrame(io);
+                AncPayload::PtrList ancs = frame.ancPayloads();
+                REQUIRE(ancs.size() == 1);
+                Cea708Cdp cdp = t.parse(ancs[0]->packets()[0]).first().get<Cea708Cdp>();
+                CHECK(cdp.ccData.size() == 0);
+        }
+
+        io->close().wait();
+        delete io;
+}
+
+TEST_CASE("TPG[708]: TpgAncCaptions708Service routes via the configured DTVCC service") {
+        // Encoder targets service 2; a decoder configured for service 1
+        // sees no cues, but a decoder configured for service 2 recovers
+        // the text.
+        const String srtPath = writeSrtFixture(
+                "1\r\n00:00:01,000 --> 00:00:02,000\r\nQ\r\n\r\n");
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
+        cfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        cfg.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+        cfg.set(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Cea708);
+        cfg.set(MediaConfig::TpgAncCaptions708Service, int32_t(2));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open().wait().isOk());
+
+        AncTranslator         t;
+        Cea708Decoder         decService1; // default service 1
+        Cea708Decoder::Config decCfg2;
+        decCfg2.serviceNumber = 2;
+        Cea708Decoder         decService2(decCfg2);
+        for (int64_t f = 0; f < 80; ++f) {
+                Frame               frame = readOneFrame(io);
+                AncPayload::PtrList ancs = frame.ancPayloads();
+                REQUIRE(ancs.size() == 1);
+                Cea708Cdp cdp = t.parse(ancs[0]->packets()[0]).first().get<Cea708Cdp>();
+                const TimeStamp ts(TimeStamp::Value(
+                        std::chrono::duration_cast<TimeStamp::Value::duration>(
+                                std::chrono::nanoseconds(f * 1001 * 1000000 / 30))));
+                decService1.pushFrame(FrameNumber(f), ts, cdp.ccData);
+                decService2.pushFrame(FrameNumber(f), ts, cdp.ccData);
+        }
+        CHECK(decService1.finalize().isEmpty());
+        SubtitleList out = decService2.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "Q");
 
         io->close().wait();
         delete io;

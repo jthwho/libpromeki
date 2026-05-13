@@ -16,8 +16,11 @@
 #include <chrono>
 #include <cstdio>
 #include <thread>
+#include <promeki/cea708cdp.h>
+#include <promeki/cea708decoder.h>
 #include <promeki/dir.h>
 #include <promeki/elapsedtimer.h>
+#include <promeki/framenumber.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
 #include <promeki/eventloop.h>
@@ -223,6 +226,156 @@ TEST_CASE("Inspector: AncData test dumps per-frame JSONL with CEA-708 packets fr
         // captionText is odd-length so the encoder pads the final
         // pair with a space; the prefix match still holds.
         CHECK(reconstructed.contains(captionText));
+
+        (void)std::remove(ancJsonlPath.cstr());
+        (void)std::remove(srtPath.cstr());
+}
+
+// ============================================================================
+// CEA-708 codec variant
+// ============================================================================
+//
+// Same pipeline shape, but the TPG is configured with
+// @c TpgAncCaptionsCodec = Cea708 so the per-frame CDP carries
+// DTVCC packets (cc_type=2/3) instead of line-21 byte pairs.  The
+// JSONL must surface those triples in the same @c parsed.ccData
+// array, and rebuilding the CcDataList from the JSONL bytes and
+// feeding it through @ref Cea708Decoder must recover the cue text.
+
+TEST_CASE("Inspector: AncData JSONL surfaces CEA-708 DTVCC packets from TPG codec=Cea708") {
+        EventLoop loop;
+
+        const String  ancJsonlPath = uniqueAncJsonlPath();
+        const String  captionText = "PROMEKI";
+
+        const int64_t ns = TimeStamp::now().nanoseconds();
+        const String  srtPath = (Dir::temp().path()
+                                / String::sprintf("promeki_inspector_anc_708_%lld.srt",
+                                                   static_cast<long long>(ns)))
+                                       .toString();
+        {
+                File f(srtPath);
+                REQUIRE(f.open(IODevice::WriteOnly, File::Create | File::Truncate).isOk());
+                String body = "1\r\n00:00:00,500 --> 00:00:02,000\r\nPROMEKI\r\n\r\n";
+                f.write(body.cstr(), static_cast<int64_t>(body.byteCount()));
+                f.close();
+        }
+
+        // Source: TPG with CEA-708 DTVCC injection.
+        MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
+        srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
+        srcCfg.set(MediaConfig::VideoEnabled, true);
+        srcCfg.set(MediaConfig::AudioEnabled, false);
+        srcCfg.set(MediaConfig::TimecodeEnabled, false);
+        srcCfg.set(MediaConfig::VideoBurnEnabled, false);
+        srcCfg.set(MediaConfig::TpgAncCaptionsEnabled, true);
+        srcCfg.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+        srcCfg.set(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Cea708);
+        srcCfg.set(MediaConfig::TpgAncCaptionsLine, int32_t(11));
+        MediaIO *src = MediaIO::create(srcCfg);
+        REQUIRE(src != nullptr);
+        REQUIRE(src->open().wait().isOk());
+
+        // Sink: Inspector with only AncData enabled.
+        MediaIO::Config sinkCfg = MediaIOFactory::defaultConfig("Inspector");
+        sinkCfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
+        sinkCfg.set(MediaConfig::InspectorDropFrames, false);
+        sinkCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);
+        sinkCfg.set(MediaConfig::InspectorAncDataFile, ancJsonlPath);
+        EnumList tests = EnumList::forType<InspectorTest>();
+        tests.append(InspectorTest::AncData);
+        sinkCfg.set(MediaConfig::InspectorTests, tests);
+        MediaIO *sink = MediaIO::create(sinkCfg);
+        REQUIRE(sink != nullptr);
+        REQUIRE(sink->setPendingMediaDesc(src->mediaDesc()).isOk());
+        REQUIRE(sink->open().wait().isOk());
+
+        MediaIOPortConnection conn(src->source(0), sink->sink(0));
+        REQUIRE(conn.start().isOk());
+
+        // Cue at 0.5s..2.0s @ 59.94 fps maps to frame ~30..120.  Pump
+        // enough frames to cover the cue's start + end (show packet at
+        // ~30, hide packet at ~120).
+        const int kFrames = 130;
+        REQUIRE(pumpUntil(loop, [&]() { return conn.framesTransferred() >= kFrames; }, 6000));
+
+        conn.stop();
+        (void)src->close().wait();
+        (void)sink->close().wait();
+        delete src;
+        delete sink;
+
+        StringList lines = readLines(ancJsonlPath);
+        REQUIRE(lines.size() >= static_cast<size_t>(kFrames));
+
+        // The CDP wire layer is identical to the 608 case — every frame
+        // still has a single Cea708 packet.  What changes is the cc_data
+        // content: DTVCC triples (cc_type=2/3) appear at the cue's
+        // start/end boundaries; the other frames have empty cc_data
+        // (DTVCC has no per-frame filler).
+        bool sawCcType2 = false;
+        bool sawCcType3 = false;
+        bool sawAny608TripleType = false;
+        for (size_t i = 0; i < static_cast<size_t>(kFrames); ++i) {
+                Error      err;
+                JsonObject row = JsonObject::parse(lines[i], &err);
+                REQUIRE(err.isOk());
+                JsonArray packets = row.getArray("packets");
+                REQUIRE(packets.size() == 1);
+                JsonObject pkt = packets.at(0).toObject();
+                CHECK(pkt.getString("format") == "Cea708");
+                CHECK(pkt.getString("transport") == "St291");
+                JsonObject parsed = pkt.getObject("parsed");
+                JsonArray  ccArr = parsed.getArray("ccData");
+                for (int j = 0; j < ccArr.size(); ++j) {
+                        JsonObject t = ccArr.at(j).toObject();
+                        const int  type = static_cast<int>(t.getInt("type"));
+                        if (type == 0 || type == 1) sawAny608TripleType = true;
+                        if (type == 2) sawCcType2 = true;
+                        if (type == 3) sawCcType3 = true;
+                }
+        }
+        CHECK(sawCcType2);
+        // cc_type=3 (DTVCC_PACKET_DATA continuation) is optional for
+        // short packets that fit in a single START triple — don't
+        // hard-require it, but record whether we saw one.
+        (void)sawCcType3;
+        CHECK_FALSE(sawAny608TripleType);
+
+        // Round-trip the cue text through Cea708Decoder.  Rebuild each
+        // frame's CcDataList from the JSONL fields and feed it in
+        // frame-order.
+        Cea708Decoder dec;
+        const int64_t nsPerFrame = (1001LL * 1000000000LL) / 60000LL; // 59.94 fps
+        for (size_t i = 0; i < lines.size(); ++i) {
+                Error      err;
+                JsonObject row = JsonObject::parse(lines[i], &err);
+                if (err.isError()) continue;
+                JsonArray packets = row.getArray("packets");
+                if (packets.size() == 0) continue;
+                JsonObject pkt = packets.at(0).toObject();
+                if (!pkt.contains("parsed")) continue;
+                JsonObject parsed = pkt.getObject("parsed");
+                JsonArray  ccArr = parsed.getArray("ccData");
+                Cea708Cdp::CcDataList list;
+                for (int j = 0; j < ccArr.size(); ++j) {
+                        JsonObject  t = ccArr.at(j).toObject();
+                        Cea708Cdp::CcData c;
+                        c.valid = t.getBool("valid");
+                        c.type = static_cast<uint8_t>(t.getInt("type"));
+                        c.b1 = static_cast<uint8_t>(t.getInt("b1"));
+                        c.b2 = static_cast<uint8_t>(t.getInt("b2"));
+                        list.pushToBack(c);
+                }
+                const int64_t frame = static_cast<int64_t>(i);
+                const TimeStamp ts(TimeStamp::Value(
+                        std::chrono::duration_cast<TimeStamp::Value::duration>(
+                                std::chrono::nanoseconds(frame * nsPerFrame))));
+                dec.pushFrame(FrameNumber(frame), ts, list);
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() >= 1);
+        CHECK(out[0].text() == captionText);
 
         (void)std::remove(ancJsonlPath.cstr());
         (void)std::remove(srtPath.cstr());

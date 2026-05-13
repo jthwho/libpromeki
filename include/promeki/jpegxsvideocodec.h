@@ -12,6 +12,7 @@
 #include <promeki/videodecoder.h>
 #include <promeki/pixelformat.h>
 #include <promeki/deque.h>
+#include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -79,11 +80,11 @@ class JpegXsVideoEncoder : public VideoEncoder {
                  */
                 static List<int> supportedInputList();
 
-                void                        configure(const MediaConfig &config) override;
-                Error                       submitPayload(const UncompressedVideoPayload::Ptr &payload) override;
-                CompressedVideoPayload::Ptr receiveCompressedPayload() override;
-                Error                       flush() override;
-                Error                       reset() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
 
                 /// @brief Returns the target bits-per-pixel budget.
                 int bpp() const { return _bpp; }
@@ -102,12 +103,12 @@ class JpegXsVideoEncoder : public VideoEncoder {
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
 
-                int                                _bpp = DefaultBpp;
-                int                                _decomposition = DefaultDecomposition;
-                PixelFormat                        _outputPd;
-                int                                _capacity = 8;
-                Deque<CompressedVideoPayload::Ptr> _queue;
-                bool                               _capacityWarned = false;
+                int          _bpp = DefaultBpp;
+                int          _decomposition = DefaultDecomposition;
+                PixelFormat  _outputPd;
+                int          _capacity = 8;
+                Deque<Frame> _queue;
+                bool         _capacityWarned = false;
 };
 
 /**
@@ -135,11 +136,11 @@ class JpegXsVideoDecoder : public VideoDecoder {
                  */
                 static List<int> supportedOutputList();
 
-                void                          configure(const MediaConfig &config) override;
-                Error                         submitPayload(const CompressedVideoPayload::Ptr &payload) override;
-                UncompressedVideoPayload::Ptr receiveVideoPayload() override;
-                Error                         flush() override;
-                Error                         reset() override;
+                void  onConfigure(const MediaConfig &config) override;
+                Error submitFrame(const Frame &frame) override;
+                Frame receiveFrame() override;
+                Error flush() override;
+                Error reset() override;
 
         private:
                 /// @brief pImpl wrapping the persistent SVT-JPEG-XS
@@ -149,10 +150,10 @@ class JpegXsVideoDecoder : public VideoDecoder {
                 using ImplPtr = UniquePtr<Impl>;
                 ImplPtr _impl;
 
-                PixelFormat                          _outputPd;
-                int                                  _capacity = 8;
-                Deque<UncompressedVideoPayload::Ptr> _queue;
-                bool                                 _capacityWarned = false;
+                PixelFormat  _outputPd;
+                int          _capacity = 8;
+                Deque<Frame> _queue;
+                bool         _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

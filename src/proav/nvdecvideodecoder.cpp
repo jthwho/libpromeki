@@ -50,6 +50,9 @@
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
 #include <promeki/ciepoint.h>
+#include <promeki/deque.h>
+#include <promeki/pair.h>
+#include <promeki/frame.h>
 
 #include <deque>
 #include <mutex>
@@ -477,7 +480,7 @@ class NvdecVideoDecoder::Impl {
                         _overrideRange = VideoRange(readEnum(MediaConfig::VideoRange).value());
                 }
 
-                Error submitPacket(const CompressedVideoPayload &payload, Codec codec) {
+                Error submitPacket(const Frame &source, const CompressedVideoPayload &payload, Codec codec) {
                         if (Error err = ensureSession(codec); err.isError()) return err;
                         if (payload.planeCount() == 0) return Error::Ok;
                         auto view = payload.plane(0);
@@ -485,13 +488,15 @@ class NvdecVideoDecoder::Impl {
 
                         // Stash the payload's per-image metadata (things
                         // like Timecode / MediaTimeStamp / user keys
-                        // that the encoder copied onto the packet) so
-                        // handleDisplay can re-attach them to the
-                        // emitted payload.  The queue is strict FIFO —
-                        // safe because display-order equals decode-order
-                        // for pure I/P streams and we don't enable
-                        // B-frames in the encoder.
-                        _packetMetaQueue.push_back(payload.metadata());
+                        // that the encoder copied onto the packet) plus
+                        // the source Frame, so handleDisplay can
+                        // re-attach the metadata and echo through the
+                        // audio / ANC / Frame metadata.  Both queues are
+                        // strict FIFO — safe because display-order
+                        // equals decode-order for pure I/P streams and
+                        // we don't enable B-frames in the encoder.
+                        _packetMetaQueue.pushToBack(payload.metadata());
+                        _packetSourceQueue.pushToBack(source);
 
                         // Push the encoded bytes into the parser.  The
                         // parser synchronously invokes our Sequence /
@@ -515,11 +520,10 @@ class NvdecVideoDecoder::Impl {
                         return mapCu(r, "cuvidParseVideoData");
                 }
 
-                UncompressedVideoPayload::Ptr receiveFrame() {
-                        if (_outQueue.empty()) return UncompressedVideoPayload::Ptr();
-                        UncompressedVideoPayload::Ptr p = std::move(_outQueue.front());
-                        _outQueue.pop_front();
-                        return p;
+                Frame receiveFrame() {
+                        if (_outQueue.isEmpty()) return Frame();
+                        OutQueueEntry entry = _outQueue.popFromFront();
+                        return VideoDecoder::buildOutputFrame(entry.first(), std::move(entry.second()));
                 }
 
                 Error flush() {
@@ -554,14 +558,25 @@ class NvdecVideoDecoder::Impl {
                 unsigned int _displayW = 0;
                 unsigned int _displayH = 0;
 
-                std::deque<UncompressedVideoPayload::Ptr> _outQueue;
+                // Output queue — each entry pairs the source Frame the
+                // packet was submitted on (so audio / ANC / Frame
+                // metadata echo through to the output Frame via
+                // VideoDecoder::buildOutputFrame) with the matching
+                // emitted uncompressed payload.
+                using OutQueueEntry = Pair<Frame, UncompressedVideoPayload::Ptr>;
+                Deque<OutQueueEntry> _outQueue;
 
-                // Per-packet metadata FIFO.  submitPayload pushes one
-                // entry per incoming CompressedVideoPayload; handleDisplay
-                // pops one entry per emitted UncompressedVideoPayload.
-                // Together they carry encoder-side per-image state
-                // (Timecode, MediaTimeStamp) across the codec boundary.
-                std::deque<Metadata> _packetMetaQueue;
+                // Per-packet metadata + source Frame FIFO.
+                // submitFrame pushes one entry per incoming Frame;
+                // handleDisplay pops one entry per emitted output Frame.
+                // _packetMetaQueue carries encoder-side per-image
+                // metadata (Timecode, MediaTimeStamp) across the codec
+                // boundary; _packetSourceQueue carries the source
+                // Frame's audio / ANC / Frame-level metadata that the
+                // output Frame echoes through.  Both queues are
+                // popped in lockstep with handleDisplay's emission.
+                Deque<Metadata> _packetMetaQueue;
+                Deque<Frame>    _packetSourceQueue;
 
                 // Bitstream-parsed sequence metadata.  Filled in by
                 // handleSequence from CUVIDEOFORMAT::video_signal_description
@@ -670,6 +685,7 @@ class NvdecVideoDecoder::Impl {
                         }
                         _outQueue.clear();
                         _packetMetaQueue.clear();
+                        _packetSourceQueue.clear();
                         if (_ctxRetained) {
                                 cuDevicePrimaryCtxRelease(_device);
                                 _ctxRetained = false;
@@ -937,9 +953,12 @@ class NvdecVideoDecoder::Impl {
                         // fall back to default-constructed Metadata
                         // otherwise so the Image still looks reasonable
                         // downstream.
-                        if (!_packetMetaQueue.empty()) {
-                                img.modify()->desc().metadata() = std::move(_packetMetaQueue.front());
-                                _packetMetaQueue.pop_front();
+                        Frame sourceFrame;
+                        if (!_packetMetaQueue.isEmpty()) {
+                                img.modify()->desc().metadata() = _packetMetaQueue.popFromFront();
+                        }
+                        if (!_packetSourceQueue.isEmpty()) {
+                                sourceFrame = _packetSourceQueue.popFromFront();
                         }
 
                         // Merge bitstream-parsed per-picture SEI (the
@@ -1026,7 +1045,7 @@ class NvdecVideoDecoder::Impl {
                         img.modify()->desc().metadata().set(Metadata::VideoScanMode,
                                                             Enum(VideoScanMode::Type, scan.value()));
 
-                        _outQueue.push_back(std::move(img));
+                        _outQueue.pushToBack(OutQueueEntry(std::move(sourceFrame), std::move(img)));
                         return 1;
                 }
 };
@@ -1050,18 +1069,19 @@ MediaIOAllocator::Ptr NvdecVideoDecoder::makeDeviceResidentAllocator() {
         return MediaIOAllocator::Ptr::takeOwnership(new NvdecAllocator());
 }
 
-void NvdecVideoDecoder::configure(const MediaConfig &config) {
+void NvdecVideoDecoder::onConfigure(const MediaConfig &config) {
         _impl->configure(config);
 }
 
-Error NvdecVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload) {
+Error NvdecVideoDecoder::submitFrame(const Frame &frame) {
         clearError();
+        CompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid()) {
                 _lastError = Error::Invalid;
-                _lastErrorMessage = "NVDEC: null payload Ptr";
+                _lastErrorMessage = "NVDEC: no compressed video payload on frame";
                 return _lastError;
         }
-        Error err = _impl->submitPacket(*payload, _codec);
+        Error err = _impl->submitPacket(frame, *payload, _codec);
         if (err.isError()) {
                 _lastError = err;
                 _lastErrorMessage = String("NVDEC submitPacket failed");
@@ -1069,7 +1089,7 @@ Error NvdecVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payloa
         return err;
 }
 
-UncompressedVideoPayload::Ptr NvdecVideoDecoder::receiveVideoPayload() {
+Frame NvdecVideoDecoder::receiveFrame() {
         return _impl->receiveFrame();
 }
 

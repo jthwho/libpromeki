@@ -22,17 +22,20 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class MediaConfig;
+class Frame;
 
 /**
  * @brief Abstract base class for stateful audio encoders.
  * @ingroup proav
  *
- * AudioEncoder is a single push-frame / pull-packet codec session:
- * @ref PcmAudioPayload frames pushed via @ref submitPayload
- * feed an internal pipeline, and encoded
- * @ref CompressedAudioPayload access units come back out of
- * @ref receiveCompressedPayload zero, one, or many submits later depending on the
- * codec's frame size and look-ahead.
+ * AudioEncoder is a single push-Frame / pull-Frame codec session:
+ * source @ref Frame objects (carrying a @ref PcmAudioPayload, plus
+ * optional video / metadata) are pushed via @ref submitFrame and
+ * fully-assembled output @ref Frame objects (carrying a
+ * @ref CompressedAudioPayload and the echoed-through video /
+ * metadata of the matching submitted source) come back out of
+ * @ref receiveFrame zero, one, or many submits later depending on
+ * the codec's frame size and look-ahead.
  *
  * Encoders expose no codec-family metadata directly — the caller asks
  * the @ref codec wrapper returned by @ref codec() instead.  The codec
@@ -66,15 +69,25 @@ class MediaConfig;
  *   1. Resolve a session via @ref AudioCodec::createEncoder.
  *   2. Call @ref configure with a @ref MediaConfig.  (Skip when a
  *      config was already supplied to @c createEncoder.)
- *   3. For each @ref PcmAudioPayload frame, call @ref submitPayload.
- *   4. After each submit, drain with @ref receiveCompressedPayload until it
- *      returns a null Ptr.  Each emitted packet carries this codec's
- *      @ref codec() value so downstream code can route it without
- *      consulting the encoder again.
+ *   3. For each source Frame containing a @ref PcmAudioPayload, call
+ *      @ref submitFrame.
+ *   4. After each submit, drain with @ref receiveFrame until it
+ *      returns an invalid Frame.  Each emitted output Frame carries
+ *      this codec's @ref codec() value on the compressed payload so
+ *      downstream code can route it without consulting the encoder
+ *      again.
  *   5. When the input stream is exhausted, call @ref flush and keep
- *      draining until @ref receiveCompressedPayload returns a packet whose
- *      @c MediaPayload::Flags::EndOfStream flag is set.
+ *      draining until @ref receiveFrame returns a Frame whose
+ *      compressed payload carries the @c MediaPayload::Flags::EndOfStream
+ *      flag.
  *   6. Destroy the encoder.
+ *
+ * @par Configure stash
+ *
+ * @ref configure is non-virtual.  Its body stores the most-recently-
+ * passed @ref MediaConfig on the base (reachable via @ref config())
+ * and then dispatches to the virtual @ref onConfigure hook that
+ * concrete backends override.
  *
  * @par Thread Safety
  * Conditionally thread-safe.  Each pipeline thread should own its own
@@ -121,24 +134,31 @@ class AudioEncoder {
                 /**
                  * @brief Applies encoder parameters from a @ref MediaConfig.
                  *
-                 * Same semantics as @ref VideoEncoder::configure &mdash; reads
-                 * known keys, ignores the rest.  Default is a no-op.
+                 * Non-virtual.  Stores @p config on the base (reachable
+                 * via @ref config()) and then dispatches to the virtual
+                 * @ref onConfigure hook.  Backends override
+                 * @ref onConfigure rather than this method.
                  */
-                virtual void configure(const MediaConfig &config);
+                void configure(const MediaConfig &config);
 
                 /**
-                 * @brief Submits one uncompressed audio payload for encoding.
+                 * @brief Submits one source @ref Frame for encoding.
                  *
-                 * The payload carries its own PTS — callers stamp it
-                 * before submitting.  A null Ptr is treated as
+                 * The encoder extracts the @ref PcmAudioPayload it
+                 * wants from @p frame (typically via the
+                 * @ref selectInputPayload helper).  A submitted Frame
+                 * with no matching audio payload is treated as
                  * @ref Error::Invalid.
                  */
-                virtual Error submitPayload(const PcmAudioPayload::Ptr &payload) = 0;
+                virtual Error submitFrame(const Frame &frame) = 0;
 
-                /** @brief Dequeues one encoded payload, or a null Ptr when none is ready. */
-                virtual CompressedAudioPayload::Ptr receiveCompressedPayload() = 0;
+                /**
+                 * @brief Dequeues one encoded output @ref Frame, or an
+                 *        invalid Frame when none is ready.
+                 */
+                virtual Frame receiveFrame() = 0;
 
-                /** @brief Signals end-of-stream and asks the encoder to drain remaining packets. */
+                /** @brief Signals end-of-stream and asks the encoder to drain remaining frames. */
                 virtual Error flush() = 0;
 
                 /** @brief Discards pending samples / packets and returns the encoder to a fresh state. */
@@ -187,6 +207,22 @@ class AudioEncoder {
                 /** @brief Records the codec + backend this session implements. */
                 void setCodec(AudioCodec codec) { _codec = codec; }
 
+                /**
+                 * @brief Concrete-backend hook invoked from
+                 *        @ref configure after the base stashes @p config.
+                 *
+                 * Default implementation is a no-op.
+                 */
+                virtual void onConfigure(const MediaConfig &config);
+
+                /**
+                 * @brief Returns the most-recent @ref MediaConfig passed
+                 *        to @ref configure, or a default-constructed
+                 *        instance when @ref configure has never been
+                 *        called.
+                 */
+                const MediaConfig &config() const;
+
                 Error  _lastError;
                 String _lastErrorMessage;
 
@@ -196,8 +232,46 @@ class AudioEncoder {
                 /** @brief Clears the error state. */
                 void clearError();
 
+        public:
+                // ---- Frame-shaped helpers (public so nested pImpls in concrete backends can use them) ----
+
+                /**
+                 * @brief Looks up the first @ref PcmAudioPayload on
+                 *        @p frame matching @p streamIndex.
+                 *
+                 * Walks @c frame.audioPayloads() once.  When
+                 * @p streamIndex is @c -1 (the default), returns the
+                 * first PCM audio payload found regardless of its
+                 * @ref MediaPayload::streamIndex.  When
+                 * @p streamIndex is non-negative, returns the first
+                 * PCM audio payload whose @c streamIndex() matches.
+                 *
+                 * Returns a null @ref PcmAudioPayload::Ptr when no
+                 * matching payload exists or when the candidate
+                 * payload is compressed.
+                 */
+                static PcmAudioPayload::Ptr selectInputPayload(const Frame &frame, int streamIndex = -1);
+
+                /**
+                 * @brief Constructs an output @ref Frame paired with an
+                 *        emitted compressed audio payload.
+                 *
+                 * Copies metadata from @p source, adds @p emitted to
+                 * the output's payload list, and echoes every video
+                 * and ANC payload from @p source onto the output so
+                 * downstream pipeline stages still see them.  Audio
+                 * payloads from @p source are intentionally not
+                 * forwarded — the compressed @p emitted replaces
+                 * them.
+                 *
+                 * Returns an empty (but valid) @ref Frame when
+                 * @p emitted is null.
+                 */
+                static Frame buildOutputFrame(const Frame &source, CompressedAudioPayload::Ptr emitted);
+
         private:
-                AudioCodec _codec;
+                UniquePtr<MediaConfig> _stashedConfig;
+                AudioCodec             _codec;
 };
 
 PROMEKI_NAMESPACE_END

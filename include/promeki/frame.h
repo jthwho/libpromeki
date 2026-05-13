@@ -68,25 +68,30 @@ class Frame {
                 Frame() = default;
 
                 /**
-                 * @brief Returns true when this Frame is in a valid state.
+                 * @brief Returns true when this Frame carries any content.
                  *
-                 * Mirrors the historical @c Frame::Ptr null-check — a
-                 * Frame whose internal storage handle has been built
-                 * (the default constructor's behaviour) reports
-                 * @c true regardless of whether any payloads or
-                 * metadata have been added yet.  This preserves the
-                 * intent of upstream guards like @c if(!frame.isValid())
-                 * which used to mean "the producer did not hand me a
-                 * Frame" rather than "the Frame is empty".
+                 * The receive side of every codec / MediaIO drain loop
+                 * uses this as the "got a real Frame?" gate, so an
+                 * empty Frame &mdash; no payloads, empty metadata, no
+                 * captureTime, no configUpdate &mdash; reports
+                 * @c false.  This matches the @c return Frame();
+                 * sentinel that backends emit from @c receiveFrame()
+                 * and @c readFrame() when no frame is ready, and it
+                 * matches input-gate checks like
+                 * @c if(!cmd.frame.isValid()) that test "did the
+                 * producer hand me anything?" before doing work.
                  *
-                 * A Frame with a null storage handle (only reachable
-                 * via @c Frame f; f = Frame::makeNull(); or after a
-                 * @c std::move that replaced the source with a moved-
-                 * from null state) reports @c false.  Empty payload
-                 * lists, empty metadata, and an empty config update
-                 * are otherwise all valid Frame states.
+                 * A Frame with a moved-from / null internal storage
+                 * handle also reports @c false.  Any non-trivial
+                 * mutation (@ref addPayload, @ref metadata "metadata()&",
+                 * @ref setCaptureTime, @ref setConfigUpdate) makes the
+                 * Frame valid.
                  */
-                bool isValid() const { return _d.isValid(); }
+                bool isValid() const {
+                        if (!_d.isValid()) return false;
+                        return !_d->_payloads.isEmpty() || !_d->_metadata.isEmpty()
+                                || _d->_captureTime.isValid() || !_d->_configUpdate.isEmpty();
+                }
 
                 /**
                  * @brief Returns a const reference to the list of media payloads.

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/captionencoder.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/enums.h>
 #include <promeki/error.h>
@@ -59,21 +60,39 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  * non-CC1 channels currently fail @ref setSubtitles with
  * @c Error::NotImplemented.
  *
- * @par Layout
+ * @par Layout (multi-row word-wrap)
  *
- * Each cue's row is derived from @ref Subtitle::anchor (Top* → row
- * 1, Middle* → row 8, Bottom* / Default → row 15).  Roll-up mode
- * forces row 15 regardless of the cue's anchor (roll-up is bottom-
- * anchored by spec).  Multi-column indent + Tab Offset (per-column
- * fine shift) is not currently emitted; horizontal placement
- * (Left / Center / Right) is dropped at the wire.
+ * The encoder lays a cue out on up to @ref Config::maxRows physical
+ * 608 rows.  The cue's text is fed to @ref TextWrap with the cue's
+ * @c '\n' boundaries tried first: if every author-broken line fits
+ * within @ref Config::maxCols *and* the row count is within
+ * @ref Config::maxRows, that explicit layout is used.  Otherwise
+ * the @c '\n's collapse to spaces and the whole cue is re-flowed
+ * via a balanced minimax wrap, producing the fewest rows that fit
+ * the width cap (rows balanced as evenly as possible).
+ *
+ * The cue's @ref Subtitle::anchor selects the *target* row for
+ * single-row layouts.  For multi-row layouts the rows extend from
+ * the anchor inward — @c Bottom* anchors fill rows
+ * @c (16 - N) .. @c 15 (broadcast convention), @c Top* anchors
+ * fill @c 1 .. @c N, @c Middle* anchors centre on row 8.
+ * Roll-up mode forces row 15 regardless of anchor (roll-up is
+ * bottom-anchored by spec).  Horizontal placement (Left / Center /
+ * Right) is dropped at the wire.
+ *
+ * @par Overflow auto-split
+ *
+ * A cue whose re-flowed layout genuinely needs more rows than
+ * @ref Config::maxRows is split into back-to-back sub-cues, each
+ * fitting @ref Config::maxRows rows.  The cue's
+ * @c [start, end] window is apportioned across the sub-cues by
+ * character count so dense chunks get more screen time.  A warning
+ * is logged identifying the source cue index.
  *
  * @par Character set
  *
  * Printable basic-ASCII (0x20..0x7E) characters are passed through
- * verbatim.  Multi-line cues are flattened with a single space
- * between rows (v1 does not emit row-changing PAC pairs between
- * lines).  Anything outside that basic set is substituted with
+ * verbatim.  Anything outside that basic set is substituted with
  * the standard 608 "no character" 0x20 (space).  Full CEA-608
  * character-set support (the accented Latin letters at 0x2A /
  * 0x5C / 0x5E / 0x5F / 0x60 / 0x7B / 0x7C / 0x7D / 0x7E / 0x7F,
@@ -129,7 +148,7 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  *
  * @see Cea608, Cea608Decoder, Cea708Cdp, SubtitleList
  */
-class Cea608Encoder {
+class Cea608Encoder : public CaptionEncoder {
         public:
                 /**
                  * @brief Operating mode controlling the byte-stream shape.
@@ -169,20 +188,35 @@ class Cea608Encoder {
                                 /// @brief Roll-up row count (2..4).  Used only
                                 ///        when @c mode == @c RollUp.
                                 int32_t rollUpRows = 2;
+                                /// @brief Maximum characters per row.  The
+                                ///        true 608 wire width is 32 columns
+                                ///        (the decoder displays at most 32
+                                ///        characters per row regardless of
+                                ///        what is transmitted).  Reduce only
+                                ///        when targeting a receiver with a
+                                ///        narrower visible region.
+                                int32_t maxCols = 32;
+                                /// @brief Maximum physical 608 rows per cue.
+                                ///        Cues that re-flow to more rows than
+                                ///        this are split into time-displaced
+                                ///        sub-cues (see class doc-comment).
+                                ///        Broadcast convention is 2–3 rows;
+                                ///        4 is the practical maximum.
+                                int32_t maxRows = 3;
                 };
 
                 Cea608Encoder();
                 explicit Cea608Encoder(Config cfg);
-                ~Cea608Encoder();
-
-                // Stateful worker — no copy / move.
-                Cea608Encoder(const Cea608Encoder &) = delete;
-                Cea608Encoder &operator=(const Cea608Encoder &) = delete;
-                Cea608Encoder(Cea608Encoder &&) = delete;
-                Cea608Encoder &operator=(Cea608Encoder &&) = delete;
+                ~Cea608Encoder() override;
 
                 /** @brief Returns the configuration this encoder was constructed with. */
                 const Config &config() const;
+
+                /// @copydoc CaptionEncoder::codec
+                CaptionCodec codec() const override { return CaptionCodec(CaptionCodec::Cea608); }
+
+                /// @copydoc CaptionEncoder::frameRate
+                FrameRate frameRate() const override;
 
                 /**
                  * @brief Loads the timeline.  Computes the per-frame
@@ -213,10 +247,10 @@ class Cea608Encoder {
                  *         pairs would overrun the cue's display
                  *         window.
                  */
-                Error setSubtitles(const SubtitleList &subs);
+                Error setSubtitles(const SubtitleList &subs) override;
 
                 /** @brief Clears the schedule. */
-                void reset();
+                void reset() override;
 
                 /**
                  * @brief Returns the @c CcData triple for frame @p frame.
@@ -234,7 +268,7 @@ class Cea608Encoder {
                  * the pre-computed schedule, not an internal frame
                  * cursor).
                  */
-                Cea708Cdp::CcDataList nextFrame(FrameNumber frame) const;
+                Cea708Cdp::CcDataList nextFrame(FrameNumber frame) const override;
 
                 /**
                  * @brief Returns the frame number at which the encoder
@@ -273,7 +307,8 @@ class Cea608Encoder {
                  * @ref setSubtitles — this helper only handles the
                  * timing-density gap.
                  */
-                SubtitleList encodableSubset(const SubtitleList &in, SubtitleList *outDropped = nullptr) const;
+                SubtitleList encodableSubset(const SubtitleList &in,
+                                             SubtitleList      *outDropped = nullptr) const override;
 
         private:
                 SharedPtr<Cea608EncoderImpl> _d;

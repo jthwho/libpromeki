@@ -1887,6 +1887,7 @@ set(PROMEKI_SOURCES
     src/core/system.cpp
     src/core/terminal.cpp
     src/core/textstream.cpp
+    src/core/textwrap.cpp
     src/core/thread.cpp
     src/core/threadpool.cpp
     src/core/timecode.cpp
@@ -2107,6 +2108,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ancpayload.h
         include/promeki/anctranslateconfig.h
         include/promeki/anctranslator.h
+        include/promeki/captiondecoder.h
+        include/promeki/captionencoder.h
         include/promeki/cea608.h
         include/promeki/cea608decoder.h
         include/promeki/cea608encoder.h
@@ -2188,6 +2191,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ancpacket.cpp
         src/proav/ancpayload.cpp
         src/proav/anctranslator.cpp
+        src/proav/captiondecoder.cpp
+        src/proav/captionencoder.cpp
         src/proav/cea608.cpp
         src/proav/cea608decoder.cpp
         src/proav/cea608encoder.cpp
@@ -2978,6 +2983,7 @@ install(FILES
 if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
         tests/unit/doctest_main.cpp
+        tests/unit/codectesthelpers.cpp
         tests/unit/algorithm.cpp
         tests/unit/amf0.cpp
         tests/unit/anccodec_afd.cpp
@@ -2997,10 +3003,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cea708decoder.cpp
         tests/unit/cea708encoder.cpp
         tests/unit/cea708service.cpp
+        tests/unit/cea708_subrip_roundtrip.cpp
         tests/unit/cea708windowstate.cpp
         tests/unit/inspector_ancdata.cpp
         tests/unit/scc.cpp
         tests/unit/subrip.cpp
+        tests/unit/subtitleburnmediaio.cpp
         tests/unit/subtitlerenderer.cpp
         tests/unit/tpg_anc_captions.cpp
         tests/unit/ansistream.cpp
@@ -3140,6 +3148,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/system.cpp
         tests/unit/terminal.cpp
         tests/unit/textstream.cpp
+        tests/unit/textwrap.cpp
         tests/unit/thread.cpp
         tests/unit/threadpool.cpp
         tests/unit/timecode.cpp
@@ -3312,6 +3321,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediapipelinestats.cpp
             tests/unit/mediapipeline.cpp
             tests/unit/pipelineevent.cpp
+            tests/unit/cscmediaio.cpp
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp
@@ -3412,6 +3422,28 @@ if(PROMEKI_BUILD_TESTS)
     target_link_libraries(unittest-promeki PRIVATE promeki promeki::warnings)
     if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
         target_link_libraries(unittest-promeki PRIVATE promeki-pipeline-core)
+    endif()
+    # Precompile the largest test-side common headers so each of the ~250
+    # unit-test TUs doesn't re-parse them at -O3 + debug-info, which was
+    # pushing per-TU peak resident memory across the build script's
+    # BUILD_PER_JOB_MB threshold and OOM-killing the build.  doctest's
+    # main TU (tests/unit/doctest_main.cpp) is excluded because it
+    # defines DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN before including
+    # doctest.h, which is incompatible with a PCH that already pulled
+    # doctest.h in.
+    if(PROMEKI_USE_PCH)
+        target_precompile_headers(unittest-promeki PRIVATE
+            ${PROMEKI_PCH_HEADERS}
+            <doctest/doctest.h>
+            <promeki/mediapayload.h>
+            <promeki/frame.h>
+            <promeki/mediaconfig.h>
+            <promeki/audiodesc.h>
+            <promeki/imagedesc.h>
+            <promeki/pixelformat.h>
+            <promeki/metadata.h>
+        )
+        set_source_files_properties(tests/unit/doctest_main.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
     endif()
     add_test(NAME unittest-promeki COMMAND unittest-promeki)
     set_tests_properties(unittest-promeki PROPERTIES TIMEOUT 60)

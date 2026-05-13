@@ -108,13 +108,11 @@ class AudioEncoderMediaIO : public SharedThreadMediaIO {
                 void  configChanged(const MediaConfig &delta) override;
 
         private:
-                // Drains the underlying encoder's ready packets into
-                // per-packet output frames, appending each to
-                // @c _outputQueue.  Each drained packet is paired with
-                // the oldest queued source Frame via @c _pendingSrcFrames
-                // so video / metadata travel with the right input even
-                // when a codec buffers an earlier chunk and emits its
-                // packets on a later submit.
+                // Drains the underlying encoder's ready Frames into
+                // @c _outputQueue.  The encoder is responsible for
+                // echoing the source Frame's video / ANC / metadata
+                // through onto each emitted Frame via the base
+                // @ref AudioEncoder::buildOutputFrame helper.
                 void drainEncoderInto();
 
                 MediaConfig        _config;
@@ -122,21 +120,12 @@ class AudioEncoderMediaIO : public SharedThreadMediaIO {
                 AudioEncoder::UPtr _encoder;
                 int                _capacity = 8;
                 Frame::List        _outputQueue;
-
-                // FIFO of submitted source Frames awaiting a matching
-                // packet from the encoder.  One entry is pushed per
-                // successful submitPayload() and popped per emitted
-                // CompressedAudioPayload.  Needed to preserve the
-                // source frame's video / metadata across codecs whose
-                // packets emerge across multiple submits.
-                Frame::List      _pendingSrcFrames;
-                FrameCount       _frameCount{0};
-                int64_t          _readCount = 0;
-                FrameCount       _framesEncoded{0};
-                int64_t          _packetsOut = 0;
-                bool             _capacityWarned = false;
-                bool             _multiTrackWarned = false;
-                bool             _closed = false;
+                FrameCount         _frameCount{0};
+                int64_t            _readCount = 0;
+                FrameCount         _framesEncoded{0};
+                int64_t            _packetsOut = 0;
+                bool               _capacityWarned = false;
+                bool               _closed = false;
 };
 
 /**

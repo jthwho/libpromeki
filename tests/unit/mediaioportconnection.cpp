@@ -9,9 +9,11 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <promeki/clockdomain.h>
 #include <promeki/eventloop.h>
 #include <promeki/frame.h>
 #include <promeki/mediaio.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/mediaiofactory.h>
 #include <promeki/mediaiocommand.h>
 #include <promeki/mediaiorequest.h>
@@ -636,6 +638,7 @@ class CascadeCloseSourceMediaIO : public PausedTestMediaIO {
                 }
                 Error executeCmd(MediaIOCommandRead &cmd) override {
                         cmd.frame = Frame();
+                        cmd.frame.setCaptureTime(MediaTimeStamp(TimeStamp::now(), ClockDomain(ClockDomain::Synthetic)));
                         cmd.currentFrame = FrameNumber(_frameNum++);
                         return Error::Ok;
                 }
@@ -807,6 +810,7 @@ class SlowFirstReadMediaIO : public DedicatedThreadMediaIO {
                                 Thread::sleepMs(_firstReadDelayMs);
                         }
                         cmd.frame = Frame();
+                        cmd.frame.setCaptureTime(MediaTimeStamp(TimeStamp::now(), ClockDomain(ClockDomain::Synthetic)));
                         cmd.currentFrame = FrameNumber(_frameNum++);
                         return Error::Ok;
                 }
@@ -896,6 +900,7 @@ class CancelledReadSourceMediaIO : public PausedTestMediaIO {
                                 (void)cmd;
                                 if (_cancelOnNext.load()) return Error::Cancelled;
                                 cmd.frame = Frame();
+                                cmd.frame.setCaptureTime(MediaTimeStamp(TimeStamp::now(), ClockDomain(ClockDomain::Synthetic)));
                                 cmd.currentFrame = FrameNumber(_frameNum++);
                                 return Error::Ok;
                         };

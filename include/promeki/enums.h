@@ -2183,23 +2183,212 @@ inline const SubtitleAnchor SubtitleAnchor::TopRight{9};
  *    when subtitles arrive embedded in ANC (broadcast capture,
  *    RTP-40, NDI).  v1 supports the @c CC1 pop-on subset that
  *    @ref Cea608Decoder implements.
+ *  - @c Cea708Anc — decode CEA-708 DTVCC captions from the frame's
+ *    @c AncPayloads via the stateful @ref Cea708Decoder.  Walks
+ *    the @c cc_type=2/3 triples of every CDP, runs the configured
+ *    service block through the 8-window state machine, and surfaces
+ *    @ref Cea708Decoder::displayedCue.  Defaults to service 1 (the
+ *    primary English caption service); other services need the
+ *    decoder configured explicitly (out of scope for v1 — exposed
+ *    later through a renderer config key when a real multi-service
+ *    stream lands).
  *
- * Future sources (@c Cea708Anc, @c HlsSei, @c RtmpAmf, @c NdiXml,
- * file-driven SubRip side-channel) slot in by adding new enum
- * values and matching handlers in @ref SubtitleBurnMediaIO.
+ * Future sources (@c HlsSei, @c RtmpAmf, @c NdiXml, file-driven
+ * SubRip side-channel) slot in by adding new enum values and
+ * matching handlers in @ref SubtitleBurnMediaIO.
  */
 class SubtitleSource : public TypedEnum<SubtitleSource> {
         public:
-                PROMEKI_REGISTER_ENUM_TYPE("SubtitleSource", 1, {"Metadata", 1}, {"Cea608Anc", 2});
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleSource", 1, {"Metadata", 1}, {"Cea608Anc", 2},
+                                           {"Cea708Anc", 3});
 
                 using TypedEnum<SubtitleSource>::TypedEnum;
 
                 static const SubtitleSource Metadata;
                 static const SubtitleSource Cea608Anc;
+                static const SubtitleSource Cea708Anc;
 };
 
 inline const SubtitleSource SubtitleSource::Metadata{1};
 inline const SubtitleSource SubtitleSource::Cea608Anc{2};
+inline const SubtitleSource SubtitleSource::Cea708Anc{3};
+
+/**
+ * @brief Caption display-mode selector (per-cue).
+ * @ingroup proav
+ *
+ * Both CEA-608 and CEA-708 wire formats support three caption display
+ * modes; this enum carries the mode in a codec-agnostic way so the
+ * @ref Subtitle data model can round-trip the producer's choice
+ * across format adapters and back to the encoders.
+ *
+ *  - @c Default — "let the encoder decide".  Encoders fall back to
+ *    their @c Config-level default (typically @c PopOn).
+ *  - @c PopOn — pre-recorded mode.  Cue text is loaded into hidden
+ *    memory and swapped to display at @c cue.start, cleared at
+ *    @c cue.end.  Standard for offline-authored captions.
+ *  - @c PaintOn — live mode.  Cue text is written directly to
+ *    displayed memory character-by-character.  No swap — chars
+ *    appear as transmitted.
+ *  - @c RollUp — continuous scrolling captions.  Each cue is
+ *    appended as a new row at the bottom; existing rows scroll up.
+ *    Common in live broadcast.
+ */
+class CaptionMode : public TypedEnum<CaptionMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("CaptionMode", 0, {"Default", 0}, {"PopOn", 1}, {"PaintOn", 2},
+                                           {"RollUp", 3}); // default: Default
+
+                using TypedEnum<CaptionMode>::TypedEnum;
+
+                static const CaptionMode Default;
+                static const CaptionMode PopOn;
+                static const CaptionMode PaintOn;
+                static const CaptionMode RollUp;
+};
+
+inline const CaptionMode CaptionMode::Default{0};
+inline const CaptionMode CaptionMode::PopOn{1};
+inline const CaptionMode CaptionMode::PaintOn{2};
+inline const CaptionMode CaptionMode::RollUp{3};
+
+/**
+ * @brief Per-span edge style (CEA-708 SetPenAttributes).
+ * @ingroup proav
+ *
+ * Modelled directly after the 708 @c edge_type field in
+ * @c SetPenAttributes — six broadcast-defined edge effects plus
+ * @c None (no edge).  CEA-608 has no edge concept; 608 encoders
+ * drop the field with a one-shot warning.
+ */
+class SubtitleEdgeStyle : public TypedEnum<SubtitleEdgeStyle> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleEdgeStyle", 0, {"None", 0}, {"Raised", 1}, {"Depressed", 2},
+                                           {"Uniform", 3}, {"ShadowLeft", 4},
+                                           {"ShadowRight", 5}); // default: None
+
+                using TypedEnum<SubtitleEdgeStyle>::TypedEnum;
+
+                static const SubtitleEdgeStyle None;
+                static const SubtitleEdgeStyle Raised;
+                static const SubtitleEdgeStyle Depressed;
+                static const SubtitleEdgeStyle Uniform;
+                static const SubtitleEdgeStyle ShadowLeft;
+                static const SubtitleEdgeStyle ShadowRight;
+};
+
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::None{0};
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::Raised{1};
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::Depressed{2};
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::Uniform{3};
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::ShadowLeft{4};
+inline const SubtitleEdgeStyle SubtitleEdgeStyle::ShadowRight{5};
+
+/**
+ * @brief Per-component opacity selector (CEA-708 SetPenColor).
+ * @ingroup proav
+ *
+ * Mirrors the 708 @c fg_opacity / @c bg_opacity / @c edge_opacity
+ * fields.  @c Solid is the conventional default (opaque).
+ * @c Flash blinks the component at ~1 Hz on the wire.
+ * @c Translucent is ~50% alpha.  @c Transparent omits the
+ * component entirely.
+ *
+ * CEA-608 has no opacity wire field; 608 encoders treat every
+ * component as @c Solid and warn-and-drop on @c Translucent /
+ * @c Transparent / @c Flash.
+ */
+class SubtitleOpacity : public TypedEnum<SubtitleOpacity> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleOpacity", 0, {"Solid", 0}, {"Flash", 1}, {"Translucent", 2},
+                                           {"Transparent", 3}); // default: Solid
+
+                using TypedEnum<SubtitleOpacity>::TypedEnum;
+
+                static const SubtitleOpacity Solid;
+                static const SubtitleOpacity Flash;
+                static const SubtitleOpacity Translucent;
+                static const SubtitleOpacity Transparent;
+};
+
+inline const SubtitleOpacity SubtitleOpacity::Solid{0};
+inline const SubtitleOpacity SubtitleOpacity::Flash{1};
+inline const SubtitleOpacity SubtitleOpacity::Translucent{2};
+inline const SubtitleOpacity SubtitleOpacity::Transparent{3};
+
+/**
+ * @brief Per-span font-face tag (CEA-708 SetPenAttributes).
+ * @ingroup proav
+ *
+ * Eight font tags from the 708 @c font_tag field.  Renderers map
+ * these to concrete TrueType faces at paint time.  CEA-608 has no
+ * font-face concept; 608 encoders drop the field with a one-shot
+ * warning when set to anything other than @c Default.
+ */
+class SubtitleFontFace : public TypedEnum<SubtitleFontFace> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleFontFace", 0, {"Default", 0}, {"MonoSerif", 1},
+                                           {"ProportionalSerif", 2}, {"MonoSans", 3}, {"ProportionalSans", 4},
+                                           {"Casual", 5}, {"Cursive", 6},
+                                           {"SmallCaps", 7}); // default: Default
+
+                using TypedEnum<SubtitleFontFace>::TypedEnum;
+
+                static const SubtitleFontFace Default;
+                static const SubtitleFontFace MonoSerif;
+                static const SubtitleFontFace ProportionalSerif;
+                static const SubtitleFontFace MonoSans;
+                static const SubtitleFontFace ProportionalSans;
+                static const SubtitleFontFace Casual;
+                static const SubtitleFontFace Cursive;
+                static const SubtitleFontFace SmallCaps;
+};
+
+inline const SubtitleFontFace SubtitleFontFace::Default{0};
+inline const SubtitleFontFace SubtitleFontFace::MonoSerif{1};
+inline const SubtitleFontFace SubtitleFontFace::ProportionalSerif{2};
+inline const SubtitleFontFace SubtitleFontFace::MonoSans{3};
+inline const SubtitleFontFace SubtitleFontFace::ProportionalSans{4};
+inline const SubtitleFontFace SubtitleFontFace::Casual{5};
+inline const SubtitleFontFace SubtitleFontFace::Cursive{6};
+inline const SubtitleFontFace SubtitleFontFace::SmallCaps{7};
+
+/**
+ * @brief Closed-caption codec selector for ANC emission paths.
+ * @ingroup proav
+ *
+ * Selects which CEA caption stream(s) a producer (e.g. the TPG) emits
+ * into a @ref Cea708Cdp.  The CDP's @c cc_data list can carry both
+ * line-21 byte pairs (CEA-608, @c cc_type=0/1) and DTVCC triples
+ * (CEA-708, @c cc_type=2/3) in the same packet, which is how real
+ * broadcast captioning rides — so all three values are first-class:
+ *
+ *  - @c Cea608 — line-21 only.  @ref Cea608Encoder drives one
+ *    byte-pair per frame; consumers fall back to legacy 608
+ *    decoders.  This is the default to preserve the historical
+ *    TPG output shape.
+ *  - @c Cea708 — DTVCC only.  @ref Cea708Encoder emits per-cue
+ *    Define/Display/Hide window transactions; consumers use
+ *    @ref Cea708Decoder.
+ *  - @c Both — both encoders feed the same per-frame @c CcDataList.
+ *    The 608 byte pair and the 708 triples ride together in a
+ *    single CDP, mirroring SDI broadcast practice.
+ */
+class CaptionCodec : public TypedEnum<CaptionCodec> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("CaptionCodec", 0, {"Cea608", 0}, {"Cea708", 1},
+                                           {"Both", 2}); // default: Cea608
+
+                using TypedEnum<CaptionCodec>::TypedEnum;
+
+                static const CaptionCodec Cea608;
+                static const CaptionCodec Cea708;
+                static const CaptionCodec Both;
+};
+
+inline const CaptionCodec CaptionCodec::Cea608{0};
+inline const CaptionCodec CaptionCodec::Cea708{1};
+inline const CaptionCodec CaptionCodec::Both{2};
 
 /** @} */
 

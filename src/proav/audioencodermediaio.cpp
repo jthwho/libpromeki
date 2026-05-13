@@ -191,10 +191,8 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _framesEncoded = 0;
         _packetsOut = 0;
         _capacityWarned = false;
-        _multiTrackWarned = false;
         _closed = false;
         _outputQueue.clear();
-        _pendingSrcFrames.clear();
 
         MediaIOPortGroup *group = addPortGroup("aencoder");
         if (group == nullptr) return Error::Invalid;
@@ -218,7 +216,6 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
                 drainEncoderInto();
                 _encoder.clear();
         }
-        _pendingSrcFrames.clear();
         _config = MediaConfig();
         _codec = AudioCodec();
         _capacity = 0;
@@ -227,7 +224,6 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _framesEncoded = 0;
         _packetsOut = 0;
         _capacityWarned = false;
-        _multiTrackWarned = false;
         _closed = true;
         return Error::Ok;
 }
@@ -253,50 +249,26 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 _capacityWarned = true;
         }
 
-        const Frame &frame = cmd.frame;
-        auto         auds = frame.audioPayloads();
+        const Frame         &frame = cmd.frame;
+        PcmAudioPayload::Ptr srcPayload = AudioEncoder::selectInputPayload(frame);
 
-        if (auds.isEmpty()) {
+        if (!srcPayload.isValid()) {
                 // No audio to encode — let the frame pass through so
-                // video / metadata-only inputs aren't lost.
-                Frame outFrame = Frame();
-                outFrame.metadata() = frame.metadata();
-                for (const VideoPayload::Ptr &vp : frame.videoPayloads()) {
-                        if (vp.isValid()) outFrame.addPayload(vp);
-                }
-                _outputQueue.pushToBack(std::move(outFrame));
+                // video / metadata-only inputs aren't lost.  Build the
+                // pass-through using the base helper without a
+                // compressed payload.
+                _outputQueue.pushToBack(AudioEncoder::buildOutputFrame(frame, CompressedAudioPayload::Ptr()));
                 _frameCount++;
                 cmd.currentFrame = toFrameNumber(_frameCount);
                 cmd.frameCount = _frameCount;
                 return Error::Ok;
         }
 
-        if (auds.size() > 1 && !_multiTrackWarned) {
-                promekiWarn("AudioEncoderMediaIO: Frame carries %zu audio "
-                            "payloads; only payload[0] will be encoded in this cut",
-                            (size_t)auds.size());
-                _multiTrackWarned = true;
-        }
-
-        // Cast the AudioPayload::Ptr down to a PcmAudioPayload::Ptr
-        // while preserving shared ownership — gives us a mutable
-        // payload handle the submitPayload entry can consume.
-        PcmAudioPayload::Ptr srcPayload = sharedPointerCast<PcmAudioPayload>(auds[0]);
-        if (srcPayload.isNull()) {
-                promekiErr("AudioEncoderMediaIO: input payload is not "
-                           "PCM audio — nothing to encode");
-                return Error::InvalidArgument;
-        }
-        Error err = _encoder->submitPayload(srcPayload);
+        Error err = _encoder->submitFrame(frame);
         if (err.isError()) {
-                promekiErr("AudioEncoderMediaIO: submitPayload failed: %s", _encoder->lastErrorMessage().cstr());
+                promekiErr("AudioEncoderMediaIO: submitFrame failed: %s", _encoder->lastErrorMessage().cstr());
                 return err;
         }
-        // Record the source frame so the matching packet — which
-        // may not emerge until a later submit if the encoder is
-        // still accumulating a full frame — can be paired back up
-        // with its original metadata and video in drainEncoderInto.
-        _pendingSrcFrames.pushToBack(cmd.frame);
         _frameCount++;
         _framesEncoded++;
         drainEncoderInto();
@@ -309,38 +281,26 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
 void AudioEncoderMediaIO::drainEncoderInto() {
         if (_encoder.isNull()) return;
         while (true) {
-                CompressedAudioPayload::Ptr outPayload = _encoder->receiveCompressedPayload();
-                if (!outPayload.isValid()) break;
-                if (outPayload->isEndOfStream()) {
-                        // EOS is an encoder-internal signal that the
-                        // session is drained; no need to propagate it
-                        // as its own Frame (the pipeline uses the
-                        // MediaIO close/EOF path for that).
-                        continue;
-                }
+                Frame outFrame = _encoder->receiveFrame();
+                if (!outFrame.isValid()) break;
 
-                // Pair the payload with the oldest queued source
-                // Frame — that's the chunk that produced it even when
-                // intervening submits called drainEncoderInto too.
-                // An empty queue is legitimate when the encoder emits
-                // more packets than there were inputs (codec
-                // accumulating multi-input chunks into smaller packets),
-                // in which case the output still carries the payload
-                // but with no video / frame metadata.
-                Frame origin;
-                if (!_pendingSrcFrames.isEmpty()) {
-                        origin = _pendingSrcFrames.front();
-                        _pendingSrcFrames.remove(0);
-                }
-
-                Frame outFrame = Frame();
-                if (origin.isValid()) {
-                        outFrame.metadata() = origin.metadata();
-                        for (const VideoPayload::Ptr &vp : origin.videoPayloads()) {
-                                if (vp.isValid()) outFrame.addPayload(vp);
+                // EOS is an encoder-internal signal that the session
+                // is drained; no need to propagate as its own Frame
+                // (the pipeline uses the MediaIO close/EOF path for
+                // that).  Inspect the frame's compressed audio
+                // payloads for the marker and drop the frame if
+                // present.
+                bool eos = false;
+                for (const AudioPayload::Ptr &ap : outFrame.audioPayloads()) {
+                        if (!ap.isValid()) continue;
+                        CompressedAudioPayload::Ptr cap = sharedPointerCast<CompressedAudioPayload>(ap);
+                        if (cap.isValid() && cap->isEndOfStream()) {
+                                eos = true;
+                                break;
                         }
                 }
-                outFrame.addPayload(outPayload);
+                if (eos) continue;
+
                 _outputQueue.pushToBack(std::move(outFrame));
                 _packetsOut++;
         }

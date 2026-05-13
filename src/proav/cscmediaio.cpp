@@ -8,12 +8,14 @@
 #include <promeki/cscmediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/cscregistry.h>
+#include <promeki/enums.h>
 #include <promeki/frame.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaiodescription.h>
+#include <promeki/mediapayload.h>
 #include <promeki/metadata.h>
 #include <promeki/logger.h>
 #include <promeki/mediaiorequest.h>
@@ -262,18 +264,23 @@ Error CscMediaIO::convertFrame(const Frame &input, Frame &output) {
                 return Error::Invalid;
         }
 
-        Frame outFrame = Frame();
-        outFrame.metadata() = input.metadata();
-
-        // Read video from the new MediaPayload world.  CSC is a raster
-        // transform — compressed payloads are rejected here rather
-        // than silently mangled.  The per-payload @ref
-        // UncompressedVideoPayload::convert runs CSC natively on the
-        // payload; we push the destination payload directly into the
-        // output frame so we skip the Image bridge round-trip.
-        for (const VideoPayload::Ptr &srcVp : input.videoPayloads()) {
-                if (!srcVp.isValid()) continue;
-                const auto *srcUvp = srcVp->as<UncompressedVideoPayload>();
+        // CoW copy: preserves metadata, captureTime, configUpdate, and
+        // every non-video payload (audio, ANC) verbatim.  We then walk
+        // the payload list and replace each uncompressed video slot
+        // with its converted form — CoW detaches the payload list
+        // before the assignment, so the upstream Frame is not
+        // mutated.  Keeping ANC payloads shared with the upstream
+        // Frame is what lets the H.264 / HEVC SEI caption emitter
+        // (and any other downstream ANC consumer) still see the
+        // source ANC packets after a colour-space hop is spliced
+        // into the pipeline.
+        Frame                  outFrame = input;
+        MediaPayload::PtrList &plist = outFrame.payloadList();
+        for (size_t i = 0; i < plist.size(); ++i) {
+                MediaPayload::Ptr &slot = plist[i];
+                if (!slot.isValid()) continue;
+                if (slot->kind() != MediaPayloadKind::Video) continue;
+                const auto *srcUvp = slot->as<UncompressedVideoPayload>();
                 if (srcUvp == nullptr) {
                         promekiErr("CscMediaIO: compressed video payload "
                                    "reached CSC — expected uncompressed input");
@@ -283,13 +290,7 @@ Error CscMediaIO::convertFrame(const Frame &input, Frame &output) {
                 Error                         err = convertPayload(*srcUvp, dstPayload);
                 if (err.isError()) return err;
                 if (!dstPayload.isValid()) return Error::ConversionFailed;
-                outFrame.addPayload(dstPayload);
-        }
-
-        // Audio is pure pass-through — just forward the audio payload
-        // pointers into the output frame.
-        for (const AudioPayload::Ptr &srcAp : input.audioPayloads()) {
-                if (srcAp.isValid()) outFrame.addPayload(srcAp);
+                slot = MediaPayload::Ptr(dstPayload);
         }
 
         output = std::move(outFrame);

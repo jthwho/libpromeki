@@ -25,7 +25,7 @@ MediaIO backend integration, then application surfaces. None of
 this requires the AJA NTV2 backend — when that lands it slots
 into the contract defined here.
 
-## Status at a glance (2026-05-12)
+## Status at a glance (2026-05-12, end of day)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -36,9 +36,9 @@ into the contract defined here.
 | 2b    | CEA-708 ← → St291 codec + `Cea708Cdp` typed value type + TPG caption injection + Inspector AncData JSONL dump | **Landed** — Phase 2b end-to-end slice (the realish use case) |
 | 3     | Remaining typed parsers (CEA-608, AFD value type, Atc helpers, Scte104, HDR static/dynamic, KLV) | Pending |
 | 3.5   | Subtitle file I/O + CEA-608 codec (generic `Subtitle` / `SubtitleList` value types + `SubRip` parser/emitter, Scc, `Cea608Encoder`/`Decoder`, TPG SubRip-driven injection, round-trip func test) | **Mostly landed** — `Subtitle`/`SubtitleList`/`SubRip` with structured `SubtitleSpan` runs + inline markup parse; `Cea608Encoder` + `Cea608Decoder` with **all three modes — pop-on, paint-on, roll-up** — and full PAC + mid-row attribute set (anchor row, italic, underline, 7-colour-quantised palette via `Color::nearestPaletteIndex`); TPG SubRip-driven injection (offset, snap-to-frame, per-frame `Metadata::Subtitle` stamp); encoder pre-roll filter (`encodableSubset`); **`Scc` value type + TPG SCC bypass path** (`TpgAncCaptionsScc` config key feeds SCC byte-pairs directly into cc_data, bypassing `Cea608Encoder` — proves the CDP wire layer independently of encoder scheduling).  Functional test (Phase 3.5g) still pending |
-| 4     | MediaIO backend integration (NdiMediaIO ANC, RtmpMediaIO ANC, **`Cea708 ← / → HlsSei` codec + NVENC SEI injection** for RTMP/HLS/SRT delivery to YouTube etc., AncMetadataStamper) | **Partial** — `Cea708 ← / → HlsSei` codec landed 2026-05-12 (ATSC A/53 user_data SEI wrapper around cc_data triples, registered via the Phase 2 codec framework, full St291↔HlsSei translate round-trip); NdiMediaIO + RtmpMediaIO ANC + NVENC SEI injection + AncMetadataStamper still pending |
+| 4     | MediaIO backend integration (NdiMediaIO ANC, RtmpMediaIO ANC, **`Cea708 ← / → HlsSei` codec + NVENC SEI injection** for RTMP/HLS/SRT delivery to YouTube etc., AncMetadataStamper) | **YouTube delivery path landed 2026-05-12 (working tree, uncommitted)** — `Cea708 ← / → HlsSei` codec, codec API Frame-shaped refactor + ANC pairing foundation, **plus the `NvencVideoEncoder` SEI injection body** (`MediaConfig::VideoSeiCaptionsEnabled` default-on, `selectAncForSei` walked per-submit, `AncTranslator → HlsSei` payload bytes stashed on the slot, NV_ENC_PIC_PARAMS H264/HEVC `seiPayloadArray` populated with `payloadType=4`).  Three new doctests verify the encoded H.264 bitstream contains the ATSC A/53 wrapper marker `0xB5 0x00 0x31 0x47 0x41 0x39 0x34 0x03` with the expected cc_count + cc_data triple bytes, plus negative cases for opt-out and no-ANC silence.  AV1 warns-once and emits no caption metadata (no NVENC AV1 caption-OBU path).  NdiMediaIO + RtmpMediaIO ANC + AncMetadataStamper still pending |
 | 5     | AJA NTV2 SDI ingest contract (documentation only) | Pending |
-| 6     | mediaio --dump-anc tool, TPG AncEmission mode, caption renderer, functional test matrix, docs, CEA-708 typed `Cea708Service` / `Cea708WindowState` decoder (DTVCC service-block + window manager) | **Mostly landed** — Inspector AncData JSON dump landed early as part of Phase 2b; caption renderer landed 2026-05-11 (`SubtitleSpan`, SubRip styled-spans, `FastFont` cache, `SubtitleRenderer`, `SubtitleBurnMediaIO`, `Cea608Decoder::displayedCue`); **full CEA-708 DTVCC stack landed 2026-05-12** — `Cea708Service` + `Cea708DtvccPacket` value types (cc_data round-trip, standard + extended block headers), `Cea708WindowState` (8-window × pen-state × character-buffer state machine consuming the full C0/G0/C1/G1/EXT1 byte stream), `Cea708Decoder` (cc_data triples → DTVCC packets → window state → SubtitleList), `Cea708Encoder` (SubtitleList → cc_data triples via DefineWindow + DisplayWindow); full encoder ↔ decoder round-trip exercised.  TPG ANC injection is one MediaConfig key away from the formal "AncEmission" surface; functional tests still pending |
+| 6     | mediaio --dump-anc tool, TPG AncEmission mode, caption renderer, functional test matrix, docs, CEA-708 typed `Cea708Service` / `Cea708WindowState` decoder (DTVCC service-block + window manager) | **Mostly landed** — Inspector AncData JSON dump landed early as part of Phase 2b; caption renderer landed 2026-05-11 (`SubtitleSpan`, SubRip styled-spans, `FastFont` cache, `SubtitleRenderer`, `SubtitleBurnMediaIO`, `Cea608Decoder::displayedCue`); **full CEA-708 DTVCC stack landed 2026-05-12** — `Cea708Service` + `Cea708DtvccPacket` value types (cc_data round-trip, standard + extended block headers), `Cea708WindowState` (8-window × pen-state × character-buffer state machine consuming the full C0/G0/C1/G1/EXT1 byte stream), `Cea708Decoder` (cc_data triples → DTVCC packets → window state → SubtitleList), `Cea708Encoder` (SubtitleList → cc_data triples via DefineWindow + DisplayWindow); full encoder ↔ decoder round-trip exercised.  **TPG 708 emission landed 2026-05-12** — `CaptionCodec` typed enum + `TpgAncCaptionsCodec` / `TpgAncCaptions708Service` config keys; `TpgMediaIO` now drives `Cea608Encoder`, `Cea708Encoder`, or both side-by-side, with full Inspector AncData JSONL round-trip coverage.  Functional tests still pending |
 
 The Phase 2b end-to-end slice proves the architecture: caption text
 goes in via `MediaConfig::TpgAncCaptionsFile` (a SubRip `.srt` path,
@@ -61,9 +61,35 @@ the 8-window state machine, plus matching `Cea708Encoder` /
 The ATSC A/53 **HlsSei codec** is registered alongside the St291
 codec, so the same `AncTranslator` can shuttle CEA-708 between
 SDI-shaped ST 291 packets and H.264 SEI for YouTube / HLS / SRT
-delivery.  Multi-packet CDPs (CDP > 255 bytes), NVENC SEI
-injection, and the rest of the typed parsers / MediaIO backend
-wiring are the remaining gaps.
+delivery.
+
+A **Frame-shaped codec API refactor** plus the **NVENC caption-SEI
+injection body** are in the working tree (uncommitted as of
+2026-05-12 end-of-day): `VideoEncoder` / `VideoDecoder` /
+`AudioEncoder` / `AudioDecoder` now push and pull whole `Frame`
+objects rather than bare payloads, with `selectInputPayload` /
+`buildOutputFrame` helpers on each base and a new
+`VideoEncoder::selectAncForSei(frame, pairedVideoStreamIndex,
+allowedFormats)` helper on the encoder side +
+`VideoDecoder::attachExtractedAnc(frame, pkt, pairedVideoStreamIndex)`
+on the decoder side.  `AncDesc` was rebuilt as an internally-CoW
+value-type handle (matching the post-2026-05-07 convention used by
+`Buffer`, `Frame`, `Metadata`, `AncPacket`) and now carries
+`pairedVideoStreamIndex` / `pairedAudioStreamIndex` so an ANC stream
+can be attributed to a specific encoded video/audio essence on the
+enclosing Frame.  TPG already stamps the pairing (video stream 0).
+**NVENC** now consumes that pairing: gated by
+`MediaConfig::VideoSeiCaptionsEnabled` (default-on, silent-no-op
+when no matching ANC is present), `submitFrame` walks the source
+Frame's ANC, translates each CEA-708 packet via the held
+`AncTranslator` to `AncTransport::HlsSei`, and stashes the bytes on
+the slot for `NV_ENC_PIC_PARAMS_H264 / _HEVC::seiPayloadArray` to
+pick up.  This closes the YouTube / Twitch / RTMP+H.264 caption
+delivery path end-to-end at the unit-test layer (TPG SubRip → NVENC
+H.264 → ATSC A/53 SEI bytes recoverable from the NAL stream).
+Multi-packet CDPs (CDP > 255 bytes), NDI / RTMP-AMF ANC codecs,
+the `AncMetadataStamper` pipeline stage, and a real over-the-wire
+RTMP / HLS functional test are the remaining gaps.
 
 ## Decisions
 
@@ -874,14 +900,15 @@ is what `MediaDesc::ancList` carries and what SDP `m=`
 sections round-trip.
 
 **Files:**
-- [x] `include/promeki/ancdesc.h` — header-only
-  implementation, including the DataStream operators.  No
-  `.cpp` needed for Phase 0 because nothing here requires
-  out-of-line definitions yet; an `ancdesc.cpp` will appear
-  when SDP support lands.
+- [x] `include/promeki/ancdesc.h` — declarations only as of
+  the 2026-05-12 CoW conversion (DataStream operators + every
+  accessor / mutator now live out-of-line in `ancdesc.cpp`).
+- [x] `src/proav/ancdesc.cpp` — out-of-line implementation
+  (constructors, CoW accessors, SDP `fromSdp` / `toSdp`,
+  DataStream operators).
 - [x] `tests/unit/ancdesc.cpp`
 
-**Fields:**
+**Fields (Impl):**
 - [x] `Size2Du32 sourceRaster` — the video raster the ANC was
   associated with (e.g. 1920×1080).  `(0,0)` if unbound.
 - [x] `VideoScanMode scanMode` — interlaced/progressive,
@@ -894,8 +921,29 @@ sections round-trip.
 - [x] `List<AncCategory> allowedCategories` — coarser
   filter; empty = no restriction.
 - [x] `Metadata metadata` — per-stream metadata container.
-- [x] Standard `PROMEKI_SHARED_FINAL` layout: `::Ptr`,
-  `::List`, `::PtrList`.  (See `dataobjects.dox`.)
+- [x] `int pairedVideoStreamIndex` (default `-1`) — the
+  `MediaPayload::streamIndex` of the video payload this ANC
+  stream is associated with on the enclosing `Frame`.  `-1`
+  means "unbound"; the ANC stream is treated as global to the
+  Frame.  Producers that know the pairing (an SDI capture
+  interleaving VANC with a specific link, an encoder hook
+  attaching SEI captions to a specific encoded video stream,
+  the TPG which stamps `0` for its single video payload) set
+  this so downstream consumers can filter by pairing without
+  inspecting the wire bytes.  Mirrors `pairedAudioStreamIndex`.
+- [x] `int pairedAudioStreamIndex` (default `-1`) — the
+  `MediaPayload::streamIndex` of the audio payload this ANC
+  stream is associated with (uncommon — most ANC pairs with
+  video; non-default for ANC carriages that ride alongside a
+  specific audio program such as a cue point bound to one
+  audio track).
+- [x] Internally-CoW value-type handle (post-2026-05-07
+  convention).  Wraps a private `SharedPtr<Impl>` — copy =
+  refcount bump, every mutator detaches via `_d.modify()` when
+  `useCount() > 1`.  No `::Ptr` alias; no `::PtrList`;
+  `::List = List<AncDesc>` is a vector of value-type handles
+  that share storage when copied.  Matches `Buffer`,
+  `Frame`, `Metadata`, `JsonObject`, `JsonArray`, `AncPacket`.
 
 **Methods:**
 - [x] `bool isValid() const` — valid raster + valid scan
@@ -903,8 +951,14 @@ sections round-trip.
   `allowedCategories` filter.
 - [x] `bool acceptsFormat(const AncFormat &) const` —
   applies both filters; empty filters accept everything.
-- [x] `bool formatEquals(const AncDesc &) const` — ignores
-  metadata, mirrors `ImageDesc::formatEquals`.
+- [x] `bool formatEquals(const AncDesc &) const` — compares
+  raster, scan mode, frame rate, both filter lists, and both
+  paired stream indices; ignores metadata.  Mirror of
+  `ImageDesc::formatEquals` / `AudioDesc::formatEquals`.
+- [x] `int pairedVideoStreamIndex() const` /
+  `setPairedVideoStreamIndex(int)`,
+  `int pairedAudioStreamIndex() const` /
+  `setPairedAudioStreamIndex(int)`.
 - [x] SDP round-trip (RTP/ST 2110-40 only): `static AncDesc
   fromSdp(const SdpMediaDescription &)`,
   `SdpMediaDescription toSdp(uint8_t payloadType) const` using
@@ -923,7 +977,10 @@ sections round-trip.
   DID/SDID survival, and malformed-entry tolerance.
 - [x] `DataStream` operators — `TypeAncDesc = 0x5A` tag
   followed by raster / scan mode / frame rate / two filter
-  lists / metadata.
+  lists / paired video & audio stream indices / metadata.
+  Wire format extended on 2026-05-12 alongside the CoW
+  conversion; the new ints ride before `metadata` so existing
+  consumers below `metadata` continue to round-trip.
 - [x] `operator==` / `!=` — compares every field including
   metadata, while `formatEquals` skips metadata.
 
@@ -2458,7 +2515,111 @@ for Facebook Live and older OBS-derived endpoints.
 - [ ] Tests: RTMP round-trip via the existing `RtmpClient`
   loopback test fixture.
 
-### `Cea708 ← / → HlsSei` codec + NVENC SEI injection — **Codec landed 2026-05-12; NVENC pending**
+### Codec base classes — Frame-shaped push/pull + ANC pairing helpers — **In working tree 2026-05-12 (uncommitted)**
+
+Prerequisite for the NVENC SEI injection step.  Before NVENC can
+walk `frame.ancPayloads()` and emit SEI it has to *see* the source
+Frame's ANC at all — the old `submitPayload(payload)` /
+`receiveCompressedPayload()` shape only handed the encoder a bare
+image.  The four codec bases were widened to push/pull whole
+Frames and given the helpers that every concrete backend would
+otherwise have to reimplement.
+
+**Surface (`VideoEncoder` / `VideoDecoder` / `AudioEncoder` /
+`AudioDecoder`):**
+
+- [x] `Error submitFrame(const Frame &frame)` — replaces the
+  payload-only entry points.  Concrete backends pull the input
+  payload they want via `selectInputPayload` and hold the source
+  Frame so its audio / ANC / Frame-level metadata can echo
+  through to the matching output Frame.
+- [x] `Frame receiveFrame()` — replaces
+  `receiveCompressedPayload` / `receiveVideoPayload` /
+  `receiveAudioPayload`.  Returns a fully-paired output Frame.
+- [x] `configure(const MediaConfig &)` is now **non-virtual** on
+  the base.  It stashes the most-recently-passed config on the
+  encoder (reachable via `config()`) and dispatches to a new
+  virtual `onConfigure(const MediaConfig &)` hook that concrete
+  backends override.  Guarantees `config()` is current for the
+  base-class helpers regardless of what a backend's `onConfigure`
+  body does.
+- [x] `static UncompressedVideoPayload::Ptr
+  VideoEncoder::selectInputPayload(const Frame &, int
+  streamIndex = -1)` and the matching `CompressedVideoPayload`,
+  `PcmAudioPayload`, `CompressedAudioPayload` selectors on the
+  other three bases — walk the frame's payload list and return
+  the first payload of the expected (un)compressed shape with a
+  matching `streamIndex`.
+- [x] `static AncPacket::List
+  VideoEncoder::selectAncForSei(const Frame &, int
+  pairedVideoStreamIndex, const AncFormat::IDList
+  &allowedFormats)` — the encoder-side bridge to the new
+  `AncDesc::pairedVideoStreamIndex`.  Returns the subset of
+  `frame.ancPayloads()` that this encoder owns (matching paired
+  index, or unbound `-1`) and whose packet format is in the
+  allowed list (empty = disabled).  Foundation for the NVENC
+  SEI hook below.
+- [x] `static void VideoDecoder::attachExtractedAnc(Frame &,
+  AncPacket, int pairedVideoStreamIndex)` — symmetric helper
+  for decoders that recover ANC from the compressed bitstream
+  (e.g. CEA-708 SEI on H.264 decode).  Finds or creates an
+  `AncPayload` on the output Frame keyed to the right paired
+  index and appends the packet.
+- [x] `static Frame buildOutputFrame(const Frame &source,
+  CompressedVideoPayload::Ptr emitted)` (and matching
+  uncompressed-video / compressed-audio / pcm-audio overloads)
+  — assembles a fresh output Frame, echoing the source's audio /
+  ANC / metadata through and adding the emitted payload.
+  Replaces the per-MediaIO `_pendingSrcFrames` queues that
+  previously paired packets back to inputs by hand.
+
+**Migrations landed in working tree:**
+
+- [x] In-tree encoders: `NvencVideoEncoder`, `JpegVideoEncoder`,
+  `JpegXsVideoEncoder`, plus the libfdk-aac and libopus
+  `AudioEncoder` subclasses — all expose `onConfigure` +
+  `submitFrame` + `receiveFrame`, stash the source Frame on
+  submit, and emit pre-paired output Frames via
+  `buildOutputFrame`.  NVENC + NVDEC track the source Frame
+  alongside their per-slot / per-packet state queues so
+  out-of-order / multi-input-per-packet codecs still pair
+  correctly.
+- [x] In-tree decoders: `NvdecVideoDecoder`, `JpegVideoDecoder`,
+  `JpegXsVideoDecoder`, plus the libfdk-aac and libopus
+  `AudioDecoder` subclasses — same migration.
+- [x] `VideoEncoderMediaIO` / `VideoDecoderMediaIO` /
+  `AudioEncoderMediaIO` / `AudioDecoderMediaIO` wrappers — the
+  per-MediaIO `_pendingSrcFrames` queue and the
+  `_multiImageWarned` / `_multiTrackWarned` bookkeeping are
+  gone; the wrapper now just hands the whole Frame to
+  `submitFrame` and pushes the encoder's emitted Frames onto
+  its output queue.  Audio-only / video-only Frames pass through
+  cleanly because `selectInputPayload` returns a null Ptr and
+  the wrapper builds an empty-but-valid pass-through via
+  `buildOutputFrame`.
+- [x] One-shot consumers — `InspectorMediaIO::decompressImages`,
+  `SDLPlayerMediaIO`, `ImageFileIO_JPEG` / `_JpegXS::save`,
+  `MjpegStreamMediaIO::encodeFrame`, and the
+  `tests/func/nvenc/main.cpp` benchmark harness — all wrap
+  the submitted payload in a transient Frame and unwrap the
+  emitted output Frame.  `tests/unit/codectesthelpers.h` grew
+  `frameWith` / `firstCompressedVideo` / `firstUncompressedVideo`
+  / `firstCompressedAudio` / `firstPcmAudio` helpers so the
+  per-codec unit tests stay one-liners.
+
+**Pending follow-ons before commit:**
+
+- [ ] Land the changeset.  The whole stack (library + all unit
+  test executables) compiles clean against `build` /
+  `build tests` as of 2026-05-12 late; the user has not yet
+  asked for a commit.
+- [ ] Doxygen sweep over the new public API — class-level
+  paragraphs on each codec base, the four helpers, and the
+  paired-index AncDesc fields.  Most landed inline with the
+  refactor; a `doxygen-review` pass before commit catches
+  anything stale.
+
+### `Cea708 ← / → HlsSei` codec + NVENC SEI injection — **Landed 2026-05-12 (working tree, uncommitted)**
 
 This is the practical caption delivery path for YouTube Live,
 Twitch, and any other modern CDN that ingests H.264 over RTMP /
@@ -2483,9 +2644,10 @@ is a follow-on cleanup, not a prerequisite for this phase.
   from `anccodec_cea708.cpp` so the SEI wrapper logic stays
   isolated from the St291 codec)
 - [x] `tests/unit/anccodec_cea708_hlssei.cpp` (13 cases)
-- [ ] NVENC integration in `src/proav/nvencvideoencoder.cpp`
-- [ ] `tests/unit/nvenc_caption_sei.cpp` (or a functional
-  test if NVENC unit-test machinery isn't conducive)
+- [x] NVENC integration in `src/proav/nvencvideoencoder.cpp`
+- [x] Three new caption-SEI cases appended to
+  `tests/unit/nvencvideoencoder.cpp` (kept beside the existing
+  NVENC tests rather than spinning up a new TU)
 
 **Codec surface (landed):**
 - [x] `Cea708 ← HlsSei` parser: validates the ATSC A/53
@@ -2513,43 +2675,72 @@ is a follow-on cleanup, not a prerequisite for this phase.
   cc_data, too-short packet), and `AncTranslator::translate`
   going St291 ↔ HlsSei via the parse + build fallback path.
 
-**NVENC SEI injection hook (pending):**
-- [ ] `NvencVideoEncoder` reads `frame.ancPayloads()` for
-  each encoded frame, picks out packets with
-  `format == Cea708`, runs them through
-  `AncTranslator(Cea708, packet.transport(), HlsSei)`, and
-  attaches the resulting SEI bytes to the encode call via
-  `NV_ENC_PIC_PARAMS::seiPayloadArray` /
-  `seiPayloadArrayCnt`.
-- [ ] **B-frame display-order caveat.**  SEI must accompany
-  the displayed-order picture, not the encoded-order one.
-  NVENC's B-frame reordering means the encoder hook needs
-  to attach SEI by display order.  Document this in code;
-  doctest with a B-frame configuration if NVENC's mock
-  surface allows.
-- [ ] Config key (likely `MediaConfig::VideoSeiCaptionsEnabled`
-  or absorbed into the existing video-encoder config) to
-  gate the behaviour.  Default off — silent passthrough
-  when no CEA-708 packets are present on the frame.
+**NVENC SEI injection hook — Landed 2026-05-12 (working tree, uncommitted):**
 
-**NVENC SEI injection hook:**
-- [ ] `NvencVideoEncoder` reads `frame.ancPayloads()` for
-  each encoded frame, picks out packets with
-  `format == Cea708`, runs them through
-  `AncTranslator(Cea708, packet.transport(), HlsSei)`, and
-  attaches the resulting SEI bytes to the encode call via
-  `NV_ENC_PIC_PARAMS::seiPayloadArray` /
-  `seiPayloadArrayCnt`.
-- [ ] **B-frame display-order caveat.**  SEI must accompany
-  the displayed-order picture, not the encoded-order one.
-  NVENC's B-frame reordering means the encoder hook needs
-  to attach SEI by display order.  Document this in code;
-  doctest with a B-frame configuration if NVENC's mock
-  surface allows.
-- [ ] Config key (likely `MediaConfig::VideoSeiCaptionsEnabled`
-  or absorbed into the existing video-encoder config) to
-  gate the behaviour.  Default off — silent passthrough
-  when no CEA-708 packets are present on the frame.
+The pieces it needs were all in place after the codec-base
+refactor above:
+
+- The encoder receives the source Frame on every `submitFrame`
+  call (stashed in `Slot::sourceFrame` until the matching
+  bitstream comes back).
+- TPG already stamps `AncDesc::pairedVideoStreamIndex = 0` on
+  the CEA-708 stream it emits.
+- `VideoEncoder::selectAncForSei(frame, _streamIndex,
+  {AncFormat::Cea708})` returns exactly the packets this
+  encoder should translate to SEI.
+- `AncTranslator(Cea708, packet.transport(), HlsSei)` already
+  produces the ATSC A/53 SEI payload bytes (codec landed
+  2026-05-12).
+
+What landed:
+
+- [x] Inside `NvencVideoEncoder::Impl::submitFrame`, call
+  `VideoEncoder::selectAncForSei(source, /*streamIndex=*/0,
+  {AncFormat::Cea708})` and run each packet through the held
+  `AncTranslator` to get its `HlsSei` payload bytes.  The bytes
+  land in two new per-slot vectors — `Slot::captionSeiPayloads`
+  (owns the bytes) and `Slot::captionSeiArray` (parallel
+  `NV_ENC_SEI_PAYLOAD` descriptors pointing into them) — so
+  storage outlives the async encode call exactly the way
+  `Slot::nvMd` / `nvCll` already do for HDR SEI.
+- [x] Wire the slot's caption-SEI buffers into
+  `NV_ENC_PIC_PARAMS_H264::seiPayloadArray` /
+  `seiPayloadArrayCnt` (and the matching HEVC fields).  AV1 is
+  skipped — NVENC has no AV1 caption-OBU path; a one-shot
+  warn at configure time tells the caller.  Payload type is `4`
+  (`user_data_registered_itu_t_t35` per H.264 / HEVC Annex D);
+  NVENC adds the SEI message header + emulation prevention.
+- [x] **B-frame display-order pairing** — solved by attaching
+  the SEI array to the *input* slot at submit time.  NVENC
+  binds `seiPayloadArray` to the input picture, so the SEI
+  rides with the encoded picture for that input regardless of
+  decode-order reordering.  Same display-order behaviour the
+  existing HDR-SEI path relies on.
+- [x] Config key `MediaConfig::VideoSeiCaptionsEnabled` (bool,
+  **default `true`**).  Default-on is safe because the feature
+  is a silent no-op when the source Frame carries no matching
+  CEA-708 ANC: `selectAncForSei` returns an empty list and
+  no SEI bytes are written.  No `VideoSeiCaptionFormats`
+  EnumList — `AncFormat` is a `TypeRegistry`, not a
+  `TypedEnum`, so the format set is hard-coded to
+  `{AncFormat::Cea708}` for now.  When the second SEI-bearing
+  format lands (HDR dynamic metadata, KLV) the gate generalises
+  to a list-typed key.
+- [x] **Unit tests** — three new cases in
+  `tests/unit/nvencvideoencoder.cpp`:
+    1. `caption-SEI injection wraps Cea708 ANC into ATSC A/53
+       SEI` — builds an `AncPayload` with two known cc_data
+       triples (`{true, 0, 0xC4, 0x45}` and `{true, 2, 0x80,
+       0x80}`), submits a Frame carrying it through NVENC H.264,
+       searches the encoded NAL bitstream for the
+       `0xB5 0x00 0x31 0x47 0x41 0x39 0x34 0x03` ATSC A/53
+       wrapper marker, then byte-asserts the cc_count flag
+       (`0xC2`), em_data (`0xFF`), both triple headers and
+       payloads, and the trailing marker.
+    2. `caption-SEI suppressed when VideoSeiCaptionsEnabled =
+       false` — same setup, opt-out, marker absent.
+    3. `caption-SEI silent passthrough when no Cea708 ANC on
+       frame` — default-on, no ANC payload, marker absent.
 
 **Functional test:**
 - [ ] `tests/func/anc-youtube-sei-roundtrip/` — TPG with a
@@ -2788,6 +2979,233 @@ TPG.
   longer than the per-packet 127-byte payload cap) surfaces
   `Error::OutOfRange`.
 
+**Generic CaptionEncoder abstraction — landed 2026-05-12:**
+
+- [x] `include/promeki/captionencoder.h` + `src/proav/captionencoder.cpp`:
+  abstract @c CaptionEncoder base with virtual @c codec /
+  @c frameRate / @c setSubtitles / @c encodableSubset /
+  @c nextFrame / @c reset, plus a factory
+  @c CaptionEncoder::create(CaptionCodec, Config) returning
+  @c UniquePtr<CaptionEncoder>.
+- [x] @c Cea608Encoder and @c Cea708Encoder now inherit
+  @c CaptionEncoder.  The 608 encoder overrides
+  @c encodableSubset with its pre-roll / back-to-back filter;
+  the 708 encoder picks up the no-op default.
+- [x] @c TpgMediaIO refactored to hold a
+  @c List<UniquePtr<CaptionEncoder>> populated from the codec
+  selector via the factory; the per-frame loop walks the list
+  and concatenates each encoder's @c nextFrame triples into
+  the same @c CcDataList.
+
+**Subtitle data-model gaps closed for 708 — landed 2026-05-12:**
+
+- [x] @c CaptionMode TypedEnum (@c Default / @c PopOn /
+  @c PaintOn / @c RollUp) in @c enums.h.  @c Subtitle now
+  carries @c mode() / @c setMode() so a cue can name its
+  display mode explicitly (or stay @c Default to let the
+  encoder pick).  Variant wire format + JSON + DataStream
+  serialisation all updated.
+- [x] @c SubtitleEdgeStyle TypedEnum (@c None / @c Raised /
+  @c Depressed / @c Uniform / @c ShadowLeft /
+  @c ShadowRight) — mirrors 708 SetPenAttributes
+  @c edge_type.
+- [x] @c SubtitleOpacity TypedEnum (@c Solid / @c Flash /
+  @c Translucent / @c Transparent) — mirrors 708 SetPenColor
+  @c fg / bg / edge opacity fields.
+- [x] @c SubtitleFontFace TypedEnum (8 face tags from the
+  708 spec — @c Default / @c MonoSerif / @c ProportionalSerif
+  / @c MonoSans / @c ProportionalSans / @c Casual / @c Cursive
+  / @c SmallCaps).
+- [x] @c SubtitleSpan extended with @c backgroundColor,
+  @c edgeColor, @c edgeStyle, @c fontFace,
+  @c foregroundOpacity, @c backgroundOpacity, @c edgeOpacity.
+  All seven fields round-trip through Variant / JSON /
+  DataStream.  @c SubtitleSpan can now fully express any
+  CEA-708 PenAttribute / PenColor styling without information
+  loss.
+
+**Wire-level wiring — landed 2026-05-12 (round 2):**
+
+- [x] **Per-list @c CaptionMode dispatch in @c Cea608Encoder.**
+  `setSubtitles` walks the input list, picks up each cue's
+  explicit `CaptionMode`, and dispatches to the matching
+  per-mode scheduler (`buildPopOnSchedule` /
+  `buildPaintOnSchedule` / `buildRollUpSchedule`).  When
+  cues mix explicit modes, the encoder warns once and
+  falls back to `Config::mode` for the whole batch —
+  per-cue mid-stream mode switching remains a follow-on.
+  Cues with @c CaptionMode::Default inherit
+  `Config::mode` (preserving the legacy behaviour for code
+  that doesn't stamp a mode).
+- [x] @c Cea608Decoder stamps recovered @c CaptionMode on
+  every emitted cue (`PopOn` via @c emitDisplayed,
+  @c PaintOn / @c RollUp via @c emitLoading driven by the
+  decoder's `currentMode` tracker).
+- [x] **Per-cue @c CaptionMode dispatch in @c Cea708Encoder.**
+  Pop-on (and @c Default) keep the existing
+  DefineWindow + chars + DSW at startFrame + HideWindow
+  at endFrame transaction.  PaintOn skips the HideWindow
+  boundary — the window stays visible after the cue's
+  end (real "live" captioning semantics).  RollUp
+  declares a multi-row window via the DefineWindow
+  `row_count` argument (3 rows) so the receiver scrolls
+  instead of overwriting; HideWindow is also skipped.
+  Mid-stream mode changes between consecutive cues are
+  fully supported — each cue's transaction is self-
+  contained.
+- [x] @c Cea708Decoder recovers @c CaptionMode from the
+  current window state at cue-commit time: row_count > 1
+  → @c RollUp, single-row → @c PopOn (the broadcast
+  default; pop-on vs paint-on are indistinguishable from
+  the wire bytes alone without retaining longer temporal
+  context).
+- [x] @c SubRip parser/emitter understands the @c &lt;font
+  background="..."&gt; libass / Aegisub extension —
+  @c SubtitleSpan::backgroundColor round-trips through
+  SubRip files.  Reader pushes a parallel bgColorStack
+  alongside the existing colorStack; emitter writes both
+  attributes on the @c &lt;font&gt; open tag when set.
+- [x] @c SubtitleRenderer per-span background paint —
+  before each styled run's glyph blits, the renderer fills
+  a rectangle covering the run's pixel range with the
+  span's @c backgroundColor (when set).  Lands on top of
+  the cue's default bg rectangle so a coloured highlight
+  reads cleanly over the cue-wide background.
+- [x] @c SubtitleRenderer honours @c SubtitleOpacity::Transparent
+  for both the foreground (skip the glyph blit) and
+  background (skip the bg fill) slots — a span configured
+  with @c backgroundOpacity = Transparent reads through to
+  whatever is behind it instead of painting a coloured
+  rectangle.  Full alpha-blend (@c Translucent / @c Flash)
+  is a paint-engine enhancement.
+
+**708 SetPenAttributes / SetPenColor — landed 2026-05-12 (round 3):**
+
+- [x] @c Cea708Encoder emits @c SetPenAttributes (SPA, 0x90)
+  and @c SetPenColor (SPC, 0x91) commands before each
+  styled span's character bytes.  SPA carries italic /
+  underline / edge style / font face; SPC carries fg / bg /
+  edge colour quantised to the 2-bit-per-channel wire
+  field, plus the fg / bg / edge opacity slots.  Redundant
+  emissions are suppressed — only spans whose style
+  actually differs from the wire's current pen state
+  re-emit the command pair.
+- [x] @c Cea708WindowState introduces @c Cea708PenAttr
+  (italic / underline / edge style / font face + fg / bg /
+  edge colour + opacity) and a @c currentPen() accessor.
+  SPA / SPC dispatch in @c processBytes now decodes the
+  argument bytes into this field instead of just skipping
+  them.
+- [x] @c Cea708Decoder reconstructs styled spans on cue
+  commit via @c Cea708WindowState::visibleSpans().
+  Single-style cues round-trip every styling field
+  encoder → decoder.
+
+**708 per-cell pen tracking — landed 2026-05-12 (round 4):**
+
+- [x] @c Cea708Cell struct (codepoint + @c Cea708PenAttr)
+  replaces the bare @c uint32_t cell type in
+  @c Cea708Window::grid.  @c putChar(cp, pen) writes the
+  pen state into the cell so the renderer can recover
+  per-character styling.
+- [x] @c Cea708Window::visibleSpans() reconstructs the
+  window's content as a styled @ref SubtitleSpan list —
+  consecutive cells in the same row with matching pen
+  state collapse into one span; rows are separated by a
+  literal @c "\n" span.  @c Cea708WindowState::visibleSpans()
+  walks visible windows in priority order, separating
+  windows with another @c "\n" span.
+- [x] @c Cea708Decoder snapshots @c visibleSpans() while
+  the cue is on screen (the live state is gone by the
+  time @c HideWindow flips visibility off and
+  @c recordCueBoundaries fires, so a deferred lookup
+  would return empty).  Multi-style cues now recover
+  with full span boundaries — e.g. a cue of
+  `[red italic "RED"] + [green underlined "GRN"]`
+  decodes back to those two spans in order.
+
+**608 background colour — landed 2026-05-12 (round 5):**
+
+- [x] @c Cea608 wire helpers: @c encodeBgAttribute,
+  @c decodeBgAttribute, @c isBgAttribute for the
+  EIA-608-B §7.6 background-attribute code family
+  (@c b1=0x10, @c b2 in @c [0x20, 0x2F]).  Maps the
+  7-primary @ref CaptionColor palette plus the
+  semi-transparent / opaque flag onto the wire bit
+  layout.
+- [x] @c Cea608Encoder emits a doubled BG attribute
+  pair after the PAC when the first span of a row
+  declares a background colour, and a fresh doubled
+  BG pair mid-row whenever the bg slot changes
+  between spans.  Bg colour is quantised through the
+  same 608 primary palette as the fg.
+  @c SubtitleOpacity::Translucent maps to the
+  spec's "semi-transparent" flag; anything else maps
+  to opaque.
+- [x] @c Cea608Encoder's wrap pass (@c rowSpansFromWords)
+  now preserves every styling slot (bg, edge, font,
+  opacity) when rebuilding spans during word-wrap —
+  previously it dropped everything except the fg
+  colour quartet.
+- [x] @c Cea608Decoder parses BG attribute codes via a
+  new @c doBgAttribute handler and stamps the bg
+  colour + opacity onto every span emitted while the
+  bg is active.
+
+**Still-pending wire-level follow-ons:**
+
+- [ ] Per-cue mid-stream mode mixing in 608 (today mixed
+  modes within a list warn and fall back to
+  `Config::mode`).  Requires the three schedule builders
+  to interleave properly with mode-transition control
+  codes between cues.
+- [ ] @c SubtitleRenderer edge style + true alpha blending
+  for @c Translucent / @c Flash opacities.  Today honours
+  fg colour, per-span / per-cue bg rectangles (with
+  @c Transparent suppression), italic / bold / underline,
+  and the @c Transparent shortcut for fg / bg.  Edge effects
+  need a FreeType glyph-outline manipulation pass; partial
+  opacity needs a paint-engine alpha-blend primitive.
+
+**TPG 708 emission — landed 2026-05-12:**
+
+- [x] `CaptionCodec` typed enum (`enums.h`) — `Cea608` /
+  `Cea708` / `Both`.  Selects which encoder(s) drive the
+  per-frame `CcDataList`.
+- [x] `MediaConfig::TpgAncCaptionsCodec` (default `Cea608`)
+  and `MediaConfig::TpgAncCaptions708Service` (default 1,
+  range 1..63) on the TPG config surface.
+- [x] `TpgMediaIO` parses the codec key in `executeCmd(Open)`,
+  instantiates `Cea608Encoder` / `Cea708Encoder` per the
+  selection, and merges both encoders' triples into the same
+  CDP on every emitted frame when codec=`Both`.  SCC bypass
+  is forced down to 608 (the SCC byte pairs are line-21
+  only).
+- [x] Encoder holders converted from `std::unique_ptr` to the
+  library's `UniquePtr<T>` (`uniqueptr.h`) — library-first
+  rule applied to both 608 and the new 708 slot.
+- [x] `tests/unit/tpg_anc_captions.cpp` — four new doctests
+  cover the 708 path:
+    - `codec=Cea708` emits only `cc_type=2/3` triples, no
+      608 triples, and `Cea708Decoder` round-trips the cue
+      text.
+    - `codec=Both` packs the 608 byte pair *and* the 708
+      triples into the same CDP at the cue boundaries.
+    - `codec=Cea708` with no file emits empty `cc_data` —
+      DTVCC has no equivalent of the line-21 null-pair
+      filler, so quiet frames carry zero triples.
+    - `TpgAncCaptions708Service=2` routes via service 2;
+      a service-1 decoder sees nothing, service-2 recovers
+      the cue.
+- [x] `tests/unit/inspector_ancdata.cpp` — added
+  `Inspector: AncData JSONL surfaces CEA-708 DTVCC packets
+  from TPG codec=Cea708` covering the full
+  TPG → MediaIOPortConnection → Inspector chain.  The JSONL
+  shows `cc_type=2` (and optionally 3) triples, no 608
+  types, and rebuilding `CcDataList` from the JSON byte
+  fields and feeding it through `Cea708Decoder` recovers
+  the cue text byte-for-byte.
+
 **Pending follow-ons:**
 
 - [ ] Pen attributes / colour / font preservation on the
@@ -2807,6 +3225,20 @@ TPG.
 - [ ] `Cea708Service` Variant X-macro integration.  Currently
   consumed by direct API.  One-line addition when an
   application needs it.
+- [x] `SubtitleSource::Cea708Anc` enum value + handler in
+  `SubtitleBurnMediaIO` — landed 2026-05-12.  Mirrors the
+  608 wiring: a `UniquePtr<Cea708Decoder>` lifted on
+  open() when the source is listed, `tryCea708AncSource()`
+  walks each frame's `AncPayloads`, filters Cea708 packets,
+  parses the CDP via the shared `AncTranslator`, and pushes
+  each `cc_data` triple list into the decoder; the renderer
+  paints `Cea708Decoder::displayedCue()`.  Coexists with
+  `Cea608Anc` — both decoders can run in parallel and the
+  ordered source preference picks the winner.  Tests:
+  `SubtitleBurnMediaIO[708]: Cea708Anc source paints a cue
+  from a real CDP` synthesises a CDP via `Cea708Encoder` and
+  verifies `FramesPainted` advances; a negative-case test
+  confirms empty `cc_data` leaves `FramesPainted` at 0.
 
 ### Caption renderer — **Phase 1 landed 2026-05-11**
 

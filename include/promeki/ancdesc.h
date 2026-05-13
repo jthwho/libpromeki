@@ -15,10 +15,10 @@
 #include <promeki/metadata.h>
 #include <promeki/list.h>
 #include <promeki/enums.h>
-#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
+class DataStream;
 class SdpMediaDescription;
 
 /**
@@ -46,14 +46,33 @@ class SdpMediaDescription;
  * candidate.  An empty filter list means "no restriction"; sinks
  * that carry every format leave both filters empty.
  *
+ * @par Pairing with video / audio streams
+ *
+ * @ref pairedVideoStreamIndex and @ref pairedAudioStreamIndex name the
+ * @ref MediaPayload::streamIndex of the video / audio payload this ANC
+ * stream is associated with on the enclosing @ref Frame.  The default
+ * value @c -1 means "unbound" — the ANC stream is not attributed to a
+ * specific essence and is treated as global to the Frame.  A producer
+ * that knows the pairing (the SDI capture that interleaved VANC with
+ * a specific link, an encoder hook that injects SEI captions on a
+ * specific encoded video stream, …) stamps the matching streamIndex
+ * here so downstream selectors can filter on it without inspecting
+ * the wire bytes.
+ *
  * @par Storage and copy semantics
  *
- * @c AncDesc is a shareable data object per
- * @ref dataobjects.dox.  Plain values copy by deep copy (small —
- * a handful of POD-ish members plus a CoW @ref Metadata).
- * @c AncDesc::Ptr shares a single instance via atomic refcount; the
- * @c PtrList alias is preferred when sinks accept many descriptors
- * that should ride together.
+ * @c AncDesc is an internally-CoW value-type handle (the
+ * post-2026-05-07 convention: no @c ::Ptr alias, no
+ * @c PROMEKI_SHARED_FINAL on the outer class).  Copying an
+ * @c AncDesc bumps an internal refcount; mutators @c (setSourceRaster,
+ * @c setScanMode, @c setFrameRate, @c setAllowedFormats,
+ * @c setAllowedCategories, @c setMetadata, @c metadata() &,
+ * @c setPairedVideoStreamIndex, @c setPairedAudioStreamIndex) detach
+ * via copy-on-write when the refcount is greater than one.  The
+ * handle is one pointer wide and is cheap to pass through pipelines.
+ *
+ * @c AncDesc::List is @c List<AncDesc> — a vector of value-type
+ * handles that share storage when copied.
  *
  * @par SDP round-trip
  *
@@ -67,16 +86,9 @@ class SdpMediaDescription;
  *      MediaDesc, ImageDesc, AudioDesc
  */
 class AncDesc {
-                PROMEKI_SHARED_FINAL(AncDesc)
         public:
-                /** @brief Shared pointer to an AncDesc. */
-                using Ptr = SharedPtr<AncDesc>;
-
-                /** @brief Plain-value list of @c AncDescs. */
+                /** @brief Plain-value list of @c AncDescs (handles share storage when copied). */
                 using List = ::promeki::List<AncDesc>;
-
-                /** @brief List of @ref Ptr — shared descriptors sharing storage. */
-                using PtrList = ::promeki::List<Ptr>;
 
                 /**
                  * @brief Default-constructs an invalid @c AncDesc.
@@ -84,7 +96,7 @@ class AncDesc {
                  * @ref isValid returns @c false until one of the
                  * meaningful fields is populated.
                  */
-                AncDesc() = default;
+                AncDesc();
 
                 /**
                  * @brief Constructs an @c AncDesc bound to a paired
@@ -93,62 +105,95 @@ class AncDesc {
                  * Common-case constructor for ANC streams associated
                  * with a video stream — the raster and scan mode let
                  * a consumer interpret VANC line numbers without
-                 * consulting the paired @ref ImageDesc.
+                 * consulting the paired @ref ImageDesc.  Paired stream
+                 * indices are left at @c -1 (unbound); producers that
+                 * know the streamIndex of the paired video / audio
+                 * call @ref setPairedVideoStreamIndex /
+                 * @ref setPairedAudioStreamIndex afterwards.
                  *
                  * @param raster    Source video raster (0×0 = unbound).
                  * @param scanMode  Source scan mode.
                  * @param frameRate Frame rate of the paired video
                  *                  (drives ST 2110-40 packet timing).
                  */
-                AncDesc(const Size2Du32 &raster, const VideoScanMode &scanMode, const FrameRate &frameRate)
-                    : _sourceRaster(raster), _scanMode(scanMode), _frameRate(frameRate) {}
+                AncDesc(const Size2Du32 &raster, const VideoScanMode &scanMode, const FrameRate &frameRate);
 
                 /** @brief Returns the source video raster (0×0 = unbound). */
-                const Size2Du32 &sourceRaster() const { return _sourceRaster; }
+                const Size2Du32 &sourceRaster() const;
 
                 /** @brief Replaces the source video raster. */
-                void setSourceRaster(const Size2Du32 &raster) { _sourceRaster = raster; }
+                void setSourceRaster(const Size2Du32 &raster);
 
                 /** @brief Returns the source scan mode. */
-                const VideoScanMode &scanMode() const { return _scanMode; }
+                const VideoScanMode &scanMode() const;
 
                 /** @brief Replaces the source scan mode. */
-                void setScanMode(const VideoScanMode &scanMode) { _scanMode = scanMode; }
+                void setScanMode(const VideoScanMode &scanMode);
 
                 /** @brief Returns the frame rate of the paired video. */
-                const FrameRate &frameRate() const { return _frameRate; }
+                const FrameRate &frameRate() const;
 
                 /** @brief Replaces the frame rate. */
-                void setFrameRate(const FrameRate &frameRate) { _frameRate = frameRate; }
+                void setFrameRate(const FrameRate &frameRate);
 
                 /**
                  * @brief Returns the allowed-format whitelist
                  *        (empty = no restriction).
                  */
-                const AncFormat::IDList &allowedFormats() const { return _allowedFormats; }
+                const AncFormat::IDList &allowedFormats() const;
 
                 /** @brief Replaces the allowed-format whitelist. */
-                void setAllowedFormats(AncFormat::IDList ids) { _allowedFormats = std::move(ids); }
+                void setAllowedFormats(AncFormat::IDList ids);
 
                 /**
                  * @brief Returns the allowed-category whitelist
                  *        (empty = no restriction).
                  */
-                const ::promeki::List<AncCategory> &allowedCategories() const { return _allowedCategories; }
+                const ::promeki::List<AncCategory> &allowedCategories() const;
 
                 /** @brief Replaces the allowed-category whitelist. */
-                void setAllowedCategories(::promeki::List<AncCategory> categories) {
-                        _allowedCategories = std::move(categories);
-                }
+                void setAllowedCategories(::promeki::List<AncCategory> categories);
 
                 /** @brief Returns the descriptor's metadata container. */
-                const Metadata &metadata() const { return _metadata; }
+                const Metadata &metadata() const;
 
                 /** @brief Returns a mutable reference to the metadata container. */
-                Metadata &metadata() { return _metadata; }
+                Metadata &metadata();
 
                 /** @brief Replaces the metadata container. */
-                void setMetadata(Metadata m) { _metadata = std::move(m); }
+                void setMetadata(Metadata m);
+
+                /**
+                 * @brief Returns the @ref MediaPayload::streamIndex of
+                 *        the video payload this ANC stream is paired
+                 *        with on the enclosing @ref Frame.
+                 *
+                 * Returns @c -1 when the ANC stream is not attributed
+                 * to a specific video stream (the default for SDP-
+                 * derived descriptors, RTP-only sources, or any
+                 * producer that does not know the pairing).
+                 */
+                int pairedVideoStreamIndex() const;
+
+                /** @brief Sets the paired video stream index; @c -1 clears the pairing. */
+                void setPairedVideoStreamIndex(int index);
+
+                /**
+                 * @brief Returns the @ref MediaPayload::streamIndex of
+                 *        the audio payload this ANC stream is paired
+                 *        with on the enclosing @ref Frame.
+                 *
+                 * Returns @c -1 when the ANC stream is not attributed
+                 * to a specific audio stream (the common case — most
+                 * ANC streams pair with video).  Non-default values
+                 * are used for ANC carriages that ride alongside a
+                 * specific audio track (e.g. cue points associated
+                 * with one audio program).
+                 */
+                int pairedAudioStreamIndex() const;
+
+                /** @brief Sets the paired audio stream index; @c -1 clears the pairing. */
+                void setPairedAudioStreamIndex(int index);
 
                 /**
                  * @brief Returns @c true when the descriptor carries
@@ -163,12 +208,7 @@ class AncDesc {
                  *    @ref allowedCategories filter, signalling the
                  *    application intent for the stream.
                  */
-                bool isValid() const {
-                        const bool hasRaster = _sourceRaster.width() > 0 && _sourceRaster.height() > 0;
-                        const bool hasScanMode = _scanMode != VideoScanMode::Unknown;
-                        if (hasRaster && hasScanMode) return true;
-                        return !_allowedFormats.isEmpty() || !_allowedCategories.isEmpty();
-                }
+                bool isValid() const;
 
                 /**
                  * @brief Returns @c true when @p fmt is admitted by
@@ -181,53 +221,19 @@ class AncDesc {
                  * appear in the list.  Both filters must admit @p fmt
                  * for @c acceptsFormat to return @c true.
                  */
-                bool acceptsFormat(const AncFormat &fmt) const {
-                        if (!_allowedFormats.isEmpty()) {
-                                bool found = false;
-                                for (auto id : _allowedFormats) {
-                                        if (id == fmt.id()) {
-                                                found = true;
-                                                break;
-                                        }
-                                }
-                                if (!found) return false;
-                        }
-                        if (!_allowedCategories.isEmpty()) {
-                                bool found = false;
-                                for (const auto &cat : _allowedCategories) {
-                                        if (cat == fmt.category()) {
-                                                found = true;
-                                                break;
-                                        }
-                                }
-                                if (!found) return false;
-                        }
-                        return true;
-                }
+                bool acceptsFormat(const AncFormat &fmt) const;
 
                 /**
                  * @brief Returns @c true when @p other has the same
                  *        format-shape fields as this descriptor.
                  *
-                 * Compares raster, scan mode, frame rate, and the two
-                 * filter lists.  Metadata is ignored — mirror of
+                 * Compares raster, scan mode, frame rate, the two
+                 * filter lists, and the paired stream indices.
+                 * Metadata is ignored — mirror of
                  * @ref AudioDesc::formatEquals and
                  * @ref ImageDesc::formatEquals.
                  */
-                bool formatEquals(const AncDesc &other) const {
-                        if (!(_sourceRaster == other._sourceRaster)) return false;
-                        if (!(_scanMode == other._scanMode)) return false;
-                        if (!(_frameRate == other._frameRate)) return false;
-                        if (_allowedFormats.size() != other._allowedFormats.size()) return false;
-                        for (size_t i = 0; i < _allowedFormats.size(); ++i) {
-                                if (_allowedFormats.at(i) != other._allowedFormats.at(i)) return false;
-                        }
-                        if (_allowedCategories.size() != other._allowedCategories.size()) return false;
-                        for (size_t i = 0; i < _allowedCategories.size(); ++i) {
-                                if (!(_allowedCategories.at(i) == other._allowedCategories.at(i))) return false;
-                        }
-                        return true;
-                }
+                bool formatEquals(const AncDesc &other) const;
 
                 /**
                  * @brief Builds an @c AncDesc from an SDP
@@ -246,12 +252,13 @@ class AncDesc {
                  *
                  * The other AncDesc fields
                  * (@ref sourceRaster, @ref scanMode,
-                 * @ref frameRate) are intentionally left at their
-                 * defaults — RFC 8331 SDP does not carry them; they
-                 * are populated by the caller from the paired
-                 * @ref ImageDesc when one exists.  Returns a default
-                 * @c AncDesc when the SDP section has the wrong
-                 * media type or a malformed rtpmap.
+                 * @ref frameRate, paired stream indices) are
+                 * intentionally left at their defaults — RFC 8331
+                 * SDP does not carry them; they are populated by the
+                 * caller from the paired @ref ImageDesc when one
+                 * exists.  Returns a default @c AncDesc when the SDP
+                 * section has the wrong media type or a malformed
+                 * rtpmap.
                  */
                 static AncDesc fromSdp(const SdpMediaDescription &md);
 
@@ -282,82 +289,46 @@ class AncDesc {
                  * @brief Equality compares every field, including
                  *        @ref metadata.
                  */
-                bool operator==(const AncDesc &other) const {
-                        return formatEquals(other) && _metadata == other._metadata;
-                }
+                bool operator==(const AncDesc &other) const;
 
                 /** @brief Inequality. */
                 bool operator!=(const AncDesc &other) const { return !(*this == other); }
 
+                /**
+                 * @brief Private @c Impl struct holding the
+                 *        descriptor's state.
+                 *
+                 * Marked @c PROMEKI_SHARED_FINAL so @c SharedPtr<Impl>
+                 * can refcount it natively with CoW semantics.
+                 * Exposed publicly only so the in-namespace stream
+                 * operators can poke at fields without a friend
+                 * declaration; application code should not depend on
+                 * the @c Impl layout.
+                 */
+                struct Impl {
+                                PROMEKI_SHARED_FINAL(Impl)
+
+                                Size2Du32                    sourceRaster;
+                                VideoScanMode                scanMode;
+                                FrameRate                    frameRate;
+                                AncFormat::IDList            allowedFormats;
+                                ::promeki::List<AncCategory> allowedCategories;
+                                Metadata                     metadata;
+                                int                          pairedVideoStreamIndex = -1;
+                                int                          pairedAudioStreamIndex = -1;
+                };
+
         private:
-                Size2Du32                 _sourceRaster;
-                VideoScanMode             _scanMode;
-                FrameRate                 _frameRate;
-                AncFormat::IDList         _allowedFormats;
-                ::promeki::List<AncCategory> _allowedCategories;
-                Metadata                  _metadata;
+                SharedPtr<Impl> _d;
 };
 
 /**
  * @brief Writes an @c AncDesc as raster + scan mode + frame rate +
- *        filter lists + metadata.
+ *        filter lists + paired stream indices + metadata.
  */
-inline DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
-        stream.writeTag(DataStream::TypeAncDesc);
-        stream << desc.sourceRaster();
-        stream << desc.scanMode();
-        stream << desc.frameRate();
-        const AncFormat::IDList &fmts = desc.allowedFormats();
-        stream << static_cast<uint32_t>(fmts.size());
-        for (auto id : fmts) stream << static_cast<int32_t>(id);
-        const ::promeki::List<AncCategory> &cats = desc.allowedCategories();
-        stream << static_cast<uint32_t>(cats.size());
-        for (const auto &cat : cats) stream << cat;
-        stream << desc.metadata();
-        return stream;
-}
+DataStream &operator<<(DataStream &stream, const AncDesc &desc);
 
 /** @brief Reads an @c AncDesc from its tagged wire format. */
-inline DataStream &operator>>(DataStream &stream, AncDesc &desc) {
-        if (!stream.readTag(DataStream::TypeAncDesc)) {
-                desc = AncDesc();
-                return stream;
-        }
-        Size2Du32     raster;
-        VideoScanMode scanMode;
-        FrameRate     frameRate;
-        uint32_t      fmtCount = 0;
-        uint32_t      catCount = 0;
-        Metadata      meta;
-        stream >> raster >> scanMode >> frameRate >> fmtCount;
-        AncFormat::IDList fmts;
-        fmts.reserve(fmtCount);
-        for (uint32_t i = 0; i < fmtCount; ++i) {
-                int32_t v = 0;
-                stream >> v;
-                fmts.pushToBack(static_cast<AncFormat::ID>(v));
-        }
-        stream >> catCount;
-        ::promeki::List<AncCategory> cats;
-        cats.reserve(catCount);
-        for (uint32_t i = 0; i < catCount; ++i) {
-                AncCategory cat;
-                stream >> cat;
-                cats.pushToBack(cat);
-        }
-        stream >> meta;
-        if (stream.status() != DataStream::Ok) {
-                desc = AncDesc();
-                return stream;
-        }
-        desc = AncDesc();
-        desc.setSourceRaster(raster);
-        desc.setScanMode(scanMode);
-        desc.setFrameRate(frameRate);
-        desc.setAllowedFormats(std::move(fmts));
-        desc.setAllowedCategories(std::move(cats));
-        desc.setMetadata(std::move(meta));
-        return stream;
-}
+DataStream &operator>>(DataStream &stream, AncDesc &desc);
 
 PROMEKI_NAMESPACE_END

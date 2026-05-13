@@ -735,7 +735,7 @@ List<int> JpegVideoEncoder::supportedInputList() {
         };
 }
 
-void JpegVideoEncoder::configure(const MediaConfig &config) {
+void JpegVideoEncoder::onConfigure(const MediaConfig &config) {
         // JpegQuality: clamped to the 1-100 range libjpeg-turbo accepts.
         if (config.contains(MediaConfig::JpegQuality)) {
                 Variant v = config.get(MediaConfig::JpegQuality);
@@ -763,10 +763,11 @@ void JpegVideoEncoder::configure(const MediaConfig &config) {
         if (_capacity < 1) _capacity = 1;
 }
 
-Error JpegVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &payload) {
+Error JpegVideoEncoder::submitFrame(const Frame &frame) {
         clearError();
+        UncompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid()) {
-                setError(Error::Invalid, "JpegVideoEncoder: invalid payload");
+                setError(Error::Invalid, "JpegVideoEncoder: no uncompressed video payload on frame");
                 return _lastError;
         }
         if (static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
@@ -792,12 +793,12 @@ Error JpegVideoEncoder::submitPayload(const UncompressedVideoPayload::Ptr &paylo
         raw->setPts(payload->pts());
         raw->setDts(payload->pts());
         raw->addFlag(MediaPayload::Keyframe);
-        _queue.pushToBack(std::move(cvp));
+        _queue.pushToBack(buildOutputFrame(frame, std::move(cvp)));
         return Error::Ok;
 }
 
-CompressedVideoPayload::Ptr JpegVideoEncoder::receiveCompressedPayload() {
-        if (_queue.isEmpty()) return CompressedVideoPayload::Ptr();
+Frame JpegVideoEncoder::receiveFrame() {
+        if (_queue.isEmpty()) return Frame();
         return _queue.popFromFront();
 }
 
@@ -854,16 +855,17 @@ List<int> JpegVideoDecoder::supportedOutputList() {
         };
 }
 
-void JpegVideoDecoder::configure(const MediaConfig &config) {
+void JpegVideoDecoder::onConfigure(const MediaConfig &config) {
         _outputPd = config.getAs<PixelFormat>(MediaConfig::OutputPixelFormat, PixelFormat());
         _capacity = config.getAs<int>(MediaConfig::Capacity, 8);
         if (_capacity < 1) _capacity = 1;
 }
 
-Error JpegVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload) {
+Error JpegVideoDecoder::submitFrame(const Frame &frame) {
         clearError();
+        CompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid() || payload->size() == 0) {
-                setError(Error::Invalid, "JpegVideoDecoder: empty payload");
+                setError(Error::Invalid, "JpegVideoDecoder: no compressed video payload on frame");
                 return _lastError;
         }
         if (static_cast<int>(_queue.size()) >= _capacity && !_capacityWarned) {
@@ -885,12 +887,12 @@ Error JpegVideoDecoder::submitPayload(const CompressedVideoPayload::Ptr &payload
                 return _lastError;
         }
         uvp.modify()->setPts(payload->pts());
-        _queue.pushToBack(std::move(uvp));
+        _queue.pushToBack(buildOutputFrame(frame, std::move(uvp)));
         return Error::Ok;
 }
 
-UncompressedVideoPayload::Ptr JpegVideoDecoder::receiveVideoPayload() {
-        if (_queue.isEmpty()) return UncompressedVideoPayload::Ptr();
+Frame JpegVideoDecoder::receiveFrame() {
+        if (_queue.isEmpty()) return Frame();
         return _queue.popFromFront();
 }
 

@@ -8,8 +8,10 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/captiondecoder.h>
 #include <promeki/cea608encoder.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/enums.h>
 #include <promeki/framenumber.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
@@ -109,7 +111,7 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  *
  * @see Cea608, Cea608Encoder, Cea708Cdp, SubtitleList
  */
-class Cea608Decoder {
+class Cea608Decoder : public CaptionDecoder {
         public:
                 /** @brief Channel alias matching @ref Cea608Encoder::Channel. */
                 using Channel = Cea608Encoder::Channel;
@@ -122,12 +124,10 @@ class Cea608Decoder {
 
                 Cea608Decoder();
                 explicit Cea608Decoder(Config cfg);
-                ~Cea608Decoder();
+                ~Cea608Decoder() override;
 
-                Cea608Decoder(const Cea608Decoder &) = delete;
-                Cea608Decoder &operator=(const Cea608Decoder &) = delete;
-                Cea608Decoder(Cea608Decoder &&) = delete;
-                Cea608Decoder &operator=(Cea608Decoder &&) = delete;
+                /// @copydoc CaptionDecoder::codec
+                CaptionCodec codec() const override { return CaptionCodec(CaptionCodec::Cea608); }
 
                 /** @brief Returns the configuration this decoder was constructed with. */
                 const Config &config() const;
@@ -147,7 +147,7 @@ class Cea608Decoder {
                  *               triple list directly from an SEI /
                  *               other transport.
                  */
-                void pushFrame(FrameNumber frame, TimeStamp ts, const Cea708Cdp::CcDataList &data);
+                void pushFrame(FrameNumber frame, TimeStamp ts, const Cea708Cdp::CcDataList &data) override;
 
                 /**
                  * @brief Returns the text currently displayed
@@ -163,7 +163,7 @@ class Cea608Decoder {
                  * this accessor is the flat-text fast path for
                  * callers that don't need the attributes.
                  */
-                const String &displayedText() const;
+                String displayedText() const override;
 
                 /**
                  * @brief Returns the currently displayed cue as a
@@ -183,7 +183,7 @@ class Cea608Decoder {
                  * attribute set rather than the flat-text fast path
                  * exposed by @ref displayedText.
                  */
-                Subtitle displayedCue() const;
+                Subtitle displayedCue() const override;
 
                 /**
                  * @brief Emits the accumulated @ref SubtitleList.
@@ -196,7 +196,7 @@ class Cea608Decoder {
                  * After finalize, the decoder is reset to its
                  * initial state.
                  */
-                SubtitleList finalize();
+                SubtitleList finalize() override;
 
                 /**
                  * @brief Resets the decoder without emitting anything.
@@ -205,7 +205,7 @@ class Cea608Decoder {
                  * memory.  Use when re-feeding the decoder from a new
                  * source mid-session.
                  */
-                void reset();
+                void reset() override;
 
         private:
                 SharedPtr<Cea608DecoderImpl> _d;
