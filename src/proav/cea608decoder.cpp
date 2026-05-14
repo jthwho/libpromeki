@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <promeki/cea608.h>
 #include <promeki/cea608decoder.h>
+#include <promeki/cea608ext.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/color.h>
 #include <promeki/enums.h>
@@ -23,6 +24,41 @@
 PROMEKI_NAMESPACE_BEGIN
 
 namespace {
+
+        /// @brief Appends @p cp as UTF-8 onto @p out.
+        ///
+        /// Used by the CEA-608 character path to lift G0 / Special /
+        /// Extended bytes into Unicode codepoints — most basic G0
+        /// positions are plain ASCII, but ten G0 positions plus the
+        /// Special / Extended tables produce non-ASCII codepoints
+        /// (U+00E9 é, U+2122 ™, U+266A ♪ …) that must round-trip
+        /// through the @ref SubtitleSpan text as proper UTF-8.
+        void appendUtf8(String &out, uint32_t cp) {
+                if (cp == 0) return;
+                char buf[5];
+                int  n = 0;
+                if (cp <= 0x7F) {
+                        buf[0] = static_cast<char>(cp);
+                        n = 1;
+                } else if (cp <= 0x7FF) {
+                        buf[0] = static_cast<char>(0xC0 | (cp >> 6));
+                        buf[1] = static_cast<char>(0x80 | (cp & 0x3F));
+                        n = 2;
+                } else if (cp <= 0xFFFF) {
+                        buf[0] = static_cast<char>(0xE0 | (cp >> 12));
+                        buf[1] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                        buf[2] = static_cast<char>(0x80 | (cp & 0x3F));
+                        n = 3;
+                } else {
+                        buf[0] = static_cast<char>(0xF0 | (cp >> 18));
+                        buf[1] = static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+                        buf[2] = static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                        buf[3] = static_cast<char>(0x80 | (cp & 0x3F));
+                        n = 4;
+                }
+                buf[n] = 0;
+                out += String::fromUtf8(buf, static_cast<size_t>(n));
+        }
 
         /// @brief Returns the CDP @c cc_type for the configured
         ///        channel.  Field-1 channels map to cc_type 0;
@@ -47,14 +83,34 @@ namespace {
                 return ch == Cea608Decoder::Channel::CC1 || ch == Cea608Decoder::Channel::CC3;
         }
 
-        /// @brief Maps a CEA-608 row (1..15) to the renderer-side
-        ///        @ref SubtitleAnchor.  608 doesn't carry horizontal
-        ///        placement, so we settle on the centred variant
-        ///        per row group.
-        SubtitleAnchor rowToAnchor(int row) {
-                if (row >= 1 && row <= 4) return SubtitleAnchor::TopCenter;
-                if (row >= 5 && row <= 10) return SubtitleAnchor::MiddleCenter;
-                return SubtitleAnchor::BottomCenter; // 11..15
+        /// @brief Maps a CEA-608 row (1..15) plus the row's start
+        ///        column (0..31) to the renderer-side
+        ///        @ref SubtitleAnchor.
+        ///
+        /// Row group → vertical: 1..4 = Top, 5..10 = Middle,
+        /// 11..15 = Bottom.  Column → horizontal: column 0..3 = Left,
+        /// 4..23 = Center, 24..31 = Right.  The thresholds are
+        /// pragmatic: a real broadcast captioner emits column 0 for
+        /// flush-left, somewhere near the row's centre for centered,
+        /// and column ≈ @c (32 - rowWidth) for flush-right; without
+        /// the cue width at PAC time the decoder uses the start
+        /// column alone as the horizontal-half discriminator.
+        SubtitleAnchor rowToAnchor(int row, int column) {
+                const bool isTop = (row >= 1 && row <= 4);
+                const bool isMid = (row >= 5 && row <= 10);
+                if (column < 4) {
+                        if (isTop) return SubtitleAnchor::TopLeft;
+                        if (isMid) return SubtitleAnchor::MiddleLeft;
+                        return SubtitleAnchor::BottomLeft;
+                }
+                if (column < 24) {
+                        if (isTop) return SubtitleAnchor::TopCenter;
+                        if (isMid) return SubtitleAnchor::MiddleCenter;
+                        return SubtitleAnchor::BottomCenter;
+                }
+                if (isTop) return SubtitleAnchor::TopRight;
+                if (isMid) return SubtitleAnchor::MiddleRight;
+                return SubtitleAnchor::BottomRight;
         }
 
         /// @brief Maps a CEA-608 primary palette index back to an
@@ -76,6 +132,7 @@ namespace {
                         bool                 hasBg = false;
                         Cea608::CaptionColor bgColor = Cea608::CaptionColor::White;
                         bool                 bgSemiTransparent = false;
+                        bool                 flash = false; ///< Set by FON.
         };
 
 } // namespace
@@ -138,6 +195,23 @@ struct Cea608DecoderImpl {
                 ///        consult the anchor / styled spans on cue
                 ///        emission.
                 bool loadingHasPac = false;
+                /// @brief Start column of the current loading row —
+                ///        the most recent PAC's @c indentCol slot (in
+                ///        @c {0, 4, 8, ..., 28}) plus any Tab Offset
+                ///        shifts seen since that PAC.  Reset on every
+                ///        PAC so multi-row cues track each row's
+                ///        cursor independently.
+                int loadingColumn = 0;
+                /// @brief @c true while the loading buffer is still
+                ///        accumulating the cue's first physical row.
+                ///        The cue's @ref loadingAnchor (horizontal
+                ///        half) is committed off the first row's
+                ///        start column only — subsequent rows can be
+                ///        at different widths and would otherwise
+                ///        shift the recovered anchor mid-cue.  Goes
+                ///        @c false on the second PAC (the row-break
+                ///        boundary the encoder uses).
+                bool loadingOnFirstRow = true;
                 /// @brief Cue start timestamp for paint-on (set on
                 ///        RDC, refined on first PAC / char) and the
                 ///        start of the current row for roll-up.
@@ -200,10 +274,49 @@ struct Cea608DecoderImpl {
                 /// flush a temporary span.
                 void appendChar(uint8_t c) {
                         if (c < 0x20 || c > 0x7F) return;
-                        char tmp[2] = {static_cast<char>(c), 0};
-                        loadingText += tmp;
+                        // Translate the basic-G0 byte into its Unicode
+                        // codepoint — most positions are plain ASCII,
+                        // but ten remapped positions (0x2A=á / 0x5C=é /
+                        // 0x5E=í / 0x5F=ó / 0x60=ú / 0x7B=ç / 0x7C=÷ /
+                        // 0x7D=Ñ / 0x7E=ñ / 0x7F=█) decode to the
+                        // mapped Latin / arithmetic glyph.
+                        const uint32_t cp = Cea608Ext::decodeG0(c);
+                        appendUtf8(loadingText, cp);
                         if (currentMode == CurrentMode::PaintOn || currentMode == CurrentMode::RollUp) {
-                                displayedFlat += tmp;
+                                appendUtf8(displayedFlat, cp);
+                        }
+                }
+
+                /// @brief Replaces the most recently appended codepoint
+                ///        in the loading buffer with @p cp.
+                ///
+                /// Backs the EIA-608-B "Special / Extended Character"
+                /// receiver convention: the encoder emits a best-fit
+                /// ASCII placeholder ahead of the doubled control
+                /// pair so old decoders show a recognisable fallback;
+                /// modern decoders follow the control receipt by
+                /// replacing the placeholder with the real glyph.  No-op
+                /// when the loading buffer is empty (the control code
+                /// arrived without a preceding placeholder — out-of-
+                /// spec stream that we tolerate by treating the code
+                /// as a no-op).
+                void replaceLastWithCodepoint(uint32_t cp) {
+                        if (loadingText.isEmpty()) {
+                                appendUtf8(loadingText, cp);
+                                if (currentMode == CurrentMode::PaintOn
+                                    || currentMode == CurrentMode::RollUp) {
+                                        appendUtf8(displayedFlat, cp);
+                                }
+                                return;
+                        }
+                        loadingText = loadingText.left(loadingText.length() - 1);
+                        appendUtf8(loadingText, cp);
+                        if (currentMode == CurrentMode::PaintOn
+                            || currentMode == CurrentMode::RollUp) {
+                                if (!displayedFlat.isEmpty()) {
+                                        displayedFlat = displayedFlat.left(displayedFlat.length() - 1);
+                                }
+                                appendUtf8(displayedFlat, cp);
                         }
                 }
 
@@ -224,6 +337,9 @@ struct Cea608DecoderImpl {
                                 s.setBackgroundOpacity(loadingStyle.bgSemiTransparent
                                                               ? SubtitleOpacity::Translucent
                                                               : SubtitleOpacity::Solid);
+                        }
+                        if (loadingStyle.flash) {
+                                s.setForegroundOpacity(SubtitleOpacity::Flash);
                         }
                         return s;
                 }
@@ -280,6 +396,8 @@ struct Cea608DecoderImpl {
                         loadingText = String();
                         loadingStyle = WireStyle();
                         loadingHasPac = false;
+                        loadingColumn = 0;
+                        loadingOnFirstRow = true;
                         loadingAnchor = SubtitleAnchor::Default;
                 }
 
@@ -312,12 +430,24 @@ struct Cea608DecoderImpl {
                         }
                 }
 
-                void doRCL() {
+                void doRCL(const TimeStamp &ts) {
                         // Resume Caption Loading: enter pop-on mode and
                         // clear non-displayed memory.  Reset the wire
                         // style to defaults (white, no italic, no
                         // underline).  The currently-displayed cue is
                         // untouched until the next EOC or EDM.
+                        //
+                        // Cross-mode flush: in paint-on / roll-up the
+                        // loading buffer is the live displayed cue,
+                        // not non-displayed memory — finalise it at
+                        // @p ts so the visible content doesn't bleed
+                        // across the mode switch.  (Encoder dispatcher
+                        // emits its own EDM before re-entering pop-on,
+                        // but a wild captioner stream might not.)
+                        if (currentMode == CurrentMode::PaintOn
+                            || currentMode == CurrentMode::RollUp) {
+                                emitLoading(loadingStart, ts);
+                        }
                         currentMode = CurrentMode::PopOn;
                         resetLoading();
                 }
@@ -368,10 +498,31 @@ struct Cea608DecoderImpl {
                         // a single concatenated horizontal line and
                         // blow past the 32-col / 3-row receiver grid.
                         flushCurrentText();
+                        const bool isFirstPac = !loadingHasPac;
                         if (loadingHasPac && !loadingSpans.isEmpty()) {
                                 loadingSpans.pushToBack(SubtitleSpan(String("\n")));
+                                // We're past the first row now — Tab
+                                // Offsets that follow must not shift
+                                // the cue's anchor (it was committed
+                                // off the first row's start column).
+                                loadingOnFirstRow = false;
                         }
-                        loadingAnchor = rowToAnchor(pac.row);
+                        // Reset the per-row column tracker so the new
+                        // row's Tab Offset shifts accumulate from the
+                        // new PAC's indent slot — without this, a
+                        // multi-row cue's second-row Tab Offsets would
+                        // add to the first row's running column and
+                        // mis-position any anchor refinement.
+                        loadingColumn = pac.indentCol;
+                        // Only the first PAC contributes to the cue's
+                        // anchor.  Subsequent PACs are row breaks
+                        // within the same cue and keep the first
+                        // row's anchor in place (the cue gets one
+                        // anchor regardless of how many physical rows
+                        // it spans).
+                        if (isFirstPac) {
+                                loadingAnchor = rowToAnchor(pac.row, loadingColumn);
+                        }
                         loadingStyle.color = pac.color;
                         loadingStyle.italic = pac.italic;
                         loadingStyle.underline = pac.underline;
@@ -382,6 +533,47 @@ struct Cea608DecoderImpl {
                             && loadingText.isEmpty()) {
                                 loadingStart = ts;
                         }
+                }
+
+                /// @brief Honours a Tab Offset code.  Shifts the
+                ///        loading-row's start column by 1..3 cells —
+                ///        the receiver-side cursor advances by that
+                ///        many positions before subsequent characters
+                ///        land.
+                ///
+                /// Tab Offset is the residual companion to PAC indent
+                /// (multiples of 4): together they cover the full
+                /// 0..31 column range.  The decoder uses the combined
+                /// column to refine the recovered cue's horizontal
+                /// anchor (Center / Right vs Left).
+                void doTabOffset(int columns) {
+                        loadingColumn += columns;
+                        if (loadingColumn > 31) loadingColumn = 31;
+                        // Only refine the anchor on Tab Offsets that
+                        // arrive before the first row break — past that
+                        // point the cue's anchor was committed off the
+                        // first row's start column and further-row
+                        // Tab Offsets just shift the current row's
+                        // cursor (not the cue's anchor).
+                        if (loadingHasPac && loadingOnFirstRow) {
+                                loadingAnchor =
+                                        rowToAnchor(pacRowFor(loadingAnchor), loadingColumn);
+                        }
+                }
+
+                /// @brief Reverse of @ref rowToAnchor for the
+                ///        vertical-half — used by @ref doTabOffset
+                ///        to refresh @c loadingAnchor without losing
+                ///        the row group the prior PAC established.
+                int pacRowFor(const SubtitleAnchor &a) const {
+                        const int v = a.value();
+                        if (v == SubtitleAnchor::TopLeft.value()
+                            || v == SubtitleAnchor::TopCenter.value()
+                            || v == SubtitleAnchor::TopRight.value()) return 1;
+                        if (v == SubtitleAnchor::MiddleLeft.value()
+                            || v == SubtitleAnchor::MiddleCenter.value()
+                            || v == SubtitleAnchor::MiddleRight.value()) return 8;
+                        return 15;
                 }
 
                 /// @brief Returns @c true when the last accumulated
@@ -474,6 +666,8 @@ struct Cea608DecoderImpl {
                         loadingText = String();
                         loadingStyle = WireStyle();
                         loadingHasPac = false;
+                        loadingColumn = 0;
+                        loadingOnFirstRow = true;
                         loadingAnchor = SubtitleAnchor::Default;
                 }
 
@@ -491,14 +685,80 @@ struct Cea608DecoderImpl {
                 }
 
                 void doENM() {
-                        // Erase Non-displayed Memory.  In pop-on
-                        // (where this is most often emitted) this
-                        // clears the load buffer.  In other modes
-                        // the loading buffer is the live cue, so
-                        // ENM still clears it but loses the current
-                        // paint-on / roll-up cue's chars.
+                        // Erase Non-displayed Memory.  Only meaningful
+                        // in pop-on, where the loading buffer is the
+                        // non-displayed memory.  In paint-on / roll-up
+                        // the loading buffer is the live displayed cue
+                        // (chars commit immediately) — ENM in those
+                        // modes is a no-op per spec.
+                        if (currentMode != CurrentMode::PopOn) return;
                         loadingSpans = SubtitleSpan::List();
                         loadingText = String();
+                }
+
+                /// @brief Honours the @c BS (Backspace) misc code.
+                ///
+                /// Removes the most recently appended codepoint from
+                /// the loading buffer — used by live captioners for
+                /// typo correction (the captioner sends the wrong
+                /// char then immediately backspaces and sends the
+                /// right one).  No-op when the buffer is empty.
+                void doBS() {
+                        if (!loadingText.isEmpty()) {
+                                loadingText = loadingText.left(loadingText.length() - 1);
+                                if (currentMode == CurrentMode::PaintOn
+                                    || currentMode == CurrentMode::RollUp) {
+                                        if (!displayedFlat.isEmpty()) {
+                                                displayedFlat = displayedFlat.left(
+                                                        displayedFlat.length() - 1);
+                                        }
+                                }
+                                return;
+                        }
+                        // Loading text is empty — try the trailing span.
+                        if (!loadingSpans.isEmpty()) {
+                                SubtitleSpan &last =
+                                        const_cast<SubtitleSpan &>(loadingSpans[loadingSpans.size() - 1]);
+                                const String &t = last.text();
+                                if (!t.isEmpty()) {
+                                        last.setText(t.left(t.length() - 1));
+                                }
+                        }
+                }
+
+                /// @brief Honours the @c DER (Delete to End of Row)
+                ///        misc code.
+                ///
+                /// Discards every character on the loading row from
+                /// the cursor to the row's end.  Since the decoder
+                /// doesn't track an explicit cursor (it accumulates
+                /// chars into @ref loadingText), the closest semantic
+                /// match is "drop everything in the loading buffer
+                /// since the last PAC" — the paint-on / roll-up live
+                /// captioning case where DER is most commonly used.
+                void doDER() {
+                        loadingText = String();
+                        if (currentMode == CurrentMode::PaintOn
+                            || currentMode == CurrentMode::RollUp) {
+                                // Discard live spans built since the
+                                // most recent PAC (the same boundary
+                                // the encoder uses for row breaks).
+                                loadingSpans = SubtitleSpan::List();
+                                displayedFlat = String();
+                        }
+                }
+
+                /// @brief Honours the @c FON (Flash On) misc code.
+                ///
+                /// Switches subsequent characters' foreground opacity
+                /// to @ref SubtitleOpacity::Flash.  The flash flag
+                /// persists until the next PAC or mid-row code resets
+                /// the wire style.  The paint engine renders Flash
+                /// as the renderer sees fit; the wire layer just
+                /// records the intent on the styled span.
+                void doFON() {
+                        flushCurrentText();
+                        loadingStyle.flash = true;
                 }
 
                 /// @brief Processes one parity-stripped byte pair.
@@ -524,24 +784,40 @@ struct Cea608DecoderImpl {
                                         return;
                                 }
 
+                                // From here on we treat the control
+                                // byte as channel-agnostic — the per-
+                                // channel byte family (CC1 = 0x10..0x17,
+                                // CC2 = 0x18..0x1F) is the same control
+                                // code with just the channel selector
+                                // bit toggled.  Mask the channel bit
+                                // out so the @ref Cea608 helpers
+                                // (which are written against the CC1
+                                // byte layout) and the @c b1 == 0x14
+                                // misc-control switch work for both
+                                // sub-channels.
+                                const uint8_t b1c = static_cast<uint8_t>(b1 & 0xF7);
+
                                 // Dispatch — try PAC and mid-row first
                                 // (cover the 0x10..0x17 control space
                                 // beyond just 0x14 misc), then the
                                 // 0x14 misc codes.
-                                if (Cea608::isPac(b1, b2)) {
+                                if (Cea608::isPac(b1c, b2)) {
                                         Cea608::PacAttr pac;
-                                        if (Cea608::decodePac(b1, b2, pac)) doPac(pac, ts);
-                                } else if (Cea608::isMidRow(b1, b2)) {
+                                        if (Cea608::decodePac(b1c, b2, pac)) doPac(pac, ts);
+                                } else if (Cea608::isMidRow(b1c, b2)) {
                                         Cea608::CaptionColor c;
                                         bool                 it = false, ul = false;
-                                        if (Cea608::decodeMidRow(b1, b2, c, it, ul)) doMidRow(c, it, ul);
-                                } else if (Cea608::isBgAttribute(b1, b2)) {
+                                        if (Cea608::decodeMidRow(b1c, b2, c, it, ul)) doMidRow(c, it, ul);
+                                } else if (Cea608::isTabOffset(b1c, b2)) {
+                                        int columns = 0;
+                                        if (Cea608::decodeTabOffset(b1c, b2, columns)) doTabOffset(columns);
+                                } else if (Cea608::isBgAttribute(b1c, b2)) {
                                         Cea608::CaptionColor c;
                                         bool                 semi = false;
-                                        if (Cea608::decodeBgAttribute(b1, b2, c, semi)) doBgAttribute(c, semi);
-                                } else if (b1 == 0x14) {
+                                        if (Cea608::decodeBgAttribute(b1c, b2, c, semi)) doBgAttribute(c, semi);
+                                } else if (b1c == 0x14) {
                                         switch (b2) {
-                                                case Cea608::MiscRCL: doRCL(); break;
+                                                case Cea608::MiscRCL: doRCL(ts); break;
                                                 case Cea608::MiscRDC: doRDC(ts); break;
                                                 case Cea608::MiscRU2: doRUx(2, ts); break;
                                                 case Cea608::MiscRU3: doRUx(3, ts); break;
@@ -550,14 +826,41 @@ struct Cea608DecoderImpl {
                                                 case Cea608::MiscEDM: doEDM(ts); break;
                                                 case Cea608::MiscENM: doENM(); break;
                                                 case Cea608::MiscEOC: doEOC(ts); break;
+                                                case Cea608::MiscBS:  doBS(); break;
+                                                case Cea608::MiscDER: doDER(); break;
+                                                case Cea608::MiscFON: doFON(); break;
                                                 default:
-                                                        // BS / DER / FON / TR / RTD —
-                                                        // v1 ignores.
+                                                        // TR / RTD: text-channel
+                                                        // codes — captioning
+                                                        // doesn't model them.
                                                         break;
+                                        }
+                                } else if (b1c == 0x11 && b2 >= 0x30 && b2 <= 0x3F) {
+                                        // Special Character (16 glyphs):
+                                        // ® / ° / ½ / ¿ / ™ / ¢ / £ / ♪ /
+                                        // à / NBSP / è / â / ê / î / ô /
+                                        // û.  Replace the preceding
+                                        // placeholder character with the
+                                        // mapped codepoint.
+                                        const uint32_t cp = Cea608Ext::decodeSpecial(b2);
+                                        if (cp != Cea608Ext::NoCodepoint) {
+                                                replaceLastWithCodepoint(cp);
+                                        }
+                                } else if (b1c == 0x12 && b2 >= 0x20 && b2 <= 0x3F) {
+                                        // Extended Spanish / Misc.
+                                        const uint32_t cp = Cea608Ext::decodeExtSpanish(b2);
+                                        if (cp != Cea608Ext::NoCodepoint) {
+                                                replaceLastWithCodepoint(cp);
+                                        }
+                                } else if (b1c == 0x13 && b2 >= 0x20 && b2 <= 0x3F) {
+                                        // Extended Portuguese / German.
+                                        const uint32_t cp = Cea608Ext::decodeExtFrench(b2);
+                                        if (cp != Cea608Ext::NoCodepoint) {
+                                                replaceLastWithCodepoint(cp);
                                         }
                                 }
                                 // Other 0x1x first bytes (Tab Offsets,
-                                // special-char tables): v1 ignores.
+                                // unmodelled control space): v1 ignores.
 
                                 lastCtlB1 = b1;
                                 lastCtlB2 = b2;
@@ -595,6 +898,8 @@ void Cea608Decoder::reset() {
         d->loadingStyle = WireStyle();
         d->loadingText = String();
         d->loadingHasPac = false;
+        d->loadingColumn = 0;
+        d->loadingOnFirstRow = true;
         d->loadingStart = TimeStamp();
         d->displayedSpans = SubtitleSpan::List();
         d->displayedAnchor = SubtitleAnchor::Default;
@@ -679,6 +984,8 @@ SubtitleList Cea608Decoder::finalize() {
         d->loadingStyle = WireStyle();
         d->loadingText = String();
         d->loadingHasPac = false;
+        d->loadingColumn = 0;
+        d->loadingOnFirstRow = true;
         d->loadingStart = TimeStamp();
         d->displayedSpans = SubtitleSpan::List();
         d->displayedAnchor = SubtitleAnchor::Default;

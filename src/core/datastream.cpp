@@ -2112,6 +2112,20 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         val = std::move(sub);
                         break;
                 }
+                case TypeCea608: {
+                        // Cea608Packet's DataStream operators write a
+                        // tagged channel + cc_data triple list; the
+                        // tag was already consumed by readAnyTag()
+                        // upstream, so dispatch into the field reader.
+                        extern Cea608Packet readCea608PacketData(DataStream &);
+                        Cea608Packet pkt = readCea608PacketData(*this);
+                        if (_status != Ok) {
+                                val = Variant();
+                                break;
+                        }
+                        val = std::move(pkt);
+                        break;
+                }
                 default:
                         setError(ReadCorruptData,
                                  String::sprintf("Variant::read: tag 0x%04X is not Variant-representable",
@@ -2213,6 +2227,8 @@ namespace {
         template <> struct has_free_read<XmlDocument> : std::true_type {};
         template <> struct has_free_write<Cea708Cdp> : std::true_type {};
         template <> struct has_free_read<Cea708Cdp> : std::true_type {};
+        template <> struct has_free_write<Cea608Packet> : std::true_type {};
+        template <> struct has_free_read<Cea608Packet> : std::true_type {};
         template <> struct has_free_write<Subtitle> : std::true_type {};
         template <> struct has_free_read<Subtitle> : std::true_type {};
 

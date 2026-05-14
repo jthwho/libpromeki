@@ -351,6 +351,27 @@ class Subtitle {
                  *         cue. */
                 const CaptionMode &mode() const;
 
+                /** @brief Roll-up window row count (2, 3, or 4) when
+                 *         this cue's @ref mode is @c CaptionMode::RollUp.
+                 *
+                 * Maps to the CEA-608 @c RU2 / @c RU3 / @c RU4 control
+                 * code the encoder emits to establish the roll-up
+                 * window's vertical extent (the receiver shows the most
+                 * recent N rows, scrolling older ones off the top).  A
+                 * value of @c 0 means "use the encoder's default" —
+                 * @ref Cea608Encoder reads @ref Cea608Encoder::Config::rollUpRows
+                 * in that case.  Values outside @c 2..4 are clamped at
+                 * the encoder seam.
+                 *
+                 * Always @c 0 for non-RollUp cues; the encoder ignores
+                 * this field unless the cue's @ref mode is RollUp.
+                 *
+                 * On the CEA-708 side the closest analogue is the
+                 * window's @c row_count (set via DefineWindow); the 708
+                 * encoder treats RollUp cues as multi-row windows
+                 * regardless of this value. */
+                int rollUpRows() const;
+
                 /** @brief Pixel-space bounding-box hint; @c isValid() false when unset. */
                 const Rect2Di32 &region() const;
 
@@ -378,6 +399,7 @@ class Subtitle {
 
                 void setAnchor(const SubtitleAnchor &v);
                 void setMode(const CaptionMode &v);
+                void setRollUpRows(int v);
                 void setRegion(const Rect2Di32 &v);
                 void setSpeaker(const String &v);
                 void setMetadata(const Metadata &v);

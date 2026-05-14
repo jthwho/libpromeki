@@ -100,6 +100,19 @@ namespace promekitest {
         void registerRtpChaosCases();
 
         /**
+         * @brief Registers CEA-608 SubRip caption round-trip cases.
+         *
+         * Drives @ref etc/substest.srt through the TPG ANC caption
+         * path into @ref InspectorMediaIO's AncData JSONL dump,
+         * then walks that JSONL through @ref Cea608Decoder and
+         * re-emits the recovered cue list via @ref SubRip::emit so
+         * the round-trip is testable cue-by-cue (and the resulting
+         * @c roundtrip.srt is available in the test folder for
+         * post-mortem diffing).
+         */
+        void registerCaptionsCases();
+
+        /**
          * @brief Registers NDI transport roundtrip cases.
          *
          * Each case runs two pipelines on the main event loop —

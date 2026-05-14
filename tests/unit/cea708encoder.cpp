@@ -517,3 +517,94 @@ TEST_CASE("Cea708Encoder + Decoder: pop-on cue round-trips with mode stamped") {
         CHECK(out[0].text() == "POP");
         CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
 }
+
+// ============================================================================
+// Unicode round-trip — G1 / G2 / G3 / P16 / surrogate pair
+// ============================================================================
+
+namespace {
+
+        /// @brief Drives an encoder through a single cue and feeds the
+        ///        emitted triples into a decoder, returning the
+        ///        recovered cue text.  Exercises the encoder ->
+        ///        chunker -> CDP wrapper -> decoder reassembly path
+        ///        end-to-end.
+        String roundTripCue(const String &text) {
+                Cea708Encoder::Config encCfg;
+                encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+                encCfg.windowCols = 42;
+                Cea708Encoder enc(encCfg);
+                SubtitleList  in;
+                in.append(Subtitle(tsAt30fps(30), tsAt30fps(120), text));
+                REQUIRE(enc.setSubtitles(in).isOk());
+
+                Cea708Decoder dec;
+                for (int64_t f = 0; f < 140; ++f) {
+                        dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+                }
+                SubtitleList out = dec.finalize();
+                REQUIRE(out.size() == 1);
+                return out[0].text();
+        }
+
+} // namespace
+
+TEST_CASE("Cea708Encoder + Decoder: Latin-1 (G1) text round-trips byte-for-byte") {
+        // "café" — é is U+00E9, lives in the G1 Latin-1 supplement
+        // range and rides the wire as a single byte 0xE9.
+        const String text("caf\xC3\xA9");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: G2 typographic glyphs (smart quotes, ellipsis, trademark) round-trip") {
+        // Open quote (U+201C) / close quote (U+201D) / ellipsis
+        // (U+2026) / trademark (U+2122) — all G2.  ASCII letters
+        // separate them so word-tokenisation in @ref Subtitle::wrapped
+        // doesn't strip stand-alone glyphs as whitespace runs.
+        const String text("OK\xE2\x80\x9Cyes\xE2\x80\x9Dlast\xE2\x80\xA6tm\xE2\x84\xA2");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: G2 OE ligature round-trips") {
+        // Œuvre — Œ is U+0152 (G2 0x2C); rest is G0 ASCII.
+        const String text("\xC5\x92uvre");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: G2 box-drawing glyphs round-trip") {
+        // U+2502 vertical / U+2500 horizontal / U+250C top-left
+        // corner — all in the G2 table.  Letters between them keep
+        // the wrapper's word splitter from collapsing the run.
+        const String text("a\xE2\x94\x82" "b\xE2\x94\x80" "c\xE2\x94\x8C");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: BMP non-Latin characters (Korean) round-trip via P16") {
+        // 한글 — both glyphs are outside G0/G1/G2, so they ride via
+        // P16.  Tests the 3-byte-per-codepoint wire shape.
+        const String text("\xED\x95\x9C\xEA\xB8\x80");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: astral codepoint (musical G clef) round-trips via UTF-16 surrogate pair") {
+        // U+1D11E — encoded as two consecutive P16 sequences (high
+        // surrogate D834 + low surrogate DD1E = 6 wire bytes per
+        // glyph).  The decoder pairs them back into the original
+        // astral codepoint.
+        const String text("Note:\xF0\x9D\x84\x9E");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: U+266A music note round-trips via the G0 0x7F substitution") {
+        const String text("song\xE2\x99\xAA");
+        CHECK(roundTripCue(text) == text);
+}
+
+TEST_CASE("Cea708Encoder + Decoder: mixed-encoding cue round-trips") {
+        // Stress-test: G0 + G1 + G2 + P16 in one cue.  Letters glue
+        // each non-ASCII glyph to neighbouring ASCII so the wrapper
+        // sees one word per cluster and doesn't drop a trailing
+        // standalone glyph as whitespace.
+        const String text("Caf\xC3\xA9 \xE2\x80\x9Ch\xC3\xA9llo\xE2\x80\x9D tm\xE2\x84\xA2 ko\xED\x95\x9C");
+        CHECK(roundTripCue(text) == text);
+}

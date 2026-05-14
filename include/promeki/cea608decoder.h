@@ -31,12 +31,14 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  * of @ref Cea708Cdp::CcDataList payloads (typically pulled from an
  * @ref AncPayload that arrived via RTP-40 or any other CDP-bearing
  * transport) and reconstructs the @ref SubtitleList that produced
- * them.  Round-trip with @ref Cea608Encoder is byte-exact for the
- * pop-on subset implemented here; cue start / end timestamps are
- * the actual frame timestamps at which @c EOC and @c EDM fired,
- * which are precisely the encoder's scheduled `cue.start` and
- * `cue.end` frames (modulo the inherent 1-frame quantisation of
- * the wire format).
+ * them.  Round-trip with @ref Cea608Encoder is byte-exact for all
+ * three modes (pop-on, paint-on, roll-up); cue start / end
+ * timestamps are the actual frame timestamps at which the mode's
+ * commit control code fired (pop-on: @c EOC swap + @c EDM clear;
+ * paint-on: first PAC start + @c EDM clear; roll-up: PAC start +
+ * next @c CR), which are precisely the encoder's scheduled
+ * `cue.start` and `cue.end` frames (modulo the inherent 1-frame
+ * quantisation of the wire format).
  *
  * @par State machine
  *
@@ -81,24 +83,37 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  *    as the null pair (skipped).
  *  - **Null pair** (0x00 0x00 after parity strip, or 0x80 0x80 on
  *    the wire): no-op.
- *  - **Unknown control codes** (DER, RU2..4, FON, RDC, …) are
- *    ignored in v1 since the encoder does not emit them.
+ *  - **BS (Backspace)**: pops the most recent codepoint from the
+ *    loading buffer (typo-correction by a live captioner).
+ *  - **DER (Delete to End of Row)**: drops every char accumulated
+ *    since the last PAC on the loading row.
+ *  - **FON (Flash On)**: subsequent chars get
+ *    @c SubtitleOpacity::Flash applied to their span's foreground
+ *    opacity until the next PAC / mid-row resets the style.
+ *  - **TR / RTD** (Text Restart / Resume Text Display): text-
+ *    channel control codes — caption decoding ignores them.
  *
  * @par Scope
  *
- * Pop-on, paint-on, and roll-up modes are supported.  The decoder
- * decodes **CC1 only** (field 1, channel 1).  Cue text
- * reconstruction strips parity but does not interpret extended
- * character sets — the basic ASCII range (0x20..0x7E) passes
- * through verbatim.
+ * All three modes (pop-on, paint-on, roll-up) and all four
+ * channels (CC1 / CC2 / CC3 / CC4) are decoded.  Character set
+ * coverage is full EIA-608-B via @ref Cea608Ext: basic G0 (ASCII
+ * plus the ten remapped Latin / arithmetic positions), the 16
+ * Special Characters via @c (0x11, 0x30..0x3F), and the two
+ * 32-glyph Extended Western European tables via
+ * @c (0x12 / 0x13, 0x20..0x3F).
  *
  * @par Channel filtering
  *
- *  - @ref Cea708Cdp::CcData triples with @c cc_type != 0 (i.e.
- *    field 2 = CC3/CC4) are skipped when configured for CC1.
- *  - Within field 1, control codes whose first byte falls in the
- *    CC2 range (0x18..0x1F) are skipped.  Character pairs inherit
- *    the most recently seen control code's channel.
+ *  - @ref Cea708Cdp::CcData triples whose @c cc_type doesn't match
+ *    the configured channel's field are skipped (CC1 / CC2 want
+ *    @c cc_type = 0; CC3 / CC4 want @c cc_type = 1).
+ *  - Within a field the intra-field channel bit (bit 3 of @c b1
+ *    after parity strip) selects CC1 / CC3 (bit clear) vs
+ *    CC2 / CC4 (bit set).  Control codes from the wrong channel
+ *    are skipped.  Character pairs carry no channel info on the
+ *    wire and inherit the context of the most recently received
+ *    control code.
  *
  * @par Storage and copy semantics
  *
@@ -118,7 +133,11 @@ class Cea608Decoder : public CaptionDecoder {
 
                 /** @brief Decoder configuration. */
                 struct Config {
-                                /// @brief Which CEA-608 channel to decode.  v1: must be @c CC1.
+                                /// @brief Which CEA-608 channel to decode
+                                ///        (CC1 / CC2 / CC3 / CC4).
+                                ///        Decoders for multi-channel streams
+                                ///        (e.g. CC1 + CC2 English / Spanish)
+                                ///        instantiate one per channel.
                                 Channel channel = Channel::CC1;
                 };
 

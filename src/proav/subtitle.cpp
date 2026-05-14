@@ -74,6 +74,11 @@ struct SubtitleImpl {
                 SubtitleAnchor anchor;
                 /// @brief Per-cue display mode (Default = encoder picks).
                 CaptionMode mode = CaptionMode::Default;
+                /// @brief Roll-up row count (2..4) when @c mode is
+                ///        @c RollUp.  Zero means "encoder default" —
+                ///        the @c Cea608Encoder reads its own
+                ///        @c Config::rollUpRows in that case.
+                int rollUpRows = 0;
                 /// @brief Optional pixel-space bounding-box hint.
                 Rect2Di32 region;
                 /// @brief Optional speaker / voice identifier.
@@ -571,6 +576,7 @@ const String             &Subtitle::text() const { return _d->flatText; }
 const SubtitleSpan::List &Subtitle::spans() const { return _d->spans; }
 const SubtitleAnchor     &Subtitle::anchor() const { return _d->anchor; }
 const CaptionMode        &Subtitle::mode() const { return _d->mode; }
+int                       Subtitle::rollUpRows() const { return _d->rollUpRows; }
 const Rect2Di32          &Subtitle::region() const { return _d->region; }
 const String             &Subtitle::speaker() const { return _d->speaker; }
 const Metadata           &Subtitle::metadata() const { return _d->metadata; }
@@ -594,6 +600,7 @@ void Subtitle::setSpans(SubtitleSpan::List v) {
 
 void Subtitle::setAnchor(const SubtitleAnchor &v) { _d.modify()->anchor = v; }
 void Subtitle::setMode(const CaptionMode &v) { _d.modify()->mode = v; }
+void Subtitle::setRollUpRows(int v) { _d.modify()->rollUpRows = v; }
 void Subtitle::setRegion(const Rect2Di32 &v) { _d.modify()->region = v; }
 void Subtitle::setSpeaker(const String &v) { _d.modify()->speaker = v; }
 void Subtitle::setMetadata(const Metadata &v) { _d.modify()->metadata = v; }
@@ -624,8 +631,8 @@ bool Subtitle::isActiveAt(const TimeStamp &t) const {
 bool Subtitle::operator==(const Subtitle &o) const {
         return _d->start == o._d->start && _d->end == o._d->end && _d->spans == o._d->spans
                 && _d->anchor.value() == o._d->anchor.value() && _d->mode.value() == o._d->mode.value()
-                && _d->region == o._d->region && _d->speaker == o._d->speaker
-                && _d->metadata == o._d->metadata;
+                && _d->rollUpRows == o._d->rollUpRows && _d->region == o._d->region
+                && _d->speaker == o._d->speaker && _d->metadata == o._d->metadata;
 }
 
 JsonObject Subtitle::toJson() const {
@@ -653,6 +660,9 @@ JsonObject Subtitle::toJson() const {
         }
         if (_d->mode.value() != CaptionMode::Default.value()) {
                 obj.set("mode", _d->mode.valueName());
+        }
+        if (_d->rollUpRows != 0) {
+                obj.set("rollUpRows", static_cast<int64_t>(_d->rollUpRows));
         }
         if (_d->region.isValid()) {
                 JsonObject regionObj;
@@ -708,6 +718,7 @@ void writeSubtitleData(DataStream &stream, const Subtitle &sub) {
         //   TimeStamp end            (TypeTimeStamp)
         //   int32_t   anchor.value() (TypeS32)
         //   int32_t   mode.value()   (TypeS32 — CaptionMode)
+        //   int32_t   rollUpRows     (TypeS32 — 0 = encoder default)
         //   Rect2Di32 region         (free-function operator<< template)
         //   String    speaker        (TypeString)
         //   Metadata  metadata       (VariantDatabase template operator<<)
@@ -719,6 +730,7 @@ void writeSubtitleData(DataStream &stream, const Subtitle &sub) {
         stream << sub.end();
         stream << static_cast<int32_t>(sub.anchor().value());
         stream << static_cast<int32_t>(sub.mode().value());
+        stream << static_cast<int32_t>(sub.rollUpRows());
         stream << sub.region();
         stream << sub.speaker();
         stream << sub.metadata();
@@ -730,6 +742,7 @@ Subtitle readSubtitleData(DataStream &stream) {
         TimeStamp          end;
         int32_t            anchorValue = 0;
         int32_t            modeValue = 0;
+        int32_t            rollUpRows = 0;
         Rect2Di32          region;
         String             speaker;
         Metadata           metadata;
@@ -738,6 +751,7 @@ Subtitle readSubtitleData(DataStream &stream) {
         stream >> end;
         stream >> anchorValue;
         stream >> modeValue;
+        stream >> rollUpRows;
         stream >> region;
         stream >> speaker;
         stream >> metadata;
@@ -745,6 +759,7 @@ Subtitle readSubtitleData(DataStream &stream) {
         Subtitle s(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
                    std::move(metadata));
         s.setMode(CaptionMode(modeValue));
+        s.setRollUpRows(static_cast<int>(rollUpRows));
         return s;
 }
 

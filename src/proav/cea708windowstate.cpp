@@ -6,6 +6,7 @@
  */
 
 #include <cstdint>
+#include <promeki/cea708ext.h>
 #include <promeki/cea708service.h>
 #include <promeki/cea708windowstate.h>
 #include <promeki/list.h>
@@ -255,6 +256,7 @@ void Cea708WindowState::reset() {
         for (int i = 0; i < WindowCount; ++i) _windows[i] = Cea708Window();
         _currentWindow = 0;
         _pen = Cea708PenAttr();
+        _pendingHighSurrogate = 0;
 }
 
 bool Cea708WindowState::anyVisible() const {
@@ -345,6 +347,15 @@ void Cea708WindowState::processBytes(const void *dataPtr, size_t size) {
         size_t      i = 0;
         while (i < size) {
                 const uint8_t b = p[i];
+                // -- Drop a pending UTF-16 high surrogate when the
+                //    next byte is anything other than a fresh @c P16
+                //    sequence — the surrogate pair was broken
+                //    mid-stream, so commit the orphaned high half as
+                //    @c U+FFFD before processing the new byte.
+                if (_pendingHighSurrogate != 0 && b != 0x18) {
+                        currentWindow().putChar(0xFFFD, _pen);
+                        _pendingHighSurrogate = 0;
+                }
                 // -- G0 (printable ASCII) ----------------------------
                 if (b >= 0x20 && b <= 0x7F) {
                         currentWindow().putChar(g0ToCodepoint(b), _pen);
@@ -401,7 +412,7 @@ void Cea708WindowState::processBytes(const void *dataPtr, size_t size) {
                                         ++i;
                                         break;
                                 }
-                                case 0x10: // EXT1 (extension prefix — C2 / G2 follow)
+                                case 0x10: // EXT1 (extension prefix — C2 / G2 / C3 / G3 follow)
                                 {
                                         if (i + 1 >= size) {
                                                 ++i;
@@ -409,13 +420,21 @@ void Cea708WindowState::processBytes(const void *dataPtr, size_t size) {
                                         }
                                         const uint8_t ext = p[i + 1];
                                         if (ext >= 0x20 && ext <= 0x7F) {
-                                                // G2 character — full table is a future task;
-                                                // for now substitute with U+FFFD (replacement).
-                                                currentWindow().putChar(0xFFFD, _pen);
+                                                // G2 character — look up the codepoint in
+                                                // the CEA-708-D Annex G G2 table; substitute
+                                                // U+FFFD for genuinely-undefined positions
+                                                // (most of G2 is reserved).
+                                                const uint32_t cp = Cea708Ext::decodeG2(ext);
+                                                currentWindow().putChar(
+                                                        cp != Cea708Ext::NoCodepoint ? cp : 0xFFFD, _pen);
                                                 i += 2;
                                         } else if (ext >= 0xA0) {
-                                                // G3 character — same treatment.
-                                                currentWindow().putChar(0xFFFD, _pen);
+                                                // G3 character — only @c 0xA0 (the ATSC CC
+                                                // logo, U+E000) is defined; others get
+                                                // U+FFFD.
+                                                const uint32_t cp = Cea708Ext::decodeG3(ext);
+                                                currentWindow().putChar(
+                                                        cp != Cea708Ext::NoCodepoint ? cp : 0xFFFD, _pen);
                                                 i += 2;
                                         } else if (ext <= 0x07) {
                                                 // C2 single-byte controls — no extra args.
@@ -460,12 +479,54 @@ void Cea708WindowState::processBytes(const void *dataPtr, size_t size) {
                                 case 0x18: // P16 (next 2 bytes form a 16-bit char)
                                 {
                                         if (i + 2 >= size) {
+                                                // Truncated P16 — drop any pending high
+                                                // surrogate as orphaned (already done at
+                                                // loop top when this byte != 0x18, but
+                                                // reaching here means @c 0x18 was the
+                                                // final byte with nothing to pair).
+                                                if (_pendingHighSurrogate != 0) {
+                                                        currentWindow().putChar(0xFFFD, _pen);
+                                                        _pendingHighSurrogate = 0;
+                                                }
                                                 i = size;
                                                 break;
                                         }
-                                        const uint32_t cp = (static_cast<uint32_t>(p[i + 1]) << 8)
-                                                            | static_cast<uint32_t>(p[i + 2]);
-                                        currentWindow().putChar(cp, _pen);
+                                        const uint32_t v = (static_cast<uint32_t>(p[i + 1]) << 8)
+                                                           | static_cast<uint32_t>(p[i + 2]);
+                                        if (_pendingHighSurrogate != 0) {
+                                                // Expect a UTF-16 low surrogate to pair
+                                                // with the held high half.
+                                                if (v >= 0xDC00 && v <= 0xDFFF) {
+                                                        const uint32_t cp =
+                                                                0x10000
+                                                                + ((_pendingHighSurrogate - 0xD800) << 10)
+                                                                + (v - 0xDC00);
+                                                        currentWindow().putChar(cp, _pen);
+                                                        _pendingHighSurrogate = 0;
+                                                } else {
+                                                        // Pairing failed — commit the
+                                                        // orphaned high half as U+FFFD,
+                                                        // then process this P16 fresh.
+                                                        currentWindow().putChar(0xFFFD, _pen);
+                                                        _pendingHighSurrogate = 0;
+                                                        if (v >= 0xD800 && v <= 0xDBFF) {
+                                                                _pendingHighSurrogate = v;
+                                                        } else if (v >= 0xDC00 && v <= 0xDFFF) {
+                                                                // Lone low surrogate — drop.
+                                                                currentWindow().putChar(0xFFFD, _pen);
+                                                        } else {
+                                                                currentWindow().putChar(v, _pen);
+                                                        }
+                                                }
+                                        } else if (v >= 0xD800 && v <= 0xDBFF) {
+                                                // High surrogate — hold for the next P16.
+                                                _pendingHighSurrogate = v;
+                                        } else if (v >= 0xDC00 && v <= 0xDFFF) {
+                                                // Lone low surrogate — drop.
+                                                currentWindow().putChar(0xFFFD, _pen);
+                                        } else {
+                                                currentWindow().putChar(v, _pen);
+                                        }
                                         i += 3;
                                         break;
                                 }

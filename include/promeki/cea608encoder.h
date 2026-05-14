@@ -54,11 +54,20 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  *
  * @par Channel support
  *
- * v1 emits CC1 (field 1, channel 1) only.  This is the
- * overwhelmingly common case for English-language captioning.
- * CC2/CC3/CC4 selection is parsed from the @ref Config but
- * non-CC1 channels currently fail @ref setSubtitles with
- * @c Error::NotImplemented.
+ * All four caption channels are supported: CC1 (field 1, channel 1),
+ * CC2 (field 1, channel 2), CC3 (field 2, channel 1), CC4 (field 2,
+ * channel 2).  The channel is set via @ref Config::channel.  Within a
+ * field the channel selector rides in bit 3 of every control byte's
+ * first byte (clear = CC1/CC3, set = CC2/CC4); cross-field routing
+ * uses the CDP @c cc_type slot (0 = field 1, 1 = field 2).  The
+ * encoder builds the schedule with CC1/CC3-shaped bytes internally
+ * and OR-shifts them to CC2/CC4 in a single post-pass.
+ *
+ * Multi-channel emission (e.g. CC1 + CC2 in parallel for English /
+ * Spanish) is achieved by instantiating one encoder per channel and
+ * merging each frame's @c CcDataList output — the shared
+ * @ref Cea708Cdp::CcData carrier accommodates multiple triples per
+ * frame.
  *
  * @par Layout (multi-row word-wrap)
  *
@@ -77,8 +86,19 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  * @c (16 - N) .. @c 15 (broadcast convention), @c Top* anchors
  * fill @c 1 .. @c N, @c Middle* anchors centre on row 8.
  * Roll-up mode forces row 15 regardless of anchor (roll-up is
- * bottom-anchored by spec).  Horizontal placement (Left / Center /
- * Right) is dropped at the wire.
+ * bottom-anchored by spec).
+ *
+ * The anchor's horizontal half drives PAC indent + Tab Offset
+ * emission: @c *Left and @c Default land at column 0; @c *Center
+ * computes @c (32 - rowWidth) / 2; @c *Right lands at @c 32 -
+ * rowWidth.  PAC's 4-bit subfield carries colour OR italic OR
+ * indent (mutually exclusive on a single PAC), so a coloured /
+ * italic cue at a @c Center / @c Right anchor degrades back to
+ * flush-left column 0 — colour is the more prominent visual
+ * cue.  Plain (white, non-italic) cues honour the anchor's
+ * horizontal half exactly via PAC indent (multiples of 4) +
+ * doubled Tab Offset (T1 / T2 / T3) for the 1..3 column
+ * residual.
  *
  * @par Overflow auto-split
  *
@@ -91,13 +111,17 @@ struct Cea608EncoderImpl; // Pimpl — defined in cea608encoder.cpp.
  *
  * @par Character set
  *
- * Printable basic-ASCII (0x20..0x7E) characters are passed through
- * verbatim.  Anything outside that basic set is substituted with
- * the standard 608 "no character" 0x20 (space).  Full CEA-608
- * character-set support (the accented Latin letters at 0x2A /
- * 0x5C / 0x5E / 0x5F / 0x60 / 0x7B / 0x7C / 0x7D / 0x7E / 0x7F,
- * plus the special / extended sets) lands when SubRip files with
- * non-ASCII content drive the test framework.
+ * Full EIA-608-B character coverage via @ref Cea608Ext: basic G0
+ * (ASCII plus the ten remapped Latin / arithmetic positions at
+ * @c 0x2A / 0x5C / 0x5E / 0x5F / 0x60 / 0x7B / 0x7C / 0x7D /
+ * @c 0x7E / 0x7F), the 16 Special Characters (@c (0x11, 0x30..0x3F)
+ * doubled control pair on CC1, channel-shifted for CC2 / CC4),
+ * the 32 Extended Spanish / Misc glyphs (@c (0x12, 0x20..0x3F)),
+ * and the 32 Extended Portuguese / German / box-drawing glyphs
+ * (@c (0x13, 0x20..0x3F)).  Codepoints with no 608 representation
+ * substitute @c 0x20 (space).  Special / Extended glyphs ride
+ * with a best-fit ASCII placeholder so old decoders that ignore
+ * the doubled control pair still render a recognisable fallback.
  *
  * @par Per-cue byte-stream layout (pop-on)
  *
@@ -156,7 +180,10 @@ class Cea608Encoder : public CaptionEncoder {
                  * All three modes are supported; each emits a
                  * different control-code framing around the same
                  * character body.  See the class doc-comment for
-                 * the per-mode byte-stream layouts.
+                 * the per-mode byte-stream layouts.  Per-cue mode
+                 * overrides via @ref Subtitle::mode are honoured;
+                 * this enum is the default fall-back when a cue
+                 * carries @c CaptionMode::Default.
                  */
                 enum class Mode {
                         PopOn  = 0, ///< Pop-on (RCL → PAC → chars → EOC, EDM at cue end).
@@ -167,26 +194,46 @@ class Cea608Encoder : public CaptionEncoder {
                 /**
                  * @brief Channel selector inside the configured field.
                  *
-                 * v1 only supports @c CC1 (field 1, channel 1).
-                 * Other channels are reserved enum values.
+                 * All four channels are fully supported.  CC1 / CC2
+                 * ride in field 1 (CDP @c cc_type = 0); CC3 / CC4
+                 * ride in field 2 (@c cc_type = 1).  Within a field,
+                 * the second channel (CC2 / CC4) is selected by bit
+                 * 3 of the first control byte being set; the encoder
+                 * applies the channel-bit OR-mask in a single post-
+                 * pass after building the CC1/CC3-shaped schedule.
                  */
                 enum class Channel {
-                        CC1 = 0, ///< Field 1 / Channel 1.  v1.
-                        CC2 = 1, ///< Field 1 / Channel 2.  Reserved.
-                        CC3 = 2, ///< Field 2 / Channel 1.  Reserved.
-                        CC4 = 3, ///< Field 2 / Channel 2.  Reserved.
+                        CC1 = 0, ///< Field 1 / Channel 1.
+                        CC2 = 1, ///< Field 1 / Channel 2.
+                        CC3 = 2, ///< Field 2 / Channel 1.
+                        CC4 = 3, ///< Field 2 / Channel 2.
                 };
 
                 /** @brief Encoder configuration. */
                 struct Config {
                                 /// @brief Required.  Drives ms → frame conversion.
                                 FrameRate frameRate;
-                                /// @brief Operating mode.  v1: must be @c PopOn.
+                                /// @brief Default operating mode.  Used as the
+                                ///        fall-back when a cue's @ref Subtitle::mode
+                                ///        is @c CaptionMode::Default; cues with
+                                ///        an explicit mode override this on a
+                                ///        per-cue basis (mid-stream mode mixing
+                                ///        is fully supported).
                                 Mode mode = Mode::PopOn;
-                                /// @brief Channel.  v1: must be @c CC1.
+                                /// @brief Channel selector (CC1 / CC2 / CC3 /
+                                ///        CC4).  Each instance emits one
+                                ///        channel; multi-channel streams pair
+                                ///        two encoder instances and merge their
+                                ///        @c CcDataList output.
                                 Channel channel = Channel::CC1;
-                                /// @brief Roll-up row count (2..4).  Used only
-                                ///        when @c mode == @c RollUp.
+                                /// @brief Default roll-up row count (2..4).
+                                ///        Used as the fall-back when a cue's
+                                ///        @ref Subtitle::rollUpRows is 0; cues
+                                ///        with an explicit row count in
+                                ///        @c [2, 4] override this on a per-cue
+                                ///        basis (a different RUx is re-emitted
+                                ///        when the count changes between
+                                ///        consecutive roll-up cues).
                                 int32_t rollUpRows = 2;
                                 /// @brief Maximum characters per row.  The
                                 ///        true 608 wire width is 32 columns
@@ -238,14 +285,14 @@ class Cea608Encoder : public CaptionEncoder {
                  * @return @c Error::Ok on success.
                  *         @c Error::Invalid when the configured
                  *         @ref FrameRate is not valid.
-                 *         @c Error::NotImplemented when @ref Channel
-                 *         is not @c CC1.
                  *         @c Error::OutOfRange when a cue's pre-roll
                  *         would fall before frame 0, when pre-roll
                  *         overlaps the prior cue's wire stream, or
                  *         when (paint-on / roll-up) the character
                  *         pairs would overrun the cue's display
-                 *         window.
+                 *         window.  Use @ref encodableSubset to
+                 *         pre-filter timing-dense input rather than
+                 *         surfacing this error.
                  */
                 Error setSubtitles(const SubtitleList &subs) override;
 

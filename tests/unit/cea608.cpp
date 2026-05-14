@@ -169,7 +169,11 @@ TEST_CASE("Cea608: decodePac handles indent-only and italic-only sub-fields") {
 // ============================================================================
 
 TEST_CASE("Cea608::encodeMidRow / decodeMidRow round-trip") {
-        for (uint8_t c = 0; c < Cea608::CaptionColorCount; ++c) {
+        // FG mid-row carries 7 primaries (no Black — code 7 is
+        // "italic white" instead).  Iterate the round-trip-able fg
+        // colour set; Black at the wire-fg path falls back to White
+        // and is exercised separately in the BG-attribute tests.
+        for (uint8_t c = 0; c < Cea608::FgCaptionColorCount; ++c) {
                 for (int u = 0; u < 2; ++u) {
                         uint8_t b1 = 0, b2 = 0;
                         Cea608::encodeMidRow(static_cast<Cea608::CaptionColor>(c), false, u != 0, b1, b2);

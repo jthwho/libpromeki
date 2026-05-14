@@ -73,6 +73,10 @@ namespace {
                         case Cea608::CaptionColor::Red:     return 4;
                         case Cea608::CaptionColor::Yellow:  return 5;
                         case Cea608::CaptionColor::Magenta: return 6;
+                        // Black has no foreground wire encoding (the
+                        // code-7 slot is "italic white" in PAC + mid-
+                        // row).  Fall back to White.
+                        case Cea608::CaptionColor::Black:   return 0;
                 }
                 return 0;
         }
@@ -89,7 +93,10 @@ Color::List Cea608::palette() {
         Color::List p;
         p.reserve(CaptionColorCount);
         // sRGB primaries matching the 608 spec's well-known palette.
-        // Stored in @ref CaptionColor index order.
+        // Stored in @ref CaptionColor index order.  Index 7 (Black)
+        // is BG-attribute only — keeping it in the palette lets
+        // BG-side nearest-colour quantisation pick Black for dark
+        // input colours.
         p.pushToBack(Color::White);
         p.pushToBack(Color::Green);
         p.pushToBack(Color::Blue);
@@ -97,6 +104,7 @@ Color::List Cea608::palette() {
         p.pushToBack(Color::Red);
         p.pushToBack(Color::Yellow);
         p.pushToBack(Color::Magenta);
+        p.pushToBack(Color::Black);
         return p;
 }
 
@@ -134,9 +142,18 @@ void Cea608::encodePac(const PacAttr &attr, uint8_t &b1, uint8_t &b2) {
 }
 
 bool Cea608::isPac(uint8_t b1, uint8_t b2) {
-        if (rowPairFirstForB1(b1) == 0) return false;
+        const int pairFirst = rowPairFirstForB1(b1);
+        if (pairFirst == 0) return false;
         // b2 must be in [0x40, 0x7F] (top two bits = 01).
-        return (b2 & 0xC0) == 0x40;
+        if ((b2 & 0xC0) != 0x40) return false;
+        // Row 11's b1 (0x10) has no second-row partner — bit 5 of
+        // b2 must be 0 for the pair to be a valid PAC.  Without
+        // this mirror of decodePac's constraint, isPac would
+        // accept b1=0x10 + b2 in [0x60, 0x7F] and the decoder
+        // dispatcher would route those bytes through PAC handling
+        // only for decodePac to reject them as no-ops.
+        if (pairFirst == 11 && (b2 & 0x20) != 0) return false;
+        return true;
 }
 
 bool Cea608::decodePac(uint8_t b1, uint8_t b2, PacAttr &out) {
@@ -201,45 +218,19 @@ bool Cea608::decodeMidRow(uint8_t b1, uint8_t b2, CaptionColor &outColor, bool &
 //   0 = White, 1 = Green, 2 = Blue, 3 = Cyan, 4 = Red,
 //   5 = Yellow, 6 = Magenta, 7 = Black.
 //
-// Note that CEA-608's foreground @ref CaptionColor enum runs
-// 0..6 (no Black foreground — black is conveyed via the
-// "Foreground Black" extension instead).  We extend the wire
-// mapping here with index 7 = Black for the BG case only;
-// callers that need a black bg should pass @ref CaptionColor::White
-// + a separate flag is *not* the right shape — instead we map
-// "no bg colour requested" to "don't emit" at the encoder level,
-// and decode any incoming index-7 bg byte as @c CaptionColor::White
-// with a sentinel flag.  To keep the API symmetric we just round-
-// trip index 0..6 and treat index 7 as "Black, opaque".
+// Index 7 (Black) is BG-attribute only — the PAC + mid-row colour
+// subfields don't carry Black (the spec uses the code-7 slot for
+// "italic white" instead).  @ref Cea608::CaptionColor exposes
+// Black as enum value 7 for the BG-attribute round-trip; the fg
+// paths (encodePac / encodeMidRow) treat Black as White on the
+// wire.
 //
 // The bg attribute is doubled on the wire like other control
 // codes — the encoder schedules a second copy of the pair
 // adjacent to the first.
 
-namespace {
-        /// @brief Wire-byte mapping for the 8 BG attribute colours.
-        ///        Index 0..6 align with @ref Cea608::CaptionColor;
-        ///        index 7 is "Black".
-        constexpr uint8_t kBgColorWire[8] = {
-                0, // White
-                1, // Green
-                2, // Blue
-                3, // Cyan
-                4, // Red
-                5, // Yellow
-                6, // Magenta
-                7, // Black (BG-only extension)
-        };
-} // namespace
-
 void Cea608::encodeBgAttribute(CaptionColor color, bool semiTransparent, uint8_t &b1, uint8_t &b2) {
         b1 = 0x10;
-        // Black bg is a 608 BG-only extension at wire index 7; the
-        // @ref CaptionColor enum runs 0..6, so callers wanting black
-        // bg pass @ref CaptionColor::White and supply a separate
-        // "actually black" hint — for the simple API we just trust
-        // the enum value.  Future caller wanting Black bg can build
-        // the raw pair directly.
         const uint8_t idx = static_cast<uint8_t>(static_cast<uint8_t>(color) & 0x07);
         b2 = static_cast<uint8_t>(0x20 | (idx << 1) | (semiTransparent ? 0x01 : 0x00));
 }
@@ -253,14 +244,24 @@ bool Cea608::decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor, b
         if (!isBgAttribute(b1, b2)) return false;
         const uint8_t idx = static_cast<uint8_t>((b2 >> 1) & 0x07);
         outSemiTransparent = (b2 & 0x01) != 0;
-        // Index 7 = Black on the wire.  The @ref CaptionColor enum
-        // doesn't have Black, so report the closest match (White) and
-        // let downstream callers refine via the raw wire bytes if they
-        // care about black bg specifically.
-        outColor = (idx == 7) ? CaptionColor::White : static_cast<CaptionColor>(idx);
-        (void)kBgColorWire; // future use — table is reserved
-                            // for callers that need the inverse
-                            // mapping.
+        outColor = static_cast<CaptionColor>(idx);
+        return true;
+}
+
+void Cea608::encodeTabOffset(int columns, uint8_t &b1, uint8_t &b2) {
+        if (columns < 1) columns = 1;
+        if (columns > 3) columns = 3;
+        b1 = TabOffsetB1;
+        b2 = static_cast<uint8_t>(0x20 + columns); // 0x21 / 0x22 / 0x23
+}
+
+bool Cea608::isTabOffset(uint8_t b1, uint8_t b2) {
+        return b1 == TabOffsetB1 && b2 >= TabOffsetT1 && b2 <= TabOffsetT3;
+}
+
+bool Cea608::decodeTabOffset(uint8_t b1, uint8_t b2, int &outColumns) {
+        if (!isTabOffset(b1, b2)) return false;
+        outColumns = static_cast<int>(b2 - 0x20); // 1 / 2 / 3
         return true;
 }
 

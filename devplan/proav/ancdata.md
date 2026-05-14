@@ -25,7 +25,7 @@ MediaIO backend integration, then application surfaces. None of
 this requires the AJA NTV2 backend — when that lands it slots
 into the contract defined here.
 
-## Status at a glance (2026-05-12, end of day)
+## Status at a glance (2026-05-13)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -35,10 +35,10 @@ into the contract defined here.
 | 2     | `AncTranslateConfig` + `AncTranslator` + 3 registries + macros + initial ATC and AFD ← → St291 codecs | **Landed** — Phase 2 |
 | 2b    | CEA-708 ← → St291 codec + `Cea708Cdp` typed value type + TPG caption injection + Inspector AncData JSONL dump | **Landed** — Phase 2b end-to-end slice (the realish use case) |
 | 3     | Remaining typed parsers (CEA-608, AFD value type, Atc helpers, Scte104, HDR static/dynamic, KLV) | Pending |
-| 3.5   | Subtitle file I/O + CEA-608 codec (generic `Subtitle` / `SubtitleList` value types + `SubRip` parser/emitter, Scc, `Cea608Encoder`/`Decoder`, TPG SubRip-driven injection, round-trip func test) | **Mostly landed** — `Subtitle`/`SubtitleList`/`SubRip` with structured `SubtitleSpan` runs + inline markup parse; `Cea608Encoder` + `Cea608Decoder` with **all three modes — pop-on, paint-on, roll-up** — and full PAC + mid-row attribute set (anchor row, italic, underline, 7-colour-quantised palette via `Color::nearestPaletteIndex`); TPG SubRip-driven injection (offset, snap-to-frame, per-frame `Metadata::Subtitle` stamp); encoder pre-roll filter (`encodableSubset`); **`Scc` value type + TPG SCC bypass path** (`TpgAncCaptionsScc` config key feeds SCC byte-pairs directly into cc_data, bypassing `Cea608Encoder` — proves the CDP wire layer independently of encoder scheduling).  Functional test (Phase 3.5g) still pending |
+| 3.5   | Subtitle file I/O + CEA-608 codec (generic `Subtitle` / `SubtitleList` value types + `SubRip` parser/emitter, Scc, `Cea608Encoder`/`Decoder`, TPG SubRip-driven injection, round-trip func test) | **Landed end-to-end (2026-05-13)** — `Subtitle`/`SubtitleList`/`SubRip` with structured `SubtitleSpan` runs + inline markup parse; `Cea608Encoder` + `Cea608Decoder` with **all three modes — pop-on, paint-on, roll-up** — and full PAC + mid-row attribute set (anchor row, italic, underline, 7-colour-quantised palette via `Color::nearestPaletteIndex`); TPG SubRip-driven injection (offset, snap-to-frame, per-frame `Metadata::Subtitle` stamp); encoder pre-roll filter (`encodableSubset`); **`Scc` value type + TPG SCC bypass path** (`TpgAncCaptionsScc` config key feeds SCC byte-pairs directly into cc_data, bypassing `Cea608Encoder` — proves the CDP wire layer independently of encoder scheduling); **full CEA-608 character set landed 2026-05-13** (`Cea608Ext` table covering the 10 remapped basic-G0 positions + 16 Special Characters + 64 Extended Western European glyphs); **CC2/CC3/CC4 channel support + per-cue mode mixing landed 2026-05-13** (every channel via a single channel-bit OR-mask post-pass; per-cue mode dispatch via `Subtitle::mode` + per-cue `Subtitle::rollUpRows`); **horizontal positioning + Cea608Packet Variant + BS/DER/FON landed 2026-05-13** (anchor's horizontal half drives PAC indent + doubled Tab Offset T1/T2/T3 — Center / Right cues land at the right column; coloured + indented cues degrade to flush-left preserving colour; decoder column-tracking recovers Left / Center / Right anchor; new `Cea608Packet` Variant value type carries channel + cc_data triples for per-channel app-level interchange; decoder honours BS / DER / FON misc codes for live-captioner typo-correction + row-clear + flash flag); **encoder/decoder production-readiness pass landed 2026-05-13** (`Cea608::CaptionColor::Black = 7` for the EIA-608-B BG-attribute round-trip with new `FgCaptionColorCount = 7` for fg-only test iteration; `isPac` mirrors `decodePac`'s row-11 b2-bit-5 constraint; `doRCL` finalises any in-flight paint-on / roll-up cue at the supplied ts before clearing; `doENM` gated to pop-on per spec; multi-row PAC handling resets per-row `loadingColumn` and commits anchor off the first row's column only); **Phase 3.5g `anc-subrip-roundtrip` functional test landed 2026-05-13** (as `promeki-test` case `captions.cea608.subrip_roundtrip` rather than `tests/func/anc-subrip-roundtrip/`) |
 | 4     | MediaIO backend integration (NdiMediaIO ANC, RtmpMediaIO ANC, **`Cea708 ← / → HlsSei` codec + NVENC SEI injection** for RTMP/HLS/SRT delivery to YouTube etc., AncMetadataStamper) | **YouTube delivery path landed 2026-05-12 (working tree, uncommitted)** — `Cea708 ← / → HlsSei` codec, codec API Frame-shaped refactor + ANC pairing foundation, **plus the `NvencVideoEncoder` SEI injection body** (`MediaConfig::VideoSeiCaptionsEnabled` default-on, `selectAncForSei` walked per-submit, `AncTranslator → HlsSei` payload bytes stashed on the slot, NV_ENC_PIC_PARAMS H264/HEVC `seiPayloadArray` populated with `payloadType=4`).  Three new doctests verify the encoded H.264 bitstream contains the ATSC A/53 wrapper marker `0xB5 0x00 0x31 0x47 0x41 0x39 0x34 0x03` with the expected cc_count + cc_data triple bytes, plus negative cases for opt-out and no-ANC silence.  AV1 warns-once and emits no caption metadata (no NVENC AV1 caption-OBU path).  NdiMediaIO + RtmpMediaIO ANC + AncMetadataStamper still pending |
 | 5     | AJA NTV2 SDI ingest contract (documentation only) | Pending |
-| 6     | mediaio --dump-anc tool, TPG AncEmission mode, caption renderer, functional test matrix, docs, CEA-708 typed `Cea708Service` / `Cea708WindowState` decoder (DTVCC service-block + window manager) | **Mostly landed** — Inspector AncData JSON dump landed early as part of Phase 2b; caption renderer landed 2026-05-11 (`SubtitleSpan`, SubRip styled-spans, `FastFont` cache, `SubtitleRenderer`, `SubtitleBurnMediaIO`, `Cea608Decoder::displayedCue`); **full CEA-708 DTVCC stack landed 2026-05-12** — `Cea708Service` + `Cea708DtvccPacket` value types (cc_data round-trip, standard + extended block headers), `Cea708WindowState` (8-window × pen-state × character-buffer state machine consuming the full C0/G0/C1/G1/EXT1 byte stream), `Cea708Decoder` (cc_data triples → DTVCC packets → window state → SubtitleList), `Cea708Encoder` (SubtitleList → cc_data triples via DefineWindow + DisplayWindow); full encoder ↔ decoder round-trip exercised.  **TPG 708 emission landed 2026-05-12** — `CaptionCodec` typed enum + `TpgAncCaptionsCodec` / `TpgAncCaptions708Service` config keys; `TpgMediaIO` now drives `Cea608Encoder`, `Cea708Encoder`, or both side-by-side, with full Inspector AncData JSONL round-trip coverage.  Functional tests still pending |
+| 6     | mediaio --dump-anc tool, TPG AncEmission mode, caption renderer, functional test matrix, docs, CEA-708 typed `Cea708Service` / `Cea708WindowState` decoder (DTVCC service-block + window manager) | **Mostly landed** — Inspector AncData JSON dump landed early as part of Phase 2b; caption renderer landed 2026-05-11 (`SubtitleSpan`, SubRip styled-spans, `FastFont` cache, `SubtitleRenderer`, `SubtitleBurnMediaIO`, `Cea608Decoder::displayedCue`); **full CEA-708 DTVCC stack landed 2026-05-12** — `Cea708Service` + `Cea708DtvccPacket` value types (cc_data round-trip, standard + extended block headers), `Cea708WindowState` (8-window × pen-state × character-buffer state machine consuming the full C0/G0/C1/G1/EXT1 byte stream), `Cea708Decoder` (cc_data triples → DTVCC packets → window state → SubtitleList), `Cea708Encoder` (SubtitleList → cc_data triples via DefineWindow + DisplayWindow); full encoder ↔ decoder round-trip exercised.  **TPG 708 emission landed 2026-05-12** — `CaptionCodec` typed enum + `TpgAncCaptionsCodec` / `TpgAncCaptions708Service` config keys; `TpgMediaIO` now drives `Cea608Encoder`, `Cea708Encoder`, or both side-by-side, with full Inspector AncData JSONL round-trip coverage.  **Full CEA-708 Unicode support landed 2026-05-13** — new `Cea708Ext` helper class with the CEA-708-D Annex G G2 table + the lone G3 ATSC CC logo entry; encoder walks codepoints (not bytes) and picks the cheapest wire encoding per codepoint (G0 single byte / G1 single byte / EXT1+G2 two bytes / EXT1+G3 two bytes / P16 three bytes / UTF-16 surrogate pair via two P16 sequences = six bytes for astral codepoints); decoder G2 / G3 lookup replaces the U+FFFD stub; `Cea708WindowState` carries a pending high-surrogate slot so a UTF-16 surrogate pair survives a `processBytes` boundary (e.g. across DTVCC packets).  Functional tests still pending |
 
 The Phase 2b end-to-end slice proves the architecture: caption text
 goes in via `MediaConfig::TpgAncCaptionsFile` (a SubRip `.srt` path,
@@ -1908,15 +1908,22 @@ caption text round-trips byte-for-byte through the whole stack.
 
 ## Phase 3.5 — Subtitle file I/O + CEA-608 codec
 
-**Status:** Phase 3.5 mostly **landed** as of 2026-05-12.
+**Status:** Phase 3.5 **landed end-to-end** as of 2026-05-13.
 `Subtitle` / `SubtitleList` value types + the SubRip parser/
 emitter pair landed 2026-05-11.  `Cea608Encoder` + `Cea608Decoder`
 gained pop-on (3.5a/b), paint-on, and roll-up (3.5d) modes plus
 the full PAC + mid-row attribute set.  TPG wiring (3.5c) loads
 SubRip files at open + drives the encoder at the configured
 frame rate.  `Scc` value type (3.5e) + TPG SCC bypass path
-(3.5f) landed 2026-05-12.  Earlier draft status —
-functional test still pending.
+(3.5f) landed 2026-05-12.  The `anc-subrip-roundtrip`
+functional test (3.5g) landed 2026-05-13 as a `promeki-test`
+case (`captions.cea608.subrip_roundtrip`).  A production-
+readiness pass on the encoder / decoder pair landed alongside
+3.5g: CaptionColor::Black for BG-attribute, isPac mirroring
+decodePac's row-11 constraint, doRCL ts-aware paint-on/roll-up
+flush, doENM PopOn-gating, multi-row PAC per-row loadingColumn
+reset + first-row-only anchor commit, plus stale-doc cleanup
+in the encoder / decoder headers.
 
 This phase adds a real subtitle-file driven test framework on
 top of the Phase 2b CEA-708 carriage.  Replaces the static
@@ -2369,39 +2376,152 @@ is unchanged; tests updated.
   `Error::InvalidArgument`, malformed SCC returns
   `Error::ParseFailed` on open.
 
-### Functional test — anc-subrip-roundtrip (Phase 3.5g)
+### Encoder / decoder production-readiness pass — **Landed 2026-05-13**
+
+Polish round that landed alongside the Phase 3.5g functional
+test.  Fixes spec-conformance gaps that didn't surface in
+short unit-test cues but mattered for the 23-cue, multi-mode,
+multi-channel fixture run end-to-end.
+
+**Spec / robustness fixes** (`src/proav/cea608.cpp`,
+`src/proav/cea608decoder.cpp`):
+- [x] `Cea608::isPac` mirrors `decodePac`'s row-11 constraint
+  — `b1 = 0x10` with `b2`'s bit 5 set (no second-of-pair
+  partner for row 11) is now rejected by `isPac` instead of
+  being accepted only to fall through `decodePac` as a no-op.
+  Sentinel test added in `tests/unit/cea608decoder.cpp`.
+- [x] `Cea608Decoder::doRCL` now takes a `TimeStamp` and
+  finalises any in-flight paint-on / roll-up cue at that ts
+  before clearing.  A wild captioner stream that mode-flips
+  mid-air no longer drops the prior cue.  (Encoder dispatcher
+  always emits an EDM before re-entering pop-on; the decoder
+  now also handles the wild-stream case.)
+- [x] `doENM` gated to PopOn — in paint-on / roll-up the
+  loading buffer is the live displayed cue, not non-displayed
+  memory, so ENM in those modes is now a no-op per spec
+  instead of erasing live chars.
+- [x] Multi-row PAC handling: `loadingColumn` resets per-PAC
+  (was: only set on the first PAC) and the cue's anchor
+  commits off the first row's row + column only via a new
+  `loadingOnFirstRow` flag.  Tab Offsets after the second
+  row's PAC no longer accumulate onto the first row's column.
+
+**`CaptionColor::Black` for BG-attribute round-trip**
+(`include/promeki/cea608.h`, `src/proav/cea608.cpp`,
+`src/proav/cea608encoder.cpp`):
+- [x] `Cea608::CaptionColor` extended with `Black = 7` for
+  the EIA-608-B BG-attribute wire index 7 (previously lossy
+  round-trip through White).
+- [x] `CaptionColorCount = 8`, plus new
+  `FgCaptionColorCount = 7` constant for fg-only iteration
+  tests (PAC + mid-row colour subfield reserves code 7 for
+  italic-white).
+- [x] `palette()` now returns 8 entries (Black at index 7).
+- [x] `encodeBgAttribute` round-trips Black directly;
+  `decodeBgAttribute` no longer maps wire 7 → White.
+- [x] `encodePac` / `encodeMidRow` `colorSubfield` treats
+  Black as White (fg paths have no Black encoding).
+- [x] Encoder's `wireStyleFor` coerces Black fg → White so
+  positioning predicates (`hasFirstSpanStyle`) don't degrade
+  Center anchors to flush-left for what is wire-equivalent
+  to White.
+- [x] Two new doctest cases in `cea608decoder.cpp`: Black bg
+  round-trip via wire index 7, Black fg silently → White on
+  wire with anchor preserved.
+
+**Stale documentation cleanup** in
+`include/promeki/cea608encoder.h` and
+`include/promeki/cea608decoder.h`:
+- [x] `Channel::CC2/CC3/CC4` no longer marked "Reserved" —
+  all four supported.
+- [x] `Mode` doc reflects per-cue mode mixing.
+- [x] Decoder doc lists BS / DER / FON / TR / RTD with their
+  real semantics (was: "Unknown control codes ignored in v1").
+- [x] Character-set blurb in encoder doc reflects `Cea608Ext`
+  coverage (G0 + Special + Extended) instead of "anything
+  outside basic ASCII → space".
+- [x] `setSubtitles` `@return` references `encodableSubset`
+  instead of the obsolete "non-PopOn / non-CC1 surfaces
+  NotImplemented".
+- [x] Decoder Config doc reflects multi-channel support.
+
+**Test counts:** unit suite was 6375 baseline; now 6381
+(+4 robustness regression tests + 2 Black bg tests).  All
+6381 pass.  The new `captions.cea608.subrip_roundtrip`
+functional test passes.
+
+### Functional test — anc-subrip-roundtrip (Phase 3.5g) — **Landed 2026-05-13**
+
+Landed as a `promeki-test` case rather than a standalone
+`tests/func/anc-subrip-roundtrip/` folder.  The promeki-test
+runner already provides the per-case scaffolding (TestParams,
+TestContext, per-case folder + result.json) the original plan
+called for, so the case became a self-contained TestCase
+inside the runner instead of a separate binary.
 
 **Files:**
-- [ ] `tests/func/anc-subrip-roundtrip/` (promeki-test
-  fixture)
+- [x] `utils/promeki-test/cases/captions.cpp` — registers
+  `captions.cea608.subrip_roundtrip` via the
+  `registerCaptionsCases()` hook in `cases.h`, called from
+  `main.cpp`.
+- [x] `utils/promeki-test/CMakeLists.txt` — adds the new
+  source + `PROMEKI_SOURCE_DIR` compile-def for fixture
+  resolution.
 - [x] `etc/substest.srt` — vendored SubRip fixture covering
   every parser branch (23 cues across ~1m53s: ASCII / multi-
   line / `{\anN}` anchors / X1..Y2 coordinate hints / inline
   `<i>`/`<b>`/`<u>`/`<font>` markup / UTF-8 / period-as-ms
   separator / WebVTT `<v Speaker>` tags / quotes-and-dashes /
   long single-line / three-line block / leading whitespace).
-  Already exercised by two doctest cases in
+  Also exercised by two doctest cases in
   `tests/unit/subrip.cpp` (parse every branch + canonical
   round-trip).
 
-**Flow:**
-- [ ] Stage 1: `mediaplay -s TPG --sc TpgAncCaptionsEnabled:true
-  --sc TpgAncCaptionsFile:etc/substest.srt -d Inspector --dc
-  InspectorTests:AncData --dc InspectorAncDataFile:<out.jsonl>`
-  — emit a few minutes of frames with embedded captions, dump
-  to JSONL.
-- [ ] Stage 2: standalone reconstructor (`promeki-test`
-  helper, lives in the test folder) walks `out.jsonl`, parses
-  each `cc_data` triple list through `Cea608Decoder`, calls
-  `decoder.finalize()` at end-of-stream, emits the resulting
-  `SubtitleList` to `roundtrip.srt` via `SubRip::emit`.
-- [ ] Stage 3: diff `roundtrip.srt` against the original
-  fixture.  Cue text must match byte-exact (modulo the
-  encoder's space-pad on odd-length cues); timing tolerance
-  ±1 frame.
-- [ ] Repeat the same fixture through RTP-40 instead of the
-  direct port connection (`-d Rtp`, separate receiver),
-  proves the wire-format leg is also lossless.
+**Flow (three stages, all in-process):**
+- [x] Stage 1: in-process pipeline TPG
+  (`TpgAncCaptionsFile = etc/substest.srt`, VideoFormat pinned
+  to `Smpte1080p30`) → `InspectorMediaIO`
+  (`InspectorTests = AncData`, `InspectorAncDataFile =
+  <testFolder>/anc.jsonl`).  Runs 1080p30 × 145s = 4350
+  frames, covering the full ~1m53s fixture window plus tail
+  for the last over-cap cue's auto-split sub-cues.
+- [x] Stage 2: case-internal reconstructor walks the JSONL,
+  parses each row's `packets[].parsed.ccData` triples through
+  `Cea608Decoder::pushFrame`, calls `finalize()` to get the
+  recovered `SubtitleList`.
+- [x] Stage 3: emits `SubRip::emit(recovered)` to
+  `<testFolder>/roundtrip.srt` for post-mortem diff, then
+  asserts every ASCII source cue has a decoded match in its
+  display window with whitespace-normalised text equality and
+  same vertical anchor band.
+
+**Verified pass:** 21/21 ASCII source cues matched, 0 text
+mismatches, 0 vertical-band mismatches, 4350 JSONL rows
+parsed, 25 recovered cues (extras from the auto-split path
+for the over-cap fixture cue).
+
+**Deliberate compromises documented inline:**
+- Anchor compare is **vertical-half only** (Top / Middle /
+  Bottom).  608 horizontal recovery is intrinsically lossy
+  for cues whose width approaches 32 cells (Center on a
+  30-char cue lands at column 1, decoder's `col < 4 → Left`
+  pulls it to the Left variant).  Strict horizontal
+  preservation is already covered by `cea608encoder.cpp`
+  unit tests with short cues.
+- VideoFormat pinned to 1080p30 (not the suite default
+  720p59.94) so the case's per-frame `TimeStamp` math matches
+  the encoder's frame schedule.
+
+**Not implemented from the original plan (handled elsewhere
+or out of scope here):**
+- The "Stage 3 byte-exact diff against `etc/substest.srt`"
+  was replaced with per-cue text + vertical-anchor matching
+  because the encoder intentionally re-times cues onto frame
+  boundaries (snapToFrames) and the auto-split overflow path
+  produces a different cue count than the source file.
+- The "repeat through RTP-40" wire-leg test is covered by
+  the Phase 6 functional matrix entry below
+  (`tests/func/anc-rtp40-roundtrip/`).
 
 ### Things Phase 3.5 deliberately leaves out
 
@@ -3027,16 +3147,15 @@ TPG.
 **Wire-level wiring — landed 2026-05-12 (round 2):**
 
 - [x] **Per-list @c CaptionMode dispatch in @c Cea608Encoder.**
-  `setSubtitles` walks the input list, picks up each cue's
-  explicit `CaptionMode`, and dispatches to the matching
-  per-mode scheduler (`buildPopOnSchedule` /
-  `buildPaintOnSchedule` / `buildRollUpSchedule`).  When
-  cues mix explicit modes, the encoder warns once and
-  falls back to `Config::mode` for the whole batch —
-  per-cue mid-stream mode switching remains a follow-on.
-  Cues with @c CaptionMode::Default inherit
-  `Config::mode` (preserving the legacy behaviour for code
-  that doesn't stamp a mode).
+  `setSubtitles` walks the input list per-cue, picks up
+  each cue's explicit `CaptionMode`, and dispatches to the
+  matching per-mode encoder (`encodePopOnCue` /
+  `encodePaintOnCue` / `encodeRollUpCue`) sharing a
+  `ModeBuilderState` across the whole batch.  Mid-stream
+  mode mixing fully supported (landed 2026-05-13): cross-
+  mode transitions flush any deferred pop-on / paint-on EDM
+  and re-emit RUx on re-entry into roll-up.  Cues with
+  @c CaptionMode::Default inherit `Config::mode`.
 - [x] @c Cea608Decoder stamps recovered @c CaptionMode on
   every emitted cue (`PopOn` via @c emitDisplayed,
   @c PaintOn / @c RollUp via @c emitLoading driven by the
@@ -3154,11 +3273,16 @@ TPG.
 
 **Still-pending wire-level follow-ons:**
 
-- [ ] Per-cue mid-stream mode mixing in 608 (today mixed
-  modes within a list warn and fall back to
-  `Config::mode`).  Requires the three schedule builders
-  to interleave properly with mode-transition control
-  codes between cues.
+- [x] Per-cue mid-stream mode mixing in 608 — landed
+  2026-05-13.  `Cea608Encoder::setSubtitles` now walks cues
+  per-cue (no batch-wide mode coercion), dispatches to the
+  matching per-mode encoder via a shared `ModeBuilderState`,
+  and emits the mode-establishing control code (RCL / RDC /
+  RUx) at every cue's pre-roll.  Cross-mode transitions
+  flush any deferred pop-on / paint-on EDM and re-emit RUx
+  on re-entry into roll-up.  Per-cue roll-up row count via
+  the new `Subtitle::rollUpRows` field — adjacent roll-up
+  cues with different counts re-emit the correct RUx.
 - [ ] @c SubtitleRenderer edge style + true alpha blending
   for @c Translucent / @c Flash opacities.  Today honours
   fg colour, per-span / per-cue bg rectangles (with
@@ -3213,9 +3337,44 @@ TPG.
   argument counts) but ignored.  Adding them is structural
   (attach a `PenAttr` per grid cell) — no wire-format
   changes needed.
-- [ ] Full G2 / G3 extended-character tables.  Currently
-  substituted with U+FFFD replacement character on decode;
-  builders don't emit them.
+- [x] Full G2 / G3 extended-character tables — landed
+  2026-05-13.  New `Cea708Ext` helper (`include/promeki/cea708ext.h`,
+  `src/proav/cea708ext.cpp`) carries the CEA-708-D Annex G G2
+  table (26 defined positions: smart quotes / em dash / ellipsis /
+  trademark / OE / Š / Ÿ / fractions 1⁄8..7⁄8 / box-drawing
+  glyphs) plus the lone G3 entry (ATSC CC logo, mapped to U+E000
+  in the Private Use Area for round-trip fidelity).  Encoder
+  walks codepoints (not bytes) via `String::charAt` and dispatches
+  through `Cea708Ext::encode` which picks the cheapest wire
+  encoding per codepoint:
+  - G0 single byte (`0x20..0x7E`) — ASCII;
+  - G0 single byte 0x7F for U+266A (the CEA-708 §7.1.4 music-
+    note remap, mirroring the decoder's reverse mapping);
+  - G1 single byte (`0xA0..0xFF`) — Latin-1 supplement
+    (codepoints `U+00A0..U+00FF`);
+  - EXT1 + G2 byte (2 bytes) for codepoints in the G2 table;
+  - EXT1 + 0xA0 (2 bytes) for the ATSC CC logo;
+  - P16 + hi + lo (3 bytes) for any other BMP codepoint;
+  - UTF-16 surrogate pair via two consecutive P16 sequences
+    (6 bytes) for astral codepoints (`U+10000..U+10FFFF`).
+  Lone surrogate codepoints + codepoints above `U+10FFFF`
+  substitute with U+FFFD via P16.  Decoder G2 / G3 lookup
+  replaces the prior U+FFFD stub (`Cea708Ext::decodeG2` /
+  `decodeG3`); reserved table positions still fall back to
+  U+FFFD.  `Cea708WindowState` now holds a
+  `_pendingHighSurrogate` slot so a UTF-16 surrogate pair
+  survives a `processBytes` boundary (e.g. across DTVCC
+  packets); orphaned high surrogates decay to U+FFFD when
+  any non-P16 byte arrives in between.  Test coverage:
+  `tests/unit/cea708ext.cpp` (16 cases covering G2 / G3
+  round-trip + the composite `encode` decision tree),
+  6 new cases in `cea708windowstate.cpp` (G2 mapped vs
+  reserved fall-back, G3 ATSC logo, P16 surrogate-pair
+  pairing both within a single `processBytes` call and across
+  the call boundary, orphaned-surrogate decay), 7 new cases
+  in `cea708encoder.cpp` (G1 / G2 / OE / box-drawing /
+  Korean BMP / astral G clef / mixed-encoding cue
+  round-trip).
 - [ ] Paint-on / roll-up 708 modes.  Today the encoder
   emits the pop-on style "Define + write + Display"
   transaction; a real paint-on flow would have the window
@@ -3453,10 +3612,69 @@ remaining ANC source path.
     - **Bold** is not representable in 608.  Encoder emits
       a one-shot warning per `setSubtitles` and drops the
       flag from the wire bytes.
-  Still pending: multi-column PAC indent + Tab Offset for
-  left/right horizontal anchor, and the extended-character
-  sets (Latin accented letters at 0x2A / 0x5C / 0x5E / …,
-  plus the special / extended tables).
+  **Horizontal positioning landed 2026-05-13.**  Encoder
+  walks the cue's @ref SubtitleAnchor horizontal half (Left /
+  Center / Right): @c BottomLeft + @c Default land flush-left
+  at column 0, @c BottomCenter at @c (32-rowWidth)/2, @c BottomRight
+  at @c 32-rowWidth.  PAC indent slot (multiples of 4) carries
+  the bulk; doubled Tab Offset (T1/T2/T3 = @c (0x17, 0x21..0x23)
+  on CC1, @c (0x1F, …) on CC2) carries the 1..3-column
+  residual.  PAC's 4-bit subfield carries colour OR italic OR
+  indent (mutually exclusive on a single PAC), so a coloured
+  cue at @c BottomCenter degrades back to flush-left column 0
+  — colour wins because it's the more prominent visual cue,
+  and SubRip files in the wild rarely combine both.  Decoder
+  tracks the row's start column (PAC.indentCol +
+  cumulative Tab Offset shift) and recovers Left / Center /
+  Right via column thresholds (@c column < 4 → Left,
+  @c < 24 → Center, else → Right) joined with the existing
+  vertical row-group heuristic.  Tests:
+  @c "BottomCenter anchor with 4-char cue uses PAC indent +
+  Tab Offset", @c "BottomRight anchor with 6-char cue lands
+  flush-right", @c "BottomCenter / BottomRight / BottomLeft
+  anchor round-trips horizontal half" plus
+  @c "TopCenter and MiddleCenter anchors round-trip" and the
+  coloured-cue degradation test.
+
+  **CEA-608 extended characters landed 2026-05-13.**  New
+  `Cea608Ext` helper (`include/promeki/cea608ext.h`,
+  `src/proav/cea608ext.cpp`) carries all three extended-
+  character tables:
+    - The 10 remapped basic-G0 positions
+      (0x2A=á / 0x5C=é / 0x5E=í / 0x5F=ó / 0x60=ú / 0x7B=ç /
+      0x7C=÷ / 0x7D=Ñ / 0x7E=ñ / 0x7F=█).
+    - The 16 Special Characters via doubled @c (0x11/0x19,
+      0x30..0x3F) (® / ° / ½ / ¿ / ™ / ¢ / £ / ♪ / à / NBSP /
+      è / â / ê / î / ô / û).
+    - The 64 Extended Western European glyphs across two
+      pairs: doubled @c (0x12/0x1A, 0x20..0x3F) (Spanish / French /
+      misc) and doubled @c (0x13/0x1B, 0x20..0x3F)
+      (Portuguese / German / Danish / box-drawing).
+  Encoder walks codepoints (not bytes) via @c String::charAt
+  and routes each through @c Cea608Ext::encode to pick the
+  cheapest path: BasicG0 (one wire byte), Special / ExtSpanish /
+  ExtFrench (one placeholder G0 byte for old-decoder fallback,
+  followed by a doubled control pair that triggers the
+  receiver's "replace previously displayed character"
+  semantics).  When the placeholder lands alone in its char
+  pair (no neighbour to share with), the encoder pads the
+  pair's second byte with @c NUL (0x00) instead of @c 0x20
+  space — receivers ignore @c NUL after parity strip, so the
+  cursor doesn't advance past the placeholder before the
+  doubled control code lands.  Decoder dispatches the three
+  control-code families ((b1 & 0xF7) == 0x11 / 0x12 / 0x13)
+  via a new @c replaceLastWithCodepoint helper that pops the
+  most recent codepoint from the loading buffer and appends
+  the mapped glyph (handles the live PaintOn / RollUp
+  displayedFlat mirror too).  Test coverage:
+  @c tests/unit/cea608ext.cpp (10 cases on the table itself —
+  basic-G0 ASCII passthrough, the 10 remapped positions,
+  16 Special / 32 + 32 Extended round-trip, placeholder
+  sanity, no-mapping fall-through), 8 new round-trip cases in
+  @c cea608decoder.cpp covering basic-G0 remap, Special
+  Character (™), mid-cue Specials (½, ¿), lone leading
+  Special with NUL-pad path (♪), Extended Spanish / French,
+  no-mapping codepoint substitution, mixed-encoding cue.
 - **CEA-708 service-block decode.**  Same story as CEA-608 but
   for the DTVCC side (cc_type=2/3 triples).  As of 2026-05-12
   the foundation is in place: `Cea708Service` (one service

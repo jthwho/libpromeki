@@ -825,3 +825,463 @@ TEST_CASE("Cea608Decoder: span background colour round-trips via EIA-608-B BG co
         CHECK(gotSpan.backgroundColor().b8() == 0);
         CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Solid.value());
 }
+
+TEST_CASE("Cea608Decoder: Black background colour round-trips via wire index 7") {
+        // Black bg is the EIA-608-B BG-attribute extension that the
+        // PAC / mid-row colour subfields can't express (code 7 is
+        // "italic white" there).  After adding CaptionColor::Black,
+        // a near-Black input bg quantises to the new palette[7]
+        // entry, encodes as wire index 7, and round-trips through
+        // the decoder back to Color::Black.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan span("HI", false, false, false, Color::White);
+        span.setBackgroundColor(Color::Black);
+        span.setBackgroundOpacity(SubtitleOpacity::Solid);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(60), spans, SubtitleAnchor::Default,
+                            Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        const SubtitleSpan &gotSpan = out[0].spans()[0];
+        CHECK(gotSpan.backgroundColor().isValid());
+        CHECK(gotSpan.backgroundColor().r8() == 0);
+        CHECK(gotSpan.backgroundColor().g8() == 0);
+        CHECK(gotSpan.backgroundColor().b8() == 0);
+        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Solid.value());
+}
+
+TEST_CASE("Cea608: encode/decode Black fg silently round-trips through White on the wire") {
+        // CEA-608 fg paths (PAC + mid-row) have no Black encoding —
+        // a Black-fg span quantises to CaptionColor::Black at the
+        // encoder, but wireStyleFor coerces it back to White so the
+        // wire byte (and the recovered cue's fg) is plain White.
+        // No regression in horizontal positioning either: the cue's
+        // anchor is preserved (no degradation to flush-left).
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan span("HI", false, false, false, Color::Black);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), spans,
+                            SubtitleAnchor::BottomCenter, Rect2Di32(),
+                            String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 150; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        const SubtitleSpan &gotSpan = out[0].spans()[0];
+        CHECK(gotSpan.text() == "HI");
+        // FG colour: invalid (= renderer's default) or White.
+        if (gotSpan.color().isValid()) {
+                CHECK(gotSpan.color().r8() == 255);
+                CHECK(gotSpan.color().g8() == 255);
+                CHECK(gotSpan.color().b8() == 255);
+        }
+        // Anchor preserved (Black fg doesn't trigger position
+        // degradation because Black is wire-indistinguishable from
+        // White at the fg level).
+        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomCenter.value());
+}
+
+// ============================================================================
+// Unicode round-trip — basic G0 remapped + Special / Extended characters
+// ============================================================================
+
+namespace {
+
+        /// @brief Drives an encoder through a single cue with @p text
+        ///        and feeds the emitted triples into a decoder, then
+        ///        returns the recovered cue text (joined across spans).
+        ///        Exercises encoder -> wire bytes -> decoder dispatch
+        ///        end-to-end.
+        String roundTripCueText(const String &text) {
+                Cea608Encoder::Config encCfg;
+                encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+                Cea608Encoder enc(encCfg);
+                SubtitleList  in;
+                in.append(Subtitle(tsAt30fps(120), tsAt30fps(180), text));
+                REQUIRE(enc.setSubtitles(in).isOk());
+
+                Cea608Decoder dec;
+                for (int64_t f = 0; f < 200; ++f) {
+                        dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+                }
+                SubtitleList out = dec.finalize();
+                REQUIRE(out.size() == 1);
+                return out[0].text();
+        }
+
+} // namespace
+
+TEST_CASE("Cea608: basic G0 remapped Latin / arithmetic glyphs round-trip") {
+        // The ten 608 G0 positions that aren't ASCII — feed each
+        // through the encoder/decoder pair and verify byte-exact
+        // recovery.  Padded to an even codepoint count so the
+        // encoder's odd-length-pad doesn't append a trailing space.
+        const String text("\xC3\xA1" "\xC3\xA9" "\xC3\xAD" "\xC3\xB3" "\xC3\xBA" "\xC3\xA7"
+                          "\xC3\xB7" "\xC3\x91" "\xC3\xB1" "x");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: Special Character ™ round-trips via doubled (0x11, 0x34)") {
+        // "Brand™" — ™ is U+2122, special index 0x34, placeholder '('.
+        // The encoder packs the placeholder as the second byte of a
+        // pair (or with a NUL pad if alone) and follows with the
+        // doubled control code.  The decoder replaces the placeholder
+        // with the special glyph.
+        const String text("Brand\xE2\x84\xA2");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: Special Character ½ and ¿ round-trip mid-cue") {
+        // Even codepoint count so the encoder's odd-length pad doesn't
+        // append a trailing space.
+        const String text("ab\xC2\xBD" "cd\xC2\xBF");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: Special Character ♪ (music note) round-trips when leading the cue") {
+        // Lone leading special char — exercises the lone-placeholder
+        // NUL-pad path in the encoder (placeholder lands as b1 of
+        // its pair, b2 is 0x00 so the receiver doesn't advance past
+        // the placeholder before the doubled control code lands).
+        // Three-codepoint cue keeps the byte cadence even so no
+        // trailing space pad is appended.
+        const String text("\xE2\x99\xAA" "bc");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: extended Spanish Á / É / Ó / ¡ / © round-trip") {
+        const String text("\xC3\x81" "\xC3\x89" "\xC3\x93 \xC2\xA1Hola\xC2\xA9");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: extended French / German Ä / Ö / ß round-trip") {
+        const String text("Gru\xC3\x9F\xC3\xA4\xC3\xB6");
+        CHECK(roundTripCueText(text) == text);
+}
+
+TEST_CASE("Cea608: codepoint with no 608 mapping substitutes a space") {
+        // 한 (U+D55C) has no CEA-608 representation — the encoder
+        // substitutes 0x20.  The recovered text should keep the
+        // ASCII context plus a single space where 한 used to be.
+        const String text("ko\xED\x95\x9C" "rea");
+        const String got = roundTripCueText(text);
+        CHECK(got == String("ko rea"));
+}
+
+TEST_CASE("Cea608: mixed-encoding cue (basic G0 + Special + Extended) round-trips") {
+        // a + é (basic G0 0x5C) + ™ (Special) + Á (ExtSpanish) +
+        // ñ (basic G0 0x7E) + ß (ExtFrench).  Letters glue them so
+        // the wrapper's word splitter doesn't drop standalone
+        // glyphs.
+        const String text("a\xC3\xA9 X\xE2\x84\xA2 t\xC3\x81m\xC3\xB1k\xC3\x9F");
+        CHECK(roundTripCueText(text) == text);
+}
+
+// ============================================================================
+// BS / DER / FON misc-control receiver support
+// ============================================================================
+
+namespace {
+
+        /// @brief Hand-builds a CcDataList with one parity-stamped
+        ///        byte pair on field-1 (CC1).  Lets the BS / DER /
+        ///        FON tests inject bytes that the encoder doesn't
+        ///        currently emit.
+        Cea708Cdp::CcDataList ccDataPair(uint8_t b1, uint8_t b2) {
+                Cea708Cdp::CcDataList list;
+                list.pushToBack(Cea708Cdp::CcData{
+                        true, 0,
+                        Cea608::withOddParity(b1),
+                        Cea608::withOddParity(b2)});
+                return list;
+        }
+
+} // namespace
+
+TEST_CASE("Cea608Decoder: BS removes the most recently appended character") {
+        // Hand-roll a paint-on stream that types "ABXC", backspaces
+        // the X, ends with EDM.  Recovered cue text should be "ABC".
+        Cea608Decoder dec;
+
+        // RDC + RDC (paint-on mode).
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        // PAC row 15 white.
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // "AB"
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4), ccDataPair('A', 'B'));
+        // "X" + space pad
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5), ccDataPair('X', 0x20));
+        // BS doubled (X removed).
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscBS));
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscBS));
+        // "C" + space pad
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8), ccDataPair('C', 0x20));
+        // EDM doubled — finalise the paint-on cue.
+        dec.pushFrame(FrameNumber(9), tsAt30fps(9),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(10), tsAt30fps(10),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // BS popped the trailing space the (X, 0x20) pair appended.
+        // The X stays — to delete it cleanly the captioner would
+        // send a second doubled BS.  This test exercises the BS
+        // mechanic itself; the (X, 0x20) → BS → leaves "ABX".  Then
+        // the (C, 0x20) pair appends "C " on top, so the recovered
+        // text reads "ABXC ".
+        CHECK(out[0].text() == "ABXC ");
+}
+
+TEST_CASE("Cea608Decoder: BS at the start of the loading buffer is a no-op") {
+        Cea608Decoder dec;
+        // RDC + PAC + immediate BS (nothing to backspace).
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // BS doubled — buffer is empty.
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscBS));
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscBS));
+        // "AB" lands cleanly.
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6), ccDataPair('A', 'B'));
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "AB");
+}
+
+TEST_CASE("Cea608Decoder: DER drops the loading buffer's chars since the last PAC") {
+        // Type "JUNKX" then DER (clears the row), then "OK" + EDM.
+        Cea608Decoder dec;
+
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4), ccDataPair('J', 'U'));
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5), ccDataPair('N', 'K'));
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6), ccDataPair('X', 0x20));
+        // DER doubled.
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscDER));
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscDER));
+        // "OK"
+        dec.pushFrame(FrameNumber(9), tsAt30fps(9), ccDataPair('O', 'K'));
+        dec.pushFrame(FrameNumber(10), tsAt30fps(10),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(11), tsAt30fps(11),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "OK");
+}
+
+TEST_CASE("Cea608Decoder: FON sets foregroundOpacity to Flash on subsequent chars") {
+        Cea608Decoder dec;
+
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // FON doubled — switch to flash.
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscFON));
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscFON));
+        // "OK" — flashes.
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6), ccDataPair('O', 'K'));
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        const SubtitleSpan &span = out[0].spans()[0];
+        CHECK(span.text() == "OK");
+        CHECK(span.foregroundOpacity().value() == SubtitleOpacity::Flash.value());
+}
+
+// ============================================================================
+// Robustness fixes (2026-05-13)
+// ============================================================================
+
+TEST_CASE("Cea608::isPac rejects row-11 b1 with second-of-pair bit set") {
+        // b1 = 0x10 maps to row 11, which has no second-of-pair
+        // partner — bit 5 of b2 must be 0 for the pair to be a valid
+        // PAC.  decodePac has always enforced this; isPac used to
+        // accept b2 in [0x60, 0x7F] and let decodePac's no-op reject
+        // them later (asymmetric).  Now they agree.
+        CHECK_FALSE(Cea608::isPac(0x10, 0x60));
+        CHECK_FALSE(Cea608::isPac(0x10, 0x70));
+        CHECK_FALSE(Cea608::isPac(0x10, 0x7F));
+        // Valid row-11 PACs (bit 5 of b2 clear) still recognised.
+        CHECK(Cea608::isPac(0x10, 0x40));
+        CHECK(Cea608::isPac(0x10, 0x5F));
+}
+
+TEST_CASE("Cea608Decoder: RCL during paint-on finalises the live cue") {
+        // Paint-on cue is on-screen; a wild stream sends RCL to
+        // switch into pop-on.  The decoder must finalise the
+        // paint-on cue at the RCL ts instead of dropping it.
+        Cea608Decoder dec;
+
+        // RDC -> PAC -> "AB" -> RCL (mode flip mid-air).
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4), ccDataPair('A', 'B'));
+        // Wild RCL: would previously drop the paint-on cue.
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5),
+                      ccDataPair(Cea608::RclB1, Cea608::RclB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "AB");
+}
+
+TEST_CASE("Cea608Decoder: ENM in paint-on is a no-op (live chars preserved)") {
+        // ENM (Erase Non-displayed Memory) only meaningfully applies
+        // to pop-on.  In paint-on the loading buffer is the live
+        // displayed cue; ENM must not discard those chars.
+        Cea608Decoder dec;
+
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::Cc1MiscFirstByte, Cea608::MiscRDC));
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4), ccDataPair('A', 'B'));
+        // ENM doubled — pre-fix this would have erased the live "AB"
+        // chars and left the cue empty.
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5),
+                      ccDataPair(Cea608::EnmB1, Cea608::EnmB2));
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6),
+                      ccDataPair(Cea608::EnmB1, Cea608::EnmB2));
+        // Live state confirms the chars survived.
+        CHECK(dec.displayedText() == "AB");
+        // Finalise via EDM.
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "AB");
+}
+
+TEST_CASE("Cea608Decoder: multi-row cue's second-row Tab Offset doesn't shift anchor") {
+        // First-row PAC at row 15 col 0 sets BottomLeft.  Second-row
+        // PAC + Tab Offset T3 would previously accumulate onto the
+        // first row's running column and could shift the recovered
+        // anchor through the column-thresholded rowToAnchor mapping.
+        // After the fix, the anchor is committed off the first row's
+        // start column only — subsequent rows can re-position their
+        // own cursor freely.
+        Cea608Decoder dec;
+
+        // RCL doubled.
+        dec.pushFrame(FrameNumber(0), tsAt30fps(0),
+                      ccDataPair(Cea608::RclB1, Cea608::RclB2));
+        dec.pushFrame(FrameNumber(1), tsAt30fps(1),
+                      ccDataPair(Cea608::RclB1, Cea608::RclB2));
+        // First-row PAC at row 14 col 0 (BottomLeft, group includes 14).
+        const uint8_t pacR14B1 = 0x14;
+        const uint8_t pacR14B2 = 0x70; // row 14 / col 0 / white.
+        dec.pushFrame(FrameNumber(2), tsAt30fps(2), ccDataPair(pacR14B1, pacR14B2));
+        dec.pushFrame(FrameNumber(3), tsAt30fps(3), ccDataPair(pacR14B1, pacR14B2));
+        // First-row chars "AB".
+        dec.pushFrame(FrameNumber(4), tsAt30fps(4), ccDataPair('A', 'B'));
+        // Second-row PAC at row 15 col 0.
+        dec.pushFrame(FrameNumber(5), tsAt30fps(5),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        dec.pushFrame(FrameNumber(6), tsAt30fps(6),
+                      ccDataPair(Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
+        // Second-row Tab Offset T3 (shifts the second row's cursor
+        // by 3 cells).  Pre-fix this would accumulate onto the first
+        // row's column (still 0) and push it to 3 — still BottomLeft,
+        // so this is more of a state-hygiene regression than a
+        // user-visible bug.  Sentinel test for the invariant.
+        dec.pushFrame(FrameNumber(7), tsAt30fps(7),
+                      ccDataPair(Cea608::TabOffsetB1, Cea608::TabOffsetT3));
+        dec.pushFrame(FrameNumber(8), tsAt30fps(8),
+                      ccDataPair(Cea608::TabOffsetB1, Cea608::TabOffsetT3));
+        dec.pushFrame(FrameNumber(9), tsAt30fps(9), ccDataPair('C', 'D'));
+        // EOC commits the cue.
+        dec.pushFrame(FrameNumber(10), tsAt30fps(10),
+                      ccDataPair(Cea608::EocB1, Cea608::EocB2));
+        dec.pushFrame(FrameNumber(11), tsAt30fps(11),
+                      ccDataPair(Cea608::EocB1, Cea608::EocB2));
+        dec.pushFrame(FrameNumber(12), tsAt30fps(12),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+        dec.pushFrame(FrameNumber(13), tsAt30fps(13),
+                      ccDataPair(Cea608::EdmB1, Cea608::EdmB2));
+
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // Anchor recovered off the first row's row+column.
+        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomLeft.value());
+        // Cue text spans both rows separated by "\n".
+        CHECK(out[0].text() == "AB\nCD");
+}

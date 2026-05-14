@@ -366,14 +366,85 @@ TEST_CASE("Cea708WindowState: truncated multi-byte command consumes available by
         CHECK(st.anyVisible());
 }
 
-TEST_CASE("Cea708WindowState: EXT1 + G2 byte substitutes with U+FFFD replacement") {
+TEST_CASE("Cea708WindowState: EXT1 + G2 byte decodes to the mapped codepoint") {
+        // G2 0x32 → U+2019 RIGHT SINGLE QUOTATION MARK (close single quote).
         std::vector<uint8_t> cmds = defineWindow0(4, true);
         cmds.push_back(0x10); // EXT1
-        cmds.push_back(0x32); // G2 byte (would map to a special char in full spec)
+        cmds.push_back(0x32); // G2: close single quote
         Cea708WindowState st;
         st.processBytes(cmds.data(), cmds.size());
-        // U+FFFD = 0xEF 0xBF 0xBD in UTF-8.
+        // U+2019 in UTF-8: 0xE2 0x80 0x99.
+        CHECK(st.visibleText() == "\xE2\x80\x99");
+}
+
+TEST_CASE("Cea708WindowState: EXT1 + reserved G2 byte falls back to U+FFFD") {
+        // 0x22 is one of the reserved positions in the G2 table — no
+        // defined glyph, so the decoder substitutes the replacement
+        // character.
+        std::vector<uint8_t> cmds = defineWindow0(4, true);
+        cmds.push_back(0x10); // EXT1
+        cmds.push_back(0x22); // reserved G2 position
+        Cea708WindowState st;
+        st.processBytes(cmds.data(), cmds.size());
         CHECK(st.visibleText() == "\xEF\xBF\xBD");
+}
+
+TEST_CASE("Cea708WindowState: EXT1 + 0xA0 decodes to the ATSC CC logo (U+E000)") {
+        // The lone defined G3 position carries the ATSC CC logo, which
+        // the library maps to a Private Use Area codepoint so the
+        // glyph round-trips.
+        std::vector<uint8_t> cmds = defineWindow0(4, true);
+        cmds.push_back(0x10); // EXT1
+        cmds.push_back(0xA0); // G3: ATSC CC logo
+        Cea708WindowState st;
+        st.processBytes(cmds.data(), cmds.size());
+        // U+E000 in UTF-8: 0xEE 0x80 0x80.
+        CHECK(st.visibleText() == "\xEE\x80\x80");
+}
+
+TEST_CASE("Cea708WindowState: P16 with a UTF-16 surrogate pair decodes to one astral codepoint") {
+        // U+1D11E (MUSICAL SYMBOL G CLEF) — surrogate pair D834 DD1E.
+        std::vector<uint8_t> cmds = defineWindow0(4, true);
+        cmds.push_back(0x18); // P16
+        cmds.push_back(0xD8);
+        cmds.push_back(0x34);
+        cmds.push_back(0x18); // P16
+        cmds.push_back(0xDD);
+        cmds.push_back(0x1E);
+        Cea708WindowState st;
+        st.processBytes(cmds.data(), cmds.size());
+        // U+1D11E in UTF-8: 0xF0 0x9D 0x84 0x9E.
+        CHECK(st.visibleText() == "\xF0\x9D\x84\x9E");
+}
+
+TEST_CASE("Cea708WindowState: orphaned high surrogate decays to U+FFFD") {
+        // High surrogate followed by a non-P16 byte — the surrogate
+        // pair is broken; the decoder commits the orphaned half as
+        // U+FFFD before processing the new byte.
+        std::vector<uint8_t> cmds = defineWindow0(4, true);
+        cmds.push_back(0x18); // P16
+        cmds.push_back(0xD8);
+        cmds.push_back(0x34); // high surrogate
+        cmds.push_back('A');  // G0 — breaks the pairing
+        Cea708WindowState st;
+        st.processBytes(cmds.data(), cmds.size());
+        CHECK(st.visibleText() == "\xEF\xBF\xBD" "A");
+}
+
+TEST_CASE("Cea708WindowState: surrogate pair survives a processBytes split") {
+        // High surrogate is the last byte of one processBytes call;
+        // the low surrogate starts the next.  The pair must still join
+        // because Cea708WindowState retains the pending high half on
+        // its state.
+        std::vector<uint8_t> cmds = defineWindow0(4, true);
+        cmds.push_back(0x18); // P16
+        cmds.push_back(0xD8);
+        cmds.push_back(0x34); // high surrogate
+        Cea708WindowState st;
+        st.processBytes(cmds.data(), cmds.size());
+        std::vector<uint8_t> tail = {0x18, 0xDD, 0x1E}; // P16 + low surrogate
+        st.processBytes(tail.data(), tail.size());
+        CHECK(st.visibleText() == "\xF0\x9D\x84\x9E");
 }
 
 TEST_CASE("Cea708WindowState: empty input is a no-op") {

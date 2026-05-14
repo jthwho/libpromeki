@@ -131,14 +131,28 @@ struct Cea608 {
                 // -- CEA-608 colour palette ---------------------------------
 
                 /**
-                 * @brief CEA-608's 7-colour primary palette.
+                 * @brief CEA-608's 8-colour palette.
                  *
                  * 608 doesn't carry arbitrary RGB — every styled span
-                 * has to be quantized to one of these primaries.  The
+                 * has to be quantised to one of these primaries.  The
                  * enum values are the @c PreambleColor codes the spec
-                 * uses internally (also accepted as mid-row colour
-                 * indices), so the same values double as the "colour
-                 * subfield" inside @ref encodePac and @ref encodeMidRow.
+                 * uses internally (also accepted as mid-row + BG-
+                 * attribute colour indices), so the same values
+                 * double as the "colour subfield" inside
+                 * @ref encodePac, @ref encodeMidRow, and
+                 * @ref encodeBgAttribute.
+                 *
+                 * Index 0..6 (White / Green / Blue / Cyan / Red /
+                 * Yellow / Magenta) are valid for both foreground
+                 * (PAC + mid-row) and background paths.  Index 7
+                 * (Black) is **BG-attribute only** — the foreground
+                 * subfields don't carry Black (the spec carves the
+                 * code-7 slot out for "italic white" in PAC and
+                 * mid-row, leaving only the BG-attribute code family
+                 * with a Black entry).  @ref encodePac /
+                 * @ref encodeMidRow treat @c Black as @c White on
+                 * the wire; @ref encodeBgAttribute round-trips it
+                 * with index 7.
                  *
                  * Italic captions in CEA-608 are encoded as "italic
                  * white" — italic isn't combinable with a non-white
@@ -154,13 +168,30 @@ struct Cea608 {
                         Red     = 4,
                         Yellow  = 5,
                         Magenta = 6,
+                        Black   = 7, ///< BG-attribute only — fg paths treat as White.
                 };
 
                 /**
-                 * @brief Number of palette entries (7 — the spec's
-                 *        well-known primaries).
+                 * @brief Number of palette entries (8 — 7 primaries
+                 *        plus Black for BG attribute).
                  */
-                static constexpr size_t CaptionColorCount = 7;
+                static constexpr size_t CaptionColorCount = 8;
+
+                /**
+                 * @brief Number of palette entries that round-trip
+                 *        through the foreground paths (PAC + mid-row
+                 *        colour subfield).
+                 *
+                 * The PAC + mid-row colour subfield carries 3 bits;
+                 * code 7 is reserved for "italic white", leaving 7
+                 * encodable foreground primaries (White / Green /
+                 * Blue / Cyan / Red / Yellow / Magenta).  Black
+                 * (palette index 7) is BG-attribute only — fg paths
+                 * silently fall back to White on the wire.  Tests
+                 * that iterate the round-trip-able fg colour set use
+                 * this constant.
+                 */
+                static constexpr size_t FgCaptionColorCount = 7;
 
                 /**
                  * @brief sRGB Color values for each @ref CaptionColor in
@@ -312,6 +343,63 @@ struct Cea608 {
                  */
                 static bool decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor,
                                               bool &outSemiTransparent);
+
+                // -- Tab Offset codes (EIA-608-B §7.6) ---------------------
+                //
+                // Tab Offset codes nudge the pen position 1, 2, or 3
+                // columns to the right of where a PAC just landed it.
+                // They're the fine-grained complement to PAC's
+                // multiples-of-4 indent slots: PAC indent 8 + Tab
+                // Offset T2 places a row at column 10 (8 + 2).  The
+                // encoder uses them to honour @ref SubtitleAnchor's
+                // horizontal half (Center / Right) when the cue's
+                // computed start column isn't already a multiple of 4.
+
+                /// @brief First wire byte for a CC1 Tab Offset code.
+                ///        CC2 form is @c 0x1F (channel-bit OR'd in).
+                static constexpr uint8_t TabOffsetB1 = 0x17;
+
+                /// @brief Second-byte values for the three Tab Offset
+                ///        codes — T1 advances the pen by 1 column, T2
+                ///        by 2, T3 by 3.
+                static constexpr uint8_t TabOffsetT1 = 0x21;
+                static constexpr uint8_t TabOffsetT2 = 0x22;
+                static constexpr uint8_t TabOffsetT3 = 0x23;
+
+                /**
+                 * @brief Encodes a Tab Offset code for a 1, 2, or 3
+                 *        column shift.
+                 *
+                 * Always succeeds — values outside @c [1, 3] clamp to
+                 * the nearest in-range value.  Bytes are returned
+                 * pre-parity (bit 7 zero); callers stamp odd parity
+                 * via @ref withOddParity at emit time.
+                 *
+                 * @param columns Column shift (1, 2, or 3).
+                 * @param[out] b1 First wire byte (always
+                 *                @ref TabOffsetB1 = @c 0x17).
+                 * @param[out] b2 Second wire byte (one of
+                 *                @ref TabOffsetT1 / @ref TabOffsetT2 /
+                 *                @ref TabOffsetT3).
+                 */
+                static void encodeTabOffset(int columns, uint8_t &b1, uint8_t &b2);
+
+                /**
+                 * @brief Returns @c true when @c (b1, b2) is a CC1
+                 *        Tab Offset code.
+                 */
+                static bool isTabOffset(uint8_t b1, uint8_t b2);
+
+                /**
+                 * @brief Decodes a Tab Offset code into the column shift.
+                 *
+                 * @param b1 First wire byte (pre-parity).
+                 * @param b2 Second wire byte (pre-parity).
+                 * @param[out] outColumns Column shift (1, 2, or 3).
+                 * @return @c true on success; @c false when @c (b1, b2)
+                 *         is not a Tab Offset code.
+                 */
+                static bool decodeTabOffset(uint8_t b1, uint8_t b2, int &outColumns);
 
                 // -- Null pair (no-op filler) -------------------------------
 

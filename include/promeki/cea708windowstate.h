@@ -335,6 +335,18 @@ class Cea708WindowState {
                 int           _currentWindow = 0;
                 Cea708PenAttr _pen;
 
+                /// @brief UTF-16 high surrogate held over from the most
+                ///        recent @c P16 — combined with the next @c P16
+                ///        when that arrives bearing a low surrogate.
+                ///        Cleared by @ref reset and any non-P16 byte
+                ///        that lands in between (an unpaired high
+                ///        surrogate decays to U+FFFD).  Persisted on
+                ///        the state so a surrogate pair split across
+                ///        @ref processBytes calls (e.g. across DTVCC
+                ///        packets) still pairs correctly.  Zero means
+                ///        no pending surrogate.
+                uint32_t _pendingHighSurrogate = 0;
+
                 static int clampId(int id) {
                         if (id < 0) return 0;
                         if (id > 7) return 7;

@@ -39,6 +39,7 @@
 #include <promeki/map.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/ancformat.h>
+#include <promeki/cea608packet.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/subtitle.h>
 #include <promeki/audiochannelmap.h>
@@ -217,6 +218,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeVariantMap, VariantMap)                                                                                  \
         X(TypeXmlDocument, XmlDocument)                                                                                \
         X(TypeCea708Cdp, Cea708Cdp)                                                                                    \
+        X(TypeCea608, Cea608Packet)                                                                                    \
         X(TypeSubtitle, Subtitle)                                                                                      \
         PROMEKI_VARIANT_TYPES_NETWORK
 

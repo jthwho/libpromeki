@@ -9,6 +9,7 @@
 #include <chrono>
 #include <doctest/doctest.h>
 #include <promeki/cea608.h>
+#include <promeki/cea608decoder.h>
 #include <promeki/cea608encoder.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/framenumber.h>
@@ -42,6 +43,14 @@ namespace {
         ///        assertion.
         bool tripleHasBytes(const Cea708Cdp::CcData &t, uint8_t expB1, uint8_t expB2) {
                 return Cea608::stripParity(t.b1) == expB1 && Cea608::stripParity(t.b2) == expB2;
+        }
+
+        /// @brief Returns the TimeStamp at frame @p frame for 30 fps.
+        ///        Uses the same rounded-ms mapping the encoder applies,
+        ///        so a TS computed via @c tsAt30fps(N) round-trips to
+        ///        frame @c N through @c timeStampToFrame.
+        TimeStamp tsAt30fps(int64_t frame) {
+                return tsFromMs((frame * 1000 + 15) / 30);
         }
 
 } // namespace
@@ -115,14 +124,22 @@ TEST_CASE("Cea608Encoder: paint-on + roll-up modes are accepted") {
         }
 }
 
-TEST_CASE("Cea608Encoder: non-CC1 channel -> setSubtitles fails Error::NotImplemented") {
-        Cea608Encoder::Config cfg;
-        cfg.frameRate = FrameRate(FrameRate::FPS_30);
-        cfg.channel = Cea608Encoder::Channel::CC3;
-        Cea608Encoder enc(cfg);
-        SubtitleList  subs;
-        subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "X"));
-        CHECK(enc.setSubtitles(subs).code() == Error::NotImplemented);
+TEST_CASE("Cea608Encoder: every channel (CC1..CC4) accepts setSubtitles") {
+        // CC1/CC2/CC3/CC4 all schedule successfully; per-channel
+        // wire-byte verification lives in the dedicated CC2 round-
+        // trip tests further down.
+        for (Cea608Encoder::Channel ch : {Cea608Encoder::Channel::CC1,
+                                          Cea608Encoder::Channel::CC2,
+                                          Cea608Encoder::Channel::CC3,
+                                          Cea608Encoder::Channel::CC4}) {
+                Cea608Encoder::Config cfg;
+                cfg.frameRate = FrameRate(FrameRate::FPS_30);
+                cfg.channel = ch;
+                Cea608Encoder enc(cfg);
+                SubtitleList  subs;
+                subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "X"));
+                CHECK(enc.setSubtitles(subs).isOk());
+        }
 }
 
 // ============================================================================
@@ -878,30 +895,652 @@ TEST_CASE("Cea608::isBgAttribute rejects PAC and mid-row bytes") {
         CHECK_FALSE(Cea608::isBgAttribute(0x11, 0x20));
 }
 
-TEST_CASE("Cea608Encoder: mixed cue modes warn and fall back to Config.mode") {
-        // Two cues with different explicit modes → encoder warns and
-        // dispatches the whole batch under Config.mode (PopOn default).
+TEST_CASE("Cea608Encoder: mixed cue modes encode per-cue mode-establishing control codes") {
+        // Three cues with three explicit modes — each cue should
+        // dispatch under its own mode and emit the matching mode-
+        // establishing control code (RUx / RDC / RCL) in its
+        // pre-roll window.  Cues are spaced far apart so cross-mode
+        // EDM flushes have room to fire.
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
         SubtitleList  subs;
-        Subtitle      cue1(tsFromMs(1000), tsFromMs(2000), "A");
+        Subtitle      cue1(tsFromMs(2000), tsFromMs(3000), "A");
         cue1.setMode(CaptionMode::RollUp);
-        Subtitle cue2(tsFromMs(3000), tsFromMs(4000), "B");
+        Subtitle cue2(tsFromMs(5000), tsFromMs(6000), "B");
         cue2.setMode(CaptionMode::PaintOn);
+        Subtitle cue3(tsFromMs(8000), tsFromMs(9000), "C");
+        cue3.setMode(CaptionMode::PopOn);
         subs.append(cue1);
         subs.append(cue2);
+        subs.append(cue3);
         REQUIRE(enc.setSubtitles(subs).isOk());
-        // Fallback to Config.mode (PopOn) → some RCL (MiscRCL)
-        // pre-roll appears in the [20..30) window before the first
-        // cue's start.  Exact frame depends on layout; just confirm
-        // RCL is present anywhere in the pre-roll range.
-        bool sawRcl = false;
-        for (int64_t f = 20; f < 30; ++f) {
-                if (tripleHasBytes(oneTriple(enc, f), Cea608::Cc1MiscFirstByte, Cea608::MiscRCL)) {
-                        sawRcl = true;
+
+        auto saw = [&](int64_t lo, int64_t hi, uint8_t miscByte) {
+                for (int64_t f = lo; f < hi; ++f) {
+                        if (tripleHasBytes(oneTriple(enc, f),
+                                           Cea608::Cc1MiscFirstByte, miscByte)) {
+                                return true;
+                        }
+                }
+                return false;
+        };
+        // RollUp cue starts at frame 60 (2s @ 30fps) — RUx pre-roll
+        // lands somewhere in [50, 60).
+        CHECK(saw(50, 60, Cea608::MiscRU2));
+        // PaintOn cue starts at frame 150 (5s) — RDC pre-roll lands
+        // somewhere in [140, 150).
+        CHECK(saw(140, 150, Cea608::MiscRDC));
+        // PopOn cue starts at frame 240 (8s) — RCL pre-roll lands
+        // somewhere in [200, 240).
+        CHECK(saw(200, 240, Cea608::MiscRCL));
+}
+
+// ============================================================================
+// CC2 / CC3 / CC4 channel support — channel-bit OR-mask in the wire bytes
+// ============================================================================
+
+TEST_CASE("Cea608Encoder: CC2 RCL pre-roll carries the channel-bit-set first byte (0x1C)") {
+        // CC1 RCL is (0x14, 0x20); CC2 RCL is (0x1C, 0x20) — the channel
+        // selector lives in bit 3 of the first byte.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "AB"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        bool sawCc2Rcl = false;
+        for (int64_t f = 0; f < 60; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                if (Cea608::stripParity(t.b1) == 0x1C
+                    && Cea608::stripParity(t.b2) == Cea608::MiscRCL) {
+                        sawCc2Rcl = true;
                         break;
                 }
         }
-        CHECK(sawRcl);
+        CHECK(sawCc2Rcl);
+}
+
+TEST_CASE("Cea608Encoder: CC2 PAC carries the channel-bit OR'd into bit 3") {
+        // CC1 row-15 white PAC is (0x14, 0x70); CC2 is (0x1C, 0x70).
+        // Default anchor leaves the row at flush-left (column 0) so
+        // the PAC second byte stays the canonical 0x70.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "AB"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        bool sawCc2Pac = false;
+        for (int64_t f = 0; f < 60; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (b1 == 0x1C && b2 == 0x70) {
+                        sawCc2Pac = true;
+                        break;
+                }
+        }
+        CHECK(sawCc2Pac);
+}
+
+TEST_CASE("Cea608Encoder: CC3 emits cc_type=1 (field 2)") {
+        // CC3 lives in field 2, so its CDP cc_type is 1.  The
+        // intra-field channel byte is the same as CC1 (bit 3 = 0).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.channel = Cea608Encoder::Channel::CC3;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "X"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // Pre-roll RCL at some frame — verify cc_type=1 and the
+        // CC1-shaped first byte (channel bit clear).
+        bool sawCc3Rcl = false;
+        for (int64_t f = 0; f < 60; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                if (t.type == 1
+                    && Cea608::stripParity(t.b1) == Cea608::Cc1MiscFirstByte
+                    && Cea608::stripParity(t.b2) == Cea608::MiscRCL) {
+                        sawCc3Rcl = true;
+                        break;
+                }
+        }
+        CHECK(sawCc3Rcl);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: CC2 round-trips end-to-end") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        // Even-length text avoids the encoder's odd-pair pad
+        // appending a trailing space.
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "Hello CC2!"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder::Config decCfg;
+        decCfg.channel = Cea608Decoder::Channel::CC2;
+        Cea608Decoder dec(decCfg);
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "Hello CC2!");
+}
+
+TEST_CASE("Cea608Encoder + Decoder: CC2 stream isn't picked up by a CC1 decoder") {
+        // Verify channel isolation: the CC2 wire bytes have bit 3 set
+        // in their control-byte first bytes, so a decoder configured
+        // for CC1 (which filters by `(b1 & 0x08) == 0`) drops them all.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "CC2 only"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec; // default CC1
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        CHECK(out.size() == 0);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: time-shared CC1 + CC2 stream both decode independently") {
+        // Real broadcast usage: English on CC1, Spanish on CC2 sharing
+        // the same field-1 wire timeline.  CEA-608 only carries one
+        // channel's byte-pair per frame in a given field — so two
+        // encoders' outputs are *time-multiplexed* (CC1 cue lands in
+        // one window, CC2 cue in another, no overlap).  At the merge
+        // point each frame still has at most one byte pair from each
+        // channel, but in practice they occupy disjoint frame ranges.
+        // Each decoder filters for its own channel via the
+        // @c (b1 & 0x08) == 0/1 channel-bit check.
+        Cea608Encoder::Config encCfg1;
+        encCfg1.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg1.channel = Cea608Encoder::Channel::CC1;
+        Cea608Encoder enc1(encCfg1);
+
+        Cea608Encoder::Config encCfg2;
+        encCfg2.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg2.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc2(encCfg2);
+
+        SubtitleList in1;
+        in1.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "English!"));
+        REQUIRE(enc1.setSubtitles(in1).isOk());
+
+        SubtitleList in2;
+        // CC2 cue is time-shifted past CC1's pre-roll + display +
+        // post-EDM window so the two channels' wire bytes don't
+        // overlap on the field-1 timeline.
+        in2.append(Subtitle(tsAt30fps(180), tsAt30fps(240), "Espanola"));
+        REQUIRE(enc2.setSubtitles(in2).isOk());
+
+        Cea608Decoder dec1; // CC1
+        Cea608Decoder::Config dec2Cfg;
+        dec2Cfg.channel = Cea608Decoder::Channel::CC2;
+        Cea608Decoder dec2(dec2Cfg);
+
+        for (int64_t f = 0; f < 280; ++f) {
+                Cea708Cdp::CcDataList merged;
+                Cea708Cdp::CcDataList l1 = enc1.nextFrame(FrameNumber(f));
+                Cea708Cdp::CcDataList l2 = enc2.nextFrame(FrameNumber(f));
+                for (size_t i = 0; i < l1.size(); ++i) merged.pushToBack(l1[i]);
+                for (size_t i = 0; i < l2.size(); ++i) merged.pushToBack(l2[i]);
+                dec1.pushFrame(FrameNumber(f), tsAt30fps(f), merged);
+                dec2.pushFrame(FrameNumber(f), tsAt30fps(f), merged);
+        }
+        SubtitleList out1 = dec1.finalize();
+        SubtitleList out2 = dec2.finalize();
+        REQUIRE(out1.size() == 1);
+        REQUIRE(out2.size() == 1);
+        CHECK(out1[0].text() == "English!");
+        CHECK(out2[0].text() == "Espanola");
+}
+
+TEST_CASE("Cea608Encoder + Decoder: CC2 special character (™) round-trips") {
+        // Special-character control code for CC1 is (0x11, 0x34); for
+        // CC2 it's (0x19, 0x34) — verifies the channel-bit OR-mask
+        // flows through encodeCharPairs' control emissions too.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.channel = Cea608Encoder::Channel::CC2;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "TM\xE2\x84\xA2"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder::Config decCfg;
+        decCfg.channel = Cea608Decoder::Channel::CC2;
+        Cea608Decoder dec(decCfg);
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == String("TM\xE2\x84\xA2"));
+}
+
+// ============================================================================
+// Per-cue mode mixing — pop-on / paint-on / roll-up in one cue list
+// ============================================================================
+
+TEST_CASE("Cea608Encoder + Decoder: pop-on then paint-on cues round-trip with their own modes") {
+        // Even-length text keeps the encoder's odd-pair pad from
+        // appending a trailing space.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue1(tsAt30fps(60), tsAt30fps(120), "POPS");
+        cue1.setMode(CaptionMode::PopOn);
+        Subtitle cue2(tsAt30fps(180), tsAt30fps(240), "PAIN");
+        cue2.setMode(CaptionMode::PaintOn);
+        in.append(cue1);
+        in.append(cue2);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 280; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "POPS");
+        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
+        CHECK(out[1].text() == "PAIN");
+        CHECK(out[1].mode().value() == CaptionMode::PaintOn.value());
+}
+
+TEST_CASE("Cea608Encoder + Decoder: paint-on then roll-up round-trip with their own modes") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue1(tsAt30fps(60), tsAt30fps(120), "PAIN");
+        cue1.setMode(CaptionMode::PaintOn);
+        Subtitle cue2(tsAt30fps(180), tsAt30fps(240), "ROLL");
+        cue2.setMode(CaptionMode::RollUp);
+        in.append(cue1);
+        in.append(cue2);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 280; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "PAIN");
+        CHECK(out[0].mode().value() == CaptionMode::PaintOn.value());
+        CHECK(out[1].text() == "ROLL");
+        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+}
+
+TEST_CASE("Cea608Encoder + Decoder: three-mode cue list round-trips per-cue modes") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue1(tsAt30fps(60), tsAt30fps(120), "ONEX");
+        cue1.setMode(CaptionMode::PopOn);
+        Subtitle cue2(tsAt30fps(180), tsAt30fps(240), "TWOY");
+        cue2.setMode(CaptionMode::RollUp);
+        Subtitle cue3(tsAt30fps(300), tsAt30fps(360), "TREZ");
+        cue3.setMode(CaptionMode::PaintOn);
+        in.append(cue1);
+        in.append(cue2);
+        in.append(cue3);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 400; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 3);
+        CHECK(out[0].text() == "ONEX");
+        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
+        CHECK(out[1].text() == "TWOY");
+        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+        CHECK(out[2].text() == "TREZ");
+        CHECK(out[2].mode().value() == CaptionMode::PaintOn.value());
+}
+
+TEST_CASE("Cea608Encoder: re-entering RollUp after another mode re-emits RUx") {
+        // First RollUp cue establishes the receiver's roll-up window
+        // with RUx.  An intervening paint-on cue ends roll-up state;
+        // the next RollUp cue must re-emit RUx to re-establish the
+        // window (the receiver doesn't auto-restore from another mode).
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue1(tsAt30fps(60), tsAt30fps(120), "R1");
+        cue1.setMode(CaptionMode::RollUp);
+        Subtitle cue2(tsAt30fps(180), tsAt30fps(240), "P");
+        cue2.setMode(CaptionMode::PaintOn);
+        Subtitle cue3(tsAt30fps(300), tsAt30fps(360), "R2");
+        cue3.setMode(CaptionMode::RollUp);
+        in.append(cue1);
+        in.append(cue2);
+        in.append(cue3);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        // Count RU2 control codes across the schedule — should appear
+        // in two distinct pre-roll windows (before frame 60 and before
+        // frame 300), not just once.
+        int ruxCount = 0;
+        int64_t lastRuxFrame = -100;
+        for (int64_t f = 0; f < 400; ++f) {
+                if (tripleHasBytes(oneTriple(enc, f), Cea608::Cc1MiscFirstByte,
+                                   Cea608::MiscRU2)
+                    && f - lastRuxFrame > 5) {
+                        ++ruxCount;
+                        lastRuxFrame = f;
+                }
+        }
+        // Two distinct RUx pairs (one per roll-up segment); each
+        // segment doubles the RUx so the counter sees both bytes.
+        CHECK(ruxCount >= 2);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: per-cue rollUpRows changes RUx between adjacent cues") {
+        // Two consecutive roll-up cues with different rollUpRows.
+        // The encoder must re-emit RUx with the new row count
+        // (RU2 → RU3) when the count changes between cues.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        Subtitle      cue1(tsAt30fps(60), tsAt30fps(120), "X");
+        cue1.setMode(CaptionMode::RollUp);
+        cue1.setRollUpRows(2);
+        Subtitle cue2(tsAt30fps(180), tsAt30fps(240), "Y");
+        cue2.setMode(CaptionMode::RollUp);
+        cue2.setRollUpRows(3);
+        in.append(cue1);
+        in.append(cue2);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        bool sawRu2 = false;
+        bool sawRu3 = false;
+        for (int64_t f = 0; f < 240; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                if (tripleHasBytes(t, Cea608::Cc1MiscFirstByte, Cea608::MiscRU2)) sawRu2 = true;
+                if (tripleHasBytes(t, Cea608::Cc1MiscFirstByte, Cea608::MiscRU3)) sawRu3 = true;
+        }
+        CHECK(sawRu2);
+        CHECK(sawRu3);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: Default cue mode falls back to Config::mode") {
+        // A cue with CaptionMode::Default should pick up the encoder's
+        // Config::mode (PaintOn here).
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.mode = Cea608Encoder::Mode::PaintOn;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        // Cue keeps Default mode → encoder picks PaintOn.
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "DEFX"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "DEFX");
+        CHECK(out[0].mode().value() == CaptionMode::PaintOn.value());
+}
+
+// ============================================================================
+// Tab Offset constants + helpers
+// ============================================================================
+
+TEST_CASE("Cea608::encodeTabOffset round-trips T1 / T2 / T3 codes") {
+        for (int n : {1, 2, 3}) {
+                uint8_t b1 = 0, b2 = 0;
+                Cea608::encodeTabOffset(n, b1, b2);
+                CHECK(b1 == Cea608::TabOffsetB1);
+                CHECK(b2 == static_cast<uint8_t>(0x20 + n));
+                CHECK(Cea608::isTabOffset(b1, b2));
+                int got = 0;
+                CHECK(Cea608::decodeTabOffset(b1, b2, got));
+                CHECK(got == n);
+        }
+}
+
+TEST_CASE("Cea608::encodeTabOffset clamps out-of-range values to [1,3]") {
+        uint8_t b1 = 0, b2 = 0;
+        Cea608::encodeTabOffset(0, b1, b2);
+        CHECK(b2 == Cea608::TabOffsetT1);
+        Cea608::encodeTabOffset(99, b1, b2);
+        CHECK(b2 == Cea608::TabOffsetT3);
+}
+
+TEST_CASE("Cea608::isTabOffset rejects non-Tab-Offset pairs") {
+        CHECK_FALSE(Cea608::isTabOffset(0x14, Cea608::MiscRCL));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x40));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x20));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x24));
+}
+
+// ============================================================================
+// Horizontal positioning — PAC indent + Tab Offset
+// ============================================================================
+
+TEST_CASE("Cea608Encoder: BottomLeft anchor lands chars at column 0 (no Tab Offset)") {
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "AB",
+                             SubtitleAnchor::BottomLeft));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // No Tab Offset anywhere in the schedule.
+        bool sawTabOffset = false;
+        for (int64_t f = 0; f < 90; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (Cea608::isTabOffset(b1, b2)) {
+                        sawTabOffset = true;
+                        break;
+                }
+        }
+        CHECK_FALSE(sawTabOffset);
+}
+
+TEST_CASE("Cea608Encoder: BottomCenter anchor with 4-char cue uses PAC indent + Tab Offset") {
+        // "WORD" is 4 chars; centered → column = (32-4)/2 = 14.
+        // PAC indent = 12, Tab Offset = T2 (+2 columns).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "WORD",
+                             SubtitleAnchor::BottomCenter));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        bool sawIndentPac = false;
+        bool sawT2 = false;
+        for (int64_t f = 0; f < 90; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (Cea608::isPac(b1, b2)) {
+                        Cea608::PacAttr pac;
+                        if (Cea608::decodePac(b1, b2, pac) && pac.row == 15
+                            && pac.indentCol == 12) {
+                                sawIndentPac = true;
+                        }
+                }
+                if (Cea608::isTabOffset(b1, b2) && b2 == Cea608::TabOffsetT2) {
+                        sawT2 = true;
+                }
+        }
+        CHECK(sawIndentPac);
+        CHECK(sawT2);
+}
+
+TEST_CASE("Cea608Encoder: BottomRight anchor with 6-char cue lands flush-right") {
+        // "ABCDEF" → 6 chars; right-aligned → column 32-6 = 26.
+        // PAC indent = 24, Tab Offset = T2.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "ABCDEF",
+                             SubtitleAnchor::BottomRight));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        bool sawIndentPac = false;
+        bool sawT2 = false;
+        for (int64_t f = 0; f < 90; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (Cea608::isPac(b1, b2)) {
+                        Cea608::PacAttr pac;
+                        if (Cea608::decodePac(b1, b2, pac) && pac.row == 15
+                            && pac.indentCol == 24) {
+                                sawIndentPac = true;
+                        }
+                }
+                if (Cea608::isTabOffset(b1, b2) && b2 == Cea608::TabOffsetT2) {
+                        sawT2 = true;
+                }
+        }
+        CHECK(sawIndentPac);
+        CHECK(sawT2);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: BottomCenter anchor round-trips horizontal half") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "WORD",
+                           SubtitleAnchor::BottomCenter));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "WORD");
+        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomCenter.value());
+}
+
+TEST_CASE("Cea608Encoder + Decoder: BottomRight anchor round-trips horizontal half") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "ABCDEF",
+                           SubtitleAnchor::BottomRight));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "ABCDEF");
+        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomRight.value());
+}
+
+TEST_CASE("Cea608Encoder + Decoder: BottomLeft anchor round-trips horizontal half") {
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "WORD",
+                           SubtitleAnchor::BottomLeft));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "WORD");
+        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomLeft.value());
+}
+
+TEST_CASE("Cea608Encoder + Decoder: TopCenter and MiddleCenter anchors round-trip") {
+        // Two cues spaced apart so each gets its own pre-roll window.
+        // Each tests both vertical group (Top/Middle) + horizontal Center.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "TOPX", SubtitleAnchor::TopCenter));
+        in.append(Subtitle(tsAt30fps(180), tsAt30fps(240), "MIDX", SubtitleAnchor::MiddleCenter));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 280; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "TOPX");
+        CHECK(out[0].anchor().value() == SubtitleAnchor::TopCenter.value());
+        CHECK(out[1].text() == "MIDX");
+        CHECK(out[1].anchor().value() == SubtitleAnchor::MiddleCenter.value());
+}
+
+TEST_CASE("Cea608Encoder: coloured BottomCenter cue degrades to flush-left (PAC colour wins over indent)") {
+        // PAC's 4-bit subfield carries colour OR indent (mutually
+        // exclusive).  When the row needs both, the encoder
+        // preserves colour and drops horizontal positioning back to
+        // column 0.  Verify by looking for the coloured PAC byte
+        // and the *absence* of any Tab Offset codes.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan::List spans;
+        spans.pushToBack(SubtitleSpan("REDX", false, false, false, Color::Red));
+        SubtitleList in;
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), spans, SubtitleAnchor::BottomCenter,
+                           Rect2Di32(), String(), Metadata()));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        bool sawTabOffset = false;
+        bool sawColorPac = false;
+        for (int64_t f = 0; f < 90; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (Cea608::isTabOffset(b1, b2)) sawTabOffset = true;
+                if (Cea608::isPac(b1, b2)) {
+                        Cea608::PacAttr pac;
+                        if (Cea608::decodePac(b1, b2, pac)
+                            && pac.color == Cea608::CaptionColor::Red) {
+                                sawColorPac = true;
+                        }
+                }
+        }
+        CHECK(sawColorPac);
+        CHECK_FALSE(sawTabOffset);
 }

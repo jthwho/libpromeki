@@ -11,6 +11,7 @@
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708encoder.h>
+#include <promeki/cea708ext.h>
 #include <promeki/cea708service.h>
 #include <promeki/cea708windowstate.h>
 #include <promeki/error.h>
@@ -45,13 +46,6 @@ namespace {
         ///        clamp + right-shift; matches the renderer's reverse
         ///        mapping when the decoder reconstructs Color.
         uint8_t channelTo2Bit(uint8_t v) { return static_cast<uint8_t>(v >> 6); }
-
-        /// @brief Reverse of @ref channelTo2Bit — expands 0..3 to a
-        ///        canonical 8-bit value (0, 85, 170, 255).
-        uint8_t channel2BitToByte(uint8_t v) {
-                static const uint8_t expand[4] = {0, 85, 170, 255};
-                return expand[v & 0x03];
-        }
 
         /// @brief Packs a @ref SubtitleSpan's per-span style into the
         ///        2-byte SetPenAttributes argument pair.
@@ -163,13 +157,18 @@ namespace {
                 else                ah = 90;  // right
         }
 
-        /// @brief One cell of laid-out cue content: the printable G0
-        ///        byte to emit plus a pointer to the source span (so
-        ///        SPA / SPC commands can ride immediately before any
-        ///        character whose owning span differs from the wire's
-        ///        current pen state).
+        /// @brief One cell of laid-out cue content: the Unicode
+        ///        codepoint to emit plus a pointer to the source span
+        ///        (so SPA / SPC commands can ride immediately before
+        ///        any character whose owning span differs from the
+        ///        wire's current pen state).
+        ///
+        /// The wire encoding for the codepoint is picked at emission
+        /// time by @ref Cea708Ext::encode, which yields anywhere from
+        /// 1 (G0 / G1) to 6 (UTF-16 surrogate pair via two P16
+        /// sequences) bytes per cell.
         struct LaidOutCell {
-                uint8_t             ch;   ///< G0 byte (0x20..0x7E)
+                char32_t            cp;   ///< Codepoint (U+0020..U+10FFFF)
                 const SubtitleSpan *span; ///< Owning span (style source)
         };
         struct LaidOutRow {
@@ -183,6 +182,12 @@ namespace {
         ///        each row carry their source-span pointer so the
         ///        byte-stream builder can interleave SPA / SPC
         ///        commands at span boundaries.
+        ///
+        /// Walks each span by Unicode codepoint via @c String::charAt
+        /// rather than by raw UTF-8 byte — multi-byte sequences
+        /// produce a single cell, so the receiver's grid sees one
+        /// cell per visible glyph regardless of the source
+        /// encoding's byte cost.
         List<LaidOutRow> layoutCueText(const Subtitle &wrappedCue) {
                 List<LaidOutRow>   rows;
                 rows.emplaceToBack();
@@ -194,16 +199,18 @@ namespace {
                                 rows.emplaceToBack();
                                 continue;
                         }
-                        const char *cp = t.cstr();
-                        const size_t n = t.byteCount();
-                        for (size_t i = 0; i < n; ++i) {
-                                const uint8_t b = static_cast<uint8_t>(cp[i]);
-                                if (b == 0x0A /* literal newline inside a span */) {
+                        const size_t len = t.length();
+                        for (size_t i = 0; i < len; ++i) {
+                                const char32_t cp = t.charAt(i).codepoint();
+                                if (cp == 0x0A /* literal newline inside a span */) {
                                         rows.emplaceToBack();
                                         continue;
                                 }
-                                const uint8_t emit = (b >= 0x20 && b <= 0x7E) ? b : 0x20;
-                                rows.back().cells.pushToBack({emit, &sp});
+                                if (cp == 0x0D /* CR */ || cp == 0x09 /* Tab */) {
+                                        rows.back().cells.pushToBack({U' ', &sp});
+                                        continue;
+                                }
+                                rows.back().cells.pushToBack({cp, &sp});
                         }
                 }
                 while (rows.size() > 1 && rows.back().cells.isEmpty()) rows.popFromBack();
@@ -373,7 +380,11 @@ namespace {
                                                 lastSpcB3 = emitB3;
                                         }
                                 }
-                                bytes.pushToBack(cell.ch);
+                                const Cea708Ext::EncodedChar enc =
+                                        Cea708Ext::encode(static_cast<uint32_t>(cell.cp));
+                                for (uint8_t bi = 0; bi < enc.length; ++bi) {
+                                        bytes.pushToBack(enc.bytes[bi]);
+                                }
                         }
                 }
 

@@ -2115,7 +2115,10 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/cea608.h
         include/promeki/cea608decoder.h
         include/promeki/cea608encoder.h
+        include/promeki/cea608ext.h
+        include/promeki/cea608packet.h
         include/promeki/cea708cdp.h
+        include/promeki/cea708ext.h
         include/promeki/hdmiinfoframe.h
         include/promeki/st291packet.h
         include/promeki/subrip.h
@@ -2198,9 +2201,12 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/cea608.cpp
         src/proav/cea608decoder.cpp
         src/proav/cea608encoder.cpp
+        src/proav/cea608ext.cpp
+        src/proav/cea608packet.cpp
         src/proav/cea708cdp.cpp
         src/proav/cea708decoder.cpp
         src/proav/cea708encoder.cpp
+        src/proav/cea708ext.cpp
         src/proav/cea708service.cpp
         src/proav/cea708windowstate.cpp
         src/proav/hdmiinfoframe.cpp
@@ -3001,9 +3007,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cea608.cpp
         tests/unit/cea608decoder.cpp
         tests/unit/cea608encoder.cpp
+        tests/unit/cea608ext.cpp
+        tests/unit/cea608packet.cpp
         tests/unit/cea708cdp.cpp
         tests/unit/cea708decoder.cpp
         tests/unit/cea708encoder.cpp
+        tests/unit/cea708ext.cpp
         tests/unit/cea708service.cpp
         tests/unit/cea708_subrip_roundtrip.cpp
         tests/unit/cea708windowstate.cpp

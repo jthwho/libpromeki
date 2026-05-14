@@ -345,6 +345,7 @@ class DataStream {
                         TypeSubtitle = 0x5C,    ///< @brief Subtitle (start/end TimeStamps + anchor + region + speaker + Metadata + List<SubtitleSpan>)
                         TypeSubtitleSpan = 0x5D, ///< @brief SubtitleSpan (length-prefixed text + style flags + Color)
                         TypeScc = 0x5E,          ///< @brief Scc (length-prefixed List<Line> of {Timecode, List<uint16_t>})
+                        TypeCea608 = 0x5F,       ///< @brief Cea608 (channel selector + cc_data triple list for one frame)
                 };
 
                 /**
