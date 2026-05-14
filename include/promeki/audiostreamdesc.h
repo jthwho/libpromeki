@@ -243,14 +243,15 @@ class AudioStreamDesc {
 
 /** @brief Writes an AudioStreamDesc as tag + registered name (length-prefixed). */
 inline DataStream &operator<<(DataStream &stream, const AudioStreamDesc &desc) {
-        stream.writeTag(DataStream::TypeAudioStreamDesc);
+        stream.beginFrame(DataStream::TypeAudioStreamDesc, 1);
         stream << desc.name();
+        stream.endFrame();
         return stream;
 }
 
 /** @brief Reads an AudioStreamDesc from tag + name. */
 inline DataStream &operator>>(DataStream &stream, AudioStreamDesc &desc) {
-        if (!stream.readTag(DataStream::TypeAudioStreamDesc)) {
+        if (!stream.readFrame(DataStream::TypeAudioStreamDesc)) {
                 desc = AudioStreamDesc();
                 return stream;
         }

@@ -960,8 +960,9 @@ inline JsonValue JsonArray::const_iterator::operator*() const { return _arr->at(
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const JsonObject &obj) {
-        stream.writeTag(DataStream::TypeJsonObject);
+        stream.beginFrame(DataStream::TypeJsonObject, 1);
         stream << obj.toString(0);
+        stream.endFrame();
         return stream;
 }
 
@@ -972,7 +973,7 @@ inline DataStream &operator<<(DataStream &stream, const JsonObject &obj) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, JsonObject &obj) {
-        if (!stream.readTag(DataStream::TypeJsonObject)) {
+        if (!stream.readFrame(DataStream::TypeJsonObject)) {
                 obj = JsonObject();
                 return stream;
         }
@@ -994,8 +995,9 @@ inline DataStream &operator>>(DataStream &stream, JsonObject &obj) {
  * @brief Writes a JsonArray as a tagged, length-prefixed JSON string.
  */
 inline DataStream &operator<<(DataStream &stream, const JsonArray &arr) {
-        stream.writeTag(DataStream::TypeJsonArray);
+        stream.beginFrame(DataStream::TypeJsonArray, 1);
         stream << arr.toString(0);
+        stream.endFrame();
         return stream;
 }
 
@@ -1003,7 +1005,7 @@ inline DataStream &operator<<(DataStream &stream, const JsonArray &arr) {
  * @brief Reads a JsonArray from a tagged, length-prefixed JSON string.
  */
 inline DataStream &operator>>(DataStream &stream, JsonArray &arr) {
-        if (!stream.readTag(DataStream::TypeJsonArray)) {
+        if (!stream.readFrame(DataStream::TypeJsonArray)) {
                 arr = JsonArray();
                 return stream;
         }

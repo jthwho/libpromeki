@@ -5,7 +5,7 @@
 **Depends-on-this:** Phase 7 (ObjectBase saveState/loadState)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-`DataStream`, `TextStream`, and `StreamString` are implemented and used throughout the library. DataStream has full type coverage (primitives, containers, data objects, Variant symmetry, golden wire-format tests, `Result<T>` read API, extension API via `writeTag`/`readTag`/`setError`). `TypeUrl = 0x46` added (Phase 4r) for `Url` round-trip via string form. See git history for the completed DataStream type expansion.
+`DataStream`, `TextStream`, and `StreamString` are implemented and used throughout the library. DataStream has full type coverage (primitives, containers, data objects, Variant symmetry, golden wire-format tests, `Result<T>` read API, extension API via `beginFrame`/`endFrame`/`readFrame`/`readFrameHeader`/`skipFrame`/`setError`). Wire format is now v3: each value is emitted as a self-describing frame (`[tag(2)][version(1)][size(4)][body]`) enabling per-type versioning and forward-compatible unknown-tag skipping. `TypeUrl = 0x46` added (Phase 4r) for `Url` round-trip via string form. See git history for the completed DataStream type expansion.
 
 What remains: TextStream type operator overloads, and ObjectBase saveState/loadState.
 
@@ -60,17 +60,18 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 - [ ] `virtual Error loadState(DataStream &stream)` — default: reads nothing, returns Ok
 - [ ] `Error saveState(Buffer &buffer) const` — convenience: creates DataStream over BufferIODevice
 - [ ] `Error loadState(const Buffer &buffer)` — convenience: creates DataStream over BufferIODevice
-- [ ] Convention: each class writes a version tag first, then its data
-  - [ ] `stream << (uint16_t)1; // version`
-  - [ ] On load: read version, handle backward compat
+- [ ] Convention: each class wraps its state in a `beginFrame`/`endFrame` pair using a stable user TypeId; the frame's per-type version field handles backward compat
+  - [ ] `stream.beginFrame(TypeMyClass, 1); stream << _field1 << _field2; stream.endFrame();`
+  - [ ] On load: `uint8_t ver = 0; stream.readFrame(TypeMyClass, 1, &ver);` — branch on `ver` when needed
 - [ ] Subclass pattern:
   ```
   Error MyClass::saveState(DataStream &stream) const {
       Error err = ObjectBase::saveState(stream);  // save parent state first
       if(err) return err;
-      stream << (uint16_t)1;  // MyClass version
+      stream.beginFrame(TypeMyClass, 1);
       stream << _myField1 << _myField2;
-      return stream.status() == DataStream::Ok ? Error() : Error("write failed");
+      stream.endFrame();
+      return stream.toError();
   }
   ```
 - [ ] `PROMEKI_SIGNAL(stateLoaded)` — emitted after successful loadState
@@ -85,22 +86,24 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 
 ## Design Notes (retained for reference)
 
-### DataStream wire format (v1)
+### DataStream wire format (v3)
 
-Wire format is frozen and protected by golden tests. Summary:
+Wire format is frozen at v3 and protected by golden tests. Summary:
 
 - Header: 16 bytes — `"PMDS"` magic, `uint16_t` version (big-endian), byte-order marker `'B'`/`'L'`, 9 reserved zero bytes
-- Payload: tagged values, one-byte `TypeId` preceding each value; tag ranges are documented in `datastream.h`
-- Strings: `uint32_t` length prefix + UTF-8 bytes
-- Buffers: `uint32_t` length prefix + raw bytes
-- Variants: no outer wrapper — writing `Variant{UUID}` is byte-identical to writing a direct `UUID`; the reader peeks the tag and dispatches
-- Size2D/Rect/Point/Rational: inner values carry their own tags so one template operator covers all element types
-- Containers: outer tag + `TypeUInt32` count + N fully-tagged elements; 256 MiB sanity cap
-- Raw byte escape hatch: `readRawData` / `writeRawData` / `skipRawData` are untagged
+- Payload: self-describing frames — each value emits `[tag(uint16)][version(uint8)][size(uint32)][body]`
+- The `size` field enables readers to skip past unknown tags without knowing the body layout (forward compat)
+- The per-type `version` field lets individual types evolve their body encoding independently
+- Strings: `uint32_t` length prefix + UTF-8 bytes (within the frame body)
+- Buffers: `uint32_t` length prefix + raw bytes (within the frame body)
+- Variants: no outer wrapper — writing `Variant{UUID}` is byte-identical to writing a direct `UUID`; the reader reads the frame header and dispatches; unknown tags consume the body via the size field and yield a default-constructed Variant without error
+- Size2D/Rect/Point/Rational: inner values carry their own framed tags so one template operator covers all element types
+- Containers: outer frame + framed `TypeUInt32` count + N fully-framed elements; 1 GiB per-frame sanity cap
+- Raw byte escape hatch: `readRawData` / `writeRawData` / `skipRawData` are unframed; inside an open frame, `writeRawData` appends to the body buffer
 
 ### Extension API
 
-Public: `writeTag`, `readTag`, `setError`. User operators use these to frame their data and report errors the same way built-ins do. Any type with `operator<<` and `operator>>` overloads automatically works inside `List<T>`, `Map<K,V>`, etc., and through the `Result<T> read<T>()` API.
+Public: `beginFrame`/`endFrame` (write), `readFrame`/`readFrameHeader`/`skipFrame` (read), `setError`. User operators use these to frame their data and report errors the same way built-ins do. Any type with `operator<<` and `operator>>` overloads automatically works inside `List<T>`, `Map<K,V>`, etc., and through the `Result<T> read<T>()` API.
 
 ### TextStream design
 

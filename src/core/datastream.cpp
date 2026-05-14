@@ -120,37 +120,197 @@ bool DataStream::atEnd() const {
 }
 
 // ============================================================================
-// Type tags
+// Frame header / framing API
 // ============================================================================
+//
+// The per-value frame header is a fixed eight bytes:
+//   [tag:uint16 (byte-order controlled)][version:uint16 (byte-order controlled)][size:uint32 (byte-order controlled)]
+//
+// Two-byte version sits between the two-byte tag and the four-byte
+// size, so the size field lands on a natural 4-byte boundary inside
+// the header and the whole header is 8 bytes.
+//
+// Tags are 16-bit so the library can grow past 256 built-in types
+// while still leaving room for user extensions (see UserTypeIdBegin).
+// The version field lets each type evolve its body layout
+// independently of the others.  The size field lets readers skip
+// past tags they don't understand.
+//
+// Writing is buffered: beginFrame pushes a body accumulator onto
+// _frameStack, every subsequent writeBytes call routes into the top
+// of that stack, and endFrame pops the accumulator and emits
+// [tag][ver][size][body] in one go to either the parent frame or the
+// underlying device.  The buffered design lets us emit the size
+// field without seeking the device — readers and writers alike work
+// over plain sequential IODevices (sockets, pipes, files, in-memory
+// buffers).
 
-// Tags are a fixed 16-bit width on the wire so the library can grow
-// past 256 built-in types and still leave room for user extensions
-// (see @c UserTypeIdBegin).  Byte order follows the stream's
-// @c _byteOrder — the same rule every other multi-byte primitive
-// observes — so a BigEndian and LittleEndian reader both decode the
-// identical tag without a dedicated tag-order marker.
-
-void DataStream::writeTag(TypeId id) {
-        writeUInt16(static_cast<uint16_t>(id));
+void DataStream::beginFrame(TypeId id, uint16_t version) {
+        if (_status != Ok) return;
+        PendingFrame frame;
+        frame.tag = id;
+        frame.version = version;
+        // Reserve a modest amount so tiny payloads avoid an extra
+        // grow; List<uint8_t> internally is a std::vector so this is
+        // a real reservation, not a hint.
+        frame.body.reserve(32);
+        _frameStack.pushToBack(std::move(frame));
 }
 
-bool DataStream::readTag(TypeId expected) {
+void DataStream::endFrame() {
+        if (_frameStack.isEmpty()) {
+                setError(WriteFailed, String("endFrame called with no open frame"));
+                return;
+        }
+        // Pop into a local — we may need to write its bytes to
+        // either the device or the new top-of-stack, and writeBytes
+        // routes based on whether _frameStack is non-empty.  Doing
+        // the pop *before* the write makes that routing correct.
+        PendingFrame frame = std::move(_frameStack.back());
+        _frameStack.popFromBack();
+
+        const size_t   bodyBytes = frame.body.size();
+        const uint32_t bodySize = static_cast<uint32_t>(bodyBytes);
+        if (bodyBytes > MaxFrameBodySize) {
+                setError(WriteFailed,
+                         String::sprintf("Frame body for tag 0x%04X is %zu bytes, "
+                                         "exceeds MaxFrameBodySize (%u)",
+                                         static_cast<unsigned>(frame.tag), bodyBytes,
+                                         static_cast<unsigned>(MaxFrameBodySize)));
+                return;
+        }
+
+        // Header layout: 2-byte tag (byte-order controlled), 2-byte
+        // version (byte-order controlled), 4-byte size (byte-order
+        // controlled).  Total 8 bytes; size lands on a 4-byte boundary.
+        uint8_t header[FrameHeaderSize];
+        {
+                uint16_t tag = static_cast<uint16_t>(frame.tag);
+                if (_byteOrder != nativeByteOrder()) {
+                        uint8_t *p = reinterpret_cast<uint8_t *>(&tag);
+                        std::swap(p[0], p[1]);
+                }
+                std::memcpy(&header[0], &tag, sizeof(tag));
+        }
+        {
+                uint16_t ver = frame.version;
+                if (_byteOrder != nativeByteOrder()) {
+                        uint8_t *p = reinterpret_cast<uint8_t *>(&ver);
+                        std::swap(p[0], p[1]);
+                }
+                std::memcpy(&header[2], &ver, sizeof(ver));
+        }
+        {
+                uint32_t sz = bodySize;
+                if (_byteOrder != nativeByteOrder()) {
+                        uint8_t *p = reinterpret_cast<uint8_t *>(&sz);
+                        std::swap(p[0], p[3]);
+                        std::swap(p[1], p[2]);
+                }
+                std::memcpy(&header[4], &sz, sizeof(sz));
+        }
+
+        writeBytes(header, FrameHeaderSize);
+        if (bodyBytes > 0) writeBytes(frame.body.data(), bodyBytes);
+}
+
+bool DataStream::readFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize) {
         if (_status != Ok) return false;
-        uint16_t tag = readUInt16();
-        if (_status != Ok) return false;
-        if (tag != static_cast<uint16_t>(expected)) {
-                setError(ReadCorruptData, String::sprintf("expected tag 0x%04X, got 0x%04X",
-                                                          static_cast<unsigned>(expected), static_cast<unsigned>(tag)));
+        uint8_t header[FrameHeaderSize];
+        if (!readBytes(header, FrameHeaderSize)) return false;
+        uint16_t tagRaw = 0;
+        std::memcpy(&tagRaw, &header[0], sizeof(tagRaw));
+        if (_byteOrder != nativeByteOrder()) {
+                uint8_t *p = reinterpret_cast<uint8_t *>(&tagRaw);
+                std::swap(p[0], p[1]);
+        }
+        uint16_t verRaw = 0;
+        std::memcpy(&verRaw, &header[2], sizeof(verRaw));
+        if (_byteOrder != nativeByteOrder()) {
+                uint8_t *p = reinterpret_cast<uint8_t *>(&verRaw);
+                std::swap(p[0], p[1]);
+        }
+        uint32_t sz = 0;
+        std::memcpy(&sz, &header[4], sizeof(sz));
+        if (_byteOrder != nativeByteOrder()) {
+                uint8_t *p = reinterpret_cast<uint8_t *>(&sz);
+                std::swap(p[0], p[3]);
+                std::swap(p[1], p[2]);
+        }
+        if (sz > MaxFrameBodySize) {
+                setError(ReadCorruptData,
+                         String::sprintf("Frame size %u exceeds MaxFrameBodySize (%u)",
+                                         static_cast<unsigned>(sz),
+                                         static_cast<unsigned>(MaxFrameBodySize)));
                 return false;
         }
+        outTag = static_cast<TypeId>(tagRaw);
+        outVersion = verRaw;
+        outSize = sz;
         return true;
 }
 
-uint16_t DataStream::readAnyTag() {
-        if (_status != Ok) return 0;
-        uint16_t tag = readUInt16();
-        if (_status != Ok) return 0;
-        return tag;
+bool DataStream::readFrame(TypeId expected, uint16_t maxVersion, uint16_t *outVersion, uint32_t *outSize) {
+        TypeId   tag = static_cast<TypeId>(0);
+        uint16_t ver = 0;
+        uint32_t sz = 0;
+        if (!readFrameHeader(tag, ver, sz)) return false;
+        if (tag != expected) {
+                setError(ReadCorruptData,
+                         String::sprintf("expected tag 0x%04X, got 0x%04X",
+                                         static_cast<unsigned>(expected), static_cast<unsigned>(tag)));
+                return false;
+        }
+        if (ver > maxVersion) {
+                setError(ReadCorruptData,
+                         String::sprintf("tag 0x%04X has version %u, reader knows up to %u",
+                                         static_cast<unsigned>(expected), static_cast<unsigned>(ver),
+                                         static_cast<unsigned>(maxVersion)));
+                return false;
+        }
+        if (outVersion) *outVersion = ver;
+        if (outSize) *outSize = sz;
+        return true;
+}
+
+void DataStream::skipFrame() {
+        TypeId   tag = static_cast<TypeId>(0);
+        uint16_t ver = 0;
+        uint32_t sz = 0;
+        if (!readFrameHeader(tag, ver, sz)) return;
+        skipFrameBody(sz);
+}
+
+bool DataStream::skipFrameBody(uint32_t sz) {
+        if (sz == 0) return true;
+        // For seekable devices that report a known size, skipRawData
+        // is just a seek — and the seek may succeed past the
+        // content end on devices like BufferIODevice that don't
+        // bound-check.  Validate up front so a truncated body
+        // surfaces as ReadPastEnd here rather than silently leaving
+        // the read position dangling.
+        if (_device != nullptr && !_device->isSequential()) {
+                Result<int64_t> total = _device->size();
+                if (!error(total).isError()) {
+                        const int64_t remaining = value(total) - _device->pos();
+                        if (remaining < static_cast<int64_t>(sz)) {
+                                setError(ReadPastEnd,
+                                         String::sprintf("frame body of %u bytes exceeds "
+                                                         "%lld remaining on device",
+                                                         static_cast<unsigned>(sz),
+                                                         static_cast<long long>(remaining)));
+                                return false;
+                        }
+                }
+        }
+        ssize_t n = skipRawData(sz);
+        if (n != static_cast<ssize_t>(sz)) {
+                setError(ReadPastEnd,
+                         String::sprintf("frame body skip: requested %u bytes, skipped %zd",
+                                         static_cast<unsigned>(sz), n));
+                return false;
+        }
+        return true;
 }
 
 // ============================================================================
@@ -180,6 +340,16 @@ bool DataStream::readBytes(void *buf, size_t len) {
 bool DataStream::writeBytes(const void *buf, size_t len) {
         if (_status != Ok) return false;
         if (len == 0) return true;
+        // When a frame is open, route bytes into its body
+        // accumulator instead of the device.  endFrame is then the
+        // single point that flushes the assembled frame.
+        if (!_frameStack.isEmpty()) {
+                List<uint8_t> &body = _frameStack.back().body;
+                const uint8_t *src = static_cast<const uint8_t *>(buf);
+                body.reserve(body.size() + len);
+                for (size_t i = 0; i < len; ++i) body.pushToBack(src[i]);
+                return true;
+        }
         if (_device == nullptr) {
                 setError(WriteFailed, String("no device attached"));
                 return false;
@@ -219,6 +389,19 @@ ssize_t DataStream::readRawData(void *buf, size_t len) {
 ssize_t DataStream::writeRawData(const void *buf, size_t len) {
         if (_status != Ok) return -1;
         if (len == 0) return 0;
+        // Inside an open frame, raw bytes go into the body
+        // accumulator like every other write — otherwise a caller
+        // using writeRawData to fill a frame body would emit bytes
+        // around the frame, corrupting the size accounting.  Outside
+        // of any frame, writeRawData stays a passthrough to the
+        // underlying device.
+        if (!_frameStack.isEmpty()) {
+                List<uint8_t> &body = _frameStack.back().body;
+                const uint8_t *src = static_cast<const uint8_t *>(buf);
+                body.reserve(body.size() + len);
+                for (size_t i = 0; i < len; ++i) body.pushToBack(src[i]);
+                return static_cast<ssize_t>(len);
+        }
         if (_device == nullptr) {
                 setError(WriteFailed, String("no device attached"));
                 return -1;
@@ -752,68 +935,79 @@ StringList DataStream::readStringListData() {
 // ============================================================================
 
 DataStream &DataStream::operator<<(int8_t val) {
-        writeTag(TypeInt8);
+        beginFrame(TypeInt8, 1);
         writeInt8(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(uint8_t val) {
-        writeTag(TypeUInt8);
+        beginFrame(TypeUInt8, 1);
         writeUInt8(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(int16_t val) {
-        writeTag(TypeInt16);
+        beginFrame(TypeInt16, 1);
         writeInt16(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(uint16_t val) {
-        writeTag(TypeUInt16);
+        beginFrame(TypeUInt16, 1);
         writeUInt16(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(int32_t val) {
-        writeTag(TypeInt32);
+        beginFrame(TypeInt32, 1);
         writeInt32(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(uint32_t val) {
-        writeTag(TypeUInt32);
+        beginFrame(TypeUInt32, 1);
         writeUInt32(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(int64_t val) {
-        writeTag(TypeInt64);
+        beginFrame(TypeInt64, 1);
         writeInt64(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(uint64_t val) {
-        writeTag(TypeUInt64);
+        beginFrame(TypeUInt64, 1);
         writeUInt64(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(float val) {
-        writeTag(TypeFloat);
+        beginFrame(TypeFloat, 1);
         writeFloat(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(double val) {
-        writeTag(TypeDouble);
+        beginFrame(TypeDouble, 1);
         writeDouble(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(bool val) {
-        writeTag(TypeBool);
+        beginFrame(TypeBool, 1);
         writeBool(val);
+        endFrame();
         return *this;
 }
 
@@ -822,8 +1016,9 @@ DataStream &DataStream::operator<<(bool val) {
 // ============================================================================
 
 DataStream &DataStream::operator<<(const String &val) {
-        writeTag(TypeString);
+        beginFrame(TypeString, 1);
         writeStringData(val);
+        endFrame();
         return *this;
 }
 
@@ -832,11 +1027,13 @@ DataStream &DataStream::operator<<(const Buffer &val) {
         // so it round-trips as null rather than as an empty Buffer.
         // Non-null uses the TypeBuffer framing.
         if (!val) {
-                writeTag(TypeInvalid);
+                beginFrame(TypeInvalid, 1);
+                endFrame();
                 return *this;
         }
-        writeTag(TypeBuffer);
+        beginFrame(TypeBuffer, 1);
         writeBufferData(val);
+        endFrame();
         return *this;
 }
 
@@ -845,122 +1042,142 @@ DataStream &DataStream::operator<<(const Buffer &val) {
 // ============================================================================
 
 DataStream &DataStream::operator<<(const UUID &val) {
-        writeTag(TypeUUID);
+        beginFrame(TypeUUID, 1);
         writeUUIDData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const UMID &val) {
-        writeTag(TypeUMID);
+        beginFrame(TypeUMID, 1);
         writeUMIDData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const DateTime &val) {
-        writeTag(TypeDateTime);
+        beginFrame(TypeDateTime, 1);
         writeDateTimeData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const TimeStamp &val) {
-        writeTag(TypeTimeStamp);
+        beginFrame(TypeTimeStamp, 1);
         writeTimeStampData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const FrameRate &val) {
-        writeTag(TypeFrameRate);
+        beginFrame(TypeFrameRate, 1);
         writeFrameRateData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const VideoFormat &val) {
-        writeTag(TypeVideoFormat);
+        beginFrame(TypeVideoFormat, 1);
         writeVideoFormatData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const Timecode &val) {
-        writeTag(TypeTimecode);
+        beginFrame(TypeTimecode, 1);
         writeTimecodeData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const Color &val) {
-        writeTag(TypeColor);
+        beginFrame(TypeColor, 1);
         writeColorData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const ColorModel &val) {
-        writeTag(TypeColorModel);
+        beginFrame(TypeColorModel, 1);
         writeColorModelData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const MemSpace &val) {
-        writeTag(TypeMemSpace);
+        beginFrame(TypeMemSpace, 1);
         writeMemSpaceData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const PixelMemLayout &val) {
-        writeTag(TypePixelMemLayout);
+        beginFrame(TypePixelMemLayout, 1);
         writePixelMemLayoutData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const PixelFormat &val) {
-        writeTag(TypePixelFormat);
+        beginFrame(TypePixelFormat, 1);
         writePixelFormatData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const AudioFormat &val) {
-        writeTag(TypeAudioFormat);
+        beginFrame(TypeAudioFormat, 1);
         writeAudioFormatData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const AncFormat &val) {
-        writeTag(TypeAncFormat);
+        beginFrame(TypeAncFormat, 1);
         writeAncFormatData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const Enum &val) {
-        writeTag(TypeEnum);
+        beginFrame(TypeEnum, 1);
         writeEnumData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const EnumList &val) {
-        writeTag(TypeEnumList);
+        beginFrame(TypeEnumList, 1);
         writeEnumListData(val);
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const MediaTimeStamp &val) {
-        writeTag(TypeMediaTimeStamp);
+        beginFrame(TypeMediaTimeStamp, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const FrameNumber &val) {
-        writeTag(TypeFrameNumber);
+        beginFrame(TypeFrameNumber, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const FrameCount &val) {
-        writeTag(TypeFrameCount);
+        beginFrame(TypeFrameCount, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const MediaDuration &val) {
-        writeTag(TypeMediaDuration);
+        beginFrame(TypeMediaDuration, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
@@ -969,36 +1186,41 @@ DataStream &DataStream::operator<<(const Duration &val) {
         // encode it directly rather than round-tripping through a
         // string so the wire form is both compact and preserves the
         // full 64-bit precision without parsing cost.
-        writeTag(TypeDuration);
+        beginFrame(TypeDuration, 1);
         writeInt64(val.nanoseconds());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const Url &val) {
-        writeTag(TypeUrl);
+        beginFrame(TypeUrl, 1);
         // Serialize via the canonical string form — round-trips
         // through Url::fromString/toString preserve every component
         // we care about, and the string form is stable across
         // library versions.
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const MacAddress &val) {
-        writeTag(TypeMacAddress);
+        beginFrame(TypeMacAddress, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const EUI64 &val) {
-        writeTag(TypeEUI64);
+        beginFrame(TypeEUI64, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const StringList &val) {
-        writeTag(TypeStringList);
+        beginFrame(TypeStringList, 1);
         writeStringListData(val);
+        endFrame();
         return *this;
 }
 
@@ -1006,24 +1228,27 @@ DataStream &DataStream::operator<<(const VideoCodec &val) {
         // VideoCodec round-trips through its "Codec[:Backend]" string
         // form (see VideoCodec::toString / fromString), which preserves
         // both the codec identity and the backend pin when one is set.
-        writeTag(TypeVideoCodec);
+        beginFrame(TypeVideoCodec, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const AudioCodec &val) {
         // AudioCodec uses the same "Codec[:Backend]" string round-trip
         // as VideoCodec.
-        writeTag(TypeAudioCodec);
+        beginFrame(TypeAudioCodec, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
 DataStream &DataStream::operator<<(const SocketAddress &val) {
         // SocketAddress round-trips through "host:port" (IPv6 uses the
         // bracketed form, e.g. "[::1]:5004") via toString / fromString.
-        writeTag(TypeSocketAddress);
+        beginFrame(TypeSocketAddress, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
@@ -1033,8 +1258,9 @@ DataStream &DataStream::operator<<(const SdpSession &val) {
         // Unknown extension attributes the parser doesn't recognise
         // may not survive round-trips, but the core session / media
         // description is lossless.
-        writeTag(TypeSdpSession);
+        beginFrame(TypeSdpSession, 1);
         writeStringData(val.toString());
+        endFrame();
         return *this;
 }
 
@@ -1044,7 +1270,8 @@ DataStream &DataStream::operator<<(const SharedPtr<SslContext, false> &val) {
         // form — we emit the tag so the Variant payload-dispatch table
         // round-trips, but no body bytes follow.  See the read overload.
         (void)val;
-        writeTag(TypeSslContext);
+        beginFrame(TypeSslContext, 1);
+        endFrame();
         return *this;
 }
 #endif
@@ -1066,8 +1293,13 @@ DataStream &DataStream::operator<<(const SharedPtr<SslContext, false> &val) {
 namespace {
         template <typename T> void writeVariantValue(DataStream &s, const Variant &v) {
                 if constexpr (std::is_same_v<T, std::monostate>) {
-                        // TypeInvalid carries no payload; only the tag.
-                        s.writeTag(DataStream::TypeInvalid);
+                        // TypeInvalid carries no payload; only the
+                        // tag.  The frame is opened and closed
+                        // immediately so the emitted bytes are
+                        // exactly the 7-byte frame header with a
+                        // zero-byte body.
+                        s.beginFrame(DataStream::TypeInvalid, 1);
+                        s.endFrame();
                 } else {
                         // Important: the @c s << v.get<T>() form would
                         // silently satisfy any missing specific
@@ -1086,6 +1318,12 @@ namespace {
 
 
 DataStream &DataStream::operator<<(const Variant &val) {
+        // The per-type writeVariantValue specialisations each open
+        // and close their own frame (or, for std::monostate, emit an
+        // empty TypeInvalid frame), so the Variant write itself
+        // doesn't add an enclosing frame — that would double-wrap
+        // every value and break the documented invariant that a
+        // Variant carrying T is bit-identical to a direct T.
         switch (val.type()) {
 #define X(name, type)                                                                                                  \
         case Variant::name: writeVariantValue<type>(*this, val); break;
@@ -1100,7 +1338,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
 // ============================================================================
 
 DataStream &DataStream::operator>>(int8_t &val) {
-        if (!readTag(TypeInt8)) {
+        if (!readFrame(TypeInt8)) {
                 val = 0;
                 return *this;
         }
@@ -1109,7 +1347,7 @@ DataStream &DataStream::operator>>(int8_t &val) {
 }
 
 DataStream &DataStream::operator>>(uint8_t &val) {
-        if (!readTag(TypeUInt8)) {
+        if (!readFrame(TypeUInt8)) {
                 val = 0;
                 return *this;
         }
@@ -1118,7 +1356,7 @@ DataStream &DataStream::operator>>(uint8_t &val) {
 }
 
 DataStream &DataStream::operator>>(int16_t &val) {
-        if (!readTag(TypeInt16)) {
+        if (!readFrame(TypeInt16)) {
                 val = 0;
                 return *this;
         }
@@ -1127,7 +1365,7 @@ DataStream &DataStream::operator>>(int16_t &val) {
 }
 
 DataStream &DataStream::operator>>(uint16_t &val) {
-        if (!readTag(TypeUInt16)) {
+        if (!readFrame(TypeUInt16)) {
                 val = 0;
                 return *this;
         }
@@ -1136,7 +1374,7 @@ DataStream &DataStream::operator>>(uint16_t &val) {
 }
 
 DataStream &DataStream::operator>>(int32_t &val) {
-        if (!readTag(TypeInt32)) {
+        if (!readFrame(TypeInt32)) {
                 val = 0;
                 return *this;
         }
@@ -1145,7 +1383,7 @@ DataStream &DataStream::operator>>(int32_t &val) {
 }
 
 DataStream &DataStream::operator>>(uint32_t &val) {
-        if (!readTag(TypeUInt32)) {
+        if (!readFrame(TypeUInt32)) {
                 val = 0;
                 return *this;
         }
@@ -1154,7 +1392,7 @@ DataStream &DataStream::operator>>(uint32_t &val) {
 }
 
 DataStream &DataStream::operator>>(int64_t &val) {
-        if (!readTag(TypeInt64)) {
+        if (!readFrame(TypeInt64)) {
                 val = 0;
                 return *this;
         }
@@ -1163,7 +1401,7 @@ DataStream &DataStream::operator>>(int64_t &val) {
 }
 
 DataStream &DataStream::operator>>(uint64_t &val) {
-        if (!readTag(TypeUInt64)) {
+        if (!readFrame(TypeUInt64)) {
                 val = 0;
                 return *this;
         }
@@ -1172,7 +1410,7 @@ DataStream &DataStream::operator>>(uint64_t &val) {
 }
 
 DataStream &DataStream::operator>>(float &val) {
-        if (!readTag(TypeFloat)) {
+        if (!readFrame(TypeFloat)) {
                 val = 0.0f;
                 return *this;
         }
@@ -1181,7 +1419,7 @@ DataStream &DataStream::operator>>(float &val) {
 }
 
 DataStream &DataStream::operator>>(double &val) {
-        if (!readTag(TypeDouble)) {
+        if (!readFrame(TypeDouble)) {
                 val = 0.0;
                 return *this;
         }
@@ -1190,7 +1428,7 @@ DataStream &DataStream::operator>>(double &val) {
 }
 
 DataStream &DataStream::operator>>(bool &val) {
-        if (!readTag(TypeBool)) {
+        if (!readFrame(TypeBool)) {
                 val = false;
                 return *this;
         }
@@ -1203,7 +1441,7 @@ DataStream &DataStream::operator>>(bool &val) {
 // ============================================================================
 
 DataStream &DataStream::operator>>(String &val) {
-        if (!readTag(TypeString)) {
+        if (!readFrame(TypeString)) {
                 val = String();
                 return *this;
         }
@@ -1212,10 +1450,14 @@ DataStream &DataStream::operator>>(String &val) {
 }
 
 DataStream &DataStream::operator>>(Buffer &val) {
-        // Peek the tag: TypeInvalid → null Buffer, TypeBuffer → allocated Buffer,
-        // anything else → ReadCorruptData.
-        uint16_t tag = readAnyTag();
-        if (_status != Ok) {
+        // Buffer accepts two tags: TypeInvalid → null Buffer (the
+        // body is zero bytes), TypeBuffer → allocated Buffer (the
+        // body is a length-prefixed byte run).  Use readFrameHeader
+        // so we can dispatch on whichever tag we got.
+        TypeId   tag = static_cast<TypeId>(0);
+        uint16_t ver = 0;
+        uint32_t sz = 0;
+        if (!readFrameHeader(tag, ver, sz)) {
                 val = Buffer();
                 return *this;
         }
@@ -1240,7 +1482,7 @@ DataStream &DataStream::operator>>(Buffer &val) {
 // ============================================================================
 
 DataStream &DataStream::operator>>(UUID &val) {
-        if (!readTag(TypeUUID)) {
+        if (!readFrame(TypeUUID)) {
                 val = UUID();
                 return *this;
         }
@@ -1249,7 +1491,7 @@ DataStream &DataStream::operator>>(UUID &val) {
 }
 
 DataStream &DataStream::operator>>(UMID &val) {
-        if (!readTag(TypeUMID)) {
+        if (!readFrame(TypeUMID)) {
                 val = UMID();
                 return *this;
         }
@@ -1258,7 +1500,7 @@ DataStream &DataStream::operator>>(UMID &val) {
 }
 
 DataStream &DataStream::operator>>(DateTime &val) {
-        if (!readTag(TypeDateTime)) {
+        if (!readFrame(TypeDateTime)) {
                 val = DateTime();
                 return *this;
         }
@@ -1267,7 +1509,7 @@ DataStream &DataStream::operator>>(DateTime &val) {
 }
 
 DataStream &DataStream::operator>>(TimeStamp &val) {
-        if (!readTag(TypeTimeStamp)) {
+        if (!readFrame(TypeTimeStamp)) {
                 val = TimeStamp();
                 return *this;
         }
@@ -1276,7 +1518,7 @@ DataStream &DataStream::operator>>(TimeStamp &val) {
 }
 
 DataStream &DataStream::operator>>(FrameRate &val) {
-        if (!readTag(TypeFrameRate)) {
+        if (!readFrame(TypeFrameRate)) {
                 val = FrameRate();
                 return *this;
         }
@@ -1285,7 +1527,7 @@ DataStream &DataStream::operator>>(FrameRate &val) {
 }
 
 DataStream &DataStream::operator>>(VideoFormat &val) {
-        if (!readTag(TypeVideoFormat)) {
+        if (!readFrame(TypeVideoFormat)) {
                 val = VideoFormat();
                 return *this;
         }
@@ -1294,7 +1536,7 @@ DataStream &DataStream::operator>>(VideoFormat &val) {
 }
 
 DataStream &DataStream::operator>>(Timecode &val) {
-        if (!readTag(TypeTimecode)) {
+        if (!readFrame(TypeTimecode)) {
                 val = Timecode();
                 return *this;
         }
@@ -1303,7 +1545,7 @@ DataStream &DataStream::operator>>(Timecode &val) {
 }
 
 DataStream &DataStream::operator>>(Color &val) {
-        if (!readTag(TypeColor)) {
+        if (!readFrame(TypeColor)) {
                 val = Color();
                 return *this;
         }
@@ -1312,7 +1554,7 @@ DataStream &DataStream::operator>>(Color &val) {
 }
 
 DataStream &DataStream::operator>>(ColorModel &val) {
-        if (!readTag(TypeColorModel)) {
+        if (!readFrame(TypeColorModel)) {
                 val = ColorModel();
                 return *this;
         }
@@ -1321,7 +1563,7 @@ DataStream &DataStream::operator>>(ColorModel &val) {
 }
 
 DataStream &DataStream::operator>>(MemSpace &val) {
-        if (!readTag(TypeMemSpace)) {
+        if (!readFrame(TypeMemSpace)) {
                 val = MemSpace();
                 return *this;
         }
@@ -1330,7 +1572,7 @@ DataStream &DataStream::operator>>(MemSpace &val) {
 }
 
 DataStream &DataStream::operator>>(PixelMemLayout &val) {
-        if (!readTag(TypePixelMemLayout)) {
+        if (!readFrame(TypePixelMemLayout)) {
                 val = PixelMemLayout();
                 return *this;
         }
@@ -1339,7 +1581,7 @@ DataStream &DataStream::operator>>(PixelMemLayout &val) {
 }
 
 DataStream &DataStream::operator>>(PixelFormat &val) {
-        if (!readTag(TypePixelFormat)) {
+        if (!readFrame(TypePixelFormat)) {
                 val = PixelFormat();
                 return *this;
         }
@@ -1348,7 +1590,7 @@ DataStream &DataStream::operator>>(PixelFormat &val) {
 }
 
 DataStream &DataStream::operator>>(AudioFormat &val) {
-        if (!readTag(TypeAudioFormat)) {
+        if (!readFrame(TypeAudioFormat)) {
                 val = AudioFormat();
                 return *this;
         }
@@ -1357,7 +1599,7 @@ DataStream &DataStream::operator>>(AudioFormat &val) {
 }
 
 DataStream &DataStream::operator>>(AncFormat &val) {
-        if (!readTag(TypeAncFormat)) {
+        if (!readFrame(TypeAncFormat)) {
                 val = AncFormat();
                 return *this;
         }
@@ -1366,7 +1608,7 @@ DataStream &DataStream::operator>>(AncFormat &val) {
 }
 
 DataStream &DataStream::operator>>(Enum &val) {
-        if (!readTag(TypeEnum)) {
+        if (!readFrame(TypeEnum)) {
                 val = Enum();
                 return *this;
         }
@@ -1375,7 +1617,7 @@ DataStream &DataStream::operator>>(Enum &val) {
 }
 
 DataStream &DataStream::operator>>(EnumList &val) {
-        if (!readTag(TypeEnumList)) {
+        if (!readFrame(TypeEnumList)) {
                 val = EnumList();
                 return *this;
         }
@@ -1384,7 +1626,7 @@ DataStream &DataStream::operator>>(EnumList &val) {
 }
 
 DataStream &DataStream::operator>>(MediaTimeStamp &val) {
-        if (!readTag(TypeMediaTimeStamp)) {
+        if (!readFrame(TypeMediaTimeStamp)) {
                 val = MediaTimeStamp();
                 return *this;
         }
@@ -1404,7 +1646,7 @@ DataStream &DataStream::operator>>(MediaTimeStamp &val) {
 }
 
 DataStream &DataStream::operator>>(FrameNumber &val) {
-        if (!readTag(TypeFrameNumber)) {
+        if (!readFrame(TypeFrameNumber)) {
                 val = FrameNumber();
                 return *this;
         }
@@ -1425,7 +1667,7 @@ DataStream &DataStream::operator>>(FrameNumber &val) {
 }
 
 DataStream &DataStream::operator>>(FrameCount &val) {
-        if (!readTag(TypeFrameCount)) {
+        if (!readFrame(TypeFrameCount)) {
                 val = FrameCount();
                 return *this;
         }
@@ -1446,7 +1688,7 @@ DataStream &DataStream::operator>>(FrameCount &val) {
 }
 
 DataStream &DataStream::operator>>(MediaDuration &val) {
-        if (!readTag(TypeMediaDuration)) {
+        if (!readFrame(TypeMediaDuration)) {
                 val = MediaDuration();
                 return *this;
         }
@@ -1467,7 +1709,7 @@ DataStream &DataStream::operator>>(MediaDuration &val) {
 }
 
 DataStream &DataStream::operator>>(Duration &val) {
-        if (!readTag(TypeDuration)) {
+        if (!readFrame(TypeDuration)) {
                 val = Duration();
                 return *this;
         }
@@ -1481,7 +1723,7 @@ DataStream &DataStream::operator>>(Duration &val) {
 }
 
 DataStream &DataStream::operator>>(MacAddress &val) {
-        if (!readTag(TypeMacAddress)) {
+        if (!readFrame(TypeMacAddress)) {
                 val = MacAddress();
                 return *this;
         }
@@ -1501,7 +1743,7 @@ DataStream &DataStream::operator>>(MacAddress &val) {
 }
 
 DataStream &DataStream::operator>>(EUI64 &val) {
-        if (!readTag(TypeEUI64)) {
+        if (!readFrame(TypeEUI64)) {
                 val = EUI64();
                 return *this;
         }
@@ -1521,7 +1763,7 @@ DataStream &DataStream::operator>>(EUI64 &val) {
 }
 
 DataStream &DataStream::operator>>(StringList &val) {
-        if (!readTag(TypeStringList)) {
+        if (!readFrame(TypeStringList)) {
                 val = StringList();
                 return *this;
         }
@@ -1530,7 +1772,7 @@ DataStream &DataStream::operator>>(StringList &val) {
 }
 
 DataStream &DataStream::operator>>(Url &val) {
-        if (!readTag(TypeUrl)) {
+        if (!readFrame(TypeUrl)) {
                 val = Url();
                 return *this;
         }
@@ -1550,7 +1792,7 @@ DataStream &DataStream::operator>>(Url &val) {
 }
 
 DataStream &DataStream::operator>>(VideoCodec &val) {
-        if (!readTag(TypeVideoCodec)) {
+        if (!readFrame(TypeVideoCodec)) {
                 val = VideoCodec();
                 return *this;
         }
@@ -1570,7 +1812,7 @@ DataStream &DataStream::operator>>(VideoCodec &val) {
 }
 
 DataStream &DataStream::operator>>(AudioCodec &val) {
-        if (!readTag(TypeAudioCodec)) {
+        if (!readFrame(TypeAudioCodec)) {
                 val = AudioCodec();
                 return *this;
         }
@@ -1590,7 +1832,7 @@ DataStream &DataStream::operator>>(AudioCodec &val) {
 }
 
 DataStream &DataStream::operator>>(SocketAddress &val) {
-        if (!readTag(TypeSocketAddress)) {
+        if (!readFrame(TypeSocketAddress)) {
                 val = SocketAddress();
                 return *this;
         }
@@ -1610,7 +1852,7 @@ DataStream &DataStream::operator>>(SocketAddress &val) {
 }
 
 DataStream &DataStream::operator>>(SdpSession &val) {
-        if (!readTag(TypeSdpSession)) {
+        if (!readFrame(TypeSdpSession)) {
                 val = SdpSession();
                 return *this;
         }
@@ -1634,7 +1876,7 @@ DataStream &DataStream::operator>>(SharedPtr<SslContext, false> &val) {
         // Pairs with the write overload — consume the tag, set @p val
         // to a default-constructed (null) Ptr.  The actual context
         // can't survive serialization; see the write overload.
-        if (!readTag(TypeSslContext)) {
+        if (!readFrame(TypeSslContext)) {
                 val = SharedPtr<SslContext, false>();
                 return *this;
         }
@@ -1647,7 +1889,7 @@ DataStream &DataStream::operator>>(SharedPtr<SslContext, false> &val) {
 // Variant read — peeks the tag and dispatches to the right type
 // ============================================================================
 
-void DataStream::readVariantPayload(TypeId id, Variant &val) {
+void DataStream::readVariantPayload(TypeId id, uint16_t version, uint32_t bodySize, Variant &val) {
         switch (id) {
                 case TypeInvalid: val = Variant(); break;
                 case TypeBool: val = readBoolValue(); break;
@@ -2100,9 +2342,10 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 }
                 case TypeSubtitle: {
                         // The dedicated Subtitle DataStream operators
-                        // consume the field-by-field payload; the tag
-                        // was already eaten by readAnyTag() upstream,
-                        // so we drop directly into the field reader.
+                        // consume the field-by-field payload; the
+                        // frame header was already eaten by
+                        // readFrameHeader() upstream, so we drop
+                        // directly into the field reader.
                         extern Subtitle readSubtitleData(DataStream &);
                         Subtitle        sub = readSubtitleData(*this);
                         if (_status != Ok) {
@@ -2115,8 +2358,9 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypeCea608: {
                         // Cea608Packet's DataStream operators write a
                         // tagged channel + cc_data triple list; the
-                        // tag was already consumed by readAnyTag()
-                        // upstream, so dispatch into the field reader.
+                        // frame header was already consumed by
+                        // readFrameHeader() upstream, so dispatch
+                        // into the field reader.
                         extern Cea608Packet readCea608PacketData(DataStream &);
                         Cea608Packet pkt = readCea608PacketData(*this);
                         if (_status != Ok) {
@@ -2127,21 +2371,31 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                         break;
                 }
                 default:
-                        setError(ReadCorruptData,
-                                 String::sprintf("Variant::read: tag 0x%04X is not Variant-representable",
-                                                 static_cast<unsigned>(id)));
+                        // Forward-compatibility path: an unknown
+                        // tag is treated as a value we don't know
+                        // how to represent, but the frame header
+                        // already told us exactly how many body
+                        // bytes follow.  Consume them so the stream
+                        // is positioned at the next frame, and hand
+                        // back a default Variant — older readers
+                        // can survive newer writers without going
+                        // into a corrupt-data state.
+                        skipFrameBody(bodySize);
                         val = Variant();
+                        (void)version;
                         break;
         }
 }
 
 DataStream &DataStream::operator>>(Variant &val) {
-        uint16_t tag = readAnyTag();
-        if (_status != Ok) {
+        TypeId   tag = static_cast<TypeId>(0);
+        uint16_t ver = 0;
+        uint32_t sz = 0;
+        if (!readFrameHeader(tag, ver, sz)) {
                 val = Variant();
                 return *this;
         }
-        readVariantPayload(static_cast<TypeId>(tag), val);
+        readVariantPayload(tag, ver, sz, val);
         return *this;
 }
 

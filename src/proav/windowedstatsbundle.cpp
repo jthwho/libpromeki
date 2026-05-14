@@ -76,19 +76,20 @@ WindowedStatsBundle WindowedStatsBundle::fromJson(const JsonObject &obj, Error *
 }
 
 DataStream &operator<<(DataStream &stream, const WindowedStatsBundle &b) {
-        stream.writeTag(DataStream::TypeWindowedStatsBundle);
+        stream.beginFrame(DataStream::TypeWindowedStatsBundle, 1);
         const WindowedStatsBundle::Map &m = b.windows();
         stream << static_cast<uint32_t>(m.size());
         for (auto it = m.cbegin(); it != m.cend(); ++it) {
                 stream << it->first.name();
                 stream << it->second;
         }
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, WindowedStatsBundle &b) {
         b.clear();
-        if (!stream.readTag(DataStream::TypeWindowedStatsBundle)) return stream;
+        if (!stream.readFrame(DataStream::TypeWindowedStatsBundle)) return stream;
         uint32_t count = 0;
         stream >> count;
         for (uint32_t i = 0; i < count && stream.status() == DataStream::Ok; ++i) {

@@ -1026,8 +1026,9 @@ class XmlNode {
  * @brief Writes an XmlDocument as a tagged, length-prefixed XML string.
  */
 inline DataStream &operator<<(DataStream &stream, const XmlDocument &doc) {
-        stream.writeTag(DataStream::TypeXmlDocument);
+        stream.beginFrame(DataStream::TypeXmlDocument, 1);
         stream << doc.toString(0);
+        stream.endFrame();
         return stream;
 }
 
@@ -1035,7 +1036,7 @@ inline DataStream &operator<<(DataStream &stream, const XmlDocument &doc) {
  * @brief Reads an XmlDocument from a tagged, length-prefixed XML string.
  */
 inline DataStream &operator>>(DataStream &stream, XmlDocument &doc) {
-        if (!stream.readTag(DataStream::TypeXmlDocument)) {
+        if (!stream.readFrame(DataStream::TypeXmlDocument)) {
                 doc = XmlDocument();
                 return stream;
         }
@@ -1058,8 +1059,9 @@ inline DataStream &operator>>(DataStream &stream, XmlDocument &doc) {
  * @brief Writes an XmlElement as a tagged, length-prefixed XML string.
  */
 inline DataStream &operator<<(DataStream &stream, const XmlElement &elem) {
-        stream.writeTag(DataStream::TypeXmlElement);
+        stream.beginFrame(DataStream::TypeXmlElement, 1);
         stream << elem.toString(0);
+        stream.endFrame();
         return stream;
 }
 
@@ -1067,7 +1069,7 @@ inline DataStream &operator<<(DataStream &stream, const XmlElement &elem) {
  * @brief Reads an XmlElement from a tagged, length-prefixed XML string.
  */
 inline DataStream &operator>>(DataStream &stream, XmlElement &elem) {
-        if (!stream.readTag(DataStream::TypeXmlElement)) {
+        if (!stream.readFrame(DataStream::TypeXmlElement)) {
                 elem = XmlElement();
                 return stream;
         }

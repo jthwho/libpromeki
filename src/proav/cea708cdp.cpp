@@ -365,13 +365,14 @@ Cea708Cdp readCea708CdpData(DataStream &stream) {
 }
 
 DataStream &operator<<(DataStream &stream, const Cea708Cdp &cdp) {
-        stream.writeTag(DataStream::TypeCea708Cdp);
+        stream.beginFrame(DataStream::TypeCea708Cdp, 1);
         writeCea708CdpData(stream, cdp);
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, Cea708Cdp &cdp) {
-        if (!stream.readTag(DataStream::TypeCea708Cdp)) {
+        if (!stream.readFrame(DataStream::TypeCea708Cdp)) {
                 cdp = Cea708Cdp();
                 return stream;
         }

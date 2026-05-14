@@ -412,15 +412,16 @@ VariantMap VariantMap::fromJsonString(const String &json, Error *err) {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const VariantList &list) {
-        stream.writeTag(DataStream::TypeVariantList);
+        stream.beginFrame(DataStream::TypeVariantList, 1);
         stream << static_cast<uint32_t>(list.size());
         for (size_t i = 0; i < list.size(); ++i) stream << list[i];
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, VariantList &list) {
         list.clear();
-        if (!stream.readTag(DataStream::TypeVariantList)) return stream;
+        if (!stream.readFrame(DataStream::TypeVariantList)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;
@@ -435,15 +436,16 @@ DataStream &operator>>(DataStream &stream, VariantList &list) {
 }
 
 DataStream &operator<<(DataStream &stream, const VariantMap &map) {
-        stream.writeTag(DataStream::TypeVariantMap);
+        stream.beginFrame(DataStream::TypeVariantMap, 1);
         stream << static_cast<uint32_t>(map.size());
         map.forEach([&stream](const String &k, const Variant &v) { stream << k << v; });
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, VariantMap &map) {
         map.clear();
-        if (!stream.readTag(DataStream::TypeVariantMap)) return stream;
+        if (!stream.readFrame(DataStream::TypeVariantMap)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;

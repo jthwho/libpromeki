@@ -85,9 +85,9 @@ TEST_CASE("DataStream: writer writes header") {
         CHECK(raw[1] == 0x4D); // 'M'
         CHECK(raw[2] == 0x44); // 'D'
         CHECK(raw[3] == 0x53); // 'S'
-        // Version 2 in big-endian
+        // Version 3 in big-endian
         CHECK(raw[4] == 0x00);
-        CHECK(raw[5] == 0x02);
+        CHECK(raw[5] == 0x03);
         // Default byte order is BigEndian → 'B'
         CHECK(raw[6] == 'B');
         // Reserved bytes 7-15 must be zero
@@ -495,21 +495,27 @@ TEST_CASE("DataStream: round-trip Variant primitives") {
 TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         uint32_t testVal = 0x01020304;
 
-        // Big-endian: 16-byte header + 2-byte type tag + 4-byte value
+        // Big-endian: 16-byte stream header + 8-byte frame header
+        // (tag(2) + version(2) + size(4)) + 4 body bytes.
         WriterFixture f1;
         {
                 DataStream ws = DataStream::createWriter(&f1.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // After header(16) + tag(2), the 4 value bytes start at offset 18
         uint8_t *raw = static_cast<uint8_t *>(f1.buf.data());
         CHECK(raw[6] == 'B');   // byte-order marker
         CHECK(raw[16] == 0x00); // tag high byte (big-endian)
         CHECK(raw[17] == DataStream::TypeUInt32);
-        CHECK(raw[18] == 0x01);
-        CHECK(raw[19] == 0x02);
-        CHECK(raw[20] == 0x03);
-        CHECK(raw[21] == 0x04);
+        CHECK(raw[18] == 0x00); // version high byte (big-endian)
+        CHECK(raw[19] == 0x01); // version low byte = 1
+        CHECK(raw[20] == 0x00); // size high byte (big-endian)
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x04); // size low byte = 4
+        CHECK(raw[24] == 0x01); // body bytes start here
+        CHECK(raw[25] == 0x02);
+        CHECK(raw[26] == 0x03);
+        CHECK(raw[27] == 0x04);
 
         f1.dev.seek(0);
         {
@@ -530,10 +536,16 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         CHECK(raw[6] == 'L');                     // byte-order marker
         CHECK(raw[16] == DataStream::TypeUInt32); // tag low byte (little-endian)
         CHECK(raw[17] == 0x00);                   // tag high byte (little-endian)
-        CHECK(raw[18] == 0x04);
-        CHECK(raw[19] == 0x03);
-        CHECK(raw[20] == 0x02);
-        CHECK(raw[21] == 0x01);
+        CHECK(raw[18] == 0x01);                   // version low byte (little-endian) = 1
+        CHECK(raw[19] == 0x00);                   // version high byte
+        CHECK(raw[20] == 0x04);                   // size low byte (little-endian) = 4
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x00); // size high byte (little-endian)
+        CHECK(raw[24] == 0x04); // body bytes start here (little-endian)
+        CHECK(raw[25] == 0x03);
+        CHECK(raw[26] == 0x02);
+        CHECK(raw[27] == 0x01);
 
         f2.dev.seek(0);
         {
@@ -552,12 +564,19 @@ TEST_CASE("DataStream: byte order for 16-bit values") {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // header(16) + tag(2) = value at offset 18
+        // stream-header(16) + frame-header(2 tag + 2 ver + 4 size) =
+        // body starts at offset 24.
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         CHECK(raw[16] == 0x00); // tag high byte
         CHECK(raw[17] == DataStream::TypeUInt16);
-        CHECK(raw[18] == 0xAB);
-        CHECK(raw[19] == 0xCD);
+        CHECK(raw[18] == 0x00); // version high byte
+        CHECK(raw[19] == 0x01); // version low byte = 1
+        CHECK(raw[20] == 0x00); // size = 2, big-endian
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x02);
+        CHECK(raw[24] == 0xAB); // body
+        CHECK(raw[25] == 0xCD);
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
@@ -574,8 +593,8 @@ TEST_CASE("DataStream: byte order for 64-bit values") {
                 DataStream ws = DataStream::createWriter(&f.dev, DataStream::BigEndian);
                 ws << testVal;
         }
-        // header(16) + tag(2) = value at offset 18
-        uint8_t *raw = static_cast<uint8_t *>(f.buf.data()) + 18;
+        // stream-header(16) + frame-header(8) = body at offset 24
+        uint8_t *raw = static_cast<uint8_t *>(f.buf.data()) + 24;
         for (int i = 0; i < 8; ++i) CHECK(raw[i] == static_cast<uint8_t>(i + 1));
         f.dev.seek(0);
         {
@@ -608,18 +627,20 @@ TEST_CASE("DataStream: type mismatch sets ReadCorruptData") {
 }
 
 TEST_CASE("DataStream: ReadPastEnd on truncated data") {
-        // Write a header + TypeUInt32 tag + only 2 of the 4 value bytes.
-        // The tag is emitted through writeTag() so the test stays
-        // agnostic to the on-wire tag width.
+        // Emit a full uint32 frame, then truncate the buffer so 2
+        // of the 4 body bytes are missing.  Reader should detect
+        // the short body via the size field in the frame header
+        // and return ReadPastEnd.
         Buffer         buf(TestBufSize);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         {
                 DataStream ws = DataStream::createWriter(&dev);
-                ws.writeTag(DataStream::TypeUInt32);
-                uint8_t partial[2] = {0x01, 0x02};
-                ws.writeRawData(partial, 2);
+                ws << static_cast<uint32_t>(0x01020304);
         }
+        const size_t fullSize = buf.size();
+        REQUIRE(fullSize >= 28); // header(16) + frame-header(8) + body(4)
+        buf.setSize(fullSize - 2);
         dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&dev);
@@ -685,10 +706,11 @@ TEST_CASE("DataStream: skipRawData") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                // Each uint8_t is tag(2) + value(1) = 3 bytes.
-                // Skip first entry (3 bytes)
-                ssize_t skipped = rs.skipRawData(3);
-                CHECK(skipped == 3);
+                // Each uint8_t value is wrapped in a frame:
+                //   tag(2) + version(1) + size(4) + body(1) = 8 bytes.
+                // Skip the first entry, then read the second.
+                ssize_t skipped = rs.skipRawData(8);
+                CHECK(skipped == 8);
                 uint8_t val;
                 rs >> val;
                 CHECK(val == 0xBB);
@@ -2239,9 +2261,12 @@ TEST_CASE("DataStream: setError preserves first error") {
 // Golden wire-format tests (pin down the exact byte layout)
 // ============================================================================
 
-// All golden tests below assume the 16-byte header so tag/payload offsets
-// start at byte 16. The header layout itself is checked in the dedicated
-// "writer writes header" test above.
+// All golden tests below assume the 16-byte stream header so the
+// first per-value frame begins at offset 16.  Every frame consumes
+// 8 bytes of header (tag(2) + version(2) + size(4)) ahead of its
+// body, so a primitive frame ends at offset 16 + 8 + sizeof(body).
+// The header layout itself is checked in the dedicated "writer
+// writes header" test above.
 
 TEST_CASE("DataStream golden: uint32_t big-endian exact bytes") {
         WriterFixture f;
@@ -2250,16 +2275,23 @@ TEST_CASE("DataStream golden: uint32_t big-endian exact bytes") {
                 ws << static_cast<uint32_t>(0xDEADBEEF);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 0-15: PMDS header (checked elsewhere)
         // Bytes 16-17: TypeUInt32 tag 0x0006 (big-endian)
         CHECK(raw[16] == 0x00);
         CHECK(raw[17] == 0x06);
-        // Bytes 18-21: 0xDEADBEEF big-endian
-        CHECK(raw[18] == 0xDE);
-        CHECK(raw[19] == 0xAD);
-        CHECK(raw[20] == 0xBE);
-        CHECK(raw[21] == 0xEF);
-        CHECK(f.dev.pos() == 22);
+        // Bytes 18-19: per-type version = 1 (big-endian uint16)
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x01);
+        // Bytes 20-23: body size = 4 (big-endian uint32)
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x04);
+        // Bytes 24-27: 0xDEADBEEF big-endian body
+        CHECK(raw[24] == 0xDE);
+        CHECK(raw[25] == 0xAD);
+        CHECK(raw[26] == 0xBE);
+        CHECK(raw[27] == 0xEF);
+        CHECK(f.dev.pos() == 28);
 }
 
 TEST_CASE("DataStream golden: String exact bytes") {
@@ -2272,15 +2304,23 @@ TEST_CASE("DataStream golden: String exact bytes") {
         // Bytes 16-17: TypeString tag 0x000C
         CHECK(raw[16] == 0x00);
         CHECK(raw[17] == 0x0C);
-        // Bytes 18-21: length = 2 (big-endian uint32)
+        // Bytes 18-19: version = 1
         CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x00);
+        CHECK(raw[19] == 0x01);
+        // Bytes 20-23: body size = 4 (uint32 length prefix) + 2 (UTF-8 "hi") = 6
         CHECK(raw[20] == 0x00);
-        CHECK(raw[21] == 0x02);
-        // Bytes 22-23: UTF-8 "hi"
-        CHECK(raw[22] == 'h');
-        CHECK(raw[23] == 'i');
-        CHECK(f.dev.pos() == 24);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x06);
+        // Bytes 24-27: length = 2 (big-endian uint32) — unframed length prefix
+        CHECK(raw[24] == 0x00);
+        CHECK(raw[25] == 0x00);
+        CHECK(raw[26] == 0x00);
+        CHECK(raw[27] == 0x02);
+        // Bytes 28-29: UTF-8 "hi"
+        CHECK(raw[28] == 'h');
+        CHECK(raw[29] == 'i');
+        CHECK(f.dev.pos() == 30);
 }
 
 TEST_CASE("DataStream golden: UUID direct write exact bytes") {
@@ -2297,9 +2337,17 @@ TEST_CASE("DataStream golden: UUID direct write exact bytes") {
         // Bytes 16-17: TypeUUID tag 0x0010 (big-endian default)
         CHECK(raw[16] == 0x00);
         CHECK(raw[17] == 0x10);
-        // Bytes 18-33: raw UUID bytes
-        for (int i = 0; i < 16; ++i) CHECK(raw[18 + i] == i);
-        CHECK(f.dev.pos() == 34);
+        // Bytes 18-19: version = 1
+        CHECK(raw[18] == 0x00);
+        CHECK(raw[19] == 0x01);
+        // Bytes 20-23: body size = 16
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x10);
+        // Bytes 24-39: raw UUID body
+        for (int i = 0; i < 16; ++i) CHECK(raw[24 + i] == i);
+        CHECK(f.dev.pos() == 40);
 }
 
 TEST_CASE("DataStream golden: Size2D<uint32_t> exact bytes") {
@@ -2309,26 +2357,44 @@ TEST_CASE("DataStream golden: Size2D<uint32_t> exact bytes") {
                 ws << Size2Du32(1920, 1080);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 16-17: TypeSize2D tag 0x0013
+        // Outer Size2D frame (offset 16):
+        //   tag(2) ver(2) size(4) = 8 bytes header, then body of
+        //   two inner uint32 frames (12 bytes each = 24 bytes body).
         CHECK(raw[16] == 0x00);
-        CHECK(raw[17] == 0x13);
-        // Bytes 18-19: TypeUInt32 tag 0x0006 for width
-        CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x06);
-        // Bytes 20-23: width = 1920 = 0x00000780 (big-endian)
+        CHECK(raw[17] == 0x13); // TypeSize2D
+        CHECK(raw[18] == 0x00); // version high
+        CHECK(raw[19] == 0x01); // version low = 1
         CHECK(raw[20] == 0x00);
         CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x07);
-        CHECK(raw[23] == 0x80);
-        // Bytes 24-25: TypeUInt32 tag 0x0006 for height
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x18); // body size = 24
+        // Inner uint32 frame for width = 1920 = 0x00000780, offset 24:
         CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x06);
-        // Bytes 26-29: height = 1080 = 0x00000438 (big-endian)
+        CHECK(raw[25] == 0x06); // TypeUInt32
         CHECK(raw[26] == 0x00);
-        CHECK(raw[27] == 0x00);
-        CHECK(raw[28] == 0x04);
-        CHECK(raw[29] == 0x38);
-        CHECK(f.dev.pos() == 30);
+        CHECK(raw[27] == 0x01); // version = 1
+        CHECK(raw[28] == 0x00);
+        CHECK(raw[29] == 0x00);
+        CHECK(raw[30] == 0x00);
+        CHECK(raw[31] == 0x04); // body size = 4
+        CHECK(raw[32] == 0x00);
+        CHECK(raw[33] == 0x00);
+        CHECK(raw[34] == 0x07);
+        CHECK(raw[35] == 0x80);
+        // Inner uint32 frame for height = 1080 = 0x00000438, offset 36:
+        CHECK(raw[36] == 0x00);
+        CHECK(raw[37] == 0x06);
+        CHECK(raw[38] == 0x00);
+        CHECK(raw[39] == 0x01);
+        CHECK(raw[40] == 0x00);
+        CHECK(raw[41] == 0x00);
+        CHECK(raw[42] == 0x00);
+        CHECK(raw[43] == 0x04);
+        CHECK(raw[44] == 0x00);
+        CHECK(raw[45] == 0x00);
+        CHECK(raw[46] == 0x04);
+        CHECK(raw[47] == 0x38);
+        CHECK(f.dev.pos() == 48);
 }
 
 TEST_CASE("DataStream golden: Rational<int> exact bytes") {
@@ -2338,26 +2404,42 @@ TEST_CASE("DataStream golden: Rational<int> exact bytes") {
                 ws << Rational<int>(24000, 1001);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 16-17: TypeRational tag 0x0014
+        // Outer Rational frame, body = two int32 frames (12 + 12 = 24).
         CHECK(raw[16] == 0x00);
-        CHECK(raw[17] == 0x14);
-        // Bytes 18-19: TypeInt32 tag 0x0005 for numerator
+        CHECK(raw[17] == 0x14); // TypeRational
         CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x05);
-        // Bytes 20-23: numerator = 24000 = 0x00005DC0 (big-endian)
+        CHECK(raw[19] == 0x01); // version = 1
         CHECK(raw[20] == 0x00);
         CHECK(raw[21] == 0x00);
-        CHECK(raw[22] == 0x5D);
-        CHECK(raw[23] == 0xC0);
-        // Bytes 24-25: TypeInt32 tag 0x0005 for denominator
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x18); // body size = 24
+        // numerator = 24000 = 0x00005DC0
         CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x05);
-        // Bytes 26-29: denominator = 1001 = 0x000003E9 (big-endian)
+        CHECK(raw[25] == 0x05); // TypeInt32
         CHECK(raw[26] == 0x00);
-        CHECK(raw[27] == 0x00);
-        CHECK(raw[28] == 0x03);
-        CHECK(raw[29] == 0xE9);
-        CHECK(f.dev.pos() == 30);
+        CHECK(raw[27] == 0x01);
+        CHECK(raw[28] == 0x00);
+        CHECK(raw[29] == 0x00);
+        CHECK(raw[30] == 0x00);
+        CHECK(raw[31] == 0x04);
+        CHECK(raw[32] == 0x00);
+        CHECK(raw[33] == 0x00);
+        CHECK(raw[34] == 0x5D);
+        CHECK(raw[35] == 0xC0);
+        // denominator = 1001 = 0x000003E9
+        CHECK(raw[36] == 0x00);
+        CHECK(raw[37] == 0x05);
+        CHECK(raw[38] == 0x00);
+        CHECK(raw[39] == 0x01);
+        CHECK(raw[40] == 0x00);
+        CHECK(raw[41] == 0x00);
+        CHECK(raw[42] == 0x00);
+        CHECK(raw[43] == 0x04);
+        CHECK(raw[44] == 0x00);
+        CHECK(raw[45] == 0x00);
+        CHECK(raw[46] == 0x03);
+        CHECK(raw[47] == 0xE9);
+        CHECK(f.dev.pos() == 48);
 }
 
 TEST_CASE("DataStream golden: Invalid Variant exact bytes") {
@@ -2368,10 +2450,16 @@ TEST_CASE("DataStream golden: Invalid Variant exact bytes") {
                 ws << invalid;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 16-17: TypeInvalid tag 0x000E, no payload
+        // TypeInvalid frame: tag + ver + size=0, no body.
         CHECK(raw[16] == 0x00);
-        CHECK(raw[17] == 0x0E);
-        CHECK(f.dev.pos() == 18);
+        CHECK(raw[17] == 0x0E); // TypeInvalid
+        CHECK(raw[18] == 0x00); // version high
+        CHECK(raw[19] == 0x01); // version low = 1
+        CHECK(raw[20] == 0x00);
+        CHECK(raw[21] == 0x00);
+        CHECK(raw[22] == 0x00);
+        CHECK(raw[23] == 0x00); // body size = 0
+        CHECK(f.dev.pos() == 24);
 }
 
 TEST_CASE("DataStream golden: List<int32_t> exact bytes") {
@@ -2384,31 +2472,56 @@ TEST_CASE("DataStream golden: List<int32_t> exact bytes") {
                 ws << list;
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 16-17: TypeList tag 0x0020
+        // Outer List frame, body = uint32 count frame (12) + 2 int32
+        // element frames (12 each) = 36 bytes.
         CHECK(raw[16] == 0x00);
-        CHECK(raw[17] == 0x20);
-        // Bytes 18-23: count = 2 written as TypeUInt32 + big-endian value
-        CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x06); // TypeUInt32
+        CHECK(raw[17] == 0x20); // TypeList
+        CHECK(raw[18] == 0x00); // version high
+        CHECK(raw[19] == 0x01); // version low = 1
         CHECK(raw[20] == 0x00);
         CHECK(raw[21] == 0x00);
         CHECK(raw[22] == 0x00);
-        CHECK(raw[23] == 0x02);
-        // Bytes 24-29: element 1 = int32(1) written as TypeInt32 + big-endian
+        CHECK(raw[23] == 0x24); // body size = 36
+        // Inner uint32 count = 2, offset 24:
         CHECK(raw[24] == 0x00);
-        CHECK(raw[25] == 0x05); // TypeInt32
+        CHECK(raw[25] == 0x06); // TypeUInt32
         CHECK(raw[26] == 0x00);
-        CHECK(raw[27] == 0x00);
+        CHECK(raw[27] == 0x01);
         CHECK(raw[28] == 0x00);
-        CHECK(raw[29] == 0x01);
-        // Bytes 30-35: element 2 = int32(2)
+        CHECK(raw[29] == 0x00);
         CHECK(raw[30] == 0x00);
-        CHECK(raw[31] == 0x05);
+        CHECK(raw[31] == 0x04);
         CHECK(raw[32] == 0x00);
         CHECK(raw[33] == 0x00);
         CHECK(raw[34] == 0x00);
         CHECK(raw[35] == 0x02);
-        CHECK(f.dev.pos() == 36);
+        // Element 1 = int32(1), offset 36:
+        CHECK(raw[36] == 0x00);
+        CHECK(raw[37] == 0x05); // TypeInt32
+        CHECK(raw[38] == 0x00);
+        CHECK(raw[39] == 0x01);
+        CHECK(raw[40] == 0x00);
+        CHECK(raw[41] == 0x00);
+        CHECK(raw[42] == 0x00);
+        CHECK(raw[43] == 0x04);
+        CHECK(raw[44] == 0x00);
+        CHECK(raw[45] == 0x00);
+        CHECK(raw[46] == 0x00);
+        CHECK(raw[47] == 0x01);
+        // Element 2 = int32(2), offset 48:
+        CHECK(raw[48] == 0x00);
+        CHECK(raw[49] == 0x05);
+        CHECK(raw[50] == 0x00);
+        CHECK(raw[51] == 0x01);
+        CHECK(raw[52] == 0x00);
+        CHECK(raw[53] == 0x00);
+        CHECK(raw[54] == 0x00);
+        CHECK(raw[55] == 0x04);
+        CHECK(raw[56] == 0x00);
+        CHECK(raw[57] == 0x00);
+        CHECK(raw[58] == 0x00);
+        CHECK(raw[59] == 0x02);
+        CHECK(f.dev.pos() == 60);
 }
 
 TEST_CASE("DataStream golden: MemSpace exact bytes") {
@@ -2418,18 +2531,29 @@ TEST_CASE("DataStream golden: MemSpace exact bytes") {
                 ws << MemSpace(MemSpace::SystemSecure);
         }
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
-        // Bytes 16-17: TypeMemSpace tag 0x0019
+        // MemSpace frame body is one tagged uint32 (12 bytes).
         CHECK(raw[16] == 0x00);
-        CHECK(raw[17] == 0x19);
-        // Bytes 18-19: TypeUInt32 tag 0x0006 for the ID
+        CHECK(raw[17] == 0x19); // TypeMemSpace
         CHECK(raw[18] == 0x00);
-        CHECK(raw[19] == 0x06);
-        // Bytes 20-23: ID = SystemSecure = 1 (big-endian)
+        CHECK(raw[19] == 0x01); // version = 1
         CHECK(raw[20] == 0x00);
         CHECK(raw[21] == 0x00);
         CHECK(raw[22] == 0x00);
-        CHECK(raw[23] == 0x01);
-        CHECK(f.dev.pos() == 24);
+        CHECK(raw[23] == 0x0C); // body size = 12
+        // Inner uint32 ID = SystemSecure = 1, offset 24:
+        CHECK(raw[24] == 0x00);
+        CHECK(raw[25] == 0x06); // TypeUInt32
+        CHECK(raw[26] == 0x00);
+        CHECK(raw[27] == 0x01);
+        CHECK(raw[28] == 0x00);
+        CHECK(raw[29] == 0x00);
+        CHECK(raw[30] == 0x00);
+        CHECK(raw[31] == 0x04);
+        CHECK(raw[32] == 0x00);
+        CHECK(raw[33] == 0x00);
+        CHECK(raw[34] == 0x00);
+        CHECK(raw[35] == 0x01);
+        CHECK(f.dev.pos() == 36);
 }
 
 // ============================================================================
@@ -3005,3 +3129,350 @@ TEST_CASE("DataStream: round-trip Variant SdpSession") {
         }
 }
 #endif
+
+// ============================================================================
+// Frame header / framing API
+// ============================================================================
+//
+// Wire format v3 adds a per-value frame header [tag(2)][version(2)][size(4)]
+// before every body.  These tests exercise the API surface around it —
+// readFrameHeader, readFrame's version validation, skipFrame, and the
+// forward-compat path for unknown Variant tags.
+
+TEST_CASE("DataStream: framing constants") {
+        CHECK(DataStream::CurrentVersion == 3);
+        CHECK(DataStream::FrameHeaderSize == 8);
+}
+
+TEST_CASE("DataStream: readFrameHeader returns tag, version, size") {
+        WriterFixture f;
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << static_cast<uint32_t>(0x12345678);
+        }
+        f.dev.seek(0);
+        DataStream rs = DataStream::createReader(&f.dev);
+        DataStream::TypeId tag = static_cast<DataStream::TypeId>(0);
+        uint16_t           ver = 0;
+        uint32_t           sz = 0;
+        REQUIRE(rs.readFrameHeader(tag, ver, sz));
+        CHECK(tag == DataStream::TypeUInt32);
+        CHECK(ver == 1);
+        CHECK(sz == 4);
+}
+
+TEST_CASE("DataStream: readFrame rejects future versions") {
+        // Hand-craft a frame whose tag matches what we'll ask for but
+        // whose version is higher than the reader's maxVersion.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws.beginFrame(DataStream::TypeUInt32, /*version=*/2);
+                uint32_t v = 0xCAFEBABE;
+                ws.writeRawData(&v, sizeof(v));
+                ws.endFrame();
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        uint16_t   ver = 0;
+        // Default maxVersion = 1 → reader rejects v=2.
+        CHECK(!rs.readFrame(DataStream::TypeUInt32, 1, &ver));
+        CHECK(rs.status() == DataStream::ReadCorruptData);
+        CHECK(rs.errorContext().contains("version"));
+}
+
+TEST_CASE("DataStream: readFrame accepts future versions when maxVersion permits") {
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws.beginFrame(DataStream::TypeUInt32, /*version=*/2);
+                uint32_t v = 0xCAFEBABE;
+                ws.writeRawData(&v, sizeof(v));
+                ws.endFrame();
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        uint16_t   ver = 0;
+        uint32_t   sz = 0;
+        // maxVersion = 2 admits version 2.  Status stays Ok and the
+        // reported version reflects what was on the wire.
+        REQUIRE(rs.readFrame(DataStream::TypeUInt32, 2, &ver, &sz));
+        CHECK(ver == 2);
+        CHECK(sz == 4);
+        CHECK(rs.status() == DataStream::Ok);
+}
+
+TEST_CASE("DataStream: skipFrame consumes a complete frame") {
+        // Layout: [String "first"][int32(42)][String "third"].  Skip
+        // the middle int32 and read the bracketing strings.
+        WriterFixture f;
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << String("first") << static_cast<int32_t>(42) << String("third");
+        }
+        f.dev.seek(0);
+        DataStream rs = DataStream::createReader(&f.dev);
+        String     a, c;
+        rs >> a;
+        rs.skipFrame();
+        rs >> c;
+        CHECK(rs.status() == DataStream::Ok);
+        CHECK(a == "first");
+        CHECK(c == "third");
+}
+
+TEST_CASE("DataStream: Variant read silently skips unknown tags") {
+        // Forward-compat scenario: a writer emits a tag in the user
+        // range that no existing reader knows.  The Variant read
+        // should consume the body via the size field and yield a
+        // default-constructed Variant without dirtying the stream
+        // status, so subsequent reads of known frames still work.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                // "Unknown" type — a value reserved for user types.
+                auto unknownTag = static_cast<DataStream::TypeId>(DataStream::UserTypeIdEnd);
+                ws.beginFrame(unknownTag, /*version=*/1);
+                // Some arbitrary body bytes the reader must skip past.
+                const char body[] = {'\x01', '\x02', '\x03', '\x04', '\x05'};
+                ws.writeRawData(body, sizeof(body));
+                ws.endFrame();
+                // Then a well-known Variant we expect to read after the skip.
+                Variant v(static_cast<int32_t>(0x12345678));
+                ws << v;
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        Variant    skipped;
+        rs >> skipped;
+        CHECK(rs.status() == DataStream::Ok); // forward-compat: no error
+        CHECK(skipped.type() == Variant::TypeInvalid);
+        Variant follow;
+        rs >> follow;
+        CHECK(rs.status() == DataStream::Ok);
+        REQUIRE(follow.type() == Variant::TypeS32);
+        CHECK(follow.get<int32_t>() == 0x12345678);
+}
+
+TEST_CASE("DataStream: nested frames flush in correct order") {
+        // Manually open an outer frame whose body is two nested inner
+        // frames, verifying the buffered-write design correctly
+        // routes inner-frame bytes into the parent's accumulator.
+        WriterFixture f;
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws.beginFrame(DataStream::TypeList, 1);
+                ws << static_cast<uint32_t>(2);
+                ws << String("alpha");
+                ws << String("beta");
+                ws.endFrame();
+        }
+        f.dev.seek(0);
+        DataStream rs = DataStream::createReader(&f.dev);
+        uint16_t   ver = 0;
+        uint32_t   sz = 0;
+        REQUIRE(rs.readFrame(DataStream::TypeList, 1, &ver, &sz));
+        CHECK(ver == 1);
+        // sz captures the entire nested body — non-zero proves the
+        // parent frame buffered the children correctly.
+        CHECK(sz > 0);
+        uint32_t count = 0;
+        rs >> count;
+        REQUIRE(count == 2);
+        String a, b;
+        rs >> a >> b;
+        CHECK(rs.status() == DataStream::Ok);
+        CHECK(a == "alpha");
+        CHECK(b == "beta");
+}
+
+TEST_CASE("DataStream: endFrame without matching beginFrame is an error") {
+        WriterFixture f;
+        DataStream    ws = DataStream::createWriter(&f.dev);
+        ws.endFrame(); // no open frame
+        CHECK(ws.status() == DataStream::WriteFailed);
+        CHECK(ws.errorContext().contains("no open frame"));
+}
+
+TEST_CASE("DataStream: writeRawData inside an open frame lands in body") {
+        // The body bytes must flow through the frame accumulator so
+        // they're covered by the size field; otherwise they would
+        // appear after the frame and break readers.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        const uint8_t  payload[] = {0xDE, 0xAD, 0xBE, 0xEF, 0x42};
+        const auto     userTag = static_cast<DataStream::TypeId>(DataStream::UserTypeIdBegin);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws.beginFrame(userTag, /*version=*/1);
+                ws.writeRawData(payload, sizeof(payload));
+                ws.endFrame();
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        DataStream::TypeId tag = static_cast<DataStream::TypeId>(0);
+        uint16_t           ver = 0;
+        uint32_t           sz = 0;
+        REQUIRE(rs.readFrameHeader(tag, ver, sz));
+        CHECK(tag == userTag);
+        CHECK(ver == 1);
+        CHECK(sz == sizeof(payload));
+        uint8_t readback[sizeof(payload)];
+        ssize_t got = rs.readRawData(readback, sizeof(readback));
+        REQUIRE(got == static_cast<ssize_t>(sizeof(readback)));
+        for (size_t i = 0; i < sizeof(payload); ++i) CHECK(readback[i] == payload[i]);
+        // The stream should now be at EOF — no stray bytes leaked
+        // around the frame.
+        CHECK(rs.atEnd());
+}
+
+TEST_CASE("DataStream: writeRawData outside any frame writes straight to the device") {
+        // Sibling property: without an open frame, writeRawData
+        // bypasses framing entirely and pushes bytes onto the device.
+        // This is the historical escape-hatch behaviour that
+        // pre-frame code depended on.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        const uint8_t  payload[] = {0x11, 0x22, 0x33};
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws.writeRawData(payload, sizeof(payload));
+        }
+        // header(16) + raw 3 bytes = 19
+        CHECK(dev.pos() == 19);
+        uint8_t *raw = static_cast<uint8_t *>(buf.data());
+        for (size_t i = 0; i < sizeof(payload); ++i) CHECK(raw[16 + i] == payload[i]);
+}
+
+TEST_CASE("DataStream: multi-level frame nesting round-trips") {
+        // List<List<int32_t>> exercises two levels of nested
+        // beginFrame/endFrame.  Each inner element write also
+        // produces its own frame, so this proves the frame stack
+        // handles deep nesting and that each level's size accounting
+        // reflects everything underneath it.
+        WriterFixture          f;
+        List<List<int32_t>>    nested;
+        List<int32_t>          a;
+        a.pushToBack(10);
+        a.pushToBack(20);
+        List<int32_t>          b;
+        b.pushToBack(30);
+        nested.pushToBack(a);
+        nested.pushToBack(b);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << nested;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        DataStream rs = DataStream::createReader(&f.dev);
+        List<List<int32_t>> out;
+        rs >> out;
+        REQUIRE(rs.status() == DataStream::Ok);
+        REQUIRE(out.size() == 2);
+        REQUIRE(out[0].size() == 2);
+        CHECK(out[0][0] == 10);
+        CHECK(out[0][1] == 20);
+        REQUIRE(out[1].size() == 1);
+        CHECK(out[1][0] == 30);
+}
+
+TEST_CASE("DataStream: skipFrame on truncated body sets ReadPastEnd") {
+        // Write a fully-formed uint32 frame then truncate the body so
+        // the declared size exceeds what's available.  skipFrame
+        // should report ReadPastEnd rather than silently succeeding.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << static_cast<uint32_t>(0x01020304);
+        }
+        // Drop the last 2 body bytes — header says size=4 but only
+        // 2 bytes follow.
+        buf.setSize(buf.size() - 2);
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        rs.skipFrame();
+        CHECK(rs.status() == DataStream::ReadPastEnd);
+}
+
+TEST_CASE("DataStream: beginFrame/endFrame are no-ops when status is not Ok") {
+        // Defensive: once the stream is in an error state, framing
+        // calls must not allocate, must not pop a phantom frame off
+        // an empty stack, and must not clobber the existing status
+        // context.  This is the "first error wins" guarantee
+        // extended to the frame machinery.
+        WriterFixture f;
+        DataStream    ws = DataStream::createWriter(&f.dev);
+        // Force an error.
+        ws.setError(DataStream::WriteFailed, String("synthetic"));
+        REQUIRE(ws.status() == DataStream::WriteFailed);
+        // beginFrame on errored stream must not push.
+        ws.beginFrame(DataStream::TypeUInt32, 1);
+        // endFrame on errored stream (and empty stack) must not
+        // overwrite the existing error or crash.
+        ws.endFrame();
+        CHECK(ws.status() == DataStream::WriteFailed);
+        CHECK(ws.errorContext() == "synthetic");
+}
+
+TEST_CASE("DataStream: Variant carrying a primitive is bit-identical to a direct write") {
+        // Documented invariant: Variants share tag values with their
+        // direct counterparts, so a Variant holding a UUID emits the
+        // same bytes as writing the UUID directly.  This invariant
+        // is what lets readers switch between the direct and Variant
+        // forms without coordinating wire layouts.
+        UUID::DataFormat bytes;
+        for (uint8_t i = 0; i < 16; ++i) bytes[i] = static_cast<uint8_t>(i * 17 + 1);
+        UUID id(bytes);
+        WriterFixture f1;
+        {
+                DataStream ws = DataStream::createWriter(&f1.dev);
+                ws << id;
+        }
+        WriterFixture f2;
+        {
+                DataStream ws = DataStream::createWriter(&f2.dev);
+                ws << Variant(id);
+        }
+        REQUIRE(f1.dev.pos() == f2.dev.pos());
+        const auto    sz = static_cast<size_t>(f1.dev.pos());
+        const uint8_t *a = static_cast<const uint8_t *>(f1.buf.data());
+        const uint8_t *b = static_cast<const uint8_t *>(f2.buf.data());
+        for (size_t i = 0; i < sz; ++i) CHECK(a[i] == b[i]);
+}
+
+TEST_CASE("DataStream: oversized frame body is rejected on read") {
+        // Hand-craft a header whose size field exceeds MaxFrameBodySize.
+        Buffer         buf(TestBufSize);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                // Write the frame header manually with an absurd size.
+                uint8_t hdr[DataStream::FrameHeaderSize] = {};
+                hdr[0] = 0x00;
+                hdr[1] = static_cast<uint8_t>(DataStream::TypeUInt32);
+                // version = 1, big-endian uint16
+                hdr[2] = 0x00;
+                hdr[3] = 0x01;
+                // size = 0xFFFFFFFF big-endian
+                hdr[4] = hdr[5] = hdr[6] = hdr[7] = 0xFF;
+                ws.writeRawData(hdr, DataStream::FrameHeaderSize);
+        }
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        uint32_t   val = 0;
+        rs >> val;
+        CHECK(rs.status() == DataStream::ReadCorruptData);
+        CHECK(rs.errorContext().contains("MaxFrameBodySize"));
+}
