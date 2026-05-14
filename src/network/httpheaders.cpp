@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/httpheaders.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -13,16 +14,7 @@ String HttpHeaders::foldName(const String &s) {
         // ASCII case fold per RFC 9110 §5.1.  Locale-independent so
         // the same key matches regardless of the calling thread's
         // locale settings.
-        const size_t len = s.byteCount();
-        const char  *src = s.cstr();
-        std::string  out;
-        out.resize(len);
-        for (size_t i = 0; i < len; ++i) {
-                char c = src[i];
-                if (c >= 'A' && c <= 'Z') c = static_cast<char>(c + ('a' - 'A'));
-                out[i] = c;
-        }
-        return String(std::move(out));
+        return s.toLower();
 }
 
 size_t HttpHeaders::findBucket(const String &lower) const {
@@ -120,7 +112,7 @@ int HttpHeaders::count() const {
         return n;
 }
 
-void HttpHeaders::forEach(std::function<void(const String &name, const String &value)> func) const {
+void HttpHeaders::forEach(Function<void(const String &name, const String &value)> func) const {
         // Iterate in registration order: walk _entries, skipping
         // cleared slots (where we sentinel'd the name to empty in
         // remove()).  This preserves arrival order across distinct

@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
@@ -91,7 +92,7 @@ class H264Bitstream {
                  * other value stops iteration and is returned as the
                  * final result of the walk.
                  */
-                using Visitor = std::function<Error(const NalUnit &)>;
+                using Visitor = Function<Error(const NalUnit &)>;
 
                 /**
                  * @brief Iterates every NAL unit in an Annex-B byte
@@ -180,7 +181,7 @@ class H264Bitstream {
                  *         does not fit in @p lenSize bytes.
                  */
                 static Error annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
-                                                  const std::function<bool(const NalUnit &)> &keep,
+                                                  const Function<bool(const NalUnit &)> &keep,
                                                   Buffer                                &outBuf);
 
                 /**

@@ -8,9 +8,9 @@
 #include <promeki/srtserver.h>
 #include <promeki/srtsocket.h>
 #include <promeki/logger.h>
+#include <promeki/thread.h>
 
 #include <chrono>
-#include <thread>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -220,7 +220,7 @@ SrtSocket::UPtr SrtServer::accept(unsigned int timeoutMs) {
                 }
                 // -1 with non-blocking: spin until deadline.
                 if (std::chrono::steady_clock::now() >= deadline) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
         }
         captureLastError();
         srt_setsockflag(_sock, SRTO_RCVSYN, &saveSync, sizeof(saveSync));

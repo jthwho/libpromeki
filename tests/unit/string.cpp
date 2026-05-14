@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/char.h>
 #include <promeki/enums.h>
@@ -273,6 +274,194 @@ TEST_CASE("String_Operations") {
         CHECK(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And "
                      "Thirty-Four Thousand Two Hundred and Ninety-Six")
                       .parseNumberWords() == 226483134296);
+}
+
+TEST_CASE("String_CtorIsUtf8Aware") {
+        // Regression: String(const char *) and operator==(const char *) must
+        // both interpret the input bytes as UTF-8.  Before the fix, the
+        // constructor stored bytes as Latin1 while == decoded them as UTF-8,
+        // so String("café") != "café".
+        SUBCASE("Pure ASCII keeps cheap Latin1 representation") {
+                String s("hello");
+                CHECK(s == "hello");
+                CHECK(s.length() == 5);
+                CHECK(s.byteCount() == 5);
+                CHECK(s.encoding() == String::Latin1);
+        }
+
+        SUBCASE("Non-ASCII is decoded to Unicode codepoints") {
+                String s("café");
+                CHECK(s == "café");                                  // <-- the headline contract
+                CHECK(s.length() == 4);                              // 4 codepoints, not 5 bytes
+                CHECK(s.byteCount() == 5);                           // UTF-8 encoding preserves the bytes
+                CHECK(s.encoding() == String::Unicode);
+                CHECK(s.charAt(3) == Char(static_cast<char32_t>(0x00E9)));   // 'é'
+        }
+
+        SUBCASE("Multi-plane characters") {
+                String s("世😀");
+                CHECK(s == "世😀");
+                CHECK(s.length() == 2);                              // 1 BMP + 1 SMP codepoint
+                CHECK(s.charAt(0) == Char(static_cast<char32_t>(0x4E16)));
+                CHECK(s.charAt(1) == Char(static_cast<char32_t>(0x1F600)));
+        }
+
+        SUBCASE("Explicit-length char* ctor agrees with null-terminated") {
+                const char  utf8[] = "héllo";                        // 6 bytes: h é(2) l l o
+                String      a(utf8);
+                String      b(utf8, sizeof(utf8) - 1);
+                CHECK(a == b);
+                CHECK(a.length() == 5);
+                CHECK(a.byteCount() == 6);
+        }
+
+        SUBCASE("std::string copy and move ctors are UTF-8 aware") {
+                std::string s = "café";
+                String      a(s);                                    // copy
+                std::string s2 = "café";
+                String      b(std::move(s2));                        // move
+                CHECK(a == "café");
+                CHECK(b == "café");
+                CHECK(a.length() == 4);
+                CHECK(b.length() == 4);
+        }
+
+        SUBCASE("std::string move on pure-ASCII keeps Latin1 fast path") {
+                std::string s(100, 'x');
+                String      r(std::move(s));
+                CHECK(r.encoding() == String::Latin1);
+                CHECK(r.length() == 100);
+                CHECK(r.byteCount() == 100);
+        }
+
+        SUBCASE("fromUtf8 stays consistent with the new ctor") {
+                CHECK(String::fromUtf8("café", 5) == String("café"));
+        }
+
+        SUBCASE("String(size_t, char) is still byte-level (not UTF-8)") {
+                // A lone high byte is never valid UTF-8 on its own — this
+                // constructor stays Latin1 so it remains a byte-fill helper.
+                String s(3, 'a');
+                CHECK(s == "aaa");
+                CHECK(s.length() == 3);
+        }
+}
+
+TEST_CASE("String_Arg_Placeholders") {
+        SUBCASE("Single placeholder") {
+                CHECK(String("Hello %1").arg("World") == "Hello World");
+                CHECK(String("%1").arg("alone") == "alone");
+        }
+
+        SUBCASE("Three placeholders pick smallest N first") {
+                CHECK(String("%3 %2 %1").arg("a").arg("b").arg("c") == "c b a");
+        }
+
+        SUBCASE("Out-of-order placement still resolves by N order") {
+                String t("[%2][%1][%3]");
+                CHECK(t.arg("X").arg("Y").arg("Z") == "[Y][X][Z]");
+        }
+
+        SUBCASE("Multi-digit placeholder numbers") {
+                String t = "%10 %2 %1 %11";
+                t.arg("one");                                       // smallest N is 1
+                CHECK(t == "%10 %2 one %11");
+                t.arg("two");                                       // next is 2
+                CHECK(t == "%10 two one %11");
+                t.arg("ten");                                       // next is 10
+                CHECK(t == "ten two one %11");
+                t.arg("eleven");                                    // last is 11
+                CHECK(t == "ten two one eleven");
+        }
+
+        SUBCASE("Adjacent placeholders") {
+                CHECK(String("%1%2").arg("foo").arg("bar") == "foobar");
+                CHECK(String("%2%1").arg("foo").arg("bar") == "barfoo");
+        }
+
+        SUBCASE("Numeric arg overloads chain through arg(String)") {
+                CHECK(String("%3 %2 %1").arg(3).arg(2).arg(1) == "1 2 3");
+                CHECK(String("%1 %2 %3").arg(static_cast<int64_t>(-9223372036854775807LL - 1))
+                                .arg(static_cast<uint64_t>(18446744073709551615ULL))
+                                .arg(static_cast<int16_t>(-32768)) ==
+                      "-9223372036854775808 18446744073709551615 -32768");
+        }
+
+        SUBCASE("Bases and padding flow through") {
+                CHECK(String("0x%1").arg(0xFF, 16) == "0xFF");           // String::number hex is uppercase
+                CHECK(String("[%1]").arg(7, 10, 4, '0') == "[0007]");
+        }
+
+        SUBCASE("No matching placeholder is a no-op") {
+                CHECK(String("nothing here").arg("ignored") == "nothing here");
+                CHECK(String("").arg("ignored") == "");
+                CHECK(String("just a literal %").arg("nope") == "just a literal %");
+                CHECK(String("trailing %").arg("nope") == "trailing %");
+                CHECK(String("not a placeholder %abc").arg("nope") == "not a placeholder %abc");
+        }
+
+        SUBCASE("Replacement containing % is not re-scanned") {
+                // arg() must not pick up placeholders that appear inside the
+                // replacement value — otherwise %1 -> "%1" loops forever.
+                String t = "value is %1";
+                t.arg("%1");                                        // inserts "%1" verbatim
+                CHECK(t == "value is %1");
+                t.arg("again");                                     // would re-trigger if we re-scanned
+                CHECK(t == "value is again");
+        }
+
+        SUBCASE("Replacement may be empty") {
+                CHECK(String("[%1]").arg(String("")) == "[]");
+                CHECK(String("a%1b").arg(String("")) == "ab");
+        }
+
+        SUBCASE("Only the lowest occurrence is replaced per call") {
+                // Two copies of %1 — first call eats the first occurrence only.
+                String t = "%1 and %1";
+                t.arg("X");
+                CHECK(t == "X and %1");
+                t.arg("Y");
+                CHECK(t == "X and Y");
+        }
+
+        SUBCASE("Surrounding multi-byte UTF-8 text is preserved byte-perfect") {
+                // 'é' (U+00E9), '世' (U+4E16), '😀' (U+1F600) — multi-byte
+                // UTF-8 sequences in the source must be traversed by Char,
+                // not by byte, so arg() can find '%' / digits at the correct
+                // character index and keep the surrounding bytes intact.
+                String src("café %1 — 世 %2 — 😀 %3 end");
+                String r = src.arg("X").arg("Y").arg("Z");
+                CHECK(r == "café X — 世 Y — 😀 Z end");
+                String expect("café X — 世 Y — 😀 Z end");
+                CHECK(r.byteCount() == expect.byteCount());
+                CHECK(std::memcmp(r.cstr(), expect.cstr(), r.byteCount()) == 0);
+        }
+
+        SUBCASE("Unicode replacement is inserted intact") {
+                CHECK(String("greet: %1").arg("héllo 😀") == "greet: héllo 😀");
+        }
+
+        SUBCASE("Placeholder right at start and end") {
+                CHECK(String("%1 end").arg("start") == "start end");
+                CHECK(String("start %1").arg("end") == "start end");
+                CHECK(String("%1").arg("solo") == "solo");
+        }
+
+        SUBCASE("Source string is not mutated when arg returns no match") {
+                String src = "literal text";
+                String r = src;                                     // share via CoW
+                r.arg("never used");
+                CHECK(src == "literal text");
+                CHECK(r == "literal text");
+        }
+
+        SUBCASE("CoW: arg on a copy does not mutate the original") {
+                String src = "%1 + %2";
+                String r = src;                                     // share
+                r.arg("a").arg("b");
+                CHECK(src == "%1 + %2");
+                CHECK(r == "a + b");
+        }
 }
 
 // ============================================================================
@@ -2293,7 +2482,7 @@ TEST_CASE("String_Rfind") {
 
 TEST_CASE("String_CrossEncodingFind") {
         // A Latin1 haystack containing 'é' as the raw byte 0xE9.
-        String latin1Haystack(reinterpret_cast<const char *>("caf\xe9 caf\xe9"), 9);
+        String latin1Haystack = String::fromLatin1("caf\xe9 caf\xe9", 9);
         REQUIRE(latin1Haystack.encoding() == String::Latin1);
         REQUIRE(latin1Haystack.length() == 9);
         REQUIRE(latin1Haystack.charAt(3).codepoint() == 0xE9);
@@ -2328,7 +2517,7 @@ TEST_CASE("String_CrossEncodingFind") {
         // pin it down so it stays that way.
         String unicodeHaystack = String::fromUtf8("caf\xc3\xa9 caf\xc3\xa9", 11);
         REQUIRE(unicodeHaystack.encoding() == String::Unicode);
-        String latin1Needle(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String latin1Needle = String::fromLatin1("caf\xe9", 4);
         REQUIRE(latin1Needle.encoding() == String::Latin1);
         CHECK(unicodeHaystack.find(latin1Needle) == 0);
         CHECK(unicodeHaystack.rfind(latin1Needle) == 5);
@@ -2520,7 +2709,7 @@ TEST_CASE("String_HashCrossEncoding") {
         CHECK(asciiLatin1.hash() == asciiUnicode.hash());
 
         // Latin1 with high bytes vs Unicode of the same logical chars.
-        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String latin1Cafe = String::fromLatin1("caf\xe9", 4);
         String unicodeCafe = String::fromUtf8("caf\xc3\xa9", 5);
         REQUIRE(latin1Cafe.encoding() == String::Latin1);
         REQUIRE(unicodeCafe.encoding() == String::Unicode);
@@ -2550,7 +2739,7 @@ TEST_CASE("String_LessThanCrossEncoding") {
         // operator==-equal — which broke std::map<String, T> and
         // std::set<String> invariants whenever a key arrived in a different
         // encoding from a stored key.
-        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String latin1Cafe = String::fromLatin1("caf\xe9", 4);
         String unicodeCafe = String::fromUtf8("caf\xc3\xa9", 5);
         REQUIRE(latin1Cafe.encoding() == String::Latin1);
         REQUIRE(unicodeCafe.encoding() == String::Unicode);
@@ -2561,7 +2750,7 @@ TEST_CASE("String_LessThanCrossEncoding") {
         CHECK_FALSE(unicodeCafe < latin1Cafe);
 
         // operator< must agree with codepoint order across encodings.
-        String latin1A(reinterpret_cast<const char *>("\xe0"), 1); // U+00E0 'à'
+        String latin1A = String::fromLatin1("\xe0", 1); // U+00E0 'à'
         String unicodeB = String::fromUtf8("\xc3\xa9", 2);         // U+00E9 'é'
         REQUIRE(latin1A.charAt(0).codepoint() < unicodeB.charAt(0).codepoint());
         CHECK(latin1A < unicodeB);
@@ -2590,7 +2779,7 @@ TEST_CASE("String_FindCStrIsUtf8") {
         // never matched the corresponding logical character in the haystack.
 
         // Latin1 haystack with high byte 'é' (0xE9), UTF-8 needle "é".
-        String latin1Haystack(reinterpret_cast<const char *>("caf\xe9 caf\xe9"), 9);
+        String latin1Haystack = String::fromLatin1("caf\xe9 caf\xe9", 9);
         REQUIRE(latin1Haystack.encoding() == String::Latin1);
         CHECK(latin1Haystack.find("caf\xc3\xa9") == 0);
         CHECK(latin1Haystack.rfind("caf\xc3\xa9") == 5);
@@ -2623,7 +2812,7 @@ TEST_CASE("String_EqualsCStrIsUtf8") {
 
         // Latin1 storage compared to a UTF-8 literal of the same logical
         // characters (matches via codepoint comparison after UTF-8 decode).
-        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String latin1Cafe = String::fromLatin1("caf\xe9", 4);
         CHECK(latin1Cafe == "caf\xc3\xa9");
 
         // Length mismatches still fail correctly.

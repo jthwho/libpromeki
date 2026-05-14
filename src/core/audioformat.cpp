@@ -729,12 +729,19 @@ struct AudioFormatRegistry {
                         };
 
                         // 8-bit only has signed/unsigned (no endian) — sign flip only.
-                        for (auto pair : {std::pair{AudioFormat::PCMI_S8, AudioFormat::PCMI_U8},
-                                          std::pair{AudioFormat::PCMP_S8, AudioFormat::PCMP_U8}}) {
-                                addDirect(pair.first, pair.first, directIdentity<1>, true);
-                                addDirect(pair.second, pair.second, directIdentity<1>, true);
-                                addDirect(pair.first, pair.second, directSignFlip<1, 0>, true);
-                                addDirect(pair.second, pair.first, directSignFlip<1, 0>, true);
+                        struct SignedUnsignedPair {
+                                AudioFormat::ID s;
+                                AudioFormat::ID u;
+                        };
+                        const SignedUnsignedPair pairs8[] = {
+                                {AudioFormat::PCMI_S8, AudioFormat::PCMI_U8},
+                                {AudioFormat::PCMP_S8, AudioFormat::PCMP_U8},
+                        };
+                        for (const SignedUnsignedPair &p : pairs8) {
+                                addDirect(p.s, p.s, directIdentity<1>, true);
+                                addDirect(p.u, p.u, directIdentity<1>, true);
+                                addDirect(p.s, p.u, directSignFlip<1, 0>, true);
+                                addDirect(p.u, p.s, directSignFlip<1, 0>, true);
                         }
 
                         for (const Group &g : groups16) {

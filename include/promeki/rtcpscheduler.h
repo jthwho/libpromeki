@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/list.h>
 #include <promeki/mutex.h>
@@ -186,7 +187,7 @@ struct RtcpSchedulerContext {
                 ///        latch is still flipped, the call is just
                 ///        skipped).  The callback is passed the
                 ///        stream view and the gap in nanoseconds.
-                std::function<void(RtcpSchedulerReaderStream &, int64_t gapNs)>
+                Function<void(RtcpSchedulerReaderStream &, int64_t gapNs)>
                         onWireSilenceEos;
 };
 

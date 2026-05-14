@@ -5,7 +5,6 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <algorithm>
 #include <cmath>
 #include <promeki/musicalscale.h>
 
@@ -36,25 +35,21 @@ MusicalScale::MusicalScale(int rootPitchClass, Mode mode) : _rootPitchClass(root
 Result<MusicalScale> MusicalScale::fromName(const String &name) {
         if (name.isEmpty()) return makeError<MusicalScale>(Error::Invalid);
 
-        const std::string &s = name.str();
-
         // Find where the root note ends and the mode name begins.
         // Root can be 1 char (C) or 2 chars (C#, Db, Ab).
         size_t modeStart = 1;
-        if (s.size() >= 2 && (s[1] == '#' || s[1] == 'b')) modeStart = 2;
+        if (name.length() >= 2 && (name.charAt(1) == '#' || name.charAt(1) == 'b')) modeStart = 2;
 
-        String rootStr = String(s.substr(0, modeStart));
+        String rootStr = name.substr(0, modeStart);
         int    root = pitchClassFromName(rootStr);
         if (root < 0) return makeError<MusicalScale>(Error::Invalid);
 
         // Extract mode string, trimming leading whitespace.
         Mode mode = Chromatic;
-        if (modeStart < s.size()) {
-                std::string modeStr = s.substr(modeStart);
-                size_t      first = modeStr.find_first_not_of(' ');
-                if (first != std::string::npos) {
-                        modeStr = modeStr.substr(first);
-                        auto [m, err] = modeFromName(String(modeStr));
+        if (modeStart < name.length()) {
+                String modeStr = name.substr(modeStart).trim();
+                if (!modeStr.isEmpty()) {
+                        auto [m, err] = modeFromName(modeStr);
                         if (err.isError()) return makeError<MusicalScale>(err);
                         mode = m;
                 }
@@ -123,10 +118,8 @@ float MusicalScale::constrainNote(float midiNote, float strength) const {
 int MusicalScale::pitchClassFromName(const String &name) {
         if (name.isEmpty()) return -1;
 
-        const std::string &s = name.str();
-
         int base = -1;
-        switch (s[0]) {
+        switch (name.charAt(0).codepoint()) {
                 case 'C': base = 0; break;
                 case 'D': base = 2; break;
                 case 'E': base = 4; break;
@@ -137,10 +130,10 @@ int MusicalScale::pitchClassFromName(const String &name) {
                 default: return -1;
         }
 
-        for (size_t i = 1; i < s.size(); i++) {
-                if (s[i] == '#')
+        for (size_t i = 1; i < name.length(); i++) {
+                if (name.charAt(i) == '#')
                         base++;
-                else if (s[i] == 'b')
+                else if (name.charAt(i) == 'b')
                         base--;
         }
 
@@ -155,8 +148,7 @@ const char *MusicalScale::pitchClassName(int pitchClass) {
 }
 
 Result<MusicalScale::Mode> MusicalScale::modeFromName(const String &name) {
-        std::string lower = name.str();
-        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        String lower = name.toLower();
 
         if (lower == "chromatic") return makeResult(Chromatic);
         if (lower == "major" || lower == "ionian") return makeResult(Major);

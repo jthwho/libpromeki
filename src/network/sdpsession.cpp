@@ -10,7 +10,6 @@
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
 #include <promeki/stringlist.h>
-#include <sstream>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,51 +24,57 @@ void SdpSession::setOrigin(const String &username, uint64_t sessionId, uint64_t 
 }
 
 String SdpSession::toString() const {
-        std::ostringstream out;
+        String out;
 
-        // v= (protocol version, always 0)
-        out << "v=0\r\n";
+        out += "v=0\r\n";
 
-        // o= (origin)
-        out << "o=" << _originUsername.str() << " " << _sessionId << " " << _sessionVersion << " "
-            << _originNetType.str() << " " << _originAddrType.str() << " " << _originAddress.str() << "\r\n";
+        out += String::sprintf("o=%s %llu %llu %s %s %s\r\n", _originUsername.cstr(),
+                               static_cast<unsigned long long>(_sessionId),
+                               static_cast<unsigned long long>(_sessionVersion), _originNetType.cstr(),
+                               _originAddrType.cstr(), _originAddress.cstr());
 
-        // s= (session name)
-        out << "s=" << (_sessionName.isEmpty() ? " " : _sessionName.str()) << "\r\n";
+        out += "s=";
+        out += _sessionName.isEmpty() ? String(" ") : _sessionName;
+        out += "\r\n";
 
-        // c= (connection, session-level)
         if (!_connectionAddress.isEmpty()) {
-                out << "c=IN IP4 " << _connectionAddress.str() << "\r\n";
+                out += "c=IN IP4 ";
+                out += _connectionAddress;
+                out += "\r\n";
         }
 
-        // t= (timing, always 0 0 for permanent sessions)
-        out << "t=0 0\r\n";
+        out += "t=0 0\r\n";
 
-        // Media descriptions
         for (const auto &md : _mediaDescriptions) {
-                // m= line
-                out << "m=" << md.mediaType().str() << " " << md.port() << " " << md.protocol().str();
+                out += String::sprintf("m=%s %d %s", md.mediaType().cstr(), static_cast<int>(md.port()),
+                                       md.protocol().cstr());
                 for (auto pt : md.payloadTypes()) {
-                        out << " " << static_cast<int>(pt);
+                        out += String::sprintf(" %d", static_cast<int>(pt));
                 }
-                out << "\r\n";
+                out += "\r\n";
 
-                // c= (media-level connection, if different from session)
                 if (!md.connectionAddress().isEmpty()) {
-                        out << "c=IN IP4 " << md.connectionAddress().str() << "\r\n";
+                        out += "c=IN IP4 ";
+                        out += md.connectionAddress();
+                        out += "\r\n";
                 }
 
-                // a= (attributes, in insertion order)
                 for (size_t ai = 0; ai < md.attributes().size(); ai++) {
                         const auto &attr = md.attributes()[ai];
                         if (attr.second().isEmpty()) {
-                                out << "a=" << attr.first().str() << "\r\n";
+                                out += "a=";
+                                out += attr.first();
+                                out += "\r\n";
                         } else {
-                                out << "a=" << attr.first().str() << ":" << attr.second().str() << "\r\n";
+                                out += "a=";
+                                out += attr.first();
+                                out += ":";
+                                out += attr.second();
+                                out += "\r\n";
                         }
                 }
         }
-        return String(out.str());
+        return out;
 }
 
 SdpMediaDescription::RtpMap SdpMediaDescription::rtpMap() const {
@@ -185,9 +190,9 @@ Result<SdpSession> SdpSession::fromString(const String &sdp) {
                                 if (parts.size() >= 3) {
                                         // Strip TTL suffix if present
                                         String addr = parts[2];
-                                        auto   slashPos = addr.str().find('/');
-                                        if (slashPos != std::string::npos) {
-                                                addr = String(addr.str().substr(0, slashPos));
+                                        size_t slashPos = addr.find('/');
+                                        if (slashPos != String::npos) {
+                                                addr = addr.left(slashPos);
                                         }
                                         if (currentMedia) {
                                                 currentMedia->setConnectionAddress(addr);
@@ -224,13 +229,11 @@ Result<SdpSession> SdpSession::fromString(const String &sdp) {
                         case 'a': {
                                 // a=<attribute> or a=<attribute>:<value>
                                 if (!currentMedia) break;
-                                auto colonPos = value.str().find(':');
-                                if (colonPos == std::string::npos) {
+                                size_t colonPos = value.find(':');
+                                if (colonPos == String::npos) {
                                         currentMedia->setAttribute(value, String());
                                 } else {
-                                        String attrName(value.str().substr(0, colonPos));
-                                        String attrValue(value.str().substr(colonPos + 1));
-                                        currentMedia->setAttribute(attrName, attrValue);
+                                        currentMedia->setAttribute(value.left(colonPos), value.mid(colonPos + 1));
                                 }
                                 break;
                         }

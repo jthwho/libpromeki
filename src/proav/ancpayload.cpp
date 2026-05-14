@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/optional.h>
 #include <promeki/ancpayload.h>
 #include <promeki/datastream.h>
 #include <promeki/variantlookup.h>
@@ -87,26 +88,26 @@ void AncPayload::deserialisePayload(DataStream &s) {
 PROMEKI_LOOKUP_REGISTER(AncPayload)
         .inheritsFrom<MediaPayload>()
         .scalar("PacketCount",
-                [](const AncPayload &p) -> std::optional<Variant> {
+                [](const AncPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.packets().size()));
                 })
         .scalar("HasCaptions",
-                [](const AncPayload &p) -> std::optional<Variant> {
+                [](const AncPayload &p) -> Optional<Variant> {
                         return Variant(p.hasCategory(AncCategory::Captions));
                 })
         .scalar("HasTimecode",
-                [](const AncPayload &p) -> std::optional<Variant> {
+                [](const AncPayload &p) -> Optional<Variant> {
                         return Variant(p.hasCategory(AncCategory::Timecode));
                 })
         .scalar("HasAfd",
-                [](const AncPayload &p) -> std::optional<Variant> {
+                [](const AncPayload &p) -> Optional<Variant> {
                         return Variant(p.hasFormat(AncFormat(AncFormat::Afd)));
                 })
         .scalar("HasHdr",
-                [](const AncPayload &p) -> std::optional<Variant> {
+                [](const AncPayload &p) -> Optional<Variant> {
                         return Variant(p.hasCategory(AncCategory::Hdr));
                 })
-        .scalar("HasSplice", [](const AncPayload &p) -> std::optional<Variant> {
+        .scalar("HasSplice", [](const AncPayload &p) -> Optional<Variant> {
                 return Variant(p.hasCategory(AncCategory::Splice));
         });
 

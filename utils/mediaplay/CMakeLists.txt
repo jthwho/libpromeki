@@ -1,6 +1,7 @@
 add_executable(mediaplay
     main.cpp
     cli.cpp
+    helpformat.cpp
     stage.cpp
 )
 target_link_libraries(mediaplay PRIVATE promeki::promeki promeki::sdl)

@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
-#include <array>
+#include <promeki/array.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -36,15 +36,15 @@ template <size_t NumBytes> class ByteArray {
                 PROMEKI_SHARED_FINAL(ByteArray)
         public:
                 using Ptr = SharedPtr<ByteArray>;
-                using DataType = std::array<uint8_t, NumBytes>;
+                using DataType = Array<uint8_t, NumBytes>;
 
                 /** @brief Default constructor.  Value-initializes all bytes to zero. */
                 ByteArray() : d{} {}
 
-                /** @brief Constructs from a std::array. */
+                /** @brief Constructs from an Array. */
                 ByteArray(const DataType &val) : d(val) {}
 
-                /** @brief Move-constructs from a std::array. */
+                /** @brief Move-constructs from an Array. */
                 ByteArray(DataType &&val) noexcept : d(std::move(val)) {}
 
                 /** @brief Constructs from a raw byte pointer.  Copies NumBytes from src. */
@@ -88,8 +88,7 @@ template <size_t NumBytes> class ByteArray {
                  */
                 String toHexString() const {
                         static const char digits[] = "0123456789abcdef";
-                        std::string       ret;
-                        ret.reserve(NumBytes * 2);
+                        String            ret;
                         for (size_t i = 0; i < NumBytes; i++) {
                                 ret += digits[d[i] >> 4];
                                 ret += digits[d[i] & 0x0F];

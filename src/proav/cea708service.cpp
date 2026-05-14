@@ -65,7 +65,7 @@ Cea708Service Cea708Service::fromText(uint8_t serviceNumber, const String &text)
                         }
                 }
                 if (!bytes.isEmpty()) {
-                        std::vector<uint8_t> contig(bytes.size());
+                        List<uint8_t> contig(bytes.size());
                         for (size_t i = 0; i < bytes.size(); ++i) contig[i] = bytes[i];
                         buf.setSize(contig.size());
                         outLen = contig.size();
@@ -128,12 +128,12 @@ Buffer Cea708DtvccPacket::toPayloadBytes() const {
         // a wrapped (mod-32) block size and misinterpret subsequent
         // data bytes as a fresh block header.
         constexpr size_t       kMaxBlockData = 31;
-        std::vector<uint8_t>   bytes;
+        List<uint8_t>   bytes;
         for (size_t i = 0; i < _serviceBlocks.size(); ++i) {
                 const Cea708Service &b = _serviceBlocks[i];
                 if (b.isNull()) {
                         // Null block: header byte 0x00.
-                        bytes.push_back(0x00);
+                        bytes.pushToBack(0x00);
                         continue;
                 }
                 size_t blockBytes = b.data().size();
@@ -149,18 +149,18 @@ Buffer Cea708DtvccPacket::toPayloadBytes() const {
                         //   byte 0: 0b111 (service_number==7) + block_size (5 bits)
                         //   byte 1: 0b00 + service_number_ext (6 bits)
                         const uint8_t bsz = static_cast<uint8_t>(blockBytes & 0x1F);
-                        bytes.push_back(static_cast<uint8_t>((7u << 5) | bsz));
-                        bytes.push_back(static_cast<uint8_t>(b.serviceNumber() & 0x3F));
+                        bytes.pushToBack(static_cast<uint8_t>((7u << 5) | bsz));
+                        bytes.pushToBack(static_cast<uint8_t>(b.serviceNumber() & 0x3F));
                 } else {
                         const uint8_t bsz = static_cast<uint8_t>(blockBytes & 0x1F);
-                        bytes.push_back(static_cast<uint8_t>(((b.serviceNumber() & 0x07) << 5) | bsz));
+                        bytes.pushToBack(static_cast<uint8_t>(((b.serviceNumber() & 0x07) << 5) | bsz));
                 }
                 const auto *dp = static_cast<const uint8_t *>(b.data().data());
-                for (size_t k = 0; k < blockBytes; ++k) bytes.push_back(dp[k]);
+                for (size_t k = 0; k < blockBytes; ++k) bytes.pushToBack(dp[k]);
         }
         Buffer out(bytes.size());
         out.setSize(bytes.size());
-        if (bytes.empty()) return out;
+        if (bytes.isEmpty()) return out;
         Error err = out.copyFrom(bytes.data(), bytes.size(), 0);
         if (err.isError()) {
                 promekiWarn("Cea708DtvccPacket::toPayloadBytes: buffer copy failed: %s",
@@ -267,7 +267,7 @@ Result<Cea708DtvccPacket> Cea708DtvccPacket::fromCcData(const Cea708Cdp::CcDataL
                 return makeError<Cea708DtvccPacket>(Error::ParseFailed);
         }
         // Reassemble the wire byte stream from the triples.
-        std::vector<uint8_t> bytes;
+        List<uint8_t> bytes;
         bytes.reserve(triples.size() * 2);
         for (size_t i = 0; i < triples.size(); ++i) {
                 const Cea708Cdp::CcData &t = triples[i];
@@ -278,10 +278,10 @@ Result<Cea708DtvccPacket> Cea708DtvccPacket::fromCcData(const Cea708Cdp::CcDataL
                         // triple lists by packet.
                         break;
                 }
-                bytes.push_back(t.b1);
-                bytes.push_back(t.b2);
+                bytes.pushToBack(t.b1);
+                bytes.pushToBack(t.b2);
         }
-        if (bytes.empty()) return makeError<Cea708DtvccPacket>(Error::ParseFailed);
+        if (bytes.isEmpty()) return makeError<Cea708DtvccPacket>(Error::ParseFailed);
         const uint8_t header = bytes[0];
         const uint8_t seq = static_cast<uint8_t>((header >> 6) & 0x03);
         uint8_t       sizeCode = static_cast<uint8_t>(header & 0x3F);

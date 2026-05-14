@@ -11,9 +11,9 @@
 #include <promeki/clock.h>
 #include <promeki/objectbase.h>
 #include <promeki/periodiccallback.h>
+#include <promeki/atomic.h>
 #include <promeki/string.h>
 
-#include <atomic>
 #include <cstdint>
 #include <climits>
 
@@ -210,8 +210,8 @@ class SDLAudioClock : public Clock {
                 // through the paused interval does not drag the
                 // clock forward.  Rate estimation and interpolation
                 // checkpoints are reset in @ref onPause on resume.
-                mutable std::atomic<bool>    _devicePaused{false};
-                mutable std::atomic<int64_t> _rawAtPause{0};
+                mutable Atomic<bool>    _devicePaused{false};
+                mutable Atomic<int64_t> _rawAtPause{0};
 
                 ObjectBasePtr<SDLAudioOutput> _output;
                 double                        _bytesPerSec;

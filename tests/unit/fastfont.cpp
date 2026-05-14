@@ -8,6 +8,7 @@
 #include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/fastfont.h>
+#include <promeki/stringlist.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/color.h>
@@ -688,4 +689,114 @@ TEST_CASE("FastFont: underline DrawStyle paints a line below text") {
         uint64_t under = sumWith(true);
         CHECK(plain > 0);
         CHECK(under > plain);
+}
+
+// ============================================================================
+// Font fallback chain
+// ============================================================================
+
+TEST_CASE("FastFont: fontFallbacks() default is empty") {
+        // Empty override is the "use the library's bundled chain" sentinel.
+        // Getter therefore reports an empty list until the caller explicitly
+        // sets one — the default chain is consumed internally via
+        // Font::effectiveFallbacks().
+        FastFont ff{PaintEngine()};
+        CHECK(ff.fontFallbacks().isEmpty());
+}
+
+TEST_CASE("FastFont: setFontFallbacks roundtrip") {
+        FastFont   ff{PaintEngine()};
+        StringList list;
+        list.pushToBack(String("/some/font-a.ttf"));
+        list.pushToBack(String("/some/font-b.ttf"));
+        ff.setFontFallbacks(list);
+        REQUIRE(ff.fontFallbacks().size() == 2);
+        CHECK(ff.fontFallbacks()[0] == "/some/font-a.ttf");
+        CHECK(ff.fontFallbacks()[1] == "/some/font-b.ttf");
+}
+
+TEST_CASE("FastFont: default fallback chain renders Hiragana absent from primary") {
+        // FiraCode (the bundled primary) ships no Hiragana / Katakana /
+        // CJK Unified Ideographs.  Without a fallback face the renderer
+        // would emit the primary's .notdef rectangle for every CJK
+        // codepoint.  The bundled Sarasa Mono J fallback carries the
+        // entire BMP CJK range, so the same draw with the default
+        // fallback chain must produce a visibly different cell than
+        // the primary-only configuration.
+        if (!fontAvailable()) return;
+
+        auto renderHiragana = [](bool primaryOnly) -> uint64_t {
+                auto     img = makePayload(64, 64, PixelFormat::RGB8_sRGB, 0);
+                FastFont ff(img->createPaintEngine());
+                ff.setFontSize(36);
+                ff.setForegroundColor(Color::White);
+                ff.setBackgroundColor(Color::Black);
+                if (primaryOnly) {
+                        // Suppress the default chain by binding the
+                        // fallback list to the primary itself — that
+                        // entry is filtered out as already-loaded, so
+                        // ensureFontLoaded() ends up with one face.
+                        StringList only;
+                        only.pushToBack(String(":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf"));
+                        ff.setFontFallbacks(only);
+                }
+                // U+3042 HIRAGANA LETTER A.
+                ff.drawText("\xE3\x81\x82", 4, 50);
+                return planeSum(*img);
+        };
+
+        uint64_t notdef = renderHiragana(true);
+        uint64_t fallback = renderHiragana(false);
+        CHECK(notdef > 0);    // .notdef still draws *something*.
+        CHECK(fallback > 0);  // Real Hiragana glyph from Sarasa.
+        CHECK(fallback != notdef);
+}
+
+TEST_CASE("FastFont: unmapped codepoint still renders without crashing") {
+        // U+E000 sits in the BMP Private Use Area and is not in any
+        // bundled face's cmap.  resolveFaceIndex() returns 0 (primary)
+        // as a last-resort answer and we render whatever the primary's
+        // FT_Load_Char yields — usually the .notdef glyph.  The
+        // important invariant is that drawText completes successfully
+        // and writes *some* pixels rather than asserting / returning
+        // false on the unmapped codepoint.
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(64, 64, PixelFormat::RGB8_sRGB, 0);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(36);
+        ff.setForegroundColor(Color::White);
+        ff.setBackgroundColor(Color::Black);
+        // U+E000 PRIVATE USE AREA, encoded as UTF-8: EE 80 80.
+        REQUIRE(ff.drawText("\xEE\x80\x80", 4, 50));
+        CHECK(planeSum(*img) > 0);
+}
+
+TEST_CASE("FastFont: setFontFallbacks invalidates cache") {
+        // Switching the fallback list mid-session changes which face
+        // produces which codepoint, so cached glyph cells captured
+        // before the switch can no longer be reused without risking
+        // a stale-face mismatch.  Verify that a measureText() call
+        // after the switch still produces a sane (positive) advance,
+        // confirming we rebuilt the FT_Face list instead of holding
+        // stale FT_Face pointers.
+        if (!fontAvailable()) return;
+
+        auto     img = makePayload(256, 64, PixelFormat::RGB8_sRGB);
+        FastFont ff(img->createPaintEngine());
+        ff.setFontSize(24);
+
+        int wBefore = ff.measureText("ABC");
+        REQUIRE(wBefore > 0);
+
+        StringList list;
+        list.pushToBack(String(":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf"));
+        ff.setFontFallbacks(list);
+
+        int wAfter = ff.measureText("ABC");
+        // ASCII glyphs come from the primary regardless of fallback
+        // configuration, so the width is identical.  What matters is
+        // that the measure didn't return 0 — i.e. ensureFontLoaded()
+        // reloaded the primary cleanly after the cache invalidation.
+        CHECK(wAfter == wBefore);
 }

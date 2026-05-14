@@ -9,6 +9,8 @@
 
 #include <functional>
 #include <optional>
+#include <promeki/optional.h>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -55,7 +57,7 @@ namespace detail {
          * Must never be null.  @ref VariantQuery::match wires this to
          * @c VariantLookup<T>::resolve(instance, key).
          */
-                        std::function<std::optional<Variant>(const String &)> resolve;
+                        Function<Optional<Variant>(const String &)> resolve;
 
                         /**
          * @brief Returns the declared @ref VariantSpec for a key, or nullptr.
@@ -66,7 +68,7 @@ namespace detail {
          * @c VariantLookup<T>::specFor(key).  May be null when the
          * caller wants to skip spec-based coercion entirely.
          */
-                        std::function<const VariantSpec *(const String &)> specFor;
+                        Function<const VariantSpec *(const String &)> specFor;
         };
 
         /**

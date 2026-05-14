@@ -12,6 +12,7 @@
 #include <functional>
 #include <utility>
 #include <tuple>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/variant_fwd.h>
 
@@ -36,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
 template <typename... Args> class Slot {
         public:
                 /** @brief Callable type that the slot wraps. */
-                using Function = std::function<void(Args...)>;
+                using Function = promeki::Function<void(Args...)>;
 
                 /**
                  * @brief Constructs a Slot with the given callable and optional metadata.

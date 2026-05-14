@@ -123,36 +123,36 @@ namespace {
                                     ccData.size());
                         return makeError<AncPacket>(Error::OutOfRange);
                 }
-                std::vector<uint8_t> bytes;
+                List<uint8_t> bytes;
                 bytes.reserve(11 + ccData.size() * 3);
-                bytes.push_back(T35CountryUsa);
-                bytes.push_back(static_cast<uint8_t>((T35ProviderAtsc >> 8) & 0xFF));
-                bytes.push_back(static_cast<uint8_t>(T35ProviderAtsc & 0xFF));
-                bytes.push_back(static_cast<uint8_t>((UserIdentifierGa94 >> 24) & 0xFF));
-                bytes.push_back(static_cast<uint8_t>((UserIdentifierGa94 >> 16) & 0xFF));
-                bytes.push_back(static_cast<uint8_t>((UserIdentifierGa94 >> 8) & 0xFF));
-                bytes.push_back(static_cast<uint8_t>(UserIdentifierGa94 & 0xFF));
-                bytes.push_back(UserDataTypeCodeCcData);
+                bytes.pushToBack(T35CountryUsa);
+                bytes.pushToBack(static_cast<uint8_t>((T35ProviderAtsc >> 8) & 0xFF));
+                bytes.pushToBack(static_cast<uint8_t>(T35ProviderAtsc & 0xFF));
+                bytes.pushToBack(static_cast<uint8_t>((UserIdentifierGa94 >> 24) & 0xFF));
+                bytes.pushToBack(static_cast<uint8_t>((UserIdentifierGa94 >> 16) & 0xFF));
+                bytes.pushToBack(static_cast<uint8_t>((UserIdentifierGa94 >> 8) & 0xFF));
+                bytes.pushToBack(static_cast<uint8_t>(UserIdentifierGa94 & 0xFF));
+                bytes.pushToBack(UserDataTypeCodeCcData);
                 // flags byte: reserved(1)=1 | process_cc_data_flag(1)=1 |
                 //              zero_bit(1)=0 | cc_count(5)
                 const uint8_t flagsByte =
                         static_cast<uint8_t>(0xC0 | (static_cast<uint8_t>(ccData.size()) & 0x1F));
-                bytes.push_back(flagsByte);
-                bytes.push_back(0xFF); // em_data (reserved)
+                bytes.pushToBack(flagsByte);
+                bytes.pushToBack(0xFF); // em_data (reserved)
                 for (size_t k = 0; k < ccData.size(); ++k) {
                         const Cea708Cdp::CcData &t = ccData[k];
                         const uint8_t            b0 = static_cast<uint8_t>(
                                 0xF8 /* marker bits */ | (t.valid ? 0x04 : 0x00)
                                 | (t.type & 0x03));
-                        bytes.push_back(b0);
-                        bytes.push_back(t.b1);
-                        bytes.push_back(t.b2);
+                        bytes.pushToBack(b0);
+                        bytes.pushToBack(t.b1);
+                        bytes.pushToBack(t.b2);
                 }
-                bytes.push_back(0xFF); // trailing marker_bits.
+                bytes.pushToBack(0xFF); // trailing marker_bits.
 
                 Buffer wire(bytes.size());
                 wire.setSize(bytes.size());
-                if (!bytes.empty()) wire.copyFrom(bytes.data(), bytes.size(), 0);
+                if (!bytes.isEmpty()) wire.copyFrom(bytes.data(), bytes.size(), 0);
 
                 AncPacket out(AncFormat(AncFormat::Cea708), AncTransport::HlsSei, std::move(wire),
                               Metadata());

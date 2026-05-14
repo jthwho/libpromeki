@@ -61,19 +61,18 @@ int MidiNote::pitchClass(int midiNote) {
 }
 
 String MidiNote::nameFromMidiNote(int midiNote) {
-        return String(std::string(pitchClassName(midiNote)) + std::to_string(octave(midiNote)));
+        return String(pitchClassName(midiNote)) + String::number(octave(midiNote));
 }
 
 MidiNote MidiNote::fromName(const String &name) {
-        const std::string &s = name.str();
-        if (s.size() < 2) return MidiNote();
+        if (name.length() < 2) return MidiNote();
 
         int pc = -1;
         int nameLen = 0;
 
         // Try two-char pitch names first (e.g. "C#", "Db").
-        if (s.size() >= 3 && (s[1] == '#' || s[1] == 'b')) {
-                auto prefix = s.substr(0, 2);
+        if (name.length() >= 3 && (name.charAt(1) == '#' || name.charAt(1) == 'b')) {
+                String prefix = name.substr(0, 2);
                 for (int i = 0; i < 12; ++i) {
                         if (prefix == kSharpNames[i] || prefix == kFlatNames[i]) {
                                 pc = i;
@@ -85,7 +84,7 @@ MidiNote MidiNote::fromName(const String &name) {
 
         // Try single-char pitch name.
         if (pc < 0) {
-                auto prefix = s.substr(0, 1);
+                String prefix = name.substr(0, 1);
                 for (int i = 0; i < 12; ++i) {
                         if (prefix == kSharpNames[i]) {
                                 pc = i;
@@ -98,15 +97,13 @@ MidiNote MidiNote::fromName(const String &name) {
         if (pc < 0) return MidiNote();
 
         // Parse the octave number.
-        auto octStr = s.substr(static_cast<size_t>(nameLen));
-        try {
-                int oct = std::stoi(octStr);
-                int note = (oct + 1) * 12 + pc;
-                if (note < 0 || note > 127) return MidiNote();
-                return MidiNote(static_cast<uint8_t>(note));
-        } catch (...) {
-                return MidiNote();
-        }
+        String octStr = name.substr(static_cast<size_t>(nameLen));
+        Error  err;
+        int    oct = octStr.toInt(&err);
+        if (err.isError()) return MidiNote();
+        int note = (oct + 1) * 12 + pc;
+        if (note < 0 || note > 127) return MidiNote();
+        return MidiNote(static_cast<uint8_t>(note));
 }
 
 double MidiNote::frequencyFromMidiNote(double midiNote, double a4Hz) {

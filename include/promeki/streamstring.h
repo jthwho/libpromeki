@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/iodevice.h>
@@ -27,7 +28,7 @@ class StreamStringIODevice : public IODevice {
                 PROMEKI_OBJECT(StreamStringIODevice, IODevice)
         public:
                 /** @brief Callback type invoked for each completed line. */
-                using OnNewLineFunc = std::function<bool(String &)>;
+                using OnNewLineFunc = Function<bool(String &)>;
 
                 /**
                  * @brief Constructs a StreamStringIODevice.
@@ -132,7 +133,7 @@ class StreamStringIODevice : public IODevice {
 class StreamString {
         public:
                 /** @brief Callback type invoked for each completed line. */
-                using OnNewLineFunc = std::function<bool(String &)>;
+                using OnNewLineFunc = Function<bool(String &)>;
 
                 /** @brief Constructs a StreamString with no callback. */
                 StreamString() : _stream(&_device) { _device.open(IODevice::WriteOnly); }

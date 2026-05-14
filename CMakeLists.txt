@@ -1677,6 +1677,7 @@ set(PROMEKI_HEADERS
     include/promeki/framecount.h
     include/promeki/framenumber.h
     include/promeki/framerate.h
+    include/promeki/function.h
     include/promeki/future.h
     include/promeki/h264bitstream.h
     include/promeki/hevcbitstream.h
@@ -1708,6 +1709,7 @@ set(PROMEKI_HEADERS
     include/promeki/numnameseq.h
     include/promeki/objectbase.h
     include/promeki/obfuscatedstring.h
+    include/promeki/optional.h
     include/promeki/pidcontroller.h
     include/promeki/pixelformat.h
     include/promeki/pixelmemlayout.h
@@ -3074,6 +3076,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/framenumber.cpp
         tests/unit/framerate.cpp
         tests/unit/framesync.cpp
+        tests/unit/function.cpp
         tests/unit/future.cpp
         tests/unit/h264bitstream.cpp
         tests/unit/hashmap.cpp
@@ -3108,6 +3111,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/objectbase.cpp
         tests/unit/objectbase2.cpp
         tests/unit/objectbasepointer_race.cpp
+        tests/unit/optional.cpp
         tests/unit/periodiccallback.cpp
         tests/unit/pair.cpp
         tests/unit/pidcontroller.cpp

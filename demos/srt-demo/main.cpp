@@ -30,7 +30,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
-#include <chrono>
 #include <atomic>
 
 #include <promeki/application.h>
@@ -40,6 +39,7 @@
 #include <promeki/srtserver.h>
 #include <promeki/srtepoll.h>
 #include <promeki/string.h>
+#include <promeki/thread.h>
 
 using namespace promeki;
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
                                                     "msg %d / %d", i + 1, cfg.messages);
                         sock.write(buf, n);
                         std::printf("[caller] sent: \"%.*s\"\n", n, buf);
-                        std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                        promeki::Thread::sleepMs(150);
                 }
                 // Print stats before tearing down.
                 const auto s = sock.stats();
@@ -165,14 +165,14 @@ int main(int argc, char **argv) {
                             static_cast<long long>(s.pktSent),
                             static_cast<unsigned long long>(s.byteSent),
                             s.rttMs, s.linkBandwidthMbps);
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                promeki::Thread::sleepMs(200);
                 sock.close();
         });
 
         // Wait for the listener-side accept (driven by mux.run on its
         // own thread) before draining the data path.
         while (!stop.load(std::memory_order_acquire)) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                promeki::Thread::sleepMs(20);
         }
         mux.stop();
         mxThread.join();

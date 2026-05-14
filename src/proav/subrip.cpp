@@ -677,8 +677,14 @@ Buffer SubRip::emit(const SubtitleList &list) {
                         } else if (bp[k] == '\r') {
                                 // Skip.
                         } else {
-                                char tmp[2] = {bp[k], 0};
-                                out += tmp;
+                                // Byte-level append: bp[k] may be a fragment of
+                                // a multi-byte UTF-8 sequence, so we cannot
+                                // route it through the UTF-8-aware String ctor
+                                // / operator+=.  pushBack(char) appends a Char
+                                // with codepoint = byte value, which stays in
+                                // Latin1 storage and round-trips byte-for-byte
+                                // via cstr().
+                                out.pushBack(bp[k]);
                         }
                 }
                 out += "\r\n\r\n";

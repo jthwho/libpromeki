@@ -23,6 +23,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -44,7 +45,7 @@ namespace promekitest {
         class TestCase {
                 public:
                         /** @brief Test function signature. */
-                        using Function = std::function<void(TestContext &)>;
+                        using Function = promeki::Function<void(TestContext &)>;
 
                         /**
                          * @brief Constructs a test case.

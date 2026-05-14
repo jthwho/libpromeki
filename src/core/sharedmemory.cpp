@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/list.h>
 #include <promeki/sharedmemory.h>
 #include <promeki/platform.h>
 #include <promeki/logger.h>
@@ -147,7 +148,7 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
                 struct group *result = nullptr;
                 long          bufMax = ::sysconf(_SC_GETGR_R_SIZE_MAX);
                 if (bufMax <= 0) bufMax = 16384;
-                std::vector<char> buf(static_cast<size_t>(bufMax));
+                List<char> buf(static_cast<size_t>(bufMax));
                 int               rc = ::getgrnam_r(groupName.cstr(), &gr, buf.data(), buf.size(), &result);
                 if (rc != 0 || result == nullptr) {
                         Error grErr = (rc == 0) ? Error(Error::NotExist) : Error::syserr(rc);

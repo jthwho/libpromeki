@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/buffercommand.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
@@ -40,14 +41,14 @@ void BufferCommand::markCompleted() {
         // fire it just below) or sees the latched flag (and fires the
         // callback inline itself).  Either path runs the callback
         // exactly once.
-        std::function<void(Error)> cb;
+        Function<void(Error)> cb;
         EventLoop                 *loop = nullptr;
         {
                 Mutex::Locker lock(_callbackMutex);
                 if (_callback) {
                         cb = std::move(_callback);
                         loop = _callbackLoop;
-                        _callback = std::function<void(Error)>();
+                        _callback = Function<void(Error)>();
                         _callbackLoop = nullptr;
                 }
         }
@@ -82,7 +83,7 @@ Error BufferCommand::waitForCompletion(unsigned int timeoutMs) const {
         return Error::Ok;
 }
 
-void BufferCommand::setCompletionCallback(std::function<void(Error)> cb, EventLoop *loop) {
+void BufferCommand::setCompletionCallback(Function<void(Error)> cb, EventLoop *loop) {
         bool fireNow = false;
         {
                 Mutex::Locker lock(_callbackMutex);

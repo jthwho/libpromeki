@@ -63,21 +63,19 @@ int64_t StringIODevice::write(const void *data, int64_t maxSize) {
                 // Append
                 *_string += String(src, static_cast<size_t>(maxSize));
         } else if (_pos < strLen) {
-                // Overwrite from _pos, potentially extending
-                // Build the result: prefix + new data + suffix (if any)
-                std::string s(_string->cstr(), _string->byteCount());
-                size_t      pos = static_cast<size_t>(_pos);
-                size_t      count = static_cast<size_t>(maxSize);
-                if (pos + count > s.size()) {
-                        s.resize(pos + count);
+                // Overwrite from _pos, potentially extending: prefix + new data + suffix (if any)
+                size_t pos = static_cast<size_t>(_pos);
+                size_t count = static_cast<size_t>(maxSize);
+                String prefix = _string->left(pos);
+                String tail;
+                if (pos + count < static_cast<size_t>(strLen)) {
+                        tail = _string->mid(pos + count);
                 }
-                std::memcpy(s.data() + pos, src, count);
-                *_string = String(s.c_str(), s.size());
+                *_string = prefix + String(src, count) + tail;
         } else {
                 // Past end — pad with spaces, then append
-                size_t      gap = static_cast<size_t>(_pos - strLen);
-                std::string pad(gap, ' ');
-                *_string += String(pad.c_str(), gap);
+                size_t gap = static_cast<size_t>(_pos - strLen);
+                *_string += String(gap, ' ');
                 *_string += String(src, static_cast<size_t>(maxSize));
         }
         _pos += maxSize;

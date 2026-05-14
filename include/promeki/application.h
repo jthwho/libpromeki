@@ -10,6 +10,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
 #include <promeki/duration.h>
@@ -332,7 +333,7 @@ class Application {
                  * shutdown completes) and @c false to fall through to
                  * the default quit behaviour.
                  */
-                using QuitRequestHandler = std::function<bool(int exitCode)>;
+                using QuitRequestHandler = Function<bool(int exitCode)>;
 
                 /**
                  * @brief Installs a handler invoked on every @ref quit call.

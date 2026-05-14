@@ -10,6 +10,7 @@
 #include <tuple>
 #include <type_traits>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
@@ -432,7 +433,7 @@ class ObjectBase {
                 void deleteLater();
 
                 /** @brief Cleanup-handler signature: receives @c this on invocation. */
-                using CleanupHandler = std::function<void(ObjectBase *)>;
+                using CleanupHandler = Function<void(ObjectBase *)>;
 
                 /**
                  * @brief Registers a function to run during this object's

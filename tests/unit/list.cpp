@@ -619,3 +619,60 @@ TEST_CASE("List: mid edge cases") {
         auto m2 = l.mid(5, 2);
         CHECK(m2.isEmpty());
 }
+
+TEST_CASE("List: pointer-range constructor") {
+        int       arr[] = {10, 20, 30, 40};
+        List<int> l(arr, arr + 4);
+        REQUIRE(l.size() == 4);
+        CHECK(l[0] == 10);
+        CHECK(l[3] == 40);
+}
+
+TEST_CASE("List: assign(iterator, iterator)") {
+        List<int> src = {1, 2, 3, 4, 5};
+        List<int> dst = {99, 98};
+        dst.assign(src.begin(), src.end());
+        REQUIRE(dst.size() == 5);
+        CHECK(dst[0] == 1);
+        CHECK(dst[4] == 5);
+}
+
+TEST_CASE("List: assign(count, value)") {
+        List<int> l;
+        l.assign(4, 7);
+        REQUIRE(l.size() == 4);
+        CHECK(l[0] == 7);
+        CHECK(l[3] == 7);
+}
+
+TEST_CASE("List: pushToBack pointer range") {
+        int       arr[] = {4, 5, 6};
+        List<int> l     = {1, 2, 3};
+        l.pushToBack(arr, arr + 3);
+        REQUIRE(l.size() == 6);
+        CHECK(l[3] == 4);
+        CHECK(l[5] == 6);
+}
+
+TEST_CASE("List: sort with comparator (descending)") {
+        List<int> l      = {3, 1, 4, 1, 5};
+        List<int> sorted = l.sort([](int a, int b) { return a > b; });
+        CHECK(sorted[0] == 5);
+        CHECK(sorted[4] == 1);
+        // Original unchanged
+        CHECK(l[0] == 3);
+}
+
+TEST_CASE("List: sortInPlace (natural order)") {
+        List<int> l = {5, 3, 8, 1};
+        l.sortInPlace();
+        CHECK(l[0] == 1);
+        CHECK(l[3] == 8);
+}
+
+TEST_CASE("List: sortInPlace with comparator") {
+        List<int> l = {5, 3, 8, 1};
+        l.sortInPlace([](int a, int b) { return a > b; });
+        CHECK(l[0] == 8);
+        CHECK(l[3] == 1);
+}

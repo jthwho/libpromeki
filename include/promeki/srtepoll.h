@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
@@ -116,7 +117,7 @@ class SrtEpoll {
                  * to forward the work to their own thread via
                  * Promeki signals.
                  */
-                using ReadyCallback = std::function<void(int events)>;
+                using ReadyCallback = Function<void(int events)>;
 
                 /** @brief Constructs an unopened SrtEpoll group. */
                 SrtEpoll();

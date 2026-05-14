@@ -117,8 +117,8 @@ Result<int64_t> SDLAudioClock::raw() const {
         // release-store in onPause so any checkpoint / baseline
         // state mutated by the resume path is visible before the
         // flag drops back to false.
-        if (_devicePaused.load(std::memory_order_acquire)) {
-                return makeResult<int64_t>(_rawAtPause.load(std::memory_order_relaxed));
+        if (_devicePaused.value()) {
+                return makeResult<int64_t>(_rawAtPause.value());
         }
         return makeResult<int64_t>(computeRawNs());
 }
@@ -415,12 +415,12 @@ Error SDLAudioClock::onPause(bool paused) {
                 // the device stopped but still runs its wall-time
                 // interpolation.
                 int64_t snapshot = computeRawNs();
-                _rawAtPause.store(snapshot, std::memory_order_relaxed);
-                _devicePaused.store(true, std::memory_order_release);
+                _rawAtPause.setValue(snapshot);
+                _devicePaused.setValue(true);
 
                 Error e = out->setPaused(true);
                 if (e.isError()) {
-                        _devicePaused.store(false, std::memory_order_release);
+                        _devicePaused.setValue(false);
                         return e;
                 }
                 return {};
@@ -437,7 +437,7 @@ Error SDLAudioClock::onPause(bool paused) {
         Error e = out->setPaused(false);
         if (e.isError()) return e;
 
-        const int64_t pauseValue = _rawAtPause.load(std::memory_order_relaxed);
+        const int64_t pauseValue = _rawAtPause.value();
         const int64_t wallNs = TimeStamp::now().nanoseconds();
         int64_t       pushed = out->totalBytesPushed();
         int64_t       queued = static_cast<int64_t>(out->queuedBytes());
@@ -489,7 +489,7 @@ Error SDLAudioClock::onPause(bool paused) {
         _prevRateStable = false;
         _lastRateUpdateWallNs = wallNs;
 
-        _devicePaused.store(false, std::memory_order_release);
+        _devicePaused.setValue(false);
         return {};
 }
 

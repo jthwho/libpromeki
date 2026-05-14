@@ -8,8 +8,8 @@ Color, VariantDatabase, Metadata, TimeStamp, etc.). The historical
 "shipped" feature catalogue (Variant template engine, `Url`, `Units`,
 `Duration` formatter, `VariantList` / `VariantMap`, nested-key lookup,
 `Variant::peek`, `VariantSpec::coerce`, `VariantLookup::variantTree`,
-…) lives in git history. The items below are the remaining
-opportunistic enhancements.
+`Function<Sig>`, `Optional<T>`, …) lives in git history. The items below
+are the remaining opportunistic enhancements.
 
 ---
 

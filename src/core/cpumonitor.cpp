@@ -257,7 +257,7 @@ void CpuMonitor::run() {
                 auto byTid = [](const ThreadCpuTimes &a, const ThreadCpuTimes &b) {
                         return a.tid < b.tid;
                 };
-                std::sort(prev.begin(), prev.end(), byTid);
+                prev.sortInPlace(byTid);
 
                 for (const ThreadCpuTimes &t : cur) {
                         // Find matching prev entry by TID.  A new
@@ -291,10 +291,9 @@ void CpuMonitor::run() {
                         report.threads.pushToBack(sample);
                 }
 
-                std::sort(report.threads.begin(), report.threads.end(),
-                          [](const ThreadSample &a, const ThreadSample &b) {
-                                  return a.totalPercent > b.totalPercent;
-                          });
+                report.threads.sortInPlace([](const ThreadSample &a, const ThreadSample &b) {
+                        return a.totalPercent > b.totalPercent;
+                });
 
                 ReportFunction fn;
                 {

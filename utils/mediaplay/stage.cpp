@@ -6,22 +6,25 @@
  */
 
 #include "stage.h"
+#include "helpformat.h"
 
 #include <cstdio>
 #include <cstdlib>
 
-#include <promeki/imagefilemediaio.h>
+#include <promeki/ansistream.h>
 #include <promeki/audiocodec.h>
-#include <promeki/mediaiofactory.h>
 #include <promeki/enums.h>
+#include <promeki/fileiodevice.h>
+#include <promeki/imagefilemediaio.h>
+#include <promeki/mediaiofactory.h>
 #include <promeki/pixelformat.h>
 #include <promeki/result.h>
 #include <promeki/set.h>
 #include <promeki/size2d.h>
-#include <promeki/url.h>
-#include <promeki/videocodec.h>
 #include <promeki/textstream.h>
+#include <promeki/url.h>
 #include <promeki/variantspec.h>
+#include <promeki/videocodec.h>
 
 using namespace promeki;
 
@@ -79,22 +82,210 @@ namespace mediaplay {
         // Listing helpers
         // --------------------------------------------------------------------------
 
+        namespace {
+
+                // Maps a backend's role flags to the user-facing Mode string:
+                //   T   = transform (canBeTransform overrides everything else)
+                //   I/O = both source and sink
+                //   I   = sink only
+                //   O   = source only
+                //   ?   = nothing claimed (should not happen for a registered factory)
+                String backendModeBadge(bool isSource, bool isSink, bool isTransform) {
+                        if (isTransform) return String("T");
+                        if (isSource && isSink) return String("I/O");
+                        if (isSink) return String("I");
+                        if (isSource) return String("O");
+                        return String("?");
+                }
+
+        } // namespace
+
         void listMediaIOBackendsAndExit() {
-                fprintf(stdout, "Registered MediaIO backends:\n");
+                // Build the row list first so column widths can be computed
+                // from real data — registered backend names vary widely in
+                // length and a fixed %-16s lookups truncate in practice.
+                struct Row {
+                                String name;
+                                String mode;
+                                String description;
+                };
+                List<Row> rows;
                 for (const MediaIOFactory *desc : MediaIOFactory::registeredFactories()) {
                         if (desc == nullptr) continue;
-                        String caps;
-                        if (desc->canBeSink()) caps += "I";
-                        if (desc->canBeSource()) caps += "O";
-                        if (desc->canBeTransform() && caps.isEmpty()) caps = "IO";
-                        fprintf(stdout, "  %-16s [%-3s]  %s\n", desc->name().cstr(), caps.cstr(),
-                                desc->description().cstr());
+                        Row r;
+                        r.name = desc->name();
+                        r.mode = backendModeBadge(desc->canBeSource(), desc->canBeSink(), desc->canBeTransform());
+                        r.description = desc->description();
+                        rows.pushToBack(std::move(r));
                 }
                 // SDL is a mediaplay-local pseudo-backend (see the note in
-                // stage.h) — it isn't in MediaIOFactory::registeredFactories()
-                // but it accepts the same -d / --dc CLI surface, so list it
-                // here too to keep the --help picture honest.
-                fprintf(stdout, "  %-16s [%-3s]  %s\n", kStageSdl, "I", sdlDescription());
+                // stage.h): not in MediaIOFactory::registeredFactories() but
+                // it accepts the same -d / --dc CLI surface, so list it here
+                // too to keep the picture honest.
+                rows.pushToBack({String(kStageSdl), String("I"), String(sdlDescription())});
+
+                // Alphabetical by name so the registry order (which
+                // depends on static-init sequencing) doesn't leak into
+                // the user-facing listing.
+                rows.sortInPlace([](const Row &a, const Row &b) { return a.name < b.name; });
+
+                int nameWidth = 0;
+                int modeWidth = 0;
+                for (const Row &r : rows) {
+                        int nw = static_cast<int>(r.name.size());
+                        int mw = static_cast<int>(r.mode.size());
+                        if (nw > nameWidth) nameWidth = nw;
+                        if (mw > modeWidth) modeWidth = mw;
+                }
+
+                AnsiStream out(FileIODevice::stdoutDevice());
+                out.setAnsiEnabled(helpUseColor());
+                const HelpPalette &palette = helpPalette();
+                const int          cols = detectTerminalCols();
+                // Layout: "<name><pad>  <mode><pad>  <description>".
+                // The description's leftPad is everything before it so
+                // word-wrap continuations line up under the description
+                // column.
+                const int leftPad = nameWidth + 2 + modeWidth + 2;
+
+                for (const Row &r : rows) {
+                        out.setForeground(palette.option);
+                        out << r.name;
+                        out.reset();
+                        for (int i = static_cast<int>(r.name.size()); i < nameWidth; ++i) out << ' ';
+                        out << "  ";
+                        out.setForeground(palette.mode);
+                        out << r.mode;
+                        out.reset();
+                        for (int i = static_cast<int>(r.mode.size()); i < modeWidth; ++i) out << ' ';
+                        out << "  ";
+                        writeWrapped(out, r.description, leftPad, cols);
+                        out << '\n';
+                }
+                out.flush();
+                std::exit(0);
+        }
+
+        void listMediaIOConfigAndExit(const String &backendName) {
+                // Resolve the SpecMap.  SDL is a pseudo-backend so we have
+                // to special-case it; everything else goes through the
+                // registered factory's configSpecs().
+                MediaIO::Config::SpecMap specs;
+                if (backendName == kStageSdl) {
+                        specs = sdlConfigSpecs();
+                } else {
+                        const MediaIOFactory *factory = MediaIOFactory::findByName(backendName);
+                        if (factory == nullptr) {
+                                fprintf(stderr,
+                                        "Error: unknown MediaIO backend '%s'.  "
+                                        "Use --list-io to see available backends.\n",
+                                        backendName.cstr());
+                                std::exit(1);
+                        }
+                        specs = factory->configSpecs();
+                }
+
+                // Collect visible keys (hide the implicit Type key — it's
+                // selected by -s / -c / -d, not a user-facing config knob).
+                // Sort by name so two consecutive runs produce identical
+                // output even if the underlying Map changed order.
+                StringList names;
+                for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                        const String &n = it->first.name();
+                        if (n == "Type") continue;
+                        names.pushToBack(n);
+                }
+                names = names.sort();
+
+                AnsiStream out(FileIODevice::stdoutDevice());
+                out.setAnsiEnabled(helpUseColor());
+                const HelpPalette &palette = helpPalette();
+
+                if (names.isEmpty()) {
+                        out << backendName << ": (no config keys)\n";
+                        out.flush();
+                        std::exit(0);
+                }
+
+                int nameWidth = 0;
+                for (const String &n : names) {
+                        int nw = static_cast<int>(n.size());
+                        if (nw > nameWidth) nameWidth = nw;
+                }
+
+                const int cols = detectTerminalCols();
+                // Description starts after the padded name column + one
+                // space (e.g. "AudioRate     Audio sample rate...").
+                const int descLeftPad = nameWidth + 1;
+
+                for (size_t i = 0; i < names.size(); ++i) {
+                        MediaIO::Config::ID id(names[i]);
+                        auto                it = specs.find(id);
+                        if (it == specs.end()) continue;
+                        const VariantSpec &spec = it->second;
+
+                        // First line: colored key name, padded, then the
+                        // description wrapped to terminal width.
+                        out.setForeground(palette.keyName);
+                        out << names[i];
+                        out.reset();
+                        for (int j = static_cast<int>(names[i].size()); j < nameWidth; ++j) out << ' ';
+                        out << ' ';
+                        writeWrapped(out, spec.description(), descLeftPad, cols);
+                        out << '\n';
+
+                        // Second line: "   Type: X, Range: Y, Def: Z".
+                        // Labels (Type/Range/Def) get the dim accent so
+                        // the actual values pop visually; range is
+                        // omitted when the spec doesn't declare one.
+                        out << "   ";
+                        out.setForeground(palette.dim);
+                        out << "Type:";
+                        out.reset();
+                        out << ' ' << spec.typeName();
+                        String range = spec.rangeString();
+                        if (!range.isEmpty()) {
+                                out << ", ";
+                                out.setForeground(palette.dim);
+                                out << "Range:";
+                                out.reset();
+                                out << ' ' << range;
+                        }
+                        out << ", ";
+                        out.setForeground(palette.dim);
+                        out << "Def:";
+                        out.reset();
+                        out << ' ' << spec.defaultString() << '\n';
+
+                        // Optional third line: for types whose accepted
+                        // values come from a registry (Enum, EnumList,
+                        // PixelFormat, VideoCodec, AudioCodec), tell
+                        // the user how to enumerate them — `K:list`
+                        // through the appropriate per-stage config flag
+                        // dispatches into the matching listEnumTypeAndExit
+                        // / listPixelFormatsAndExit / etc. handler in
+                        // applyStageConfig below.
+                        const bool enumLike =
+                                spec.hasEnumType() || spec.acceptsType(Variant::TypePixelFormat) ||
+                                spec.acceptsType(Variant::TypeVideoCodec) || spec.acceptsType(Variant::TypeAudioCodec);
+                        if (enumLike) {
+                                out << "   ";
+                                out.setForeground(palette.dim);
+                                out << "Values:";
+                                out.reset();
+                                // `Key:list` stays in the line's default
+                                // color — highlighting it competes with
+                                // the dim "Values:" label and the user
+                                // doesn't need the extra emphasis to
+                                // spot the command they should type.
+                                out << " pass `" << names[i] << ":list` via --sc/--cc/--dc to enumerate\n";
+                        }
+
+                        // Blank line between entries so the per-key block
+                        // reads as a paragraph instead of a wall of text.
+                        if (i + 1 < names.size()) out << '\n';
+                }
+                out.flush();
                 std::exit(0);
         }
 

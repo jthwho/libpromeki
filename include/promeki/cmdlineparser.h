@@ -8,6 +8,7 @@
 #pragma once
 
 #include <variant>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/stringlist.h>
 #include <promeki/string.h>
@@ -50,19 +51,19 @@ PROMEKI_NAMESPACE_BEGIN
 class CmdLineParser {
         public:
                 /** @brief Callback for options that take no argument. */
-                using OptionCallback = std::function<int()>;
+                using OptionCallback = Function<int()>;
 
                 /** @brief Callback for options that take a boolean argument. */
-                using OptionBoolCallback = std::function<int(bool)>;
+                using OptionBoolCallback = Function<int(bool)>;
 
                 /** @brief Callback for options that take a string argument. */
-                using OptionStringCallback = std::function<int(const String &)>;
+                using OptionStringCallback = Function<int(const String &)>;
 
                 /** @brief Callback for options that take an integer argument. */
-                using OptionIntCallback = std::function<int(int)>;
+                using OptionIntCallback = Function<int(int)>;
 
                 /** @brief Callback for options that take a double argument. */
-                using OptionDoubleCallback = std::function<int(double)>;
+                using OptionDoubleCallback = Function<int(double)>;
 
                 /**
                  * @brief Variant type holding any of the supported option callbacks.

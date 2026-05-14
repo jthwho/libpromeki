@@ -141,15 +141,7 @@ namespace mediaplay {
                         ListCodecsKind listCodecs = ListCodecsNone;
         };
 
-        /**
- * @brief Dumps a per-backend config schema to stdout.
- *
- * Walks the MediaIO registry, pulls each backend's defaultConfig,
- * and prints every key with its default value and Variant type.
- */
-        void printBackendConfigHelp();
-
-        /** @brief Prints usage to stderr followed by @c printBackendConfigHelp. */
+        /** @brief Prints usage text to stderr. */
         void usage();
 
         /**

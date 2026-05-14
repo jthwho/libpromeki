@@ -7,14 +7,14 @@
 
 #pragma once
 
-#include <atomic>
 #include <cassert>
-#include <mutex>
+#include <promeki/atomic.h>
 #include <promeki/namespace.h>
 #include <promeki/clockdomain.h>
 #include <promeki/duration.h>
 #include <promeki/error.h>
 #include <promeki/mediatimestamp.h>
+#include <promeki/mutex.h>
 #include <promeki/result.h>
 #include <promeki/sharedptr.h>
 #include <promeki/uniqueptr.h>
@@ -364,13 +364,13 @@ class Clock {
                 ClockPauseMode    _pauseMode;
                 ClockFilter::UPtr _filter;
 
-                mutable std::mutex _mutex;
-                int64_t            _fixedOffsetNs;
-                int64_t            _pausedOffsetNs;
-                int64_t            _frozenFilteredNs;
-                bool               _paused;
+                mutable Mutex _mutex;
+                int64_t       _fixedOffsetNs;
+                int64_t       _pausedOffsetNs;
+                int64_t       _frozenFilteredNs;
+                bool          _paused;
 
-                mutable std::atomic<int64_t> _lastNowNs;
+                mutable Atomic<int64_t> _lastNowNs;
 };
 
 /**

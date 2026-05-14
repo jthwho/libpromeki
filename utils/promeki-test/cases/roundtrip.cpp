@@ -455,7 +455,7 @@ namespace promekitest {
                         // Stream IDs are arbitrary but must be unique across cases that
                         // share the same TPG-stamped frame; the test folder name does
                         // that for free, so we hash it in.
-                        uint32_t streamId = 0xABCD0000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                        uint32_t streamId = 0xABCD0000u ^ static_cast<uint32_t>(c.name.hash());
 
                         ctx.setDetail(String("backend"), c.backendName);
                         ctx.setDetail(String("extension"), c.extension);

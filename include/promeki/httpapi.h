@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -263,7 +264,7 @@ class HttpApi : public ObjectBase {
                  * declared @ref ErrorResponse entries by status code,
                  * falling back to 500 if none matches.
                  */
-                using RpcCall = std::function<Result<Variant>(const VariantMap &args)>;
+                using RpcCall = Function<Result<Variant>(const VariantMap &args)>;
 
                 // ============================================================
                 // Construction / lifetime

@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/httprouter.h>
 #include <promeki/url.h>
 #include <promeki/stringlist.h>
@@ -207,7 +208,7 @@ void HttpRouter::runChain(HttpRequest &request, HttpResponse &response, HttpHand
         // index `i` so middleware can call next() multiple times only
         // if it really wants to (each next() invocation re-enters
         // the same frame's continuation).
-        std::function<void(size_t)> step;
+        Function<void(size_t)> step;
         step = [&](size_t i) {
                 if (i >= _middleware.size()) {
                         if (terminal) terminal(request, response);

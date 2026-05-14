@@ -9,6 +9,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
 #include <promeki/error.h>
@@ -101,7 +102,7 @@ class WindowedStat {
                  * empty (the default), @ref toString falls back to
                  * @ref String::number for every value.
                  */
-                using ValueFormatter = std::function<String(double)>;
+                using ValueFormatter = Function<String(double)>;
 
                 /** @brief Default-constructs an empty, zero-capacity window. */
                 WindowedStat() = default;

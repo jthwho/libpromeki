@@ -8,13 +8,13 @@
 #pragma once
 
 #include <cstdint>
-#include <tuple>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
 #include <promeki/framenumber.h>
+#include <promeki/array.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -442,7 +442,7 @@ class Timecode {
                 // ordering.  Used by the comparison operators whenever a
                 // frame-number conversion would be undefined or
                 // unnecessary (same mode, or either side lacks a rate).
-                using DigitTuple = std::tuple<DigitType, DigitType, DigitType, DigitType>;
+                using DigitTuple = Array<DigitType, 4>;
                 DigitTuple digitTuple() const { return DigitTuple(_hour, _min, _sec, _frame); }
 
                 // Returns true when @ref operator< / @c > / @c <= / @c >=

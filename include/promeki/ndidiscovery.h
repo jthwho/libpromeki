@@ -12,8 +12,8 @@
 
 #if PROMEKI_ENABLE_NDI
 
-#include <atomic>
 #include <thread>
+#include <promeki/atomic.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
@@ -114,7 +114,7 @@ class NdiDiscovery {
                  * False when @ref NdiLib failed to load (the singleton still
                  * exists for API uniformity but does no work).
                  */
-                bool isRunning() const { return _running.load(std::memory_order_acquire); }
+                bool isRunning() const { return _running.value(); }
 
                 /**
                  * @brief Snapshot the current registry without waiting.
@@ -233,10 +233,10 @@ class NdiDiscovery {
                 mutable WaitCondition         _condRegistry; ///< Notified when a tick updates the registry.
                 WaitCondition                 _condConfig;   ///< Notified when config changes (wakes the worker early).
                 Map<String, Record>           _registry;     ///< canonicalName → Record.
-                std::atomic<bool>             _running{false};
-                std::atomic<bool>             _shutdown{false};
-                std::atomic<bool>             _configDirty{false}; ///< Worker recreates find instance on next iter.
-                std::atomic<int>              _pollIntervalMs{500};
+                Atomic<bool>                  _running{false};
+                Atomic<bool>                  _shutdown{false};
+                Atomic<bool>                  _configDirty{false}; ///< Worker recreates find instance on next iter.
+                Atomic<int>                   _pollIntervalMs{500};
                 String                        _groups;       ///< Mirror of the SDK config (mutex-protected).
                 String                        _extraIps;     ///< Mirror of the SDK config (mutex-protected).
                 TimeStamp                     _startTime;    ///< Set when the worker thread first runs.

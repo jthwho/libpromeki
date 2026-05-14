@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <promeki/logger.h>
 #include <promeki/packettransport.h>
+#include <promeki/random.h>
 #include <promeki/rtcppacket.h>
 #include <promeki/rtpseqreorderbuffer.h>
 #include <promeki/rtpseqtracker.h>
@@ -18,7 +19,6 @@
 #include <promeki/udpsockettransport.h>
 #include <promeki/timestamp.h>
 #include <cstring>
-#include <random>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -33,7 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
 // demuxes RTCP via byte[1] in [200..223], and dispatches RTP packets
 // through the per-stream @c StreamReceiver entries: SSRC pin / change
 // detection → @ref RtpSeqTracker observe → @ref RtpSeqReorderBuffer
-// insert → post-reorder @c Queue<RtpPacket>.  The matching depacketizer
+// insert → post-reorder @c RtpPacket::Queue.  The matching depacketizer
 // thread consumes the queue on its own thread.  The receive socket's
 // SO_RCVTIMEO is used (for UDP transports) to poll the stop flag
 // between datagrams.
@@ -283,10 +283,7 @@ RtpSession::~RtpSession() {
 }
 
 void RtpSession::generateSsrc() {
-        std::random_device                      rd;
-        std::mt19937                            gen(rd());
-        std::uniform_int_distribution<uint32_t> dist;
-        _ssrc = dist(gen);
+        (void)Random::trueRandom(reinterpret_cast<uint8_t *>(&_ssrc), sizeof(_ssrc));
 }
 
 Error RtpSession::start(const SocketAddress &localAddr) {

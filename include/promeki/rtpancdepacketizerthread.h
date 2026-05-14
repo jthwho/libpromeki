@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/ancdesc.h>
 #include <promeki/atomic.h>
 #include <promeki/clockdomain.h>
@@ -88,17 +89,17 @@ struct RtpAncDepacketizerContext {
 
                 /// @brief Bumps the @c FrameCount on the owning
                 ///        ReaderStream.  May be @c nullptr.
-                std::function<void()> noteFrameReceived;
+                Function<void()> noteFrameReceived;
 
                 /// @brief Refreshes @ref streamClock from the owning
                 ///        RtpSession's most-recent SR.
-                std::function<void()> refreshStreamClock;
+                Function<void()> refreshStreamClock;
 
                 /// @brief Converts an NTP timestamp to local steady
                 ///        time using the owning @c RtpMediaIO 's
                 ///        anchor.  Returns a default TimeStamp when
                 ///        the anchor is not yet valid.
-                std::function<TimeStamp(const NtpTime &)> ntpToSteady;
+                Function<TimeStamp(const NtpTime &)> ntpToSteady;
 };
 
 /**

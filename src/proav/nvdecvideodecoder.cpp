@@ -51,11 +51,9 @@
 #include <promeki/contentlightlevel.h>
 #include <promeki/ciepoint.h>
 #include <promeki/deque.h>
+#include <promeki/mutex.h>
 #include <promeki/pair.h>
 #include <promeki/frame.h>
-
-#include <deque>
-#include <mutex>
 #include <cstring>
 #include <dlfcn.h>
 
@@ -88,7 +86,7 @@ namespace {
 
         NvcuvidFns gCuvid{};
         bool       gCuvidLoaded = false;
-        std::mutex gCuvidMutex;
+        Mutex      gCuvidMutex;
 
         template <typename T> bool resolve(void *lib, const char *name, T &out) {
                 out = reinterpret_cast<T>(dlsym(lib, name));
@@ -121,7 +119,7 @@ namespace {
         }
 
         bool loadCuvid() {
-                std::lock_guard<std::mutex> lock(gCuvidMutex);
+                Mutex::Locker lock(gCuvidMutex);
                 return loadCuvidLocked();
         }
 
@@ -601,7 +599,8 @@ class NvdecVideoDecoder::Impl {
                 // drained in handleDisplay onto the matching output Image.
                 // The parser's contract is that pfnGetSEIMsg fires before
                 // pfnDisplayPicture for the same picIdx.
-                std::deque<Metadata> _pendingSeiMeta;
+                using PendingSeiMetaQueue = Deque<Metadata>;
+                PendingSeiMetaQueue _pendingSeiMeta;
 
                 // ---- Callback thunks ----------------------------------
                 static int CUDAAPI onSequence(void *user, CUVIDEOFORMAT *fmt) {
@@ -825,7 +824,7 @@ class NvdecVideoDecoder::Impl {
                                                 break;
                                 }
                         }
-                        _pendingSeiMeta.push_back(std::move(sei));
+                        _pendingSeiMeta.pushToBack(std::move(sei));
                         return 1;
                 }
 
@@ -968,9 +967,8 @@ class NvdecVideoDecoder::Impl {
                         // values from pfnGetSEIMsg override whatever the
                         // packet metadata carried — the bitstream is the
                         // authoritative source when it's present.
-                        if (!_pendingSeiMeta.empty()) {
-                                Metadata sei = std::move(_pendingSeiMeta.front());
-                                _pendingSeiMeta.pop_front();
+                        if (!_pendingSeiMeta.isEmpty()) {
+                                Metadata sei = _pendingSeiMeta.popFromFront();
                                 img.modify()->desc().metadata().merge(sei);
                         }
 

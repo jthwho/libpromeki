@@ -240,6 +240,25 @@ template <typename K, typename V> class Map {
                 bool insertNew(const K &key, const V &val) { return d.emplace(key, val).second; }
 
                 /**
+                 * @brief Inserts only if @p key is absent, constructing the value
+                 *        in place from @p args.
+                 *
+                 * Mirrors @c std::map::try_emplace: when @p key already exists
+                 * nothing is constructed and the existing entry is returned;
+                 * otherwise a new entry is built in place with @p args.  Use
+                 * when the value type is expensive to construct unconditionally
+                 * or only move-constructible.
+                 *
+                 * @tparam ArgsT Constructor argument types for @c V (deduced).
+                 * @param  key  The key.
+                 * @param  args Arguments forwarded to @c V's constructor.
+                 * @return A pair of (iterator-to-entry, inserted).
+                 */
+                template <typename... ArgsT> std::pair<Iterator, bool> tryEmplace(const K &key, ArgsT &&...args) {
+                        return d.try_emplace(key, std::forward<ArgsT>(args)...);
+                }
+
+                /**
                  * @brief Removes the entry for @p key.
                  * @param key The key to remove.
                  * @return True if an entry was removed, false if the key was not found.

@@ -174,7 +174,7 @@ Amf0Value Amf0Value::reference(uint16_t index) {
 Amf0Value Amf0Value::object(std::initializer_list<Field> kv) {
         Amf0Value v;
         v._d.modify()->type = Object;
-        for (const auto &f : kv) v.setField(f.first, f.second);
+        for (const auto &f : kv) v.setField(f.first(), f.second());
         return v;
 }
 
@@ -182,7 +182,7 @@ Amf0Value Amf0Value::ecmaArray(std::initializer_list<Field> kv, uint32_t countHi
         Amf0Value v;
         v._d.modify()->type          = EcmaArray;
         v._d.modify()->ecmaCountHint = countHint;
-        for (const auto &f : kv) v.setField(f.first, f.second);
+        for (const auto &f : kv) v.setField(f.first(), f.second());
         return v;
 }
 
@@ -212,7 +212,7 @@ Amf0Value Amf0Value::typedObject(const promeki::String &className, std::initiali
         Amf0Value v;
         v._d.modify()->type = TypedObject;
         v._d.modify()->s    = className;
-        for (const auto &f : kv) v.setField(f.first, f.second);
+        for (const auto &f : kv) v.setField(f.first(), f.second());
         return v;
 }
 
@@ -244,7 +244,7 @@ Amf0Value::FieldList       &Amf0Value::fields() { return _d.modify()->fields; }
 
 const Amf0Value *Amf0Value::find(const promeki::String &key) const {
         for (const auto &f : _d->fields) {
-                if (f.first == key) return &f.second;
+                if (f.first() == key) return &f.second();
         }
         return nullptr;
 }
@@ -252,7 +252,7 @@ const Amf0Value *Amf0Value::find(const promeki::String &key) const {
 Amf0Value *Amf0Value::find(const promeki::String &key) {
         FieldList &fl = _d.modify()->fields;
         for (auto &f : fl) {
-                if (f.first == key) return &f.second;
+                if (f.first() == key) return &f.second();
         }
         return nullptr;
 }
@@ -262,8 +262,8 @@ bool Amf0Value::contains(const promeki::String &key) const { return find(key) !=
 void Amf0Value::setField(const promeki::String &key, Amf0Value value) {
         FieldList &fl = _d.modify()->fields;
         for (auto &f : fl) {
-                if (f.first == key) {
-                        f.second = std::move(value);
+                if (f.first() == key) {
+                        f.second() = std::move(value);
                         return;
                 }
         }
@@ -306,8 +306,8 @@ bool Amf0Value::operator==(const Amf0Value &other) const {
                         if (_d->type == EcmaArray && _d->ecmaCountHint != other._d->ecmaCountHint)
                                 return false;
                         for (size_t i = 0; i < _d->fields.size(); ++i) {
-                                if (_d->fields[i].first != other._d->fields[i].first) return false;
-                                if (!(_d->fields[i].second == other._d->fields[i].second)) return false;
+                                if (_d->fields[i].first() != other._d->fields[i].first()) return false;
+                                if (!(_d->fields[i].second() == other._d->fields[i].second())) return false;
                         }
                         return true;
         }
@@ -386,9 +386,9 @@ namespace {
                                         if (!first) out += ", ";
                                         first = false;
                                         appendIndent(out, indent, depth + 1);
-                                        out += f.first;
+                                        out += f.first();
                                         out += ": ";
-                                        appendDebug(f.second, out, indent, depth + 1);
+                                        appendDebug(f.second(), out, indent, depth + 1);
                                 }
                                 appendIndent(out, indent, depth);
                                 out += '}';
@@ -524,10 +524,10 @@ Error Amf0Writer::writeObject(const Amf0Value::FieldList &fields) {
         Error err = appendByte(Amf0Value::MarkerObject);
         if (err.isError()) return err;
         for (const auto &f : fields) {
-                if (f.first.byteCount() > 0xFFFF) return Error::OutOfRange;
-                err = appendShortString(f.first);
+                if (f.first().byteCount() > 0xFFFF) return Error::OutOfRange;
+                err = appendShortString(f.first());
                 if (err.isError()) return err;
-                err = writeValue(f.second);
+                err = writeValue(f.second());
                 if (err.isError()) return err;
         }
         return appendObjectEnd(*this, _out, _bytesWritten);
@@ -539,10 +539,10 @@ Error Amf0Writer::writeEcmaArray(const Amf0Value::FieldList &fields, uint32_t co
         err = appendU32BE(countHint);
         if (err.isError()) return err;
         for (const auto &f : fields) {
-                if (f.first.byteCount() > 0xFFFF) return Error::OutOfRange;
-                err = appendShortString(f.first);
+                if (f.first().byteCount() > 0xFFFF) return Error::OutOfRange;
+                err = appendShortString(f.first());
                 if (err.isError()) return err;
-                err = writeValue(f.second);
+                err = writeValue(f.second());
                 if (err.isError()) return err;
         }
         return appendObjectEnd(*this, _out, _bytesWritten);
@@ -555,10 +555,10 @@ Error Amf0Writer::writeTypedObject(const promeki::String &className, const Amf0V
         err = appendShortString(className);
         if (err.isError()) return err;
         for (const auto &f : fields) {
-                if (f.first.byteCount() > 0xFFFF) return Error::OutOfRange;
-                err = appendShortString(f.first);
+                if (f.first().byteCount() > 0xFFFF) return Error::OutOfRange;
+                err = appendShortString(f.first());
                 if (err.isError()) return err;
-                err = writeValue(f.second);
+                err = writeValue(f.second());
                 if (err.isError()) return err;
         }
         return appendObjectEnd(*this, _out, _bytesWritten);

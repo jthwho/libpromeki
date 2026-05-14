@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <vector>
+#include <promeki/list.h>
 #include <promeki/audiodataencoder.h>
 #include <promeki/audioformat.h>
 #include <promeki/pcmaudiopayload.h>
@@ -23,7 +24,7 @@ namespace {
         // quantisation so integer formats land on the format's
         // mid-scale-relative grid (e.g. 0.0f → 128 for unsigned 8-bit).
         Buffer buildPrimer(const AudioFormat &fmt, float amp, size_t halfSamples) {
-                std::vector<float> floats(halfSamples, amp);
+                List<float> floats(halfSamples, amp);
                 Buffer             out(halfSamples * fmt.bytesPerSample());
                 if (!out.isValid()) return Buffer();
                 fmt.floatToSamples(static_cast<uint8_t *>(out.data()), floats.data(), halfSamples);

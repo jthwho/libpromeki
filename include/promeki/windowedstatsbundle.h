@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
 #include <promeki/error.h>
@@ -134,7 +135,7 @@ class WindowedStatsBundle {
                  * unit-aware output (ms, MB) where the picker depends
                  * on the ID name.
                  */
-                using ValueFormatter = std::function<WindowedStat::ValueFormatter(ID)>;
+                using ValueFormatter = Function<WindowedStat::ValueFormatter(ID)>;
                 StringList describe(const ValueFormatter &formatter = ValueFormatter()) const;
 
                 /** @brief Serializes the bundle as a JSON object keyed by stat-ID name. */

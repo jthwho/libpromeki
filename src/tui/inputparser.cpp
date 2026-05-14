@@ -146,7 +146,7 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
 void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         if (seq.isEmpty()) return;
 
-        char   final = seq.str().back();
+        Char   final = seq.charAt(seq.length() - 1);
         String params = seq.substr(0, seq.length() - 1);
 
         // Parse semicolon-separated parameters
@@ -154,8 +154,8 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         if (!params.isEmpty()) {
                 size_t pos = 0;
                 while (pos < params.length()) {
-                        size_t semi = params.str().find(';', pos);
-                        if (semi == std::string::npos) semi = params.length();
+                        size_t semi = params.find(';', pos);
+                        if (semi == String::npos) semi = params.length();
                         String part = params.substr(pos, semi - pos);
                         Error  err;
                         int    val = part.toInt(&err);
@@ -170,7 +170,7 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         ParsedEvent ev;
         ev.type = ParsedEvent::Key;
 
-        switch (final) {
+        switch (final.codepoint()) {
                 case 'A': ev.key = KeyEvent::Key_Up; break;
                 case 'B': ev.key = KeyEvent::Key_Down; break;
                 case 'C': ev.key = KeyEvent::Key_Right; break;
@@ -240,14 +240,14 @@ void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events)
         // Format: <button;col;row[Mm]
         if (seq.isEmpty()) return;
 
-        char   final = seq.str().back();
+        Char   final = seq.charAt(seq.length() - 1);
         String params = seq.substr(0, seq.length() - 1);
 
         List<int> nums;
         size_t    pos = 0;
         while (pos < params.length()) {
-                size_t semi = params.str().find(';', pos);
-                if (semi == std::string::npos) semi = params.length();
+                size_t semi = params.find(';', pos);
+                if (semi == String::npos) semi = params.length();
                 String part = params.substr(pos, semi - pos);
                 Error  err;
                 nums += part.toInt(&err);

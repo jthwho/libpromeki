@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <atomic>
+#include <promeki/atomic.h>
 #include <promeki/namespace.h>
 #include <promeki/clock.h>
 #include <promeki/framenumber.h>
@@ -89,7 +89,7 @@ class SyntheticClock : public Clock {
                 void setCurrentFrame(const FrameNumber &frame);
 
                 /** @brief Returns the current frame counter. */
-                FrameNumber currentFrame() const { return FrameNumber(_currentFrame.load(std::memory_order_relaxed)); }
+                FrameNumber currentFrame() const { return FrameNumber(_currentFrame.value()); }
 
                 /**
                  * @brief Advances the frame counter.
@@ -114,8 +114,8 @@ class SyntheticClock : public Clock {
                 void recomputePeriod();
 
                 FrameRate            _frameRate;
-                std::atomic<int64_t> _framePeriodNs{0};
-                std::atomic<int64_t> _currentFrame{0};
+                Atomic<int64_t> _framePeriodNs{0};
+                Atomic<int64_t> _currentFrame{0};
 };
 
 PROMEKI_NAMESPACE_END

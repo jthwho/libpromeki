@@ -7,12 +7,12 @@
 
 #include <promeki/srtsocket.h>
 #include <promeki/logger.h>
+#include <promeki/thread.h>
 #include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
 #include <chrono>
-#include <thread>
 
 #include <srt/srt.h>
 
@@ -41,7 +41,7 @@ namespace {
                 if (!sStarting.compare_exchange_strong(expected, true)) {
                         // Another thread is mid-init; spin briefly.
                         while (!sSrtInitDone.load(std::memory_order_acquire)) {
-                                std::this_thread::yield();
+                                Thread::yield();
                         }
                         return Error::Ok;
                 }
@@ -212,7 +212,7 @@ Error SrtSocket::waitForConnected(unsigned int timeoutMs) {
                         return Error::ConnectionReset;
                 }
                 if (std::chrono::steady_clock::now() >= deadline) return Error::Timeout;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                Thread::sleepMs(10);
         }
 }
 

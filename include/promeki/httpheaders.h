@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -132,7 +133,7 @@ class HttpHeaders {
                  * multi-valued headers, all values for one name are
                  * emitted contiguously in arrival order.
                  */
-                void forEach(std::function<void(const String &name, const String &value)> func) const;
+                void forEach(Function<void(const String &name, const String &value)> func) const;
 
                 /** @brief Equality on the full set of (name, value) pairs. */
                 bool operator==(const HttpHeaders &other) const;

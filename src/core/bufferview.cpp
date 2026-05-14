@@ -6,6 +6,7 @@
  */
 
 #include <limits>
+#include <promeki/optional.h>
 #include <promeki/bufferview.h>
 #include <promeki/variantlookup.h>
 
@@ -234,22 +235,22 @@ Error BufferView::seal() const {
 
 PROMEKI_LOOKUP_REGISTER(BufferView::Entry)
         .scalar("Index",
-                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                [](const BufferView::Entry &e) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(e.bufferIndex()));
                 })
         .scalar("Offset",
-                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                [](const BufferView::Entry &e) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(e.offset()));
                 })
         .scalar("Size",
-                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                [](const BufferView::Entry &e) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(e.size()));
                 })
         .scalar("BufferSize",
-                [](const BufferView::Entry &e) -> std::optional<Variant> {
+                [](const BufferView::Entry &e) -> Optional<Variant> {
                         const Buffer &b = e.buffer();
                         return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
                 })
-        .scalar("IsValid", [](const BufferView::Entry &e) -> std::optional<Variant> { return Variant(e.isValid()); });
+        .scalar("IsValid", [](const BufferView::Entry &e) -> Optional<Variant> { return Variant(e.isValid()); });
 
 PROMEKI_NAMESPACE_END

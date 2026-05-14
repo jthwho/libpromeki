@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
+#include <promeki/array.h>
 #include <promeki/buffer.h>
 #include <promeki/cea708service.h>
 #include <promeki/color.h>
@@ -328,9 +328,12 @@ class Cea708WindowState {
                 void processBytes(const void *data, size_t size);
 
         private:
-                std::array<Cea708Window, WindowCount> _windows;
-                int                                    _currentWindow = 0;
-                Cea708PenAttr                          _pen;
+                /// @brief Per-service window array, indexed by window ID (0..7).
+                using WindowArray = Array<Cea708Window, WindowCount>;
+
+                WindowArray   _windows;
+                int           _currentWindow = 0;
+                Cea708PenAttr _pen;
 
                 static int clampId(int id) {
                         if (id < 0) return 0;

@@ -278,7 +278,7 @@ namespace promekitest {
                         // number jump at the inspector rather than
                         // silently flowing through.
                         const uint32_t streamId =
-                                0x4ED1'0000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                                0x4ED1'0000u ^ static_cast<uint32_t>(c.name.hash());
 
                         // Inject the inspector so we can pull a
                         // snapshot once the close cascade completes.

@@ -12,7 +12,7 @@
 
 #if PROMEKI_ENABLE_NDI
 
-#include <atomic>
+#include <promeki/atomic.h>
 #include <promeki/clock.h>
 #include <promeki/clockdomain.h>
 #include <promeki/framerate.h>
@@ -124,9 +124,9 @@ class NdiClock : public Clock {
                 // Atomic backing the fast-path raw() / setLatestTimestamp pair.
                 // Stored in nanoseconds so raw() does not multiply on every
                 // call — a hot path for downstream timing math.
-                mutable std::atomic<int64_t> _lastTimestampNs{0};
-                std::atomic<bool>            _hasTimestamp{false};
-                std::atomic<bool>            _shutdown{false};
+                mutable Atomic<int64_t> _lastTimestampNs{0};
+                Atomic<bool>            _hasTimestamp{false};
+                Atomic<bool>            _shutdown{false};
 
                 // Wait condition for sleepUntilNs.  Signalled on every
                 // setLatestTimestamp so the longest-waiter can wake

@@ -11,6 +11,7 @@
 #include <initializer_list>
 #include <utility>
 #include <promeki/namespace.h>
+#include <promeki/pair.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/sharedptr.h>
@@ -69,13 +70,13 @@ class Amf0Value {
         public:
                 /** @brief List of values — used for the StrictArray payload and as an
                  * Amf0Reader return type. */
-                using List = ::promeki::List<Amf0Value>;
+                using List = promeki::List<Amf0Value>;
 
                 /** @brief Object / EcmaArray field — name + value, insertion-ordered. */
-                using Field = std::pair<promeki::String, Amf0Value>;
+                using Field = promeki::Pair<promeki::String, Amf0Value>;
 
                 /** @brief Insertion-ordered list of object / ecma-array fields. */
-                using FieldList = ::promeki::List<Field>;
+                using FieldList = promeki::List<Field>;
 
                 /** @brief Discriminant for the held value. */
                 enum Type {

@@ -10,6 +10,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/eventloop.h>
 
@@ -115,7 +116,7 @@ class SignalHandler {
                 static bool isInstalled();
 
                 /** @brief Callback type for @ref subscribe. */
-                using Callback = std::function<void(int signo)>;
+                using Callback = Function<void(int signo)>;
 
                 /**
                  * @brief Subscribes a callback for a non-termination signal.

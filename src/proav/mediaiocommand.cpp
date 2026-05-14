@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/mediaiocommand.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
@@ -31,14 +32,14 @@ void MediaIOCommand::markCompleted() {
         // — we'll fire it just below) or sees the latched flag (and
         // fires the callback inline itself).  Either path runs the
         // callback exactly once.
-        std::function<void(Error)> cb;
+        Function<void(Error)> cb;
         EventLoop                 *loop = nullptr;
         {
                 Mutex::Locker lock(_callbackMutex);
                 if (_callback) {
                         cb = std::move(_callback);
                         loop = _callbackLoop;
-                        _callback = std::function<void(Error)>();
+                        _callback = Function<void(Error)>();
                         _callbackLoop = nullptr;
                 }
         }
@@ -81,7 +82,7 @@ Error MediaIOCommand::waitForCompletion(unsigned int timeoutMs) const {
         return Error::Ok;
 }
 
-void MediaIOCommand::setCompletionCallback(std::function<void(Error)> cb, EventLoop *loop) {
+void MediaIOCommand::setCompletionCallback(Function<void(Error)> cb, EventLoop *loop) {
         // If the command resolved before this call ran (or resolves
         // between our flag check and our store), fire the callback
         // ourselves — markCompleted() couldn't see it.  The atomic

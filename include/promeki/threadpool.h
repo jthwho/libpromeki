@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
 #include <promeki/duration.h>
@@ -21,6 +22,7 @@
 #include <promeki/readwritelock.h>
 #include <promeki/stringregistry.h>
 #include <promeki/timestamp.h>
+#include <promeki/uniqueptr.h>
 #include <promeki/waitcondition.h>
 #include <promeki/future.h>
 #include <promeki/list.h>
@@ -312,7 +314,7 @@ class ThreadPool {
                 static List<ThreadPool *> allPools();
 
         private:
-                using Task = std::function<void()>;
+                using Task = Function<void()>;
 
                 /// One internal queue entry: caller's callable plus the
                 /// metadata the worker needs to attribute time.
@@ -372,7 +374,7 @@ class ThreadPool {
                 bool                                           _shutdown = false;
 
                 mutable ReadWriteLock                          _statsLock;
-                HashMap<uint64_t, std::unique_ptr<WorkRecord>> _stats;
+                HashMap<uint64_t, UniquePtr<WorkRecord>> _stats;
 };
 
 PROMEKI_NAMESPACE_END

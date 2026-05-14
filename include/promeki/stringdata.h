@@ -157,6 +157,17 @@ class StringData {
                  */
                 virtual void resize(size_t len, Char fill = Char()) = 0;
 
+                /**
+                 * @brief Reserves storage for at least @p capacity characters.
+                 *
+                 * Optional hint; backends may treat as a no-op.  Helps
+                 * appenders avoid reallocations when the final length is
+                 * known in advance.
+                 *
+                 * @param capacity Desired minimum capacity in characters.
+                 */
+                virtual void reserve(size_t capacity) { (void)capacity; }
+
                 ///@}
 
                 /** @name Byte-level output */
@@ -253,6 +264,7 @@ class StringLatin1Data : public StringData {
                 void erase(size_t pos, size_t count) override;
                 void clear() override { _s.clear(); }
                 void resize(size_t len, Char fill = Char()) override;
+                void reserve(size_t capacity) override { _s.reserve(capacity); }
 
                 size_t             byteCount() const override { return _s.size(); }
                 uint8_t            byteAt(size_t idx) const override { return static_cast<uint8_t>(_s[idx]); }
@@ -332,6 +344,7 @@ class StringUnicodeData : public StringData {
                 void erase(size_t pos, size_t count) override;
                 void clear() override;
                 void resize(size_t len, Char fill = Char()) override;
+                void reserve(size_t capacity) override { _chars.reserve(capacity); }
 
                 size_t             byteCount() const override;
                 uint8_t            byteAt(size_t idx) const override;

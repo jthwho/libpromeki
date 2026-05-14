@@ -274,7 +274,7 @@ class RtmpMediaIO::PacketizerThread : public Thread {
                                 // the strand-side write path surfaces
                                 // the error to the pipeline via
                                 // RtmpMediaIO::_clientDisconnected.
-                                if (_owner->_clientDisconnected.load(std::memory_order_acquire)) break;
+                                if (_owner->_clientDisconnected.value()) break;
                                 Result<Item> r = _queue.pop(kDepacketizerPopMs);
                                 if (r.second() == Error::Cancelled) break;
                                 if (r.second() == Error::Timeout) continue;
@@ -579,7 +579,7 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                                 // socket failure, etc.) — exit the
                                 // pump rather than busy-looping on
                                 // Error::Invalid take results.
-                                if (_owner->_clientDisconnected.load(std::memory_order_acquire)) break;
+                                if (_owner->_clientDisconnected.value()) break;
 
                                 bool any = false;
 
@@ -911,9 +911,9 @@ void RtmpMediaIO::resetAll() {
         }
 
         _readerQueue.clear();
-        _readCancelled.store(false, std::memory_order_release);
-        _clientDisconnected.store(false, std::memory_order_release);
-        _disconnectErrorCode.store(0, std::memory_order_release);
+        _readCancelled.setValue(false);
+        _clientDisconnected.setValue(false);
+        _disconnectErrorCode.setValue(0);
         _imageDesc = ImageDesc();
         _audioDesc = AudioDesc();
         _url = Url();
@@ -939,10 +939,9 @@ void RtmpMediaIO::onClientDisconnected(Error reason) {
         // Coalesce repeat firings — RtmpClient::close on a still-open
         // client emits a second disconnect with Error::Ok after a
         // peer-driven disconnect already latched the reason.
-        if (_clientDisconnected.load(std::memory_order_acquire)) return;
-        _disconnectErrorCode.store(static_cast<int>(reason.code()),
-                                   std::memory_order_release);
-        _clientDisconnected.store(true, std::memory_order_release);
+        if (_clientDisconnected.value()) return;
+        _disconnectErrorCode.setValue(static_cast<int>(reason.code()));
+        _clientDisconnected.setValue(true);
         // Surface as a generic MediaIO error so any listener observing
         // errorOccurredSignal sees the failure too.  The pipeline's
         // primary error cascade still comes through the Write/Read
@@ -1071,7 +1070,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         Enum modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
         const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
         _readerMode = !isWrite;
-        _readCancelled.store(false, std::memory_order_release);
+        _readCancelled.setValue(false);
 
         // URL is required.
         Variant urlVar = cfg.get(MediaConfig::RtmpUrl);
@@ -1251,17 +1250,17 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (r.second() != Error::Timeout) {
                         return r.second();
                 }
-                if (_readCancelled.load(std::memory_order_acquire)) {
+                if (_readCancelled.value()) {
                         return Error::Cancelled;
                 }
-                if (_clientDisconnected.load(std::memory_order_acquire)) {
+                if (_clientDisconnected.value()) {
                         // Drain any frames the depacketizer queued
                         // before the disconnect latched (handled above
                         // via the .isOk() path); once empty, surface
                         // the captured reason — or @c BrokenPipe as a
                         // sentinel when the disconnect was clean.
                         Error::Code code = static_cast<Error::Code>(
-                                _disconnectErrorCode.load(std::memory_order_acquire));
+                                _disconnectErrorCode.value());
                         return code == Error::Ok ? Error(Error::BrokenPipe) : Error(code);
                 }
         }
@@ -1275,9 +1274,9 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // The peer went away mid-stream; surface the captured reason
         // so MediaIOPortConnection's writeError signal cascades the
         // failure to the pipeline (which then initiates a teardown).
-        if (_clientDisconnected.load(std::memory_order_acquire)) {
+        if (_clientDisconnected.value()) {
                 Error::Code code = static_cast<Error::Code>(
-                        _disconnectErrorCode.load(std::memory_order_acquire));
+                        _disconnectErrorCode.value());
                 return code == Error::Ok ? Error(Error::BrokenPipe) : Error(code);
         }
 
@@ -1435,7 +1434,7 @@ String RtmpMediaIO::paceClockKind() const {
 }
 
 void RtmpMediaIO::cancelBlockingWork() {
-        _readCancelled.store(true, std::memory_order_release);
+        _readCancelled.setValue(true);
         _readerQueue.cancelWaiters();
 }
 

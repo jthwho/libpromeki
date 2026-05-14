@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include <deque>
 #include <functional>
 #include <type_traits>
 #include <memory>
+#include <promeki/function.h>
+#include <promeki/deque.h>
 #include <promeki/namespace.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
@@ -56,7 +57,7 @@ PROMEKI_NAMESPACE_BEGIN
 class Strand {
         public:
                 /** @brief Convenience alias for the void-returning task functions used by submit/cancel. */
-                using TaskFunc = std::function<void()>;
+                using TaskFunc = Function<void()>;
 
                 /**
                  * @brief Constructs a Strand backed by the given ThreadPool.
@@ -148,7 +149,7 @@ class Strand {
                  * @return The number of tasks that were cancelled.
                  */
                 size_t cancelPending() {
-                        std::deque<Entry> toCancel;
+                        EntryQueue toCancel;
                         {
                                 Mutex::Locker lock(_mutex);
                                 toCancel = std::move(_queue);
@@ -275,9 +276,9 @@ class Strand {
                         {
                                 Mutex::Locker lock(_mutex);
                                 if (urgent) {
-                                        _queue.emplace_front(std::move(entry));
+                                        _queue.pushToFront(std::move(entry));
                                 } else {
-                                        _queue.emplace_back(std::move(entry));
+                                        _queue.pushToBack(std::move(entry));
                                 }
                                 if (!_running) {
                                         _running = true;
@@ -301,9 +302,8 @@ class Strand {
                         bool  haveTask = false;
                         {
                                 Mutex::Locker lock(_mutex);
-                                if (!_queue.empty()) {
-                                        entry = std::move(_queue.front());
-                                        _queue.pop_front();
+                                if (!_queue.isEmpty()) {
+                                        entry = _queue.popFromFront();
                                         haveTask = true;
                                 }
                         }
@@ -316,7 +316,7 @@ class Strand {
                         bool reSpawn = false;
                         {
                                 Mutex::Locker lock(_mutex);
-                                if (_queue.empty()) {
+                                if (_queue.isEmpty()) {
                                         _running = false;
                                         _idleCv.wakeAll();
                                 } else {
@@ -334,10 +334,13 @@ class Strand {
                         }
                 }
 
+                /// @brief Pending-task queue type.
+                using EntryQueue = Deque<Entry>;
+
                 ThreadPool         &_pool;
                 mutable Mutex       _mutex;
                 WaitCondition       _idleCv;
-                std::deque<Entry>   _queue;
+                EntryQueue          _queue;
                 ThreadPool::WorkTag _workTag;
                 bool                _running = false;
 };

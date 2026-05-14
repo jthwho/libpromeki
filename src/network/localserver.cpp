@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/list.h>
 #include <promeki/localserver.h>
 #include <promeki/localsocket.h>
 #include <promeki/platform.h>
@@ -62,7 +63,7 @@ namespace {
         Error resolveGid(const String &groupName, gid_t &gidOut) {
                 long bufMax = ::sysconf(_SC_GETGR_R_SIZE_MAX);
                 if (bufMax <= 0) bufMax = 16384;
-                std::vector<char> buf(static_cast<size_t>(bufMax));
+                List<char> buf(static_cast<size_t>(bufMax));
                 struct group      gr;
                 struct group     *result = nullptr;
                 int               rc = ::getgrnam_r(groupName.cstr(), &gr, buf.data(), buf.size(), &result);

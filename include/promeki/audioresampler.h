@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/audiodesc.h>
 #include <promeki/error.h>
@@ -41,8 +42,8 @@ PROMEKI_NAMESPACE_BEGIN
  * Error err = r.setup(2, SrcQuality::SincMedium);
  * r.setRatio(48000.0 / 44100.0);
  *
- * std::vector<float> in(1024 * 2);
- * std::vector<float> out(2048 * 2);
+ * List<float> in(1024 * 2);
+ * List<float> out(2048 * 2);
  * long used = 0, gen = 0;
  * r.process(in.data(), 1024, out.data(), 2048, used, gen);
  * @endcode

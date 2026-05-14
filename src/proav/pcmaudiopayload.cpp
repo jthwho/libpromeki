@@ -6,6 +6,7 @@
  */
 
 #include <cstring>
+#include <promeki/optional.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/variantlookup.h>
 #include <promeki/variantdatabase.h>
@@ -102,19 +103,19 @@ PcmAudioPayload::Ptr PcmAudioPayload::convert(const AudioFormat &dstFormat) cons
 PROMEKI_LOOKUP_REGISTER(AudioPayload)
         .inheritsFrom<MediaPayload>()
         .scalar("SampleRate",
-                [](const AudioPayload &p) -> std::optional<Variant> { return Variant(p.desc().sampleRate()); })
+                [](const AudioPayload &p) -> Optional<Variant> { return Variant(p.desc().sampleRate()); })
         .scalar("Channels",
-                [](const AudioPayload &p) -> std::optional<Variant> {
+                [](const AudioPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint32_t>(p.desc().channels()));
                 })
-        .scalar("Format", [](const AudioPayload &p) -> std::optional<Variant> { return Variant(p.desc().format()); })
+        .scalar("Format", [](const AudioPayload &p) -> Optional<Variant> { return Variant(p.desc().format()); })
         .scalar("BytesPerSample",
-                [](const AudioPayload &p) -> std::optional<Variant> {
+                [](const AudioPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.desc().bytesPerSample()));
                 })
         .scalar("IsNative",
-                [](const AudioPayload &p) -> std::optional<Variant> { return Variant(p.desc().isNative()); })
-        .scalar("SampleCount", [](const AudioPayload &p) -> std::optional<Variant> {
+                [](const AudioPayload &p) -> Optional<Variant> { return Variant(p.desc().isNative()); })
+        .scalar("SampleCount", [](const AudioPayload &p) -> Optional<Variant> {
                 return Variant(static_cast<uint64_t>(p.sampleCount()));
         });
 

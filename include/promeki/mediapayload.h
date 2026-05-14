@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <promeki/optional.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
@@ -599,7 +600,7 @@ class MediaPayload {
                  * @ref PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH to
                  * generate the override uniformly.
                  */
-                virtual std::optional<Variant> variantLookupResolve(const String &key, Error *err = nullptr) const = 0;
+                virtual Optional<Variant> variantLookupResolve(const String &key, Error *err = nullptr) const = 0;
 
                 /**
                  * @brief Assigns @p value under @p key into this
@@ -740,7 +741,7 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
  * @endcode
  */
 #define PROMEKI_MEDIAPAYLOAD_LOOKUP_DISPATCH(Self)                                                                     \
-        std::optional<::promeki::Variant> variantLookupResolve(const ::promeki::String &key,                           \
+        Optional<::promeki::Variant> variantLookupResolve(const ::promeki::String &key,                           \
                                                                ::promeki::Error        *err = nullptr) const override {       \
                 return ::promeki::VariantLookup<Self>::resolveDirect(*this, key, err);                                 \
         }                                                                                                              \

@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/h264bitstream.h>
 
 #include <cstring>
@@ -189,7 +190,7 @@ Error H264Bitstream::annexBToAvcc(const BufferView &in, uint8_t lenSize, Buffer 
 }
 
 Error H264Bitstream::annexBToAvccFiltered(const BufferView &in, uint8_t lenSize,
-                                          const std::function<bool(const NalUnit &)> &keep, Buffer &outBuf) {
+                                          const Function<bool(const NalUnit &)> &keep, Buffer &outBuf) {
         if (!isValidLenSize(lenSize)) return Error::InvalidArgument;
 
         size_t         totalSize = 0;

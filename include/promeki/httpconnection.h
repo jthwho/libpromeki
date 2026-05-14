@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -86,7 +87,7 @@ class HttpConnection : public ObjectBase {
                  * handlers, copy the request and call @ref postResponse
                  * later from the same loop.
                  */
-                using RequestHandler = std::function<void(HttpRequest &request, HttpResponse &response)>;
+                using RequestHandler = Function<void(HttpRequest &request, HttpResponse &response)>;
 
                 /**
                  * @brief Constructs a connection wrapping @p socket.

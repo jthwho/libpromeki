@@ -155,7 +155,7 @@ void TextStream::skipWhitespace() {
 
 String TextStream::readToken() {
         skipWhitespace();
-        std::string result;
+        String result;
         while (!atEnd()) {
                 char ch;
                 if (!readChar(ch)) break;
@@ -165,8 +165,8 @@ String TextStream::readToken() {
                 }
                 result += ch;
         }
-        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
-        return String(result.c_str(), result.size());
+        if (!result.isEmpty() && _status == ReadPastEnd) _status = Ok;
+        return result;
 }
 
 // ============================================================================
@@ -398,8 +398,8 @@ TextStream &TextStream::operator>>(double &val) {
 // ============================================================================
 
 String TextStream::readLine() {
-        std::string result;
-        char        ch;
+        String result;
+        char   ch;
         while (readChar(ch)) {
                 if (ch == '\n') break;
                 if (ch == '\r') {
@@ -416,30 +416,30 @@ String TextStream::readLine() {
                 }
                 result += ch;
         }
-        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
-        return String(result.c_str(), result.size());
+        if (!result.isEmpty() && _status == ReadPastEnd) _status = Ok;
+        return result;
 }
 
 String TextStream::readAll() {
-        std::string result;
-        char        ch;
+        String result;
+        char   ch;
         while (readChar(ch)) {
                 result += ch;
         }
         if (_status == ReadPastEnd) _status = Ok;
-        return String(result.c_str(), result.size());
+        return result;
 }
 
 String TextStream::read(size_t maxLength) {
-        std::string result;
+        String result;
         result.reserve(maxLength);
         char ch;
         for (size_t i = 0; i < maxLength; ++i) {
                 if (!readChar(ch)) break;
                 result += ch;
         }
-        if (!result.empty() && _status == ReadPastEnd) _status = Ok;
-        return String(result.c_str(), result.size());
+        if (!result.isEmpty() && _status == ReadPastEnd) _status = Ok;
+        return result;
 }
 
 PROMEKI_NAMESPACE_END

@@ -21,8 +21,7 @@ MusicalNote::List NoteSequenceParser::parse(const String &input) {
         _notes.clear();
         _errors.clear();
 
-        const std::string &s = _input.str();
-        while (_pos < s.size()) {
+        while (_pos < _input.byteCount()) {
                 skipWhitespace();
                 if (atEnd()) break;
                 parseToken();
@@ -122,7 +121,7 @@ void NoteSequenceParser::parseToken() {
                 return;
         }
 
-        addError(String("Unexpected character: '") + String(std::string(1, c)) + "'");
+        addError(String("Unexpected character: '") + String(1, c) + "'");
         _pos++;
         return;
 }
@@ -131,12 +130,11 @@ void NoteSequenceParser::parseToken() {
 
 void NoteSequenceParser::parseTempo() {
         _pos++; // skip 'T'
-        auto arg = readParenArg();
-        try {
-                _params.tempo = std::stod(arg);
-        } catch (...) {
-                addError(String("Invalid tempo value: ") + arg);
-        }
+        auto  arg = readParenArg();
+        Error err;
+        double v = arg.toDouble(&err);
+        if (err.isOk()) _params.tempo = v;
+        else addError(String("Invalid tempo value: ") + arg);
         return;
 }
 
@@ -153,23 +151,21 @@ void NoteSequenceParser::parseNoteLengthParam() {
 
 void NoteSequenceParser::parseAmplitude() {
         _pos++; // skip 'A'
-        auto arg = readParenArg();
-        try {
-                _params.amplitude = std::stof(arg);
-        } catch (...) {
-                addError(String("Invalid amplitude value: ") + arg);
-        }
+        auto  arg = readParenArg();
+        Error err;
+        float v = arg.to<float>(&err);
+        if (err.isOk()) _params.amplitude = v;
+        else addError(String("Invalid amplitude value: ") + arg);
         return;
 }
 
 void NoteSequenceParser::parseOctave() {
         _pos++; // skip 'O'
-        auto arg = readParenArg();
-        try {
-                _params.octave = std::stoi(arg);
-        } catch (...) {
-                addError(String("Invalid octave value: ") + arg);
-        }
+        auto  arg = readParenArg();
+        Error err;
+        int v = arg.toInt(&err);
+        if (err.isOk()) _params.octave = v;
+        else addError(String("Invalid octave value: ") + arg);
         return;
 }
 
@@ -187,12 +183,11 @@ void NoteSequenceParser::parseScaleParam() {
 
 void NoteSequenceParser::parseLegato() {
         _pos++; // skip 'L'
-        auto arg = readParenArg();
-        try {
-                _params.legato = std::stof(arg);
-        } catch (...) {
-                addError(String("Invalid legato value: ") + arg);
-        }
+        auto  arg = readParenArg();
+        Error err;
+        float v = arg.to<float>(&err);
+        if (err.isOk()) _params.legato = v;
+        else addError(String("Invalid legato value: ") + arg);
         return;
 }
 
@@ -201,16 +196,22 @@ void NoteSequenceParser::parseVibrato() {
         auto arg = readParenArg();
 
         // Parse "depth" or "depth, rate".
-        auto comma = arg.find(',');
-        try {
-                if (comma != String::npos) {
-                        _params.vibrato = std::stof(arg.substr(0, comma));
-                        _params.vibratoRate = std::stof(arg.substr(comma + 1));
+        size_t comma = arg.find(',');
+        Error  err;
+        if (comma != String::npos) {
+                Error  rateErr;
+                float depth = arg.left(comma).to<float>(&err);
+                float rate = arg.mid(comma + 1).to<float>(&rateErr);
+                if (err.isOk() && rateErr.isOk()) {
+                        _params.vibrato = depth;
+                        _params.vibratoRate = rate;
                 } else {
-                        _params.vibrato = std::stof(arg);
+                        addError(String("Invalid vibrato value: ") + arg);
                 }
-        } catch (...) {
-                addError(String("Invalid vibrato value: ") + arg);
+        } else {
+                float v = arg.to<float>(&err);
+                if (err.isOk()) _params.vibrato = v;
+                else addError(String("Invalid vibrato value: ") + arg);
         }
         return;
 }
@@ -219,16 +220,22 @@ void NoteSequenceParser::parseTremolo() {
         _pos += 2; // skip 'TR'
         auto arg = readParenArg();
 
-        auto comma = arg.find(',');
-        try {
-                if (comma != String::npos) {
-                        _params.tremolo = std::stof(arg.substr(0, comma));
-                        _params.tremoloRate = std::stof(arg.substr(comma + 1));
+        size_t comma = arg.find(',');
+        Error  err;
+        if (comma != String::npos) {
+                Error  rateErr;
+                float depth = arg.left(comma).to<float>(&err);
+                float rate = arg.mid(comma + 1).to<float>(&rateErr);
+                if (err.isOk() && rateErr.isOk()) {
+                        _params.tremolo = depth;
+                        _params.tremoloRate = rate;
                 } else {
-                        _params.tremolo = std::stof(arg);
+                        addError(String("Invalid tremolo value: ") + arg);
                 }
-        } catch (...) {
-                addError(String("Invalid tremolo value: ") + arg);
+        } else {
+                float v = arg.to<float>(&err);
+                if (err.isOk()) _params.tremolo = v;
+                else addError(String("Invalid tremolo value: ") + arg);
         }
         return;
 }
@@ -273,8 +280,8 @@ void NoteSequenceParser::parseRecallParams() {
 // --- Notes ---
 
 void NoteSequenceParser::parseLetterNote() {
-        const std::string &s = _input.str();
-        char               noteName = s[_pos++];
+        const char *s = _input.cstr();
+        char        noteName = s[_pos++];
 
         // Map letter to pitch class.
         static const int kPitchClass[] = {9, 11, 0, 2, 4, 5, 7}; // A=9, B=11, C=0, ...
@@ -325,11 +332,11 @@ void NoteSequenceParser::parseLetterNote() {
 }
 
 void NoteSequenceParser::parseNumericNote() {
-        const std::string &s = _input.str();
-        size_t             start = _pos;
+        const char *s = _input.cstr();
+        size_t      start = _pos;
         if (!atEnd() && s[_pos] == '-') _pos++; // allow leading minus
         while (!atEnd() && std::isdigit(static_cast<unsigned char>(s[_pos]))) _pos++;
-        int degree = std::stoi(s.substr(start, _pos - start));
+        int degree = _input.mid(start, _pos - start).toInt();
 
         // Accidentals.
         int accidental = 0;
@@ -375,7 +382,7 @@ void NoteSequenceParser::parseNumericNote() {
 }
 
 void NoteSequenceParser::parseRest() {
-        const std::string &s = _input.str();
+        const char *s = _input.cstr();
         _pos++; // skip '_'
 
         int dots = 0;
@@ -459,34 +466,32 @@ void NoteSequenceParser::emitRest(int dots, double lengthMod) {
 }
 
 void NoteSequenceParser::skipComment() {
-        const std::string &s = _input.str();
+        const char *s = _input.cstr();
         while (!atEnd() && s[_pos] != '\n') _pos++;
         return;
 }
 
 void NoteSequenceParser::skipWhitespace() {
-        const std::string &s = _input.str();
+        const char *s = _input.cstr();
         while (!atEnd() && std::isspace(static_cast<unsigned char>(s[_pos]))) _pos++;
         return;
 }
 
 char NoteSequenceParser::current() const {
-        const std::string &s = _input.str();
-        return _pos < s.size() ? s[_pos] : '\0';
+        return _pos < _input.byteCount() ? _input.cstr()[_pos] : '\0';
 }
 
 char NoteSequenceParser::peek(int offset) const {
-        const std::string &s = _input.str();
-        size_t             idx = _pos + static_cast<size_t>(offset);
-        return idx < s.size() ? s[idx] : '\0';
+        size_t idx = _pos + static_cast<size_t>(offset);
+        return idx < _input.byteCount() ? _input.cstr()[idx] : '\0';
 }
 
 bool NoteSequenceParser::atEnd() const {
-        return _pos >= _input.str().size();
+        return _pos >= _input.byteCount();
 }
 
 String NoteSequenceParser::readParenArg() {
-        const std::string &s = _input.str();
+        const char *s = _input.cstr();
         if (current() != '(') {
                 addError("Expected '('");
                 return "";
@@ -494,13 +499,13 @@ String NoteSequenceParser::readParenArg() {
         _pos++; // skip '('
         size_t start = _pos;
         while (!atEnd() && s[_pos] != ')') _pos++;
-        auto arg = s.substr(start, _pos - start);
+        String arg = _input.mid(start, _pos - start);
         if (!atEnd()) _pos++; // skip ')'
         return arg;
 }
 
 double NoteSequenceParser::parseDurationModifier() {
-        const std::string &s = _input.str();
+        const char *s = _input.cstr();
         if (atEnd()) return 1.0;
         if (s[_pos] == '/' || s[_pos] == '*') {
                 bool isDivide = (s[_pos] == '/');
@@ -511,7 +516,7 @@ double NoteSequenceParser::parseDurationModifier() {
                         addError(String("Expected number after '") + (isDivide ? "/" : "*") + "'");
                         return 1.0;
                 }
-                double val = std::stod(s.substr(start, _pos - start));
+                double val = _input.mid(start, _pos - start).toDouble();
                 if (val == 0.0) {
                         addError("Division by zero in duration modifier");
                         return 1.0;
@@ -522,41 +527,43 @@ double NoteSequenceParser::parseDurationModifier() {
 }
 
 double NoteSequenceParser::parseNoteLengthValue(const String &s) {
-        size_t pos = 0;
-        auto   skipSpaces = [&]() {
-                while (pos < s.size() && s[pos] == ' ') pos++;
+        const char  *p = s.cstr();
+        const size_t n = s.byteCount();
+        size_t       pos = 0;
+        auto         skipSpaces = [&]() {
+                while (pos < n && p[pos] == ' ') pos++;
         };
 
         skipSpaces();
-        if (pos >= s.size() || !std::isdigit(static_cast<unsigned char>(s[pos]))) return -1.0;
+        if (pos >= n || !std::isdigit(static_cast<unsigned char>(p[pos]))) return -1.0;
 
         size_t numStart = pos;
-        while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
-        double first = std::stod(s.substr(numStart, pos - numStart));
+        while (pos < n && std::isdigit(static_cast<unsigned char>(p[pos]))) pos++;
+        double first = s.mid(numStart, pos - numStart).toDouble();
 
         // Check for fraction: "1/4".
-        if (pos < s.size() && s[pos] == '/') {
+        if (pos < n && p[pos] == '/') {
                 pos++;
                 numStart = pos;
-                while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+                while (pos < n && std::isdigit(static_cast<unsigned char>(p[pos]))) pos++;
                 if (pos == numStart) return -1.0;
-                double den = std::stod(s.substr(numStart, pos - numStart));
+                double den = s.mid(numStart, pos - numStart).toDouble();
                 if (den == 0.0) return -1.0;
                 return first / den;
         }
 
         // Check for mixed: "1 1/2".
         skipSpaces();
-        if (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) {
+        if (pos < n && std::isdigit(static_cast<unsigned char>(p[pos]))) {
                 numStart = pos;
-                while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
-                double fracNum = std::stod(s.substr(numStart, pos - numStart));
-                if (pos < s.size() && s[pos] == '/') {
+                while (pos < n && std::isdigit(static_cast<unsigned char>(p[pos]))) pos++;
+                double fracNum = s.mid(numStart, pos - numStart).toDouble();
+                if (pos < n && p[pos] == '/') {
                         pos++;
                         numStart = pos;
-                        while (pos < s.size() && std::isdigit(static_cast<unsigned char>(s[pos]))) pos++;
+                        while (pos < n && std::isdigit(static_cast<unsigned char>(p[pos]))) pos++;
                         if (pos == numStart) return first;
-                        double den = std::stod(s.substr(numStart, pos - numStart));
+                        double den = s.mid(numStart, pos - numStart).toDouble();
                         if (den == 0.0) return first;
                         return first + fracNum / den;
                 }

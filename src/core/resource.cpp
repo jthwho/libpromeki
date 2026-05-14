@@ -40,18 +40,18 @@ namespace {
                                 // std::string is used here (rather than
                                 // promeki::String) because we need a container
                                 // whose c_str() never moves and outlives the
-                                // map's iterators across rehashes. std::map
-                                // gives us iterator stability for both keys
-                                // and values.
-                                auto [it, inserted] = _entries.try_emplace(prefix.str(), prefix.str());
+                                // map's iterators across rehashes. Map wraps
+                                // std::map, which gives us iterator stability
+                                // for both keys and values.
+                                auto [it, inserted] = _entries.tryEmplace(prefix.str(), prefix.str());
                                 return it->second.c_str();
                         }
 
                         /// Drops the stored copy for @p prefix, if any.
-                        void remove(const String &prefix) { _entries.erase(prefix.str()); }
+                        void remove(const String &prefix) { _entries.remove(prefix.str()); }
 
                 private:
-                        std::map<std::string, std::string> _entries;
+                        Map<std::string, std::string> _entries;
         };
 
         PrefixRegistry &prefixRegistry() {

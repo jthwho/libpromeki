@@ -19,6 +19,20 @@ namespace {
         // that can be moved or renamed without touching the Font API.
         constexpr const char *kDefaultFontFilename = ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
 
+        // Default fallback chain consulted by effectiveFallbacks() when
+        // the caller has not supplied an explicit list. Ordered from
+        // best-matching coverage to broadest coverage:
+        //   1. Sarasa Mono J — Hiragana / Katakana / full CJK Unified
+        //      Ideographs, monospaced metrics that line up with the
+        //      primary FiraCode face.
+        //   2. Noto Sans Mono — broad non-CJK Unicode (Devanagari,
+        //      Thai, Arabic, Hebrew, IPA, math, etc.) for everything
+        //      else the primary face does not carry.
+        constexpr const char *kDefaultFontFallbacks[] = {
+                ":/.PROMEKI/fonts/SarasaMonoJ-Regular.ttf",
+                ":/.PROMEKI/fonts/NotoSansMono-Regular.ttf",
+        };
+
 } // namespace
 
 Font::Font(const PaintEngine &pe) : _paintEngine(pe) {}
@@ -37,6 +51,12 @@ void Font::onColorChanged() {
 void Font::setFontFilename(const String &val) {
         if (_fontFilename == val) return;
         _fontFilename = val;
+        onStateChanged();
+}
+
+void Font::setFontFallbacks(const StringList &val) {
+        if (_fontFallbacks == val) return;
+        _fontFallbacks = val;
         onStateChanged();
 }
 
@@ -91,6 +111,13 @@ bool Font::isValid() const {
 
 String Font::effectiveFilename() const {
         return _fontFilename.isEmpty() ? String(kDefaultFontFilename) : _fontFilename;
+}
+
+StringList Font::effectiveFallbacks() const {
+        if (!_fontFallbacks.isEmpty()) return _fontFallbacks;
+        StringList out;
+        for (const char *p : kDefaultFontFallbacks) out.pushToBack(String(p));
+        return out;
 }
 
 PROMEKI_NAMESPACE_END

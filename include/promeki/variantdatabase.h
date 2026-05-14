@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <type_traits>
+#include <promeki/optional.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/stringregistry.h>
@@ -551,7 +552,7 @@ template <CompiledString Name> class VariantDatabase {
                  *
                  * When the database itself does not contain the key,
                  * the optional @p resolver callback is consulted with
-                 * @c (keyName, spec).  A returned @c std::optional<String>
+                 * @c (keyName, spec).  A returned @c Optional<String>
                  * holding a value is substituted as-is — typically the
                  * caller will format a Variant from another scope (a
                  * parent database, an environment lookup, etc.) and
@@ -582,7 +583,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @code
                  * Error err;
                  * String s = childDb.format("{Local} / {Inherited}",
-                 *     [&parentDb](const String &key, const String &spec) -> std::optional<String> {
+                 *     [&parentDb](const String &key, const String &spec) -> Optional<String> {
                  *         Error sub;
                  *         String r = parentDb.format("{" + key + (spec.isEmpty() ? "" : ":" + spec) + "}", &sub);
                  *         if(sub.isError()) return std::nullopt;
@@ -591,7 +592,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @endcode
                  *
                  * @tparam Resolver  Callable with signature
-                 *                   @c std::optional<String>(const String &key, const String &spec).
+                 *                   @c Optional<String>(const String &key, const String &spec).
                  *                   Pass @c nullptr (or use the no-resolver overload) to
                  *                   skip the fallback path.
                  * @param tmpl       Template string with @c {Key[:spec]} placeholders.
@@ -604,7 +605,7 @@ template <CompiledString Name> class VariantDatabase {
                 template <typename Resolver>
                 String format(const String &tmpl, Resolver &&resolver, Error *err = nullptr) const {
                         if (err != nullptr) *err = Error::Ok;
-                        std::string out;
+                        String out;
                         out.reserve(tmpl.byteCount());
                         const char  *src = tmpl.cstr();
                         const size_t len = tmpl.byteCount();
@@ -614,25 +615,29 @@ template <CompiledString Name> class VariantDatabase {
                                 char c = src[i];
                                 if (c == '{') {
                                         if (i + 1 < len && src[i + 1] == '{') {
-                                                out.push_back('{');
+                                                out.pushBack('{');
                                                 i += 2;
                                                 continue;
                                         }
                                         size_t end = i + 1;
                                         while (end < len && src[end] != '}') ++end;
                                         if (end >= len) {
-                                                out.append(src + i, len - i);
+                                                out += String(src + i, len - i);
                                                 break;
                                         }
-                                        std::string_view body(src + i + 1, end - (i + 1));
-                                        size_t           colon = body.find(':');
-                                        std::string_view keyView =
-                                                (colon == std::string_view::npos) ? body : body.substr(0, colon);
-                                        std::string_view specView = (colon == std::string_view::npos)
-                                                                            ? std::string_view()
-                                                                            : body.substr(colon + 1);
-                                        String           keyName(keyView.data(), keyView.size());
-                                        String           specStr(specView.data(), specView.size());
+                                        const char *bodyData = src + i + 1;
+                                        const size_t bodyLen = end - (i + 1);
+                                        size_t colon = bodyLen;
+                                        for (size_t p = 0; p < bodyLen; ++p) {
+                                                if (bodyData[p] == ':') {
+                                                        colon = p;
+                                                        break;
+                                                }
+                                        }
+                                        const size_t keyLen = colon;
+                                        const size_t specOff = (colon == bodyLen) ? bodyLen : colon + 1;
+                                        String       keyName(bodyData, keyLen);
+                                        String       specStr(bodyData + specOff, bodyLen - specOff);
                                         // Split on the first '.' (or '[') to allow
                                         // nested keys like "Foo.bar" or "Foo[0]"
                                         // when the value at "Foo" is a VariantMap
@@ -664,45 +669,43 @@ template <CompiledString Name> class VariantDatabase {
                                                         if (pe.isError() || !target.isValid()) {
                                                                 sawUnresolved = true;
                                                                 out += '?';
-                                                                out.append(keyView.data(), keyView.size());
+                                                                out += String(bodyData, keyLen);
                                                                 out += '?';
                                                                 i = end + 1;
                                                                 continue;
                                                         }
                                                 }
-                                                String rendered = target.format(specStr);
-                                                out.append(rendered.cstr(), rendered.byteCount());
+                                                out += target.format(specStr);
                                         } else {
-                                                std::optional<String> resolved;
+                                                Optional<String> resolved;
                                                 if constexpr (!std::is_same_v<std::decay_t<Resolver>, std::nullptr_t>) {
                                                         resolved = resolver(keyName, specStr);
                                                 }
-                                                if (resolved.has_value()) {
-                                                        const String &r = *resolved;
-                                                        out.append(r.cstr(), r.byteCount());
+                                                if (resolved.hasValue()) {
+                                                        out += *resolved;
                                                 } else {
                                                         sawUnresolved = true;
                                                         out += '?';
-                                                        out.append(keyView.data(), keyView.size());
+                                                        out += String(bodyData, keyLen);
                                                         out += '?';
                                                 }
                                         }
                                         i = end + 1;
                                 } else if (c == '}') {
                                         if (i + 1 < len && src[i + 1] == '}') {
-                                                out.push_back('}');
+                                                out.pushBack('}');
                                                 i += 2;
                                         } else {
-                                                out.push_back('}');
+                                                out.pushBack('}');
                                                 ++i;
                                         }
                                 } else {
-                                        out.push_back(c);
+                                        out.pushBack(c);
                                         ++i;
                                 }
                         }
                         if (sawUnresolved && err != nullptr) *err = Error::IdNotFound;
-                        return String(std::move(out));
+                        return out;
                 }
 
                 /**

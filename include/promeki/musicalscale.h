@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <array>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/array.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 
@@ -43,7 +43,7 @@ class MusicalScale {
                  * Each element is 1 if the semitone offset from the root
                  * is a member of the scale, 0 otherwise.
                  */
-                using MembershipMask = std::array<int, 12>;
+                using MembershipMask = Array<int, 12>;
 
                 /** @brief Default-constructs a C Chromatic scale. */
                 MusicalScale();

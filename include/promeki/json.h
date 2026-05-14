@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <utility>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -478,7 +479,7 @@ class JsonObject {
                  * @brief Iterates over all key-value pairs in the object.
                  * @param func Callback invoked for each key-value pair.
                  */
-                void forEach(std::function<void(const String &key, const Variant &val)> func) const;
+                void forEach(Function<void(const String &key, const Variant &val)> func) const;
 
                 /** @brief Returns true if both JSON objects have identical contents. */
                 bool operator==(const JsonObject &other) const {
@@ -769,7 +770,7 @@ class JsonArray {
                  * @brief Iterates over all elements in the array.
                  * @param func Callback invoked for each element.
                  */
-                void forEach(std::function<void(const Variant &val)> func) const;
+                void forEach(Function<void(const Variant &val)> func) const;
 
                 /** @brief Returns true if both JSON arrays have identical contents. */
                 bool operator==(const JsonArray &other) const {

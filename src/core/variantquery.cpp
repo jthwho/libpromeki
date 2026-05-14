@@ -10,8 +10,9 @@
 #include <cstdlib>
 #include <memory>
 #include <optional>
-#include <regex>
 #include <string>
+#include <promeki/optional.h>
+#include <promeki/regex.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
@@ -177,35 +178,35 @@ namespace {
                                 t.kind = Tok::StringLit;
                                 t.column = startCol;
                                 ++_pos; // consume opening quote
-                                std::string out;
+                                String out;
                                 while (_pos < _len && _src[_pos] != '"') {
                                         char c = _src[_pos];
                                         if (c == '\\' && _pos + 1 < _len) {
                                                 char n = _src[_pos + 1];
                                                 switch (n) {
                                                         case 'n':
-                                                                out.push_back('\n');
+                                                                out.pushBack('\n');
                                                                 _pos += 2;
                                                                 continue;
                                                         case 't':
-                                                                out.push_back('\t');
+                                                                out.pushBack('\t');
                                                                 _pos += 2;
                                                                 continue;
                                                         case '\\':
-                                                                out.push_back('\\');
+                                                                out.pushBack('\\');
                                                                 _pos += 2;
                                                                 continue;
                                                         case '"':
-                                                                out.push_back('"');
+                                                                out.pushBack('"');
                                                                 _pos += 2;
                                                                 continue;
                                                         default:
-                                                                out.push_back(n);
+                                                                out.pushBack(n);
                                                                 _pos += 2;
                                                                 continue;
                                                 }
                                         }
-                                        out.push_back(c);
+                                        out.pushBack(c);
                                         ++_pos;
                                 }
                                 if (_pos >= _len) {
@@ -215,7 +216,7 @@ namespace {
                                         return make(Tok::End, startCol);
                                 }
                                 ++_pos; // consume closing quote
-                                t.text = String(std::move(out));
+                                t.text = std::move(out);
                                 return t;
                         }
 
@@ -224,17 +225,17 @@ namespace {
                                 t.kind = Tok::RegexLit;
                                 t.column = startCol;
                                 ++_pos; // consume opening '/'
-                                std::string out;
+                                String out;
                                 while (_pos < _len && _src[_pos] != '/') {
                                         char c = _src[_pos];
                                         if (c == '\\' && _pos + 1 < _len) {
-                                                // Preserve the escape so std::regex sees it.
-                                                out.push_back(c);
-                                                out.push_back(_src[_pos + 1]);
+                                                // Preserve the escape so RegEx sees it.
+                                                out.pushBack(c);
+                                                out.pushBack(_src[_pos + 1]);
                                                 _pos += 2;
                                                 continue;
                                         }
-                                        out.push_back(c);
+                                        out.pushBack(c);
                                         ++_pos;
                                 }
                                 if (_pos >= _len) {
@@ -244,7 +245,7 @@ namespace {
                                         return make(Tok::End, startCol);
                                 }
                                 ++_pos; // consume closing '/'
-                                t.text = String(std::move(out));
+                                t.text = std::move(out);
                                 return t;
                         }
 
@@ -310,10 +311,10 @@ namespace {
                                 IsLiteral,
                                 IsRegex
                         };
-                        Kind                        kind{IsLiteral};
-                        String                      key;     // only when kind == IsKey
-                        Variant                     literal; // only when kind == IsLiteral
-                        std::shared_ptr<std::regex> regex;   // only when kind == IsRegex
+                        Kind    kind{IsLiteral};
+                        String  key;     // only when kind == IsKey
+                        Variant literal; // only when kind == IsLiteral
+                        RegEx   regex;   // only when kind == IsRegex
         };
 
         // Coerce a string literal to match the spec-declared type of the key
@@ -478,7 +479,7 @@ namespace {
                 public:
                         explicit HasNode(String k) : key(std::move(k)) {}
                         bool eval(const detail::VariantQueryContext &ctx) const override {
-                                return ctx.resolve(key).has_value();
+                                return ctx.resolve(key).hasValue();
                         }
 
                 private:
@@ -514,17 +515,17 @@ namespace {
                         bool eval(const detail::VariantQueryContext &ctx) const override {
                                 // Regex / substring paths need string forms.
                                 if (op == Regex) {
-                                        if (rhs.kind != Operand::IsRegex || !rhs.regex) return false;
+                                        if (rhs.kind != Operand::IsRegex || !rhs.regex.isValid()) return false;
                                         auto lv = resolve(lhs, ctx);
-                                        if (!lv.has_value()) return false;
+                                        if (!lv.hasValue()) return false;
                                         String s = lv->get<String>();
-                                        return std::regex_search(std::string(s.cstr(), s.byteCount()), *rhs.regex);
+                                        return rhs.regex.search(s);
                                 }
                                 if (op == Contains) {
                                         auto lv = resolve(lhs, ctx);
-                                        if (!lv.has_value()) return false;
+                                        if (!lv.hasValue()) return false;
                                         auto rv = resolve(rhs, ctx);
-                                        if (!rv.has_value()) return false;
+                                        if (!rv.hasValue()) return false;
                                         String ls = lv->get<String>();
                                         String rs = rv->get<String>();
                                         return ls.contains(rs);
@@ -533,8 +534,8 @@ namespace {
                                 auto lv = resolve(lhs, ctx);
                                 auto rv = resolve(rhs, ctx);
                                 // Missing key → any comparison is false (except !=).
-                                if (!lv.has_value() || !rv.has_value()) {
-                                        return op == NotEq && lv.has_value() != rv.has_value();
+                                if (!lv.hasValue() || !rv.hasValue()) {
+                                        return op == NotEq && lv.hasValue() != rv.hasValue();
                                 }
 
                                 // When one side is a key and the other is a bare String
@@ -566,7 +567,7 @@ namespace {
                         }
 
                 private:
-                        static std::optional<Variant> resolve(const Operand                     &o,
+                        static Optional<Variant> resolve(const Operand                     &o,
                                                               const detail::VariantQueryContext &ctx) {
                                 switch (o.kind) {
                                         case Operand::IsKey: return ctx.resolve(o.key);
@@ -752,13 +753,10 @@ namespace {
                                                                        _cur.column));
                                                 return nullptr;
                                         }
-                                        rhs.kind = Operand::IsRegex;
-                                        try {
-                                                rhs.regex = std::make_shared<std::regex>(
-                                                        std::string(_cur.text.cstr(), _cur.text.byteCount()));
-                                        } catch (const std::regex_error &e) {
-                                                setErr(String::sprintf("invalid regex at col %d: %s", _cur.column,
-                                                                       e.what()));
+                                        rhs.kind  = Operand::IsRegex;
+                                        rhs.regex = RegEx(_cur.text);
+                                        if (!rhs.regex.isValid()) {
+                                                setErr(String::sprintf("invalid regex at col %d", _cur.column));
                                                 return nullptr;
                                         }
                                         advance();
@@ -892,7 +890,7 @@ template <typename T> bool VariantQuery<T>::isValid() const {
 template <typename T> bool VariantQuery<T>::match(const T &instance) const {
         if (!_root) return false;
         detail::VariantQueryContext ctx;
-        ctx.resolve = [&instance](const String &key) -> std::optional<Variant> {
+        ctx.resolve = [&instance](const String &key) -> Optional<Variant> {
                 return VariantLookup<T>::resolve(instance, key);
         };
         ctx.specFor = [](const String &key) -> const VariantSpec * {

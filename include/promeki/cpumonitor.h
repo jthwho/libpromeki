@@ -9,6 +9,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/duration.h>
 #include <promeki/list.h>
@@ -118,7 +119,7 @@ class CpuMonitor : public Thread {
                  * call; copy any fields you need to keep beyond
                  * the callback.
                  */
-                using ReportFunction = std::function<void(const Report &)>;
+                using ReportFunction = Function<void(const Report &)>;
 
                 /// @brief Default sample interval if @ref start is called with @c Duration{}.
                 static constexpr int64_t DefaultIntervalSec = 5;

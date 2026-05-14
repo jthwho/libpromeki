@@ -148,10 +148,9 @@ namespace {
         }
 
         void sortByWeight(List<VideoEncoder::BackendRecord> &list) {
-                std::sort(list.begin(), list.end(),
-                          [](const VideoEncoder::BackendRecord &a, const VideoEncoder::BackendRecord &b) {
-                                  return a.weight > b.weight;
-                          });
+                list.sortInPlace([](const VideoEncoder::BackendRecord &a, const VideoEncoder::BackendRecord &b) {
+                        return a.weight > b.weight;
+                });
         }
 
 } // namespace

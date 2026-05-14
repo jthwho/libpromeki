@@ -31,14 +31,14 @@
 
 #pragma once
 
-#include <atomic>
-#include <random>
+#include <promeki/atomic.h>
 #include <thread>
 
 #include <promeki/buffer.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
+#include <promeki/random.h>
 #include <promeki/socketaddress.h>
 #include <promeki/timestamp.h>
 #include <promeki/udpsocket.h>
@@ -117,13 +117,13 @@ namespace promekitest {
                          * test thread can read them after the shim has joined.
                          */
                         struct Counters {
-                                std::atomic<uint64_t> received{0};   ///< @brief Total datagrams received across every endpoint.
-                                std::atomic<uint64_t> forwarded{0};  ///< @brief Datagrams forwarded (after chaos drops + dup).
-                                std::atomic<uint64_t> dropped{0};    ///< @brief Datagrams dropped by Loss / RtcpBlocked.
-                                std::atomic<uint64_t> duplicated{0}; ///< @brief Datagrams the shim duplicated (Dup mode).
-                                std::atomic<uint64_t> reordered{0};  ///< @brief Datagrams whose emit position changed under Reorder.
-                                std::atomic<uint64_t> delayed{0};    ///< @brief Datagrams Late mode held past their arrival time.
-                                std::atomic<uint64_t> ssrcMutated{0}; ///< @brief RTP datagrams whose SSRC field was rewritten.
+                                Atomic<uint64_t> received{0};   ///< @brief Total datagrams received across every endpoint.
+                                Atomic<uint64_t> forwarded{0};  ///< @brief Datagrams forwarded (after chaos drops + dup).
+                                Atomic<uint64_t> dropped{0};    ///< @brief Datagrams dropped by Loss / RtcpBlocked.
+                                Atomic<uint64_t> duplicated{0}; ///< @brief Datagrams the shim duplicated (Dup mode).
+                                Atomic<uint64_t> reordered{0};  ///< @brief Datagrams whose emit position changed under Reorder.
+                                Atomic<uint64_t> delayed{0};    ///< @brief Datagrams Late mode held past their arrival time.
+                                Atomic<uint64_t> ssrcMutated{0}; ///< @brief RTP datagrams whose SSRC field was rewritten.
                         };
 
                         RtpChaosShim() = default;
@@ -201,7 +201,7 @@ namespace promekitest {
                                 bool             isRtcp = false;///< @brief True for RTCP, false for RTP.
                                 UdpSocket       *socket = nullptr; ///< @brief Bound socket (heap-owned).
                                 std::thread      thread;        ///< @brief Worker thread.
-                                std::mt19937_64  rng;           ///< @brief Per-endpoint chaos RNG.
+                                Random           rng;           ///< @brief Per-endpoint chaos RNG.
                                 size_t           rtpPacketCount = 0; ///< @brief RTP-only running count for SsrcChange.
                                 List<Pending>    reorderHold;   ///< @brief Held window for @ref Mode::Reorder.
                                 List<Pending>    delayQueue;    ///< @brief Scheduled emissions sorted by emitAt.
@@ -227,7 +227,7 @@ namespace promekitest {
                         Config             _cfg;
                         List<Endpoint *>   _endpoints;       // heap-owned; freed in stop().
                         Counters           _counters;
-                        std::atomic<bool>  _stop{false};
+                        Atomic<bool>  _stop{false};
                         bool               _started = false;
         };
 

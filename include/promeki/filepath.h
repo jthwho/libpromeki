@@ -86,9 +86,9 @@ class FilePath {
                  * @return The complete suffix as a String.
                  */
                 String completeSuffix() const {
-                        auto fn = _path.filename().string();
-                        auto pos = fn.find('.');
-                        if (pos == std::string::npos || pos == 0) return String();
+                        String fn = _path.filename().string();
+                        auto   pos = fn.find('.');
+                        if (pos == String::npos || pos == 0) return String();
                         return fn.substr(pos + 1);
                 }
 
@@ -156,6 +156,25 @@ class FilePath {
                 FilePath absolutePath() const {
                         std::error_code ec;
                         return FilePath(std::filesystem::absolute(_path, ec));
+                }
+
+                /**
+                 * @brief Returns the canonical (real) path with symlinks resolved.
+                 *
+                 * Wraps @c std::filesystem::canonical.  The path must
+                 * exist on the filesystem; if resolution fails (path
+                 * missing, symlink loop, permission error, etc.)
+                 * returns the original path with @c Error::Invalid.
+                 *
+                 * @return The canonical FilePath on success, or
+                 *         @c Error::Invalid with the original path on
+                 *         failure.
+                 */
+                Result<FilePath> canonicalPath() const {
+                        std::error_code ec;
+                        auto            r = std::filesystem::canonical(_path, ec);
+                        if (ec) return Result<FilePath>(*this, Error::Invalid);
+                        return Result<FilePath>(FilePath(r), Error::Ok);
                 }
 
                 /**

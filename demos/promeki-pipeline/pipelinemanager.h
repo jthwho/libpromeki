@@ -9,6 +9,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/error.h>
 #include <promeki/json.h>
 #include <promeki/list.h>
@@ -109,7 +110,7 @@ namespace promekipipeline {
                  * @c MediaPipeline::publish.
                  */
                         using EventCallback =
-                                std::function<void(const promeki::String &id, const promeki::PipelineEvent &ev)>;
+                                promeki::Function<void(const promeki::String &id, const promeki::PipelineEvent &ev)>;
 
                         /**
                  * @brief Constructs a manager bound to the calling EventLoop.

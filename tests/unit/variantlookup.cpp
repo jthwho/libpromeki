@@ -213,7 +213,7 @@ TEST_CASE("VariantLookup: resolve scalar") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Width", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<uint32_t>() == 1920u);
 }
@@ -222,7 +222,7 @@ TEST_CASE("VariantLookup: resolve read-only scalar") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "KidCount", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<uint64_t>() == 3u);
 }
@@ -231,7 +231,7 @@ TEST_CASE("VariantLookup: resolve unknown scalar returns IdNotFound") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Unknown", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -239,7 +239,7 @@ TEST_CASE("VariantLookup: resolve indexed scalar in range") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "KidValue[1]", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<uint32_t>() == 20u);
 }
@@ -248,7 +248,7 @@ TEST_CASE("VariantLookup: resolve indexed scalar out of range") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "KidValue[99]", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::OutOfRange);
 }
 
@@ -256,7 +256,7 @@ TEST_CASE("VariantLookup: resolve unknown indexed scalar returns IdNotFound") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Nope[0]", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -268,7 +268,7 @@ TEST_CASE("VariantLookup: resolve into child") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Single.Value", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<uint32_t>() == 99u);
 }
@@ -277,7 +277,7 @@ TEST_CASE("VariantLookup: resolve into indexed child") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Kid[2].Value", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<uint32_t>() == 30u);
 }
@@ -286,7 +286,7 @@ TEST_CASE("VariantLookup: resolve indexed child out of range") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Kid[99].Value", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::OutOfRange);
 }
 
@@ -294,7 +294,7 @@ TEST_CASE("VariantLookup: bare child lookup returns nullopt") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Single", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -302,7 +302,7 @@ TEST_CASE("VariantLookup: child with unknown sub-key") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Single.Nope", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -316,7 +316,7 @@ TEST_CASE("VariantLookup: resolve through database binding") {
         root.db.set(key, String("Hello"));
         Error err;
         auto  v = VariantLookup<LookupRoot>::resolve(root, "Meta.Title", &err);
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(err.isOk());
         CHECK(v->get<String>() == "Hello");
 }
@@ -325,7 +325,7 @@ TEST_CASE("VariantLookup: resolve unknown database key returns IdNotFound") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Meta.Missing", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -352,11 +352,11 @@ PROMEKI_LOOKUP_REGISTER(ShapeCollision)
 TEST_CASE("VariantLookup: scalar and indexedScalar share a name") {
         ShapeCollision o;
         auto           bare = VariantLookup<ShapeCollision>::resolve(o, "Value");
-        REQUIRE(bare.has_value());
+        REQUIRE(bare.hasValue());
         CHECK(bare->get<uint32_t>() == 11u);
 
         auto indexed = VariantLookup<ShapeCollision>::resolve(o, "Value[1]");
-        REQUIRE(indexed.has_value());
+        REQUIRE(indexed.hasValue());
         CHECK(indexed->get<uint32_t>() == 200u);
 }
 
@@ -449,7 +449,7 @@ TEST_CASE("VariantLookup: malformed key on resolve") {
         LookupRoot root;
         Error      err;
         auto       v = VariantLookup<LookupRoot>::resolve(root, "Kid[abc].Value", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::ParseFailed);
 }
 
@@ -567,12 +567,12 @@ TEST_CASE("VariantLookup cascade: derived resolves base scalars") {
         d.baseRo = 77;
         Error err;
         auto  mid = VariantLookup<CascadeDerived>::resolve(d, "MidValue", &err);
-        REQUIRE(mid.has_value());
+        REQUIRE(mid.hasValue());
         CHECK(err.isOk());
         CHECK(mid->get<uint32_t>() == 5u);
 
         auto baseRo = VariantLookup<CascadeDerived>::resolve(d, "BaseRo", &err);
-        REQUIRE(baseRo.has_value());
+        REQUIRE(baseRo.hasValue());
         CHECK(err.isOk());
         CHECK(baseRo->get<uint32_t>() == 77u);
 }
@@ -582,7 +582,7 @@ TEST_CASE("VariantLookup cascade: derived shadows base scalar") {
         d.CascadeBase::baseValue = 11; // base storage
         d.baseValue = 22;              // derived storage
         auto v = VariantLookup<CascadeDerived>::resolve(d, "BaseValue");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<uint32_t>() == 22u); // derived wins
 }
 
@@ -590,7 +590,7 @@ TEST_CASE("VariantLookup cascade: base's indexed scalar reachable from derived")
         CascadeDerived d;
         d.indexedVals[1] = 444;
         auto v = VariantLookup<CascadeDerived>::resolve(d, "IndexedBase[1]");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<uint32_t>() == 444u);
 }
 
@@ -622,7 +622,7 @@ TEST_CASE("VariantLookup cascade: unknown key still reports IdNotFound") {
         CascadeDerived d;
         Error          err;
         auto           v = VariantLookup<CascadeDerived>::resolve(d, "NoSuchKey", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::IdNotFound);
 }
 
@@ -630,7 +630,7 @@ TEST_CASE("VariantLookup cascade: parse-failure short-circuits before cascade") 
         CascadeDerived d;
         Error          err;
         auto           v = VariantLookup<CascadeDerived>::resolve(d, "Kid[bad].Value", &err);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
         CHECK(err == Error::ParseFailed);
 }
 
@@ -712,7 +712,7 @@ TEST_CASE("VariantLookup: variantTree resolves terminal Name") {
         Error           err;
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config", &err);
         CHECK(err.isOk());
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->type() == Variant::TypeVariantMap);
 }
 
@@ -721,7 +721,7 @@ TEST_CASE("VariantLookup: variantTree resolves nested map key") {
         Error           err;
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.width", &err);
         CHECK(err.isOk());
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<int32_t>() == 1920);
 
         v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.height", &err);
@@ -734,7 +734,7 @@ TEST_CASE("VariantLookup: variantTree resolves indexed list element") {
         Error           err;
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[0]", &err);
         CHECK(err.isOk());
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<String>() == "alpha");
 
         v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[1]", &err);
@@ -747,7 +747,7 @@ TEST_CASE("VariantLookup: variantTree missing nested key reports IdNotFound") {
         Error           err;
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.video.depth", &err);
         CHECK(err.code() == Error::IdNotFound);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
 }
 
 TEST_CASE("VariantLookup: variantTree out-of-range index reports OutOfRange") {
@@ -755,7 +755,7 @@ TEST_CASE("VariantLookup: variantTree out-of-range index reports OutOfRange") {
         Error           err;
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config.tags[42]", &err);
         CHECK(err.code() == Error::OutOfRange);
-        CHECK_FALSE(v.has_value());
+        CHECK_FALSE(v.hasValue());
 }
 
 TEST_CASE("VariantLookup: variantTree assign reports ReadOnly") {

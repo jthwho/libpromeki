@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
+#include <promeki/list.h>
 #include <promeki/audiodatadecoder.h>
 #include <promeki/audioformat.h>
 #include <promeki/pcmaudiopayload.h>
@@ -25,7 +26,7 @@ namespace {
         // per-channel offset / stride from AudioDesc).  Returns false
         // when the payload is empty / inaccessible.
         bool extractChannel(const PcmAudioPayload &payload, uint32_t channel, uint64_t firstSample, uint64_t sampleCount,
-                            std::vector<float> &out) {
+                            List<float> &out) {
                 const AudioDesc &desc = payload.desc();
                 if (channel >= desc.channels()) return false;
                 if (payload.planeCount() < 1) return false;
@@ -58,7 +59,7 @@ namespace {
                 // sample conversion through samplesToFloat is correct
                 // but most format implementations are bulk-friendly so
                 // a single pass amortises better.
-                std::vector<uint8_t> scratch(static_cast<size_t>(sampleCount) * bps);
+                List<uint8_t> scratch(static_cast<size_t>(sampleCount) * bps);
                 for (size_t i = 0; i < sampleCount; i++) {
                         std::memcpy(scratch.data() + i * bps, base + i * stride, bps);
                 }
@@ -101,7 +102,7 @@ namespace {
                         uint64_t syncStartSampleInt = 0;
         };
 
-        SyncMeasurement findSync(const std::vector<float> &samples, uint32_t expectedSamplesPerBit) {
+        SyncMeasurement findSync(const List<float> &samples, uint32_t expectedSamplesPerBit) {
                 SyncMeasurement r;
 
                 if (samples.size() < 8) {
@@ -239,7 +240,7 @@ AudioDataDecoder::DecodedItem AudioDataDecoder::decodeOne(const PcmAudioPayload 
                 return item;
         }
 
-        std::vector<float> samples;
+        List<float> samples;
         if (!extractChannel(payload, band.channel, band.firstSample, band.sampleCount, samples)) {
                 item.error = Error::ConversionFailed;
                 return item;
@@ -260,7 +261,7 @@ AudioDataDecoder::DecodedItem AudioDataDecoder::decodeSamples(const float *sampl
         // small std::vector once so the helper signatures stay
         // unchanged.  Decoder is called O(1) times per frame so the
         // copy doesn't show up in profiles.
-        std::vector<float> samples(samplesPtr, samplesPtr + count);
+        List<float> samples(samplesPtr, samplesPtr + count);
 
         SyncMeasurement sync = findSync(samples, _expectedSamplesPerBit);
         if (!sync.ok) {
@@ -445,7 +446,7 @@ void AudioDataDecoder::decodeAll(StreamState &state, const float *newSamples, si
         // wait for more data; the buffer cap below keeps memory
         // bounded if the failure persists.
         while (state.buffer.size() >= minPacketSamples) {
-                std::vector<float> view(state.buffer.data(), state.buffer.data() + state.buffer.size());
+                List<float> view(state.buffer.data(), state.buffer.data() + state.buffer.size());
                 SyncMeasurement    sync = findSync(view, _expectedSamplesPerBit);
                 if (!sync.ok) break;
 

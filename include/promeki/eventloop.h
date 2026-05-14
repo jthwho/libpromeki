@@ -9,6 +9,7 @@
 
 #include <variant>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
 #include <promeki/duration.h>
@@ -162,7 +163,7 @@ class EventLoop {
                  *
                  * @param func The callable to execute.
                  */
-                void postCallable(std::function<void()> func);
+                void postCallable(Function<void()> func);
 
                 /**
                  * @brief Posts a tagged callable for per-label bucketing in the activity monitor.
@@ -193,7 +194,7 @@ class EventLoop {
                  *              to the same id.
                  * @param func  The callable to execute.
                  */
-                void postCallable(Label label, std::function<void()> func);
+                void postCallable(Label label, Function<void()> func);
 
                 /**
                  * @brief Posts an Event to this EventLoop for delivery to a receiver.
@@ -235,7 +236,7 @@ class EventLoop {
                  * @param singleShot If true, the timer fires once and is removed.
                  * @return The timer ID, usable with stopTimer().
                  */
-                int startTimer(unsigned int intervalMs, std::function<void()> func, bool singleShot = false);
+                int startTimer(unsigned int intervalMs, Function<void()> func, bool singleShot = false);
 
                 /**
                  * @brief Stops and removes a timer.
@@ -304,7 +305,7 @@ class EventLoop {
                  * is reported whenever @c POLLERR / @c POLLHUP surface
                  * regardless of the caller's mask.
                  */
-                using IoCallback = std::function<void(int fd, uint32_t events)>;
+                using IoCallback = Function<void(int fd, uint32_t events)>;
 
                 /**
                  * @brief Registers a file descriptor to be monitored by this EventLoop.
@@ -461,7 +462,7 @@ class EventLoop {
                  * the callback is responsible for its own
                  * thread-safety in that mode.
                  */
-                using ReportFunction = std::function<void(const Report &)>;
+                using ReportFunction = Function<void(const Report &)>;
 
                 /**
                  * @brief Sets the loop's human-readable identity.
@@ -580,7 +581,7 @@ class EventLoop {
 
         private:
                 struct CallableItem {
-                                std::function<void()> func;
+                                Function<void()> func;
                                 /// Per-call-site label id for activity-monitor
                                 /// bucketing.  @c Label::InvalidID for
                                 /// unlabeled posts.  Stored unconditionally
@@ -602,7 +603,7 @@ class EventLoop {
                 struct TimerInfo {
                                 int                   id;
                                 ObjectBase           *receiver; ///< nullptr for callable timers
-                                std::function<void()> func;     ///< For callable timers
+                                Function<void()> func;     ///< For callable timers
                                 unsigned int          intervalMs;
                                 bool                  singleShot;
                                 TimeStamp             nextFire;

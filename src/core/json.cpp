@@ -6,6 +6,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/json.h>
 #include <promeki/variant.h>
 #include <promeki/uuid.h>
@@ -177,7 +178,7 @@ JsonValue JsonObject::take(const String &key) {
         return JsonValue(std::move(removed));
 }
 
-void JsonObject::forEach(std::function<void(const String &, const Variant &)> func) const {
+void JsonObject::forEach(Function<void(const String &, const Variant &)> func) const {
         for (auto it = _d->j.begin(); it != _d->j.end(); ++it) {
                 String  key = it.key();
                 Variant val = Variant::fromJson(it.value());
@@ -242,7 +243,7 @@ void JsonArray::insert(int index, const JsonValue &val) {
         j.insert(j.begin() + index, std::move(node));
 }
 
-void JsonArray::forEach(std::function<void(const Variant &)> func) const {
+void JsonArray::forEach(Function<void(const Variant &)> func) const {
         for (const auto &elem : _d->j) {
                 Variant val = Variant::fromJson(elem);
                 func(val);

@@ -9,6 +9,7 @@
 
 #include <functional>
 
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
@@ -287,7 +288,7 @@ class MediaIOPortConnection : public ObjectBase {
                  * same frame because the per-sink loop reads the
                  * updated state.
                  */
-                using FrameInspector = std::function<void(const Frame &)>;
+                using FrameInspector = Function<void(const Frame &)>;
 
                 /**
                  * @brief Installs a per-frame inspector callback.

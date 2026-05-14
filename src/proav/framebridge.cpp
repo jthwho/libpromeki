@@ -162,7 +162,7 @@ struct FrameBridge::Impl {
                 SlotOffsets slotOff;
                 uint64_t    configHash = 0;
 
-                std::vector<size_t> planeSizes; // per-plane size, cached from MediaDesc
+                List<size_t> planeSizes; // per-plane size, cached from MediaDesc
                 size_t              imageBytesTotal = 0;
 
                 SharedMemory shm;
@@ -269,7 +269,7 @@ struct FrameBridge::Impl {
                         if (nPlanes <= 0) return Error::Invalid;
                         for (int p = 0; p < nPlanes; ++p) {
                                 size_t sz = id.pixelFormat().planeSize(static_cast<size_t>(p), id);
-                                planeSizes.push_back(sz);
+                                planeSizes.pushToBack(sz);
                                 imageBytesTotal += sz;
                         }
                         return Error::Ok;

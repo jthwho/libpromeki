@@ -7,12 +7,12 @@
 
 #include <cmath>
 #include <cstring>
-#include <random>
 
 #include <promeki/audiotestpattern.h>
 #include <promeki/audiogen.h>
 #include <promeki/ltcencoder.h>
 #include <promeki/pcmaudiopayload.h>
+#include <promeki/random.h>
 #include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -205,7 +205,7 @@ void AudioTestPattern::buildWhiteNoiseBuffer() {
         if (length == 0) return;
         const size_t fadeLen = noiseCrossfadeLength(length);
 
-        std::mt19937 rng(_noiseSeed);
+        Random rng(_noiseSeed);
         // Gaussian white noise — matches the "true" definition of
         // white noise (uncorrelated samples drawn from a normal
         // distribution) rather than the uniform-distribution
@@ -218,14 +218,14 @@ void AudioTestPattern::buildWhiteNoiseBuffer() {
         // long buffer is almost certain to contain samples out past
         // 3σ, so the post-generation rescale lands the actual peak
         // on `peak` regardless of the chosen starting σ.
-        const float                     peak = _toneLevel.toLinearFloat();
-        std::normal_distribution<float> dist(0.0f, peak / 3.0f);
+        const float peak   = _toneLevel.toLinearFloat();
+        const float stddev = peak / 3.0f;
 
         List<float> raw;
         raw.resize(length + fadeLen);
         double maxAbs = 0.0;
         for (size_t i = 0; i < length + fadeLen; ++i) {
-                const float v = dist(rng);
+                const float v = rng.randomNormalFloat(0.0f, stddev);
                 raw[i] = v;
                 const double a = v < 0 ? -v : v;
                 if (a > maxAbs) maxAbs = a;
@@ -295,9 +295,8 @@ void AudioTestPattern::buildPinkNoiseBuffer() {
 
         // Independent seed for pink so white and pink don't correlate
         // when both appear on different channels of the same stream.
-        std::mt19937                          rng(_noiseSeed ^ 0xA3C7B1F0u);
-        const float                           peak = _toneLevel.toLinearFloat();
-        std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+        Random      rng(_noiseSeed ^ 0xA3C7B1F0u);
+        const float peak = _toneLevel.toLinearFloat();
 
         double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
         auto   pinkStep = [&](float w) {
@@ -314,7 +313,7 @@ void AudioTestPattern::buildPinkNoiseBuffer() {
 
         // Warm-up pass so the IIR state is representative of "steady
         // state" pink before the first captured sample.
-        for (int i = 0; i < 4096; ++i) pinkStep(dist(rng));
+        for (int i = 0; i < 4096; ++i) pinkStep(rng.randomFloat(-1.0f, 1.0f));
 
         // Generate `length + fadeLen` pink samples into a scratch
         // buffer.  The Kellet IIR has very large DC gain (the slowest
@@ -331,7 +330,7 @@ void AudioTestPattern::buildPinkNoiseBuffer() {
         raw.resize(length + fadeLen);
         double rawSum = 0.0;
         for (size_t i = 0; i < length + fadeLen; ++i) {
-                double s = pinkStep(dist(rng));
+                double s = pinkStep(rng.randomFloat(-1.0f, 1.0f));
                 raw[i] = static_cast<float>(s);
                 rawSum += s;
         }

@@ -141,7 +141,7 @@ class Thread;
  * destination is a group address, and runs an @ref RtpSession
  * receive thread that pushes packets through the per-stream
  * @ref RtpSeqTracker / @ref RtpSeqReorderBuffer into a post-reorder
- * @c Queue<RtpPacket>.  A per-stream depacketizer worker thread
+ * @c RtpPacket::Queue.  A per-stream depacketizer worker thread
  * pops the queue, runs reassembly + @c payload->unpack + JPEG
  * geometry probe / JSON parse, and produces typed bundles
  * (@c RxVideoFrame / @c RxAudioChunk / @c RxDataMessage) onto
@@ -891,7 +891,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 ///        @c pushDropOldest path;
                                 ///        @c depacketizer pops in
                                 ///        its run loop.
-                                UniquePtr<Queue<RtpPacket>> reorderQueue;
+                                UniquePtr<RtpPacket::Queue> reorderQueue;
 
                                 /// @brief Owned per-stream
                                 ///        depacketizer worker.

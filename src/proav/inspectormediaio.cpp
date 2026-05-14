@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <ctime>
 #include <unistd.h>
+#include <promeki/list.h>
 #include <promeki/inspectormediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/mediaiorequest.h>
@@ -978,8 +979,8 @@ void InspectorMediaIO::runAudioDataCheck(const Frame &frame, InspectorEvent &eve
                 _audioDataChannelActive.resize(channels, 0);
         }
 
-        std::vector<uint8_t> rawScratch;
-        std::vector<float>   floatScratch;
+        List<uint8_t> rawScratch;
+        List<float>   floatScratch;
 
         event.audioChannelMarkers.clear();
         event.audioChannelMarkers.reserve(channels);

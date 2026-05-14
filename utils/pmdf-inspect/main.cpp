@@ -25,6 +25,7 @@
 #include <promeki/mediaiorequest.h>
 #include <promeki/mediaiosink.h>
 #include <promeki/mediaiosource.h>
+#include <promeki/result.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
@@ -119,22 +120,22 @@ namespace {
                         end = v + 1;
                         return true;
                 }
-                std::string left(s, colon);
-                std::string right(colon + 1);
-                if (left.empty())
+                String left(s, static_cast<size_t>(colon - s));
+                String right(colon + 1);
+                if (left.isEmpty()) {
                         start = 0;
-                else {
-                        char     *endp = nullptr;
-                        long long v = std::strtoll(left.c_str(), &endp, 10);
-                        if (endp == left.c_str() || *endp != '\0') return false;
+                } else {
+                        Error err;
+                        int64_t v = left.to<int64_t>(&err);
+                        if (err.isError()) return false;
                         start = v;
                 }
-                if (right.empty())
+                if (right.isEmpty()) {
                         end = -1;
-                else {
-                        char     *endp = nullptr;
-                        long long v = std::strtoll(right.c_str(), &endp, 10);
-                        if (endp == right.c_str() || *endp != '\0') return false;
+                } else {
+                        Error err;
+                        int64_t v = right.to<int64_t>(&err);
+                        if (err.isError()) return false;
                         end = v;
                 }
                 return true;
@@ -152,7 +153,7 @@ namespace {
                 out.command = Args::CmdSummary;
 
                 while (i < argc) {
-                        std::string a = argv[i];
+                        String a = argv[i];
                         if (a == "--help") {
                                 out.command = Args::CmdHelp;
                                 return true;
@@ -434,7 +435,7 @@ namespace {
                 // semantics of the removed library helper closely enough
                 // that --extract-* output is unchanged.
                 auto copyFrames = [&](MediaIOSource *s, MediaIOSink *d, int64_t skip, int64_t want,
-                                      const auto &fn) -> std::pair<int64_t, Error> {
+                                      const auto &fn) -> Result<int64_t> {
                         int64_t copied = 0;
                         int64_t skipped = 0;
                         for (;;) {

@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/bufferimpl.h>
@@ -47,7 +48,7 @@ using BufferImplPtr = SharedPtr<BufferImpl, false>;
  * captureless lambdas implicitly convert.
  */
 using BufferImplFactory =
-        std::function<BufferImplPtr(const MemSpace &ms, size_t bytes, size_t align)>;
+        Function<BufferImplPtr(const MemSpace &ms, size_t bytes, size_t align)>;
 
 /**
  * @brief Registers a factory function for a MemSpace ID.

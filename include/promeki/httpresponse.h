@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/buffer.h>
@@ -303,7 +304,7 @@ class HttpResponse {
                  * Set on a 101-status response by application or
                  * library handlers; ignored on non-101 responses.
                  */
-                using UpgradeHook = std::function<void(TcpSocket *socket)>;
+                using UpgradeHook = Function<void(TcpSocket *socket)>;
 
                 /** @brief Installs the upgrade hook (see @ref UpgradeHook). */
                 void setUpgradeHook(UpgradeHook hook) { _upgradeHook = std::move(hook); }

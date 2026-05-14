@@ -22,6 +22,7 @@
  */
 
 #include <cstdlib>
+#include <promeki/function.h>
 #include <promeki/variant.tpp>
 #include <promeki/json.h>
 #include <promeki/datastream.h>
@@ -354,7 +355,7 @@ StringList VariantMap::keys() const {
         return out;
 }
 
-void VariantMap::forEach(std::function<void(const String &, const Variant &)> fn) const {
+void VariantMap::forEach(Function<void(const String &, const Variant &)> fn) const {
         if (_impl.isNull()) return;
         for (auto it = _impl->map.cbegin(); it != _impl->map.cend(); ++it) {
                 fn(it->first, it->second);

@@ -26,15 +26,14 @@
 #include <promeki/contentlightlevel.h>
 #include <promeki/timecode.h>
 #include <promeki/deque.h>
+#include <promeki/list.h>
+#include <promeki/mutex.h>
 #include <promeki/pair.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslator.h>
 #include <promeki/anctranslateconfig.h>
 
-#include <deque>
-#include <mutex>
-#include <vector>
 #include <cstring>
 #include <cstdint>
 #include <dlfcn.h>
@@ -56,7 +55,7 @@ namespace {
 
         NV_ENCODE_API_FUNCTION_LIST gNvenc{};
         bool                        gNvencLoaded = false;
-        std::mutex                  gNvencMutex;
+        Mutex                       gNvencMutex;
 
         bool loadNvencLocked() {
                 if (gNvencLoaded) return true;
@@ -89,7 +88,7 @@ namespace {
         }
 
         bool loadNvenc() {
-                std::lock_guard<std::mutex> lock(gNvencMutex);
+                Mutex::Locker lock(gNvencMutex);
                 return loadNvencLocked();
         }
 
@@ -500,7 +499,7 @@ class NvencVideoEncoder::Impl {
                         if (!slot) return setError(Error::TryAgain, "no free NVENC slot");
 
                         if (Error err = uploadFrame(frame, slot); err.isError()) {
-                                _freeSlots.push_back(slot);
+                                _freeSlots.pushToBack(slot);
                                 return err;
                         }
                         slot->imageMeta = idesc.metadata();
@@ -647,11 +646,11 @@ class NvencVideoEncoder::Impl {
                                         const AncPacket &out = value(r);
                                         const Buffer    &b = out.data();
                                         if (b.size() == 0) continue;
-                                        std::vector<uint8_t> bytes(b.size());
+                                        List<uint8_t> bytes(b.size());
                                         std::memcpy(bytes.data(), b.data(), b.size());
-                                        slot->captionSeiPayloads.push_back(std::move(bytes));
+                                        slot->captionSeiPayloads.pushToBack(std::move(bytes));
                                 }
-                                if (!slot->captionSeiPayloads.empty()) {
+                                if (!slot->captionSeiPayloads.isEmpty()) {
                                         slot->captionSeiArray.reserve(slot->captionSeiPayloads.size());
                                         for (auto &p : slot->captionSeiPayloads) {
                                                 NV_ENC_SEI_PAYLOAD entry{};
@@ -666,7 +665,7 @@ class NvencVideoEncoder::Impl {
                                                 entry.payloadType = 4;
                                                 entry.payloadSize = static_cast<uint32_t>(p.size());
                                                 entry.payload = p.data();
-                                                slot->captionSeiArray.push_back(entry);
+                                                slot->captionSeiArray.pushToBack(entry);
                                         }
                                         if (_codec == Codec_H264) {
                                                 pic.codecPicParams.h264PicParams.seiPayloadArray =
@@ -684,14 +683,14 @@ class NvencVideoEncoder::Impl {
 
                         NVENCSTATUS st = gNvenc.nvEncEncodePicture(_encoder, &pic);
                         if (st != NV_ENC_SUCCESS && st != NV_ENC_ERR_NEED_MORE_INPUT) {
-                                _freeSlots.push_back(slot);
+                                _freeSlots.pushToBack(slot);
                                 return setError(Error::LibraryFailure,
                                                 String::sprintf("nvEncEncodePicture failed (%d)", (int)st));
                         }
 
                         slot->pts = pts;
                         slot->hasOutput = (st == NV_ENC_SUCCESS);
-                        _inFlight.push_back(slot);
+                        _inFlight.pushToBack(slot);
                         ++_frameIdx;
                         return Error::Ok;
                 }
@@ -702,18 +701,17 @@ class NvencVideoEncoder::Impl {
                                 return VideoEncoder::buildOutputFrame(entry.first(), std::move(entry.second()));
                         }
 
-                        if (!_inFlight.empty() && _inFlight.front()->hasOutput) {
-                                Slot *slot = _inFlight.front();
-                                _inFlight.pop_front();
+                        if (!_inFlight.isEmpty() && _inFlight.front()->hasOutput) {
+                                Slot *slot = _inFlight.popFromFront();
                                 Frame source = std::move(slot->sourceFrame);
                                 slot->sourceFrame = Frame();
                                 auto pkt = lockAndBuildPacket(slot);
-                                _freeSlots.push_back(slot);
+                                _freeSlots.pushToBack(slot);
                                 if (!pkt.isValid()) return Frame();
                                 return VideoEncoder::buildOutputFrame(source, std::move(pkt));
                         }
 
-                        if (_eosPending && _inFlight.empty()) {
+                        if (_eosPending && _inFlight.isEmpty()) {
                                 _eosPending = false;
                                 ImageDesc cdesc(Size2Du32(0, 0), outputPixelFormat());
                                 auto      pkt = CompressedVideoPayload::Ptr::create(cdesc);
@@ -814,8 +812,8 @@ class NvencVideoEncoder::Impl {
                                 // descriptors is rebuilt on every submit so
                                 // its @c payload pointers always reference
                                 // the current @c captionSeiPayloads vector.
-                                std::vector<std::vector<uint8_t>> captionSeiPayloads;
-                                std::vector<NV_ENC_SEI_PAYLOAD>   captionSeiArray;
+                                List<List<uint8_t>> captionSeiPayloads;
+                                List<NV_ENC_SEI_PAYLOAD>   captionSeiArray;
                 };
 
                 struct Caps {
@@ -944,9 +942,12 @@ class NvencVideoEncoder::Impl {
                 // config (profile / level / size).
                 String _paramSetsBlob;
 
-                std::vector<Slot>  _slots;
-                std::deque<Slot *> _freeSlots;
-                std::deque<Slot *> _inFlight;
+                using SlotList   = List<Slot>;
+                using SlotDeque  = Deque<Slot *>;
+
+                SlotList  _slots;
+                SlotDeque _freeSlots;
+                SlotDeque _inFlight;
 
                 bool _eosPending = false;
 
@@ -1511,33 +1512,31 @@ class NvencVideoEncoder::Impl {
                                 }
                                 s.out = cb.bitstreamBuffer;
 
-                                _freeSlots.push_back(&s);
+                                _freeSlots.pushToBack(&s);
                         }
                         return Error::Ok;
                 }
 
                 Slot *acquireFreeSlot() {
-                        if (_freeSlots.empty()) {
+                        if (_freeSlots.isEmpty()) {
                                 // Drain completed slots from the head of
                                 // the in-flight queue.  With B-frames,
                                 // only slots with hasOutput can be safely
                                 // recycled — others are still held by
                                 // the encoder as reference frames.
-                                while (!_inFlight.empty() && _inFlight.front()->hasOutput) {
-                                        Slot *head = _inFlight.front();
-                                        _inFlight.pop_front();
+                                while (!_inFlight.isEmpty() && _inFlight.front()->hasOutput) {
+                                        Slot *head = _inFlight.popFromFront();
                                         Frame source = std::move(head->sourceFrame);
                                         head->sourceFrame = Frame();
                                         if (auto pkt = lockAndBuildPacket(head)) {
                                                 _pendingPackets.pushToBack(
                                                         PendingPacketEntry(std::move(source), std::move(pkt)));
                                         }
-                                        _freeSlots.push_back(head);
+                                        _freeSlots.pushToBack(head);
                                 }
-                                if (_freeSlots.empty()) return nullptr;
+                                if (_freeSlots.isEmpty()) return nullptr;
                         }
-                        Slot *s = _freeSlots.front();
-                        _freeSlots.pop_front();
+                        Slot *s = _freeSlots.popFromFront();
                         s->hasOutput = false;
                         return s;
                 }

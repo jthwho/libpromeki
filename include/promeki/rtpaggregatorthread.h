@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
@@ -233,7 +234,7 @@ struct RtpAggregatorContext {
                 ///        for any onward push (drop-oldest /
                 ///        block-on-full) into the strand-side
                 ///        queue.
-                std::function<void(Frame)> pushFrame;
+                Function<void(Frame)> pushFrame;
 };
 
 /**

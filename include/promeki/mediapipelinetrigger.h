@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 
+#include <promeki/function.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
 #include <promeki/namespace.h>
@@ -69,11 +70,11 @@ class MediaPipelineTrigger {
  *
  * The most flexible form — the lambda gets the full @ref Frame and
  * can inspect any combination of payload, metadata, or shape.  Used
- * by @ref MediaPipeline::setCaptureTrigger(std::function<bool(const Frame &)>).
+ * by @ref MediaPipeline::setCaptureTrigger(Function<bool(const Frame &)>).
  */
 class MediaPipelineFunctionTrigger : public MediaPipelineTrigger {
         public:
-                using Predicate = std::function<bool(const Frame &)>;
+                using Predicate = Function<bool(const Frame &)>;
 
                 /**
                  * @brief Constructs from a callable.

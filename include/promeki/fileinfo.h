@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <promeki/optional.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/filepath.h>
@@ -129,7 +130,7 @@ class FileInfo {
                  * @param force If true, refreshes the status even if already cached.
                  */
                 void updateStatus(bool force = false) const {
-                        if (!_status.has_value() || force) {
+                        if (!_status.hasValue() || force) {
                                 _status = std::filesystem::status(_path);
                         }
                         return;
@@ -228,7 +229,7 @@ class FileInfo {
 
         private:
                 std::filesystem::path         _path;
-                mutable std::optional<Status> _status;
+                mutable Optional<Status> _status;
 
                 bool ownerHasPerm(std::filesystem::perms bit) const {
                         std::error_code ec;

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/font.h>
+#include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/buffer.h>
@@ -162,9 +163,24 @@ class FastFont : public Font {
                 struct CachedGlyph {
                                 UncompressedVideoPayload::Ptr payload; ///< Pre-rendered glyph payload.
                                 int advanceX = 0;                      ///< Horizontal advance to next glyph in pixels.
+                                /// @brief Index into @c _ftFaces of the face that produced
+                                ///        this glyph.  Used by drawText / measureText to
+                                ///        route kerning lookups (kerning only makes sense
+                                ///        within a single face).
+                                int faceIndex = 0;
+                };
+
+                /// @brief A single TrueType face plus the bytes that
+                ///        FT_Face borrows from.  The buffer must live
+                ///        as long as the face does.
+                struct LoadedFace {
+                                void  *face = nullptr;
+                                Buffer data;
+                                String path;
                 };
 
                 bool               ensureFontLoaded();
+                bool               loadFace(const String &path, LoadedFace &out);
                 const CachedGlyph *getGlyph(uint32_t codepoint, const GlyphKey &key, const Color &fg, const Color &bg);
                 void               invalidateGlyphs();
                 void               invalidateFont();
@@ -178,9 +194,15 @@ class FastFont : public Font {
                 /// @brief Packs an sRGB Color into a 32-bit cache key.
                 static uint32_t colorKey(const Color &c);
 
+                /// @brief Finds the face index whose cmap carries
+                ///        @p codepoint, walking @c _ftFaces in order.
+                ///        Returns 0 (primary face) when no face has
+                ///        the glyph — that path then renders the
+                ///        primary's @c .notdef as the last resort.
+                int resolveFaceIndex(uint32_t codepoint) const;
+
                 void                      *_ftLibrary = nullptr;
-                void                      *_ftFace = nullptr;
-                Buffer                     _fontData; ///< Owns the font bytes for the lifetime of _ftFace.
+                List<LoadedFace>           _ftFaces; ///< [0] = primary, [1..] = fallbacks.
                 int                        _ascender = 0;
                 int                        _descender = 0;
                 int                        _lineHeight = 0;

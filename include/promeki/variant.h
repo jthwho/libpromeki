@@ -13,6 +13,7 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <promeki/function.h>
 #include <promeki/config.h>
 #include <promeki/namespace.h>
 #include <promeki/variant_fwd.h>
@@ -679,7 +680,7 @@ template <typename... Types> class VariantImpl {
  *
  * @par Element iteration
  * Iteration is exposed via raw @c Variant @c * pointers — the underlying
- * @c std::vector<Variant> storage is contiguous, so range-for and
+ * @c List<Variant> storage is contiguous, so range-for and
  * pointer arithmetic both work.  This avoids leaking
  * @c List<Variant>::iterator into the header (which would require
  * @ref Variant to be a complete type for the iterator's full
@@ -884,7 +885,7 @@ class VariantMap {
                 StringList keys() const;
 
                 /** @brief Iterates every (key, value) pair in key order. */
-                void forEach(std::function<void(const String &, const Variant &)> fn) const;
+                void forEach(Function<void(const String &, const Variant &)> fn) const;
 
                 /**
                  * @brief Borrows the underlying @c Map<String, Variant> for

@@ -81,7 +81,7 @@ template <typename T> class Size2DTemplate {
                 T area() const { return _width * _height; }
 
                 /** @brief Returns the size as a string in "WxH" format. */
-                String toString() const { return std::to_string(_width) + "x" + std::to_string(_height); }
+                String toString() const { return String::number(_width) + "x" + String::number(_height); }
 
                 /** @brief Converts to a String using toString(). */
                 operator String() const { return toString(); }

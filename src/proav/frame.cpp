@@ -8,6 +8,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <promeki/optional.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
 #include <promeki/videopayload.h>
@@ -108,7 +109,7 @@ StringList Frame::dump(const String &indent) const {
         StringList out;
         VariantLookup<Frame>::forEachScalar([this, &out, &indent](const String &name) {
                 auto v = VariantLookup<Frame>::resolve(*this, name);
-                if (v.has_value()) {
+                if (v.hasValue()) {
                         out += indent + name + " [" + v->typeName() + "]: " + v->format(String());
                 }
         });
@@ -189,23 +190,23 @@ namespace {
 
 PROMEKI_LOOKUP_REGISTER(Frame)
         .scalar("PayloadCount",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.payloadList().size()));
                 })
         .scalar("VideoCount",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.videoPayloads().size()));
                 })
         .scalar("AudioCount",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.audioPayloads().size()));
                 })
         .scalar("AncCount",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(f.ancPayloads().size()));
                 })
         .scalar("AncPacketCount",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         uint64_t total = 0;
                         for (const MediaPayload::Ptr &p : f.payloadList()) {
                                 if (!p.isValid()) continue;
@@ -217,33 +218,33 @@ PROMEKI_LOOKUP_REGISTER(Frame)
                         return Variant(total);
                 })
         .scalar("HasCaptions",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(
                                 anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Captions); }));
                 })
         .scalar("HasTimecode",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(
                                 anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Timecode); }));
                 })
         .scalar("HasAfd",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(
                                 anyAnc(f, [](const AncPayload &a) { return a.hasFormat(AncFormat(AncFormat::Afd)); }));
                 })
         .scalar("HasHdr",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(
                                 anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Hdr); }));
                 })
         .scalar("HasSplice",
-                [](const Frame &f) -> std::optional<Variant> {
+                [](const Frame &f) -> Optional<Variant> {
                         return Variant(
                                 anyAnc(f, [](const AncPayload &a) { return a.hasCategory(AncCategory::Splice); }));
                 })
-        .scalar("VideoFormat", [](const Frame &f) -> std::optional<Variant> { return Variant(f.videoFormat(0)); })
+        .scalar("VideoFormat", [](const Frame &f) -> Optional<Variant> { return Variant(f.videoFormat(0)); })
         .indexedScalar("VideoFormat",
-                       [](const Frame &f, size_t i) -> std::optional<Variant> {
+                       [](const Frame &f, size_t i) -> Optional<Variant> {
                                auto vf = f.videoFormat(i);
                                if (!vf.isValid()) return std::nullopt;
                                return Variant(vf);

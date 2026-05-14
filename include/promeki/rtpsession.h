@@ -219,7 +219,7 @@ class RtpSession : public ObjectBase {
                                 ///        output queue.  The
                                 ///        depacketizer thread
                                 ///        consumes from here.
-                                Queue<RtpPacket> *outQueue = nullptr;
+                                RtpPacket::Queue *outQueue = nullptr;
 
                                 /// @brief Per-source seq /
                                 ///        loss / jitter tracker.
@@ -268,7 +268,7 @@ class RtpSession : public ObjectBase {
                  * entries: the recv socket thread updates each
                  * entry's seq tracker and pushes through its
                  * reorder buffer into its post-reorder
-                 * @c Queue<RtpPacket>.  The matching per-stream
+                 * @c RtpPacket::Queue.  The matching per-stream
                  * depacketizer thread consumes from the queue on
                  * its own thread, so the recv thread never runs
                  * reassembly / payload->unpack / FIFO push work

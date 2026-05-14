@@ -94,7 +94,7 @@ struct StreamAnchor {
  * @ingroup network
  *
  * One @c RtpDepacketizerThread instance lives between an
- * @c RtpSession's per-stream post-reorder @c Queue<RtpPacket> and
+ * @c RtpSession's per-stream post-reorder @c RtpPacket::Queue and
  * a per-stream @c PayloadQueue (RxVideoFrame / RxAudioChunk /
  * RxDataMessage).  It owns the pop loop that drains the post-
  * reorder queue, calls into the subclass's @ref handlePacket on
@@ -123,7 +123,7 @@ struct StreamAnchor {
 class RtpDepacketizerThread : public Thread {
         public:
                 /// @brief Default depth of the post-reorder
-                ///        @c Queue<RtpPacket> bound.  Sized to
+                ///        @c RtpPacket::Queue bound.  Sized to
                 ///        match @c RtpSeqReorderBuffer::Config's
                 ///        @c maxWindow default.  Drop-oldest fires
                 ///        at this depth when the depacketizer
@@ -160,10 +160,10 @@ class RtpDepacketizerThread : public Thread {
                 ///        recv thread pushes via
                 ///        @c pushDropOldest; this thread pops in
                 ///        @ref run.
-                Queue<RtpPacket> &inputQueue() { return _inputQueue; }
+                RtpPacket::Queue &inputQueue() { return _inputQueue; }
 
                 /// @brief See above (const overload).
-                const Queue<RtpPacket> &inputQueue() const { return _inputQueue; }
+                const RtpPacket::Queue &inputQueue() const { return _inputQueue; }
 
                 /**
                  * @brief Marks the worker for shutdown and wakes
@@ -251,7 +251,7 @@ class RtpDepacketizerThread : public Thread {
 
         private:
                 Atomic<bool>      _stopRequested;
-                Queue<RtpPacket>  _inputQueue;
+                RtpPacket::Queue  _inputQueue;
                 uint32_t          _clockRateHz;
                 StreamAnchor      _anchor;
 };

@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
 #include <promeki/sharedptr.h>
@@ -188,14 +189,14 @@ class BufferCommand {
                  * otherwise.  Re-registering replaces any previously-set
                  * callback; calling after completion fires immediately.
                  */
-                void setCompletionCallback(std::function<void(Error)> cb, EventLoop *loop);
+                void setCompletionCallback(Function<void(Error)> cb, EventLoop *loop);
 
         private:
                 Atomic<bool>               _completed{false};
                 mutable Mutex              _completionMutex;
                 mutable WaitCondition      _completionCv;
                 Mutex                      _callbackMutex;
-                std::function<void(Error)> _callback;
+                Function<void(Error)> _callback;
                 EventLoop                 *_callbackLoop = nullptr;
 };
 

@@ -160,7 +160,7 @@ namespace promekitest {
                                                   String::number(static_cast<int64_t>(caseIndex));
 
                         const uint32_t streamId =
-                                0xFB000000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                                0xFB000000u ^ static_cast<uint32_t>(c.name.hash());
 
                         ctx.setDetail(String("bridgeName"), bridgeName);
                         ctx.setDetail(String("frames"), int64_t(frames));

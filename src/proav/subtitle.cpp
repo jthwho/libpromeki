@@ -825,9 +825,9 @@ void SubtitleList::reserve(size_t n) { _d.modify()->entries.reserve(n); }
 void SubtitleList::sortByStart() {
         auto *d = _d.modify();
         if (d->sortedByStart) return;
-        std::vector<Subtitle> tmp;
+        List<Subtitle> tmp;
         tmp.reserve(d->entries.size());
-        for (size_t i = 0; i < d->entries.size(); ++i) tmp.push_back(d->entries[i]);
+        for (size_t i = 0; i < d->entries.size(); ++i) tmp.pushToBack(d->entries[i]);
         std::stable_sort(tmp.begin(), tmp.end(), [](const Subtitle &a, const Subtitle &b) {
                 return a.start().value() < b.start().value();
         });

@@ -10,9 +10,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
-#include <map>
 #include <type_traits>
 #include <promeki/string.h>
+#include <promeki/map.h>
 #include <promeki/stringlist.h>
 #include <promeki/error.h>
 #include <promeki/enum.h>
@@ -210,26 +210,35 @@ String String::number(double val, int precision) {
 // ============================================================================
 
 String &String::arg(const String &str) {
-        const std::string &s = d->str();
-        int                minValue = std::numeric_limits<int>::max();
-        size_t             minPos = std::string::npos;
-        std::string        placeholderToReplace;
-        for (size_t i = 0; i < s.size(); ++i) {
-                if (s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
-                        size_t j = i + 1;
-                        while (j < s.size() && std::isdigit(s[j])) ++j;
-                        std::string placeholder = s.substr(i, j - i);
-                        int         value = std::stoi(placeholder.substr(1));
-                        if (value < minValue) {
-                                minValue = value;
-                                minPos = i;
-                                placeholderToReplace = placeholder;
-                        }
+        // Find the placeholder `%N` (N a run of decimal digits) with the
+        // smallest N.  Iterate by Char so multi-byte UTF-8 runs in the
+        // surrounding text are handled correctly: '%' and ASCII digits
+        // round-trip through Char::codepoint() as themselves.
+        int          minValue = std::numeric_limits<int>::max();
+        size_t       minPos = npos;
+        size_t       minLen = 0;
+        const size_t n = length();
+        for (size_t i = 0; i < n; ++i) {
+                if (charAt(i).codepoint() != '%') continue;
+                size_t j = i + 1;
+                if (j >= n || !charAt(j).isDigit()) continue;
+                int value = 0;
+                while (j < n && charAt(j).isDigit()) {
+                        value = value * 10 + static_cast<int>(charAt(j).codepoint() - '0');
+                        ++j;
+                }
+                if (value < minValue) {
+                        minValue = value;
+                        minPos = i;
+                        minLen = j - i;
                 }
         }
-        if (minPos != std::string::npos) {
-                std::string result = s;
-                result.replace(minPos, placeholderToReplace.length(), str.d->str());
+        if (minPos != npos) {
+                String result;
+                result.reserve(byteCount() + str.byteCount());
+                result += left(minPos);
+                result += str;
+                result += mid(minPos + minLen);
                 *this = std::move(result);
         }
         return *this;
@@ -376,7 +385,7 @@ double String::toDouble(Error *e) const {
 }
 
 int64_t String::parseNumberWords(Error *err) const {
-        static const std::map<std::string, int64_t> numberWords = {
+        static const Map<std::string, int64_t> numberWords = {
                 {"zero", 0},      {"one", 1},         {"two", 2},           {"three", 3},
                 {"four", 4},      {"five", 5},        {"six", 6},           {"seven", 7},
                 {"eight", 8},     {"nine", 9},        {"ten", 10},          {"eleven", 11},
@@ -446,19 +455,28 @@ String String::replace(const String &find, const String &replacement) const {
 // Split
 // ============================================================================
 
-StringList String::split(const std::string &delimiter) const {
-        StringList         result;
-        const std::string &s = d->str();
-        size_t             start = 0;
-        size_t             pos;
-        while ((pos = s.find(delimiter, start)) != std::string::npos) {
-                std::string token = s.substr(start, pos - start);
-                if (!token.empty()) result += String(token);
+StringList String::split(const String &delimiter) const {
+        StringList result;
+        if (delimiter.isEmpty()) {
+                if (!isEmpty()) result += *this;
+                return result;
+        }
+        size_t start = 0;
+        size_t pos;
+        while ((pos = find(delimiter, start)) != npos) {
+                if (pos > start) result += substr(start, pos - start);
                 start = pos + delimiter.length();
         }
-        std::string last = s.substr(start);
-        if (!last.empty()) result += String(last);
+        if (start < length()) result += substr(start);
         return result;
+}
+
+StringList String::split(const char *delimiter) const {
+        return split(String(delimiter));
+}
+
+StringList String::split(char delimiter) const {
+        return split(String(1, delimiter));
 }
 
 PROMEKI_NAMESPACE_END

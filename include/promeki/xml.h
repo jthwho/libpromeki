@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <utility>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -723,7 +724,7 @@ class XmlElement {
                 String toString(unsigned int indent = 0) const;
 
                 /** @brief Iterates over every element child in document order. */
-                void forEachElement(std::function<void(const XmlElement &)> func) const;
+                void forEachElement(Function<void(const XmlElement &)> func) const;
 
                 /** @brief Returns true when both elements serialize identically. */
                 bool operator==(const XmlElement &other) const;

@@ -142,3 +142,38 @@ TEST_CASE("HashMap: range-based for") {
         for (const auto &[k, v] : m) sum += v;
         CHECK(sum == 30);
 }
+
+TEST_CASE("HashMap: reserve does not discard existing entries") {
+        HashMap<int, int> m = {{1, 10}, {2, 20}};
+        m.reserve(100);
+        CHECK(m.size() == 2);
+        CHECK(m.value(1) == 10);
+        CHECK(m.value(2) == 20);
+}
+
+TEST_CASE("HashMap: insertNew inserts when absent") {
+        HashMap<int, int> m;
+        CHECK(m.insertNew(1, 10) == true);
+        CHECK(m.value(1) == 10);
+}
+
+TEST_CASE("HashMap: insertNew does not overwrite existing key") {
+        HashMap<int, int> m = {{1, 10}};
+        CHECK(m.insertNew(1, 99) == false);
+        CHECK(m.value(1) == 10);    // original value preserved
+}
+
+TEST_CASE("HashMap: tryEmplace inserts new key in place") {
+        HashMap<int, int> m;
+        auto [it, inserted] = m.tryEmplace(7, 42);
+        CHECK(inserted == true);
+        CHECK(it->second == 42);
+        CHECK(m.value(7) == 42);
+}
+
+TEST_CASE("HashMap: tryEmplace leaves existing key untouched") {
+        HashMap<int, int> m = {{7, 42}};
+        auto [it, inserted] = m.tryEmplace(7, 99);
+        CHECK(inserted == false);
+        CHECK(it->second == 42);    // original value unchanged
+}

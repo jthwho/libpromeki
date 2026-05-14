@@ -123,6 +123,17 @@ template <typename K, typename V> class HashMap {
                 /** @brief Returns the number of key-value pairs. */
                 size_t size() const noexcept { return d.size(); }
 
+                /**
+                 * @brief Reserves space for at least @p count buckets.
+                 *
+                 * Pre-sizes the underlying hash table to avoid rehashing
+                 * when the final size is known up front.
+                 *
+                 * @param count Minimum number of elements to accommodate
+                 *              without forcing a rehash.
+                 */
+                void reserve(size_t count) { d.reserve(count); }
+
                 // -- Lookup --
 
                 /**
@@ -190,6 +201,37 @@ template <typename K, typename V> class HashMap {
                 void insert(const K &key, V &&val) {
                         d.insert_or_assign(key, std::move(val));
                         return;
+                }
+
+                /**
+                 * @brief Inserts a key-value pair only if @p key is absent.
+                 *
+                 * Mirrors @c std::unordered_map::insert: when the key is
+                 * already present the existing value is left unchanged
+                 * and the call returns @c false.
+                 *
+                 * @param key The key.
+                 * @param val The value.
+                 * @return True if inserted, false if @p key already existed.
+                 */
+                bool insertNew(const K &key, const V &val) { return d.emplace(key, val).second; }
+
+                /**
+                 * @brief Inserts only if @p key is absent, constructing the value
+                 *        in place from @p args.
+                 *
+                 * Mirrors @c std::unordered_map::try_emplace: when @p key
+                 * already exists nothing is constructed and the existing
+                 * entry is returned; otherwise a new entry is built in
+                 * place with @p args.
+                 *
+                 * @tparam ArgsT Constructor argument types for @c V (deduced).
+                 * @param  key  The key.
+                 * @param  args Arguments forwarded to @c V's constructor.
+                 * @return A pair of (iterator-to-entry, inserted).
+                 */
+                template <typename... ArgsT> std::pair<Iterator, bool> tryEmplace(const K &key, ArgsT &&...args) {
+                        return d.try_emplace(key, std::forward<ArgsT>(args)...);
                 }
 
                 /**

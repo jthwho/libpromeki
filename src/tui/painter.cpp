@@ -27,36 +27,10 @@ void TuiPainter::drawChar(int x, int y, char32_t ch) {
 }
 
 void TuiPainter::drawText(int x, int y, const String &text) {
-        const std::string &s = text.str();
-        int                col = x;
-        size_t             i = 0;
-        while (i < s.size()) {
-                // Decode UTF-8
-                char32_t ch;
-                uint8_t  c = s[i];
-                if (c < 0x80) {
-                        ch = c;
-                        i += 1;
-                } else if ((c & 0xE0) == 0xC0) {
-                        ch = (c & 0x1F) << 6;
-                        if (i + 1 < s.size()) ch |= (s[i + 1] & 0x3F);
-                        i += 2;
-                } else if ((c & 0xF0) == 0xE0) {
-                        ch = (c & 0x0F) << 12;
-                        if (i + 1 < s.size()) ch |= (s[i + 1] & 0x3F) << 6;
-                        if (i + 2 < s.size()) ch |= (s[i + 2] & 0x3F);
-                        i += 3;
-                } else if ((c & 0xF8) == 0xF0) {
-                        ch = (c & 0x07) << 18;
-                        if (i + 1 < s.size()) ch |= (s[i + 1] & 0x3F) << 12;
-                        if (i + 2 < s.size()) ch |= (s[i + 2] & 0x3F) << 6;
-                        if (i + 3 < s.size()) ch |= (s[i + 3] & 0x3F);
-                        i += 4;
-                } else {
-                        ch = U'?';
-                        i += 1;
-                }
-                putCell(col, y, ch);
+        int    col = x;
+        size_t n = text.length();
+        for (size_t i = 0; i < n; ++i) {
+                putCell(col, y, text.charAt(i).codepoint());
                 col++;
         }
 }

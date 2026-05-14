@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <promeki/list.h>
 #include <promeki/bufferediodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -139,15 +140,15 @@ Buffer BufferedIODevice::readLine(size_t maxLength) {
         if (!isOpen() || !isReadable()) return Buffer();
 
         if (_unbuffered) {
-                std::vector<uint8_t> result;
+                List<uint8_t> result;
                 uint8_t              c;
                 while (maxLength == 0 || result.size() < maxLength) {
                         int64_t n = readFromDevice(&c, 1);
                         if (n <= 0) break;
-                        result.push_back(c);
+                        result.pushToBack(c);
                         if (c == '\n') break;
                 }
-                if (result.empty()) return Buffer();
+                if (result.isEmpty()) return Buffer();
                 Buffer buf(result.size());
                 std::memcpy(buf.data(), result.data(), result.size());
                 buf.setSize(result.size());
@@ -157,7 +158,7 @@ Buffer BufferedIODevice::readLine(size_t maxLength) {
         ensureReadBuffer();
 
         // Collect bytes into a temporary vector until newline or maxLength
-        std::vector<uint8_t> result;
+        List<uint8_t> result;
         while (maxLength == 0 || result.size() < maxLength) {
                 // Ensure we have buffered data
                 size_t buffered = _readBufFill - _readBufPos;
@@ -178,17 +179,17 @@ Buffer BufferedIODevice::readLine(size_t maxLength) {
                 uint8_t *nl = static_cast<uint8_t *>(std::memchr(start, '\n', searchLen));
                 if (nl != nullptr) {
                         size_t lineLen = static_cast<size_t>(nl - start) + 1;
-                        result.insert(result.end(), start, start + lineLen);
+                        result.pushToBack(start, start + lineLen);
                         _readBufPos += lineLen;
                         break;
                 }
 
                 // No newline found, consume all searched bytes
-                result.insert(result.end(), start, start + searchLen);
+                result.pushToBack(start, start + searchLen);
                 _readBufPos += searchLen;
         }
 
-        if (result.empty()) return Buffer();
+        if (result.isEmpty()) return Buffer();
         Buffer buf(result.size());
         std::memcpy(buf.data(), result.data(), result.size());
         buf.setSize(result.size());
@@ -199,14 +200,14 @@ Buffer BufferedIODevice::readAll() {
         if (!isOpen() || !isReadable()) return Buffer();
 
         if (_unbuffered) {
-                std::vector<uint8_t> result;
+                List<uint8_t> result;
                 uint8_t              tmp[4096];
                 for (;;) {
                         int64_t n = readFromDevice(tmp, sizeof(tmp));
                         if (n <= 0) break;
-                        result.insert(result.end(), tmp, tmp + n);
+                        result.pushToBack(tmp, tmp + n);
                 }
-                if (result.empty()) return Buffer();
+                if (result.isEmpty()) return Buffer();
                 Buffer buf(result.size());
                 std::memcpy(buf.data(), result.data(), result.size());
                 buf.setSize(result.size());
@@ -215,27 +216,27 @@ Buffer BufferedIODevice::readAll() {
 
         ensureReadBuffer();
 
-        std::vector<uint8_t> result;
+        List<uint8_t> result;
 
         // Drain buffered data first
         size_t buffered = _readBufFill - _readBufPos;
         if (buffered > 0) {
                 uint8_t *bufData = static_cast<uint8_t *>(_readBuf.data());
-                result.insert(result.end(), bufData + _readBufPos, bufData + _readBufFill);
+                result.pushToBack(bufData + _readBufPos, bufData + _readBufFill);
                 _readBufPos = 0;
                 _readBufFill = 0;
         }
 
         // Read remaining data from device
         size_t               capacity = _readBuf.availSize();
-        std::vector<uint8_t> tmp(capacity);
+        List<uint8_t> tmp(capacity);
         for (;;) {
                 int64_t n = readFromDevice(tmp.data(), static_cast<int64_t>(capacity));
                 if (n <= 0) break;
-                result.insert(result.end(), tmp.data(), tmp.data() + n);
+                result.pushToBack(tmp.data(), tmp.data() + n);
         }
 
-        if (result.empty()) return Buffer();
+        if (result.isEmpty()) return Buffer();
         Buffer buf(result.size());
         std::memcpy(buf.data(), result.data(), result.size());
         buf.setSize(result.size());

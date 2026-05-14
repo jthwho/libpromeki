@@ -118,6 +118,33 @@ class Random {
                 float randomFloat(float min, float max);
 
                 /**
+                 * @brief Returns a Gaussian (normal) distributed random double.
+                 * @param mean   Mean of the distribution.
+                 * @param stddev Standard deviation of the distribution (must be &gt; 0).
+                 * @return A random double drawn from N(mean, stddev²).
+                 */
+                double randomNormalDouble(double mean, double stddev);
+
+                /**
+                 * @brief Returns a Gaussian (normal) distributed random float.
+                 * @param mean   Mean of the distribution.
+                 * @param stddev Standard deviation of the distribution (must be &gt; 0).
+                 * @return A random float drawn from N(mean, stddev²).
+                 */
+                float randomNormalFloat(float mean, float stddev);
+
+                /**
+                 * @brief Returns an exponentially distributed random double.
+                 *
+                 * The exponential distribution describes the time between
+                 * events in a Poisson process with rate parameter @p lambda.
+                 *
+                 * @param lambda Rate parameter (must be &gt; 0).
+                 * @return A random double drawn from Exp(lambda).
+                 */
+                double randomExponentialDouble(double lambda);
+
+                /**
                  * @brief Returns a Buffer filled with random bytes.
                  * @param count Number of random bytes.
                  * @return A Buffer of the given size filled with random data.
@@ -129,6 +156,26 @@ class Random {
                  * @return true or false with equal probability.
                  */
                 bool randomBool();
+
+                // -- UniformRandomBitGenerator concept --
+                //
+                // The four members below let Random be passed directly to
+                // standard algorithms that take a URBG, e.g. @c std::shuffle
+                // and @c std::sample, and to the constructors of any
+                // standard distribution (@c std::normal_distribution and
+                // friends).
+
+                /** @brief URBG concept: the type produced by @c operator(). */
+                using result_type = std::mt19937_64::result_type;
+
+                /** @brief URBG concept: smallest value @c operator() can return. */
+                static constexpr result_type min() { return std::mt19937_64::min(); }
+
+                /** @brief URBG concept: largest value @c operator() can return. */
+                static constexpr result_type max() { return std::mt19937_64::max(); }
+
+                /** @brief URBG concept: draws the next 64-bit pseudo-random value. */
+                result_type operator()() { return _engine(); }
 
         private:
                 std::mt19937_64 _engine;

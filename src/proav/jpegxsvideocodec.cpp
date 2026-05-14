@@ -9,6 +9,7 @@
 #include <cstring>
 #include <vector>
 
+#include <promeki/list.h>
 #include <promeki/jpegxsvideocodec.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/buffer.h>
@@ -243,7 +244,7 @@ CompressedVideoPayload::Ptr JpegXsVideoEncoder::Impl::encodeFrame(const Uncompre
                 inBuf.data_yuv[c] = const_cast<uint8_t *>(input.plane(c).data());
         }
 
-        std::vector<uint8_t>           bitstreamStorage(bytesPerFrame);
+        List<uint8_t>           bitstreamStorage(bytesPerFrame);
         svt_jpeg_xs_bitstream_buffer_t outBuf = {};
         outBuf.buffer = bitstreamStorage.data();
         outBuf.allocation_size = bytesPerFrame;
@@ -379,7 +380,7 @@ UncompressedVideoPayload::Ptr JpegXsVideoDecoder::Impl::decodeFrame(const Compre
         // directly.  stride is width*pixel_size bytes per the API's
         // current "decoder ignores stride" contract.
         const uint32_t                    pixelBytes = (cfg.bit_depth > 8) ? 2u : 1u;
-        std::vector<std::vector<uint8_t>> tmpPlanes(cfg.components_num);
+        List<List<uint8_t>> tmpPlanes(cfg.components_num);
         svt_jpeg_xs_image_buffer_t        imgBuf = {};
         for (int c = 0; c < cfg.components_num; c++) {
                 tmpPlanes[c].resize(cfg.components[c].byte_size);

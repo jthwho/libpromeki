@@ -6,262 +6,282 @@
  */
 
 #include "cli.h"
+#include "helpformat.h"
 
 #include <cstdio>
 #include <cstdlib>
 
-#include <promeki/buffer.h>
+#include <promeki/ansistream.h>
 #include <promeki/cmdlineparser.h>
 #include <promeki/error.h>
-#include <promeki/mediaio.h>
-#include <promeki/mediaiofactory.h>
-#include <promeki/metadata.h>
-#include <promeki/textstream.h>
-#include <promeki/variant.h>
-#include <promeki/variantdatabase.h>
-#include <promeki/variantspec.h>
+#include <promeki/fileiodevice.h>
+#include <promeki/list.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 
 namespace mediaplay {
 
-        void printBackendConfigHelp() {
-                TextStream ts(stdout);
-                ts << endl
-                   << "Config per backend (set via --sc / --dc / --cc Key:Value," << endl
-                   << "  pass Key:list for enum values, Key:help for key details):" << endl;
+        namespace {
 
-                // "Type" is implied by -i / -o / -c so it has no user-visible
-                // role in the per-backend help — hide it from every backend.
-                StringList hidden;
-                hidden.pushToBack(String("Type"));
-
-                auto dumpBackend = [&](const String &name, const String &caps, const String &desc,
-                                       const MediaIO::Config::SpecMap &specs) {
-                        // Emit the header line, then the spec block bracketed
-                        // by a dashed border that matches the widest physical
-                        // line the block printed.  Two backends can produce
-                        // very different widths — TPG is wide, AudioFile is
-                        // narrow — so the border is computed per block rather
-                        // than using a fixed column.
-                        String header = String("  ") + name + " [" + caps + "] — " + desc;
-                        ts << endl << header << endl;
-                        if (specs.isEmpty()) {
-                                ts << "    (no config keys)" << endl;
-                                return;
-                        }
-
-                        // Round-trip through a scratch buffer so we know the
-                        // actual block width before we write the top border.
-                        // The alternative — writing two passes directly to the
-                        // stream — would put the top border below the block
-                        // or force us to guess the width ahead of time.
-                        Buffer     scratch;
-                        TextStream body(&scratch);
-                        int        bodyWidth = MediaIO::Config::writeSpecMapHelp(body, specs, hidden);
-                        body.flush();
-
-                        int borderWidth = bodyWidth;
-                        int headerWidth = static_cast<int>(header.size());
-                        if (headerWidth > borderWidth) borderWidth = headerWidth;
-                        String border;
-                        for (int i = 0; i < borderWidth; ++i) border += '-';
-                        ts << border << endl;
-                        ts << String(static_cast<const char *>(scratch.data()), scratch.size());
-                        ts << border << endl;
+                // A single flag entry (spec + description).  The renderer
+                // pads `spec` to the widest spec in the section so the
+                // description column lines up.
+                struct HelpOption {
+                                String spec;
+                                String description;
                 };
 
-                // Badge letters match the MediaIO's own perspective: a
-                // source (e.g. TPG) provides frames so it carries `[O]` for
-                // Output; a sink (e.g. a file writer) accepts frames so it
-                // carries `[I]` for Input.  The mediaplay CLI is named from
-                // the pipeline's perspective — `-s` takes a source backend
-                // (`[O]`) and `-d` takes a destination sink (`[I]`) — so the
-                // badge mirrors the backend's own role, not the CLI slot it
-                // plugs into.
-                //
-                // Order is Input-first so a backend that supports both (but
-                // not simultaneously) reads as `IO` — the same string a pure
-                // transform (canBeTransform only) displays, so the badge
-                // stays consistent regardless of how the backend decomposes
-                // its modes.
-                for (const MediaIOFactory *desc : MediaIOFactory::registeredFactories()) {
-                        if (desc == nullptr) continue;
-                        String caps;
-                        if (desc->canBeSink()) caps += "I";
-                        if (desc->canBeSource()) caps += "O";
-                        if (desc->canBeTransform() && caps.isEmpty()) caps = "IO";
-                        dumpBackend(desc->name(), caps, desc->description(), desc->configSpecs());
+                // One section of the help output — heading, optional
+                // free-text body under the heading, and zero or more
+                // options.  Layout column widths are computed per-section
+                // so a section of short specs (exit codes) lines up tight
+                // while the long --src spec doesn't push everything else
+                // to the right.
+                struct HelpSection {
+                                String           title;
+                                String           prose;
+                                List<HelpOption> options;
+                };
+
+                // Walks the section list and renders the full help doc
+                // to @p out.  Word-wrapping uses the runtime terminal
+                // width returned by @ref detectTerminalCols; if the
+                // stream is color-enabled, section headings and option
+                // specs pick up the accent colors from helpPalette().
+                void renderHelp(AnsiStream &out, const String &title, const String &intro,
+                                const List<HelpSection> &sections) {
+                        const int          cols = detectTerminalCols();
+                        const HelpPalette &palette = helpPalette();
+
+                        out << title << '\n' << '\n';
+                        writeWrapped(out, intro, 0, cols);
+                        out << '\n';
+
+                        for (const HelpSection &section : sections) {
+                                out << '\n';
+                                out.setForeground(palette.section);
+                                out << section.title;
+                                out.reset();
+                                out << '\n';
+
+                                if (!section.prose.isEmpty()) {
+                                        out << "  ";
+                                        writeWrapped(out, section.prose, 2, cols);
+                                        out << '\n';
+                                }
+
+                                // Spec column width is computed locally
+                                // to this section so short-spec sections
+                                // don't inherit the longest option-spec
+                                // width from the rest of the doc.
+                                int specWidth = 0;
+                                for (const HelpOption &opt : section.options) {
+                                        int sw = static_cast<int>(opt.spec.size());
+                                        if (sw > specWidth) specWidth = sw;
+                                }
+
+                                // Layout: "  <spec><pad>  <description>".
+                                // The 4 = 2 left-margin + 2 gutter.
+                                const int leftPad = 4 + specWidth;
+
+                                for (const HelpOption &opt : section.options) {
+                                        out << "  ";
+                                        out.setForeground(palette.option);
+                                        out << opt.spec;
+                                        out.reset();
+                                        int pad = specWidth - static_cast<int>(opt.spec.size()) + 2;
+                                        for (int i = 0; i < pad; ++i) out << ' ';
+                                        writeWrapped(out, opt.description, leftPad, cols);
+                                        out << '\n';
+                                }
+                        }
+                        out.flush();
                 }
 
-                // SDL is a mediaplay-local pseudo-backend — strictly a sink.
-                dumpBackend(String(kStageSdl), String("I"), String(sdlDescription()), sdlConfigSpecs());
-        }
+                // Builds the static help document.  Long descriptions are
+                // single logical lines (no embedded \n) so the renderer
+                // is free to wrap them to whatever width the terminal
+                // happens to be; explicit \n is reserved for hard
+                // paragraph boundaries inside one entry (e.g. when a
+                // single option needs a follow-up caveat paragraph).
+                List<HelpSection> buildHelpSections() {
+                        List<HelpSection> sections;
+
+                        HelpSection stages;
+                        stages.title = "Stages:";
+                        stages.options = {
+                                {"-s, --src <NAME|list>", "Source backend name (default: TPG)."},
+                                {"--sc <K:V>",
+                                 "Set one source stage config key.  Repeatable.  Passing `K:list` lists "
+                                 "valid values for Enum, EnumList, and PixelFormat keys.  Passing `K:help` "
+                                 "shows the key's type, range, and description."},
+                                {"--sm <K:V>",
+                                 "Set one source stage metadata key (Title, Artist, Copyright, ...).  "
+                                 "Repeatable."},
+                                {"-c, --convert <NAME>",
+                                 "Insert an intermediate MediaIO stage (backend name, e.g. CSC / "
+                                 "VideoEncoder / VideoDecoder / FrameSync / SRC).  Repeatable — stages "
+                                 "are chained in the order given."},
+                                {"--cc <K:V>",
+                                 "Set one config key on the most recently declared -c.  Repeatable."},
+                                {"--cm <K:V>",
+                                 "Set one metadata key on the most recently declared -c.  Repeatable."},
+                                {"-d, --dst <NAME|PATH|list>",
+                                 "Add a destination stage — a backend name (SDL, QuickTime, ImageFile, "
+                                 "...) or a file path auto-detected via MediaIO::createForFileWrite.  "
+                                 "Default destination is SDL.  Repeatable (fan-out)."},
+                                {"--dc <K:V>",
+                                 "Set one config key on the most recently declared -d.  Repeatable."},
+                                {"--dm <K:V>",
+                                 "Set one metadata key on the most recently declared -d.  Overlays "
+                                 "metadata inherited from upstream.  Repeatable."},
+                        };
+                        sections.pushToBack(std::move(stages));
+
+                        HelpSection playback;
+                        playback.title = "Playback control:";
+                        playback.options = {
+                                {"--duration <SEC>",
+                                 "Wall-clock runtime limit for the mediaplay process.  This is NOT a "
+                                 "recording length — an unpaced file-only pipeline can easily write "
+                                 "thousands of frames per second, so a 10s --duration may produce many "
+                                 "more frames of content than you expect.  Use --frame-count when you "
+                                 "want a specific number of output frames."},
+                                {"--frame-count <N>",
+                                 "Require the pipeline to deliver exactly N frames to each sink "
+                                 "(0 = unlimited).  Runs through MediaPipelineConfig::frameCount — once "
+                                 "a sink has received N frames at the next safe cut point (keyframe "
+                                 "boundary for interframe codecs) the pipeline closes that sink and "
+                                 "drops further source output on the floor.  Interframe streams may "
+                                 "overshoot by up to one GOP so the sink ends on a complete sequence of "
+                                 "GOPs."},
+                                {"--verbose", "Print periodic progress stats."},
+                                {"--stats",
+                                 "Enable live MediaIO telemetry.  Prints a BytesPerSecond / "
+                                 "FramesPerSecond / FramesDropped / QueueDepth summary for every stage "
+                                 "(source, transform, sinks) once per second by default."},
+                                {"--stats-interval <SEC>",
+                                 "Override the --stats print interval in seconds (default 1.0)."},
+                                {"--cpumon <SEC>",
+                                 "Sample per-thread CPU usage every SEC seconds and log a one-line "
+                                 "summary at Info level showing the top consumers, sorted descending.  "
+                                 "Disabled by default."},
+                                {"--elstats <SEC>",
+                                 "Sample per-EventLoop activity every SEC seconds and log a one-line "
+                                 "summary at Info level breaking each loop's wallclock into named "
+                                 "buckets.  Disabled by default."},
+                                {"--memstats",
+                                 "Print MemSpace allocation statistics for every registered memory "
+                                 "space on shutdown."},
+                        };
+                        sections.pushToBack(std::move(playback));
+
+                        HelpSection preset;
+                        preset.title = "Pipeline preset I/O:";
+                        preset.options = {
+                                {"--save-pipeline <PATH>",
+                                 "Build the pipeline from the other flags, write it to PATH as a JSON "
+                                 "preset, and exit without opening stages.  Pair with --pipeline <PATH> "
+                                 "to re-run the same pipeline later."},
+                                {"--pipeline <PATH>",
+                                 "Load the pipeline from PATH (previously written by --save-pipeline) "
+                                 "instead of building it from -s / -c / -d.  Other non-stage flags "
+                                 "(--duration, --stats, --frame-count) still apply."},
+                                {"--write-stats <PATH>",
+                                 "Append a JSON-lines snapshot of the pipeline's stats to PATH once per "
+                                 "--stats-interval, plus a final aggregate snapshot at shutdown.  "
+                                 "Implicitly turns on the stats collector (default 1s interval)."},
+                        };
+                        sections.pushToBack(std::move(preset));
+
+                        HelpSection planner;
+                        planner.title = "Planner:";
+                        planner.options = {
+                                {"--no-autoplan",
+                                 "Disable automatic bridge insertion (CSC, decoder, FrameSync, SRC, "
+                                 "encoder) before pipeline build.  Default behaviour runs "
+                                 "MediaPipelinePlanner; this flag forces a strict, fully-resolved input "
+                                 "config."},
+                                {"--plan",
+                                 "Run the planner against the resolved CLI config, print the resulting "
+                                 "stages and routes to stdout, and exit without opening anything."},
+                                {"--describe",
+                                 "Instantiate every stage, call MediaIO::describe on each, dump the "
+                                 "summary, and exit."},
+                        };
+                        sections.pushToBack(std::move(planner));
+
+                        HelpSection inspector;
+                        inspector.title = "Inspector-driven pass/fail:";
+                        inspector.prose = "Every Inspector sink is injected automatically so mediaplay can poll "
+                                          "its snapshot at shutdown.  Any discontinuity reported by Inspector "
+                                          "surfaces as exit code 21 below.";
+                        sections.pushToBack(std::move(inspector));
+
+                        HelpSection registry;
+                        registry.title = "Registry enumeration:";
+                        registry.options = {
+                                {"--list-io",
+                                 "Print every MediaIO backend on stdout and exit.  Columns: Name, Mode "
+                                 "(I=input-only, O=output-only, I/O=both, T=transform), Description."},
+                                {"--list-config <NAME>",
+                                 "Print the named backend's config schema on stdout and exit.  Each key "
+                                 "is shown with its type, range, default, and description."},
+                                {"--list-codecs [video|audio|all]",
+                                 "Print a tab-separated list of codec / backend pairs, one per line, "
+                                 "and exit.  Columns: kind, codec, backend, enc, dec (yes / no).  "
+                                 "Codecs with no registered backend are omitted entirely.  Default "
+                                 "argument is 'all'.  Intended for scripts (see "
+                                 "scripts/roundtrip-codecs.sh)."},
+                        };
+                        sections.pushToBack(std::move(registry));
+
+                        HelpSection exits;
+                        exits.title = "Exit codes (applicable to all runs):";
+                        // Right-justify the exit code column manually
+                        // (the spec column is left-aligned in render);
+                        // a leading space gives "  0" / " 10" alignment.
+                        exits.options = {
+                                {" 0", "Success."},
+                                {" 1", "Generic failure (CLI, argparse, setup)."},
+                                {"10", "Pipeline build failed (planner could not resolve)."},
+                                {"11", "Pipeline open failed."},
+                                {"12", "Pipeline start failed."},
+                                {"13", "Pipeline runtime error (pipelineErrorSignal fired)."},
+                                {"21", "Inspector discontinuity detected."},
+                        };
+                        sections.pushToBack(std::move(exits));
+
+                        HelpSection misc;
+                        misc.title = "Misc:";
+                        misc.options = {
+                                {"-h, --help", "Show this help text."},
+                        };
+                        sections.pushToBack(std::move(misc));
+
+                        return sections;
+                }
+
+        } // namespace
 
         void usage() {
-                fprintf(stderr, "Usage: mediaplay [OPTIONS]\n"
-                                "\n"
-                                "Pumps media frames from one MediaIO source, through zero or more\n"
-                                "intermediate transform stages (CSC, SRC, VideoEncoder, etc.), out\n"
-                                "to one or more MediaIO sinks.  Every stage is configured via\n"
-                                "generic Key:Value options whose values are parsed against the\n"
-                                "backend's default config.  Pacing is implicit: if an SDL\n"
-                                "destination is present it drives the pipeline at video rate\n"
-                                "(audio-led clock), otherwise frames flow as fast as the file\n"
-                                "sinks can consume them.\n"
-                                "\n"
-                                "Backend badges in the schema below show which direction each\n"
-                                "backend supports:\n"
-                                "  [O]  = Output — backend provides frames; use with -s\n"
-                                "  [I]  = Input  — backend accepts frames; use with -d\n"
-                                "  [IO] = both\n"
-                                "\n"
-                                "Stages:\n"
-                                "  -s, --src <NAME|list>     Source backend name (default: TPG).\n"
-                                "  --sc <K:V>                Set one source stage config key.\n"
-                                "                            Repeatable.  Passing `K:list`\n"
-                                "                            lists valid values for Enum,\n"
-                                "                            EnumList, and PixelFormat keys.\n"
-                                "                            Passing `K:help` shows the key's\n"
-                                "                            type, range, and description.\n"
-                                "  --sm <K:V>                Set one source stage metadata key\n"
-                                "                            (Title, Artist, Copyright, ...).\n"
-                                "                            Repeatable.\n"
-                                "  -c, --convert <NAME>      Insert an intermediate MediaIO\n"
-                                "                            stage (backend name, e.g.\n"
-                                "                            CSC / VideoEncoder /\n"
-                                "                            VideoDecoder / FrameSync /\n"
-                                "                            SRC).  Repeatable — stages\n"
-                                "                            are chained in the order\n"
-                                "                            given.\n"
-                                "  --cc <K:V>                Set one config key on the\n"
-                                "                            most recently declared -c.\n"
-                                "                            Repeatable.\n"
-                                "  --cm <K:V>                Set one metadata key on the\n"
-                                "                            most recently declared -c.\n"
-                                "                            Repeatable.\n"
-                                "  -d, --dst <NAME|PATH|list>\n"
-                                "                            Add a destination stage — a backend\n"
-                                "                            name (SDL, QuickTime, ImageFile,\n"
-                                "                            ...) or a file path auto-detected\n"
-                                "                            via MediaIO::createForFileWrite.\n"
-                                "                            Default destination is SDL.\n"
-                                "                            Repeatable (fan-out).\n"
-                                "  --dc <K:V>                Set one config key on the most\n"
-                                "                            recently declared -d.  Repeatable.\n"
-                                "  --dm <K:V>                Set one metadata key on the most\n"
-                                "                            recently declared -d.  Overlays\n"
-                                "                            metadata inherited from upstream.\n"
-                                "                            Repeatable.\n"
-                                "\n"
-                                "Playback control:\n"
-                                "  --duration <SEC>          Wall-clock runtime limit for\n"
-                                "                            the mediaplay process.  This\n"
-                                "                            is NOT a recording length — an\n"
-                                "                            unpaced file-only pipeline can\n"
-                                "                            easily write thousands of\n"
-                                "                            frames per second, so a 10s\n"
-                                "                            --duration may produce many\n"
-                                "                            more frames of content than\n"
-                                "                            you expect.  Use --frame-count\n"
-                                "                            when you want a specific\n"
-                                "                            number of output frames.\n"
-                                "  --frame-count <N>         Require the pipeline to deliver\n"
-                                "                            exactly N frames to each sink\n"
-                                "                            (0 = unlimited).  Runs through\n"
-                                "                            MediaPipelineConfig::frameCount\n"
-                                "                            — once a sink has received N\n"
-                                "                            frames at the next safe cut\n"
-                                "                            point (keyframe boundary for\n"
-                                "                            interframe codecs) the pipeline\n"
-                                "                            closes that sink and drops\n"
-                                "                            further source output on the\n"
-                                "                            floor.  Interframe streams may\n"
-                                "                            overshoot by up to one GOP so\n"
-                                "                            the sink ends on a complete\n"
-                                "                            sequence of GOPs.\n"
-                                "  --verbose                 Print periodic progress stats.\n"
-                                "  --stats                   Enable live MediaIO telemetry.\n"
-                                "                            Prints a BytesPerSecond /\n"
-                                "                            FramesPerSecond / FramesDropped /\n"
-                                "                            QueueDepth summary for every stage\n"
-                                "                            (source, transform, sinks) once per\n"
-                                "                            second by default.\n"
-                                "  --stats-interval <SEC>    Override the --stats print interval\n"
-                                "                            in seconds (default 1.0).\n"
-                                "  --cpumon <SEC>            Sample per-thread CPU usage every\n"
-                                "                            SEC seconds and log a one-line\n"
-                                "                            summary at Info level showing the\n"
-                                "                            top consumers, sorted descending.\n"
-                                "                            Disabled by default.\n"
-                                "  --elstats <SEC>           Sample per-EventLoop activity every\n"
-                                "                            SEC seconds and log a one-line\n"
-                                "                            summary at Info level breaking each\n"
-                                "                            loop's wallclock into named buckets.\n"
-                                "                            Disabled by default.\n"
-                                "  --memstats                Print MemSpace allocation\n"
-                                "                            statistics for every registered\n"
-                                "                            memory space on shutdown.\n"
-                                "\n"
-                                "Pipeline preset I/O:\n"
-                                "  --save-pipeline <PATH>    Build the pipeline from the other flags,\n"
-                                "                            write it to PATH as a JSON preset, and\n"
-                                "                            exit without opening stages.  Pair with\n"
-                                "                            --pipeline <PATH> to re-run the same\n"
-                                "                            pipeline later.\n"
-                                "  --pipeline <PATH>         Load the pipeline from PATH (previously\n"
-                                "                            written by --save-pipeline) instead of\n"
-                                "                            building it from -s / -c / -d.  Other\n"
-                                "                            non-stage flags (--duration, --stats,\n"
-                                "                            --frame-count) still apply.\n"
-                                "  --write-stats <PATH>      Append a JSON-lines snapshot of the\n"
-                                "                            pipeline's stats to PATH once per\n"
-                                "                            --stats-interval, plus a final\n"
-                                "                            aggregate snapshot at shutdown.\n"
-                                "                            Implicitly turns on the stats\n"
-                                "                            collector (default 1s interval).\n"
-                                "\n"
-                                "Planner:\n"
-                                "  --no-autoplan             Disable automatic bridge insertion\n"
-                                "                            (CSC, decoder, FrameSync, SRC, encoder)\n"
-                                "                            before pipeline build.  Default behaviour\n"
-                                "                            runs MediaPipelinePlanner; this flag forces\n"
-                                "                            a strict, fully-resolved input config.\n"
-                                "  --plan                    Run the planner against the resolved CLI\n"
-                                "                            config, print the resulting stages and\n"
-                                "                            routes to stdout, and exit without opening\n"
-                                "                            anything.\n"
-                                "  --describe                Instantiate every stage, call\n"
-                                "                            MediaIO::describe on each, dump the\n"
-                                "                            summary, and exit.\n"
-                                "\n"
-                                "Inspector-driven pass/fail:\n"
-                                "  Every Inspector sink is injected automatically so mediaplay\n"
-                                "  can poll its snapshot at shutdown.  Any discontinuity reported\n"
-                                "  by Inspector surfaces as exit code 21 below.\n"
-                                "\n"
-                                "Codec enumeration:\n"
-                                "  --list-codecs [video|audio|all]\n"
-                                "                            Print a tab-separated list of codec /\n"
-                                "                            backend pairs, one per line, and exit.\n"
-                                "                            Columns: kind, codec, backend, enc, dec\n"
-                                "                            (yes / no).  Codecs with no registered\n"
-                                "                            backend are omitted entirely.  Default\n"
-                                "                            argument is 'all'.  Intended for scripts\n"
-                                "                            (see scripts/roundtrip-codecs.sh).\n"
-                                "\n"
-                                "Exit codes (applicable to all runs):\n"
-                                "   0  Success.\n"
-                                "   1  Generic failure (CLI, argparse, setup).\n"
-                                "  10  Pipeline build failed (planner could not resolve).\n"
-                                "  11  Pipeline open failed.\n"
-                                "  12  Pipeline start failed.\n"
-                                "  13  Pipeline runtime error (pipelineErrorSignal fired).\n"
-                                "  21  Inspector discontinuity detected.\n"
-                                "\n"
-                                "Misc:\n"
-                                "  -h, --help                Show this help text and the schema.\n");
-                printBackendConfigHelp();
+                AnsiStream out(FileIODevice::stdoutDevice());
+                out.setAnsiEnabled(helpUseColor());
+
+                const String title = "Usage: mediaplay [OPTIONS]";
+                const String intro =
+                        "Pumps media frames from one MediaIO source, through zero or more intermediate "
+                        "transform stages (CSC, SRC, VideoEncoder, etc.), out to one or more MediaIO "
+                        "sinks.  Every stage is configured via generic Key:Value options whose values "
+                        "are parsed against the backend's default config.  Pacing is implicit: if an "
+                        "SDL destination is present it drives the pipeline at video rate (audio-led "
+                        "clock), otherwise frames flow as fast as the file sinks can consume them.\n"
+                        "\n"
+                        "Use --list-io for the registry of available MediaIO backends and --list-config "
+                        "<NAME> for one backend's config schema.";
+
+                renderHelp(out, title, intro, buildHelpSections());
         }
 
         bool parseOptions(int argc, char **argv, Options &opts) {
@@ -281,7 +301,7 @@ namespace mediaplay {
                 opts.source.type = "TPG"; // default source
 
                 parser.registerOptions({
-                        {'h', "help", "Show help text and backend config schema", CmdLineParser::OptionCallback([&]() {
+                        {'h', "help", "Show help text", CmdLineParser::OptionCallback([&]() {
                                  helpRequested = true;
                                  return 0;
                          })},
@@ -487,6 +507,23 @@ namespace mediaplay {
                                          opts.statsInterval = 1.0;
                                  }
                                  return 0;
+                         })},
+
+                        {0, "list-io",
+                         "Print every MediaIO backend (Name, Mode, Description) and exit",
+                         CmdLineParser::OptionCallback([&]() {
+                                 listMediaIOBackendsAndExit();
+                                 return 0; // unreachable
+                         })},
+                        {0, "list-config",
+                         "Print the named backend's config schema (--list-config <NAME>) and exit",
+                         CmdLineParser::OptionStringCallback([&](const String &s) {
+                                 if (s.isEmpty()) {
+                                         fprintf(stderr, "Error: --list-config requires a MediaIO backend name\n");
+                                         return 1;
+                                 }
+                                 listMediaIOConfigAndExit(s);
+                                 return 0; // unreachable
                          })},
 
                         {0, "list-codecs", "Print codec/backend list (video|audio|all) as TSV and exit",

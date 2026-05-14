@@ -7,8 +7,8 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <map>
 #include <promeki/datetime.h>
+#include <promeki/map.h>
 #include <promeki/stringlist.h>
 #include <promeki/logger.h>
 
@@ -75,11 +75,11 @@ String DateTime::toString(const char *fmt) const {
 
 DateTime DateTime::fromNow(const String &description) {
         using namespace std::chrono;
-        static const std::map<std::string, system_clock::duration> units = {{"second", seconds(1)},
-                                                                            {"minute", minutes(1)},
-                                                                            {"hour", hours(1)},
-                                                                            {"day", hours(24)},
-                                                                            {"week", hours(24 * 7)}};
+        static const Map<String, system_clock::duration> units = {{"second", seconds(1)},
+                                                                  {"minute", minutes(1)},
+                                                                  {"hour", hours(1)},
+                                                                  {"day", hours(24)},
+                                                                  {"week", hours(24 * 7)}};
 
         StringList             tokens = description.split(" ");
         int64_t                count = 0;
@@ -88,7 +88,7 @@ DateTime DateTime::fromNow(const String &description) {
         int                    years = 0;
 
         for (size_t ti = 0; ti < tokens.size(); ++ti) {
-                std::string token = tokens[ti].toLower().str();
+                String token = tokens[ti].toLower();
 
                 // Handle "next" and "previous" tokens
                 if (token == "next") {
@@ -100,9 +100,9 @@ DateTime DateTime::fromNow(const String &description) {
                 }
 
                 // Try to parse the token as an integer count
-                char     *endp = nullptr;
-                long long parsed = std::strtoll(token.c_str(), &endp, 10);
-                if (endp != token.c_str() && *endp == '\0') {
+                Error err;
+                int64_t parsed = token.to<int64_t>(&err);
+                if (err.isOk()) {
                         count = parsed;
                         continue;
                 }
@@ -111,7 +111,7 @@ DateTime DateTime::fromNow(const String &description) {
                 //if(parse_number_word(token, count)) continue;
 
                 // Remove trailing 's' if present (e.g., "days" -> "day")
-                if (token.back() == 's') token.pop_back();
+                if (!token.isEmpty() && token.endsWith('s')) token = token.left(token.length() - 1);
 
                 // Look up the duration unit in the map and accumulate the total duration
                 auto it = units.find(token);

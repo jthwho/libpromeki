@@ -260,7 +260,7 @@ namespace {
                         "  -h, --help               Show this help text and exit\n"
                         "  -l, --list               Print the (filtered) case list and exit\n"
                         "  -k, --regex PATTERN      Restrict to cases whose dotted name matches\n"
-                        "                             PATTERN (std::regex_search, ECMAScript).\n"
+                        "                             PATTERN (RegEx::search, ECMAScript grammar).\n"
                         "                             Repeatable — a case is included if ANY\n"
                         "                             pattern matches it.  Default: run everything.\n"
                         "  -b, --base DIR           Base folder for per-test scratch space\n"

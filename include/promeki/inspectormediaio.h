@@ -9,6 +9,7 @@
 
 #include <cstdio>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/mediaiofactory.h>
@@ -619,7 +620,7 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 PROMEKI_OBJECT(InspectorMediaIO, SharedThreadMediaIO)
         public:
                 /// Per-frame callback signature.
-                using EventCallback = std::function<void(const InspectorEvent &)>;
+                using EventCallback = Function<void(const InspectorEvent &)>;
 
                 /** @brief Constructs an inspector. */
                 InspectorMediaIO(ObjectBase *parent = nullptr);
@@ -775,7 +776,7 @@ class InspectorMediaIO : public SharedThreadMediaIO {
                 // 4-transition search happens to land on a samplesPerBit
                 // inside the decoder's bandwidth gate.
                 // Stored as @c uint8_t (0/1) rather than @c bool —
-                // @c List<bool> wraps @c std::vector<bool> whose
+                // @c List<bool> wraps @c List<bool> whose
                 // proxy references break the lvalue interfaces our
                 // @c List wrapper exposes.
                 List<uint8_t> _audioDataChannelActive;

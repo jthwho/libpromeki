@@ -8,12 +8,11 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
 #include <promeki/duration.h>
 #include <promeki/error.h>
+#include <promeki/map.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
-#include <promeki/queue.h>
 #include <promeki/rtppacket.h>
 #include <promeki/timestamp.h>
 
@@ -33,7 +32,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Emission rules
  * @ref insert may synchronously emit zero or more packets to the
- * supplied output @c Queue<RtpPacket>:
+ * supplied output @c RtpPacket::Queue:
  * - **In-order delivery**: as soon as the next-expected extended
  *   seq fills, emit it (and any contiguous tail) immediately.
  * - **Deadline-driven gap-fill**: when the oldest buffered
@@ -129,7 +128,7 @@ class RtpSeqReorderBuffer {
                  *                      pressure upstream.
                  */
                 void insert(RtpPacket pkt, uint32_t extendedSeq,
-                            const TimeStamp &arrivalSteady, Queue<RtpPacket> &out);
+                            const TimeStamp &arrivalSteady, RtpPacket::Queue &out);
 
                 /**
                  * @brief Drain everything still buffered.
@@ -141,7 +140,7 @@ class RtpSeqReorderBuffer {
                  * since the gap (if any) is closed by force at
                  * flush time.
                  */
-                void flush(Queue<RtpPacket> &out);
+                void flush(RtpPacket::Queue &out);
 
                 /**
                  * @brief Drop everything currently buffered without
@@ -166,17 +165,20 @@ class RtpSeqReorderBuffer {
                                 TimeStamp arrival;
                 };
 
+                /// @brief Reorder window keyed by extended sequence number.
+                using EntryMap = Map<uint32_t, Entry>;
+
                 // Drains any in-order tail starting at the next-
                 // expected seq.  Caller must hold @c _mutex.
-                void drainInOrderLocked(Queue<RtpPacket> &out);
+                void drainInOrderLocked(RtpPacket::Queue &out);
 
                 // Emits the head entry as a deadline-fill case.
                 // Caller must hold @c _mutex.
-                void emitHeadLocked(Queue<RtpPacket> &out, bool deadline);
+                void emitHeadLocked(RtpPacket::Queue &out, bool deadline);
 
                 mutable Mutex                _mutex;
                 Config                       _config;
-                std::map<uint32_t, Entry>    _buf;
+                EntryMap                     _buf;
                 bool                         _haveExpected = false;
                 uint32_t                     _expectedSeq = 0;
                 Stats                        _stats;

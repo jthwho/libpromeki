@@ -39,6 +39,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <promeki/optional.h>
 #include <promeki/application.h>
 #include <promeki/dir.h>
 #include <promeki/error.h>
@@ -112,10 +113,10 @@ class DemoState {
 };
 
 PROMEKI_LOOKUP_REGISTER(DemoState)
-        .scalar("name", [](const DemoState &s) { return std::optional<Variant>(Variant(s.name)); })
-        .scalar("counter", [](const DemoState &s) { return std::optional<Variant>(Variant(s.counter)); })
-        .scalar("running", [](const DemoState &s) { return std::optional<Variant>(Variant(s.running)); })
-        .scalar("lastValue", [](const DemoState &s) { return std::optional<Variant>(Variant(s.lastValue)); });
+        .scalar("name", [](const DemoState &s) { return Optional<Variant>(Variant(s.name)); })
+        .scalar("counter", [](const DemoState &s) { return Optional<Variant>(Variant(s.counter)); })
+        .scalar("running", [](const DemoState &s) { return Optional<Variant>(Variant(s.running)); })
+        .scalar("lastValue", [](const DemoState &s) { return Optional<Variant>(Variant(s.lastValue)); });
 
 // ============================================================
 // Argument parsing — tiny, no library deps.

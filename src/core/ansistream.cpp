@@ -8,14 +8,15 @@
 #include <climits>
 #include <cstdlib>
 #include <cstdio>
-#include <unordered_map>
 #include <promeki/ansistream.h>
+#include <promeki/hashmap.h>
 #include <promeki/iodevice.h>
 #include <promeki/platform.h>
 #include <promeki/error.h>
 #include <promeki/terminal.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
+#include <io.h>
 #include <windows.h>
 #else
 #include <sys/ioctl.h>
@@ -291,15 +292,15 @@ static uint32_t colorHash(uint8_t r, uint8_t g, uint8_t b) {
         return (static_cast<uint32_t>(r) << 16) | (static_cast<uint32_t>(g) << 8) | b;
 }
 
-static const std::unordered_map<uint32_t, uint8_t> &paletteHashMap() {
-        static std::unordered_map<uint32_t, uint8_t> map = []() {
-                std::unordered_map<uint32_t, uint8_t> m;
+static const HashMap<uint32_t, uint8_t> &paletteHashMap() {
+        static HashMap<uint32_t, uint8_t> map = []() {
+                HashMap<uint32_t, uint8_t> m;
                 m.reserve(256);
                 for (int i = 0; i < 256; ++i) {
                         uint32_t h = colorHash(ansiPalette[i][0], ansiPalette[i][1], ansiPalette[i][2]);
                         // First entry wins — system colors take priority over cube duplicates
-                        if (m.find(h) == m.end()) {
-                                m[h] = static_cast<uint8_t>(i);
+                        if (!m.contains(h)) {
+                                m.insert(h, static_cast<uint8_t>(i));
                         }
                 }
                 return m;
@@ -406,6 +407,24 @@ AnsiStream &AnsiStream::setBackground(const Color &color, int maxIndex) {
 }
 
 bool AnsiStream::stdoutSupportsANSI() {
+        // Even when env vars say the terminal supports color, redirecting
+        // stdout to a pipe / file / CI log should drop the escape codes —
+        // they show up as `^[[36m` garbage in saved logs and break
+        // downstream parsers that don't know to strip them.  isatty is
+        // the cheapest signal for "stdout is actually a terminal".
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        if (_isatty(_fileno(stdout)) == 0) return false;
+#else
+        if (::isatty(STDOUT_FILENO) == 0) return false;
+#endif
+        // NO_COLOR (https://no-color.org/) is "no ANSI codes at all".
+        // Terminal::colorSupport degrades to a grayscale level when
+        // NO_COLOR is set so TUIs that want to keep some structure can
+        // still render — but raw-text users (help output, log lines)
+        // expect zero escape sequences, so we treat NO_COLOR as a hard
+        // off here.  Presence-only per the spec.
+        const char *noColor = std::getenv("NO_COLOR");
+        if (noColor != nullptr && *noColor != '\0') return false;
         return Terminal::colorSupport() > Terminal::NoColor;
 }
 
@@ -429,8 +448,7 @@ bool AnsiStream::stdoutWindowSize(int &rows, int &cols) {
 }
 
 AnsiStream &AnsiStream::write(const String &text) {
-        const std::string &s = text.str();
-        _device->write(s.data(), static_cast<int64_t>(s.size()));
+        _device->write(text.cstr(), static_cast<int64_t>(text.byteCount()));
         return *this;
 }
 
@@ -479,9 +497,9 @@ bool AnsiStream::getCursorPosition(IODevice *input, int &row, int &col) {
         if (!success) return false;
 
         // Parse the response to extract the row and column values
-        if (response.length() >= 4 && response[0] == '\033' && response[1] == '[') {
+        if (response.length() >= 4 && response.charAt(0) == '\033' && response.charAt(1) == '[') {
                 size_t semicolonPos = response.find(';');
-                if (semicolonPos != std::string::npos) {
+                if (semicolonPos != String::npos) {
                         Error err;
                         row = response.substr(2, semicolonPos - 2).toInt(&err);
                         if (err.isError()) return false;

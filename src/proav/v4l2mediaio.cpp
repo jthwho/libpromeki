@@ -24,6 +24,7 @@
 #include <promeki/compressedvideopayload.h>
 #include <promeki/dir.h>
 #include <promeki/duration.h>
+#include <promeki/filepath.h>
 #include <promeki/frame.h>
 #include <promeki/logger.h>
 #include <promeki/mediadesc.h>
@@ -306,31 +307,28 @@ static void applyV4l2Controls(int fd, const MediaIO::Config &cfg) {
 // PROMEKI_DEBUG(V4l2MediaIO) declaration above.
 
 static String findPairedAlsaDevice(const String &v4l2DevPath) {
-        namespace fs = std::filesystem;
-
         // Extract the device name (e.g. "video0") from "/dev/video0"
-        fs::path    devNode(v4l2DevPath.cstr());
-        std::string devName = devNode.filename().string();
+        FilePath devNode(v4l2DevPath);
+        String   devName = devNode.fileName();
 
         // Resolve the V4L2 sysfs device symlink to its real path
-        fs::path        v4l2SysfsLink = fs::path("/sys/class/video4linux") / devName / "device";
-        std::error_code ec;
-        fs::path        v4l2InterfacePath = fs::canonical(v4l2SysfsLink, ec);
-        if (ec) {
-                promekiDebug("V4l2MediaIO: auto-detect: cannot resolve %s: %s", v4l2SysfsLink.c_str(),
-                             ec.message().c_str());
+        FilePath v4l2SysfsLink = FilePath("/sys/class/video4linux") / devName / "device";
+        auto     canonResult = v4l2SysfsLink.canonicalPath();
+        if (canonResult.second().isError()) {
+                promekiDebug("V4l2MediaIO: auto-detect: cannot resolve %s", v4l2SysfsLink.toString().cstr());
                 return String();
         }
+        FilePath v4l2InterfacePath = canonResult.first();
 
         // The V4L2 interface path ends with the USB interface
         // (e.g. "1-1:1.0").  The parent is the USB device.
-        fs::path    usbDevicePath = v4l2InterfacePath.parent_path();
-        std::string usbDeviceStr = usbDevicePath.string();
-        if (usbDeviceStr.empty()) return String();
+        FilePath usbDevicePath = v4l2InterfacePath.parent();
+        String   usbDeviceStr = usbDevicePath.toString();
+        if (usbDeviceStr.isEmpty()) return String();
 
         promekiDebug("V4l2MediaIO: auto-detect: %s interface=%s  "
                      "usbDevice=%s",
-                     devName.c_str(), v4l2InterfacePath.c_str(), usbDeviceStr.c_str());
+                     devName.cstr(), v4l2InterfacePath.toString().cstr(), usbDeviceStr.cstr());
 
         // Scan ALSA cards for one whose parent device is under the
         // same USB device.
@@ -339,20 +337,17 @@ static String findPairedAlsaDevice(const String &v4l2DevPath) {
         auto cards = soundDir.entryList("card*");
         for (const auto &cardEntry : cards) {
                 String   cardName = cardEntry.fileName();
-                fs::path cardDevLink = fs::path("/sys/class/sound") / cardName.cstr() / "device";
-                fs::path cardDevPath = fs::canonical(cardDevLink, ec);
-                if (ec) {
-                        ec.clear();
-                        continue;
-                }
+                FilePath cardDevLink = FilePath("/sys/class/sound") / cardName / "device";
+                auto     cardCanon = cardDevLink.canonicalPath();
+                if (cardCanon.second().isError()) continue;
 
-                std::string cardDevStr = cardDevPath.string();
+                String cardDevStr = cardCanon.first().toString();
                 // Check whether the ALSA card's device path is under
                 // the same USB device (common parent).
-                if (cardDevStr.find(usbDeviceStr) == std::string::npos) {
+                if (cardDevStr.find(usbDeviceStr) == String::npos) {
                         promekiDebug("V4l2MediaIO: auto-detect: %s → %s  "
                                      "not under USB device, skipping",
-                                     cardName.cstr(), cardDevStr.c_str());
+                                     cardName.cstr(), cardDevStr.cstr());
                         continue;
                 }
 
@@ -363,7 +358,7 @@ static String findPairedAlsaDevice(const String &v4l2DevPath) {
 
                 // Check that a capture PCM device exists for this card
                 String captureNode = String::sprintf("/dev/snd/pcmC%dD0c", cardNum);
-                if (!fs::exists(captureNode.cstr(), ec)) {
+                if (!FilePath(captureNode).exists()) {
                         promekiDebug("V4l2MediaIO: auto-detect: %s matches USB "
                                      "parent but %s not found",
                                      cardName.cstr(), captureNode.cstr());
@@ -378,7 +373,7 @@ static String findPairedAlsaDevice(const String &v4l2DevPath) {
         }
         promekiDebug("V4l2MediaIO: auto-detect: no ALSA card shares USB "
                      "parent %s",
-                     usbDeviceStr.c_str());
+                     usbDeviceStr.cstr());
         return String();
 }
 

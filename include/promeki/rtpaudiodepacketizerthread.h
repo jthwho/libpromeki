@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/audiodesc.h>
 #include <promeki/clockdomain.h>
@@ -110,14 +111,14 @@ struct RtpAudioDepacketizerContext {
                 ///        atomic, so this is invoked through a
                 ///        callback the owner provides.  May be
                 ///        @c nullptr in tests.
-                std::function<void()> noteFrameReceived;
+                Function<void()> noteFrameReceived;
 
                 /// @brief Refreshes @ref streamClock from any
                 ///        newly arrived SR on the per-stream
                 ///        RtpSession.  Called once per packet at
                 ///        the top of @c handlePacket.  May be
                 ///        empty in tests.
-                std::function<void()> refreshStreamClock;
+                Function<void()> refreshStreamClock;
 
                 /// @brief Converts an NTP timestamp to local
                 ///        steady time using the owning
@@ -127,7 +128,7 @@ struct RtpAudioDepacketizerContext {
                 ///        valid (the depacketizer falls back to
                 ///        the anchor-derived captureTime in that
                 ///        case).  May be empty in tests.
-                std::function<TimeStamp(const NtpTime &)> ntpToSteady;
+                Function<TimeStamp(const NtpTime &)> ntpToSteady;
 };
 
 /**

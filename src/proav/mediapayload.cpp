@@ -10,6 +10,7 @@
  * knowing the type statically.
  */
 
+#include <promeki/optional.h>
 #include <promeki/mediapayload.h>
 #include <promeki/datastream.h>
 #include <promeki/buffer.h>
@@ -377,7 +378,7 @@ void CompressedAudioPayload::deserialisePayload(DataStream &s) {
 
 PROMEKI_LOOKUP_REGISTER(MediaPayload)
         .scalar(
-                "PTS", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.pts()); },
+                "PTS", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.pts()); },
                 [](MediaPayload &p, const Variant &v) -> Error {
                         Error          e;
                         MediaTimeStamp ts = v.get<MediaTimeStamp>(&e);
@@ -386,7 +387,7 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                         return Error::Ok;
                 })
         .scalar(
-                "DTS", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.dts()); },
+                "DTS", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.dts()); },
                 [](MediaPayload &p, const Variant &v) -> Error {
                         Error          e;
                         MediaTimeStamp ts = v.get<MediaTimeStamp>(&e);
@@ -396,7 +397,7 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                 })
         .scalar(
                 "Duration",
-                [](const MediaPayload &p) -> std::optional<Variant> {
+                [](const MediaPayload &p) -> Optional<Variant> {
                         if (!p.hasDuration()) return std::nullopt;
                         return Variant(p.duration());
                 },
@@ -406,10 +407,10 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                         if (e.isError()) return Error::ConversionFailed;
                         return p.setDuration(d);
                 })
-        .scalar("HasDuration", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.hasDuration()); })
+        .scalar("HasDuration", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.hasDuration()); })
         .scalar(
                 "StreamIndex",
-                [](const MediaPayload &p) -> std::optional<Variant> {
+                [](const MediaPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<int32_t>(p.streamIndex()));
                 },
                 [](MediaPayload &p, const Variant &v) -> Error {
@@ -421,7 +422,7 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                 })
         .scalar(
                 "Flags",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(flagsToString(p.flags())); },
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(flagsToString(p.flags())); },
                 [](MediaPayload &p, const Variant &v) -> Error {
                         // Accept either the string form (comma-separated
                         // names / bit indices emitted by the getter) or
@@ -443,31 +444,31 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                         return Error::Ok;
                 })
         .scalar("Kind",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(String(p.kind().valueName())); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(String(p.kind().valueName())); })
         .scalar("PlaneCount",
-                [](const MediaPayload &p) -> std::optional<Variant> {
+                [](const MediaPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.planeCount()));
                 })
         .scalar("ByteSize",
-                [](const MediaPayload &p) -> std::optional<Variant> {
+                [](const MediaPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.size()));
                 })
-        .scalar("IsValid", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isValid()); })
+        .scalar("IsValid", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isValid()); })
         .scalar("IsCompressed",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isCompressed()); })
-        .scalar("IsKeyframe", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isKeyframe()); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isCompressed()); })
+        .scalar("IsKeyframe", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isKeyframe()); })
         .scalar("IsSafeCutPoint",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isSafeCutPoint()); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isSafeCutPoint()); })
         .scalar("IsDiscardable",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isDiscardable()); })
-        .scalar("IsCorrupt", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isCorrupt()); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isDiscardable()); })
+        .scalar("IsCorrupt", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isCorrupt()); })
         .scalar("IsEndOfStream",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isEndOfStream()); })
-        .scalar("IsExclusive", [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.isExclusive()); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isEndOfStream()); })
+        .scalar("IsExclusive", [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.isExclusive()); })
         .scalar("CorruptReason",
-                [](const MediaPayload &p) -> std::optional<Variant> { return Variant(p.corruptReason()); })
+                [](const MediaPayload &p) -> Optional<Variant> { return Variant(p.corruptReason()); })
         .scalar("SubclassFourCC",
-                [](const MediaPayload &p) -> std::optional<Variant> {
+                [](const MediaPayload &p) -> Optional<Variant> {
                         // Render as the four-byte ASCII mnemonic for
                         // human-readable dumps; callers that need the
                         // raw integer can go through Variant::get.
@@ -486,7 +487,7 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
         // BufferView — there's no stable pointer to the slice.
         .indexedChildByValue<BufferView::Entry>("Buffer",
                                                 [](const MediaPayload &p,
-                                                   size_t              idx) -> std::optional<BufferView::Entry> {
+                                                   size_t              idx) -> Optional<BufferView::Entry> {
                                                         if (idx >= p.data().count()) return std::nullopt;
                                                         return p.data()[idx];
                                                 });
@@ -504,16 +505,16 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
 PROMEKI_LOOKUP_REGISTER(CompressedVideoPayload)
         .inheritsFrom<VideoPayload>()
         .scalar("FrameType",
-                [](const CompressedVideoPayload &p) -> std::optional<Variant> {
+                [](const CompressedVideoPayload &p) -> Optional<Variant> {
                         return Variant(String(p.frameType().valueName()));
                 })
         .scalar("IsParameterSet",
-                [](const CompressedVideoPayload &p) -> std::optional<Variant> { return Variant(p.isParameterSet()); })
+                [](const CompressedVideoPayload &p) -> Optional<Variant> { return Variant(p.isParameterSet()); })
         .scalar("HasInBandCodecData",
-                [](const CompressedVideoPayload &p) -> std::optional<Variant> {
+                [](const CompressedVideoPayload &p) -> Optional<Variant> {
                         return Variant(p.inBandCodecData().isValid());
                 })
-        .scalar("InBandCodecDataSize", [](const CompressedVideoPayload &p) -> std::optional<Variant> {
+        .scalar("InBandCodecDataSize", [](const CompressedVideoPayload &p) -> Optional<Variant> {
                 const auto &b = p.inBandCodecData();
                 return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
         });
@@ -521,10 +522,10 @@ PROMEKI_LOOKUP_REGISTER(CompressedVideoPayload)
 PROMEKI_LOOKUP_REGISTER(CompressedAudioPayload)
         .inheritsFrom<AudioPayload>()
         .scalar("HasInBandCodecData",
-                [](const CompressedAudioPayload &p) -> std::optional<Variant> {
+                [](const CompressedAudioPayload &p) -> Optional<Variant> {
                         return Variant(p.inBandCodecData().isValid());
                 })
-        .scalar("InBandCodecDataSize", [](const CompressedAudioPayload &p) -> std::optional<Variant> {
+        .scalar("InBandCodecDataSize", [](const CompressedAudioPayload &p) -> Optional<Variant> {
                 const auto &b = p.inBandCodecData();
                 return Variant(static_cast<uint64_t>(b.isValid() ? b.size() : 0u));
         });

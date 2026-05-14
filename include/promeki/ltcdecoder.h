@@ -143,8 +143,8 @@ class LtcDecoder {
                 /// Reusable scratch buffers for the format-agnostic decode
                 /// path; held as members so per-call allocation is amortised
                 /// across the inspector / monitor use case.
-                std::vector<float>  _floatScratch;
-                std::vector<int8_t> _int8Scratch;
+                List<float>  _floatScratch;
+                List<int8_t> _int8Scratch;
 
                 /// Shared implementation behind both @ref decode overloads.
                 /// Takes the raw interleaved byte range plus the descriptor

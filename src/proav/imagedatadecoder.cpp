@@ -10,6 +10,7 @@
 #include <cstring>
 #include <numeric>
 #include <vector>
+#include <promeki/list.h>
 #include <promeki/imagedatadecoder.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelmemlayout.h>
@@ -222,7 +223,7 @@ namespace {
         // Builds the @c imageWidth-long luma array from the converted RGBA8
         // strip according to the supplied sample mode.
         void extractLumaRow(const UncompressedVideoPayload &rgba, uint32_t sliceFirst, uint32_t lineCount,
-                            ImageDataDecoder::SampleMode mode, std::vector<uint8_t> &out) {
+                            ImageDataDecoder::SampleMode mode, List<uint8_t> &out) {
                 const size_t   width = rgba.desc().width();
                 const size_t   height = rgba.desc().height();
                 auto           view = rgba.plane(0);
@@ -242,7 +243,7 @@ namespace {
                 // AverageBand: sum each column across all rows, divide by
                 // lineCount.  Sums fit in uint32 because lineCount * 255 <
                 // 2^32 for any plausible band height.
-                std::vector<uint32_t> sumBuf(width, 0);
+                List<uint32_t> sumBuf(width, 0);
                 for (uint32_t row = 0; row < lineCount; row++) {
                         const uint8_t *line = base + static_cast<size_t>(sliceFirst + row) * stride;
                         for (size_t x = 0; x < width; x++) {
@@ -313,12 +314,12 @@ ImageDataDecoder::DecodedItem ImageDataDecoder::decodeOne(const UncompressedVide
                 return item;
         }
 
-        std::vector<uint8_t> row;
+        List<uint8_t> row;
         extractLumaRow(*rgba, sliceFirst, band.lineCount, _sampleMode, row);
 
         // Otsu threshold + binarise.
         const uint8_t        threshold = otsuThreshold(row.data(), row.size());
-        std::vector<uint8_t> binary(row.size());
+        List<uint8_t> binary(row.size());
         for (size_t i = 0; i < row.size(); i++) {
                 binary[i] = (row[i] > threshold) ? uint8_t(1) : uint8_t(0);
         }

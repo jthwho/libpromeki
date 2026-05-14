@@ -23,8 +23,8 @@
 
 #include <cstdio>
 #include <cstring>
-#include <atomic>
 #include <promeki/application.h>
+#include <promeki/atomic.h>
 #include <promeki/thread.h>
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
@@ -32,8 +32,8 @@
 using namespace promeki;
 
 static constexpr int     NumWorkers = 4;
-static std::atomic<bool> g_running{true};
-static std::atomic<int>  g_crashTarget{-1}; // -1 = main, 0..N-1 = worker index
+static Atomic<bool> g_running{true};
+static Atomic<int>  g_crashTarget{-1}; // -1 = main, 0..N-1 = worker index
 
 // --------------------------------------------------------------------
 // Worker thread — loops until told to stop or asked to crash.
@@ -47,13 +47,13 @@ class WorkerThread : public Thread {
         protected:
                 void run() override {
                         int cycle = 0;
-                        while (g_running.load()) {
+                        while (g_running.value()) {
                                 // Simulate useful work.
                                 volatile int sum = 0;
                                 for (int i = 0; i < 100000; ++i) sum += i;
                                 (void)sum;
 
-                                if (g_crashTarget.load() == _index) {
+                                if (g_crashTarget.value() == _index) {
                                         promekiInfo("worker-%d: triggering crash", _index);
                                         promekiLogSync();
                                         triggerCrash();
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
                 mainCrashA();
         } else {
                 // Tell the target worker to crash.
-                g_crashTarget.store(crashThread);
+                g_crashTarget.setValue(crashThread);
 
                 // Wait for the crash to propagate.
                 struct timespec wait = {2, 0};
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
                 promekiErr("crashtest: worker didn't crash — exiting normally");
         }
 
-        g_running.store(false);
+        g_running.setValue(false);
         for (int i = 0; i < NumWorkers; ++i) {
                 workers[i]->wait();
                 delete workers[i];

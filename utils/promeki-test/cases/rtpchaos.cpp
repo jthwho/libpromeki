@@ -398,7 +398,7 @@ namespace promekitest {
                         // packet leakage shows up as a frame-number jump
                         // at the inspector.
                         const uint32_t streamId =
-                                0xC4A0'0000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                                0xC4A0'0000u ^ static_cast<uint32_t>(c.name.hash());
 
                         // Inject the inspector so we can pull a snapshot
                         // once close completes; the pipeline holds a raw
@@ -468,13 +468,13 @@ namespace promekitest {
                         const RtpChaosShim::Counters &cnt = shim.counters();
                         ctx.setDetail(String("framesProcessed"), framesProcessed);
                         ctx.setDetail(String("totalDiscontinuities"), totalDiscontinuities);
-                        ctx.setDetail(String("shimReceived"), int64_t(cnt.received.load()));
-                        ctx.setDetail(String("shimForwarded"), int64_t(cnt.forwarded.load()));
-                        ctx.setDetail(String("shimDropped"), int64_t(cnt.dropped.load()));
-                        ctx.setDetail(String("shimDuplicated"), int64_t(cnt.duplicated.load()));
-                        ctx.setDetail(String("shimReordered"), int64_t(cnt.reordered.load()));
-                        ctx.setDetail(String("shimDelayed"), int64_t(cnt.delayed.load()));
-                        ctx.setDetail(String("shimSsrcMutated"), int64_t(cnt.ssrcMutated.load()));
+                        ctx.setDetail(String("shimReceived"), int64_t(cnt.received.value()));
+                        ctx.setDetail(String("shimForwarded"), int64_t(cnt.forwarded.value()));
+                        ctx.setDetail(String("shimDropped"), int64_t(cnt.dropped.value()));
+                        ctx.setDetail(String("shimDuplicated"), int64_t(cnt.duplicated.value()));
+                        ctx.setDetail(String("shimReordered"), int64_t(cnt.reordered.value()));
+                        ctx.setDetail(String("shimDelayed"), int64_t(cnt.delayed.value()));
+                        ctx.setDetail(String("shimSsrcMutated"), int64_t(cnt.ssrcMutated.value()));
 
                         // Structural-failure drain mirrors @c rtp.cpp.
                         auto isPlannerGap = [](const Error &e) { return e == Error::NotSupported; };
@@ -534,32 +534,32 @@ namespace promekitest {
                         // claimed to.
                         switch (c.shim.rtpMode) {
                                 case RtpChaosShim::Mode::Loss:
-                                        if (cnt.dropped.load() == 0) {
+                                        if (cnt.dropped.value() == 0) {
                                                 ctx.setFail(String("chaos.loss never dropped a packet "
                                                                    "(rate too low for run length)"));
                                                 return;
                                         }
                                         break;
                                 case RtpChaosShim::Mode::Dup:
-                                        if (cnt.duplicated.load() == 0) {
+                                        if (cnt.duplicated.value() == 0) {
                                                 ctx.setFail(String("chaos.dup never duplicated a packet"));
                                                 return;
                                         }
                                         break;
                                 case RtpChaosShim::Mode::Reorder:
-                                        if (cnt.reordered.load() == 0) {
+                                        if (cnt.reordered.value() == 0) {
                                                 ctx.setFail(String("chaos.reorder never reordered a packet"));
                                                 return;
                                         }
                                         break;
                                 case RtpChaosShim::Mode::Late:
-                                        if (cnt.delayed.load() == 0) {
+                                        if (cnt.delayed.value() == 0) {
                                                 ctx.setFail(String("chaos.late never delayed a packet"));
                                                 return;
                                         }
                                         break;
                                 case RtpChaosShim::Mode::SsrcChange:
-                                        if (cnt.ssrcMutated.load() == 0) {
+                                        if (cnt.ssrcMutated.value() == 0) {
                                                 ctx.setFail(String("chaos.ssrcchange never mutated a packet"));
                                                 return;
                                         }

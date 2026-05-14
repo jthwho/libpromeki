@@ -485,7 +485,7 @@ int main(int argc, char **argv) {
                 if (perr.isError()) {
                         fprintf(stderr, "Error: planning failed: %s\n", perr.desc().cstr());
                         if (!diag.isEmpty()) {
-                                const StringList lines = diag.split(std::string("\n"));
+                                const StringList lines = diag.split('\n');
                                 for (size_t i = 0; i < lines.size(); ++i) {
                                         fprintf(stderr, "  %s\n", lines[i].cstr());
                                 }

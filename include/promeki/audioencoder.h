@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -100,7 +101,7 @@ class AudioEncoder {
                 using UPtr = UniquePtr<AudioEncoder>;
 
                 /** @brief Factory signature used by the encoder registry. */
-                using Factory = std::function<AudioEncoder *()>;
+                using Factory = Function<AudioEncoder *()>;
 
                 /**
                  * @brief Registration record attaching a concrete encoder to a (codec, backend) pair.

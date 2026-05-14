@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/eventloop.h>
 #include <promeki/application.h>
 #include <promeki/objectbase.h>
@@ -264,13 +265,13 @@ void EventLoop::quit(int returnCode) {
         return;
 }
 
-void EventLoop::postCallable(std::function<void()> func) {
+void EventLoop::postCallable(Function<void()> func) {
         _queue.push(Item{CallableItem{std::move(func), Label::InvalidID}});
         wakeSelf();
         return;
 }
 
-void EventLoop::postCallable(Label label, std::function<void()> func) {
+void EventLoop::postCallable(Label label, Function<void()> func) {
         _queue.push(Item{CallableItem{std::move(func), label.id()}});
         wakeSelf();
         return;
@@ -304,7 +305,7 @@ int EventLoop::startTimer(ObjectBase *receiver, unsigned int intervalMs, bool si
         return id;
 }
 
-int EventLoop::startTimer(unsigned int intervalMs, std::function<void()> func, bool singleShot) {
+int EventLoop::startTimer(unsigned int intervalMs, Function<void()> func, bool singleShot) {
         int       id = _nextTimerId.fetchAndAdd(1);
         TimerInfo info;
         info.id = id;
@@ -340,7 +341,7 @@ void EventLoop::processTimers() {
         struct ReadyTimer {
                         int                   id;
                         ObjectBase           *receiver;
-                        std::function<void()> func;
+                        Function<void()> func;
         };
         List<ReadyTimer> toFire;
 
@@ -823,8 +824,7 @@ String formatStatsTail(const HashMap<Key, EventLoop::Report::EventStat> &byKey,
                 e.count = es.count;
                 entries += e;
         }
-        std::sort(entries.begin(), entries.end(),
-                  [](const Entry &a, const Entry &b) { return a.elapsedNs > b.elapsedNs; });
+        entries.sortInPlace([](const Entry &a, const Entry &b) { return a.elapsedNs > b.elapsedNs; });
         const double wallNs = static_cast<double>(wall.nanoseconds());
         String       out;
         size_t       emit = topN == 0 ? entries.size() : std::min(topN, entries.size());

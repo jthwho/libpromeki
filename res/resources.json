@@ -12,6 +12,16 @@
                     "type": "file",
                     "path": "FiraCodeNerdFontMono-Regular.ttf",
                     "source": "./.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf"
+                },
+                {
+                    "type": "file",
+                    "path": "SarasaMonoJ-Regular.ttf",
+                    "source": "./.PROMEKI/fonts/SarasaMonoJ-Regular.ttf"
+                },
+                {
+                    "type": "file",
+                    "path": "NotoSansMono-Regular.ttf",
+                    "source": "./.PROMEKI/fonts/NotoSansMono-Regular.ttf"
                 }
             ]
         },

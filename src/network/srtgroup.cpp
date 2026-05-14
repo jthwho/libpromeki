@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/list.h>
 #include <promeki/srtgroup.h>
 #include <promeki/logger.h>
 
@@ -143,10 +144,10 @@ Error SrtGroup::connect(const MemberList &members) {
 
         // Convert MemberList to libsrt's SRT_SOCKGROUPCONFIG[].  Each
         // entry is built via srt_prepare_endpoint(src, dst, len).
-        std::vector<SRT_SOCKGROUPCONFIG> configs;
+        List<SRT_SOCKGROUPCONFIG> configs;
         configs.reserve(members.size());
-        std::vector<sockaddr_storage> srcStorage(members.size());
-        std::vector<sockaddr_storage> dstStorage(members.size());
+        List<sockaddr_storage> srcStorage(members.size());
+        List<sockaddr_storage> dstStorage(members.size());
 
         for (size_t i = 0; i < members.size(); ++i) {
                 const Member &m = members[i];
@@ -163,7 +164,7 @@ Error SrtGroup::connect(const MemberList &members) {
                         srcSa,
                         reinterpret_cast<struct sockaddr *>(&dstStorage[i]),
                         static_cast<int>(dstLen));
-                configs.push_back(cfg);
+                configs.pushToBack(cfg);
         }
 
         const int rc = srt_connect_group(_sock, configs.data(), static_cast<int>(configs.size()));
@@ -202,7 +203,7 @@ SrtGroup::MemberStatusList SrtGroup::memberStatus() const {
         size_t n = 0;
         // First call with nullptr returns the count via inoutlen.
         if (srt_group_data(_sock, nullptr, &n) == SRT_ERROR && n == 0) return out;
-        std::vector<SRT_SOCKGROUPDATA> data(n);
+        List<SRT_SOCKGROUPDATA> data(n);
         if (n > 0) {
                 if (srt_group_data(_sock, data.data(), &n) == SRT_ERROR) return out;
         }

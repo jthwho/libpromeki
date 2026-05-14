@@ -8,9 +8,12 @@
 
 #include <sstream>
 #include <string>
+#include <promeki/optional.h>
+#include <promeki/function.h>
 #include <promeki/xml.h>
 #include <promeki/file.h>
 #include <promeki/list.h>
+#include <promeki/pair.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -46,7 +49,7 @@ String trimTrailingNewline(std::string s) {
  * @brief Splits a raw qualified XML name into (prefix, local).
  * @return @c (prefix, local). Prefix is empty when there is no colon.
  */
-std::pair<String, String> splitQName(const String &raw) {
+Pair<String, String> splitQName(const String &raw) {
         size_t colon = raw.find(':');
         if (colon == String::npos) return {String(), raw};
         return {raw.substr(0, colon), raw.substr(colon + 1)};
@@ -755,13 +758,13 @@ List<XmlNode> XmlElement::children() const {
 String XmlElement::text() const {
         auto root = rootNode();
         if (!root) return String();
-        std::string out;
+        String out;
         for (auto c = root.first_child(); c; c = c.next_sibling()) {
                 if (c.type() == pugi::node_pcdata || c.type() == pugi::node_cdata) {
-                        out.append(c.value());
+                        out += c.value();
                 }
         }
-        return String(std::move(out));
+        return out;
 }
 
 void XmlElement::setText(const String &text) {
@@ -1164,13 +1167,13 @@ String XmlElement::toString(unsigned int indent) const {
         if (indent == 0) {
                 root.print(w, "", pugi::format_raw);
         } else {
-                std::string indentStr(indent, ' ');
-                root.print(w, indentStr.c_str(), pugi::format_indent);
+                String indentStr(indent, ' ');
+                root.print(w, indentStr.cstr(), pugi::format_indent);
         }
         return trimTrailingNewline(std::move(w.out));
 }
 
-void XmlElement::forEachElement(std::function<void(const XmlElement &)> func) const {
+void XmlElement::forEachElement(Function<void(const XmlElement &)> func) const {
         for (const auto &e : elements()) func(e);
 }
 
@@ -1365,9 +1368,9 @@ String XmlDocument::toString(unsigned int indent) const {
                 }
         }
         if (!hasDecl) flags |= pugi::format_no_declaration;
-        std::string indentStr;
-        if (indent > 0) indentStr.assign(indent, ' ');
-        _d->doc.save(w, indent == 0 ? "" : indentStr.c_str(), flags);
+        String indentStr;
+        if (indent > 0) indentStr = String(indent, ' ');
+        _d->doc.save(w, indent == 0 ? "" : indentStr.cstr(), flags);
         return trimTrailingNewline(std::move(w.out));
 }
 

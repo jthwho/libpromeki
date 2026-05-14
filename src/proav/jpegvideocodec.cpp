@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <promeki/list.h>
 #include <promeki/jpegvideocodec.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/buffer.h>
@@ -332,13 +333,13 @@ namespace {
                 // the MCU-aligned width and zero-init so tail bytes are defined.
                 int                               yBufWidth = (width + 15) & ~15;
                 int                               cBufWidth = (chromaWidth + 7) & ~7;
-                std::vector<std::vector<uint8_t>> yRowBufs(mcuRows, std::vector<uint8_t>(yBufWidth, 0));
-                std::vector<std::vector<uint8_t>> cbRowBufs(chromaMcuRows, std::vector<uint8_t>(cBufWidth, 0));
-                std::vector<std::vector<uint8_t>> crRowBufs(chromaMcuRows, std::vector<uint8_t>(cBufWidth, 0));
+                List<List<uint8_t>> yRowBufs(mcuRows, List<uint8_t>(yBufWidth, 0));
+                List<List<uint8_t>> cbRowBufs(chromaMcuRows, List<uint8_t>(cBufWidth, 0));
+                List<List<uint8_t>> crRowBufs(chromaMcuRows, List<uint8_t>(cBufWidth, 0));
 
-                std::vector<JSAMPROW> yRowPtrs(mcuRows);
-                std::vector<JSAMPROW> cbRowPtrs(chromaMcuRows);
-                std::vector<JSAMPROW> crRowPtrs(chromaMcuRows);
+                List<JSAMPROW> yRowPtrs(mcuRows);
+                List<JSAMPROW> cbRowPtrs(chromaMcuRows);
+                List<JSAMPROW> crRowPtrs(chromaMcuRows);
                 for (int i = 0; i < mcuRows; i++) yRowPtrs[i] = yRowBufs[i].data();
                 for (int i = 0; i < chromaMcuRows; i++) cbRowPtrs[i] = cbRowBufs[i].data();
                 for (int i = 0; i < chromaMcuRows; i++) crRowPtrs[i] = crRowBufs[i].data();
@@ -525,13 +526,13 @@ namespace {
                 int mcuRows = DCTSIZE * dinfo.max_v_samp_factor;
                 int chromaMcuRows = DCTSIZE;
 
-                std::vector<std::vector<uint8_t>> yRowBufs(mcuRows, std::vector<uint8_t>(width));
-                std::vector<std::vector<uint8_t>> cbRowBufs(chromaMcuRows, std::vector<uint8_t>(chromaWidth));
-                std::vector<std::vector<uint8_t>> crRowBufs(chromaMcuRows, std::vector<uint8_t>(chromaWidth));
+                List<List<uint8_t>> yRowBufs(mcuRows, List<uint8_t>(width));
+                List<List<uint8_t>> cbRowBufs(chromaMcuRows, List<uint8_t>(chromaWidth));
+                List<List<uint8_t>> crRowBufs(chromaMcuRows, List<uint8_t>(chromaWidth));
 
-                std::vector<JSAMPROW> yRowPtrs(mcuRows);
-                std::vector<JSAMPROW> cbRowPtrs(chromaMcuRows);
-                std::vector<JSAMPROW> crRowPtrs(chromaMcuRows);
+                List<JSAMPROW> yRowPtrs(mcuRows);
+                List<JSAMPROW> cbRowPtrs(chromaMcuRows);
+                List<JSAMPROW> crRowPtrs(chromaMcuRows);
                 for (int i = 0; i < mcuRows; i++) yRowPtrs[i] = yRowBufs[i].data();
                 for (int i = 0; i < chromaMcuRows; i++) cbRowPtrs[i] = cbRowBufs[i].data();
                 for (int i = 0; i < chromaMcuRows; i++) crRowPtrs[i] = crRowBufs[i].data();

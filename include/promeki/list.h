@@ -12,6 +12,7 @@
 #include <functional>
 #include <algorithm>
 #include <stdexcept>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/result.h>
 #include <promeki/sharedptr.h>
@@ -66,7 +67,7 @@ template <typename T> class List {
                 using ConstRevIterator = typename std::vector<T>::const_reverse_iterator;
 
                 /** @brief Predicate function type used by removeIf(). */
-                using TestFunc = std::function<bool(const T &)>;
+                using TestFunc = Function<bool(const T &)>;
 
                 /** @brief Default constructor. Creates an empty list. */
                 List() = default;
@@ -96,6 +97,18 @@ template <typename T> class List {
                  */
                 List(std::initializer_list<T> initList) : d(initList) {}
 
+                /**
+                 * @brief Constructs a list from a raw pointer range @c [first, last).
+                 *
+                 * Restricted to raw pointers (rather than a generic iterator
+                 * template) so two-argument @c List<T>(size_t, T) calls remain
+                 * unambiguous for any @c T.
+                 *
+                 * @param first Pointer to the first element of the source range.
+                 * @param last  Pointer one past the last element.
+                 */
+                List(const T *first, const T *last) : d(first, last) {}
+
                 /** @brief Destructor. */
                 ~List() = default;
 
@@ -119,6 +132,29 @@ template <typename T> class List {
                 List &operator=(std::initializer_list<T> initList) {
                         d = initList;
                         return *this;
+                }
+
+                /**
+                 * @brief Replaces the list's contents with the half-open range @c [first, last).
+                 *
+                 * @tparam InputIt Any input iterator whose value_type is
+                 *                 convertible to @c T.
+                 * @param  first   Beginning of the source range.
+                 * @param  last    One-past-the-end of the source range.
+                 */
+                template <typename InputIt> void assign(InputIt first, InputIt last) {
+                        d.assign(first, last);
+                        return;
+                }
+
+                /**
+                 * @brief Replaces the list's contents with @p count copies of @p value.
+                 * @param count Number of elements.
+                 * @param value Value to copy.
+                 */
+                void assign(size_t count, const T &value) {
+                        d.assign(count, value);
+                        return;
                 }
 
                 /**
@@ -407,6 +443,22 @@ template <typename T> class List {
                 }
 
                 /**
+                 * @brief Pushes the half-open pointer range @c [first, last) to the back.
+                 *
+                 * Restricted to raw-pointer ranges (e.g. C arrays, @c .data() spans)
+                 * because a generic templated overload conflicts with brace-init
+                 * @c pushToBack({a, b}) call sites where @c T has a two-argument
+                 * constructor.
+                 *
+                 * @param  first Pointer to the first element of the source range.
+                 * @param  last  Pointer one past the last element.
+                 */
+                void pushToBack(const T *first, const T *last) {
+                        d.insert(d.end(), first, last);
+                        return;
+                }
+
+                /**
                  * @brief Moves an item onto the back of the list.
                  * @param value The value to move-append.
                  */
@@ -494,6 +546,30 @@ template <typename T> class List {
                         std::sort(ret.begin(), ret.end());
                         return ret;
                 }
+
+                /**
+                 * @brief Returns a sorted copy of this list using a custom comparator.
+                 * @tparam Compare Binary comparator type.
+                 * @param comp The comparator.
+                 * @return A new list with elements sorted according to @p comp.
+                 */
+                template <typename Compare> List<T> sort(Compare comp) const {
+                        auto ret = *this;
+                        std::sort(ret.begin(), ret.end(), comp);
+                        return ret;
+                }
+
+                /**
+                 * @brief Sorts this list in place in ascending order.
+                 */
+                void sortInPlace() { std::sort(d.begin(), d.end()); }
+
+                /**
+                 * @brief Sorts this list in place using a custom comparator.
+                 * @tparam Compare Binary comparator type.
+                 * @param comp The comparator.
+                 */
+                template <typename Compare> void sortInPlace(Compare comp) { std::sort(d.begin(), d.end(), comp); }
 
                 /**
                  * @brief Returns a reversed copy of this list.

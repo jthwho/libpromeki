@@ -10,6 +10,7 @@
 #include <tuple>
 #include <functional>
 #include <atomic>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/mutex.h>
@@ -50,7 +51,7 @@ class ObjectBase;
 template <typename... Args> class Signal {
         public:
                 /** @brief Callable type that slots must conform to. */
-                using Function = std::function<void(Args...)>;
+                using Function = promeki::Function<void(Args...)>;
 
                 /** @brief Metafunction that strips const and reference qualifiers from a type. */
                 template <typename T> struct removeConstAndRef {

@@ -66,6 +66,21 @@ float Random::randomFloat(float min, float max) {
         return dist(_engine);
 }
 
+double Random::randomNormalDouble(double mean, double stddev) {
+        std::normal_distribution<double> dist(mean, stddev);
+        return dist(_engine);
+}
+
+float Random::randomNormalFloat(float mean, float stddev) {
+        std::normal_distribution<float> dist(mean, stddev);
+        return dist(_engine);
+}
+
+double Random::randomExponentialDouble(double lambda) {
+        std::exponential_distribution<double> dist(lambda);
+        return dist(_engine);
+}
+
 Buffer Random::randomBytes(size_t count) {
         Buffer buf(count);
         if (!buf.isValid()) return buf;

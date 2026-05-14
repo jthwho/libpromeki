@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -118,7 +119,7 @@ class VideoEncoder {
                 using UPtr = UniquePtr<VideoEncoder>;
 
                 /** @brief Factory signature used by the encoder registry. */
-                using Factory = std::function<VideoEncoder *()>;
+                using Factory = Function<VideoEncoder *()>;
 
                 /**
                  * @brief Registration record attaching a concrete encoder to a (codec, backend) pair.

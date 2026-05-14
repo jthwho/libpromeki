@@ -113,10 +113,9 @@ namespace {
         }
 
         void sortByWeight(List<AudioEncoder::BackendRecord> &list) {
-                std::sort(list.begin(), list.end(),
-                          [](const AudioEncoder::BackendRecord &a, const AudioEncoder::BackendRecord &b) {
-                                  return a.weight > b.weight;
-                          });
+                list.sortInPlace([](const AudioEncoder::BackendRecord &a, const AudioEncoder::BackendRecord &b) {
+                        return a.weight > b.weight;
+                });
         }
 
 } // namespace

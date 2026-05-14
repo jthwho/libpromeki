@@ -54,7 +54,7 @@ NdiDiscovery::NdiDiscovery() {
 }
 
 NdiDiscovery::~NdiDiscovery() {
-        _shutdown.store(true, std::memory_order_release);
+        _shutdown.setValue(true);
         {
                 Mutex::Locker lk(_mutex);
                 _condConfig.wakeAll();
@@ -75,7 +75,7 @@ NdiDiscovery::RecordList NdiDiscovery::sources() const {
 }
 
 NdiDiscovery::RecordList NdiDiscovery::sources(int minUptimeMs) const {
-        if (!_running.load(std::memory_order_acquire)) {
+        if (!_running.value()) {
                 return RecordList();
         }
         if (minUptimeMs <= 0) {
@@ -178,21 +178,21 @@ String NdiDiscovery::waitForSource(const String &nameOrPattern, int timeoutMs) {
                 _condRegistry.wait(_mutex, remaining);
                 match = findMatch();
                 if (!match.isEmpty()) return match;
-                if (_shutdown.load(std::memory_order_acquire)) return String();
+                if (_shutdown.value()) return String();
         }
 }
 
 void NdiDiscovery::setPollIntervalMs(int ms) {
         if (ms < 50) ms = 50;
         if (ms > 60'000) ms = 60'000;
-        _pollIntervalMs.store(ms, std::memory_order_release);
+        _pollIntervalMs.setValue(ms);
 }
 
 void NdiDiscovery::setGroups(const String &commaSeparated) {
         Mutex::Locker lk(_mutex);
         if (_groups == commaSeparated) return;
         _groups = commaSeparated;
-        _configDirty.store(true, std::memory_order_release);
+        _configDirty.setValue(true);
         _condConfig.wakeAll();
 }
 
@@ -200,16 +200,16 @@ void NdiDiscovery::setExtraIps(const String &commaSeparated) {
         Mutex::Locker lk(_mutex);
         if (_extraIps == commaSeparated) return;
         _extraIps = commaSeparated;
-        _configDirty.store(true, std::memory_order_release);
+        _configDirty.setValue(true);
         _condConfig.wakeAll();
 }
 
 int NdiDiscovery::pollIntervalMs() const {
-        return _pollIntervalMs.load(std::memory_order_acquire);
+        return _pollIntervalMs.value();
 }
 
 int64_t NdiDiscovery::uptimeMs() const {
-        if (!_running.load(std::memory_order_acquire)) return 0;
+        if (!_running.value()) return 0;
         return _startTime.elapsedMilliseconds();
 }
 
@@ -236,7 +236,7 @@ void NdiDiscovery::workerMain() {
                         Mutex::Locker lk(_mutex);
                         groupsLocal   = _groups;
                         extraIpsLocal = _extraIps;
-                        _configDirty.store(false, std::memory_order_release);
+                        _configDirty.setValue(false);
                 }
                 NDIlib_find_create_t cfg;
                 cfg.show_local_sources = true;
@@ -253,22 +253,22 @@ void NdiDiscovery::workerMain() {
         if (!find) return;
 
         _startTime.update();
-        _running.store(true, std::memory_order_release);
+        _running.setValue(true);
 
-        while (!_shutdown.load(std::memory_order_acquire)) {
-                if (_configDirty.load(std::memory_order_acquire)) {
+        while (!_shutdown.value()) {
+                if (_configDirty.value()) {
                         api->find_destroy(find);
                         find = buildFind();
                         if (!find) break;
                 }
 
-                int waitMs = _pollIntervalMs.load(std::memory_order_acquire);
+                int waitMs = _pollIntervalMs.value();
                 // The SDK call returns true if anything changed during
                 // the wait — either way we then snapshot the current
                 // source list, so the return value is purely an
                 // optimisation hint we don't need.
                 api->find_wait_for_sources(find, static_cast<uint32_t>(waitMs));
-                if (_shutdown.load(std::memory_order_acquire)) break;
+                if (_shutdown.value()) break;
 
                 uint32_t                count = 0;
                 const NDIlib_source_t *list = api->find_get_current_sources(find, &count);
@@ -301,7 +301,7 @@ void NdiDiscovery::workerMain() {
         if (find) {
                 api->find_destroy(find);
         }
-        _running.store(false, std::memory_order_release);
+        _running.setValue(false);
 }
 
 PROMEKI_NAMESPACE_END

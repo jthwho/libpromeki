@@ -99,8 +99,32 @@ namespace mediaplay {
         // Listing helpers (value == "list" sentinel, and --in list)
         // --------------------------------------------------------------------------
 
-        /** @brief Dumps every registered MediaIO backend and exits. */
+        /**
+ * @brief Dumps every registered MediaIO backend and exits.
+ *
+ * Three-column listing: Name, Mode, Description.  The Mode column
+ * uses one of @c I (input-only), @c O (output-only), @c I/O (can be
+ * either), or @c T (transform).  The SDL pseudo-backend is appended.
+ */
         [[noreturn]] void listMediaIOBackendsAndExit();
+
+        /**
+ * @brief Dumps the config schema for one MediaIO backend and exits.
+ *
+ * For each config key the backend exposes, prints two lines: the key
+ * name (padded to a common width) followed by its description, then
+ * an indented @c "Type: ..., Range: ..., Def: ..." line summarising
+ * the @ref promeki::VariantSpec.  The implicit @c Type key is hidden.
+ * Entries are blank-line separated.
+ *
+ * Recognises the @c "SDL" pseudo-backend in addition to every
+ * registered @ref promeki::MediaIOFactory.  Unknown names print a
+ * diagnostic on stderr and exit with status 1.
+ *
+ * @param backendName The backend name (e.g. @c "TPG", @c "ImageFile",
+ *                    @c "SDL").
+ */
+        [[noreturn]] void listMediaIOConfigAndExit(const promeki::String &backendName);
 
         /**
  * @brief Prints every value of an Enum::Type and exits.

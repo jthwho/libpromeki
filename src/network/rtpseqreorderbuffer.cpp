@@ -12,7 +12,7 @@ PROMEKI_NAMESPACE_BEGIN
 RtpSeqReorderBuffer::RtpSeqReorderBuffer(const Config &c) : _config(c) {}
 
 void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
-                                 const TimeStamp &arrivalSteady, Queue<RtpPacket> &out) {
+                                 const TimeStamp &arrivalSteady, RtpPacket::Queue &out) {
         Mutex::Locker lock(_mutex);
 
         // First insert anchors the next-expected seq cursor.  Until
@@ -32,7 +32,7 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
                 _stats.droppedAsDuplicate++;
                 return;
         }
-        if (_buf.find(extendedSeq) != _buf.end()) {
+        if (_buf.contains(extendedSeq)) {
                 _stats.droppedAsDuplicate++;
                 return;
         }
@@ -50,7 +50,7 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
                         // floor — anything strictly older than it
                         // is a stale dup from this point onward.
                         const uint32_t droppedSeq = it->first;
-                        _buf.erase(it);
+                        _buf.remove(it);
                         if (static_cast<int32_t>(droppedSeq - _expectedSeq) >= 0) {
                                 // Advancing the cursor past the
                                 // dropped seq guarantees subsequent
@@ -62,7 +62,7 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
                 }
         }
 
-        _buf.emplace(extendedSeq, Entry{std::move(pkt), arrivalSteady});
+        _buf.tryEmplace(extendedSeq, Entry{std::move(pkt), arrivalSteady});
         _stats.inserted++;
 
         // In-order delivery: if the next-expected seq is now in the
@@ -76,7 +76,7 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
         // behaviour by relying purely on the in-order path.
         if (!_config.playoutDelay.isZero()) {
                 const TimeStamp now = TimeStamp::now();
-                while (!_buf.empty()) {
+                while (!_buf.isEmpty()) {
                         auto       it = _buf.begin();
                         const auto deadline = it->second.arrival + _config.playoutDelay;
                         if (now.value() < deadline.value()) break;
@@ -88,24 +88,24 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
         }
 }
 
-void RtpSeqReorderBuffer::drainInOrderLocked(Queue<RtpPacket> &out) {
-        while (!_buf.empty()) {
+void RtpSeqReorderBuffer::drainInOrderLocked(RtpPacket::Queue &out) {
+        while (!_buf.isEmpty()) {
                 auto it = _buf.begin();
                 if (it->first != _expectedSeq) break;
                 RtpPacket pkt = std::move(it->second.pkt);
-                _buf.erase(it);
+                _buf.remove(it);
                 _expectedSeq++;
                 _stats.emittedInOrder++;
                 (void)out.pushDropOldest(std::move(pkt));
         }
 }
 
-void RtpSeqReorderBuffer::emitHeadLocked(Queue<RtpPacket> &out, bool deadline) {
-        if (_buf.empty()) return;
+void RtpSeqReorderBuffer::emitHeadLocked(RtpPacket::Queue &out, bool deadline) {
+        if (_buf.isEmpty()) return;
         auto      it = _buf.begin();
         const uint32_t seq = it->first;
         RtpPacket pkt = std::move(it->second.pkt);
-        _buf.erase(it);
+        _buf.remove(it);
         // Force-advance the cursor past any gap.  This is the case
         // where the §A reorder window proved too short for the
         // wire's actual jitter, or the gap was a real loss; either
@@ -121,9 +121,9 @@ void RtpSeqReorderBuffer::emitHeadLocked(Queue<RtpPacket> &out, bool deadline) {
         (void)out.pushDropOldest(std::move(pkt));
 }
 
-void RtpSeqReorderBuffer::flush(Queue<RtpPacket> &out) {
+void RtpSeqReorderBuffer::flush(RtpPacket::Queue &out) {
         Mutex::Locker lock(_mutex);
-        while (!_buf.empty()) {
+        while (!_buf.isEmpty()) {
                 emitHeadLocked(out, /*deadline=*/true);
         }
 }

@@ -232,7 +232,7 @@ namespace promekitest {
                         // across cases that run back-to-back; hashing
                         // the dotted name gives a stable per-case value.
                         uint32_t streamId =
-                                0xC0DE0000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                                0xC0DE0000u ^ static_cast<uint32_t>(c.name.hash());
 
                         // The inspector is constructed and injected so we
                         // can pull a snapshot once the close cascade

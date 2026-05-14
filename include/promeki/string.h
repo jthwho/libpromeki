@@ -326,16 +326,38 @@ class String {
                  *         which is also valid UTF-8 with one codepoint per byte),
                  *         otherwise a Unicode-encoded String with codepoints
                  *         decoded from the UTF-8 sequence.
+                 *
+                 * @note The plain @c String(const char*) constructor already
+                 *       applies the same UTF-8 fast-path-or-decode policy, so
+                 *       this static is now a thin alias kept for call-site
+                 *       readability when the input is explicitly known to be
+                 *       UTF-8 bytes.
                  */
-                static String fromUtf8(const char *data, size_t len) {
-                        // Pure ASCII fast path: every byte is its own codepoint and
-                        // fits trivially in the cheaper Latin1 storage.
-                        for (size_t i = 0; i < len; ++i) {
-                                if (static_cast<unsigned char>(data[i]) > 0x7F)
-                                        return String(StringUnicodeData::fromUtf8(data, len));
-                        }
-                        return String(data, len);
+                static String fromUtf8(const char *data, size_t len) { return String(data, len); }
+
+                /**
+                 * @brief Creates a String by treating @p data as raw Latin1
+                 *        bytes — one byte per codepoint, no UTF-8 decoding.
+                 * @param data Pointer to byte data.
+                 * @param len  Number of bytes.
+                 *
+                 * The result is always Latin1-encoded; high bytes (0x80–0xFF)
+                 * are preserved verbatim as their corresponding Latin1
+                 * codepoint.  Use this when you have a buffer whose bytes
+                 * are *known* to be Latin1 (e.g. an in-memory case-fold
+                 * result, or content from a Latin1-encoded source) and you
+                 * want to bypass the UTF-8 interpretation that the default
+                 * @c String(const char*) constructor applies.
+                 */
+                static String fromLatin1(const char *data, size_t len) {
+                        return String(new StringLatin1Data(data, len));
                 }
+
+                /// @copydoc fromLatin1(const char *, size_t)
+                static String fromLatin1(const std::string &data) { return String(new StringLatin1Data(data)); }
+
+                /// @copydoc fromLatin1(const char *, size_t)
+                static String fromLatin1(std::string &&data) { return String(new StringLatin1Data(std::move(data))); }
 
                 /**
                  * @brief Wraps a static literal StringData without copying.
@@ -357,39 +379,64 @@ class String {
                 String(std::nullptr_t) : String() {}
 
                 /**
-                 * @brief Constructs from a null-terminated C string.
+                 * @brief Constructs from a null-terminated UTF-8 / ASCII C string.
                  * @param str The C string (null treated as empty).
+                 *
+                 * The bytes are interpreted as UTF-8.  Pure-ASCII inputs are
+                 * stored as Latin1 (the cheap path: 1 byte == 1 codepoint);
+                 * inputs that contain any byte >= 0x80 are decoded into
+                 * Unicode storage so the resulting String's character indices
+                 * match the encoded codepoints, not the raw bytes.  This
+                 * keeps @ref operator==(const char *) and the constructor on
+                 * the same encoding model.
                  */
                 String(const char *str)
-                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str ? str : ""))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(
+                          makeDataFromUtf8(str ? str : "", str ? std::strlen(str) : 0))) {}
 
                 /**
-                 * @brief Constructs from a character buffer with explicit length.
-                 * @param str Pointer to character data.
+                 * @brief Constructs from a UTF-8 / ASCII byte buffer with explicit length.
+                 * @param str Pointer to character data (interpreted as UTF-8).
                  * @param len Number of bytes.
+                 *
+                 * Same encoding policy as @ref String(const char*).
                  */
                 String(const char *str, size_t len)
-                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str, len))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(makeDataFromUtf8(str, len))) {}
 
                 /**
                  * @brief Constructs a string of repeated characters.
                  * @param ct Number of characters.
                  * @param c  Character to repeat.
+                 *
+                 * @c c is a single byte and is stored verbatim — high-byte
+                 * values are treated as Latin1 since a lone non-ASCII byte
+                 * is never valid UTF-8 on its own.  Use @ref String(size_t,
+                 * Char) (if available) or @ref fromUtf8 to build a Unicode
+                 * repetition.
                  */
                 String(size_t ct, char c) : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(ct, c))) {}
 
                 /**
-                 * @brief Constructs from a std::string (copy).
+                 * @brief Constructs from a std::string (copy), interpreting bytes as UTF-8.
                  * @param str The source string.
+                 *
+                 * Same encoding policy as @ref String(const char*).
                  */
-                String(const std::string &str) : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str))) {}
+                String(const std::string &str)
+                    : d(SharedPtr<StringData>::takeOwnership(makeDataFromUtf8(str.data(), str.size()))) {}
 
                 /**
-                 * @brief Constructs from a std::string (move).
+                 * @brief Constructs from a std::string (move), interpreting bytes as UTF-8.
                  * @param str The source string to move from.
+                 *
+                 * Pure-ASCII inputs are moved into Latin1 storage with no
+                 * copy.  Non-ASCII inputs are decoded into Unicode storage
+                 * (the move is forfeited in that branch — decode reads from
+                 * @p str, which is then discarded as usual).
                  */
                 String(std::string &&str)
-                    : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(std::move(str)))) {}
+                    : d(SharedPtr<StringData>::takeOwnership(makeDataFromUtf8(std::move(str)))) {}
 
                 // ============================================================
                 // Const access (pure delegation)
@@ -618,6 +665,33 @@ class String {
                 void resize(size_t val) { d.modify()->resize(val); }
 
                 /**
+                 * @brief Reserves storage for at least @p capacity characters.
+                 *
+                 * Optional hint that allows builder patterns to avoid
+                 * repeated reallocation when the final size is known
+                 * up front.  Triggers COW like any other mutator —
+                 * shared instances stay untouched.
+                 *
+                 * @param capacity Desired minimum capacity in characters.
+                 */
+                void reserve(size_t capacity) { d.modify()->reserve(capacity); }
+
+                /**
+                 * @brief Appends a single character to the string.
+                 * @param ch The character to append.
+                 */
+                void pushBack(Char ch) {
+                        if (d->isLatin1() && ch.codepoint() > 0xFF) {
+                                auto *ud = StringUnicodeData::fromLatin1(d->str());
+                                d = SharedPtr<StringData>::takeOwnership(ud);
+                        }
+                        d.modify()->append(ch);
+                }
+
+                /// @copydoc pushBack(Char)
+                void pushBack(char ch) { d.modify()->append(Char(ch)); }
+
+                /**
                  * @brief Erases characters from the string.
                  * @param pos   Starting character index.
                  * @param count Number of characters to erase (default 1).
@@ -696,7 +770,10 @@ class String {
                 /// @copydoc operator+=(const String &)
                 String &operator+=(const char *val) { return *this += String(val); }
                 /// @copydoc operator+=(const String &)
-                String &operator+=(char val) { return *this += String(1, val); }
+                String &operator+=(char val) {
+                        d.modify()->append(Char(val));
+                        return *this;
+                }
 
                 /**
                  * @brief Returns the concatenation of this string and @p val.
@@ -831,7 +908,9 @@ class String {
                                         // 0x00–0xFF range, so this is lossless.
                                         s[i] = static_cast<char>(cp);
                                 }
-                                return String(std::move(s));
+                                // The bytes are already Latin1 by construction —
+                                // bypass the UTF-8-aware ctor.
+                                return fromLatin1(std::move(s));
                         }
                         CharList chars;
                         chars.reserve(d->length());
@@ -855,7 +934,9 @@ class String {
                                         char32_t cp = Char(src[i]).toLower().codepoint();
                                         s[i] = static_cast<char>(cp);
                                 }
-                                return String(std::move(s));
+                                // The bytes are already Latin1 by construction —
+                                // bypass the UTF-8-aware ctor.
+                                return fromLatin1(std::move(s));
                         }
                         CharList chars;
                         chars.reserve(d->length());
@@ -911,6 +992,12 @@ class String {
                         }
                         return true;
                 }
+
+                /**
+                 * @brief Returns true if the string ends with the given character.
+                 * @param c The character to test.
+                 */
+                bool endsWith(char c) const { return !isEmpty() && d->charAt(d->length() - 1) == c; }
 
                 /** @brief Returns a copy with characters in reverse order. */
                 String reverse() const {
@@ -999,7 +1086,9 @@ class String {
                                 char32_t cp = d->charAt(i).codepoint();
                                 s += static_cast<char>(cp <= 0xFF ? cp : '?');
                         }
-                        return String(std::move(s));
+                        // The bytes are Latin1 by construction (codepoints
+                        // 0–0xFF or '?') — bypass the UTF-8-aware ctor.
+                        return fromLatin1(std::move(s));
                 }
 
                 /**
@@ -1195,13 +1284,55 @@ class String {
                  * @brief Splits the string by a delimiter.
                  * @param delimiter The delimiter string to split on.
                  * @return A StringList containing the split parts.
+                 *         Empty tokens (consecutive delimiters or
+                 *         delimiters at the start/end) are skipped.
                  */
-                StringList split(const std::string &delimiter) const;
+                StringList split(const String &delimiter) const;
+
+                /// @copydoc split(const String &) const
+                StringList split(const char *delimiter) const;
+
+                /// @copydoc split(const String &) const
+                StringList split(char delimiter) const;
 
         private:
                 SharedPtr<StringData> d;
 
                 explicit String(StringData *data) : d(SharedPtr<StringData>::takeOwnership(data)) {}
+
+                /**
+                 * @brief Picks the right StringData type for a span of bytes
+                 *        interpreted as UTF-8.
+                 *
+                 * Pure-ASCII inputs (every byte < 0x80) land in cheap Latin1
+                 * storage — Latin1 and UTF-8 agree byte-for-byte in that
+                 * range.  Inputs containing any high byte are decoded into
+                 * Unicode storage so character indices match codepoints.
+                 * Used by the public @c String(const char*) /
+                 * @c String(const char*, size_t) / @c String(const std::string &)
+                 * constructors to keep their interpretation consistent with
+                 * @ref operator==(const char *).
+                 */
+                static StringData *makeDataFromUtf8(const char *data, size_t len) {
+                        for (size_t i = 0; i < len; ++i) {
+                                if (static_cast<unsigned char>(data[i]) > 0x7F)
+                                        return StringUnicodeData::fromUtf8(data, len);
+                        }
+                        return new StringLatin1Data(data, len);
+                }
+
+                /// @copydoc makeDataFromUtf8(const char *, size_t)
+                ///
+                /// Move overload: preserves the zero-copy path for the
+                /// pure-ASCII case by transferring @p data straight into the
+                /// Latin1 backend.  The non-ASCII branch must copy bytes
+                /// out anyway during decode, so no move is possible there.
+                static StringData *makeDataFromUtf8(std::string &&data) {
+                        for (unsigned char c : data) {
+                                if (c > 0x7F) return StringUnicodeData::fromUtf8(data.data(), data.size());
+                        }
+                        return new StringLatin1Data(std::move(data));
+                }
 
                 /**
                  * @brief Strips digit-group separators from a numeric string.

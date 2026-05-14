@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/size2d.h>
 #include <promeki/platform.h>
@@ -36,7 +37,7 @@ PROMEKI_NAMESPACE_BEGIN
 class Terminal {
         public:
                 /** @brief Callback type for window resize notifications. */
-                using ResizeCallback = std::function<void(int cols, int rows)>;
+                using ResizeCallback = Function<void(int cols, int rows)>;
 
                 /**
                  * @brief Describes the color capability level of the terminal.

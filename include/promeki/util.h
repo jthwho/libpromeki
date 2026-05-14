@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include <array>
 #include <stdexcept>
 #include <cstdint>
 #include <limits>
 #include <type_traits>
 #include <utility>
+#include <promeki/array.h>
 #include <promeki/namespace.h>
 #include <promeki/platform.h>
 #include <promeki/error.h>
@@ -167,7 +167,7 @@ template <typename T> inline T promekiLerp(const T &a, const T &b, const double 
         return a + t * (b - a);
 }
 
-template <typename T> T promekiCatmullRom(const std::array<T, 4> &points, T t) {
+template <typename T> T promekiCatmullRom(const Array<T, 4> &points, T t) {
         T t2 = t * t;
         T t3 = t * t2;
         T c1 = -0.5 * points[0] + 1.5 * points[1] - 1.5 * points[2] + 0.5 * points[3];
@@ -177,7 +177,7 @@ template <typename T> T promekiCatmullRom(const std::array<T, 4> &points, T t) {
         return c1 * t3 + c2 * t2 + c3 * t + c4;
 }
 
-template <typename T> T promekiBezier(const std::array<T, 4> &points, T t) {
+template <typename T> T promekiBezier(const Array<T, 4> &points, T t) {
         T u = 1 - t;
         T t2 = t * t;
         T u2 = u * u;
@@ -190,10 +190,10 @@ template <typename T> T promekiBezier(const std::array<T, 4> &points, T t) {
         return b0 * points[0] + b1 * points[1] + b2 * points[2] + b3 * points[3];
 }
 
-template <typename T> T promekiBicubic(const std::array<std::array<T, 4>, 4> &points, T x, T y) {
-        std::array<T, 4> arr;
+template <typename T> T promekiBicubic(const Array<Array<T, 4>, 4> &points, T x, T y) {
+        Array<T, 4> arr;
         for (int i = 0; i < 4; ++i) {
-                std::array<T, 4> row;
+                Array<T, 4> row;
                 for (int j = 0; j < 4; ++j) {
                         row[j] = points[i][j];
                 }
@@ -202,7 +202,7 @@ template <typename T> T promekiBicubic(const std::array<std::array<T, 4>, 4> &po
         return cubic_lerp(arr, x);
 }
 
-template <typename T> T promekiCubic(const std::array<T, 4> &points, T t) {
+template <typename T> T promekiCubic(const Array<T, 4> &points, T t) {
         T a = points[3] - points[2] - points[0] + points[1];
         T b = points[0] - points[1] - a;
         T c = points[2] - points[0];

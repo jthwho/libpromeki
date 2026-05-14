@@ -239,16 +239,16 @@ TEST_CASE("Frame VariantLookup: resolves MediaPayload base scalars via video pay
         // Frame.indexedChild lookup and the VariantLookup<VideoPayload>
         // inheritsFrom<MediaPayload> cascade.
         auto ptsVal = VariantLookup<Frame>::resolve(f, "Video[0].PTS");
-        REQUIRE(ptsVal.has_value());
+        REQUIRE(ptsVal.hasValue());
         MediaTimeStamp ptsResolved = ptsVal->get<MediaTimeStamp>();
         CHECK(ptsResolved.isValid());
 
         auto si = VariantLookup<Frame>::resolve(f, "Video[0].StreamIndex");
-        REQUIRE(si.has_value());
+        REQUIRE(si.hasValue());
         CHECK(si->get<int32_t>() == 7);
 
         auto kind = VariantLookup<Frame>::resolve(f, "Video[0].Kind");
-        REQUIRE(kind.has_value());
+        REQUIRE(kind.hasValue());
         CHECK(kind->get<String>() == "Video");
 }
 
@@ -258,11 +258,11 @@ TEST_CASE("Frame VariantLookup: resolves VideoPayload intermediate scalars") {
         f.addPayload(vp);
 
         auto w = VariantLookup<Frame>::resolve(f, "Video[0].Width");
-        REQUIRE(w.has_value());
+        REQUIRE(w.hasValue());
         CHECK(w->get<uint32_t>() == 1920u);
 
         auto pf = VariantLookup<Frame>::resolve(f, "Video[0].PixelFormat");
-        REQUIRE(pf.has_value());
+        REQUIRE(pf.hasValue());
         CHECK(pf->get<PixelFormat>().id() == PixelFormat::RGB8_sRGB);
 }
 
@@ -275,11 +275,11 @@ TEST_CASE("Frame VariantLookup: ImageDesc fields are flat on the payload") {
         f.addPayload(vp);
 
         auto w = VariantLookup<Frame>::resolve(f, "Video[0].Width");
-        REQUIRE(w.has_value());
+        REQUIRE(w.hasValue());
         CHECK(w->get<uint32_t>() == 1280u);
 
         auto fpc = VariantLookup<Frame>::resolve(f, "Video[0].FormatPlaneCount");
-        REQUIRE(fpc.has_value());
+        REQUIRE(fpc.hasValue());
         CHECK(fpc->get<uint64_t>() == 1u); // RGB8 packed = one format plane
 }
 
@@ -297,11 +297,11 @@ TEST_CASE("Frame VariantLookup: polymorphic dispatch picks up CompressedVideoPay
         f.addPayload(pkt);
 
         auto ft = VariantLookup<Frame>::resolve(f, "Video[0].FrameType");
-        REQUIRE(ft.has_value());
+        REQUIRE(ft.hasValue());
         CHECK(ft->get<String>() == "IDR");
 
         auto ps = VariantLookup<Frame>::resolve(f, "Video[0].IsParameterSet");
-        REQUIRE(ps.has_value());
+        REQUIRE(ps.hasValue());
         CHECK(ps->get<bool>() == true);
 }
 
@@ -311,12 +311,12 @@ TEST_CASE("Frame VariantLookup: PcmAudioPayload.SampleCount via Audio[0]") {
         f.addPayload(ap);
 
         auto sc = VariantLookup<Frame>::resolve(f, "Audio[0].SampleCount");
-        REQUIRE(sc.has_value());
+        REQUIRE(sc.hasValue());
         CHECK(sc->get<uint64_t>() == 128u);
 
         // Descriptor-level fields are flat on the payload.
         auto sr = VariantLookup<Frame>::resolve(f, "Audio[0].SampleRate");
-        REQUIRE(sr.has_value());
+        REQUIRE(sr.hasValue());
         CHECK(sr->get<float>() == doctest::Approx(48000.0f));
 }
 
@@ -329,25 +329,25 @@ TEST_CASE("Frame VariantLookup: Buffer[N] exposes per-slice details") {
         f.addPayload(vp);
 
         auto off = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Offset");
-        REQUIRE(off.has_value());
+        REQUIRE(off.hasValue());
         CHECK(off->get<uint64_t>() == 0u);
 
         auto size = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Size");
-        REQUIRE(size.has_value());
+        REQUIRE(size.hasValue());
         CHECK(size->get<uint64_t>() == 16u * 8u * 3u);
 
         auto idx = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Index");
-        REQUIRE(idx.has_value());
+        REQUIRE(idx.hasValue());
         CHECK(idx->get<uint64_t>() == 0u);
 
         auto valid = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].IsValid");
-        REQUIRE(valid.has_value());
+        REQUIRE(valid.hasValue());
         CHECK(valid->get<bool>() == true);
 
         // Out-of-range index cleanly reports OutOfRange.
         Error err;
         auto  miss = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[5].Size", &err);
-        CHECK_FALSE(miss.has_value());
+        CHECK_FALSE(miss.hasValue());
         CHECK(err == Error::OutOfRange);
 }
 
@@ -376,7 +376,7 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         for (size_t i = 0; i < 3; ++i) {
                 String key = String::sprintf("Video[0].Buffer[%zu].Index", i);
                 auto   v = VariantLookup<Frame>::resolve(f, key);
-                REQUIRE(v.has_value());
+                REQUIRE(v.hasValue());
                 CHECK(v->get<uint64_t>() == (i < 2 ? 0u : 1u));
         }
 
@@ -384,15 +384,15 @@ TEST_CASE("Frame VariantLookup: Buffer[N] sees sliced multi-plane payloads") {
         auto sz0 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[0].Size");
         auto sz1 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[1].Size");
         auto sz2 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[2].Size");
-        REQUIRE(sz0.has_value());
-        REQUIRE(sz1.has_value());
-        REQUIRE(sz2.has_value());
+        REQUIRE(sz0.hasValue());
+        REQUIRE(sz1.hasValue());
+        REQUIRE(sz2.hasValue());
         CHECK(sz0->get<uint64_t>() == 100u);
         CHECK(sz1->get<uint64_t>() == 50u);
         CHECK(sz2->get<uint64_t>() == 128u);
 
         auto off1 = VariantLookup<Frame>::resolve(f, "Video[0].Buffer[1].Offset");
-        REQUIRE(off1.has_value());
+        REQUIRE(off1.hasValue());
         CHECK(off1->get<uint64_t>() == 100u);
 }
 
@@ -432,7 +432,7 @@ TEST_CASE("Frame VariantLookup: Meta on video payload reaches descriptor metadat
         f.addPayload(vp);
 
         auto fn = VariantLookup<Frame>::resolve(f, "Video[0].Meta.FrameNumber");
-        REQUIRE(fn.has_value());
+        REQUIRE(fn.hasValue());
         CHECK(fn->get<FrameNumber>().value() == 42);
 
         // And the same reference on the descriptor side — virtual
@@ -686,7 +686,7 @@ TEST_CASE("Frame VariantLookup: AncCount is zero on a frame with no ANC payload"
         Frame f = Frame();
         f.addPayload(makeVideoPayload());
         auto v = VariantLookup<Frame>::resolve(f, "AncCount");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<uint64_t>() == 0u);
 }
 
@@ -696,7 +696,7 @@ TEST_CASE("Frame VariantLookup: AncCount counts AncPayload entries") {
         f.addPayload(makeAncPayload({AncFormat::Cea708}));
         f.addPayload(makeAncPayload({AncFormat::AtcLtc}));
         auto v = VariantLookup<Frame>::resolve(f, "AncCount");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<uint64_t>() == 2u);
 }
 
@@ -705,7 +705,7 @@ TEST_CASE("Frame VariantLookup: AncPacketCount sums packets across all ANC paylo
         f.addPayload(makeAncPayload({AncFormat::Cea708, AncFormat::Afd}));
         f.addPayload(makeAncPayload({AncFormat::AtcLtc}));
         auto v = VariantLookup<Frame>::resolve(f, "AncPacketCount");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<uint64_t>() == 3u);
 }
 
@@ -715,25 +715,25 @@ TEST_CASE("Frame VariantLookup: HasCaptions / HasTimecode / HasAfd predicates un
         f.addPayload(makeAncPayload({AncFormat::AtcLtc, AncFormat::Afd}));
 
         auto captions = VariantLookup<Frame>::resolve(f, "HasCaptions");
-        REQUIRE(captions.has_value());
+        REQUIRE(captions.hasValue());
         CHECK(captions->get<bool>() == true);
 
         auto timecode = VariantLookup<Frame>::resolve(f, "HasTimecode");
-        REQUIRE(timecode.has_value());
+        REQUIRE(timecode.hasValue());
         CHECK(timecode->get<bool>() == true);
 
         auto afd = VariantLookup<Frame>::resolve(f, "HasAfd");
-        REQUIRE(afd.has_value());
+        REQUIRE(afd.hasValue());
         CHECK(afd->get<bool>() == true);
 
         // Hdr / Splice predicates report false when nothing in that
         // category was added.
         auto hdr = VariantLookup<Frame>::resolve(f, "HasHdr");
-        REQUIRE(hdr.has_value());
+        REQUIRE(hdr.hasValue());
         CHECK(hdr->get<bool>() == false);
 
         auto splice = VariantLookup<Frame>::resolve(f, "HasSplice");
-        REQUIRE(splice.has_value());
+        REQUIRE(splice.hasValue());
         CHECK(splice->get<bool>() == false);
 }
 
@@ -741,7 +741,7 @@ TEST_CASE("Frame VariantLookup: HasCaptions is false on a frame with only AFD / 
         Frame f = Frame();
         f.addPayload(makeAncPayload({AncFormat::AtcLtc, AncFormat::Afd}));
         auto v = VariantLookup<Frame>::resolve(f, "HasCaptions");
-        REQUIRE(v.has_value());
+        REQUIRE(v.hasValue());
         CHECK(v->get<bool>() == false);
 }
 
@@ -752,11 +752,11 @@ TEST_CASE("Frame VariantLookup: Anc[N].PacketCount delegates into AncPayload's l
         f.addPayload(makeAncPayload({AncFormat::Cea708}));
 
         auto first = VariantLookup<Frame>::resolve(f, "Anc[0].PacketCount");
-        REQUIRE(first.has_value());
+        REQUIRE(first.hasValue());
         CHECK(first->get<uint64_t>() == 3u);
 
         auto second = VariantLookup<Frame>::resolve(f, "Anc[1].PacketCount");
-        REQUIRE(second.has_value());
+        REQUIRE(second.hasValue());
         CHECK(second->get<uint64_t>() == 1u);
 }
 
@@ -766,11 +766,11 @@ TEST_CASE("Frame VariantLookup: Anc[N].HasCaptions reaches the AncPayload predic
         f.addPayload(makeAncPayload({AncFormat::Cea708}));
 
         auto first = VariantLookup<Frame>::resolve(f, "Anc[0].HasCaptions");
-        REQUIRE(first.has_value());
+        REQUIRE(first.hasValue());
         CHECK(first->get<bool>() == false);
 
         auto second = VariantLookup<Frame>::resolve(f, "Anc[1].HasCaptions");
-        REQUIRE(second.has_value());
+        REQUIRE(second.hasValue());
         CHECK(second->get<bool>() == true);
 }
 
@@ -780,7 +780,7 @@ TEST_CASE("Frame VariantLookup: Anc[N] out-of-range yields no value") {
 
         Error err = Error::Ok;
         auto missing = VariantLookup<Frame>::resolve(f, "Anc[1].PacketCount", &err);
-        CHECK_FALSE(missing.has_value());
+        CHECK_FALSE(missing.hasValue());
         CHECK(err == Error::OutOfRange);
 }
 

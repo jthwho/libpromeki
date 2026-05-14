@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
@@ -159,7 +160,7 @@ class HttpServer : public ObjectBase {
                  * re-parenting or storing it somewhere that outlives
                  * the connection.
                  */
-                using WebSocketHandler = std::function<void(WebSocket *socket, const HttpRequest &request)>;
+                using WebSocketHandler = Function<void(WebSocket *socket, const HttpRequest &request)>;
 
                 /**
                  * @brief Registers a route that upgrades to WebSocket on @p pattern.
@@ -406,7 +407,7 @@ template <typename T> void HttpServer::exposeLookup(const String &mountPath, T &
                 }
                 Error err;
                 auto  v = VariantLookup<T>::resolve(target, key, &err);
-                if (!v.has_value() || err.isError()) {
+                if (!v.hasValue() || err.isError()) {
                         res = HttpResponse::notFound(String("Unknown lookup: ") + key);
                         return;
                 }

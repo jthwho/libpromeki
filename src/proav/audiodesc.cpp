@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/optional.h>
 #include <promeki/audiodesc.h>
 #include <promeki/sdpsession.h>
 #include <promeki/variantlookup.h>
@@ -101,21 +102,21 @@ AudioDesc AudioDesc::fromJson(const JsonObject &json, Error *err) {
 // ============================================================================
 
 PROMEKI_LOOKUP_REGISTER(AudioDesc)
-        .scalar("Format", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.format()); })
-        .scalar("SampleRate", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.sampleRate()); })
+        .scalar("Format", [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.format()); })
+        .scalar("SampleRate", [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.sampleRate()); })
         .scalar("Channels",
-                [](const AudioDesc &d) -> std::optional<Variant> {
+                [](const AudioDesc &d) -> Optional<Variant> {
                         return Variant(static_cast<uint32_t>(d.channels()));
                 })
         .scalar("BytesPerSample",
-                [](const AudioDesc &d) -> std::optional<Variant> {
+                [](const AudioDesc &d) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.bytesPerSample()));
                 })
-        .scalar("IsValid", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isValid()); })
-        .scalar("IsCompressed", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isCompressed()); })
-        .scalar("IsNative", [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.isNative()); })
+        .scalar("IsValid", [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.isValid()); })
+        .scalar("IsCompressed", [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.isCompressed()); })
+        .scalar("IsNative", [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.isNative()); })
         .scalar("ChannelMap",
-                [](const AudioDesc &d) -> std::optional<Variant> { return Variant(d.channelMap().toString()); })
+                [](const AudioDesc &d) -> Optional<Variant> { return Variant(d.channelMap().toString()); })
         .database<"Metadata">(
                 "Meta", [](const AudioDesc &d) -> const VariantDatabase<"Metadata"> * { return &d.metadata(); },
                 [](AudioDesc &d) -> VariantDatabase<"Metadata"> * { return &d.metadata(); });

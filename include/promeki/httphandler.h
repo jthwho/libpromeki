@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/list.h>
@@ -29,7 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  * the entire handler.  When a handler needs explicit state, derive
  * from @ref HttpHandler instead.
  */
-using HttpHandlerFunc = std::function<void(const HttpRequest &request, HttpResponse &response)>;
+using HttpHandlerFunc = Function<void(const HttpRequest &request, HttpResponse &response)>;
 
 /** @brief Convenience list of @ref HttpHandlerFunc values. */
 using HttpHandlerFuncList = ::promeki::List<HttpHandlerFunc>;
@@ -55,7 +56,7 @@ using HttpHandlerFuncList = ::promeki::List<HttpHandlerFunc>;
  * @endcode
  */
 using HttpMiddleware =
-        std::function<void(const HttpRequest &request, HttpResponse &response, std::function<void()> next)>;
+        Function<void(const HttpRequest &request, HttpResponse &response, Function<void()> next)>;
 
 /** @brief Convenience list of @ref HttpMiddleware values. */
 using HttpMiddlewareList = ::promeki::List<HttpMiddleware>;

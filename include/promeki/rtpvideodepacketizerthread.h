@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/clockdomain.h>
 #include <promeki/eui64.h>
@@ -118,16 +119,16 @@ struct RtpVideoDepacketizerContext {
 
                 /// @brief Bumps the @c FrameCount on the owning
                 ///        ReaderStream.  May be @c nullptr.
-                std::function<void()> noteFrameReceived;
+                Function<void()> noteFrameReceived;
 
                 /// @brief Refreshes @ref streamClock from any
                 ///        newly-arrived SR.
-                std::function<void()> refreshStreamClock;
+                Function<void()> refreshStreamClock;
 
                 /// @brief Converts an NTP timestamp to local
                 ///        steady time using the owning
                 ///        @c RtpMediaIO 's anchor.
-                std::function<TimeStamp(const NtpTime &)> ntpToSteady;
+                Function<TimeStamp(const NtpTime &)> ntpToSteady;
 };
 
 /**

@@ -24,15 +24,15 @@ void SyntheticClock::setFrameRate(const FrameRate &frameRate) {
 }
 
 void SyntheticClock::setCurrentFrame(const FrameNumber &frame) {
-        _currentFrame.store(frame.isValid() ? frame.value() : 0, std::memory_order_relaxed);
+        _currentFrame.setValue(frame.isValid() ? frame.value() : 0);
 }
 
 void SyntheticClock::advance(int64_t frames) {
-        _currentFrame.fetch_add(frames, std::memory_order_relaxed);
+        _currentFrame.fetchAndAdd(frames);
 }
 
 void SyntheticClock::reset(const FrameNumber &frame) {
-        _currentFrame.store(frame.isValid() ? frame.value() : 0, std::memory_order_relaxed);
+        _currentFrame.setValue(frame.isValid() ? frame.value() : 0);
 }
 
 int64_t SyntheticClock::resolutionNs() const {
@@ -46,8 +46,8 @@ ClockJitter SyntheticClock::jitter() const {
 }
 
 Result<int64_t> SyntheticClock::raw() const {
-        int64_t frame = _currentFrame.load(std::memory_order_relaxed);
-        int64_t period = _framePeriodNs.load(std::memory_order_relaxed);
+        int64_t frame = _currentFrame.value();
+        int64_t period = _framePeriodNs.value();
         return makeResult<int64_t>(frame * period);
 }
 
@@ -59,7 +59,7 @@ Error SyntheticClock::sleepUntilNs(int64_t) const {
 
 void SyntheticClock::recomputePeriod() {
         int64_t period = _frameRate.isValid() ? _frameRate.frameDuration().nanoseconds() : 0;
-        _framePeriodNs.store(period, std::memory_order_relaxed);
+        _framePeriodNs.setValue(period);
 }
 
 PROMEKI_NAMESPACE_END

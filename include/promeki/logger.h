@@ -10,6 +10,7 @@
 #include <thread>
 #include <variant>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -152,7 +153,7 @@ class Logger {
                  * A formatter receives a LogFormat and returns a fully formatted
                  * string ready for output.
                  */
-                using LogFormatter = std::function<String(const LogFormat &fmt)>;
+                using LogFormatter = Function<String(const LogFormat &fmt)>;
 
                 /**
                  * @brief Opaque identifier for a registered log listener.
@@ -178,7 +179,7 @@ class Logger {
                  * @ref EventLoop, marshal the entry across via
                  * @ref EventLoop::postCallable rather than blocking.
                  */
-                using LogListener = std::function<void(const LogEntry &entry, const String &threadName)>;
+                using LogListener = Function<void(const LogEntry &entry, const String &threadName)>;
 
                 /** @brief Default size of the in-memory history ring used for replay. */
                 static constexpr size_t DefaultHistorySize = 1024;

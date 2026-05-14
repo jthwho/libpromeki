@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <thread>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -30,17 +29,17 @@ Error Clock::onPause(bool) {
 }
 
 Duration Clock::fixedOffset() const {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         return Duration::fromNanoseconds(_fixedOffsetNs);
 }
 
 void Clock::setFixedOffset(const Duration &offset) {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         _fixedOffsetNs = offset.nanoseconds();
 }
 
 bool Clock::isPaused() const {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         return _paused;
 }
 
@@ -54,7 +53,7 @@ Result<MediaTimeStamp> Clock::now() const {
         int64_t filteredNs;
         int64_t totalOffsetNs;
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker lock(_mutex);
 
                 if (_paused) {
                         // While paused, the filtered value is frozen.
@@ -84,15 +83,14 @@ Result<MediaTimeStamp> Clock::now() const {
         // Monotonic clamp: never return a value less than the
         // previous one.  CAS loop so concurrent callers all see a
         // non-decreasing sequence even without the mutex.
-        int64_t last = _lastNowNs.load(std::memory_order_relaxed);
+        int64_t last = _lastNowNs.value();
         while (true) {
                 int64_t clamped = std::max(value, last);
-                if (_lastNowNs.compare_exchange_weak(last, clamped, std::memory_order_acq_rel,
-                                                     std::memory_order_relaxed)) {
+                if (_lastNowNs.compareAndSwap(last, clamped)) {
                         value = clamped;
                         break;
                 }
-                // last reloaded on failure; loop again.
+                // last reloaded by compareAndSwap on failure; loop again.
         }
 
         TimeStamp ts{TimeStamp::Clock::time_point(std::chrono::nanoseconds(value))};
@@ -111,7 +109,7 @@ Error Clock::setPause(bool paused) {
         }
 
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker lock(_mutex);
                 if (_paused == paused) return {};
 
                 if (paused) {
@@ -154,7 +152,7 @@ Error Clock::sleepUntil(const MediaTimeStamp &deadline) const {
 
         int64_t totalOffsetNs;
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker lock(_mutex);
                 if (_paused) return Error::ClockPaused;
                 totalOffsetNs = _fixedOffsetNs + _pausedOffsetNs;
         }
@@ -187,8 +185,7 @@ Result<int64_t> WallClock::raw() const {
 }
 
 Error WallClock::sleepUntilNs(int64_t targetNs) const {
-        auto tp = TimeStamp::Clock::time_point(std::chrono::nanoseconds(targetNs));
-        std::this_thread::sleep_until(tp);
+        TimeStamp(TimeStamp::Clock::time_point(std::chrono::nanoseconds(targetNs))).sleepUntil();
         return {};
 }
 

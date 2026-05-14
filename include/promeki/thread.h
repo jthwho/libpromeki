@@ -185,6 +185,15 @@ class Thread : public ObjectBase {
                 static void sleep(const Duration &d) { sleepNs(d.nanoseconds()); }
 
                 /**
+                 * @brief Yields the calling thread to the OS scheduler.
+                 *
+                 * Thin wrapper around @c std::this_thread::yield.  Use
+                 * sparingly — busy-yielding burns CPU.  Prefer
+                 * @ref sleepNs / @ref sleepUs for back-off waits.
+                 */
+                static void yield() { std::this_thread::yield(); }
+
+                /**
                  * @brief Constructs a Thread (spawned mode).
                  * @param parent Optional parent ObjectBase.
                  */

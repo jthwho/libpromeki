@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/atomic.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
@@ -110,7 +111,7 @@ class MulticastReceiver : public Thread {
                  *               pointer or copy the data out.
                  * @param sender The sender's address and port.
                  */
-                using DatagramCallback = std::function<void(Buffer data, const SocketAddress &sender)>;
+                using DatagramCallback = Function<void(Buffer data, const SocketAddress &sender)>;
 
                 /**
                  * @brief Describes one group membership request.

@@ -192,7 +192,7 @@ ThreadPool::WorkRecord *ThreadPool::recordFor(WorkTag tag) {
         ReadWriteLock::WriteLocker wl(_statsLock);
         auto                       it = _stats.find(id);
         if (it != _stats.end()) return it->second.get();
-        auto rec = std::make_unique<WorkRecord>();
+        auto rec = UniquePtr<WorkRecord>::create();
         rec->tag = tag;
         if (id == kUntaggedId) {
                 rec->name = "(untagged)";
@@ -237,7 +237,7 @@ List<ThreadPool::WorkStats> ThreadPool::snapshotWorkStats() const {
                 s.count = rec.count.value();
                 out.pushToBack(s);
         }
-        std::sort(out.begin(), out.end(), [](const WorkStats &a, const WorkStats &b) {
+        out.sortInPlace([](const WorkStats &a, const WorkStats &b) {
                 if (a.totalCpu.nanoseconds() != b.totalCpu.nanoseconds()) {
                         return a.totalCpu.nanoseconds() > b.totalCpu.nanoseconds();
                 }

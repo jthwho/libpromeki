@@ -6,6 +6,7 @@
  */
 
 #include <cstdint>
+#include <promeki/list.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708decoder.h>
 #include <promeki/cea708service.h>
@@ -135,7 +136,7 @@ struct Cea708DecoderImpl {
                         if (total == 0) return;
                         // Second pass: concatenate the matching blocks'
                         // bytes into a single contiguous buffer.
-                        std::vector<uint8_t> bytes;
+                        List<uint8_t> bytes;
                         bytes.reserve(total);
                         for (size_t i = 0; i < blocks.size(); ++i) {
                                 const Cea708Service &svc = blocks[i];
@@ -143,7 +144,7 @@ struct Cea708DecoderImpl {
                                 if (svc.serviceNumber() != cfg.serviceNumber) continue;
                                 const auto *p = static_cast<const uint8_t *>(svc.data().data());
                                 const size_t n = svc.data().size();
-                                for (size_t k = 0; k < n; ++k) bytes.push_back(p[k]);
+                                for (size_t k = 0; k < n; ++k) bytes.pushToBack(p[k]);
                         }
                         windows.processBytes(bytes.data(), bytes.size());
                 }

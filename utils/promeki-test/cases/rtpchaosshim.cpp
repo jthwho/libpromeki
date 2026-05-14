@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
-#include <random>
 
 #include <poll.h>
 
+#include <promeki/list.h>
 #include <promeki/error.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
@@ -38,20 +38,16 @@ namespace promekitest {
                 // Sample an exponential delay capped at maxMs.  The mean is
                 // maxMs / 4 so most packets arrive promptly while the tail
                 // exercises the reorder buffer's playoutDelay path.
-                int sampleLateMs(std::mt19937_64 &rng, int maxMs) {
+                int sampleLateMs(Random &rng, int maxMs) {
                         if (maxMs <= 0) return 0;
-                        std::exponential_distribution<double> dist(4.0 / static_cast<double>(maxMs));
-                        double                                v = dist(rng);
+                        double v = rng.randomExponentialDouble(4.0 / static_cast<double>(maxMs));
                         if (v > static_cast<double>(maxMs)) v = static_cast<double>(maxMs);
                         if (v < 0.0) v = 0.0;
                         return static_cast<int>(v);
                 }
 
                 // Heap-free RNG floor for uniform [0, 1).
-                double sampleUniform(std::mt19937_64 &rng) {
-                        std::uniform_real_distribution<double> dist(0.0, 1.0);
-                        return dist(rng);
-                }
+                double sampleUniform(Random &rng) { return rng.randomDouble(0.0, 1.0); }
 
         } // namespace
 
@@ -95,7 +91,7 @@ namespace promekitest {
 
         Error RtpChaosShim::start() {
                 if (_started) return Error::Invalid;
-                _stop.store(false);
+                _stop.setValue(false);
                 _started = true;
                 for (size_t i = 0; i < _endpoints.size(); ++i) {
                         Endpoint *ep = _endpoints[i];
@@ -106,7 +102,7 @@ namespace promekitest {
 
         void RtpChaosShim::stop() {
                 if (!_started) return;
-                _stop.store(true);
+                _stop.setValue(true);
                 for (size_t i = 0; i < _endpoints.size(); ++i) {
                         Endpoint *ep = _endpoints[i];
                         if (ep->thread.joinable()) ep->thread.join();
@@ -121,7 +117,7 @@ namespace promekitest {
         void RtpChaosShim::runEndpoint(Endpoint &ep) {
                 uint8_t recvBuf[kRecvBufBytes];
 
-                while (!_stop.load(std::memory_order_acquire)) {
+                while (!_stop.value()) {
                         drainDueFromDelayQueue(ep);
 
                         // Block on recv with a deadline computed from the
@@ -147,7 +143,7 @@ namespace promekitest {
                         int64_t       n = ep.socket->readDatagram(recvBuf, sizeof(recvBuf), &sender);
                         if (n <= 0) continue;
 
-                        _counters.received.fetch_add(1, std::memory_order_relaxed);
+                        _counters.received.fetchAndAdd(1);
 
                         Buffer pkt(static_cast<size_t>(n));
                         pkt.copyFrom(recvBuf, static_cast<size_t>(n));
@@ -175,12 +171,12 @@ namespace promekitest {
                                 return;
 
                         case Mode::RtcpBlocked:
-                                _counters.dropped.fetch_add(1, std::memory_order_relaxed);
+                                _counters.dropped.fetchAndAdd(1);
                                 return;
 
                         case Mode::Loss:
                                 if (sampleUniform(ep.rng) < _cfg.rate) {
-                                        _counters.dropped.fetch_add(1, std::memory_order_relaxed);
+                                        _counters.dropped.fetchAndAdd(1);
                                         return;
                                 }
                                 sendNow(ep, bytes);
@@ -189,7 +185,7 @@ namespace promekitest {
                         case Mode::Dup:
                                 sendNow(ep, bytes);
                                 if (sampleUniform(ep.rng) < _cfg.rate) {
-                                        _counters.duplicated.fetch_add(1, std::memory_order_relaxed);
+                                        _counters.duplicated.fetchAndAdd(1);
                                         sendNow(ep, bytes);
                                 }
                                 return;
@@ -198,7 +194,7 @@ namespace promekitest {
                                 int       delayMs = sampleLateMs(ep.rng, _cfg.maxLateMs);
                                 TimeStamp emitAt  = TimeStamp::now();
                                 emitAt += std::chrono::milliseconds(delayMs);
-                                _counters.delayed.fetch_add(1, std::memory_order_relaxed);
+                                _counters.delayed.fetchAndAdd(1);
                                 scheduleAt(ep, std::move(bytes), emitAt);
                                 return;
                         }
@@ -219,7 +215,7 @@ namespace promekitest {
                                         ep.rtpPacketCount += 1;
                                         if (ep.rtpPacketCount > _cfg.ssrcChangeAfter) {
                                                 mutateSsrc(bytes);
-                                                _counters.ssrcMutated.fetch_add(1, std::memory_order_relaxed);
+                                                _counters.ssrcMutated.fetchAndAdd(1);
                                         }
                                 }
                                 sendNow(ep, bytes);
@@ -240,7 +236,7 @@ namespace promekitest {
                 // shuffled order while still going through the delay
                 // queue path (keeps emission sequencing identical to
                 // Late mode and avoids a separate code path).
-                std::vector<size_t> idx(ep.reorderHold.size());
+                List<size_t> idx(ep.reorderHold.size());
                 for (size_t i = 0; i < idx.size(); ++i) idx[i] = i;
                 std::shuffle(idx.begin(), idx.end(), ep.rng);
 
@@ -249,7 +245,7 @@ namespace promekitest {
                         size_t  src = idx[pos];
                         Pending p   = std::move(ep.reorderHold[src]);
                         if (src != pos) {
-                                _counters.reordered.fetch_add(1, std::memory_order_relaxed);
+                                _counters.reordered.fetchAndAdd(1);
                         }
                         scheduleAt(ep, std::move(p.bytes), now);
                 }
@@ -304,7 +300,7 @@ namespace promekitest {
                         promekiWarn("RtpChaosShim: writeDatagram failed: %s", std::strerror(errno));
                         return;
                 }
-                _counters.forwarded.fetch_add(1, std::memory_order_relaxed);
+                _counters.forwarded.fetchAndAdd(1);
         }
 
         void RtpChaosShim::mutateSsrc(Buffer &bytes) const {

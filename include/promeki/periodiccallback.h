@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/timestamp.h>
 
@@ -41,7 +42,7 @@ PROMEKI_NAMESPACE_BEGIN
 class PeriodicCallback {
         public:
                 /** @brief Callable type. */
-                using Function = std::function<void()>;
+                using Function = promeki::Function<void()>;
 
                 /** @brief Default constructor — invalid, service() is a no-op. */
                 PeriodicCallback() = default;

@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <utility>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
 #include <promeki/buffercommand.h>
@@ -54,7 +55,7 @@ PROMEKI_NAMESPACE_BEGIN
 class BufferRequest {
         public:
                 /** @brief Continuation callback type. */
-                using Callback = std::function<void(Error)>;
+                using Callback = Function<void(Error)>;
 
                 /**
                  * @brief Constructs an empty / invalid request.

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/clock.h>
 #include <promeki/duration.h>
 #include <promeki/error.h>
@@ -555,7 +556,7 @@ class MediaPipeline : public ObjectBase {
                  * via @ref setCaptureTrigger.  An empty function
                  * clears any installed trigger.
                  */
-                Error setCaptureTrigger(std::function<bool(const Frame &)> fn);
+                Error setCaptureTrigger(Function<bool(const Frame &)> fn);
 
                 /**
                  * @brief Plug-in trigger from a VariantQuery expression.
@@ -756,7 +757,7 @@ class MediaPipeline : public ObjectBase {
                  * Invoked on the subscriber's @ref EventLoop with each
                  * @ref PipelineEvent the pipeline produces.
                  */
-                using EventCallback = std::function<void(const PipelineEvent &)>;
+                using EventCallback = Function<void(const PipelineEvent &)>;
 
                 /**
                  * @brief Registers @p cb to receive every future @ref PipelineEvent.

@@ -1194,7 +1194,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
         // Phase 2 queue-mode receive path.  Each ReaderStream owns
         // a per-source @ref RtpSeqTracker (RFC 3550 §A bookkeeping),
         // an @ref RtpSeqReorderBuffer (windowed reorder-by-extended-
-        // seq), a post-reorder @c Queue<RtpPacket>, and a per-stream
+        // seq), a post-reorder @c RtpPacket::Queue, and a per-stream
         // depacketizer thread that drains the queue and forwards
         // packets to the corresponding on*Packet handler.  The recv
         // socket thread does only seq-tracker bookkeeping + reorder
@@ -1213,7 +1213,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                 rcfg.playoutDelay = Duration::fromMilliseconds(_readerJitterMs);
         }
         s.reorderBuffer = UniquePtr<RtpSeqReorderBuffer>::create(rcfg);
-        s.reorderQueue = UniquePtr<Queue<RtpPacket>>::create();
+        s.reorderQueue = UniquePtr<RtpPacket::Queue>::create();
         s.resetEpoch.setValue(0);
 
         // Hook up SSRC-change → reset-epoch bump on the session

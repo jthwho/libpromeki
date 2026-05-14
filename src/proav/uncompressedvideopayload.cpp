@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder.
  */
 
+#include <promeki/optional.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/cscpipeline.h>
 #include <promeki/mediaconfig.h>
@@ -73,30 +74,30 @@ UncompressedVideoPayload::Ptr UncompressedVideoPayload::allocate(const ImageDesc
 PROMEKI_LOOKUP_REGISTER(VideoPayload)
         .inheritsFrom<MediaPayload>()
         .scalar("Width",
-                [](const VideoPayload &p) -> std::optional<Variant> {
+                [](const VideoPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint32_t>(p.desc().width()));
                 })
         .scalar("Height",
-                [](const VideoPayload &p) -> std::optional<Variant> {
+                [](const VideoPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint32_t>(p.desc().height()));
                 })
-        .scalar("Size", [](const VideoPayload &p) -> std::optional<Variant> { return Variant(p.desc().size()); })
+        .scalar("Size", [](const VideoPayload &p) -> Optional<Variant> { return Variant(p.desc().size()); })
         .scalar("PixelFormat",
-                [](const VideoPayload &p) -> std::optional<Variant> { return Variant(p.desc().pixelFormat()); })
+                [](const VideoPayload &p) -> Optional<Variant> { return Variant(p.desc().pixelFormat()); })
         .scalar("PixelMemLayout",
-                [](const VideoPayload &p) -> std::optional<Variant> { return Variant(p.desc().memLayout()); })
+                [](const VideoPayload &p) -> Optional<Variant> { return Variant(p.desc().memLayout()); })
         .scalar("ColorModel",
-                [](const VideoPayload &p) -> std::optional<Variant> { return Variant(p.desc().colorModel()); })
+                [](const VideoPayload &p) -> Optional<Variant> { return Variant(p.desc().colorModel()); })
         .scalar("LinePad",
-                [](const VideoPayload &p) -> std::optional<Variant> {
+                [](const VideoPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.desc().linePad()));
                 })
         .scalar("LineAlign",
-                [](const VideoPayload &p) -> std::optional<Variant> {
+                [](const VideoPayload &p) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(p.desc().lineAlign()));
                 })
         .scalar("ScanMode",
-                [](const VideoPayload &p) -> std::optional<Variant> {
+                [](const VideoPayload &p) -> Optional<Variant> {
                         return Variant(String(p.desc().videoScanMode().valueName()));
                 })
         // ImageDesc's "format declares N planes" vs MediaPayload's
@@ -104,7 +105,7 @@ PROMEKI_LOOKUP_REGISTER(VideoPayload)
         // the former may say 3 for YUV-planar while the latter says 1
         // for a single-buffer packed read.  Expose the format-side
         // count under a distinct name so the two don't shadow.
-        .scalar("FormatPlaneCount", [](const VideoPayload &p) -> std::optional<Variant> {
+        .scalar("FormatPlaneCount", [](const VideoPayload &p) -> Optional<Variant> {
                 return Variant(static_cast<uint64_t>(p.desc().planeCount()));
         });
 

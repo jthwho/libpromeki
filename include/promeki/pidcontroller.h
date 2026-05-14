@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <functional>
 
@@ -35,9 +36,9 @@ PROMEKI_NAMESPACE_BEGIN
 template <typename ValueType = double, typename TimeType = double> class PIDController {
         public:
                 /** @brief Callback type that returns the current time. */
-                using CurrentTimeFunc = std::function<TimeType()>;
+                using CurrentTimeFunc = Function<TimeType()>;
                 /** @brief Callback type that returns the current measured process value. */
-                using CurrentValueFunc = std::function<ValueType()>;
+                using CurrentValueFunc = Function<ValueType()>;
 
                 /**
       * @brief Constructs a PID controller with the given feedback callbacks.

@@ -25,8 +25,6 @@
 #include <promeki/uniqueptr.h>
 #include <promeki/url.h>
 
-#include <atomic>
-
 PROMEKI_NAMESPACE_BEGIN
 
 class RtmpClient;
@@ -301,7 +299,7 @@ class RtmpMediaIO : public DedicatedThreadMediaIO {
 
                 // Cancellation latch for executeCmd(Read).  Set by
                 // cancelBlockingWork(); cleared at every Open.
-                std::atomic<bool> _readCancelled{false};
+                Atomic<bool>      _readCancelled{false};
 
                 // Latched when @c RtmpClient::disconnectedSignal fires
                 // (peer went away, socket I/O error, etc.).  Polled by
@@ -313,8 +311,8 @@ class RtmpMediaIO : public DedicatedThreadMediaIO {
                 // @c _disconnectErrorCode stores the disconnect reason
                 // as an @c Error::Code (int) to keep the atomic POD;
                 // reconstruct an @c Error via @c Error(static_cast).
-                std::atomic<bool> _clientDisconnected{false};
-                std::atomic<int>  _disconnectErrorCode{0};
+                Atomic<bool>      _clientDisconnected{false};
+                Atomic<int>       _disconnectErrorCode{0};
 
                 // Sink-side state set at Open from the MediaConfig +
                 // pending descriptor, read by the packetizer thread.

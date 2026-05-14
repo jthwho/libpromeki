@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <promeki/list.h>
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708encoder.h>
@@ -172,7 +173,7 @@ namespace {
                 const SubtitleSpan *span; ///< Owning span (style source)
         };
         struct LaidOutRow {
-                std::vector<LaidOutCell> cells;
+                List<LaidOutCell> cells;
         };
 
         /// @brief Reads the row layout from a wrapped @ref Subtitle.
@@ -182,15 +183,15 @@ namespace {
         ///        each row carry their source-span pointer so the
         ///        byte-stream builder can interleave SPA / SPC
         ///        commands at span boundaries.
-        std::vector<LaidOutRow> layoutCueText(const Subtitle &wrappedCue) {
-                std::vector<LaidOutRow>   rows;
-                rows.emplace_back();
+        List<LaidOutRow> layoutCueText(const Subtitle &wrappedCue) {
+                List<LaidOutRow>   rows;
+                rows.emplaceToBack();
                 const SubtitleSpan::List &spans = wrappedCue.spans();
                 for (size_t s = 0; s < spans.size(); ++s) {
                         const SubtitleSpan &sp = spans[s];
                         const String       &t = sp.text();
                         if (t == "\n") {
-                                rows.emplace_back();
+                                rows.emplaceToBack();
                                 continue;
                         }
                         const char *cp = t.cstr();
@@ -198,15 +199,15 @@ namespace {
                         for (size_t i = 0; i < n; ++i) {
                                 const uint8_t b = static_cast<uint8_t>(cp[i]);
                                 if (b == 0x0A /* literal newline inside a span */) {
-                                        rows.emplace_back();
+                                        rows.emplaceToBack();
                                         continue;
                                 }
                                 const uint8_t emit = (b >= 0x20 && b <= 0x7E) ? b : 0x20;
-                                rows.back().cells.push_back({emit, &sp});
+                                rows.back().cells.pushToBack({emit, &sp});
                         }
                 }
-                while (rows.size() > 1 && rows.back().cells.empty()) rows.pop_back();
-                if (rows.empty()) rows.emplace_back();
+                while (rows.size() > 1 && rows.back().cells.isEmpty()) rows.popFromBack();
+                if (rows.isEmpty()) rows.emplaceToBack();
                 return rows;
         }
 
@@ -242,8 +243,8 @@ namespace {
                 // span pointers preserved for SPA / SPC emission.
                 const Subtitle           wrappedCue =
                         cue.wrapped(windowCols, Cea708Window::MaxRows);
-                std::vector<LaidOutRow>  rows = layoutCueText(wrappedCue);
-                if (rows.empty()) rows.emplace_back();
+                List<LaidOutRow>  rows = layoutCueText(wrappedCue);
+                if (rows.isEmpty()) rows.emplaceToBack();
 
                 int rowCount = static_cast<int>(rows.size());
                 if (forcedRowCount > rowCount) rowCount = forcedRowCount;
@@ -284,15 +285,15 @@ namespace {
                 const uint8_t colWire = static_cast<uint8_t>((colCount - 1) & 0x3F);
                 const uint8_t df0Style = 0x00;
 
-                std::vector<uint8_t> bytes;
+                List<uint8_t> bytes;
                 bytes.reserve(static_cast<size_t>(7 + colCount * rowCount + rowCount + 2));
-                bytes.push_back(0x98); // DF0 (window 0)
-                bytes.push_back(df0Arg1);
-                bytes.push_back(df0Anchor);
-                bytes.push_back(df0AnchorH);
-                bytes.push_back(df0Rows);
-                bytes.push_back(colWire);
-                bytes.push_back(df0Style);
+                bytes.pushToBack(0x98); // DF0 (window 0)
+                bytes.pushToBack(df0Arg1);
+                bytes.pushToBack(df0Anchor);
+                bytes.pushToBack(df0AnchorH);
+                bytes.pushToBack(df0Rows);
+                bytes.pushToBack(colWire);
+                bytes.pushToBack(df0Style);
 
                 // -- Walk rows + cells, emitting style cmds + chars ---
                 //
@@ -313,13 +314,13 @@ namespace {
                 packSpaArgs(defaultSpan, defSpaB1, defSpaB2);
                 packSpcArgs(defaultSpan, defSpcB1, defSpcB2, defSpcB3);
 
-                bytes.push_back(0x90); // SPA
-                bytes.push_back(defSpaB1);
-                bytes.push_back(defSpaB2);
-                bytes.push_back(0x91); // SPC
-                bytes.push_back(defSpcB1);
-                bytes.push_back(defSpcB2);
-                bytes.push_back(defSpcB3);
+                bytes.pushToBack(0x90); // SPA
+                bytes.pushToBack(defSpaB1);
+                bytes.pushToBack(defSpaB2);
+                bytes.pushToBack(0x91); // SPC
+                bytes.pushToBack(defSpcB1);
+                bytes.pushToBack(defSpcB2);
+                bytes.pushToBack(defSpcB3);
 
                 bool    lastSpaValid = true;
                 bool    lastSpcValid = true;
@@ -327,7 +328,7 @@ namespace {
                 uint8_t lastSpcB1 = defSpcB1, lastSpcB2 = defSpcB2, lastSpcB3 = defSpcB3;
 
                 for (size_t ri = 0; ri < rows.size(); ++ri) {
-                        if (ri > 0) bytes.push_back(0x0D); // CR — next row
+                        if (ri > 0) bytes.pushToBack(0x0D); // CR — next row
                         const auto &row = rows[ri];
                         for (size_t ci = 0; ci < row.cells.size(); ++ci) {
                                 const LaidOutCell &cell = row.cells[ci];
@@ -336,9 +337,9 @@ namespace {
                                         uint8_t spaB1 = 0, spaB2 = 0;
                                         packSpaArgs(*cell.span, spaB1, spaB2);
                                         if (!lastSpaValid || spaB1 != lastSpaB1 || spaB2 != lastSpaB2) {
-                                                bytes.push_back(0x90);
-                                                bytes.push_back(spaB1);
-                                                bytes.push_back(spaB2);
+                                                bytes.pushToBack(0x90);
+                                                bytes.pushToBack(spaB1);
+                                                bytes.pushToBack(spaB2);
                                                 lastSpaValid = true;
                                                 lastSpaB1 = spaB1;
                                                 lastSpaB2 = spaB2;
@@ -362,26 +363,26 @@ namespace {
                                                            && (emitB1 != lastSpcB1 || emitB2 != lastSpcB2
                                                                || emitB3 != lastSpcB3));
                                         if (needEmit) {
-                                                bytes.push_back(0x91);
-                                                bytes.push_back(emitB1);
-                                                bytes.push_back(emitB2);
-                                                bytes.push_back(emitB3);
+                                                bytes.pushToBack(0x91);
+                                                bytes.pushToBack(emitB1);
+                                                bytes.pushToBack(emitB2);
+                                                bytes.pushToBack(emitB3);
                                                 lastSpcValid = true;
                                                 lastSpcB1 = emitB1;
                                                 lastSpcB2 = emitB2;
                                                 lastSpcB3 = emitB3;
                                         }
                                 }
-                                bytes.push_back(cell.ch);
+                                bytes.pushToBack(cell.ch);
                         }
                 }
 
-                bytes.push_back(0x89); // DSW
-                bytes.push_back(0x01); // window 0 bitmap
+                bytes.pushToBack(0x89); // DSW
+                bytes.pushToBack(0x01); // window 0 bitmap
 
                 Buffer buf(bytes.size());
                 buf.setSize(bytes.size());
-                if (!bytes.empty()) buf.copyFrom(bytes.data(), bytes.size(), 0);
+                if (!bytes.isEmpty()) buf.copyFrom(bytes.data(), bytes.size(), 0);
                 return buf;
         }
 

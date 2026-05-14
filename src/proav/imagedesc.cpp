@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/optional.h>
 #include <promeki/imagedesc.h>
 #include <promeki/sdpsession.h>
 #include <promeki/colormodel.h>
@@ -409,32 +410,32 @@ SdpMediaDescription ImageDesc::toSdp(uint8_t payloadType) const {
 
 PROMEKI_LOOKUP_REGISTER(ImageDesc)
         .scalar("Width",
-                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(static_cast<uint32_t>(d.width())); })
+                [](const ImageDesc &d) -> Optional<Variant> { return Variant(static_cast<uint32_t>(d.width())); })
         .scalar("Height",
-                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(static_cast<uint32_t>(d.height())); })
-        .scalar("Size", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.size()); })
-        .scalar("PixelFormat", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.pixelFormat()); })
-        .scalar("PixelMemLayout", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.memLayout()); })
-        .scalar("ColorModel", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.colorModel()); })
+                [](const ImageDesc &d) -> Optional<Variant> { return Variant(static_cast<uint32_t>(d.height())); })
+        .scalar("Size", [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.size()); })
+        .scalar("PixelFormat", [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.pixelFormat()); })
+        .scalar("PixelMemLayout", [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.memLayout()); })
+        .scalar("ColorModel", [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.colorModel()); })
         .scalar("LinePad",
-                [](const ImageDesc &d) -> std::optional<Variant> {
+                [](const ImageDesc &d) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.linePad()));
                 })
         .scalar("LineAlign",
-                [](const ImageDesc &d) -> std::optional<Variant> {
+                [](const ImageDesc &d) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.lineAlign()));
                 })
         .scalar("ScanMode",
-                [](const ImageDesc &d) -> std::optional<Variant> {
+                [](const ImageDesc &d) -> Optional<Variant> {
                         return Variant(String(d.videoScanMode().valueName()));
                 })
         .scalar("PlaneCount",
-                [](const ImageDesc &d) -> std::optional<Variant> {
+                [](const ImageDesc &d) -> Optional<Variant> {
                         return Variant(static_cast<uint64_t>(d.planeCount()));
                 })
-        .scalar("IsValid", [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.isValid()); })
+        .scalar("IsValid", [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.isValid()); })
         .scalar("IsCompressed",
-                [](const ImageDesc &d) -> std::optional<Variant> { return Variant(d.pixelFormat().isCompressed()); })
+                [](const ImageDesc &d) -> Optional<Variant> { return Variant(d.pixelFormat().isCompressed()); })
         .database<"Metadata">(
                 "Meta", [](const ImageDesc &d) -> const VariantDatabase<"Metadata"> * { return &d.metadata(); },
                 [](ImageDesc &d) -> VariantDatabase<"Metadata"> * { return &d.metadata(); });

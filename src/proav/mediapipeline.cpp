@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/function.h>
 #include <promeki/mediapipeline.h>
 
 #include <cmath>
@@ -291,7 +292,7 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
                 if (perr.isError()) {
                         promekiErr("MediaPipeline::build: planner failed (%s)", perr.name().cstr());
                         if (!planDiag.isEmpty()) {
-                                const StringList lines = planDiag.split(std::string("\n"));
+                                const StringList lines = planDiag.split('\n');
                                 for (size_t i = 0; i < lines.size(); ++i) {
                                         promekiErr("  %s", lines[i].cstr());
                                 }
@@ -1015,7 +1016,7 @@ Error MediaPipeline::setCaptureTrigger(MediaPipelineTrigger::UPtr trig) {
         return Error::Ok;
 }
 
-Error MediaPipeline::setCaptureTrigger(std::function<bool(const Frame &)> fn) {
+Error MediaPipeline::setCaptureTrigger(Function<bool(const Frame &)> fn) {
         if (_config.kind() != MediaPipelineConfig::Kind::Capture) return Error::NotSupported;
         if (!fn) return clearCaptureTrigger();
         _captureTrigger = MediaPipelineTrigger::UPtr::takeOwnership(

@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstring>
 #include <promeki/bufferview.h>
+#include <promeki/queue.h>
 #include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -60,10 +61,14 @@ PROMEKI_NAMESPACE_BEGIN
 class RtpPacket : public BufferView {
         public:
                 /** @brief List of RtpPacket values. */
-                using List = ::promeki::List<RtpPacket>;
+                using List = promeki::List<RtpPacket>;
+
+                /** @brief Thread-safe queue of RtpPacket values, used for cross-thread handoff
+                 *         between RTP receive, reorder, and depacketizer stages. */
+                using Queue = promeki::Queue<RtpPacket>;
 
                 /** @brief List of sizes. */
-                using SizeList = ::promeki::List<size_t>;
+                using SizeList = promeki::List<size_t>;
 
                 /** @brief Minimum RTP fixed header size in bytes. */
                 static constexpr size_t HeaderSize = 12;

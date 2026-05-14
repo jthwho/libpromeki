@@ -9,6 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/color.h>
 #include <promeki/paintengine.h>
 
@@ -62,6 +63,35 @@ class Font {
                  * @return The font filename.
                  */
                 const String &fontFilename() const { return _fontFilename; }
+
+                /**
+                 * @brief Sets the ordered list of fallback font paths.
+                 * @param val Ordered list of filesystem or @c ":/..."
+                 *            resource paths.  Each entry is consulted
+                 *            when the primary face (set via
+                 *            @ref setFontFilename) does not have a
+                 *            glyph for a requested codepoint.
+                 *
+                 * Passing an empty list resets the font to the library's
+                 * bundled default fallback chain (currently a Japanese
+                 * CJK monospace plus the Noto Sans Mono general-Unicode
+                 * fallback).  Callers wanting "no fallback at all" can
+                 * pass a single-element list containing the primary
+                 * filename to suppress the default chain.
+                 *
+                 * @note Subclasses are notified through @ref onStateChanged
+                 *       so cached glyphs / loaded faces can be rebuilt.
+                 */
+                void setFontFallbacks(const StringList &val);
+
+                /**
+                 * @brief Returns the configured fallback font list.
+                 *
+                 * Empty when no override has been set — subclasses
+                 * still walk the library's bundled default chain via
+                 * @ref effectiveFallbacks.
+                 */
+                const StringList &fontFallbacks() const { return _fontFallbacks; }
 
                 /**
                  * @brief Sets the font size in pixels.
@@ -238,7 +268,25 @@ class Font {
                  */
                 String effectiveFilename() const;
 
+                /**
+                 * @brief Returns the fallback font paths subclasses
+                 *        should actually load.
+                 *
+                 * When the caller set an explicit fallback list (via
+                 * @ref setFontFallbacks), that list is returned
+                 * verbatim.  When the override is empty this returns
+                 * the library's bundled default chain — an internal
+                 * implementation detail that subclasses consume
+                 * through this method rather than by touching
+                 * @c _fontFallbacks directly.  The primary face (from
+                 * @ref effectiveFilename) is *not* part of this list;
+                 * subclasses load it separately and then walk the
+                 * fallback list for codepoints the primary lacks.
+                 */
+                StringList effectiveFallbacks() const;
+
                 String      _fontFilename;
+                StringList  _fontFallbacks;
                 int         _fontSize = 12;
                 Color       _fg = Color::White;
                 Color       _bg = Color::Black;

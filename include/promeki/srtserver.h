@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <promeki/function.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/socketaddress.h>
@@ -160,7 +161,7 @@ class SrtServer : public ObjectBase {
                  *                 empty.
                  * @param peer     The peer's resolved address.
                  */
-                using ListenCallback = std::function<bool(const String &streamId, const SocketAddress &peer)>;
+                using ListenCallback = Function<bool(const String &streamId, const SocketAddress &peer)>;
 
                 /**
                  * @brief Installs a pre-accept decision callback.

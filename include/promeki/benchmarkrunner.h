@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -349,7 +350,7 @@ class BenchmarkResult {
 class BenchmarkCase {
         public:
                 /** @brief Case function signature. */
-                using Function = std::function<void(BenchmarkState &)>;
+                using Function = promeki::Function<void(BenchmarkState &)>;
 
                 /**
                  * @brief Constructs a benchmark case.

@@ -82,9 +82,9 @@ TEST_CASE("Amf0Value: setField preserves insertion order") {
         o.setField("alpha", 2);
         o.setField("mike", 3);
         REQUIRE(o.fields().size() == 3);
-        CHECK(o.fields()[0].first == "zulu");
-        CHECK(o.fields()[1].first == "alpha");
-        CHECK(o.fields()[2].first == "mike");
+        CHECK(o.fields()[0].first() == "zulu");
+        CHECK(o.fields()[1].first() == "alpha");
+        CHECK(o.fields()[2].first() == "mike");
 }
 
 TEST_CASE("Amf0Value: setField on existing key replaces in place") {
@@ -93,9 +93,9 @@ TEST_CASE("Amf0Value: setField on existing key replaces in place") {
         o.setField("b", 2);
         o.setField("a", 99);  // replace
         REQUIRE(o.fields().size() == 2);
-        CHECK(o.fields()[0].first == "a");
-        CHECK(o.fields()[0].second.asNumber() == 99.0);
-        CHECK(o.fields()[1].first == "b");
+        CHECK(o.fields()[0].first() == "a");
+        CHECK(o.fields()[0].second().asNumber() == 99.0);
+        CHECK(o.fields()[1].first() == "b");
 }
 
 TEST_CASE("Amf0Value: StrictArray") {
@@ -221,9 +221,9 @@ TEST_CASE("Amf0: Object round-trip preserves field order") {
         REQUIRE(parsed.isObject());
         REQUIRE(parsed.fields().size() == 3);
         // Critically: order must match.
-        CHECK(parsed.fields()[0].first == "app");
-        CHECK(parsed.fields()[1].first == "tcUrl");
-        CHECK(parsed.fields()[2].first == "flashVer");
+        CHECK(parsed.fields()[0].first() == "app");
+        CHECK(parsed.fields()[1].first() == "tcUrl");
+        CHECK(parsed.fields()[2].first() == "flashVer");
         // Whole-tree equality.
         CHECK(parsed == o);
 }
@@ -347,8 +347,8 @@ TEST_CASE("Amf0: RTMP connect body shape parses cleanly") {
         CHECK(r.first()[1] == txn);
         CHECK(r.first()[2] == body);
         // Specifically verify field order survives.
-        CHECK(r.first()[2].fields()[0].first == "app");
-        CHECK(r.first()[2].fields()[9].first == "objectEncoding");
+        CHECK(r.first()[2].fields()[0].first() == "app");
+        CHECK(r.first()[2].fields()[9].first() == "objectEncoding");
 }
 
 TEST_CASE("Amf0: onStatus body shape parses cleanly") {

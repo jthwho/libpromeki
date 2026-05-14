@@ -165,7 +165,7 @@ namespace promekitest {
                                 (testFolder / (String("audio.") + c.extension)).toString();
 
                         const uint32_t streamId =
-                                0xAFD00000u ^ static_cast<uint32_t>(std::hash<std::string>{}(c.name.str()));
+                                0xAFD00000u ^ static_cast<uint32_t>(c.name.hash());
 
                         ctx.setDetail(String("extension"), c.extension);
                         ctx.setDetail(String("path"), path);
