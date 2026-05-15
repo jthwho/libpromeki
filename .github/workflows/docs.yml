@@ -3,144 +3,51 @@ name: Documentation
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
 
+# Cancel an in-flight docs build if a new push lands.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 permissions:
-  contents: write
+  contents: read
   pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          # Pull real bytes for LFS-tracked assets (e.g. docs/*.jpg logos)
-          # so they get copied into gh-pages as images instead of pointer
-          # files served as text/plain.
           lfs: true
-        # No submodules: PROMEKI_DOCS_ONLY mode (below) configures only
-        # the Doxygen target and skips every third-party dep.
 
       - name: Install Doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
-      - name: Determine version name
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/}"
-          else
-            VERSION="${GITHUB_REF#refs/heads/}"
-          fi
-          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building docs for: $VERSION"
-
       - name: Build documentation
         run: |
           cmake -B build -DPROMEKI_DOCS_ONLY=ON \
-            -DPROMEKI_DOCS_VERSION=${{ steps.version.outputs.name }}
+            -DPROMEKI_DOCS_VERSION=main
           cmake --build build --target docs
 
-      - name: Checkout gh-pages
-        id: checkout-pages
-        uses: actions/checkout@v4
+      - name: Disable Jekyll processing
+        run: touch build/doxygen/html/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          ref: gh-pages
-          path: gh-pages
-          fetch-depth: 0
-        continue-on-error: true
+          path: build/doxygen/html
 
-      - name: Initialize gh-pages if needed
-        if: steps.checkout-pages.outcome == 'failure'
-        run: |
-          rm -rf gh-pages
-          mkdir gh-pages
-          cd gh-pages
-          git init -b gh-pages
-
-      - name: Deploy version
-        run: |
-          VERSION="${{ steps.version.outputs.name }}"
-          rm -rf "gh-pages/$VERSION"
-          cp -r build/doxygen/html "gh-pages/$VERSION"
-          touch gh-pages/.nojekyll
-
-      - name: Generate index page
-        run: |
-          cd gh-pages
-
-          BRANCHES=()
-          TAGS=()
-          for dir in */; do
-            dir="${dir%/}"
-            [ "$dir" = ".git" ] && continue
-            [ ! -f "$dir/index.html" ] && continue
-            if [[ "$dir" == v* ]]; then
-              TAGS+=("$dir")
-            else
-              BRANCHES+=("$dir")
-            fi
-          done
-
-          IFS=$'\n' TAGS=($(printf '%s\n' "${TAGS[@]}" | sort -rV)); unset IFS
-
-          {
-            echo '<!DOCTYPE html>'
-            echo '<html lang="en"><head>'
-            echo '<meta charset="utf-8">'
-            echo '<meta name="viewport" content="width=device-width, initial-scale=1">'
-            echo '<title>libpromeki Documentation</title>'
-            echo '<style>'
-            echo 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #333; background: #fafafa; }'
-            echo 'h1 { margin-bottom: 0.25em; }'
-            echo '.subtitle { color: #666; margin-bottom: 2em; }'
-            echo 'h2 { margin-top: 2em; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; }'
-            echo 'ul { list-style: none; padding: 0; }'
-            echo 'li { margin: 0.5em 0; }'
-            echo 'a { color: #0366d6; text-decoration: none; font-size: 1.1em; }'
-            echo 'a:hover { text-decoration: underline; }'
-            echo '.empty { color: #999; font-style: italic; }'
-            echo '</style></head><body>'
-            echo '<h1>libpromeki</h1>'
-            echo '<p class="subtitle">PROfessional MEdia toolKIt &mdash; API Documentation</p>'
-
-            echo '<h2>Branches</h2>'
-            if [ ${#BRANCHES[@]} -gt 0 ]; then
-              echo '<ul>'
-              for b in "${BRANCHES[@]}"; do
-                echo "<li><a href=\"$b/\">$b</a></li>"
-              done
-              echo '</ul>'
-            else
-              echo '<p class="empty">No branch documentation available.</p>'
-            fi
-
-            echo '<h2>Releases</h2>'
-            if [ ${#TAGS[@]} -gt 0 ]; then
-              echo '<ul>'
-              for t in "${TAGS[@]}"; do
-                echo "<li><a href=\"$t/\">$t</a></li>"
-              done
-              echo '</ul>'
-            else
-              echo '<p class="empty">No release documentation available yet.</p>'
-            fi
-
-            echo '</body></html>'
-          } > index.html
-
-      - name: Push to gh-pages
-        run: |
-          cd gh-pages
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No documentation changes to commit."
-          else
-            git commit -m "Update docs for ${{ steps.version.outputs.name }}"
-            git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages
-          fi
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
