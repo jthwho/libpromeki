@@ -1672,8 +1672,7 @@ Error QuickTimeReader::parseUdta(int64_t payloadOffset, int64_t payloadEnd) {
                                                 _containerMetadata.set(Metadata::OriginationDateTime, combined);
                                         }
                                         if (!umidHex.isEmpty()) {
-                                                Error umidErr;
-                                                UMID  umid = UMID::fromString(umidHex, &umidErr);
+                                                auto [umid, umidErr] = UMID::fromString(umidHex);
                                                 if (umidErr.isOk() && umid.isValid()) {
                                                         _containerMetadata.set(Metadata::UMID, umid);
                                                 } else {

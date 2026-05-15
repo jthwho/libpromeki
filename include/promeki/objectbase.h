@@ -17,11 +17,14 @@
 #include <promeki/mutex.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
-#include <promeki/variant_fwd.h>
 #include <promeki/signal.h>
 #include <promeki/slot.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class Variant;
+class VariantList;
+class VariantMap;
 
 class EventLoop;
 class Event;

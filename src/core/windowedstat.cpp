@@ -250,18 +250,19 @@ bool WindowedStat::operator==(const WindowedStat &other) const {
 }
 
 DataStream &operator<<(DataStream &stream, const WindowedStat &val) {
-        stream.writeTag(DataStream::TypeWindowedStat);
+        stream.beginFrame(DataStream::TypeWindowedStat, 1);
         stream << static_cast<uint32_t>(val.capacity());
         const WindowedStat::Samples ordered = val.values();
         stream << static_cast<uint32_t>(ordered.size());
         for (size_t i = 0; i < ordered.size(); ++i) {
                 stream << ordered[i];
         }
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, WindowedStat &val) {
-        if (!stream.readTag(DataStream::TypeWindowedStat)) {
+        if (!stream.readFrame(DataStream::TypeWindowedStat)) {
                 val = WindowedStat();
                 return stream;
         }

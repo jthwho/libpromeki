@@ -13,7 +13,6 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/buffer.h>
-#include <promeki/variant_fwd.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/set.h>
@@ -34,6 +33,9 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class Variant;
+class VariantList;
+class VariantMap;
 class JsonObject;
 class JsonArray;
 class XmlDocument;
@@ -89,7 +91,7 @@ class SdpSession;
  * - Bytes 0-3: ASCII magic `"PMDS"` (`0x50 0x4D 0x44 0x53`).
  * - Bytes 4-5: uint16_t version in big-endian order. The version
  *   identifies the wire format so future changes remain
- *   backward-compatible. The current version is 1.
+ *   backward-compatible. The current version is 3.
  * - Byte 6: byte-order marker — `'B'` (0x42) for big-endian or
  *   `'L'` (0x4C) for little-endian. A reader uses this to
  *   auto-configure its byte order, so writers and readers do not
@@ -100,35 +102,88 @@ class SdpSession;
  *   a future version repurposes a reserved byte, old readers fail
  *   loudly rather than silently mis-parsing.
  *
- * After the header, each value is preceded by a one-byte TypeId tag
- * that identifies the type. On read, the tag is validated against the
- * expected type; a mismatch sets the status to ReadCorruptData. This
- * makes streams self-describing and catches type mismatches early.
+ * After the header, every value is emitted as a self-describing
+ * *frame* whose 8-byte header is naturally 4-byte aligned:
+ * - Bytes 0-1: @c uint16_t TypeId tag (byte-order controlled).
+ * - Bytes 2-3: @c uint16_t per-type version (byte-order
+ *              controlled).  Lets individual types evolve their
+ *              wire format independently of the stream-level
+ *              version — a writer that learns a new representation
+ *              of @c TypeUUID bumps just the UUID frame's version
+ *              field, and readers that don't know the new version
+ *              reject only that frame, not the whole stream.
+ * - Bytes 4-7: @c uint32_t body size in bytes (byte-order
+ *              controlled). Lets readers @ref skipFrame past a
+ *              tag they don't understand without having to know
+ *              the body layout. This is the foundation of forward
+ *              compatibility: a future writer can introduce a new
+ *              type and existing readers will skip it cleanly.
+ * - Bytes 8…:  type-specific body bytes (exactly the size declared
+ *              above).
  *
- * Value encoding:
- * - Multi-byte integers are byte-order controlled via setByteOrder(),
- *   defaulting to big-endian (network byte order).
- * - Strings are stored as a uint32_t byte-count prefix followed by
- *   UTF-8 encoded bytes (no null terminator).
- * - Buffers are stored as a uint32_t byte-count prefix followed by
- *   raw bytes.
- * - Floats and doubles use IEEE 754, byte-swapped if needed.
- * - Data objects (UUID, DateTime, Timecode, etc.) each have their own
- *   tag and native binary encoding.
- * - Containers (List, Map, Set) are stored as a uint32_t count prefix
- *   followed by their fully-tagged elements.
- * - Variants are stored using the same tag as the value they carry, so
- *   a stream position holding a Variant containing a UUID is byte-for-byte
- *   identical to one holding a direct UUID. Readers can flip between
- *   direct and Variant forms freely.
+ * A mismatch between the expected tag and the actual tag during a
+ * typed read sets the status to ReadCorruptData. A Variant read that
+ * encounters an unknown tag consumes the body bytes via the size
+ * field, yields a default Variant, and leaves the stream in @c Ok —
+ * the explicit forward-compat path.
+ *
+ * @par Forward compatibility
+ * The per-frame `[version][size]` pair is the foundation of the
+ * format's forward-compatibility story:
+ * - The @b version field lets a single TypeId evolve its body
+ *   layout across releases.  When a type's encoding changes, its
+ *   writer bumps the version literal and its reader gains a switch
+ *   on @c ver.  Readers that haven't been updated reject the new
+ *   version explicitly via the @ref readFrame @c maxVersion check
+ *   instead of mis-parsing the body.
+ * - The @b size field lets readers @ref skipFrame past types they
+ *   don't know about at all.  This is what the Variant read does
+ *   in its default case: an unknown tag is treated as a value the
+ *   reader can't materialise, its body bytes are consumed via the
+ *   declared size, and the stream stays usable for whatever comes
+ *   next.  Older readers can decode the parts of a stream they
+ *   understand even when a newer writer mixes in types they don't.
+ *
+ * @par Value encoding
+ * Each per-frame body uses a type-specific encoding.  Multi-byte
+ * integers are byte-order controlled via setByteOrder() (default
+ * big-endian).  Common shapes used across the built-ins:
+ * - Primitives — body is exactly the in-memory representation,
+ *   byte-swapped if needed.  Floats and doubles use IEEE 754.
+ * - Strings — body is `[uint32 length][UTF-8 bytes]` (no null
+ *   terminator).  The length prefix is raw (not framed) so the
+ *   body stays compact.
+ * - Buffers — `[uint32 length][raw bytes]`, same convention.
+ * - Data objects (UUID, DateTime, Timecode, FrameRate, …) — body
+ *   is whatever native binary encoding the type defines.  Look at
+ *   the per-overload doxygen for the exact shape.
+ * - Containers (List, Map, Set, HashMap, HashSet) — body is a
+ *   framed uint32 element count followed by each element as its
+ *   own fully-framed value.  This means containers nest naturally
+ *   and inherit the same forward-compat properties as the values
+ *   they hold.
+ * - Variants — emit exactly the same bytes as a direct write of the
+ *   contained type.  A stream position holding a Variant carrying
+ *   a UUID is byte-for-byte identical to one holding a direct UUID.
+ *   Readers can flip between direct and Variant forms freely.
+ *
+ * @par Buffered writes (no seek required)
+ * @ref beginFrame opens a frame whose body bytes accumulate in an
+ * internal stack-allocated buffer.  Only when @ref endFrame is
+ * called does the assembled `[tag][version][size][body]` group hit
+ * the underlying device — that's the moment the size field is
+ * computed from the body buffer's length.  The upshot is that
+ * writers don't require a seekable IODevice; sockets, pipes,
+ * file-descriptor adapters, and BufferIODevice all work.
  *
  * @par Extensibility
  * User types can be serialized by implementing free-standing
  * `operator<<(DataStream &, const MyType &)` and
  * `operator>>(DataStream &, MyType &)`. The extension API exposed on
- * DataStream is writeTag(), readTag(), and setError() — use the first
- * two to frame your data with a tag so type mismatches are caught on
- * read, and the last to report meaningful errors with context.
+ * DataStream is @ref beginFrame() / @ref endFrame() (write),
+ * @ref readFrame() (typed read), and @ref setError() — wrap the body
+ * in a frame so it's self-describing, and use setError to report
+ * meaningful failures with context.
  *
  * @par Extension example
  * @code
@@ -139,19 +194,31 @@ class SdpSession;
  *     double lon;
  * };
  *
- * // Allocate a stable tag for Waypoint. Values 0x80-0xFF are free for
- * // user types; the built-ins own 0x00-0x7F.
+ * // Allocate a stable tag for Waypoint. Values >= UserTypeIdBegin
+ * // are free for user types; the built-ins own everything below.
  * inline constexpr DataStream::TypeId TypeWaypoint =
- *     static_cast<DataStream::TypeId>(0x80);
+ *     static_cast<DataStream::TypeId>(DataStream::UserTypeIdBegin);
  *
  * inline DataStream &operator<<(DataStream &s, const Waypoint &w) {
- *     s.writeTag(TypeWaypoint);
+ *     // Open the frame at version 1.  Subsequent writes accumulate
+ *     // in an internal body buffer; endFrame() emits the tag,
+ *     // version, body size and the body in a single flush.
+ *     s.beginFrame(TypeWaypoint, 1);
  *     s << w.name << w.lat << w.lon;
+ *     s.endFrame();
  *     return s;
  * }
  *
  * inline DataStream &operator>>(DataStream &s, Waypoint &w) {
- *     if(!s.readTag(TypeWaypoint)) { w = Waypoint(); return s; }
+ *     // readFrame validates the tag (mismatch → ReadCorruptData)
+ *     // and rejects versions newer than the maxVersion you pass
+ *     // here.  When you later support v2, bump maxVersion and
+ *     // branch on `ver`.
+ *     uint16_t ver = 0;
+ *     if(!s.readFrame(TypeWaypoint, 1, &ver)) {
+ *         w = Waypoint();
+ *         return s;
+ *     }
  *     s >> w.name >> w.lat >> w.lon;
  *     if(s.status() != DataStream::Ok) { w = Waypoint(); return s; }
  *     if(w.lat < -90.0 || w.lat > 90.0) {
@@ -214,15 +281,17 @@ class DataStream {
                 };
 
                 /**
-                 * @brief Type identifiers written before each value.
+                 * @brief Type identifiers written at the head of each frame.
                  *
-                 * Every operator<< writes a two-byte TypeId before the
-                 * payload, honouring the stream's byte order.  Every
-                 * operator>> reads and validates it.  A mismatch sets
-                 * status to ReadCorruptData.
+                 * Every operator<< wraps its body in a frame whose
+                 * header is `[tag(uint16)][version(uint16)][size(uint32)]`,
+                 * honouring the stream's byte order.  Every operator>>
+                 * reads the frame header and validates the tag — a
+                 * mismatch sets status to ReadCorruptData.
                  *
                  * Raw byte methods (readRawData, writeRawData, skipRawData)
-                 * do NOT write or expect type tags — they are unframed.
+                 * do NOT emit or expect frame headers — they are unframed
+                 * passthrough into the underlying device.
                  *
                  * Variants share tag values with their direct counterparts:
                  * writing a `Variant` holding a `UUID` emits the same bytes
@@ -366,13 +435,29 @@ class DataStream {
                 /**
                  * @brief Current wire format version.
                  *
-                 * Version 2 widened the @ref TypeId tag from 8 to 16
-                 * bits.  Older @c v1 streams are not forward-compatible.
+                 * Version 3 introduced the per-value frame header
+                 * (`[tag(2)][version(2)][size(4)]`, naturally 4-byte
+                 * aligned).  The size field lets readers skip past
+                 * tags they don't understand; the version field lets
+                 * individual types evolve their wire format
+                 * independently.  Older streams (v1 / v2) are not
+                 * forward-compatible — there's no way to derive a
+                 * per-frame size from them.
                  */
-                static constexpr uint16_t CurrentVersion = 2;
+                static constexpr uint16_t CurrentVersion = 3;
 
                 /** @brief Total size of the stream header in bytes. */
                 static constexpr size_t HeaderSize = 16;
+
+                /** @brief Size of every per-value frame header in bytes
+                 *         (uint16 tag + uint16 version + uint32 size). */
+                static constexpr size_t FrameHeaderSize = 8;
+
+                /**
+                 * @brief Maximum frame body size accepted on read, used
+                 *        as a sanity bound against corrupt size fields.
+                 */
+                static constexpr uint32_t MaxFrameBodySize = 1u << 30; // 1 GiB
 
                 /** @brief Magic bytes identifying a DataStream ("PMDS"). */
                 static constexpr uint8_t Magic[4] = {0x50, 0x4D, 0x44, 0x53};
@@ -531,7 +616,16 @@ class DataStream {
                 DataStream &operator<<(const String &val);
                 /** @brief Writes a Buffer as length-prefixed raw bytes. */
                 DataStream &operator<<(const Buffer &val);
-                /** @brief Writes a Variant using the same tag as the value's direct form. */
+                /**
+                 * @brief Writes a Variant using the same tag as the value's direct form.
+                 *
+                 * Dispatches on the Variant's runtime type to the
+                 * appropriate concrete @c operator<< overload, so the
+                 * emitted bytes are bit-identical to writing the
+                 * contained value directly.  A @c TypeInvalid
+                 * (default-constructed) Variant emits a frame with
+                 * a zero-byte body.
+                 */
                 DataStream &operator<<(const Variant &val);
 
                 // ============================================================
@@ -641,7 +735,21 @@ class DataStream {
                 DataStream &operator>>(String &val);
                 /** @brief Reads a Buffer from length-prefixed raw bytes. */
                 DataStream &operator>>(Buffer &val);
-                /** @brief Reads any value into a Variant, dispatching on the tag. */
+                /**
+                 * @brief Reads any value into a Variant, dispatching on the tag.
+                 *
+                 * Consumes the frame header, dispatches on the tag
+                 * to the matching concrete reader, and stores the
+                 * result in @p val.  When the tag isn't in the
+                 * dispatch table — typically because a newer writer
+                 * emitted a type this reader doesn't know — the
+                 * body bytes are consumed via the size field, @p
+                 * val is left default-constructed, and the stream
+                 * status stays @c Ok.  This is what makes a Variant
+                 * read forward-compatible: older code can drain a
+                 * stream produced by newer code without erroring on
+                 * the unknown frames it contains.
+                 */
                 DataStream &operator>>(Variant &val);
 
                 // ============================================================
@@ -744,25 +852,158 @@ class DataStream {
                 // ============================================================
 
                 /**
-                 * @brief Writes a type tag byte to the stream.
+                 * @brief Opens a new frame on the write side.
                  *
-                 * Public so that user-written operator<< overloads can emit
-                 * the same framing as the built-in operators.
-                 * @param id The TypeId to write.
+                 * Pushes a fresh body buffer onto an internal frame
+                 * stack.  Every subsequent write — primitives, nested
+                 * frames, raw bytes — accumulates in that buffer
+                 * instead of going straight to the underlying device.
+                 * The matching @ref endFrame() pops the buffer and
+                 * flushes the assembled
+                 * `[tag][version][size][body]` group to the parent
+                 * frame (if any) or to the device.
+                 *
+                 * Frames may nest freely; for example, a List<UUID>
+                 * write opens a TypeList frame whose body in turn
+                 * contains a count plus N UUID frames.
+                 *
+                 * @param id      Tag identifying this frame's type.
+                 * @param version Per-type wire-format version
+                 *                emitted in the header.  Pass 1 for
+                 *                the initial wire format; bump when
+                 *                the type's body layout changes so
+                 *                readers can dispatch on it.
                  */
-                void writeTag(TypeId id);
+                void beginFrame(TypeId id, uint16_t version);
 
                 /**
-                 * @brief Reads a type tag byte and validates it.
+                 * @brief Closes the most recently opened frame.
                  *
-                 * If the tag does not match @p expected, sets status to
-                 * ReadCorruptData with a descriptive context message. Public
-                 * so that user-written operator>> overloads can validate
-                 * their framing.
-                 * @param expected The expected TypeId.
-                 * @return True if the tag matched.
+                 * Pops the body buffer pushed by the matching
+                 * @ref beginFrame() call, emits the
+                 * `[tag][version][size]` header followed by the body
+                 * bytes, and routes them either into the parent
+                 * frame's body buffer (when frames are nested) or to
+                 * the underlying device.  If the stream is already in
+                 * an error state this is a no-op.  If @ref endFrame()
+                 * is called with no matching @ref beginFrame() open,
+                 * the stream status is set to @c WriteFailed with a
+                 * descriptive context message.
                  */
-                bool readTag(TypeId expected);
+                void endFrame();
+
+                /**
+                 * @brief Reads a frame header and validates the tag.
+                 *
+                 * Consumes the 8-byte
+                 * `[tag(uint16)][version(uint16)][size(uint32)]`
+                 * header from the stream.  If @p expected doesn't
+                 * match the tag in the wire, sets status to
+                 * ReadCorruptData and returns @c false; the size
+                 * bytes are NOT skipped, so the stream is positioned
+                 * at the start of the unexpected body and further
+                 * reads will fail in turn.
+                 *
+                 * If the tag matches but @p version exceeds
+                 * @p maxVersion, sets status to ReadCorruptData and
+                 * returns @c false.  This lets readers reject newer
+                 * encodings of a type they know without having to
+                 * write the version check by hand.
+                 *
+                 * @param expected   Required tag.
+                 * @param maxVersion Highest version this reader
+                 *                   understands.  Defaults to 1 —
+                 *                   built-ins all live at version 1
+                 *                   today.
+                 * @param outVersion Optional out-parameter receiving
+                 *                   the actual version from the
+                 *                   frame, useful for branching when
+                 *                   the reader supports multiple
+                 *                   versions.
+                 * @param outSize    Optional out-parameter receiving
+                 *                   the declared body size; useful
+                 *                   for sanity-checking how many
+                 *                   bytes the body reader consumed.
+                 * @return @c true if the tag matched and the version
+                 *         was acceptable.
+                 */
+                bool readFrame(TypeId expected, uint16_t maxVersion = 1, uint16_t *outVersion = nullptr,
+                               uint32_t *outSize = nullptr);
+
+                /**
+                 * @brief Reads a frame header without validating its tag.
+                 *
+                 * Useful when a reader has to accept one of several
+                 * tags (e.g. Variant dispatch, Buffer accepting both
+                 * TypeBuffer and TypeInvalid).  The header is fully
+                 * consumed; on success the stream is positioned at
+                 * the first body byte.
+                 *
+                 * @param outTag     Receives the tag found in the
+                 *                   header.
+                 * @param outVersion Receives the per-type version.
+                 * @param outSize    Receives the body size.
+                 * @return @c true if all 8 header bytes were read.
+                 *         On failure (truncation) status is set to
+                 *         ReadPastEnd and @c false is returned.
+                 */
+                bool readFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize);
+
+                /**
+                 * @brief Reads a frame header but leaves it cached for the next read.
+                 *
+                 * Pulls the 8 header bytes from the device (parsing
+                 * them according to the current byte order) and
+                 * caches the parsed @c tag / @c version / @c size so
+                 * that the next call to @ref readFrameHeader (or any
+                 * @ref readFrame / @ref skipFrame, which both go
+                 * through @c readFrameHeader internally) returns the
+                 * same values without touching the device a second
+                 * time.
+                 *
+                 * The cache holds at most one frame header.  Calling
+                 * @c peekFrameHeader twice in a row returns the same
+                 * cached header without re-reading.  Consuming the
+                 * cache happens implicitly via the next
+                 * @c readFrameHeader call — there is no separate
+                 * "discard" entry point.
+                 *
+                 * Used by @c operator>>(Variant&) so that the
+                 * dispatch code can look at the tag to pick a
+                 * registered reader, then hand off to the per-type
+                 * @c operator>> overload which re-reads the header
+                 * through @c readFrame and consumes the cache
+                 * transparently.  This keeps the read path working
+                 * on sequential devices (sockets, pipes) where
+                 * seeking back is not possible.
+                 *
+                 * @par Constraint
+                 * Calling raw byte methods (@c readBytes,
+                 * @c readRawData, @c skipRawData) while a peeked
+                 * header is pending consumes bytes from the device
+                 * past the header without draining the cache, which
+                 * would mis-align subsequent frame reads.  In debug
+                 * builds those entry points assert that the cache is
+                 * empty.
+                 *
+                 * @param outTag     Receives the tag.
+                 * @param outVersion Receives the version.
+                 * @param outSize    Receives the body size.
+                 * @return @c true on success.
+                 */
+                bool peekFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize);
+
+                /**
+                 * @brief Consumes a complete frame, discarding its body.
+                 *
+                 * Reads the frame header via @ref readFrameHeader()
+                 * and advances past the declared body size.  Provided
+                 * primarily for forward compatibility: when a reader
+                 * encounters a tag it doesn't understand it can call
+                 * @ref skipFrame() to step past the value cleanly,
+                 * leaving the stream positioned at the next frame.
+                 */
+                void skipFrame();
 
                 /**
                  * @brief Sets the status and a context message in one call.
@@ -789,9 +1030,17 @@ class DataStream {
                 ssize_t readRawData(void *buf, size_t len);
 
                 /**
-                 * @brief Writes raw bytes to the stream.
-                 * @param buf  Source buffer.
-                 * @param len  Number of bytes to write.
+                 * @brief Writes raw bytes — no tag, no frame header.
+                 *
+                 * Outside of any frame, the bytes pass straight
+                 * through to the underlying device.  When a frame
+                 * is open, the bytes are appended to that frame's
+                 * body so they're covered by the frame's size
+                 * field; this lets a typed @c operator<< overload
+                 * stream out a precomputed body without going
+                 * through the framed-value @c operator<< machinery.
+                 * @param buf Source buffer.
+                 * @param len Number of bytes to write.
                  * @return The number of bytes actually written, or -1 on error.
                  */
                 ssize_t writeRawData(const void *buf, size_t len);
@@ -815,32 +1064,32 @@ class DataStream {
                 void readHeader();
 
                 /**
-                 * @brief Reads a 16-bit type tag without validation.
-                 *
-                 * Used by Variant reads and peek-style dispatch. Sets status
-                 * to ReadPastEnd if the bytes cannot be read.
-                 * @return The tag value, or 0 on failure.
-                 */
-                uint16_t readAnyTag();
-
-                /**
-                 * @brief Reads a Variant payload for the given TypeId tag.
-                 *
-                 * Called after the tag has been consumed. Dispatches to the
-                 * appropriate readXXXData() helper and stores the resulting
-                 * value in @p val.
-                 * @param id The tag that was consumed from the stream.
-                 * @param val The Variant to populate.
-                 */
-                void readVariantPayload(TypeId id, Variant &val);
-
-                /**
                  * @brief Reads exactly len bytes, setting status on failure.
                  * @param buf  Destination buffer.
                  * @param len  Number of bytes to read.
                  * @return True if all bytes were read successfully.
                  */
                 bool readBytes(void *buf, size_t len);
+
+                /**
+                 * @brief Advances past @p sz body bytes, validating
+                 *        the device has them available.
+                 *
+                 * Shared by @ref skipFrame and the Variant
+                 * unknown-tag forward-compat path.  On a seekable
+                 * device that knows its size, the remaining-bytes
+                 * check catches truncation before skipRawData's
+                 * seek silently positions past the content end.
+                 * Sequential devices fall back to skipRawData's
+                 * read-and-discard behaviour, which already detects
+                 * short reads.
+                 *
+                 * @param sz  Number of body bytes to consume.
+                 * @return @c true when the body was consumed; @c
+                 *         false when truncation was detected (and
+                 *         status was set to @ref ReadPastEnd).
+                 */
+                bool skipFrameBody(uint32_t sz);
 
                 /**
                  * @brief Writes exactly len bytes, setting status on failure.
@@ -945,11 +1194,38 @@ class DataStream {
                         return (*reinterpret_cast<const uint8_t *>(&val) == 1) ? LittleEndian : BigEndian;
                 }
 
-                IODevice *_device = nullptr;
-                ByteOrder _byteOrder = BigEndian;
-                uint16_t  _version = 0;
-                Status    _status = Ok;
-                String    _errorContext;
+                /**
+                 * @brief One entry on the in-flight frame stack.
+                 *
+                 * Captures the bytes accumulated between a
+                 * @ref beginFrame() and its matching
+                 * @ref endFrame().  At endFrame, the parent target
+                 * (either the frame underneath this one, or the
+                 * device when this was the outermost frame) receives
+                 * the assembled `[tag][version][size][body]` group.
+                 */
+                struct PendingFrame {
+                        TypeId        tag;     ///< @brief Tag this frame will emit.
+                        uint16_t      version; ///< @brief Per-type version this frame will emit.
+                        List<uint8_t> body;    ///< @brief Body bytes accumulated so far.
+                };
+
+                IODevice *           _device = nullptr;
+                ByteOrder            _byteOrder = BigEndian;
+                uint16_t             _version = 0;
+                Status               _status = Ok;
+                String               _errorContext;
+                List<PendingFrame>   _frameStack;
+
+                // One-deep frame-header lookahead.  Populated by
+                // @ref peekFrameHeader and drained by the next
+                // @ref readFrameHeader so that Variant dispatch can
+                // inspect the tag without requiring a seekable
+                // device.
+                bool                 _peekedHeaderValid = false;
+                TypeId               _peekedTag         = static_cast<TypeId>(0);
+                uint16_t             _peekedVersion     = 0;
+                uint32_t             _peekedSize        = 0;
 };
 
 // ============================================================================
@@ -986,8 +1262,9 @@ namespace detail {
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const Size2DTemplate<T> &sz) {
-        stream.writeTag(DataStream::TypeSize2D);
+        stream.beginFrame(DataStream::TypeSize2D, 1);
         stream << sz.width() << sz.height();
+        stream.endFrame();
         return stream;
 }
 
@@ -999,7 +1276,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const Size2DTem
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator>>(DataStream &stream, Size2DTemplate<T> &sz) {
-        if (!stream.readTag(DataStream::TypeSize2D)) {
+        if (!stream.readFrame(DataStream::TypeSize2D)) {
                 sz = Size2DTemplate<T>();
                 return stream;
         }
@@ -1021,8 +1298,9 @@ template <typename T> DataStream &operator>>(DataStream &stream, Size2DTemplate<
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const Rational<T> &r) {
-        stream.writeTag(DataStream::TypeRational);
+        stream.beginFrame(DataStream::TypeRational, 1);
         stream << r.numerator() << r.denominator();
+        stream.endFrame();
         return stream;
 }
 
@@ -1034,7 +1312,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const Rational<
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator>>(DataStream &stream, Rational<T> &r) {
-        if (!stream.readTag(DataStream::TypeRational)) {
+        if (!stream.readFrame(DataStream::TypeRational)) {
                 r = Rational<T>();
                 return stream;
         }
@@ -1056,8 +1334,9 @@ template <typename T> DataStream &operator>>(DataStream &stream, Rational<T> &r)
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const Rect<T> &rect) {
-        stream.writeTag(DataStream::TypeRect);
+        stream.beginFrame(DataStream::TypeRect, 1);
         stream << rect.x() << rect.y() << rect.width() << rect.height();
+        stream.endFrame();
         return stream;
 }
 
@@ -1069,7 +1348,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const Rect<T> &
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator>>(DataStream &stream, Rect<T> &rect) {
-        if (!stream.readTag(DataStream::TypeRect)) {
+        if (!stream.readFrame(DataStream::TypeRect)) {
                 rect = Rect<T>();
                 return stream;
         }
@@ -1097,10 +1376,11 @@ template <typename T> DataStream &operator>>(DataStream &stream, Rect<T> &rect) 
  * @return The stream, for chaining.
  */
 template <typename T, size_t N> DataStream &operator<<(DataStream &stream, const Point<T, N> &point) {
-        stream.writeTag(DataStream::TypePoint);
+        stream.beginFrame(DataStream::TypePoint, 1);
         stream << static_cast<uint32_t>(N);
         const Array<T, N> &arr = point;
         for (size_t i = 0; i < N; ++i) stream << arr[i];
+        stream.endFrame();
         return stream;
 }
 
@@ -1113,7 +1393,7 @@ template <typename T, size_t N> DataStream &operator<<(DataStream &stream, const
  * @return The stream, for chaining.
  */
 template <typename T, size_t N> DataStream &operator>>(DataStream &stream, Point<T, N> &point) {
-        if (!stream.readTag(DataStream::TypePoint)) {
+        if (!stream.readFrame(DataStream::TypePoint)) {
                 point = Point<T, N>();
                 return stream;
         }
@@ -1159,9 +1439,10 @@ template <typename T, size_t N> DataStream &operator>>(DataStream &stream, Point
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const XYZColor &col) {
-        stream.writeTag(DataStream::TypeXYZColor);
+        stream.beginFrame(DataStream::TypeXYZColor, 1);
         const XYZColor::DataType &arr = col.data();
         stream << arr[0] << arr[1] << arr[2];
+        stream.endFrame();
         return stream;
 }
 
@@ -1172,7 +1453,7 @@ inline DataStream &operator<<(DataStream &stream, const XYZColor &col) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, XYZColor &col) {
-        if (!stream.readTag(DataStream::TypeXYZColor)) {
+        if (!stream.readFrame(DataStream::TypeXYZColor)) {
                 col = XYZColor();
                 return stream;
         }
@@ -1205,9 +1486,10 @@ inline DataStream &operator>>(DataStream &stream, XYZColor &col) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const MasteringDisplay &md) {
-        stream.writeTag(DataStream::TypeMasteringDisplay);
+        stream.beginFrame(DataStream::TypeMasteringDisplay, 1);
         stream << md.red().x() << md.red().y() << md.green().x() << md.green().y() << md.blue().x() << md.blue().y()
                << md.whitePoint().x() << md.whitePoint().y() << md.minLuminance() << md.maxLuminance();
+        stream.endFrame();
         return stream;
 }
 
@@ -1218,7 +1500,7 @@ inline DataStream &operator<<(DataStream &stream, const MasteringDisplay &md) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, MasteringDisplay &md) {
-        if (!stream.readTag(DataStream::TypeMasteringDisplay)) {
+        if (!stream.readFrame(DataStream::TypeMasteringDisplay)) {
                 md = MasteringDisplay();
                 return stream;
         }
@@ -1244,8 +1526,9 @@ inline DataStream &operator>>(DataStream &stream, MasteringDisplay &md) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const ContentLightLevel &cll) {
-        stream.writeTag(DataStream::TypeContentLightLevel);
+        stream.beginFrame(DataStream::TypeContentLightLevel, 1);
         stream << cll.maxCLL() << cll.maxFALL();
+        stream.endFrame();
         return stream;
 }
 
@@ -1256,7 +1539,7 @@ inline DataStream &operator<<(DataStream &stream, const ContentLightLevel &cll) 
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, ContentLightLevel &cll) {
-        if (!stream.readTag(DataStream::TypeContentLightLevel)) {
+        if (!stream.readFrame(DataStream::TypeContentLightLevel)) {
                 cll = ContentLightLevel();
                 return stream;
         }
@@ -1278,9 +1561,10 @@ inline DataStream &operator>>(DataStream &stream, ContentLightLevel &cll) {
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const List<T> &list) {
-        stream.writeTag(DataStream::TypeList);
+        stream.beginFrame(DataStream::TypeList, 1);
         stream << static_cast<uint32_t>(list.size());
         for (const auto &item : list) stream << item;
+        stream.endFrame();
         return stream;
 }
 
@@ -1293,7 +1577,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const List<T> &
  */
 template <typename T> DataStream &operator>>(DataStream &stream, List<T> &list) {
         list.clear();
-        if (!stream.readTag(DataStream::TypeList)) return stream;
+        if (!stream.readFrame(DataStream::TypeList)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;
@@ -1320,11 +1604,12 @@ template <typename T> DataStream &operator>>(DataStream &stream, List<T> &list) 
  * @return The stream, for chaining.
  */
 template <typename K, typename V> DataStream &operator<<(DataStream &stream, const Map<K, V> &map) {
-        stream.writeTag(DataStream::TypeMap);
+        stream.beginFrame(DataStream::TypeMap, 1);
         stream << static_cast<uint32_t>(map.size());
         for (auto it = map.cbegin(); it != map.cend(); ++it) {
                 stream << it->first << it->second;
         }
+        stream.endFrame();
         return stream;
 }
 
@@ -1338,7 +1623,7 @@ template <typename K, typename V> DataStream &operator<<(DataStream &stream, con
  */
 template <typename K, typename V> DataStream &operator>>(DataStream &stream, Map<K, V> &map) {
         map.clear();
-        if (!stream.readTag(DataStream::TypeMap)) return stream;
+        if (!stream.readFrame(DataStream::TypeMap)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;
@@ -1364,9 +1649,10 @@ template <typename K, typename V> DataStream &operator>>(DataStream &stream, Map
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const Set<T> &set) {
-        stream.writeTag(DataStream::TypeSet);
+        stream.beginFrame(DataStream::TypeSet, 1);
         stream << static_cast<uint32_t>(set.size());
         for (const auto &item : set) stream << item;
+        stream.endFrame();
         return stream;
 }
 
@@ -1379,7 +1665,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const Set<T> &s
  */
 template <typename T> DataStream &operator>>(DataStream &stream, Set<T> &set) {
         set.clear();
-        if (!stream.readTag(DataStream::TypeSet)) return stream;
+        if (!stream.readFrame(DataStream::TypeSet)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;
@@ -1405,11 +1691,12 @@ template <typename T> DataStream &operator>>(DataStream &stream, Set<T> &set) {
  * @return The stream, for chaining.
  */
 template <typename K, typename V> DataStream &operator<<(DataStream &stream, const HashMap<K, V> &map) {
-        stream.writeTag(DataStream::TypeHashMap);
+        stream.beginFrame(DataStream::TypeHashMap, 1);
         stream << static_cast<uint32_t>(map.size());
         for (auto it = map.cbegin(); it != map.cend(); ++it) {
                 stream << it->first << it->second;
         }
+        stream.endFrame();
         return stream;
 }
 
@@ -1428,7 +1715,7 @@ template <typename K, typename V> DataStream &operator<<(DataStream &stream, con
  */
 template <typename K, typename V> DataStream &operator>>(DataStream &stream, HashMap<K, V> &map) {
         map.clear();
-        if (!stream.readTag(DataStream::TypeHashMap)) return stream;
+        if (!stream.readFrame(DataStream::TypeHashMap)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;
@@ -1454,9 +1741,10 @@ template <typename K, typename V> DataStream &operator>>(DataStream &stream, Has
  * @return The stream, for chaining.
  */
 template <typename T> DataStream &operator<<(DataStream &stream, const HashSet<T> &set) {
-        stream.writeTag(DataStream::TypeHashSet);
+        stream.beginFrame(DataStream::TypeHashSet, 1);
         stream << static_cast<uint32_t>(set.size());
         for (const auto &item : set) stream << item;
+        stream.endFrame();
         return stream;
 }
 
@@ -1469,7 +1757,7 @@ template <typename T> DataStream &operator<<(DataStream &stream, const HashSet<T
  */
 template <typename T> DataStream &operator>>(DataStream &stream, HashSet<T> &set) {
         set.clear();
-        if (!stream.readTag(DataStream::TypeHashSet)) return stream;
+        if (!stream.readFrame(DataStream::TypeHashSet)) return stream;
         uint32_t count = 0;
         stream >> count;
         if (stream.status() != DataStream::Ok) return stream;

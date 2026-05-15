@@ -162,7 +162,7 @@ namespace {
 // ============================================================================
 
 DataStream &operator<<(DataStream &s, const MediaPayload::Ptr &p) {
-        s.writeTag(DataStream::TypeMediaPayload);
+        s.beginFrame(DataStream::TypeMediaPayload, 1);
         const bool valid = p.isValid();
         s << static_cast<uint32_t>(valid ? p->subclassFourCC() : 0u);
         if (!valid) return s;
@@ -197,12 +197,13 @@ DataStream &operator<<(DataStream &s, const MediaPayload::Ptr &p) {
         // Subclass tail — serialises the descriptor (which carries
         // the metadata) and any codec-specific fields.
         mp.serialisePayload(s);
+        s.endFrame();
         return s;
 }
 
 DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p) {
         p = MediaPayload::Ptr();
-        if (!s.readTag(DataStream::TypeMediaPayload)) return s;
+        if (!s.readFrame(DataStream::TypeMediaPayload)) return s;
 
         uint32_t fourcc = 0;
         s >> fourcc;

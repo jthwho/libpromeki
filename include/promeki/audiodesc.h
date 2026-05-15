@@ -352,12 +352,13 @@ class AudioDesc {
  * @brief Writes an AudioDesc as tag + format + sample rate + channels + channel map + metadata.
  */
 inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
-        stream.writeTag(DataStream::TypeAudioDesc);
+        stream.beginFrame(DataStream::TypeAudioDesc, 1);
         stream << desc.format();
         stream << desc.sampleRate();
         stream << static_cast<uint32_t>(desc.channels());
         stream << desc.channelMap();
         stream << desc.metadata();
+        stream.endFrame();
         return stream;
 }
 
@@ -365,7 +366,7 @@ inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
  * @brief Reads an AudioDesc from its tagged wire format.
  */
 inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
-        if (!stream.readTag(DataStream::TypeAudioDesc)) {
+        if (!stream.readFrame(DataStream::TypeAudioDesc)) {
                 desc = AudioDesc();
                 return stream;
         }

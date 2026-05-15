@@ -11,12 +11,12 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/variant_fwd.h>
 #include <promeki/iodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class Buffer;
+class Variant;
 
 /**
  * @brief Formatted text I/O with encoding awareness.

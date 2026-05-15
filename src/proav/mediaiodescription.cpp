@@ -232,7 +232,7 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
 
         if (obj.contains("canSeek")) d._canSeek = obj.getBool("canSeek");
         if (obj.contains("frameCount")) {
-                d._frameCount = FrameCount::fromString(obj.getString("frameCount"));
+                d._frameCount = value(FrameCount::fromString(obj.getString("frameCount")));
         }
         if (obj.contains("frameRate")) {
                 Result<FrameRate> r = FrameRate::fromString(obj.getString("frameRate"));
@@ -277,7 +277,7 @@ bool MediaIODescription::operator==(const MediaIODescription &other) const {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
-        stream.writeTag(DataStream::TypeMediaIODescription);
+        stream.beginFrame(DataStream::TypeMediaIODescription, 1);
         stream << d.backendName();
         stream << d.backendDescription();
         stream << d.name();
@@ -293,12 +293,13 @@ DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
         stream << d.containerMetadata();
         stream << static_cast<uint32_t>(d.probeStatus().code());
         stream << d.probeMessage();
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         d = MediaIODescription();
-        if (!stream.readTag(DataStream::TypeMediaIODescription)) return stream;
+        if (!stream.readFrame(DataStream::TypeMediaIODescription)) return stream;
 
         String          backendName, backendDescription, name, probeMessage;
         bool            canBeSource = false, canBeSink = false, canBeTransform = false;

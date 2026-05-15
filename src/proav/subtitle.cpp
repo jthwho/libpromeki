@@ -459,7 +459,7 @@ DataStream &operator<<(DataStream &stream, const SubtitleSpan &span) {
         //   int32_t foregroundOpacity   (SubtitleOpacity value)
         //   int32_t backgroundOpacity
         //   int32_t edgeOpacity
-        stream.writeTag(DataStream::TypeSubtitleSpan);
+        stream.beginFrame(DataStream::TypeSubtitleSpan, 1);
         stream << span.text();
         stream << packStyleFlags(span);
         stream << span.color();
@@ -470,11 +470,12 @@ DataStream &operator<<(DataStream &stream, const SubtitleSpan &span) {
         stream << static_cast<int32_t>(span.foregroundOpacity().value());
         stream << static_cast<int32_t>(span.backgroundOpacity().value());
         stream << static_cast<int32_t>(span.edgeOpacity().value());
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, SubtitleSpan &span) {
-        if (!stream.readTag(DataStream::TypeSubtitleSpan)) {
+        if (!stream.readFrame(DataStream::TypeSubtitleSpan)) {
                 span = SubtitleSpan();
                 return stream;
         }
@@ -514,7 +515,14 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span) {
 // Subtitle — construction / special members
 // ============================================================================
 
-Subtitle::Subtitle() : _d(SharedPtr<SubtitleImpl>::create()) {}
+Subtitle::Subtitle() : _d(SharedPtr<SubtitleImpl>::create()) {
+        // Enforce the same "always at least one span" invariant that
+        // the args-taking constructors and setSpans() maintain, so a
+        // default Subtitle compares structurally equal to one built
+        // through those paths from empty inputs (used by the DataStream
+        // round-trip and by other generic value-shaped consumers).
+        _d.modify()->spans.pushToBack(SubtitleSpan());
+}
 
 Subtitle::Subtitle(TimeStamp start, TimeStamp end, String text, SubtitleAnchor anchor)
     : _d(SharedPtr<SubtitleImpl>::create()) {
@@ -764,13 +772,14 @@ Subtitle readSubtitleData(DataStream &stream) {
 }
 
 DataStream &operator<<(DataStream &stream, const Subtitle &sub) {
-        stream.writeTag(DataStream::TypeSubtitle);
+        stream.beginFrame(DataStream::TypeSubtitle, 1);
         writeSubtitleData(stream, sub);
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, Subtitle &sub) {
-        if (!stream.readTag(DataStream::TypeSubtitle)) {
+        if (!stream.readFrame(DataStream::TypeSubtitle)) {
                 sub = Subtitle();
                 return stream;
         }

@@ -143,36 +143,34 @@ TEST_CASE("FrameCount comparisons") {
 TEST_CASE("FrameCount toString and fromString") {
         SUBCASE("Unknown round-trip via empty string") {
                 CHECK(FrameCount::unknown().toString() == String());
-                CHECK(FrameCount::fromString(String()).isUnknown());
+                CHECK(value(FrameCount::fromString(String())).isUnknown());
         }
         SUBCASE("Finite round-trip uses 'f' suffix") {
                 CHECK(FrameCount(0).toString() == String("0f"));
                 CHECK(FrameCount(50).toString() == String("50f"));
-                CHECK(FrameCount::fromString(String("50f")).value() == 50);
-                CHECK(FrameCount::fromString(String("0f")).value() == 0);
+                CHECK(value(FrameCount::fromString(String("50f"))).value() == 50);
+                CHECK(value(FrameCount::fromString(String("0f"))).value() == 0);
         }
         SUBCASE("Bare integer parses as FrameCount") {
-                CHECK(FrameCount::fromString(String("42")).value() == 42);
+                CHECK(value(FrameCount::fromString(String("42"))).value() == 42);
         }
         SUBCASE("Infinity round-trip") {
                 CHECK(FrameCount::infinity().toString() == String("inf"));
-                CHECK(FrameCount::fromString(String("inf")).isInfinite());
-                CHECK(FrameCount::fromString(String("Infinity")).isInfinite());
-                CHECK(FrameCount::fromString(String("INFINITE")).isInfinite());
+                CHECK(value(FrameCount::fromString(String("inf"))).isInfinite());
+                CHECK(value(FrameCount::fromString(String("Infinity"))).isInfinite());
+                CHECK(value(FrameCount::fromString(String("INFINITE"))).isInfinite());
         }
         SUBCASE("Lenient parse: whitespace + case") {
-                CHECK(FrameCount::fromString(String("  50F  ")).value() == 50);
-                CHECK(FrameCount::fromString(String("UNKNOWN")).isUnknown());
+                CHECK(value(FrameCount::fromString(String("  50F  "))).value() == 50);
+                CHECK(value(FrameCount::fromString(String("UNKNOWN"))).isUnknown());
         }
         SUBCASE("Negative integer is OutOfRange") {
-                Error      err;
-                FrameCount c = FrameCount::fromString(String("-3"), &err);
+                auto [c, err] = FrameCount::fromString(String("-3"));
                 CHECK(err == Error::OutOfRange);
                 CHECK(c.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error      err;
-                FrameCount c = FrameCount::fromString(String("abc"), &err);
+                auto [c, err] = FrameCount::fromString(String("abc"));
                 CHECK(err == Error::ParseFailed);
                 CHECK(c.isUnknown());
         }

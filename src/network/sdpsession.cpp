@@ -182,7 +182,16 @@ Result<SdpSession> SdpSession::fromString(const String &sdp) {
                                 break;
                         }
 
-                        case 's': session.setSessionName(value); break;
+                        case 's':
+                                // RFC 4566 forbids an empty 's=' line, so
+                                // toString() emits a single-space placeholder
+                                // when the session name is empty.  Map that
+                                // placeholder back to an empty string so the
+                                // toString → fromString round-trip lands on an
+                                // identical default-constructed SdpSession
+                                // rather than one whose name is literally " ".
+                                session.setSessionName(value == " " ? String() : value);
+                                break;
 
                         case 'c': {
                                 // c=IN IP4 <address>[/<ttl>]

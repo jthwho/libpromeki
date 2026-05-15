@@ -1809,6 +1809,7 @@ set(PROMEKI_SOURCES
     src/core/cudabufferimpl.cpp
     src/core/videocodec.cpp
     src/core/datastream.cpp
+    src/core/datatype.cpp
     src/core/datetime.cpp
     src/core/dir.cpp
     src/core/duration.cpp
@@ -3062,6 +3063,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cuda.cpp
         tests/unit/datastream.cpp
         tests/unit/datastream_include_chain.cpp
+        tests/unit/datatype.cpp
+        tests/unit/datatype_roundtrip.cpp
         tests/unit/datetime.cpp
         tests/unit/deque.cpp
         tests/unit/dir.cpp

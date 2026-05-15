@@ -166,13 +166,14 @@ Cea608Packet readCea608PacketData(DataStream &stream) {
 }
 
 DataStream &operator<<(DataStream &stream, const Cea608Packet &pkt) {
-        stream.writeTag(DataStream::TypeCea608);
+        stream.beginFrame(DataStream::TypeCea608, 1);
         writeCea608PacketData(stream, pkt);
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, Cea608Packet &pkt) {
-        if (!stream.readTag(DataStream::TypeCea608)) {
+        if (!stream.readFrame(DataStream::TypeCea608)) {
                 pkt = Cea608Packet();
                 return stream;
         }

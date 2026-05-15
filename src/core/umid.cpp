@@ -142,7 +142,7 @@ static int hexVal(char c) {
         return -1;
 }
 
-UMID UMID::fromString(const String &str, Error *err) {
+Result<UMID> UMID::fromString(const String &str) {
         // Strip whitespace and dashes from the input; accept either
         // pure hex or a dash-separated grouping for readability.
         const char *src = str.cstr();
@@ -154,25 +154,18 @@ UMID UMID::fromString(const String &str, Error *err) {
                 char c = *src++;
                 if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '-') continue;
                 int v = hexVal(c);
-                if (v < 0) {
-                        if (err != nullptr) *err = Error::Invalid;
-                        return UMID();
-                }
+                if (v < 0) return makeError<UMID>(Error::ParseFailed);
                 if (nibble < 0) {
                         nibble = v;
                 } else {
-                        if (byteCount >= ExtendedSize) {
-                                if (err != nullptr) *err = Error::Invalid;
-                                return UMID();
-                        }
+                        if (byteCount >= ExtendedSize) return makeError<UMID>(Error::ParseFailed);
                         bytes[byteCount++] = static_cast<uint8_t>((nibble << 4) | v);
                         nibble = -1;
                 }
         }
         if (nibble >= 0) {
                 // Odd number of hex digits.
-                if (err != nullptr) *err = Error::Invalid;
-                return UMID();
+                return makeError<UMID>(Error::ParseFailed);
         }
 
         Length len;
@@ -181,15 +174,13 @@ UMID UMID::fromString(const String &str, Error *err) {
         } else if (byteCount == ExtendedSize) {
                 len = Extended;
         } else {
-                if (err != nullptr) *err = Error::Invalid;
-                return UMID();
+                return makeError<UMID>(Error::ParseFailed);
         }
 
         UMID ret;
         ret._length = len;
         std::memcpy(ret.d.data(), bytes, byteCount);
-        if (err != nullptr) *err = Error::Ok;
-        return ret;
+        return makeResult(ret);
 }
 
 String UMID::toString() const {

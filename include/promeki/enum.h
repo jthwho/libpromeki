@@ -389,6 +389,21 @@ class Enum {
                  */
                 static Enum lookup(const String &text, Error *err = nullptr);
 
+                /**
+                 * @brief Result-shaped sibling of @ref lookup.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref toString() via
+                 * @ref Detail::HasResultFromString.
+                 */
+                static Result<Enum> fromString(const String &text) {
+                        Error err;
+                        Enum  e = lookup(text, &err);
+                        if (err.isError()) return makeError<Enum>(err);
+                        return makeResult(e);
+                }
+
                 /// @brief Default-constructs an invalid Enum (no type, no value).
                 Enum() = default;
 

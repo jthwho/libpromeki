@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/fourcc.h>
 #include <promeki/colormodel.h>
 #include <promeki/pixelmemlayout.h>
@@ -525,6 +526,20 @@ class PixelFormat {
                  *         @c PixelFormat(Invalid) on miss.
                  */
                 static PixelFormat lookup(const String &name, Error *err);
+
+                /**
+                 * @brief Result-shaped sibling of @ref lookup.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref name().
+                 */
+                static Result<PixelFormat> fromString(const String &name) {
+                        Error err;
+                        PixelFormat p = lookup(name, &err);
+                        if (err.isError()) return makeError<PixelFormat>(err);
+                        return makeResult(p);
+                }
 
                 /**
                  * @brief Constructs a PixelFormat for the given ID.

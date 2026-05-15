@@ -353,18 +353,19 @@ class AudioChannelMap {
 
 /** @brief Writes an AudioChannelMap as tag + count + (streamName, role) pairs. */
 inline DataStream &operator<<(DataStream &stream, const AudioChannelMap &map) {
-        stream.writeTag(DataStream::TypeAudioChannelMap);
+        stream.beginFrame(DataStream::TypeAudioChannelMap, 1);
         stream << static_cast<uint32_t>(map.channels());
         for (const auto &entry : map.entries()) {
                 stream << entry.first().name();
                 stream << static_cast<int32_t>(entry.second().value());
         }
+        stream.endFrame();
         return stream;
 }
 
 /** @brief Reads an AudioChannelMap from its tagged wire format. */
 inline DataStream &operator>>(DataStream &stream, AudioChannelMap &map) {
-        if (!stream.readTag(DataStream::TypeAudioChannelMap)) {
+        if (!stream.readFrame(DataStream::TypeAudioChannelMap)) {
                 map = AudioChannelMap();
                 return stream;
         }

@@ -15,21 +15,13 @@ String FrameCount::toString() const {
         return String::number(_value) + String("f");
 }
 
-FrameCount FrameCount::fromString(const String &str, Error *err) {
+Result<FrameCount> FrameCount::fromString(const String &str) {
         String t = str.trim();
-        if (t.isEmpty()) {
-                if (err != nullptr) *err = Error::Ok;
-                return FrameCount::unknown();
-        }
+        if (t.isEmpty()) return makeResult(FrameCount::unknown());
         String lc = t.toLower();
-        if (lc == "unknown" || lc == "unk" || lc == "?") {
-                if (err != nullptr) *err = Error::Ok;
-                return FrameCount::unknown();
-        }
-        if (lc == "inf" || lc == "infinity" || lc == "infinite" || lc == "\xe2\x88\x9e") {
-                if (err != nullptr) *err = Error::Ok;
-                return FrameCount::infinity();
-        }
+        if (lc == "unknown" || lc == "unk" || lc == "?") return makeResult(FrameCount::unknown());
+        if (lc == "inf" || lc == "infinity" || lc == "infinite" || lc == "\xe2\x88\x9e")
+                return makeResult(FrameCount::infinity());
         // Drop a trailing 'f' / 'F' so that "50f", "50F", or bare "50"
         // all parse.  Anything else after digits is a parse error.
         String body = t;
@@ -37,24 +29,14 @@ FrameCount FrameCount::fromString(const String &str, Error *err) {
                 char last = body.cstr()[body.byteCount() - 1];
                 if (last == 'f' || last == 'F') {
                         body = String(body.cstr(), body.byteCount() - 1).trim();
-                        if (body.isEmpty()) {
-                                if (err != nullptr) *err = Error::ParseFailed;
-                                return FrameCount::unknown();
-                        }
+                        if (body.isEmpty()) return makeError<FrameCount>(Error::ParseFailed);
                 }
         }
         Error   parseErr;
         int64_t v = body.to<int64_t>(&parseErr);
-        if (parseErr.isError()) {
-                if (err != nullptr) *err = Error::ParseFailed;
-                return FrameCount::unknown();
-        }
-        if (v < 0) {
-                if (err != nullptr) *err = Error::OutOfRange;
-                return FrameCount::unknown();
-        }
-        if (err != nullptr) *err = Error::Ok;
-        return FrameCount(v);
+        if (parseErr.isError()) return makeError<FrameCount>(Error::ParseFailed);
+        if (v < 0) return makeError<FrameCount>(Error::OutOfRange);
+        return makeResult(FrameCount(v));
 }
 
 FrameCount &FrameCount::operator+=(int64_t n) {

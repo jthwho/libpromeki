@@ -33,26 +33,25 @@ TEST_CASE("UUID: generate creates unique UUIDs") {
 }
 
 TEST_CASE("UUID: parse from string") {
-        UUID v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1");
+        UUID v = value(UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1"));
         CHECK(v.isValid());
 }
 
 TEST_CASE("UUID: case insensitive parsing") {
-        UUID a = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1");
-        UUID b = UUID::fromString("94EB2454-5116-4814-889F-7EB9BCB58BF1");
+        UUID a = value(UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1"));
+        UUID b = value(UUID::fromString("94EB2454-5116-4814-889F-7EB9BCB58BF1"));
         CHECK(a == b);
 }
 
 TEST_CASE("UUID: invalid string") {
-        Error err;
-        UUID  v = UUID::fromString("94EB2454-X116-4814-889F-7EB9BCB58BF1", &err);
+        auto [v, err] = UUID::fromString("94EB2454-X116-4814-889F-7EB9BCB58BF1");
         CHECK_FALSE(v.isValid());
         CHECK(err != Error::Ok);
 }
 
 TEST_CASE("UUID: construct from String type") {
         String s("91809c4d-3682-4868-800c-05b871b84c0b");
-        UUID   v = UUID::fromString(s);
+        UUID   v = value(UUID::fromString(s));
         CHECK(v.isValid());
         CHECK(v.toString() == s);
 }
@@ -60,7 +59,7 @@ TEST_CASE("UUID: construct from String type") {
 TEST_CASE("UUID: toString roundtrip") {
         UUID   v = UUID::generate();
         String s = v.toString();
-        UUID   v2 = UUID::fromString(s);
+        UUID   v2 = value(UUID::fromString(s));
         CHECK(v == v2);
 }
 
@@ -91,7 +90,7 @@ TEST_CASE("UUID: less than is consistent with greater than") {
 }
 
 TEST_CASE("UUID: String conversion operator") {
-        UUID   v = UUID::fromString("91809c4d-3682-4868-800c-05b871b84c0b");
+        UUID   v = value(UUID::fromString("91809c4d-3682-4868-800c-05b871b84c0b"));
         String s = v;
         CHECK_FALSE(s.isEmpty());
 }
@@ -109,15 +108,15 @@ TEST_CASE("UUID: data accessor") {
 }
 
 TEST_CASE("UUID: fromString with error") {
-        Error err;
-        UUID  v = UUID::fromString("invalid-uuid", &err);
+        auto [v, err] = UUID::fromString("invalid-uuid");
         CHECK_FALSE(v.isValid());
+        CHECK(err.isError());
 }
 
 TEST_CASE("UUID: fromString valid") {
-        Error err;
-        UUID  v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1", &err);
+        auto [v, err] = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1");
         CHECK(v.isValid());
+        CHECK(err.isOk());
 }
 
 TEST_CASE("UUID: generateV4 is valid and version 4") {
@@ -171,7 +170,7 @@ TEST_CASE("UUID: generateV7 explicit timestamps are sortable") {
 }
 
 TEST_CASE("UUID: generateV3 is deterministic") {
-        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"); // DNS namespace
+        UUID   ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")); // DNS namespace
         String name("example.com");
         UUID   a = UUID::generateV3(ns, name);
         UUID   b = UUID::generateV3(ns, name);
@@ -180,14 +179,14 @@ TEST_CASE("UUID: generateV3 is deterministic") {
 }
 
 TEST_CASE("UUID: generateV3 different names produce different UUIDs") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         UUID a = UUID::generateV3(ns, "foo");
         UUID b = UUID::generateV3(ns, "bar");
         CHECK(a != b);
 }
 
 TEST_CASE("UUID: generateV5 is deterministic") {
-        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         String name("example.com");
         UUID   a = UUID::generateV5(ns, name);
         UUID   b = UUID::generateV5(ns, name);
@@ -196,21 +195,21 @@ TEST_CASE("UUID: generateV5 is deterministic") {
 }
 
 TEST_CASE("UUID: generateV5 different names produce different UUIDs") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         UUID a = UUID::generateV5(ns, "foo");
         UUID b = UUID::generateV5(ns, "bar");
         CHECK(a != b);
 }
 
 TEST_CASE("UUID: generateV3 and generateV5 produce different results for same input") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         UUID v3 = UUID::generateV3(ns, "example.com");
         UUID v5 = UUID::generateV5(ns, "example.com");
         CHECK(v3 != v5);
 }
 
 TEST_CASE("UUID: generate convenience with v3 uses Application") {
-        Application::setAppUUID(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
+        Application::setAppUUID(value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")));
         Application::setAppName("test-app");
         UUID v = UUID::generate(3);
         CHECK(v.isValid());
@@ -221,7 +220,7 @@ TEST_CASE("UUID: generate convenience with v3 uses Application") {
 }
 
 TEST_CASE("UUID: generate convenience with v5 uses Application") {
-        Application::setAppUUID(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
+        Application::setAppUUID(value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8")));
         Application::setAppName("test-app");
         UUID v = UUID::generate(5);
         CHECK(v.isValid());
@@ -232,7 +231,7 @@ TEST_CASE("UUID: generate convenience with v5 uses Application") {
 
 TEST_CASE("UUID: version from parsed string") {
         // This is a known v4 UUID
-        UUID v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1");
+        UUID v = value(UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1"));
         CHECK(v.version() == 4);
 }
 
@@ -240,7 +239,7 @@ TEST_CASE("UUID: generateV3 with long name exceeding stack buffer") {
         // Names longer than 256 bytes previously triggered a heap allocation
         // via raw new[]/delete[].  This test exercises that path (now using
         // List<uint8_t>) to verify no leaks or crashes.
-        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         String longName(512, 'x');
         UUID   a = UUID::generateV3(ns, longName);
         CHECK(a.isValid());
@@ -251,7 +250,7 @@ TEST_CASE("UUID: generateV3 with long name exceeding stack buffer") {
 }
 
 TEST_CASE("UUID: generateV5 with long name exceeding stack buffer") {
-        UUID   ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID   ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         String longName(512, 'y');
         UUID   a = UUID::generateV5(ns, longName);
         CHECK(a.isValid());
@@ -261,14 +260,14 @@ TEST_CASE("UUID: generateV5 with long name exceeding stack buffer") {
 }
 
 TEST_CASE("UUID: generateV3 short vs long name produce different results") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         UUID shortResult = UUID::generateV3(ns, "short");
         UUID longResult = UUID::generateV3(ns, String(512, 'z'));
         CHECK(shortResult != longResult);
 }
 
 TEST_CASE("UUID: generateV5 short vs long name produce different results") {
-        UUID ns = UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID ns = value(UUID::fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
         UUID shortResult = UUID::generateV5(ns, "short");
         UUID longResult = UUID::generateV5(ns, String(512, 'z'));
         CHECK(shortResult != longResult);

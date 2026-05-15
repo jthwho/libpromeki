@@ -123,17 +123,16 @@ TEST_CASE("DateTime: String conversion operator") {
 }
 
 TEST_CASE("DateTime: fromString with known format") {
-        Error    err;
-        DateTime parsed = DateTime::fromString("2023-11-14 22:13:20", "%Y-%m-%d %H:%M:%S", &err);
+        auto [parsed, err] = DateTime::fromString("2023-11-14 22:13:20", "%Y-%m-%d %H:%M:%S");
         CHECK(err.isOk());
         // Should parse successfully to a valid time
         CHECK(parsed.toTimeT() > 0);
 }
 
 TEST_CASE("DateTime: fromString with bad input") {
-        Error err;
-        (void)DateTime::fromString("not-a-date", DateTime::DefaultFormat, &err);
+        auto [parsed, err] = DateTime::fromString("not-a-date");
         CHECK(err.isError());
+        (void)parsed;
 }
 
 TEST_CASE("DateTime: toString is thread-safe with known time_t") {

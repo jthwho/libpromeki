@@ -314,19 +314,20 @@ class AudioMarkerList {
 
 /** @brief Writes an AudioMarkerList as tag + count + N (offset, length, type). */
 inline DataStream &operator<<(DataStream &stream, const AudioMarkerList &list) {
-        stream.writeTag(DataStream::TypeAudioMarkerList);
+        stream.beginFrame(DataStream::TypeAudioMarkerList, 1);
         stream << static_cast<uint32_t>(list.size());
         for (const auto &e : list.entries()) {
                 stream << static_cast<int64_t>(e.offset());
                 stream << static_cast<int64_t>(e.length());
                 stream << static_cast<int32_t>(e.type().value());
         }
+        stream.endFrame();
         return stream;
 }
 
 /** @brief Reads an AudioMarkerList from its tagged wire format. */
 inline DataStream &operator>>(DataStream &stream, AudioMarkerList &list) {
-        if (!stream.readTag(DataStream::TypeAudioMarkerList)) {
+        if (!stream.readFrame(DataStream::TypeAudioMarkerList)) {
                 list = AudioMarkerList();
                 return stream;
         }

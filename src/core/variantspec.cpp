@@ -24,6 +24,12 @@
 #include <promeki/timecode.h>
 #include <promeki/url.h>
 #include <promeki/windowedstat.h>
+#include <promeki/audioformat.h>
+#include <promeki/audiostreamdesc.h>
+#include <promeki/audiochannelmap.h>
+#include <promeki/audiomarker.h>
+#include <promeki/framecount.h>
+#include <promeki/mediaduration.h>
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/eui64.h>
@@ -278,20 +284,17 @@ namespace {
                                 return Variant(r.first());
                         }
                         case Variant::TypeFrameNumber: {
-                                Error       pe;
-                                FrameNumber fn = FrameNumber::fromString(str, &pe);
+                                auto [fn, pe] = FrameNumber::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(fn);
                         }
                         case Variant::TypeFrameCount: {
-                                Error      pe;
-                                FrameCount fc = FrameCount::fromString(str, &pe);
+                                auto [fc, pe] = FrameCount::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(fc);
                         }
                         case Variant::TypeMediaDuration: {
-                                Error         pe;
-                                MediaDuration md = MediaDuration::fromString(str, &pe);
+                                auto [md, pe] = MediaDuration::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(md);
                         }
@@ -302,14 +305,13 @@ namespace {
                                 return Variant(d);
                         }
                         case Variant::TypeDateTime: {
-                                Error    de;
-                                DateTime dt = DateTime::fromString(str, DateTime::DefaultFormat, &de);
+                                auto [dt, de] = DateTime::fromString(str);
                                 if (de.isError()) break;
                                 return Variant(dt);
                         }
                         case Variant::TypeColor: {
-                                Color c = Color::fromString(str);
-                                if (!c.isValid()) break;
+                                auto [c, ce] = Color::fromString(str);
+                                if (ce.isError() || !c.isValid()) break;
                                 return Variant(c);
                         }
                         case Variant::TypePixelFormat: {

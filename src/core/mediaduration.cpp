@@ -154,12 +154,9 @@ String MediaDuration::toString() const {
         return _start.toString() + String("+") + _length.toString();
 }
 
-MediaDuration MediaDuration::fromString(const String &str, Error *err) {
+Result<MediaDuration> MediaDuration::fromString(const String &str) {
         String t = str.trim();
-        if (t.isEmpty()) {
-                if (err != nullptr) *err = Error::Ok;
-                return MediaDuration();
-        }
+        if (t.isEmpty()) return makeResult(MediaDuration());
 
         // Find the operator that splits the two components.  Prefer
         // '+' (start+length form); fall back to '-' (inclusive range
@@ -185,41 +182,24 @@ MediaDuration MediaDuration::fromString(const String &str, Error *err) {
                         }
                 }
         }
-        if (opIdx == SIZE_MAX) {
-                if (err != nullptr) *err = Error::ParseFailed;
-                return MediaDuration();
-        }
+        if (opIdx == SIZE_MAX) return makeError<MediaDuration>(Error::ParseFailed);
 
         String left(s, opIdx);
         String right(s + opIdx + 1, n - opIdx - 1);
 
-        Error       leftErr;
-        FrameNumber start = FrameNumber::fromString(left, &leftErr);
-        if (leftErr.isError()) {
-                if (err != nullptr) *err = Error::ParseFailed;
-                return MediaDuration();
-        }
+        auto [start, leftErr] = FrameNumber::fromString(left);
+        if (leftErr.isError()) return makeError<MediaDuration>(Error::ParseFailed);
 
         if (opCh == '+') {
-                Error      rightErr;
-                FrameCount length = FrameCount::fromString(right, &rightErr);
-                if (rightErr.isError()) {
-                        if (err != nullptr) *err = Error::ParseFailed;
-                        return MediaDuration();
-                }
-                if (err != nullptr) *err = Error::Ok;
-                return MediaDuration(start, length);
+                auto [length, rightErr] = FrameCount::fromString(right);
+                if (rightErr.isError()) return makeError<MediaDuration>(Error::ParseFailed);
+                return makeResult(MediaDuration(start, length));
         }
 
         // Range form "<start>-<end>".
-        Error       rightErr;
-        FrameNumber end = FrameNumber::fromString(right, &rightErr);
-        if (rightErr.isError()) {
-                if (err != nullptr) *err = Error::ParseFailed;
-                return MediaDuration();
-        }
-        if (err != nullptr) *err = Error::Ok;
-        return fromFrameRange(FrameRange(start, end));
+        auto [end, rightErr] = FrameNumber::fromString(right);
+        if (rightErr.isError()) return makeError<MediaDuration>(Error::ParseFailed);
+        return makeResult(fromFrameRange(FrameRange(start, end)));
 }
 
 PROMEKI_NAMESPACE_END

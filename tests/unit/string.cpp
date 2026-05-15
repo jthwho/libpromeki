@@ -926,7 +926,7 @@ TEST_CASE("String_Format_UnicodeContent") {
 TEST_CASE("String_Format_LibraryTypes") {
         // Library types with no-arg toString() returning a String can be
         // passed to format() directly via PROMEKI_FORMAT_VIA_TOSTRING.
-        UUID   id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
+        UUID   id = value(UUID::fromString("00112233-4455-6677-8899-aabbccddeeff"));
         String s = String::format("id = {}", id);
         CHECK(s == "id = 00112233-4455-6677-8899-aabbccddeeff");
 
@@ -1033,7 +1033,7 @@ TEST_CASE("String_Format_Variant") {
         CHECK(String::format("v = {}", v) == "v = hello");
 
         // UUID.
-        UUID id = UUID::fromString("00112233-4455-6677-8899-aabbccddeeff");
+        UUID id = value(UUID::fromString("00112233-4455-6677-8899-aabbccddeeff"));
         v.set(id);
         CHECK(String::format("v = {}", v) == "v = 00112233-4455-6677-8899-aabbccddeeff");
 

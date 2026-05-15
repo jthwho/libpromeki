@@ -389,18 +389,19 @@ bool MediaPipelineStats::operator==(const MediaPipelineStats &other) const {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const MediaPipelineStats &s) {
-        stream.writeTag(DataStream::TypeMediaPipelineStats);
+        stream.beginFrame(DataStream::TypeMediaPipelineStats, 1);
         const MediaPipelineStats::StageList &stages = s.stages();
         stream << static_cast<uint32_t>(stages.size());
         for (size_t i = 0; i < stages.size(); ++i) {
                 stream << stages[i];
         }
+        stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, MediaPipelineStats &s) {
         s.clear();
-        if (!stream.readTag(DataStream::TypeMediaPipelineStats)) {
+        if (!stream.readFrame(DataStream::TypeMediaPipelineStats)) {
                 return stream;
         }
         uint32_t stageCount = 0;

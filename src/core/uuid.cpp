@@ -140,59 +140,47 @@ UUID UUID::generateV7(int64_t timestampMs) {
         return UUID(d);
 }
 
-UUID UUID::fromString(const char *str, Error *err) {
+Result<UUID> UUID::fromString(const String &string) {
+        const char *str = string.cstr();
         DataFormat data;
         uint8_t   *d = data.data();
-        if (!hexStr(d++, str, err)) return UUID();
+        Error      err;
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (*str++ != '-') {
-                if (err != nullptr) *err = Error::Invalid;
-                return UUID();
-        }
-        if (!hexStr(d++, str, err)) return UUID();
+        if (*str++ != '-') return makeError<UUID>(Error::ParseFailed);
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (*str++ != '-') {
-                if (err != nullptr) *err = Error::Invalid;
-                return UUID();
-        }
-        if (!hexStr(d++, str, err)) return UUID();
+        if (*str++ != '-') return makeError<UUID>(Error::ParseFailed);
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (*str++ != '-') {
-                if (err != nullptr) *err = Error::Invalid;
-                return UUID();
-        }
-        if (!hexStr(d++, str, err)) return UUID();
+        if (*str++ != '-') return makeError<UUID>(Error::ParseFailed);
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (*str++ != '-') {
-                if (err != nullptr) *err = Error::Invalid;
-                return UUID();
-        }
-        if (!hexStr(d++, str, err)) return UUID();
+        if (*str++ != '-') return makeError<UUID>(Error::ParseFailed);
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d++, str, err)) return UUID();
+        if (!hexStr(d++, str, &err)) return makeError<UUID>(Error::ParseFailed);
         str += 2;
-        if (!hexStr(d, str, err)) return UUID();
-
-        if (err != nullptr) *err = Error::Ok;
-        return UUID(data);
+        if (!hexStr(d, str, &err)) return makeError<UUID>(Error::ParseFailed);
+        return makeResult(UUID(data));
 }
 
 inline void strHex(char *str, const uint8_t *d) {

@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -389,6 +390,20 @@ class PixelMemLayout {
                  *         @c PixelMemLayout(Invalid) on miss.
                  */
                 static PixelMemLayout lookup(const String &name, Error *err);
+
+                /**
+                 * @brief Result-shaped sibling of @ref lookup.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref name().
+                 */
+                static Result<PixelMemLayout> fromString(const String &name) {
+                        Error err;
+                        PixelMemLayout p = lookup(name, &err);
+                        if (err.isError()) return makeError<PixelMemLayout>(err);
+                        return makeResult(p);
+                }
 
                 /**
                  * @brief Constructs a PixelMemLayout for the given ID.

@@ -125,8 +125,7 @@ TEST_CASE("UMID: toString length matches byte size") {
 TEST_CASE("UMID: toString/fromString round trip (Basic)") {
         UMID   a = UMID::generate(UMID::Basic);
         String s = a.toString();
-        Error  err;
-        UMID   b = UMID::fromString(s, &err);
+        auto [b, err] = UMID::fromString(s);
         CHECK(err.isOk());
         CHECK(b.isValid());
         CHECK(b.length() == UMID::Basic);
@@ -136,8 +135,7 @@ TEST_CASE("UMID: toString/fromString round trip (Basic)") {
 TEST_CASE("UMID: toString/fromString round trip (Extended)") {
         UMID   a = UMID::generate(UMID::Extended);
         String s = a.toString();
-        Error  err;
-        UMID   b = UMID::fromString(s, &err);
+        auto [b, err] = UMID::fromString(s);
         CHECK(err.isOk());
         CHECK(b.isValid());
         CHECK(b.length() == UMID::Extended);
@@ -148,7 +146,7 @@ TEST_CASE("UMID: fromString accepts uppercase hex") {
         UMID   a = UMID::generate(UMID::Basic);
         String s = a.toString();
         String upper = s.toUpper();
-        UMID   b = UMID::fromString(upper);
+        UMID   b = value(UMID::fromString(upper));
         CHECK(b.isValid());
         CHECK(a == b);
 }
@@ -163,14 +161,13 @@ TEST_CASE("UMID: fromString accepts dashes and whitespace") {
                 if (i != 0 && (i % 8) == 0) decorated += '-';
                 decorated += s[i];
         }
-        UMID b = UMID::fromString(decorated);
+        UMID b = value(UMID::fromString(decorated));
         CHECK(b.isValid());
         CHECK(a == b);
 }
 
 TEST_CASE("UMID: fromString rejects wrong length") {
-        Error err;
-        UMID  v = UMID::fromString("deadbeef", &err);
+        auto [v, err] = UMID::fromString("deadbeef");
         CHECK_FALSE(v.isValid());
         CHECK(err.isError());
 }
@@ -178,16 +175,14 @@ TEST_CASE("UMID: fromString rejects wrong length") {
 TEST_CASE("UMID: fromString rejects invalid characters") {
         // 64 chars, but one is 'g' which isn't hex.
         String bad = String(5, '0') + String("g") + String(58, '0');
-        Error  err;
-        UMID   v = UMID::fromString(bad, &err);
+        auto [v, err] = UMID::fromString(bad);
         CHECK_FALSE(v.isValid());
         CHECK(err.isError());
 }
 
 TEST_CASE("UMID: fromString rejects odd number of hex digits") {
         String odd(63, '0');
-        Error  err;
-        UMID   v = UMID::fromString(odd, &err);
+        auto [v, err] = UMID::fromString(odd);
         CHECK_FALSE(v.isValid());
         CHECK(err.isError());
 }
