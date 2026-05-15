@@ -9,6 +9,7 @@
 #include <promeki/buffer.h>
 #include <promeki/buffercommand.h>
 #include <promeki/hostbufferimpl.h>
+#include <promeki/string.h>
 #include <promeki/util.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
@@ -40,6 +41,75 @@ Buffer Buffer::wrapHost(void *p, size_t sz, size_t an, const MemSpace &ms) {
         if (p == nullptr || sz == 0) return b;
         b._d = BufferImplPtr::takeOwnership(new WrappedHostBufferImpl(ms, p, sz, an));
         return b;
+}
+
+namespace {
+
+        int hexNibble(char c) {
+                if (c >= '0' && c <= '9') return c - '0';
+                if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
+                if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
+                return -1;
+        }
+
+        bool isHexSkip(char c) {
+                return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '-';
+        }
+
+}
+
+Result<Buffer> Buffer::fromHex(const String &hex) {
+        const char *cp = hex.cstr();
+        size_t      n = hex.byteCount();
+        // Two passes: first count significant nibbles to size the
+        // destination, then decode.  Keeps a single allocation.
+        size_t nibbles = 0;
+        for (size_t i = 0; i < n; ++i) {
+                char c = cp[i];
+                if (isHexSkip(c)) continue;
+                if (hexNibble(c) < 0) return makeError<Buffer>(Error::ParseFailed);
+                ++nibbles;
+        }
+        if ((nibbles & 1u) != 0) return makeError<Buffer>(Error::ParseFailed);
+        const size_t bytes = nibbles / 2;
+        Buffer       out(bytes == 0 ? 1 : bytes);
+        out.setSize(bytes);
+        if (bytes == 0) return makeResult<Buffer>(std::move(out));
+        auto *dp = static_cast<uint8_t *>(out.data());
+        int   hi = -1;
+        size_t outIdx = 0;
+        for (size_t i = 0; i < n; ++i) {
+                char c = cp[i];
+                if (isHexSkip(c)) continue;
+                int v = hexNibble(c);
+                if (hi < 0) {
+                        hi = v;
+                } else {
+                        dp[outIdx++] = static_cast<uint8_t>((hi << 4) | v);
+                        hi = -1;
+                }
+        }
+        return makeResult<Buffer>(std::move(out));
+}
+
+String Buffer::toHex(const String &sep) const {
+        String out;
+        size_t n = size();
+        if (n == 0) return out;
+        const auto *p = static_cast<const uint8_t *>(data());
+        if (p == nullptr) return out;
+        const size_t sepBytes = sep.byteCount();
+        out.reserve(n * 2 + (n > 1 ? (n - 1) * sepBytes : 0));
+        for (size_t i = 0; i < n; ++i) {
+                if (i != 0 && sepBytes > 0) out += sep;
+                out += String::sprintf("%02x", static_cast<unsigned>(p[i]));
+        }
+        return out;
+}
+
+String Buffer::toHex() const {
+        static const String kSpace(" ");
+        return toHex(kSpace);
 }
 
 Error Buffer::copyFrom(const void *src, size_t bytes, size_t offset) const {
@@ -105,6 +175,30 @@ BufferRequest Buffer::copyTo(Buffer &dst, size_t bytes, size_t srcOffset, size_t
         }
 
         return resolvedCopy(bytes, srcOffset, dstOffset, Error::NotSupported);
+}
+
+bool Buffer::operator==(const Buffer &o) const {
+        // Identity short-circuit: shared backing storage is equal by
+        // construction and is the common CoW case.
+        if (_d == o._d) return true;
+
+        const size_t sz = size();
+        if (sz != o.size()) return false;
+        // Equal-sized empty buffers (or one valid + one invalid both with
+        // zero logicalSize) compare equal here, matching value semantics
+        // for "no bytes."
+        if (sz == 0) return true;
+
+        // Distinct impls with content — only compare bytes when both
+        // sides are host-accessible.  Cross-domain (CUDA device, FPGA)
+        // contents cannot be inspected synchronously through this
+        // operator; conservatively report unequal.
+        if (!isHostAccessible() || !o.isHostAccessible()) return false;
+
+        const void *a = data();
+        const void *b = o.data();
+        if (a == nullptr || b == nullptr) return false;
+        return std::memcmp(a, b, sz) == 0;
 }
 
 PROMEKI_NAMESPACE_END

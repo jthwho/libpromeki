@@ -415,6 +415,12 @@ class DataStream {
                         TypeSubtitleSpan = 0x5D, ///< @brief SubtitleSpan (length-prefixed text + style flags + Color)
                         TypeScc = 0x5E,          ///< @brief Scc (length-prefixed List<Line> of {Timecode, List<uint16_t>})
                         TypeCea608 = 0x5F,       ///< @brief Cea608 (channel selector + cc_data triple list for one frame)
+                        TypeCea708Service =
+                                0x60, ///< @brief Cea708Service (uint8 service_number + length-prefixed Buffer of service-data bytes)
+                        TypeCea708DtvccPacket =
+                                0x61, ///< @brief Cea708DtvccPacket (uint8 sequence_number + uint32 count + N tagged Cea708Service entries)
+                        TypeHdrStaticMetadata =
+                                0x62, ///< @brief HdrStaticMetadata (tagged Buffer holding the CTA-861-G DRM InfoFrame body)
                 };
 
                 /**

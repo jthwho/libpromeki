@@ -33,32 +33,61 @@ struct Cea708EncoderImpl; // Pimpl — defined in cea708encoder.cpp.
  * (DTVCC_PACKET_DATA) triples wrapped around one or more
  * @ref Cea708Service blocks.
  *
- * @par Window model (v1 — single window, single service)
+ * @par Window model (single window, per-cue transaction)
  *
- * Each cue is emitted as a self-contained two-frame transaction:
+ * Each cue is emitted as a self-contained transaction over one or
+ * more consecutive frames starting at @c cue.start:
  *
- *  - At @c cue.start: one DTVCC packet containing
- *    `[DF0(window 0, visible), char bytes..., DSW(bitmap=1)]`.
- *    The DefineWindow command declares window 0 as visible with
- *    1 row × N columns (N = max text length); the chars stream
- *    into it; DisplayWindow ensures it's on-screen.
- *  - At @c cue.end: one DTVCC packet containing
- *    `[HDW(bitmap=1)]` — hide window 0.
+ *  - DefineWindow (DF0) with @ref Config::windowCols and the cue's
+ *    row count (1 for pop-on / paint-on, 3 for roll-up so the
+ *    receiver scrolls instead of overwriting).
+ *  - SetWindowAttributes (SWA) when the cue's spans share a
+ *    uniform background colour.
+ *  - SetPenAttributes / SetPenColor (SPA / SPC) defaults to bring
+ *    the wire pen to a known state.
+ *  - Per-span SPA / SPC re-asserted whenever a span's style
+ *    differs from the wire's current pen state, followed by the
+ *    span's character bytes.
+ *  - DisplayWindow (DSW) terminates the transaction.
  *
- * Frames outside cue boundaries emit no DTVCC triples (the CDP's
- * @c cc_data list remains free for other services / padding).
+ *  For pop-on cues a HideWindow (HDW) packet is also scheduled
+ *  at @c cue.end so the cue clears.  Paint-on and roll-up cues
+ *  skip the HideWindow — the window stays visible until the next
+ *  cue's DefineWindow overwrites it.  When a subsequent cue's
+ *  startFrame coincides with this cue's endFrame, the redundant
+ *  HideWindow is elided (the next cue's DefineWindow handles the
+ *  visibility transition atomically).
+ *
+ * @par Mode support
+ *
+ *  - @ref CaptionMode::PopOn (and @ref CaptionMode::Default) —
+ *    DefineWindow(visible, 1 row) + chars + DSW at @c cue.start,
+ *    HideWindow at @c cue.end.
+ *  - @ref CaptionMode::PaintOn — same show transaction; no
+ *    HideWindow boundary.  The window stays visible until the
+ *    next cue's transaction overwrites it.
+ *  - @ref CaptionMode::RollUp — DefineWindow declares a multi-row
+ *    window so the receiver scrolls; no HideWindow.
+ *
+ *  Per-cue mode mixing is fully supported because each cue's
+ *  transaction is self-contained.
+ *
+ * @par Per-frame cc_count budget
+ *
+ * SMPTE 334-2 / CEA-708 cap the CDP's cc_count at 5 bits
+ * (max 31 cc_data triples per video frame).  Each DTVCC packet
+ * the encoder emits produces ~17 triples, so the encoder
+ * schedules at most one packet per frame.  A cue whose show
+ * transaction needs more frames than the cue's duration is
+ * dropped with a warning; collisions that would exceed the
+ * per-frame cap return @c Error::OutOfRange from
+ * @ref setSubtitles.
+ *
+ * @par Service multiplexing
  *
  * Service number defaults to 1 (the primary English caption
  * service); other services are reachable via @ref Config but
  * the wire output is otherwise identical.
- *
- * @par Mode support (v1)
- *
- * Only the "pop-on" style transaction above is currently emitted.
- * Paint-on / roll-up 708 modes would use a different sequence of
- * window commands (no DSW boundary; characters streamed live with
- * the window already visible).  Paint-on / roll-up is a follow-on
- * once a 608/708 cross-encoded broadcast stream demands it.
  *
  * @par Storage and copy semantics
  *

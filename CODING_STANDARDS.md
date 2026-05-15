@@ -914,6 +914,23 @@ Prefer these doctest macros:
 
 All library code is built into a single `promeki` shared library with one test executable (`unittest-promeki`). It is registered with CTest. The `run-tests` custom target runs all tests as part of the normal build.
 
+### Quiet By Default
+
+A passing test run prints **nothing**. The only output should be the per-failure block (file:line + the failing `CHECK`/`REQUIRE` expressions) and doctest's final summary. No "starting test X", no "round-trip delivered N frames", no per-iteration counters — anything informational belongs in `INFO()`, not `MESSAGE()`.
+
+`tests/unit/doctest_main.cpp` enforces this by routing `promeki::Logger` output to the console only when `--verbose` (or `--logger`) is passed on the command line. To debug a noisy test locally, run:
+
+```bash
+build/bin/unittest-promeki --verbose --test-case="MyTestCaseSubstring"
+```
+
+Rules of thumb:
+
+- `INFO(expr)` — context that should appear **only when a later assertion fails**. Doctest captures it and prints it alongside the failure. This is the right tool for "here's what value I observed before the check" and for documenting why a test is taking a runtime-skip path.
+- `MESSAGE(expr)` — fires unconditionally. Reserve for genuine test-driven diagnostics that must surface even on success. In practice, this should be rare; if you are tempted to reach for it, prefer `INFO()` or a richer `CHECK_MESSAGE(cond, ...)`.
+- Library code under test should also stay quiet on the happy path. `promekiInfo` / `promekiWarn` / `promekiErr` calls inside the code-under-test are silenced by default in the test binary, but the macros still cost a formatting pass — don't fire them every loop iteration just because nobody can see them.
+- Third-party libraries that write directly to `stderr` must be wired through `promeki::Logger`. See `src/network/srtsocket.cpp` (`srtPromekiLogHandler`) for the pattern: install a log handler in the runtime-init function so the test binary's `setConsoleLoggingEnabled(false)` gate silences foreign output too.
+
 ---
 
 ## Logging

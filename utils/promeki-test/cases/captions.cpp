@@ -50,6 +50,7 @@
 #include <promeki/cea608.h>
 #include <promeki/cea608decoder.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/cea708decoder.h>
 #include <promeki/dir.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
@@ -246,6 +247,47 @@ namespace promekitest {
                         return dec.finalize();
                 }
 
+                /// @brief 708 sibling of @ref reconstructFromJsonl.
+                ///        Feeds every JSONL row's CcDataList through a
+                ///        @ref Cea708Decoder configured for the named
+                ///        DTVCC service.  Cue boundaries are emitted on
+                ///        visible-text transitions inside the decoder's
+                ///        internal @ref Cea708WindowState.
+                SubtitleList reconstructFromJsonl708(const String &text, uint8_t serviceNumber,
+                                                       int64_t *outRowsParsed) {
+                        Cea708Decoder::Config dcfg;
+                        dcfg.serviceNumber = serviceNumber;
+                        Cea708Decoder dec(dcfg);
+                        int64_t       rows = 0;
+                        const char   *p = text.cstr();
+                        const size_t  sz = text.byteCount();
+                        size_t        i = 0;
+                        while (i < sz) {
+                                size_t j = i;
+                                while (j < sz && p[j] != '\n') ++j;
+                                if (j > i) {
+                                        size_t end = j;
+                                        if (end > i && p[end - 1] == '\r') --end;
+                                        if (end > i) {
+                                                String line(p + i, end - i);
+                                                Error  perr;
+                                                JsonObject row = JsonObject::parse(line, &perr);
+                                                if (perr.isOk()) {
+                                                        const int64_t frameIdx = row.getInt(String("frame"));
+                                                        Cea708Cdp::CcDataList cc =
+                                                                ccDataFromJsonRow(row);
+                                                        dec.pushFrame(FrameNumber(frameIdx),
+                                                                      tsForFrame(frameIdx), cc);
+                                                        ++rows;
+                                                }
+                                        }
+                                }
+                                i = j + 1;
+                        }
+                        if (outRowsParsed) *outRowsParsed = rows;
+                        return dec.finalize();
+                }
+
                 /// @brief Returns @c true when every codepoint in @p s
                 ///        has a basic-ASCII representation (so the
                 ///        encoder's 608 wire round-trip is byte-exact
@@ -339,6 +381,23 @@ namespace promekitest {
                         // emitted Frame's AncPayload list.
                         s.config.set(MediaConfig::TpgAncCaptionsEnabled, true);
                         s.config.set(MediaConfig::TpgAncCaptionsFile, srtPath);
+                        return s;
+                }
+
+                /// @brief 708 sibling of @ref makeCaptionsTpgStage —
+                ///        same TPG stage but with
+                ///        @ref MediaConfig::TpgAncCaptionsCodec pinned to
+                ///        @ref CaptionCodec::Cea708 so the per-frame
+                ///        @c CcDataList holds DTVCC triples (cc_type=2/3)
+                ///        instead of line-21 byte pairs (cc_type=0/1).
+                MediaPipelineConfig::Stage makeCaptions708TpgStage(uint32_t streamId,
+                                                                     const String &srtPath,
+                                                                     uint8_t       serviceNumber) {
+                        MediaPipelineConfig::Stage s = makeCaptionsTpgStage(streamId, srtPath);
+                        s.config.set(MediaConfig::TpgAncCaptionsCodec,
+                                      CaptionCodec(CaptionCodec::Cea708));
+                        s.config.set(MediaConfig::TpgAncCaptions708Service,
+                                      static_cast<int32_t>(serviceNumber));
                         return s;
                 }
 
@@ -599,16 +658,204 @@ namespace promekitest {
                         ctx.setPass();
                 }
 
+                /// @brief 708 sibling of @ref runCea608SubRipRoundtripCase.
+                ///
+                /// Identical pipeline shape (TPG → Inspector AncData JSONL)
+                /// but the TPG is pinned to @ref CaptionCodec::Cea708 so
+                /// the per-frame CDP rides DTVCC triples instead of line-21
+                /// pairs.  The reconstructor uses @ref Cea708Decoder and
+                /// the comparison logic is the same whitespace-normalised
+                /// flat-text check used for the 608 case — vertical anchor
+                /// preservation isn't asserted because 708 DefineWindow
+                /// uses an anchor_point/anchor_v/anchor_h tuple in
+                /// percent-space units rather than a discrete row group,
+                /// and the test fixture's broadcast-bottom convention
+                /// always lands on the bottom band.
+                void runCea708SubRipRoundtripCase(TestContext &ctx) {
+                        EventLoop *loop = Application::mainEventLoop();
+                        if (loop == nullptr) {
+                                ctx.setFail(String("no main EventLoop"));
+                                return;
+                        }
+
+                        const int32_t timeoutMs =
+                                ctx.params().getAs<int32_t>(TestParams::PhaseTimeoutMs, 30000);
+
+                        const FilePath testFolder = ctx.testFolder();
+                        const String   ancJsonl =
+                                (testFolder / String("anc.jsonl")).toString();
+                        const String   roundtripPath =
+                                (testFolder / String("roundtrip.srt")).toString();
+
+                        ctx.setDetail(String("ancJsonl"), ancJsonl);
+                        ctx.setDetail(String("roundtripSrt"), roundtripPath);
+
+                        String         loadErr;
+                        SubtitleList source = loadSubstest(&loadErr);
+                        if (source.isEmpty()) {
+                                ctx.setSkip(String("substest.srt unavailable: ") + loadErr);
+                                return;
+                        }
+                        ctx.setDetail(String("sourceCueCount"),
+                                       static_cast<int64_t>(source.size()));
+                        const String srtPath = resolveSubstestPath();
+                        ctx.setDetail(String("sourceSrt"), srtPath);
+
+                        const uint8_t serviceNumber = 1;
+                        ctx.setDetail(String("serviceNumber"),
+                                       static_cast<int64_t>(serviceNumber));
+
+                        const uint32_t streamId = 0xCEA70800u;
+                        const int32_t  frames =
+                                static_cast<int32_t>(kCaptionRunSeconds * static_cast<int32_t>(kFps));
+                        ctx.setDetail(String("framesScheduled"), int64_t(frames));
+
+                        MediaPipelineConfig cfg;
+                        cfg.addStage(makeCaptions708TpgStage(streamId, srtPath, serviceNumber));
+                        cfg.addStage(makeAncInspectorStage(ancJsonl));
+                        cfg.addRoute(String("tpg"), String("insp"));
+                        cfg.setFrameCount(FrameCount(frames));
+
+                        JsonObject pipelineDump;
+                        {
+                                MediaPipeline pipe;
+                                PhaseOutcome  p =
+                                        runPhase(pipe, cfg, loop, static_cast<unsigned int>(timeoutMs));
+                                if (p.resolvedConfig.size() > 0) {
+                                        pipelineDump.set("captions", p.resolvedConfig);
+                                        ctx.setPipelineConfig(pipelineDump);
+                                }
+                                if (!p.built) {
+                                        ctx.setFail(String("pipeline build failed: ") +
+                                                    p.buildError.desc());
+                                        return;
+                                }
+                                if (!p.opened) {
+                                        ctx.setFail(String("pipeline open failed: ") +
+                                                    p.openError.desc());
+                                        return;
+                                }
+                                if (!p.started) {
+                                        ctx.setFail(String("pipeline start failed: ") +
+                                                    p.startError.desc());
+                                        return;
+                                }
+                                if (p.timedOut) {
+                                        ctx.setTimeout(String("pipeline deadlocked past ") +
+                                                       String::number(timeoutMs) + String(" ms"));
+                                        return;
+                                }
+                                if (p.sawError) {
+                                        ctx.setFail(String("pipeline error: ") + p.errorDetail);
+                                        return;
+                                }
+                        }
+
+                        String       readErr;
+                        const String jsonl = readWholeFile(ancJsonl, &readErr);
+                        if (jsonl.isEmpty()) {
+                                ctx.setFail(String("anc.jsonl is empty: ") + readErr);
+                                return;
+                        }
+                        int64_t      rowsParsed = 0;
+                        SubtitleList recovered =
+                                reconstructFromJsonl708(jsonl, serviceNumber, &rowsParsed);
+                        ctx.setDetail(String("jsonlRowsParsed"), rowsParsed);
+                        ctx.setDetail(String("recoveredCueCount"),
+                                       static_cast<int64_t>(recovered.size()));
+
+                        {
+                                Buffer rtBuf = SubRip::emit(recovered);
+                                File   rtFile(roundtripPath);
+                                Error  oe = rtFile.open(IODevice::WriteOnly,
+                                                          File::Create | File::Truncate);
+                                if (oe.isOk()) {
+                                        rtFile.write(rtBuf.data(),
+                                                      static_cast<int64_t>(rtBuf.size()));
+                                        rtFile.close();
+                                } else {
+                                        promekiWarn(
+                                                "captions(708): failed to write roundtrip.srt: %s",
+                                                oe.desc().cstr());
+                                }
+                        }
+
+                        int64_t asciiSourceCues = 0;
+                        int64_t matchedCues = 0;
+                        int64_t textMismatchCount = 0;
+                        int64_t unmatchedCues = 0;
+                        String  firstFailDetail;
+                        for (size_t i = 0; i < source.size(); ++i) {
+                                const Subtitle &src = source[i];
+                                if (src.text().isEmpty()) continue;
+                                if (!textIsAsciiOnly(src.text())) continue;
+                                ++asciiSourceCues;
+
+                                const List<int64_t> idxs = findMatchingCues(recovered, src);
+                                if (idxs.isEmpty()) {
+                                        ++unmatchedCues;
+                                        if (firstFailDetail.isEmpty()) {
+                                                firstFailDetail = String("source cue ") +
+                                                                  String::number(static_cast<int64_t>(i)) +
+                                                                  String(" (\"") + src.text() +
+                                                                  String("\") has no decoded match");
+                                        }
+                                        continue;
+                                }
+                                String concatGot;
+                                for (size_t k = 0; k < idxs.size(); ++k) {
+                                        const Subtitle &part =
+                                                recovered[static_cast<size_t>(idxs[k])];
+                                        if (k > 0) concatGot += String(" ");
+                                        concatGot += part.text();
+                                }
+                                ++matchedCues;
+                                const std::string srcN = normaliseWs(src.text());
+                                const std::string gotN = normaliseWs(concatGot);
+                                if (srcN != gotN) {
+                                        ++textMismatchCount;
+                                        if (firstFailDetail.isEmpty()) {
+                                                firstFailDetail = String("source cue ") +
+                                                                  String::number(static_cast<int64_t>(i)) +
+                                                                  String(" text mismatch: src=\"") +
+                                                                  String(srcN.c_str()) +
+                                                                  String("\" got=\"") +
+                                                                  String(gotN.c_str()) + String("\"");
+                                        }
+                                }
+                        }
+
+                        ctx.setDetail(String("asciiSourceCues"), asciiSourceCues);
+                        ctx.setDetail(String("matchedCues"), matchedCues);
+                        ctx.setDetail(String("textMismatchCount"), textMismatchCount);
+                        ctx.setDetail(String("unmatchedCues"), unmatchedCues);
+
+                        if (asciiSourceCues == 0) {
+                                ctx.setFail(String("substest.srt has no ASCII-only cues to "
+                                                    "compare; fixture mis-configured"));
+                                return;
+                        }
+                        if (unmatchedCues > 0 || textMismatchCount > 0) {
+                                ctx.setFail(firstFailDetail);
+                                return;
+                        }
+
+                        ctx.setPass();
+                }
+
         } // namespace
 
         void registerCaptionsCases() {
-                String desc =
+                TestRunner::registerCase(TestCase(
+                        String("captions.cea608.subrip_roundtrip"),
                         String("CEA-608 SubRip caption round-trip: TPG → AncJsonl → Cea608Decoder "
-                               "→ SubRip::emit");
-                TestRunner::registerCase(TestCase(String("captions.cea608.subrip_roundtrip"), desc,
-                                                   [](TestContext &ctx) {
-                                                           runCea608SubRipRoundtripCase(ctx);
-                                                   }));
+                               "→ SubRip::emit"),
+                        [](TestContext &ctx) { runCea608SubRipRoundtripCase(ctx); }));
+                TestRunner::registerCase(TestCase(
+                        String("captions.cea708.subrip_roundtrip"),
+                        String("CEA-708 SubRip caption round-trip: TPG → AncJsonl → Cea708Decoder "
+                               "→ SubRip::emit"),
+                        [](TestContext &ctx) { runCea708SubRipRoundtripCase(ctx); }));
         }
 
 } // namespace promekitest

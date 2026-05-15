@@ -95,10 +95,14 @@ BufferView::BufferView(std::initializer_list<BufferView> init) {
 
 size_t BufferView::internBuffer(const Buffer &buf) {
         if (!buf.isValid()) return kNoBuffer;
-        // Identity check: two Buffer handles point at the same backing
-        // BufferImpl iff their internal SharedPtrs compare equal.
+        // Storage-identity dedup: we want to share a slot iff the new
+        // Buffer hands us the same backing BufferImpl as an existing
+        // slot.  Use the explicit @ref Buffer::impl handle comparison —
+        // @c Buffer::operator== falls back to a content compare when
+        // the impls differ, which would conflate distinct allocations
+        // of identical bytes.
         for (size_t i = 0; i < _buffers.size(); ++i) {
-                if (_buffers[i] == buf) return i;
+                if (_buffers[i].impl() == buf.impl()) return i;
         }
         _buffers.pushToBack(buf);
         return _buffers.size() - 1;

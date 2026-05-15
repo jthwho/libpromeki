@@ -271,12 +271,11 @@ class Cea708Cdp {
                 /**
                  * @brief Field-wise equality.
                  *
-                 * @c Buffer @ref extraBytes is compared by identity (the
-                 * underlying @c BufferImpl pointer) for symmetry with
-                 * the rest of the library; freshly built CDPs with
-                 * identical opaque-bytes content but distinct @c Buffer
-                 * allocations compare unequal.  Most callers use
-                 * @ref toBuffer round-trip for content-level comparison.
+                 * @c Buffer @ref extraBytes is compared via
+                 * @c Buffer::operator==, which does identity short-circuit
+                 * then byte-by-byte content compare for host-accessible
+                 * impls — so freshly built CDPs with identical
+                 * opaque-bytes content round-trip equal.
                  */
                 bool operator==(const Cea708Cdp &o) const;
 

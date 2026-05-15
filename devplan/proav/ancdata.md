@@ -25,7 +25,138 @@ MediaIO backend integration, then application surfaces. None of
 this requires the AJA NTV2 backend — when that lands it slots
 into the contract defined here.
 
-## Status at a glance (2026-05-13)
+## Status at a glance (2026-05-15)
+
+**Update 2026-05-15:** HDR static signaling Phase 3 foundation +
+DataType-registry migration follow-on for CEA-708 and HDR.
+
+  - **HDR static metadata façade landed.**  New
+    `HdrStaticMetadata` value type
+    (`include/promeki/hdrstaticmetadata.h`,
+    `src/proav/hdrstaticmetadata.cpp`) composing
+    `TransferCharacteristics eotf` + `MasteringDisplay` (SMPTE
+    ST 2086) + `ContentLightLevel` (CTA-861.3 MaxCLL / MaxFALL)
+    into the single typed view a CTA-861-G DRM InfoFrame actually
+    carries.  Codec `HdrStatic2086 ← / → HdmiInfoFrame`
+    (`src/proav/anccodec_hdrstatic.cpp`) registered through the
+    Phase 2 `AncTranslator` framework — type byte 0x87,
+    version 1, 26-byte Static Metadata Type 1 body in
+    little-endian (chromaticity * 50000, min-luminance scaled by
+    10000 cd/m², MaxCLL/MaxFALL in cd/m²).  EOTF round-trip
+    handles `SMPTE2084` (PQ) and `ARIB_STD_B67` (HLG) cleanly;
+    the two SDR-gamma wire codes collapse to `Unspecified` per
+    spec.  `Variant::TypeHdrStaticMetadata` = `0x62` registered
+    through the new `DataType` registry.  Tests:
+    `tests/unit/hdrstaticmetadata.cpp` (12 cases — EOTF mapping,
+    HDR10 / HLG / default round-trip, error modes, JSON,
+    toString, Variant, DataStream, op==) and
+    `tests/unit/anccodec_hdrstatic.cpp` (3 cases — registry
+    capability, InfoFrame structure + checksum, AncTranslator
+    parse↔build round-trip).  Devplan §3 HDR section and
+    AncMetadataStamper section refreshed to reflect the façade
+    decision (the value type wraps the existing leaves rather
+    than duplicating them; stamper explodes back onto
+    `Metadata::MasteringDisplay` / `ContentLightLevel` /
+    `VideoTransferCharacteristics`).  `HdrStatic ← / → St291`
+    codec deferred — needs the SDI carriage spec reference
+    (SMPTE ST 2108-2 or successor) locked down before it lands.
+
+  - **`Cea708Service` / `Cea708DtvccPacket` migrated to the new
+    `DataType` registry** (the post-2026-05-15 merge replaced the
+    `std::variant`-backed Variant with a `SharedPtr<VariantBox>`
+    + per-type @c DataType ops table; the @c Variant runtime tag
+    and the @c DataStream wire tag are now the same 16-bit
+    integer).  Both types now have:
+      - `HasFreeDataStreamWrite/Read` specializations in
+        `src/core/variant.cpp` so the registry sees the free
+        DataStream operators.
+      - `registerBuiltin<Cea708Service>` /
+        `registerBuiltin<Cea708DtvccPacket>` entries pinning
+        them to `Variant::TypeCea708Service` = `0x60` /
+        `Variant::TypeCea708DtvccPacket` = `0x61` (the IDs the
+        previous std::variant-era code already pinned).
+      - `Variant::TypeCea708Service` / `TypeCea708DtvccPacket`
+        compat aliases restored on the `Variant` class — the
+        merge had inadvertently dropped them.
+      - DataStream operators in `src/proav/cea708service.cpp`
+        migrated from the retired @c writeTag / @c readTag API
+        to @c beginFrame(TypeId, version=1) / @c readFrame —
+        mirroring the @c Cea708Cdp migration that landed
+        alongside the merge.
+    Same migration applied to @c HdrStaticMetadata so the new
+    HDR value type rides through the same registry path as the
+    rest of the Phase 0–6 Variant alternatives.
+
+  - **`Buffer::operator==` switched to value-equality.**  The
+    old identity-only compare (`_d == o._d`) was a footgun —
+    @c Cea708Cdp / @c AncPacket equality silently treated two
+    byte-identical buffers as unequal when their @c BufferImpl
+    pointers differed.  New semantic: identity short-circuit
+    (`_d == o._d`) → return true; otherwise fall back to byte
+    `std::memcmp` when both buffers are host-accessible.
+    Cross-domain (CUDA device, FPGA) buffers with distinct
+    impls return @c false (no synchronous content compare
+    available).  @c BufferView::internBuffer migrated to the
+    explicit @c Buffer::impl()` == `Buffer::impl() check for
+    storage-identity dedup (it explicitly wants identity, not
+    value).  Stale identity-only docs in @c Cea708Cdp::operator==
+    refreshed; the @c tests/unit/ancpacket.cpp equality test
+    now exercises byte-equal-buffers-compare-equal.
+
+  - **Library-builtin serialize guarantee.**  Strengthened
+    @c tests/unit/datatype_roundtrip.cpp to enforce that every
+    library-builtin DataType (id < @c DataType::UserBegin =
+    @c 0x4000) advertises both @c writeStream and @c readStream
+    ops — there is no opt-out.  User-space types (the 5 test
+    fixtures registered by the test binaries themselves —
+    @c SampleBare, @c StageDLabel, @c UserConvFrom, @c UserConvTo,
+    @c SampleLabel) may still opt out to exercise the
+    no-serialize code path.  Current snapshot: 65 registered
+    types, 60 round-trip cleanly, 5 user-space test fixtures
+    skipped (no serialize), 0 library-builtin gaps.
+
+**Update 2026-05-14:** Phase 6 follow-on — `Cea708Service` and
+`Cea708DtvccPacket` are now first-class `Variant` payload types
+(`Variant::TypeCea708Service` / `TypeCea708DtvccPacket`,
+`DataStream::TypeCea708Service` = `0x60`,
+`DataStream::TypeCea708DtvccPacket` = `0x61`).  Both ride through
+@c DataStream tagged round-trip with deep value equality (the
+prior `Buffer`-handle identity check on `Cea708Service::operator==`
+broke value-type round-trips).  Library-first follow-on landed
+alongside: `Buffer::toHex(sep)` + `Buffer::fromHex(String)` static
+helpers on @ref Buffer (replaces the per-site hex-dump loops; used
+by the new `Cea708Service::toJson()` and a future migration target
+for `InspectorMediaIO::runAncDataCheck`).
+
+**CEA-708 encoder/decoder production-readiness pass — landed
+2026-05-14.**  Two complementary additions push the 708 stack
+toward production parity with the 608 stack:
+
+  - **SWA (SetWindowAttributes) full decode + encode.**  New
+    @ref Cea708WindowAttr struct carries fill colour / opacity,
+    border colour / type, justify, print / scroll direction,
+    word-wrap, display effect.  Decoder walks the 4-arg SWA
+    payload per CEA-708-D §8.10.5.10; encoder auto-derives a
+    uniform-bg SWA when every span in a cue shares the same
+    `backgroundColor` and emits it immediately after DF0.
+    Spans without an explicit per-cell SPC bg inherit the SWA
+    fill in @ref Cea708Window::visibleSpans (per-cell SPC bg
+    still wins where set).
+
+  - **Encoder cue overflow / cue-to-cue collision safety.**
+    `Cea708Encoder::setSubtitles` now drops cues whose show
+    packets don't fit in the cue's frame window (previously
+    overran silently), elides the HideWindow packet when the
+    next cue's startFrame coincides with the current cue's
+    endFrame (previously `Map::insert` silently overwrote the
+    HideWindow), and combines triple lists at the same frame
+    capped at the CDP's 31-triple per-frame `cc_count` budget
+    (returns `Error::OutOfRange` on overflow instead of
+    silently truncating).  Tests in
+    `tests/unit/cea708encoder.cpp` cover oversized-cue drop,
+    back-to-back PopOn cue elision + round-trip, PopOn →
+    RollUp boundary, and trailing PopOn HideWindow.
+
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -196,7 +327,7 @@ mid-implementation.
     layer is a Phase 3 task.
   - SCTE-104 ad/program markers (with SCTE-35 as a separate
     format for MPEG-TS carriage) — Phase 3 pending.
-  - SMPTE 2086 static HDR metadata — Phase 3 pending.
+  - SMPTE 2086 static HDR metadata — **landed 2026-05-15** (`HdrStaticMetadata` + `HdrStatic2086 ← / → HdmiInfoFrame` codec; `← / → St291` still pending).
   - SMPTE ST 2094-40 dynamic HDR (HDR10+) — Phase 3 pending.
   - MISB ST 0601 KLV geolocation — Phase 3 pending.
 - **`AncFormat` carries a category.** Every format is tagged
@@ -1636,8 +1767,11 @@ how every other ANC API already passes these handle types.)
 - [ ] `Cea608 ← / → St291`.
 - [ ] `Scte104 ← / → St291` (`Scte104Message` value type from
   Phase 3).
-- [ ] `HdrStatic2086 ← / → St291`,
-  `HdrStatic2086 ← / → HdmiInfoFrame` (DRM InfoFrame).
+- [x] `HdrStatic2086 ← / → HdmiInfoFrame` (CTA-861.3 DRM
+  InfoFrame, type 0x87) — typed Variant is the new
+  `HdrStaticMetadata` façade (see Phase 3 below). **Landed 2026-05-15.**
+- [ ] `HdrStatic2086 ← / → St291` (SDI VANC) — same typed
+  Variant; concrete RDD reference TBD when this lands.
 - [ ] `HdrDynamic2094_40 ← / → St291`,
   `HdrDynamic2094_40 ← / → HdmiInfoFrame`.
 - [ ] `Afd ← NdiXml`, `Afd → NdiXml`, `Afd ← HdmiInfoFrame`
@@ -1864,18 +1998,60 @@ caption text round-trips byte-for-byte through the whole stack.
   `Variant`-encoded blob — application code that needs them
   can extend the parser later.
 
-### HDR static metadata (SMPTE 2086)
+### HDR static metadata (CTA-861.3 / SMPTE ST 2086)
+
+**Decision (2026-05-14).** The wire payload on both
+`HdmiInfoFrame` (DRM InfoFrame type 0x87) and `St291` is the
+CTA-861.3 static-metadata descriptor, which bundles **EOTF +
+ST 2086 mastering display + MaxCLL/MaxFALL** into a single
+packet.  The AncTranslator framework yields one typed
+`Variant` per parsed packet, so the typed view must carry all
+three pieces together — registering separate codecs for
+`MasteringDisplay` and `ContentLightLevel` would silently drop
+fields on parse.
+
+The new typed value type is therefore a **façade** that
+composes the existing leaves (`MasteringDisplay`,
+`ContentLightLevel`, `TransferCharacteristics`) into a single
+parse / build unit.  The leaves stay as they are — already
+wired into `Metadata::MasteringDisplay`,
+`Metadata::ContentLightLevel`,
+`Metadata::VideoTransferCharacteristics`,
+`MediaConfig::HdrMasteringDisplay`,
+`MediaConfig::HdrContentLightLevel`, and the NVENC / NVDEC
+HEVC SEI paths.
+
+The `AncFormat::HdrStatic2086 = 11` enum identifier is kept
+as-is (already referenced in `ancformat.cpp`, tests, and
+`hdmiInfoFrameType = 0x87` mapping); the value type itself is
+named `HdrStaticMetadata` to match its CTA-861.3 scope rather
+than the narrower ST 2086 subset.
+
+**Status: Landed 2026-05-15.** HdmiInfoFrame codec complete; St291 codec still pending (SDI carriage spec reference not yet locked down).
 
 **Files:**
-- [ ] `include/promeki/hdrstatic2086.h` +
-  `src/proav/hdrstatic2086.cpp`
-- [ ] `tests/unit/proav/hdrstatic2086.cpp`
+- [x] `include/promeki/hdrstaticmetadata.h` +
+  `src/proav/hdrstaticmetadata.cpp`
+- [x] `tests/unit/hdrstaticmetadata.cpp` (12 cases — EOTF mapping, HDR10/HLG/default round-trip, failure modes, JSON, toString, Variant, DataStream, op==)
+- [x] `src/proav/anccodec_hdrstatic.cpp` (HdmiInfoFrame
+  codec landed; St291 codec follows when an SDI HDR
+  source/sink lands).
+- [x] `tests/unit/anccodec_hdrstatic.cpp` (3 cases — registry capability, InfoFrame structure + checksum, AncTranslator round-trip)
 
 **Surface:**
-- [ ] `HdrStatic2086` value type: display primaries, white
-  point, max/min luminance.
-- [ ] `parse` / `build` against `St291` and `HdmiInfoFrame`
-  (DRM InfoFrame type 0x87) codecs.
+- [x] `HdrStaticMetadata` value type composing
+  `TransferCharacteristics eotf`,
+  `MasteringDisplay masteringDisplay`,
+  `ContentLightLevel contentLightLevel`.
+- [x] `toBuffer` / `fromBuffer` for the CTA-861.3 DRM
+  InfoFrame body layout.  `toJson`, `toString`, `op==`,
+  `DataStream` operators.  Variant payload type
+  `TypeHdrStaticMetadata` = `0x62`.
+- [x] `HdrStatic ← / → HdmiInfoFrame` codec registered
+  through the Phase 2 framework.
+- [ ] `HdrStatic ← / → St291` codec — follow-on once the
+  SDI carriage reference is locked down (SMPTE ST 2108-2
+  or successor; not blocking for the HDMI path).
 
 ### HDR dynamic metadata (HDR10+ / ST 2094-40)
 
@@ -2895,8 +3071,13 @@ the matching `Metadata` keys.
   - `Afd` → `Metadata::AspectRatio` on the matched VideoPayload
   - `AtcLtc` / `AtcVitc1` / `AtcVitc2` → `Metadata::Timecode`
     on the Frame
-  - `HdrStatic2086` → `Metadata::HdrMasteringDisplay` /
-    `Metadata::HdrMaxCll` / `Metadata::HdrMaxFall`
+  - `HdrStatic2086` → explodes the `HdrStaticMetadata`
+    façade onto `Metadata::MasteringDisplay`,
+    `Metadata::ContentLightLevel`, and
+    `Metadata::VideoTransferCharacteristics` on the paired
+    VideoPayload (the leaves the rest of the pipeline already
+    consumes — there is no separate `HdrMaxCll`/`HdrMaxFall`
+    key).
   - `Cea708` → `Metadata::HasCaptions = true` boolean
 
 ### Future hooks
@@ -3332,11 +3513,30 @@ TPG.
 
 **Pending follow-ons:**
 
-- [ ] Pen attributes / colour / font preservation on the
-  grid.  Currently SPA / SPC / SWA are consumed (correct
-  argument counts) but ignored.  Adding them is structural
-  (attach a `PenAttr` per grid cell) — no wire-format
-  changes needed.
+- [x] Pen attributes / colour / font preservation on the
+  grid — landed 2026-05-14.  Earlier SPA / SPC were already
+  decoded into `Cea708PenAttr` and stamped onto every grid
+  cell (per-cell pen tracking landed 2026-05-12 — see
+  earlier section); the new piece is **SWA** (SetWindowAttributes,
+  0x97) which now decodes into a per-window @ref Cea708WindowAttr
+  carrying fill colour / opacity, border colour / type, justify,
+  print / scroll direction, word-wrap, display effect / direction /
+  speed (`include/promeki/cea708windowstate.h`,
+  `src/proav/cea708windowstate.cpp`).  Encoder side:
+  `Cea708Encoder` now auto-derives a uniform-bg SWA when every
+  span in a cue shares the same `backgroundColor`, emitting it
+  immediately after DF0 so the receiver paints the whole window
+  with the bg.  Spans without an explicit per-cell SPC bg inherit
+  the SWA fill in `Cea708Window::visibleSpans` (per-cell SPC bg
+  still wins where set).  Tests:
+  `tests/unit/cea708windowstate.cpp` (7 new cases — SWA fill
+  colour decode, Transparent opacity clears fillColor, byte3
+  justify/wordwrap/scroll/print direction, byte4 effect speed/
+  direction/display, border_type combines bytes 2+3, SWA fill
+  inheritance in visibleSpans, per-cell SPC bg wins over SWA
+  fill), `tests/unit/cea708encoder.cpp` (2 new cases — uniform
+  bg cue emits SWA + recovers fill, differing per-span bg
+  suppresses SWA emit and per-span SPC carries the bg).
 - [x] Full G2 / G3 extended-character tables — landed
   2026-05-13.  New `Cea708Ext` helper (`include/promeki/cea708ext.h`,
   `src/proav/cea708ext.cpp`) carries the CEA-708-D Annex G G2
@@ -3375,15 +3575,66 @@ TPG.
   in `cea708encoder.cpp` (G1 / G2 / OE / box-drawing /
   Korean BMP / astral G clef / mixed-encoding cue
   round-trip).
-- [ ] Paint-on / roll-up 708 modes.  Today the encoder
-  emits the pop-on style "Define + write + Display"
-  transaction; a real paint-on flow would have the window
-  already displayed and stream chars live without a
-  Define/Display boundary.  Decoder already handles either
-  shape (it's wire-state-driven).
-- [ ] `Cea708Service` Variant X-macro integration.  Currently
-  consumed by direct API.  One-line addition when an
-  application needs it.
+- [x] Paint-on / roll-up 708 modes — landed 2026-05-12 (per-cue
+  dispatch in `Cea708Encoder::setSubtitles`).  Pop-on (and
+  Default) keep the DefineWindow + chars + DSW at startFrame and
+  HideWindow at endFrame transaction.  PaintOn skips the
+  HideWindow boundary — the window stays visible after the cue's
+  end (real "live" captioning semantics).  RollUp declares a
+  multi-row window via the DefineWindow `row_count` argument so
+  the receiver scrolls instead of overwriting; HideWindow is
+  also skipped.  Decoder recovers `CaptionMode` from the current
+  window state at cue-commit time (row_count > 1 → RollUp,
+  single-row → PopOn — pop-on vs paint-on are indistinguishable
+  from the wire bytes alone without retaining longer temporal
+  context).  Each cue's transaction is self-contained so
+  mid-stream mode mixing is fully supported.  See follow-up
+  "streaming roll-up" note in **Still open** below: a real
+  broadcast roll-up captioner persists a single defined+
+  displayed window across adjacent RollUp cues and only emits
+  CR + new line chars on transitions — the current per-cue
+  DefineWindow approach is functionally correct (round-trips
+  cleanly through `Cea708Decoder`) but emits more wire bytes
+  than a streaming flow would.
+
+- [x] Encoder cue overflow / per-frame cc_count safety —
+  landed 2026-05-14.  `Cea708Encoder::setSubtitles` now:
+  (a) **drops cues** whose show packets need more frames than
+  the cue's `[startFrame, endFrame)` window with a warning
+  (previously the cue would silently overrun into the next
+  cue's slots); (b) **elides the HideWindow** packet when the
+  next cue's startFrame equals the current cue's endFrame —
+  the next cue's DefineWindow + DSW atomically replaces the
+  visible window (previously the HideWindow was silently
+  overwritten by `Map::insert`); (c) **combines triples** at
+  the same frame instead of overwriting, capped at the CDP's
+  `cc_count = 5 bits` (31-triple) per-frame budget and
+  returning `Error::OutOfRange` on overflow.  Tests in
+  `tests/unit/cea708encoder.cpp` cover all three:
+  oversized cue dropped, back-to-back PopOn cues elide the
+  redundant HideWindow + round-trip cleanly, PopOn → RollUp
+  collision at the same frame round-trips, trailing PopOn
+  still emits its HideWindow.
+- [x] `Cea708Service` Variant X-macro integration — landed
+  2026-05-14.  Both `Cea708Service` and `Cea708DtvccPacket` are
+  now first-class Variant payload types
+  (`Variant::TypeCea708Service`, `Variant::TypeCea708DtvccPacket`)
+  with matching @c DataStream wire tags
+  (`DataStream::TypeCea708Service` = `0x60`,
+  `DataStream::TypeCea708DtvccPacket` = `0x61`), `toJson()` /
+  `toString()` for inspection, and full @c DataStream operators.
+  `Cea708Service::operator==` is now a deep byte compare (was a
+  Buffer-handle identity check, which broke round-trip equality
+  for value-typed wire data).  Library follow-on landed alongside:
+  `Buffer::toHex(sep)` / `Buffer::fromHex(String)` static helpers
+  on @ref Buffer (replaces the per-site hex-dump loops, used by
+  `Cea708Service::toJson()` and a candidate replacement for the
+  `InspectorMediaIO::runAncDataCheck` hex fallback).  Tests:
+  `tests/unit/cea708service.cpp` (10 new cases — JSON + toString
+  + Variant + DataStream + tagged-Variant round-trips for both
+  types), `tests/unit/buffer.cpp` (10 new cases on the hex
+  helpers — defaults, separators, empty, parse errors,
+  identity round-trip).
 - [x] `SubtitleSource::Cea708Anc` enum value + handler in
   `SubtitleBurnMediaIO` — landed 2026-05-12.  Mirrors the
   608 wiring: a `UniquePtr<Cea708Decoder>` lifted on
@@ -3504,6 +3755,13 @@ remaining ANC source path.
 
 ### promeki-test functional matrix
 
+- [x] `captions.cea708.subrip_roundtrip` — landed 2026-05-14
+  (`utils/promeki-test/cases/captions.cpp`).  Sibling of the
+  608 SubRip case: TPG configured for
+  @c CaptionCodec::Cea708 → Inspector AncData JSONL →
+  @ref Cea708Decoder → @ref SubRip::emit → cue-by-cue
+  comparison against `etc/substest.srt`.  Roundtrip SRT lands
+  in the per-test scratch folder for post-mortem diffing.
 - [ ] `tests/func/anc-rtp40-roundtrip/` — TPG (with CEA-708
   captions) → RTP-40 → receiver → byte-exact ANC compare.
   All the moving parts are landed; this is a wiring task.
@@ -3524,6 +3782,18 @@ remaining ANC source path.
 
 ### Documentation
 
+- [x] `docs/captions.md` — landed 2026-05-14.  End-to-end
+  CEA-608 + CEA-708 captioning surface: wire layer
+  (@ref Cea708Cdp), codec layer (@ref Cea608Encoder /
+  @ref Cea608Decoder / @ref Cea708Encoder /
+  @ref Cea708Decoder), application layer (SubRip,
+  SubtitleRenderer, SubtitleBurnMediaIO), TPG injection
+  config keys, Inspector AncData JSONL verification path,
+  burn-in QC pipeline, character encoding tables.  Worked
+  examples for the encoder + decoder.  Cross-references the
+  `captions.cea608.subrip_roundtrip` /
+  `captions.cea708.subrip_roundtrip` promeki-test cases as
+  the canonical end-to-end smoke tests.
 - [ ] `docs/proav/anc.dox` — top-level chapter covering the
   generic packet, the descriptor, the two registries, the
   transport helpers, and the SDI / HDMI / MPEG-TS capture
@@ -3531,9 +3801,6 @@ remaining ANC source path.
   RTP-40 and re-emit it on NDI.
 - [ ] Update `docs/proav/mediaio.dox` to reference ANC
   alongside video/audio.
-- [ ] Add a CEA-708 captions walkthrough that points at the
-  Inspector AncData JSONL output as the canonical way to
-  verify caption flow through a pipeline.
 
 ---
 
@@ -3710,10 +3977,16 @@ remaining ANC source path.
 
 ### Tiny library follow-ups surfaced by Phase 2b
 
-- **`String::reserve(size_t)` missing.**  The class only
-  exposes `reverse()` (palindrome-style).  A standard
-  `reserve` is a one-line addition to `string.h` and would
-  let callers pre-size hex-dump buffers etc. cheaply.
+- **~~`String::reserve(size_t)` missing.~~** Confirmed present at
+  `string.h:677` (delegates through `d.modify()->reserve(...)`);
+  the original note conflated it with the palindrome-style
+  `reverse()`.  Settled 2026-05-14.
+- **~~Per-site hex-dump loops.~~** Settled 2026-05-14.
+  `Buffer::toHex(sep)` + `Buffer::fromHex(String)` landed
+  alongside the `Cea708Service` X-macro work.  Inspector
+  AncData hex fallback (`runAncDataCheck`) and any other
+  per-site hex loops should migrate to `Buffer::toHex()` for
+  consistency.
 - **`File::remove(path)` missing.**  The Inspector AncData
   test falls back to `std::remove(path.cstr())`.  A static
   `File::remove(const String &)` would be a clean addition.

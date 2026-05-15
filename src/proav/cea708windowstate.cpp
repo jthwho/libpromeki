@@ -225,6 +225,21 @@ SubtitleSpan::List Cea708Window::visibleSpans() const {
                 }
                 anyRow = true;
         }
+        // Window-level fill from SWA inherits onto every span that
+        // didn't pick up an explicit per-cell SPC bg.  This lets a
+        // broadcaster who set the whole window's background via SWA
+        // (rather than re-asserting it per character via SPC) recover
+        // the same visual on the receiver side.  Spans that already
+        // carry a per-cell bg keep theirs.
+        if (attrs.fillColor.isValid()) {
+                for (size_t i = 0; i < spans.size(); ++i) {
+                        SubtitleSpan &sp = spans[i];
+                        if (sp.text() == "\n") continue;
+                        if (sp.backgroundColor().isValid()) continue;
+                        sp.setBackgroundColor(attrs.fillColor);
+                        sp.setBackgroundOpacity(attrs.fillOpacity);
+                }
+        }
         return spans;
 }
 
@@ -243,7 +258,7 @@ bool Cea708Window::operator==(const Cea708Window &o) const {
                && anchorPoint == o.anchorPoint && anchorV == o.anchorV && anchorH == o.anchorH
                && relativePos == o.relativePos && rowCount == o.rowCount
                && colCount == o.colCount && rowLock == o.rowLock && colLock == o.colLock
-               && penRow == o.penRow && penCol == o.penCol && grid == o.grid;
+               && penRow == o.penRow && penCol == o.penCol && attrs == o.attrs && grid == o.grid;
 }
 
 // ============================================================================
@@ -701,10 +716,57 @@ void Cea708WindowState::processBytes(const void *dataPtr, size_t size) {
                                         i += 3;
                                         break;
                                 }
-                                case 0x97: // SWA — SetWindowAttributes (4 args)
+                                case 0x97: { // SWA — SetWindowAttributes (4 args)
+                                        if (i + 4 >= size) {
+                                                i = size;
+                                                break;
+                                        }
+                                        // Wire layout (CEA-708-D §8.10.5.10):
+                                        //   byte1: fill_opacity<<6 | fill_R<<4 | fill_G<<2 | fill_B
+                                        //   byte2: border_type01<<6 | border_R<<4 | border_G<<2 | border_B
+                                        //   byte3: border_type2<<7 | wordwrap<<6 | print_dir<<4
+                                        //          | scroll_dir<<2 | justify
+                                        //   byte4: effect_speed<<4 | effect_dir<<2 | display_effect
+                                        const uint8_t a1 = static_cast<uint8_t>(p[i + 1]);
+                                        const uint8_t a2 = static_cast<uint8_t>(p[i + 2]);
+                                        const uint8_t a3 = static_cast<uint8_t>(p[i + 3]);
+                                        const uint8_t a4 = static_cast<uint8_t>(p[i + 4]);
+                                        auto expand = [](uint8_t v) -> float {
+                                                static const float kExpand[4] = {0.0f, 85.0f / 255.0f,
+                                                                                  170.0f / 255.0f, 1.0f};
+                                                return kExpand[v & 0x03];
+                                        };
+                                        Cea708WindowAttr &wa = currentWindow().attrs;
+                                        wa.fillOpacity =
+                                                SubtitleOpacity(static_cast<int>((a1 >> 6) & 0x03));
+                                        if (wa.fillOpacity.value()
+                                            == SubtitleOpacity::Transparent.value()) {
+                                                wa.fillColor = Color();
+                                        } else {
+                                                wa.fillColor = Color::srgb(expand((a1 >> 4) & 0x03),
+                                                                           expand((a1 >> 2) & 0x03),
+                                                                           expand(a1 & 0x03));
+                                        }
+                                        const uint8_t btLow = static_cast<uint8_t>((a2 >> 6) & 0x03);
+                                        const uint8_t btHi = static_cast<uint8_t>((a3 >> 7) & 0x01);
+                                        wa.borderType = static_cast<uint8_t>((btHi << 2) | btLow);
+                                        if (wa.borderType == 0) {
+                                                wa.borderColor = Color();
+                                        } else {
+                                                wa.borderColor = Color::srgb(expand((a2 >> 4) & 0x03),
+                                                                             expand((a2 >> 2) & 0x03),
+                                                                             expand(a2 & 0x03));
+                                        }
+                                        wa.wordWrap = (a3 & 0x40) != 0;
+                                        wa.printDirection = static_cast<uint8_t>((a3 >> 4) & 0x03);
+                                        wa.scrollDirection = static_cast<uint8_t>((a3 >> 2) & 0x03);
+                                        wa.justify = static_cast<uint8_t>(a3 & 0x03);
+                                        wa.effectSpeed = static_cast<uint8_t>((a4 >> 4) & 0x0F);
+                                        wa.effectDirection = static_cast<uint8_t>((a4 >> 2) & 0x03);
+                                        wa.displayEffect = static_cast<uint8_t>(a4 & 0x03);
                                         i += 5;
-                                        if (i > size) i = size;
                                         break;
+                                }
                                 default: {
                                         // DF0..DF7 (0x98..0x9F): DefineWindow (6 args).
                                         if (b >= 0x98 && b <= 0x9F) {

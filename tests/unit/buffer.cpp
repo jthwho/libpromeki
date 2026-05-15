@@ -9,6 +9,7 @@
 #include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/buffer.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 
@@ -401,4 +402,105 @@ TEST_CASE("Buffer_isShared_invalid_false") {
         Buffer b;
         CHECK_FALSE(b.isShared());
         CHECK_FALSE(b.isExclusive());
+}
+
+// ============================================================================
+// Hex string round-trip
+// ============================================================================
+
+namespace {
+
+        Buffer fromBytesLiteral(std::initializer_list<uint8_t> bytes) {
+                Buffer b(bytes.size() == 0 ? 1 : bytes.size());
+                b.setSize(bytes.size());
+                if (bytes.size() > 0) {
+                        std::vector<uint8_t> v(bytes);
+                        b.copyFrom(v.data(), v.size(), 0);
+                }
+                return b;
+        }
+
+}
+
+TEST_CASE("Buffer::toHex emits a lowercase space-separated dump by default") {
+        Buffer b = fromBytesLiteral({0x00, 0x10, 0xAB, 0xFF});
+        CHECK(b.toHex() == "00 10 ab ff");
+}
+
+TEST_CASE("Buffer::toHex with empty separator emits a contiguous run of nibbles") {
+        Buffer b = fromBytesLiteral({0xDE, 0xAD, 0xBE, 0xEF});
+        CHECK(b.toHex(String("")) == "deadbeef");
+}
+
+TEST_CASE("Buffer::toHex with custom separator inserts it between every byte pair") {
+        Buffer b = fromBytesLiteral({0x12, 0x34, 0x56});
+        CHECK(b.toHex(String("-")) == "12-34-56");
+}
+
+TEST_CASE("Buffer::toHex on an empty buffer returns the empty string") {
+        Buffer b;
+        CHECK(b.toHex() == "");
+        Buffer b2(8);
+        b2.setSize(0);
+        CHECK(b2.toHex() == "");
+}
+
+TEST_CASE("Buffer::fromHex parses lowercase + uppercase + space-separated hex") {
+        auto [out, err] = Buffer::fromHex(String("DE ad BE ef"));
+        REQUIRE(err.isOk());
+        REQUIRE(out.size() == 4);
+        const auto *p = static_cast<const uint8_t *>(out.data());
+        CHECK(p[0] == 0xDE);
+        CHECK(p[1] == 0xAD);
+        CHECK(p[2] == 0xBE);
+        CHECK(p[3] == 0xEF);
+}
+
+TEST_CASE("Buffer::fromHex tolerates dash and tab separators between bytes") {
+        auto [out, err] = Buffer::fromHex(String("01-02\t03 04"));
+        REQUIRE(err.isOk());
+        REQUIRE(out.size() == 4);
+        const auto *p = static_cast<const uint8_t *>(out.data());
+        CHECK(p[0] == 0x01);
+        CHECK(p[1] == 0x02);
+        CHECK(p[2] == 0x03);
+        CHECK(p[3] == 0x04);
+}
+
+TEST_CASE("Buffer::fromHex parses contiguous nibbles with no separator") {
+        auto [out, err] = Buffer::fromHex(String("deadbeef"));
+        REQUIRE(err.isOk());
+        REQUIRE(out.size() == 4);
+}
+
+TEST_CASE("Buffer::fromHex returns an empty buffer for an empty / whitespace-only string") {
+        auto [out, err] = Buffer::fromHex(String(""));
+        REQUIRE(err.isOk());
+        CHECK(out.size() == 0);
+        auto [out2, err2] = Buffer::fromHex(String(" \t\n - "));
+        REQUIRE(err2.isOk());
+        CHECK(out2.size() == 0);
+}
+
+TEST_CASE("Buffer::fromHex fails on odd nibble count") {
+        auto [out, err] = Buffer::fromHex(String("abc"));
+        CHECK(err.isError());
+        CHECK(err == Error::ParseFailed);
+}
+
+TEST_CASE("Buffer::fromHex fails on non-hex / non-skip characters") {
+        auto [out, err] = Buffer::fromHex(String("ab xx 12"));
+        CHECK(err.isError());
+        CHECK(err == Error::ParseFailed);
+}
+
+TEST_CASE("Buffer::toHex / Buffer::fromHex round-trip is identity") {
+        Buffer original = fromBytesLiteral({0x00, 0x7F, 0x80, 0xFF, 0x55, 0xAA, 0x10, 0x20, 0x30});
+        String hex = original.toHex();
+        auto [restored, err] = Buffer::fromHex(hex);
+        REQUIRE(err.isOk());
+        REQUIRE(restored.size() == original.size());
+        const auto *o = static_cast<const uint8_t *>(original.data());
+        const auto *r = static_cast<const uint8_t *>(restored.data());
+        for (size_t i = 0; i < original.size(); ++i) CHECK(r[i] == o[i]);
 }

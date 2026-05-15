@@ -68,7 +68,7 @@ TEST_CASE("Numa::free(nullptr, 0) is a clean no-op") {
 
 TEST_CASE("Numa::allocOnNode(node = 0) succeeds when NUMA is available") {
         if (!Numa::isAvailable()) {
-                MESSAGE("UMA box; specific-node allocation falls through to default path");
+                INFO("UMA box; specific-node allocation falls through to default path");
         }
         // Whether or not isAvailable() is true, node 0 always exists
         // (it's the kernel's universal default node) and the

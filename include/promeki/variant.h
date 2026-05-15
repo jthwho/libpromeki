@@ -222,8 +222,11 @@ class Variant {
                 static constexpr Type TypeVariantMap       = DataStream::TypeVariantMap;
                 static constexpr Type TypeXmlDocument      = DataStream::TypeXmlDocument;
                 static constexpr Type TypeCea708Cdp        = DataStream::TypeCea708Cdp;
+                static constexpr Type TypeCea708Service    = DataStream::TypeCea708Service;
+                static constexpr Type TypeCea708DtvccPacket = DataStream::TypeCea708DtvccPacket;
                 static constexpr Type TypeCea608           = DataStream::TypeCea608;
                 static constexpr Type TypeSubtitle         = DataStream::TypeSubtitle;
+                static constexpr Type TypeHdrStaticMetadata = DataStream::TypeHdrStaticMetadata;
 #if PROMEKI_ENABLE_NETWORK
                 static constexpr Type TypeSocketAddress    = DataStream::TypeSocketAddress;
                 static constexpr Type TypeSdpSession       = DataStream::TypeSdpSession;

@@ -608,3 +608,208 @@ TEST_CASE("Cea708Encoder + Decoder: mixed-encoding cue round-trips") {
         const String text("Caf\xC3\xA9 \xE2\x80\x9Ch\xC3\xA9llo\xE2\x80\x9D tm\xE2\x84\xA2 ko\xED\x95\x9C");
         CHECK(roundTripCue(text) == text);
 }
+
+// ============================================================================
+// SetWindowAttributes (SWA) — uniform-bg detection, encode + round-trip
+// ============================================================================
+
+TEST_CASE("Cea708Encoder + Decoder: cue with uniform-bg span emits SWA + recovers fill") {
+        // Build a cue where every span shares the same background
+        // colour — encoder should emit SWA at DefineWindow time,
+        // decoder should fill that into every recovered span's
+        // backgroundColor.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+
+        const Color magenta = Color::srgb(1.0f, 0.0f, 1.0f);
+        SubtitleSpan::List spans;
+        SubtitleSpan       a("AB");
+        a.setBackgroundColor(magenta);
+        a.setBackgroundOpacity(SubtitleOpacity::Solid);
+        spans.pushToBack(a);
+        SubtitleSpan b("CD");
+        b.setBackgroundColor(magenta);
+        b.setBackgroundOpacity(SubtitleOpacity::Solid);
+        spans.pushToBack(b);
+
+        Subtitle cue(tsAt30fps(30), tsAt30fps(60), "");
+        cue.setSpans(spans);
+        cue.setMode(CaptionMode::PopOn);
+
+        SubtitleList in;
+        in.append(cue);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        const SubtitleSpan::List &outSpans = out[0].spans();
+        // Every recovered span (excluding "\n" separators) should
+        // carry the magenta background — either via the per-cell SPC
+        // bg the encoder still emits, or via the SWA fill window-
+        // level inheritance.
+        bool sawMagenta = false;
+        for (size_t i = 0; i < outSpans.size(); ++i) {
+                const SubtitleSpan &s = outSpans[i];
+                if (s.text() == "\n") continue;
+                REQUIRE(s.backgroundColor().isValid());
+                CHECK(s.backgroundColor().r8() == 255);
+                CHECK(s.backgroundColor().g8() == 0);
+                CHECK(s.backgroundColor().b8() == 255);
+                sawMagenta = true;
+        }
+        CHECK(sawMagenta);
+}
+
+TEST_CASE("Cea708Encoder: differing per-span bg suppresses SWA emit (no uniform fill detected)") {
+        // When spans disagree on bg, the encoder should NOT emit SWA;
+        // per-span SPC carries each cell's bg as today.  Verify the
+        // recovered cue still gets per-span colours back.
+        Cea708Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(encCfg);
+
+        SubtitleSpan::List spans;
+        SubtitleSpan       a("RR");
+        a.setBackgroundColor(Color::srgb(1.0f, 0.0f, 0.0f));
+        a.setBackgroundOpacity(SubtitleOpacity::Solid);
+        spans.pushToBack(a);
+        SubtitleSpan b("GG");
+        b.setBackgroundColor(Color::srgb(0.0f, 1.0f, 0.0f));
+        b.setBackgroundOpacity(SubtitleOpacity::Solid);
+        spans.pushToBack(b);
+
+        Subtitle cue(tsAt30fps(30), tsAt30fps(60), "");
+        cue.setSpans(spans);
+        cue.setMode(CaptionMode::PopOn);
+
+        SubtitleList in;
+        in.append(cue);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 80; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        // We should see at least two distinct backgrounds in the
+        // recovered cue (the per-cell SPC bg path is still active).
+        Color firstBg;
+        Color secondBg;
+        for (size_t i = 0; i < out[0].spans().size(); ++i) {
+                const SubtitleSpan &s = out[0].spans()[i];
+                if (s.text() == "\n") continue;
+                if (!s.backgroundColor().isValid()) continue;
+                if (!firstBg.isValid()) {
+                        firstBg = s.backgroundColor();
+                } else if (s.backgroundColor() != firstBg) {
+                        secondBg = s.backgroundColor();
+                        break;
+                }
+        }
+        CHECK(firstBg.isValid());
+        CHECK(secondBg.isValid());
+        CHECK(firstBg != secondBg);
+}
+
+// ============================================================================
+// Cue overflow / cue-to-cue collision safety
+// ============================================================================
+
+TEST_CASE("Cea708Encoder: cue too long to fit in its frame window is dropped with a warning") {
+        // 1500-char cue with 1-frame duration: show transaction needs
+        // dozens of frames, but the cue is only 1 frame long.  Setter
+        // must not return success while silently producing malformed
+        // schedule.  Today the safety net is "drop the cue + warn",
+        // so subsequent cues still encode cleanly.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.windowCols = 32;
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        String        longText;
+        for (int i = 0; i < 1500; ++i) longText += "A";
+        // start frame 30, end frame 31 → only 1 frame to land the show.
+        subs.append(Subtitle(tsAt30fps(30), tsAt30fps(31), longText));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+        // Cue should have been dropped — no triples scheduled anywhere.
+        for (int64_t f = 0; f < 100; ++f) {
+                CHECK(enc.nextFrame(FrameNumber(f)).size() == 0);
+        }
+}
+
+TEST_CASE("Cea708Encoder: back-to-back PopOn cues elide redundant HideWindow") {
+        // cue1 ends exactly when cue2 begins.  Today the encoder would
+        // schedule cue1's HideWindow at frame 60 and cue2's
+        // DefineWindow at frame 60.  Map::insert overwrites silently
+        // → cue1's HideWindow is lost.  The fix is to elide the
+        // HideWindow when a subsequent cue starts at or before the
+        // current cue's endFrame: cue2's DF0 atomically replaces
+        // window 0 with cue2's content + DSW.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsAt30fps(30), tsAt30fps(60), "AB"));
+        subs.append(Subtitle(tsAt30fps(60), tsAt30fps(90), "CD"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 120; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        // Two distinct cues must come back: "AB" and "CD".  Without
+        // the elision, the dropped HideWindow + collided show packet
+        // would either produce one merged cue or lose the second.
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "AB");
+        CHECK(out[1].text() == "CD");
+}
+
+TEST_CASE("Cea708Encoder: PopOn cue followed by RollUp at same frame keeps both") {
+        // cue1 PopOn ends at frame 60; cue2 RollUp starts at frame 60.
+        // RollUp has no HideWindow boundary anyway; cue1's HideWindow
+        // is elided to make room for cue2's DefineWindow.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsAt30fps(30), tsAt30fps(60), "POP"));
+        Subtitle      cue2(tsAt30fps(60), tsAt30fps(90), "RU");
+        cue2.setMode(CaptionMode::RollUp);
+        subs.append(cue2);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        Cea708Decoder dec;
+        for (int64_t f = 0; f < 120; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 2);
+        CHECK(out[0].text() == "POP");
+        CHECK(out[1].text() == "RU");
+        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+}
+
+TEST_CASE("Cea708Encoder: trailing PopOn cue still emits its HideWindow") {
+        // No next cue → HideWindow must still ride at endFrame so the
+        // cue clears.  Verifies the elision rule only fires when a
+        // collision would actually happen.
+        Cea708Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea708Encoder enc(cfg);
+        SubtitleList  subs;
+        subs.append(Subtitle(tsAt30fps(30), tsAt30fps(60), "X"));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // HideWindow at endFrame=60 produces a non-empty CcDataList.
+        CHECK(enc.nextFrame(FrameNumber(60)).size() > 0);
+        // Frames after endFrame: nothing.
+        CHECK(enc.nextFrame(FrameNumber(61)).size() == 0);
+}

@@ -15,6 +15,7 @@
 #include <chrono>
 
 #include <srt/srt.h>
+#include <srt/logging_api.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -29,10 +30,46 @@ PROMEKI_DEBUG(SrtSocket);
 // shutdown means an extra epoll-thread teardown — cheaper to call
 // it exactly once for the lifetime of the process and let
 // libpromeki shut down naturally on exit.
+//
+// We also install an SRT log handler that routes libsrt's internal
+// chatter through promeki::Logger.  Without this, libsrt writes
+// directly to stderr (bypassing every libpromeki facility for
+// silencing output), producing thousands of "srt_accept: no
+// pending connection available" lines per second from non-blocking
+// accept loops.  Routing through Logger makes the standard
+// setConsoleLoggingEnabled(false) gate in doctest_main.cpp work.
 // ============================================================
 namespace {
 
         static std::atomic<bool> sSrtInitDone{false};
+
+        // Map syslog-style SRT severity (LOG_EMERG=0 ... LOG_DEBUG=7) onto
+        // promeki LogLevel.  LOG_NOTICE is informational by syslog convention
+        // but libsrt uses it for things like "connection rejected"; treat it
+        // as Info so it can still be silenced when the console is quiet.
+        static Logger::LogLevel srtLevelToPromeki(int level) {
+                if (level <= LOG_ERR) return Logger::LogLevel::Err;
+                if (level == LOG_WARNING) return Logger::LogLevel::Warn;
+                if (level <= LOG_INFO) return Logger::LogLevel::Info;
+                return Logger::LogLevel::Debug;
+        }
+
+        extern "C" void srtPromekiLogHandler(void *opaque, int level, const char *file, int line,
+                                             const char *area, const char *message) {
+                (void)opaque;
+                if (!message) return;
+                String msg(message);
+                while (!msg.isEmpty()) {
+                        char c = msg[msg.size() - 1];
+                        if (c != '\n' && c != '\r' && c != ' ' && c != '\t') break;
+                        msg.resize(msg.size() - 1);
+                }
+                if (msg.isEmpty()) return;
+                String prefixed = String::sprintf("[SRT%s%s] %s", (area && *area) ? "." : "",
+                                                  (area && *area) ? area : "", msg.cstr());
+                Logger::defaultLogger().log(srtLevelToPromeki(level), file ? file : "srt",
+                                            line, prefixed);
+        }
 
         static Error ensureSrtRuntime() {
                 if (sSrtInitDone.load(std::memory_order_acquire)) return Error::Ok;
@@ -50,6 +87,11 @@ namespace {
                         sStarting.store(false, std::memory_order_release);
                         return Error::LibraryFailure;
                 }
+                // Strip libsrt's own time/thread/severity decoration — Logger
+                // adds its own consistent prefix.  Then forward every record.
+                srt_setlogflags(SRT_LOGF_DISABLE_TIME | SRT_LOGF_DISABLE_THREADNAME
+                                | SRT_LOGF_DISABLE_SEVERITY | SRT_LOGF_DISABLE_EOL);
+                srt_setloghandler(nullptr, &srtPromekiLogHandler);
                 std::atexit([]() { srt_cleanup(); });
                 sSrtInitDone.store(true, std::memory_order_release);
                 return Error::Ok;

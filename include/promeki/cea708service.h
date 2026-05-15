@@ -11,6 +11,7 @@
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/error.h>
+#include <promeki/json.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/result.h>
@@ -48,14 +49,19 @@ class DataStream;
  *
  * This is the wire-level structural type.  Full DTVCC decode
  * (window manager, pen state, text reconstruction) layers on top
- * via @c Cea708WindowState (forthcoming).  For now this class is
- * the substrate the encoder / decoder dispatch off.
+ * via @ref Cea708WindowState.  This class is the substrate the
+ * encoder / decoder dispatch off.
  *
  * @par Storage and copy semantics
  *
  * Plain value type — no pimpl, no shared backing.  @c data is a
  * @ref Buffer (value-type handle), so copy is essentially free
  * (refcount bump).
+ *
+ * @par Variant / DataStream integration
+ *
+ * Registered as @c Variant::TypeCea708Service with tag
+ * @c DataStream::TypeCea708Service (@c 0x60).
  *
  * @par Thread Safety
  *
@@ -130,15 +136,42 @@ class Cea708Service {
                 ///        ASCII subset.
                 String text() const;
 
-                bool operator==(const Cea708Service &o) const {
-                        return _serviceNumber == o._serviceNumber && _data == o._data;
-                }
+                /**
+                 * @brief Produces a JSON representation for inspection.
+                 *
+                 * Shape: @c {serviceNumber, dataSize, dataHex}.  Used
+                 * by tooling that wants a stable typed view of a
+                 * service block independently of the @ref Cea708Cdp
+                 * wrapping.
+                 */
+                JsonObject toJson() const;
+
+                /**
+                 * @brief Short human-readable summary.
+                 *
+                 * Reports the service number + data byte count;
+                 * designed for log lines, not machine consumption.
+                 */
+                String toString() const;
+
+                /// @brief Value equality — compares the service number
+                ///        and the @ref data bytes (deep compare, not
+                ///        @ref Buffer handle identity).  Two service
+                ///        blocks with the same wire bytes are
+                ///        interchangeable.
+                bool operator==(const Cea708Service &o) const;
                 bool operator!=(const Cea708Service &o) const { return !(*this == o); }
 
         private:
                 uint8_t _serviceNumber = 0;
                 Buffer  _data;
 };
+
+/** @brief Writes a @ref Cea708Service to a @ref DataStream. */
+DataStream &operator<<(DataStream &stream, const Cea708Service &svc);
+
+/** @brief Reads a @ref Cea708Service from a @ref DataStream. */
+DataStream &operator>>(DataStream &stream, Cea708Service &svc);
 
 /**
  * @brief One CEA-708 DTVCC packet.
@@ -178,6 +211,11 @@ class Cea708Service {
  *
  * Plain value type — no pimpl.  Service block list is a value-type
  * @ref List of value-type @ref Cea708Service entries.
+ *
+ * @par Variant / DataStream integration
+ *
+ * Registered as @c Variant::TypeCea708DtvccPacket with tag
+ * @c DataStream::TypeCea708DtvccPacket (@c 0x61).
  *
  * @see Cea708Service, Cea708Cdp::CcData
  */
@@ -245,6 +283,22 @@ class Cea708DtvccPacket {
                 ///        triple sequence is malformed.
                 static Result<Cea708DtvccPacket> fromCcData(const Cea708Cdp::CcDataList &triples);
 
+                /**
+                 * @brief Produces a JSON representation for inspection.
+                 *
+                 * Shape: @c {sequenceNumber, payloadByteCount,
+                 * serviceBlocks: [{serviceNumber, dataSize, dataHex}, ...]}.
+                 */
+                JsonObject toJson() const;
+
+                /**
+                 * @brief Short human-readable summary.
+                 *
+                 * Reports the sequence number + service-block count;
+                 * designed for log lines, not machine consumption.
+                 */
+                String toString() const;
+
                 bool operator==(const Cea708DtvccPacket &o) const {
                         return _sequenceNumber == o._sequenceNumber && _serviceBlocks == o._serviceBlocks;
                 }
@@ -254,5 +308,11 @@ class Cea708DtvccPacket {
                 uint8_t             _sequenceNumber = 0;
                 List<Cea708Service> _serviceBlocks;
 };
+
+/** @brief Writes a @ref Cea708DtvccPacket to a @ref DataStream. */
+DataStream &operator<<(DataStream &stream, const Cea708DtvccPacket &pkt);
+
+/** @brief Reads a @ref Cea708DtvccPacket from a @ref DataStream. */
+DataStream &operator>>(DataStream &stream, Cea708DtvccPacket &pkt);
 
 PROMEKI_NAMESPACE_END

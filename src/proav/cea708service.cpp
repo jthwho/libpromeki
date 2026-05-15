@@ -10,7 +10,9 @@
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708service.h>
+#include <promeki/datastream.h>
 #include <promeki/error.h>
+#include <promeki/json.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/result.h>
@@ -104,6 +106,33 @@ String Cea708Service::text() const {
                 // carry cursor / window state, not text.
         }
         return out;
+}
+
+bool Cea708Service::operator==(const Cea708Service &o) const {
+        if (_serviceNumber != o._serviceNumber) return false;
+        const size_t n = _data.size();
+        if (n != o._data.size()) return false;
+        if (n == 0) return true;
+        const auto *a = static_cast<const uint8_t *>(_data.data());
+        const auto *b = static_cast<const uint8_t *>(o._data.data());
+        return std::memcmp(a, b, n) == 0;
+}
+
+JsonObject Cea708Service::toJson() const {
+        JsonObject obj;
+        obj.set("serviceNumber", static_cast<int64_t>(_serviceNumber));
+        obj.set("dataSize", static_cast<int64_t>(_data.size()));
+        obj.set("dataHex", _data.toHex());
+        return obj;
+}
+
+String Cea708Service::toString() const {
+        String s = "Cea708Service(svc=";
+        s += String::number(static_cast<int64_t>(_serviceNumber));
+        s += ", bytes=";
+        s += String::number(static_cast<int64_t>(_data.size()));
+        s += ")";
+        return s;
 }
 
 // ============================================================================
@@ -301,6 +330,104 @@ Result<Cea708DtvccPacket> Cea708DtvccPacket::fromCcData(const Cea708Cdp::CcDataL
         }
         Cea708DtvccPacket pkt(seq, blocksR.first());
         return makeResult<Cea708DtvccPacket>(std::move(pkt));
+}
+
+JsonObject Cea708DtvccPacket::toJson() const {
+        JsonObject obj;
+        obj.set("sequenceNumber", static_cast<int64_t>(_sequenceNumber));
+        obj.set("payloadByteCount", static_cast<int64_t>(payloadByteCount()));
+        JsonArray arr;
+        for (size_t i = 0; i < _serviceBlocks.size(); ++i) {
+                arr.add(_serviceBlocks[i].toJson());
+        }
+        obj.set("serviceBlocks", arr);
+        return obj;
+}
+
+String Cea708DtvccPacket::toString() const {
+        String s = "Cea708DtvccPacket(seq=";
+        s += String::number(static_cast<int64_t>(_sequenceNumber));
+        s += ", blocks=";
+        s += String::number(static_cast<int64_t>(_serviceBlocks.size()));
+        s += ", payload=";
+        s += String::number(static_cast<int64_t>(payloadByteCount()));
+        s += "B)";
+        return s;
+}
+
+// ============================================================================
+// DataStream operators
+// ============================================================================
+//
+// Cea708Service wire layout:
+//   uint8_t   service_number   (TypeU8)
+//   Buffer    data             (TypeBuffer — length-prefixed bytes)
+//
+// Cea708DtvccPacket wire layout:
+//   uint8_t   sequence_number  (TypeU8)
+//   uint32_t  count            (TypeU32 — number of service blocks)
+//   for each service block:
+//     Cea708Service (tagged TypeCea708Service)
+
+void writeCea708ServiceData(DataStream &stream, const Cea708Service &svc) {
+        stream << svc.serviceNumber();
+        stream << svc.data();
+}
+
+Cea708Service readCea708ServiceData(DataStream &stream) {
+        uint8_t svcNum = 0;
+        Buffer  data;
+        stream >> svcNum;
+        stream >> data;
+        return Cea708Service(svcNum, std::move(data));
+}
+
+DataStream &operator<<(DataStream &stream, const Cea708Service &svc) {
+        stream.beginFrame(DataStream::TypeCea708Service, 1);
+        writeCea708ServiceData(stream, svc);
+        stream.endFrame();
+        return stream;
+}
+
+DataStream &operator>>(DataStream &stream, Cea708Service &svc) {
+        if (!stream.readFrame(DataStream::TypeCea708Service)) {
+                svc = Cea708Service();
+                return stream;
+        }
+        svc = readCea708ServiceData(stream);
+        return stream;
+}
+
+DataStream &operator<<(DataStream &stream, const Cea708DtvccPacket &pkt) {
+        stream.beginFrame(DataStream::TypeCea708DtvccPacket, 1);
+        stream << pkt.sequenceNumber();
+        const auto &blocks = pkt.serviceBlocks();
+        stream << static_cast<uint32_t>(blocks.size());
+        for (size_t i = 0; i < blocks.size(); ++i) {
+                stream << blocks[i];
+        }
+        stream.endFrame();
+        return stream;
+}
+
+DataStream &operator>>(DataStream &stream, Cea708DtvccPacket &pkt) {
+        if (!stream.readFrame(DataStream::TypeCea708DtvccPacket)) {
+                pkt = Cea708DtvccPacket();
+                return stream;
+        }
+        uint8_t  seq = 0;
+        uint32_t count = 0;
+        stream >> seq;
+        stream >> count;
+        List<Cea708Service> blocks;
+        blocks.reserve(count);
+        for (uint32_t i = 0; i < count; ++i) {
+                Cea708Service svc;
+                stream >> svc;
+                blocks.pushToBack(std::move(svc));
+        }
+        pkt = Cea708DtvccPacket(seq, std::move(blocks));
+        return stream;
 }
 
 PROMEKI_NAMESPACE_END

@@ -116,6 +116,88 @@ namespace {
                 return !(fgDefault && bgDefault && edgeDefault);
         }
 
+        /// @brief Detects whether @p cue's spans share a single
+        ///        @ref SubtitleSpan::backgroundColor — i.e. the cue
+        ///        wants a uniform window-level fill instead of per-cell
+        ///        SPC bg.  Returns the shared bg + opacity through the
+        ///        out-params and @c true; returns @c false (with
+        ///        out-params untouched) when spans disagree, no span
+        ///        sets a bg, or any span sets bg to @c Transparent.
+        ///
+        ///        Used by @ref buildShowCueBytes to decide whether to
+        ///        emit a @c SetWindowAttributes (SWA) command setting
+        ///        the window @c fill_color.  Per-span SPC bg still
+        ///        rides as today — receivers paint SWA fill first,
+        ///        then per-cell SPC bg on top.
+        bool detectUniformBackground(const Subtitle &cue, Color &outBg, SubtitleOpacity &outOpacity) {
+                const SubtitleSpan::List &spans = cue.spans();
+                bool                      anyValid = false;
+                Color                     bg;
+                SubtitleOpacity           op = SubtitleOpacity::Solid;
+                for (size_t i = 0; i < spans.size(); ++i) {
+                        const SubtitleSpan &s = spans[i];
+                        if (s.text() == "\n") continue;
+                        const Color           &spanBg = s.backgroundColor();
+                        const SubtitleOpacity &spanOp = s.backgroundOpacity();
+                        if (!spanBg.isValid()) return false;
+                        if (spanOp.value() == SubtitleOpacity::Transparent.value()) return false;
+                        if (!anyValid) {
+                                bg = spanBg;
+                                op = spanOp;
+                                anyValid = true;
+                                continue;
+                        }
+                        if (spanBg != bg) return false;
+                        if (spanOp.value() != op.value()) return false;
+                }
+                if (!anyValid) return false;
+                outBg = bg;
+                outOpacity = op;
+                return true;
+        }
+
+        /// @brief Packs a @ref Cea708WindowAttr into the 4-byte SWA
+        ///        argument tuple per CEA-708-D §8.10.5.10.  Returns
+        ///        @c true when the attrs differ from defaults (and
+        ///        the encoder should actually emit SWA); otherwise the
+        ///        caller can skip the command entirely.
+        ///
+        ///        Wire layout:
+        ///          byte1 = fill_opacity<<6 | fill_R<<4 | fill_G<<2 | fill_B
+        ///          byte2 = border_type01<<6 | border_R<<4 | border_G<<2 | border_B
+        ///          byte3 = border_type2<<7 | wordwrap<<6 | print_dir<<4
+        ///                  | scroll_dir<<2 | justify
+        ///          byte4 = effect_speed<<4 | effect_dir<<2 | display_effect
+        bool packSwaArgs(const Cea708WindowAttr &a, uint8_t &b1, uint8_t &b2, uint8_t &b3, uint8_t &b4) {
+                if (!a.hasAnyAttribute()) return false;
+                Color         fill = a.fillColor;
+                if (!fill.isValid()) fill = Color::Black;
+                const uint8_t fillOp = static_cast<uint8_t>(a.fillColor.isValid()
+                                                                    ? (a.fillOpacity.value() & 0x03)
+                                                                    : SubtitleOpacity::Transparent.value());
+                b1 = static_cast<uint8_t>((fillOp << 6)
+                                          | (channelTo2Bit(fill.r8()) << 4)
+                                          | (channelTo2Bit(fill.g8()) << 2)
+                                          | channelTo2Bit(fill.b8()));
+                Color border = a.borderColor;
+                if (!border.isValid()) border = Color::Black;
+                const uint8_t btLow = static_cast<uint8_t>(a.borderType & 0x03);
+                const uint8_t btHi = static_cast<uint8_t>((a.borderType >> 2) & 0x01);
+                b2 = static_cast<uint8_t>((btLow << 6)
+                                          | (channelTo2Bit(border.r8()) << 4)
+                                          | (channelTo2Bit(border.g8()) << 2)
+                                          | channelTo2Bit(border.b8()));
+                b3 = static_cast<uint8_t>((btHi << 7)
+                                          | ((a.wordWrap ? 1u : 0u) << 6)
+                                          | ((a.printDirection & 0x03) << 4)
+                                          | ((a.scrollDirection & 0x03) << 2)
+                                          | (a.justify & 0x03));
+                b4 = static_cast<uint8_t>(((a.effectSpeed & 0x0F) << 4)
+                                          | ((a.effectDirection & 0x03) << 2)
+                                          | (a.displayEffect & 0x03));
+                return true;
+        }
+
         /// @brief Maps a @ref SubtitleAnchor enum value (1..9 numpad
         ///        convention used by ASS @c {\anN}, or 0 for Default)
         ///        onto a CEA-708 DefineWindow @c anchor_point (1..9
@@ -301,6 +383,32 @@ namespace {
                 bytes.pushToBack(df0Rows);
                 bytes.pushToBack(colWire);
                 bytes.pushToBack(df0Style);
+
+                // -- SWA (SetWindowAttributes) ----------------------
+                //
+                // Emit immediately after DF0 — the receiver applies
+                // SWA to the *current* window (the one DF0 just made
+                // current).  Today we only auto-derive @c fill_color +
+                // @c fill_opacity from the cue's spans when every span
+                // shares a backgroundColor; the rest of the SWA
+                // payload (border / justify / scroll dir / effect)
+                // stays at codec-neutral defaults until a cue-level
+                // data model carries that information.
+                Cea708WindowAttr swaAttrs;
+                Color            uniformBg;
+                SubtitleOpacity  uniformBgOp = SubtitleOpacity::Solid;
+                if (detectUniformBackground(cue, uniformBg, uniformBgOp)) {
+                        swaAttrs.fillColor = uniformBg;
+                        swaAttrs.fillOpacity = uniformBgOp;
+                }
+                uint8_t swaB1 = 0, swaB2 = 0, swaB3 = 0, swaB4 = 0;
+                if (packSwaArgs(swaAttrs, swaB1, swaB2, swaB3, swaB4)) {
+                        bytes.pushToBack(0x97); // SWA
+                        bytes.pushToBack(swaB1);
+                        bytes.pushToBack(swaB2);
+                        bytes.pushToBack(swaB3);
+                        bytes.pushToBack(swaB4);
+                }
 
                 // -- Walk rows + cells, emitting style cmds + chars ---
                 //
@@ -603,7 +711,37 @@ Error Cea708Encoder::setSubtitles(const SubtitleList &subs) {
         // wire shape.  Per-cue mode mixing is fully supported here
         // because each cue's transaction is self-contained.
         constexpr int kRollUpRows = 3;
-        uint8_t       seq = 0;
+        // CDP's cc_count field is 5 bits (CEA-708-D / SMPTE 334-2)
+        // → at most 31 cc_data triples can ride a single video frame.
+        // The encoder's per-packet wire shape (1 service block of <=31
+        // bytes per DTVCC packet) produces up to ~17 triples per
+        // packet, so two packets in the same frame can overflow this
+        // cap; addToSchedule rejects such collisions.
+        constexpr size_t kCcCountMax = 31;
+        // Helper: append @p packet's triples to whatever's already
+        // scheduled at @p frame, or insert the packet as the new entry.
+        // Refuses to push past the 31-triple per-frame cc_count cap
+        // and returns @c Error::OutOfRange on overflow.
+        auto addToSchedule = [&](int64_t frame, Cea708Cdp::CcDataList packet) -> Error {
+                auto it = d->schedule.find(frame);
+                if (it == d->schedule.end()) {
+                        d->schedule.insert(frame, std::move(packet));
+                        return Error::Ok;
+                }
+                Cea708Cdp::CcDataList &existing = it->second;
+                if (existing.size() + packet.size() > kCcCountMax) {
+                        promekiWarn("Cea708Encoder::setSubtitles: frame %lld would exceed "
+                                    "cc_count=31 cap (%zu + %zu triples)",
+                                    static_cast<long long>(frame), existing.size(),
+                                    packet.size());
+                        return Error::OutOfRange;
+                }
+                for (size_t i = 0; i < packet.size(); ++i) {
+                        existing.pushToBack(packet[i]);
+                }
+                return Error::Ok;
+        };
+        uint8_t seq = 0;
         for (size_t i = 0; i < subs.size(); ++i) {
                 const Subtitle &cue = subs[i];
                 const int64_t   startFrame = timeStampToFrame(cue.start(), d->cfg.frameRate);
@@ -614,32 +752,59 @@ Error Cea708Encoder::setSubtitles(const SubtitleList &subs) {
                 const bool isPaintOn = cueMode == CaptionMode::PaintOn.value();
                 const int  rowCount = isRollUp ? kRollUpRows : 1;
                 Buffer showBytes = buildShowCueBytes(cue, d->cfg.windowCols, rowCount);
-                // Build per-packet triple lists (one packet per
-                // service-block chunk).  The CDP's 5-bit cc_count
-                // budget caps each video frame at one packet, so the
-                // packets are scheduled at consecutive frames
-                // starting at startFrame.  All chunks of a multi-
-                // packet show transaction must land before endFrame
-                // for the cue to display correctly; short cues with
-                // very long text could in principle run out of frames
-                // — a future concern.
                 List<Cea708Cdp::CcDataList> showPackets =
                         wrapInDtvccPackets(d->cfg.serviceNumber, showBytes, seq);
+                // A cue's show packets occupy one frame each starting at
+                // startFrame.  The cue is on screen from
+                // [startFrame, endFrame); if the show transaction needs
+                // more frames than the cue's duration, it would either
+                // bleed into the next cue's schedule slots or (for the
+                // last cue in the list) the receiver would still be
+                // applying the DefineWindow when the cue's nominal end
+                // has passed.  Drop oversized cues with a warning so
+                // setSubtitles never silently produces malformed output.
+                const int64_t cueFrames = endFrame - startFrame;
+                if (static_cast<int64_t>(showPackets.size()) > cueFrames) {
+                        promekiWarn("Cea708Encoder::setSubtitles: cue at frame %lld needs "
+                                    "%zu show packets but only %lld frames available — "
+                                    "cue dropped",
+                                    static_cast<long long>(startFrame), showPackets.size(),
+                                    static_cast<long long>(cueFrames));
+                        continue;
+                }
                 for (size_t pi = 0; pi < showPackets.size(); ++pi) {
-                        d->schedule.insert(startFrame + static_cast<int64_t>(pi),
-                                           std::move(showPackets[pi]));
+                        Error err = addToSchedule(startFrame + static_cast<int64_t>(pi),
+                                                  std::move(showPackets[pi]));
+                        if (err.isError()) return err;
                 }
                 // Pop-on (default) cues commit a HideWindow at end so
                 // the cue clears.  Paint-on / roll-up cues skip the
                 // hide — the window stays visible until the next cue's
                 // DefineWindow overwrites it.
+                //
+                // When the *next* cue's startFrame coincides with this
+                // cue's endFrame, the HideWindow would collide with the
+                // next cue's DefineWindow at the same frame.  Both can't
+                // fit in a single video frame's cc_count budget, and a
+                // DefineWindow already replaces window 0 atomically with
+                // its DSW boundary — so elide the redundant HideWindow.
                 if (!isRollUp && !isPaintOn) {
-                        Buffer                       hideBytes = buildHideWindowBytes();
-                        List<Cea708Cdp::CcDataList>  hidePackets =
-                                wrapInDtvccPackets(d->cfg.serviceNumber, hideBytes, seq);
-                        for (size_t pi = 0; pi < hidePackets.size(); ++pi) {
-                                d->schedule.insert(endFrame + static_cast<int64_t>(pi),
-                                                   std::move(hidePackets[pi]));
+                        bool elideHide = false;
+                        if (i + 1 < subs.size()) {
+                                const int64_t nextStart =
+                                        timeStampToFrame(subs[i + 1].start(), d->cfg.frameRate);
+                                if (nextStart <= endFrame) elideHide = true;
+                        }
+                        if (!elideHide) {
+                                Buffer                       hideBytes = buildHideWindowBytes();
+                                List<Cea708Cdp::CcDataList>  hidePackets =
+                                        wrapInDtvccPackets(d->cfg.serviceNumber, hideBytes, seq);
+                                for (size_t pi = 0; pi < hidePackets.size(); ++pi) {
+                                        Error err = addToSchedule(
+                                                endFrame + static_cast<int64_t>(pi),
+                                                std::move(hidePackets[pi]));
+                                        if (err.isError()) return err;
+                                }
                         }
                 }
         }

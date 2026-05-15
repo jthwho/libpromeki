@@ -79,6 +79,8 @@
 #include <promeki/videocodec.h>
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
+#include <promeki/hdrstaticmetadata.h>
+#include <promeki/cea708service.h>
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
 #include <promeki/windowedstat.h>
@@ -139,6 +141,12 @@ template <> struct HasFreeDataStreamWrite<Cea608Packet>                : std::tr
 template <> struct HasFreeDataStreamRead<Cea608Packet>                 : std::true_type {};
 template <> struct HasFreeDataStreamWrite<Subtitle>                    : std::true_type {};
 template <> struct HasFreeDataStreamRead<Subtitle>                     : std::true_type {};
+template <> struct HasFreeDataStreamWrite<Cea708Service>               : std::true_type {};
+template <> struct HasFreeDataStreamRead<Cea708Service>                : std::true_type {};
+template <> struct HasFreeDataStreamWrite<Cea708DtvccPacket>           : std::true_type {};
+template <> struct HasFreeDataStreamRead<Cea708DtvccPacket>            : std::true_type {};
+template <> struct HasFreeDataStreamWrite<HdrStaticMetadata>           : std::true_type {};
+template <> struct HasFreeDataStreamRead<HdrStaticMetadata>            : std::true_type {};
 
 } // namespace Detail
 
@@ -1015,8 +1023,11 @@ void registerBuiltinTypes() {
         registerBuiltin<VariantMap>("VariantMap", Variant::TypeVariantMap);
         registerBuiltin<XmlDocument>("XmlDocument", Variant::TypeXmlDocument);
         registerBuiltin<Cea708Cdp>("Cea708Cdp", Variant::TypeCea708Cdp);
+        registerBuiltin<Cea708Service>("Cea708Service", Variant::TypeCea708Service);
+        registerBuiltin<Cea708DtvccPacket>("Cea708DtvccPacket", Variant::TypeCea708DtvccPacket);
         registerBuiltin<Cea608Packet>("Cea608Packet", Variant::TypeCea608);
         registerBuiltin<Subtitle>("Subtitle", Variant::TypeSubtitle);
+        registerBuiltin<HdrStaticMetadata>("HdrStaticMetadata", Variant::TypeHdrStaticMetadata);
 #if PROMEKI_ENABLE_NETWORK
         registerBuiltin<SocketAddress>("SocketAddress", Variant::TypeSocketAddress);
         registerBuiltin<SdpSession>("SdpSession", Variant::TypeSdpSession);

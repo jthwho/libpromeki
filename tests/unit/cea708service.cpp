@@ -8,10 +8,14 @@
 
 #include <cstdint>
 #include <doctest/doctest.h>
+#include <promeki/bufferiodevice.h>
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708service.h>
+#include <promeki/datastream.h>
+#include <promeki/json.h>
 #include <promeki/string.h>
+#include <promeki/variant.h>
 
 using namespace promeki;
 
@@ -257,4 +261,130 @@ TEST_CASE("Cea708DtvccPacket: triple count matches the spec formula") {
         // packet_size = 5, triple count = ceil(5/2) = 3.
         Cea708Cdp::CcDataList triples = pkt.toCcData();
         CHECK(triples.size() == 3);
+}
+
+// ============================================================================
+// JSON / toString
+// ============================================================================
+
+TEST_CASE("Cea708Service::toJson reports service number, byte count, and hex dump") {
+        Cea708Service svc(2, bytesBuf({0x91, 0x20, 0xAB}));
+        JsonObject    obj = svc.toJson();
+        CHECK(obj.getInt("serviceNumber") == 2);
+        CHECK(obj.getInt("dataSize") == 3);
+        CHECK(obj.getString("dataHex") == "91 20 ab");
+}
+
+TEST_CASE("Cea708Service::toString includes service number and byte count") {
+        Cea708Service svc(7, bytesBuf({1, 2, 3, 4}));
+        CHECK(svc.toString() == "Cea708Service(svc=7, bytes=4)");
+}
+
+TEST_CASE("Cea708DtvccPacket::toJson nests service-block JSON") {
+        Cea708DtvccPacket pkt(2, {});
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A', 'B'})));
+        pkt.serviceBlocks().pushToBack(Cea708Service(7, bytesBuf({0x10, 0x11})));
+        JsonObject obj = pkt.toJson();
+        CHECK(obj.getInt("sequenceNumber") == 2);
+        CHECK(obj.getInt("payloadByteCount") == static_cast<int64_t>(pkt.payloadByteCount()));
+        JsonArray arr = obj.getArray("serviceBlocks");
+        REQUIRE(arr.size() == 2);
+        CHECK(arr.getObject(0).getInt("serviceNumber") == 1);
+        CHECK(arr.getObject(1).getInt("serviceNumber") == 7);
+}
+
+TEST_CASE("Cea708DtvccPacket::toString summarises sequence + block + payload counts") {
+        Cea708DtvccPacket pkt(3, {});
+        pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'X'})));
+        String s = pkt.toString();
+        CHECK(s == "Cea708DtvccPacket(seq=3, blocks=1, payload=2B)");
+}
+
+// ============================================================================
+// Variant integration
+// ============================================================================
+
+TEST_CASE("Cea708Service: round-trips through Variant") {
+        Cea708Service original(5, bytesBuf({0x91, 0x52, 0x20, 0x41}));
+        Variant       v;
+        v.set(original);
+        CHECK(v.type() == Variant::TypeCea708Service);
+        Cea708Service out = v.get<Cea708Service>();
+        CHECK(out == original);
+}
+
+TEST_CASE("Cea708DtvccPacket: round-trips through Variant") {
+        Cea708DtvccPacket original(2, {});
+        original.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'h', 'i'})));
+        original.serviceBlocks().pushToBack(Cea708Service(7, bytesBuf({0x91, 0x20})));
+        Variant v;
+        v.set(original);
+        CHECK(v.type() == Variant::TypeCea708DtvccPacket);
+        Cea708DtvccPacket out = v.get<Cea708DtvccPacket>();
+        CHECK(out == original);
+}
+
+// ============================================================================
+// DataStream round-trip
+// ============================================================================
+
+TEST_CASE("Cea708Service: DataStream operators round-trip") {
+        Cea708Service  original(7, bytesBuf({0x10, 0x11, 0x20, 0x41, 0x42}));
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << original;
+        }
+        dev.seek(0);
+        Cea708Service restored;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> restored;
+        }
+        CHECK(restored == original);
+}
+
+TEST_CASE("Cea708DtvccPacket: DataStream operators round-trip a multi-block packet") {
+        Cea708DtvccPacket original(1, {});
+        original.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'h', 'e', 'l', 'l', 'o'})));
+        original.serviceBlocks().pushToBack(Cea708Service(7, bytesBuf({0x91, 0x20})));
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << original;
+        }
+        dev.seek(0);
+        Cea708DtvccPacket restored;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> restored;
+        }
+        CHECK(restored == original);
+}
+
+TEST_CASE("Cea708DtvccPacket: DataStream round-trip via tagged Variant") {
+        Cea708DtvccPacket original(2, {});
+        original.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({0x20, 0x21, 0x22})));
+        Variant         v;
+        v.set(original);
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << v;
+        }
+        dev.seek(0);
+        Variant restored;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> restored;
+        }
+        REQUIRE(restored.type() == Variant::TypeCea708DtvccPacket);
+        Cea708DtvccPacket out = restored.get<Cea708DtvccPacket>();
+        CHECK(out == original);
 }

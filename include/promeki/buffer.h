@@ -13,6 +13,7 @@
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/sharedptr.h>
 #include <promeki/memspace.h>
 #include <promeki/memdomain.h>
@@ -22,6 +23,8 @@
 #include <promeki/bufferfactory.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class String;
 
 /**
  * @brief Generic memory buffer descriptor with alignment and memory space support.
@@ -157,6 +160,44 @@ class Buffer {
                         if (impl != nullptr) b._d = BufferImplPtr::takeOwnership(impl);
                         return b;
                 }
+
+                /**
+                 * @brief Parses a hex string into a fresh host Buffer.
+                 *
+                 * Reads two hex digits at a time (case-insensitive),
+                 * skipping ASCII whitespace and the @c '-' separator
+                 * commonly used in hex dumps.  Any non-hex / non-skip
+                 * character or an odd number of significant nibbles
+                 * fails the parse with @ref Error::ParseFailed.
+                 *
+                 * Both lowercase (@c "ab cd ef") and uppercase
+                 * (@c "AB-CD-EF") inputs round-trip with @ref toHex.
+                 *
+                 * @param hex The hex string to parse.
+                 * @return On success, a host-allocated Buffer holding
+                 *         the decoded bytes (with @ref size set).
+                 *         On failure, an empty Buffer + the parse
+                 *         error.
+                 */
+                static Result<Buffer> fromHex(const String &hex);
+
+                /**
+                 * @brief Returns a lowercase space-separated hex dump
+                 *        of @ref data over @ref size bytes.
+                 *
+                 * Convenient for JSON / log lines that need a
+                 * deterministic textual representation of opaque
+                 * bytes.  Empty buffers return the empty string.  The
+                 * default separator is a single space; pass an empty
+                 * separator for a contiguous run of nibbles.
+                 *
+                 * @param sep Inserted between every byte pair (default
+                 *            @c " ").  Pass @c "" for no separator.
+                 */
+                String toHex(const String &sep) const;
+
+                /** @copydoc toHex(const String &) — defaulted to a single space. */
+                String toHex() const;
 
                 /**
                  * @brief Returns true once the backing storage is allocated.
@@ -507,17 +548,27 @@ class Buffer {
                 const BufferImplPtr &impl() const { return _d; }
 
                 /**
-                 * @brief Equality on backing-storage identity.
+                 * @brief Value-equality with a cheap identity short-circuit.
                  *
-                 * Two Buffers compare equal iff they share the same
-                 * underlying @ref BufferImpl (refcount sharing).  Two
-                 * separate allocations of identical content are
-                 * @em not equal.
+                 * The fast path returns true when both Buffers share the
+                 * same backing @ref BufferImpl (refcount sharing) — this
+                 * is the @em common case in CoW pipelines.  When the
+                 * impls differ, the operator falls back to a
+                 * byte-by-byte content comparison, but only if both
+                 * Buffers are host-accessible (@ref isHostAccessible).
+                 * Non-host (e.g. CUDA device, FPGA) buffers with
+                 * distinct impls compare unequal — comparing their
+                 * contents would require an out-of-band domain copy,
+                 * which this operator cannot perform synchronously.
+                 *
+                 * To compare by storage identity only (without the
+                 * content fallback), compare the @ref impl handles
+                 * directly: @c a.impl() == b.impl().
                  */
-                bool operator==(const Buffer &o) const { return _d == o._d; }
+                bool operator==(const Buffer &o) const;
 
-                /** @brief Inequality. */
-                bool operator!=(const Buffer &o) const { return _d != o._d; }
+                /** @brief Inequality — negation of @ref operator==. */
+                bool operator!=(const Buffer &o) const { return !(*this == o); }
 
                 /** @brief Returns true when the handle is non-null. */
                 explicit operator bool() const { return _d.isValid(); }

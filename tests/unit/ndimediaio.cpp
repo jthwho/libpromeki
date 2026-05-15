@@ -109,7 +109,7 @@ TEST_CASE("NdiFactory: defaultConfig populates NDI keys") {
 
 TEST_CASE("NdiMediaIO: open as Sink, write a synthetic UYVY frame, close") {
         if (!NdiLib::instance().isLoaded()) {
-                MESSAGE("NDI runtime not available; skipping sink-mode write test");
+                INFO("NDI runtime not available; skipping sink-mode write test");
                 return;
         }
 
@@ -268,7 +268,7 @@ TEST_CASE("MediaIO::createForFileRead stamps OpenMode = Read on ndi:// URLs") {
 
 TEST_CASE("NdiMediaIO: sink open rejects URL whose host is not this machine") {
         if (!NdiLib::instance().isLoaded()) {
-                MESSAGE("NDI runtime not available; skipping non-local sink rejection test");
+                INFO("NDI runtime not available; skipping non-local sink rejection test");
                 return;
         }
         // Build an ndi://<otherhost>/<name> URL so urlToConfig stashes
@@ -293,7 +293,7 @@ TEST_CASE("NdiMediaIO: sink open rejects URL whose host is not this machine") {
 
 TEST_CASE("NdiMediaIO: source mode requires a configured source name") {
         if (!NdiLib::instance().isLoaded()) {
-                MESSAGE("NDI runtime not available; skipping source-mode test");
+                INFO("NDI runtime not available; skipping source-mode test");
                 return;
         }
         MediaIO::Config cfg = MediaIOFactory::defaultConfig("Ndi");
@@ -311,7 +311,7 @@ TEST_CASE("NdiMediaIO: source mode requires a configured source name") {
 
 TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         if (!NdiLib::instance().isLoaded()) {
-                MESSAGE("NDI runtime not available; skipping round-trip test");
+                INFO("NDI runtime not available; skipping round-trip test");
                 return;
         }
 
@@ -401,8 +401,8 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
                 senderThread.join();
                 sinkIo->close().wait();
                 delete sinkIo;
-                MESSAGE("NDI discovery did not see the sender within 5s — "
-                        "skipping round-trip read step");
+                INFO("NDI discovery did not see the sender within 5s — "
+                     "skipping round-trip read step");
                 return;
         }
 
@@ -419,7 +419,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         // its connection handshake may take time on a busy network.
         Error openErr = srcIo->open().wait(5'000);
         if (openErr.isError()) {
-                MESSAGE("Receiver open() did not complete within 5s: " << openErr.name().cstr());
+                INFO("Receiver open() did not complete within 5s: " << openErr.name().cstr());
                 stopSender.store(true, std::memory_order_release);
                 senderThread.join();
                 srcIo->close().wait(2'000);
@@ -449,7 +449,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         // and close worked end-to-end through the strand.  A frame
         // arriving is a nice-to-have but the in-process NDI loopback
         // can be flaky on first connect.
-        MESSAGE("Round-trip delivered " << framesRead << " frame(s).");
+        INFO("Round-trip delivered " << framesRead << " frame(s).");
 
         // When a frame did arrive, verify both timestamp channels:
         //   PTS (sender-anchored) — set by the receiver from NDI's
@@ -469,10 +469,10 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
                                 // DTS == PTS (no B-frame reorder in NDI).
                                 CHECK(rxVids[0]->dts().timeStamp().nanoseconds() ==
                                       rxPts.timeStamp().nanoseconds());
-                                MESSAGE("Receiver PTS: " << rxPts.timeStamp().nanoseconds() << " ns");
+                                INFO("Receiver PTS: " << rxPts.timeStamp().nanoseconds() << " ns");
                         } else {
-                                MESSAGE("Receiver did not attach PTS — SDK delivered frame "
-                                        "with NDIlib_recv_timestamp_undefined?");
+                                INFO("Receiver did not attach PTS — SDK delivered frame "
+                                     "with NDIlib_recv_timestamp_undefined?");
                         }
                         // CaptureTime is unconditionally set on every
                         // received payload (it's local arrival time,
@@ -483,7 +483,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
                                                     .get<MediaTimeStamp>();
                         CHECK(ct.isValid());
                         CHECK(ct.domain().id() == ClockDomain(ClockDomain::SystemMonotonic).id());
-                        MESSAGE("Receiver local CaptureTime: " << ct.timeStamp().nanoseconds() << " ns");
+                        INFO("Receiver local CaptureTime: " << ct.timeStamp().nanoseconds() << " ns");
                 }
                 // The receiver stamps @c Metadata::FrameRate on every
                 // emitted frame so downstream stages (e.g. the
@@ -587,7 +587,7 @@ TEST_CASE("NdiMediaIO: proposeInput requests UYVY for unsupported YUV input") {
 
 TEST_CASE("NdiMediaIO: rejects unsupported pixel formats with FormatMismatch at open") {
         if (!NdiLib::instance().isLoaded()) {
-                MESSAGE("NDI runtime not available; skipping format-rejection test");
+                INFO("NDI runtime not available; skipping format-rejection test");
                 return;
         }
 

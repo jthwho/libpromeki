@@ -123,10 +123,9 @@ TEST_CASE("AncPacket: metaMut detaches CoW") {
 // ============================================================================
 
 TEST_CASE("AncPacket: equality compares all four fields") {
-        // Buffer equality is identity-based (operator== compares the
-        // underlying impl pointer), so all "equal" cases must share the
-        // same Buffer instance.  Buffer copies do that for free since
-        // they refcount-share the same impl.
+        // Buffer equality is value-based: identity short-circuits when
+        // the impls coincide (refcount sharing — the common CoW case)
+        // and byte-content compares otherwise.
         Buffer    b1 = makeWireBytes({0x01, 0x02, 0x03});
         AncPacket a(AncFormat(AncFormat::Cea708), AncTransport::St291, b1);
         AncPacket b(AncFormat(AncFormat::Cea708), AncTransport::St291, b1);
@@ -138,10 +137,15 @@ TEST_CASE("AncPacket: equality compares all four fields") {
         AncPacket d(AncFormat(AncFormat::Cea708), AncTransport::NdiXml, b1);
         CHECK(a != d);
 
-        // Different Buffer (different impl) — packets compare unequal
-        // even though the bytes happen to match.
+        // Different Buffer impl but identical bytes — packets compare
+        // equal under Buffer's value-equality semantics.
         AncPacket e(AncFormat(AncFormat::Cea708), AncTransport::St291, makeWireBytes({0x01, 0x02, 0x03}));
-        CHECK(a != e);
+        CHECK(a == e);
+
+        // Different bytes — packets compare unequal.
+        AncPacket eDiff(AncFormat(AncFormat::Cea708), AncTransport::St291,
+                        makeWireBytes({0x01, 0x02, 0x04}));
+        CHECK(a != eDiff);
 
         Metadata withMeta;
         withMeta.set(AncMeta::St291::Line, uint16_t(11));
@@ -195,9 +199,9 @@ TEST_CASE("AncPacket: DataStream round-trip preserves all four fields") {
                 reader >> round;
                 REQUIRE(reader.status() == DataStream::Ok);
         }
-        // Buffer equality is identity-based, so operator== on the
-        // packets won't fire even on a byte-perfect round-trip.
-        // Compare every field individually.
+        // Buffer equality is now value-based, so operator== on the
+        // packets compares byte-perfect.  Keep the per-field checks
+        // below for richer diagnostic output on mismatch.
         CHECK(round.format() == original.format());
         CHECK(round.transport() == original.transport());
         CHECK(round.data().size() == original.data().size());

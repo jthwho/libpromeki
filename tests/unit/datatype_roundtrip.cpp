@@ -11,8 +11,10 @@
 #include <doctest/doctest.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
+#include <promeki/cea708service.h>
 #include <promeki/datastream.h>
 #include <promeki/datatype.h>
+#include <promeki/hdrstaticmetadata.h>
 #include <promeki/variant.h>
 
 using namespace promeki;
@@ -77,6 +79,13 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
         size_t skippedBadDefault  = 0;   // type's default doesn't round-trip cleanly
 
         List<DataType::ID> failedTypes;
+        // Library builtins (id < UserBegin) must all advertise
+        // writeStream + readStream — there's no opt-out.  User-space
+        // types may legitimately register without serialize ops
+        // (and several test fixtures in this binary do exactly that
+        // to exercise the no-serialize code path).  Anything that
+        // lands here is a real library gap.
+        List<DataType::ID> librarySkippedNoSerialize;
 
         for (size_t i = 0; i < ids.size(); ++i) {
                 const DataType::ID id = ids[i];
@@ -95,6 +104,9 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
 
                 if (ops.writeStream == nullptr || ops.readStream == nullptr) {
                         ++skippedNoSerialize;
+                        if (static_cast<unsigned>(id) < static_cast<unsigned>(DataType::UserBegin)) {
+                                librarySkippedNoSerialize.pushToBack(id);
+                        }
                         continue;
                 }
 
@@ -145,12 +157,29 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
                 std::snprintf(buf, sizeof(buf), "%04X", static_cast<unsigned>(failedTypes[i]));
                 failedList += buf;
         }
+        std::string libGapList;
+        for (size_t i = 0; i < librarySkippedNoSerialize.size(); ++i) {
+                if (i > 0) libGapList += ",";
+                libGapList += "0x";
+                char buf[8];
+                std::snprintf(buf, sizeof(buf), "%04X",
+                              static_cast<unsigned>(librarySkippedNoSerialize[i]));
+                libGapList += buf;
+        }
         MESSAGE("Registered types: " << ids.size()
                 << " | round-tripped: " << roundTripped
                 << " | skipped (no serialize): " << skippedNoSerialize
                 << " | skipped (no default ctor): " << skippedNoDefault
                 << " | skipped (default not round-trippable): " << skippedBadDefault
-                << " | offending ids: [" << failedList << "]");
+                << " | offending ids: [" << failedList << "]"
+                << " | library-builtin gaps: [" << libGapList << "]");
+
+        // Every library builtin (id < UserBegin) must serialize —
+        // there's no opt-out for the library's own types.  User-space
+        // types may register without serialize ops; the test fixtures
+        // in this binary do so deliberately to exercise the
+        // no-serialize path.
+        CHECK(librarySkippedNoSerialize.size() == 0);
 
         // Every type that advertises a writeStream + readStream op
         // must round-trip its default-constructed value cleanly.
@@ -161,6 +190,60 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
         // value as different from the source.
         CHECK(skippedBadDefault == 0);
         CHECK(roundTripped >= 50);
+}
+
+TEST_CASE("DataType: HdrStaticMetadata / Cea708Service / Cea708DtvccPacket round-trip Variant ⇄ DataStream") {
+        // Targeted regression for the three Variant payload types
+        // wired through the new DataType registry in this branch.
+        // The generic "every registered type round-trips" test above
+        // already covers them transitively, but a named per-type
+        // case gives a sharper failure signal if any of these
+        // regresses (and verifies they sit in the round-trippable
+        // bucket, not the no-serialize one).
+
+        const Variant::Type ids[] = {
+                Variant::TypeHdrStaticMetadata,
+                Variant::TypeCea708Service,
+                Variant::TypeCea708DtvccPacket,
+        };
+        for (Variant::Type id : ids) {
+                const DataType dt(id);
+                REQUIRE_MESSAGE(dt.isValid(), "missing DataType registration for id=", id);
+
+                const DataType::Ops &ops = dt.ops();
+                REQUIRE_MESSAGE(ops.writeStream != nullptr,
+                                "no writeStream op for ", dt.name());
+                REQUIRE_MESSAGE(ops.readStream != nullptr,
+                                "no readStream op for ", dt.name());
+                REQUIRE_MESSAGE(ops.defaultConstruct != nullptr,
+                                "no defaultConstruct for ", dt.name());
+
+                Variant src = Variant::createDefault(dt);
+                REQUIRE(src.isValid());
+                REQUIRE(src.type() == id);
+
+                Buffer         buf(64 * 1024);
+                BufferIODevice dev(&buf);
+                REQUIRE(dev.open(IODevice::ReadWrite).isOk());
+                {
+                        DataStream ws = DataStream::createWriter(&dev);
+                        ws << src;
+                        REQUIRE_MESSAGE(ws.status() == DataStream::Ok,
+                                        "write failed for ", dt.name());
+                }
+                dev.seek(0);
+                Variant out;
+                {
+                        DataStream rs = DataStream::createReader(&dev);
+                        rs >> out;
+                        REQUIRE_MESSAGE(rs.status() == DataStream::Ok,
+                                        "read failed for ", dt.name());
+                }
+                CHECK_MESSAGE(out.isValid(), "out is invalid for ", dt.name());
+                CHECK_MESSAGE(out.type() == id, "type mismatch for ", dt.name());
+                CHECK_MESSAGE(variantContentsEqual(src, out),
+                              "contents diverged for ", dt.name());
+        }
 }
 
 TEST_CASE("DataType: registered user type via PROMEKI_IMPLEMENT_DATATYPE is reachable end-to-end") {

@@ -9,7 +9,10 @@
 #include <cstdint>
 #include <doctest/doctest.h>
 #include <promeki/cea708windowstate.h>
+#include <promeki/color.h>
+#include <promeki/enums.h>
 #include <promeki/string.h>
+#include <promeki/subtitle.h>
 
 using namespace promeki;
 
@@ -334,6 +337,141 @@ TEST_CASE("Cea708WindowState: SPA / SPC / SWA are consumed without affecting tex
         cmds.push_back('B');
         st.processBytes(cmds.data(), cmds.size());
         CHECK(st.visibleText() == "AB");
+}
+
+// ============================================================================
+// SetWindowAttributes (SWA, 0x97)
+// ============================================================================
+
+TEST_CASE("Cea708WindowState: SWA fill_color decodes from a max-red opaque payload") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // SWA: fill_opacity=Solid (0 → 00), fill_R=3, fill_G=0, fill_B=0
+        // → byte1 = 0b00_11_00_00 = 0x30
+        // (CEA-708-D §8.10.5.10: opacity wire bits 00=Solid, 11=Transparent.)
+        cmds.push_back(0x97);
+        cmds.push_back(0x30);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back('A');
+        st.processBytes(cmds.data(), cmds.size());
+        const Cea708WindowAttr &a = st.window(0).attrs;
+        CHECK(a.fillColor.isValid());
+        CHECK(a.fillColor.r8() == 255);
+        CHECK(a.fillColor.g8() == 0);
+        CHECK(a.fillColor.b8() == 0);
+        CHECK(a.fillOpacity.value() == SubtitleOpacity::Solid.value());
+}
+
+TEST_CASE("Cea708WindowState: SWA fill_opacity=Transparent clears fillColor") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // fill_opacity=Transparent (wire bits 11 = enum value 3), no fill RGB.
+        cmds.push_back(0x97);
+        cmds.push_back(static_cast<uint8_t>(SubtitleOpacity::Transparent.value() << 6));
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        st.processBytes(cmds.data(), cmds.size());
+        CHECK_FALSE(st.window(0).attrs.fillColor.isValid());
+        CHECK(st.window(0).attrs.fillOpacity.value() == SubtitleOpacity::Transparent.value());
+}
+
+TEST_CASE("Cea708WindowState: SWA byte3 carries justify / wordwrap / scroll / print direction") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // byte3: border_type2=0, wordwrap=1 (bit 6), print_dir=1 (bits 5..4),
+        //        scroll_dir=2 (bits 3..2), justify=2 (bits 1..0)
+        // → 0_1_01_10_10 = 0b01_01_10_10 = 0x5A
+        cmds.push_back(0x97);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x5A);
+        cmds.push_back(0x00);
+        st.processBytes(cmds.data(), cmds.size());
+        const Cea708WindowAttr &a = st.window(0).attrs;
+        CHECK(a.wordWrap == true);
+        CHECK(a.printDirection == 1);
+        CHECK(a.scrollDirection == 2);
+        CHECK(a.justify == 2);
+}
+
+TEST_CASE("Cea708WindowState: SWA byte4 carries effect speed / direction / display effect") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // byte4: effect_speed=5 (bits 7..4), effect_dir=1 (bits 3..2), display_effect=2 (bits 1..0)
+        // → 0101_01_10 = 0x56
+        cmds.push_back(0x97);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x56);
+        st.processBytes(cmds.data(), cmds.size());
+        const Cea708WindowAttr &a = st.window(0).attrs;
+        CHECK(a.effectSpeed == 5);
+        CHECK(a.effectDirection == 1);
+        CHECK(a.displayEffect == 2);
+}
+
+TEST_CASE("Cea708WindowState: SWA border_type combines byte2 (low 2 bits) + byte3 (high bit)") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // border_type = 5 (ShadowRight) → low 2 bits = 0b01 (in byte2 << 6),
+        //                                   high bit  = 0b1 (in byte3 << 7)
+        cmds.push_back(0x97);
+        cmds.push_back(0x00);
+        cmds.push_back(static_cast<uint8_t>(0x01 << 6)); // border_type01=01
+        cmds.push_back(static_cast<uint8_t>(0x80));      // border_type2=1
+        cmds.push_back(0x00);
+        st.processBytes(cmds.data(), cmds.size());
+        CHECK(st.window(0).attrs.borderType == 5);
+}
+
+TEST_CASE("Cea708Window::visibleSpans applies SWA fill to spans without explicit bg") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // SWA with opaque green fill (G channel = 3 → max).
+        // byte1: fill_op=Solid (00) | fill_R=0 | fill_G=3 | fill_B=0 → 0x0C
+        cmds.push_back(0x97);
+        cmds.push_back(0x0C);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back('H');
+        cmds.push_back('I');
+        st.processBytes(cmds.data(), cmds.size());
+        SubtitleSpan::List spans = st.visibleSpans();
+        REQUIRE(spans.size() == 1);
+        CHECK(spans[0].text() == "HI");
+        CHECK(spans[0].backgroundColor().isValid());
+        CHECK(spans[0].backgroundColor().g8() == 255);
+}
+
+TEST_CASE("Cea708Window::visibleSpans: per-cell SPC bg wins over SWA fill") {
+        Cea708WindowState    st;
+        std::vector<uint8_t> cmds = defineWindow0(2, true);
+        // SWA: opaque red fill.  byte1 = fill_op=Solid (00) << 6 | fill_R=3 << 4 = 0x30
+        cmds.push_back(0x97);
+        cmds.push_back(0x30);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        cmds.push_back(0x00);
+        // SPC asserting opaque blue per-cell bg before writing chars.
+        // byte1 (fg): default white (Solid=00, R=3, G=3, B=3) = 0x3F
+        // byte2 (bg): Solid(00) | R=0 | G=0 | B=3                = 0x03
+        // byte3 (edge): all zero
+        cmds.push_back(0x91);
+        cmds.push_back(0x3F);
+        cmds.push_back(0x03);
+        cmds.push_back(0x00);
+        cmds.push_back('B');
+        st.processBytes(cmds.data(), cmds.size());
+        SubtitleSpan::List spans = st.visibleSpans();
+        REQUIRE(spans.size() == 1);
+        // Per-cell SPC bg (blue) wins over the window-level SWA fill (red).
+        CHECK(spans[0].backgroundColor().b8() == 255);
+        CHECK(spans[0].backgroundColor().r8() == 0);
 }
 
 // ============================================================================

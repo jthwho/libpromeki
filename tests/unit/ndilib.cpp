@@ -27,7 +27,7 @@ TEST_CASE("NdiLib: when loaded, exposes a non-empty version string and api() tab
         // in that case — load failure is a deployment concern, not a
         // libpromeki bug — but everything else below assumes success.
         if (!lib.isLoaded()) {
-                MESSAGE("NDI runtime not available on this host; skipping load-dependent checks");
+                INFO("NDI runtime not available on this host; skipping load-dependent checks");
                 return;
         }
         // The function-pointer table is forward-declared in the public
@@ -46,7 +46,7 @@ TEST_CASE("NdiLib: load failure leaves api() null and version empty") {
         // the runtime did load.
         NdiLib &lib = NdiLib::instance();
         if (lib.isLoaded()) {
-                MESSAGE("NDI runtime loaded; load-failure invariants vacuously hold");
+                INFO("NDI runtime loaded; load-failure invariants vacuously hold");
                 return;
         }
         CHECK(lib.api() == nullptr);

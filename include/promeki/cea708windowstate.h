@@ -73,6 +73,91 @@ struct Cea708PenAttr {
 };
 
 /**
+ * @brief Last-asserted window-level attributes from @c SetWindowAttributes
+ *        (SWA, 0x97).
+ * @ingroup proav
+ *
+ * Mirrors the CEA-708 §8.10.5.10 wire shape exactly.  Each window has
+ * one @ref Cea708WindowAttr that the decoder updates whenever an SWA
+ * command lands inside the window's service block; the encoder emits
+ * SWA at @c DefineWindow time so the receiver's window state matches
+ * the source's intent.
+ *
+ * @par Wire field summary
+ *
+ *  - @c fillColor / @c fillOpacity — paints the entire window's
+ *    background.  Independent of per-cell SPC background.
+ *  - @c borderColor / @c borderType — frames the window with one of
+ *    six border styles (None / Raised / Depressed / Uniform /
+ *    ShadowLeft / ShadowRight; values 6 and 7 are reserved per spec).
+ *  - @c justify — paragraph justification (Left / Right / Center / Full).
+ *  - @c printDirection — text flow direction (LtR / RtL / TtB / BtT).
+ *  - @c scrollDirection — same enum, applies to the window-level scroll.
+ *  - @c wordWrap — whether the receiver auto-wraps long lines.
+ *  - @c displayEffect / @c effectDirection / @c effectSpeed — display
+ *    transition for window appearance / disappearance.  @c effectSpeed
+ *    is in units of 0.5s (0..7.5s).
+ */
+struct Cea708WindowAttr {
+                /// @brief Window fill (background).  Default-constructed
+                ///        @c Color means "no override" (SubtitleOpacity::Transparent).
+                Color           fillColor;
+                SubtitleOpacity fillOpacity = SubtitleOpacity::Solid;
+
+                /// @brief Window border.  Default-constructed @c Color
+                ///        means "no override".
+                Color borderColor;
+                /// @brief Border type — 0=None, 1=Raised, 2=Depressed,
+                ///        3=Uniform, 4=ShadowLeft, 5=ShadowRight,
+                ///        6/7=Reserved.
+                uint8_t borderType = 0;
+
+                /// @brief Justify (0=Left, 1=Right, 2=Center, 3=Full).
+                uint8_t justify = 0;
+                /// @brief Print direction (0=LtR, 1=RtL, 2=TtB, 3=BtT).
+                uint8_t printDirection = 0;
+                /// @brief Scroll direction (same enum as printDirection).
+                uint8_t scrollDirection = 3; // BtT — caption convention
+                /// @brief @c true when receiver word-wraps long lines.
+                bool wordWrap = false;
+                /// @brief Display effect (0=Snap, 1=Fade, 2=Wipe).
+                uint8_t displayEffect = 0;
+                /// @brief Effect direction (same enum as printDirection).
+                uint8_t effectDirection = 0;
+                /// @brief Effect speed in units of 0.5s (0..15 = 0..7.5s).
+                uint8_t effectSpeed = 0;
+
+                /// @brief @c true when any field differs from the
+                ///        codec-neutral default (no fill, no border,
+                ///        Left justify, LtR print, BtT scroll, no
+                ///        wrap, snap effect).
+                bool hasAnyAttribute() const {
+                        return fillColor.isValid()
+                               || fillOpacity.value() != SubtitleOpacity::Solid.value()
+                               || borderColor.isValid()
+                               || borderType != 0
+                               || justify != 0
+                               || printDirection != 0
+                               || scrollDirection != 3
+                               || wordWrap
+                               || displayEffect != 0
+                               || effectDirection != 0
+                               || effectSpeed != 0;
+                }
+
+                bool operator==(const Cea708WindowAttr &o) const {
+                        return fillColor == o.fillColor
+                               && fillOpacity.value() == o.fillOpacity.value()
+                               && borderColor == o.borderColor && borderType == o.borderType
+                               && justify == o.justify && printDirection == o.printDirection
+                               && scrollDirection == o.scrollDirection && wordWrap == o.wordWrap
+                               && displayEffect == o.displayEffect && effectDirection == o.effectDirection
+                               && effectSpeed == o.effectSpeed;
+                }
+                bool operator!=(const Cea708WindowAttr &o) const { return !(*this == o); }
+};
+
+/**
  * @brief One character cell in a @ref Cea708Window grid.
  * @ingroup proav
  *
@@ -143,6 +228,13 @@ struct Cea708Window {
                 bool colLock = true;        ///< Disallows col count change.
                 int  penRow = 0;            ///< Cursor row (0-based).
                 int  penCol = 0;            ///< Cursor column (0-based).
+
+                /// @brief Window-level attributes from @c SetWindowAttributes
+                ///        (SWA, 0x97).  Updated every time an SWA
+                ///        command lands inside this window's service
+                ///        block; default-constructed before the first
+                ///        SWA arrives.  See @ref Cea708WindowAttr.
+                Cea708WindowAttr attrs;
 
                 /// @brief Character grid.  Outer index = row (0..rowCount-1);
                 ///        inner index = column (0..colCount-1).  Each
@@ -238,9 +330,16 @@ struct Cea708Window {
  *    DeleteWindows (CLW / DSW / HDW / TGW / DLW) — visibility
  *    bitmap updates.
  *  - SetPenLocation (SPL) — repositions the cursor.
- *  - SetPenAttributes / SetPenColor / SetWindowAttributes (SPA /
- *    SPC / SWA) — *consumed* (correct argument byte counts) but
- *    not yet preserved on the grid.
+ *  - SetPenAttributes / SetPenColor (SPA / SPC) — fully decoded
+ *    into @ref currentPen and stamped onto every character cell
+ *    so multi-style cues recover with span boundaries via
+ *    @ref Cea708Window::visibleSpans.
+ *  - SetWindowAttributes (SWA) — fully decoded into the current
+ *    window's @ref Cea708Window::attrs (fill colour / opacity,
+ *    border, justify, scroll / print direction, word-wrap,
+ *    display effect).  When set, the window's @c fillColor is
+ *    inherited by every span emitted from that window's grid
+ *    that doesn't carry an explicit per-cell SPC bg colour.
  *  - Delay (DLY), DelayCancel (DLC), Reset (RST) — recognised.
  *  - C0: ETX terminates a row, CR moves cursor to next row, FF
  *    clears the current window, BS moves cursor back one column.
