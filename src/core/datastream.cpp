@@ -9,10 +9,45 @@
 #include <cstring>
 #include <promeki/datastream.h>
 #include <promeki/variant.h>
+#include <promeki/uuid.h>
+#include <promeki/umid.h>
+#include <promeki/datetime.h>
+#include <promeki/timestamp.h>
+#include <promeki/timecode.h>
+#include <promeki/framerate.h>
+#include <promeki/videoformat.h>
+#include <promeki/color.h>
+#include <promeki/colormodel.h>
+#include <promeki/memspace.h>
+#include <promeki/pixelmemlayout.h>
+#include <promeki/pixelformat.h>
+#include <promeki/audioformat.h>
+#include <promeki/ancformat.h>
+#include <promeki/audiochannelmap.h>
+#include <promeki/audiomarker.h>
+#include <promeki/audiostreamdesc.h>
+#include <promeki/videocodec.h>
+#include <promeki/audiocodec.h>
+#include <promeki/cea608packet.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/subtitle.h>
+#include <promeki/duration.h>
+#include <promeki/framenumber.h>
+#include <promeki/framecount.h>
+#include <promeki/mediaduration.h>
+#include <promeki/stringlist.h>
+#include <promeki/url.h>
+#include <promeki/windowedstat.h>
+#include <promeki/xml.h>
+#include <promeki/enum.h>
 #include <promeki/enumlist.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
+#if PROMEKI_ENABLE_NETWORK
+#include <promeki/socketaddress.h>
+#include <promeki/sdpsession.h>
+#endif
 #if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
 #endif
@@ -216,6 +251,16 @@ void DataStream::endFrame() {
 
 bool DataStream::readFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize) {
         if (_status != Ok) return false;
+        // Cached frame header from a prior peekFrameHeader call — return
+        // those parsed values and drop the cache so subsequent header
+        // reads pull fresh bytes from the device.
+        if (_peekedHeaderValid) {
+                outTag             = _peekedTag;
+                outVersion         = _peekedVersion;
+                outSize            = _peekedSize;
+                _peekedHeaderValid = false;
+                return true;
+        }
         uint8_t header[FrameHeaderSize];
         if (!readBytes(header, FrameHeaderSize)) return false;
         uint16_t tagRaw = 0;
@@ -247,6 +292,23 @@ bool DataStream::readFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t 
         outTag = static_cast<TypeId>(tagRaw);
         outVersion = verRaw;
         outSize = sz;
+        return true;
+}
+
+bool DataStream::peekFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize) {
+        // Already cached?  Return the cached parse without touching the
+        // device.  The cache lives until the next readFrameHeader call.
+        if (_peekedHeaderValid) {
+                outTag     = _peekedTag;
+                outVersion = _peekedVersion;
+                outSize    = _peekedSize;
+                return true;
+        }
+        if (!readFrameHeader(outTag, outVersion, outSize)) return false;
+        _peekedTag         = outTag;
+        _peekedVersion     = outVersion;
+        _peekedSize        = outSize;
+        _peekedHeaderValid = true;
         return true;
 }
 
@@ -572,8 +634,16 @@ void DataStream::writeTimecodeData(const Timecode &val) {
 }
 
 void DataStream::writeColorData(const Color &val) {
-        // Color::toString() produces a lossless ModelFormat representation
-        // that round-trips through fromString().
+        // A default-constructed Color has no ColorModel and would
+        // serialise to "Invalid(0,0,0,0)" which fromString rejects.
+        // Encode it as an empty string so the round-trip lands back on
+        // a default Color (readColorData's empty-string fast path).
+        // Valid Colors round-trip through the lossless ModelFormat
+        // representation.
+        if (!val.isValid()) {
+                writeStringData(String());
+                return;
+        }
         writeStringData(val.toString());
 }
 
@@ -806,6 +876,7 @@ FrameRate DataStream::readFrameRateData() {
 VideoFormat DataStream::readVideoFormatData() {
         String s = readStringData();
         if (_status != Ok) return VideoFormat();
+        if (s.isEmpty()) return VideoFormat();
         auto [vf, err] = VideoFormat::fromString(s);
         if (err.isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse VideoFormat from '%s'", s.cstr()));
@@ -831,7 +902,13 @@ Timecode DataStream::readTimecodeData() {
 Color DataStream::readColorData() {
         String s = readStringData();
         if (_status != Ok) return Color();
-        return Color::fromString(s);
+        if (s.isEmpty()) return Color();
+        auto [c, e] = Color::fromString(s);
+        if (e.isError()) {
+                setError(ReadCorruptData, String::sprintf("Failed to parse Color from '%s'", s.cstr()));
+                return Color();
+        }
+        return c;
 }
 
 ColorModel DataStream::readColorModelData() {
@@ -878,6 +955,11 @@ AncFormat DataStream::readAncFormatData() {
 Enum DataStream::readEnumData() {
         String s = readStringData();
         if (_status != Ok) return Enum();
+        // Empty body or the bare qualifier "::" is the wire form of a
+        // default-constructed (invalid) Enum — Enum::toString() returns
+        // "::" for it.  Both spellings reduce to the same default
+        // without raising ReadCorruptData.
+        if (s.isEmpty() || s == "::") return Enum();
         Error err;
         Enum  e = Enum::lookup(s, &err);
         if (err.isError()) {
@@ -890,10 +972,17 @@ Enum DataStream::readEnumData() {
 EnumList DataStream::readEnumListData() {
         String typeName = readStringData();
         if (_status != Ok) return EnumList();
-        Enum::Type type = Enum::findType(typeName);
-        if (!type.isValid()) {
-                setError(ReadCorruptData, String("EnumList: unknown type '") + typeName + "'");
-                return EnumList();
+        // Empty type name is the wire form of a default-constructed
+        // EnumList: write emits empty-name + count(0) + no entries.
+        // Leave the Enum::Type unbound and let the rest of the read
+        // drain the count tag below so the stream stays in sync.
+        Enum::Type type;
+        if (!typeName.isEmpty()) {
+                type = Enum::findType(typeName);
+                if (!type.isValid()) {
+                        setError(ReadCorruptData, String("EnumList: unknown type '") + typeName + "'");
+                        return EnumList();
+                }
         }
         uint32_t count = 0;
         *this >> count; // tagged read
@@ -1277,59 +1366,26 @@ DataStream &DataStream::operator<<(const SharedPtr<SslContext, false> &val) {
 #endif
 
 // ============================================================================
-// Variant write — dispatches by the Variant's current type
+// Variant write — registry-driven dispatch
 //
-// The switch body is generated from @c PROMEKI_VARIANT_TYPES so every
-// type registered in the Variant type list is guaranteed to have a
-// case here.  The generated case delegates through
-// @c writeVariantValue<T> — its @c *this << v.get<T>() expression
-// fails to compile if there is no @c operator<<(DataStream&, const T&)
-// for @c T, which is exactly the class of bug we want caught at build
-// time rather than surfacing as a runtime @c WriteFailed.  Adding a
-// new Variant type without the matching operator is now a compile
-// error instead of silent data loss.
+// The Variant's @ref DataType carries an @c ops.writeStream function
+// pointer that was populated at registration time from the existing
+// free @c operator<<(DataStream&, const T&) for the registered type.
+// We just look it up and call it; the per-type operator emits its
+// own frame, so the Variant write does not wrap an outer frame.
+// An invalid Variant (or one whose registered type has no
+// @c writeStream slot) emits an empty @c TypeInvalid frame.
 // ============================================================================
 
-namespace {
-        template <typename T> void writeVariantValue(DataStream &s, const Variant &v) {
-                if constexpr (std::is_same_v<T, std::monostate>) {
-                        // TypeInvalid carries no payload; only the
-                        // tag.  The frame is opened and closed
-                        // immediately so the emitted bytes are
-                        // exactly the 7-byte frame header with a
-                        // zero-byte body.
-                        s.beginFrame(DataStream::TypeInvalid, 1);
-                        s.endFrame();
-                } else {
-                        // Important: the @c s << v.get<T>() form would
-                        // silently satisfy any missing specific
-                        // operator via the converting @c Variant ctor
-                        // and then recurse right back here at runtime.
-                        // The explicit invocation below uses ordinary
-                        // overload resolution (no pointer-to-member
-                        // casts needed — there's no ambiguity to
-                        // disambiguate) so the coverage static_asserts
-                        // below are what actually guard the fallback
-                        // hazard at build time.
-                        s << v.get<T>();
-                }
-        }
-} // namespace
-
-
 DataStream &DataStream::operator<<(const Variant &val) {
-        // The per-type writeVariantValue specialisations each open
-        // and close their own frame (or, for std::monostate, emit an
-        // empty TypeInvalid frame), so the Variant write itself
-        // doesn't add an enclosing frame — that would double-wrap
-        // every value and break the documented invariant that a
-        // Variant carrying T is bit-identical to a direct T.
-        switch (val.type()) {
-#define X(name, type)                                                                                                  \
-        case Variant::name: writeVariantValue<type>(*this, val); break;
-                PROMEKI_VARIANT_TYPES
-#undef X
+        const DataType        dt = val.dataType();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.writeStream == nullptr) {
+                beginFrame(TypeInvalid, 1);
+                endFrame();
+                return *this;
         }
+        td->ops.writeStream(*this, val.payloadPtr());
         return *this;
 }
 
@@ -1635,6 +1691,13 @@ DataStream &DataStream::operator>>(MediaTimeStamp &val) {
                 val = MediaTimeStamp();
                 return *this;
         }
+        // A default-constructed MediaTimeStamp serializes to an empty
+        // string via toString(), so accept that as the default-value
+        // wire form rather than trying to parse it.
+        if (s.isEmpty()) {
+                val = MediaTimeStamp();
+                return *this;
+        }
         auto [mts, parseErr] = MediaTimeStamp::fromString(s);
         if (parseErr.isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse MediaTimeStamp from '%s'", s.cstr()));
@@ -1655,8 +1718,7 @@ DataStream &DataStream::operator>>(FrameNumber &val) {
                 val = FrameNumber();
                 return *this;
         }
-        Error       pe;
-        FrameNumber fn = FrameNumber::fromString(s, &pe);
+        auto [fn, pe] = FrameNumber::fromString(s);
         if (pe.isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse FrameNumber from '%s'", s.cstr()));
                 val = FrameNumber();
@@ -1676,8 +1738,7 @@ DataStream &DataStream::operator>>(FrameCount &val) {
                 val = FrameCount();
                 return *this;
         }
-        Error      pe;
-        FrameCount fc = FrameCount::fromString(s, &pe);
+        auto [fc, pe] = FrameCount::fromString(s);
         if (pe.isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse FrameCount from '%s'", s.cstr()));
                 val = FrameCount();
@@ -1697,8 +1758,15 @@ DataStream &DataStream::operator>>(MediaDuration &val) {
                 val = MediaDuration();
                 return *this;
         }
-        Error         pe;
-        MediaDuration md = MediaDuration::fromString(s, &pe);
+        // Default-constructed MediaDuration renders as "+" (empty
+        // start + separator + empty length), which the parser
+        // otherwise rejects.  Treat empty and the bare "+" placeholder
+        // as the wire forms of a default-constructed value.
+        if (s.isEmpty() || s == "+") {
+                val = MediaDuration();
+                return *this;
+        }
+        auto [md, pe] = MediaDuration::fromString(s);
         if (pe.isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse MediaDuration from '%s'", s.cstr()));
                 val = MediaDuration();
@@ -1781,6 +1849,13 @@ DataStream &DataStream::operator>>(Url &val) {
                 val = Url();
                 return *this;
         }
+        // A default-constructed Url serializes to an empty string; map
+        // that back to a default-constructed Url rather than rejecting
+        // it as a parse failure.
+        if (s.isEmpty()) {
+                val = Url();
+                return *this;
+        }
         Result<Url> r = Url::fromString(s);
         if (r.second().isError() || !r.first().isValid()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse Url from '%s'", s.cstr()));
@@ -1841,6 +1916,13 @@ DataStream &DataStream::operator>>(SocketAddress &val) {
                 val = SocketAddress();
                 return *this;
         }
+        // A default-constructed SocketAddress serializes to an empty
+        // string; map it back to default rather than treating empty as
+        // a parse failure.
+        if (s.isEmpty()) {
+                val = SocketAddress();
+                return *this;
+        }
         auto r = SocketAddress::fromString(s);
         if (error(r).isError()) {
                 setError(ReadCorruptData, String::sprintf("Failed to parse SocketAddress from '%s'", s.cstr()));
@@ -1886,626 +1968,40 @@ DataStream &DataStream::operator>>(SharedPtr<SslContext, false> &val) {
 #endif
 
 // ============================================================================
-// Variant read — peeks the tag and dispatches to the right type
+// Variant read — registry-driven dispatch
+//
+// The frame header tells us which DataType this Variant holds.  We peek
+// the header so the per-type @c operator>> overload can re-read it
+// through @c readFrame; the cached header lets that re-read succeed
+// without touching the device a second time, so the path works on
+// sequential devices (sockets, pipes) just as well as seekable ones.
+//
+// Tags the local registry doesn't know about hit the forward-compat
+// path: drain the cached header, skip the body via its declared size,
+// and yield an invalid Variant — older readers can drain streams
+// produced by newer writers without going into a corrupt-data state.
 // ============================================================================
-
-void DataStream::readVariantPayload(TypeId id, uint16_t version, uint32_t bodySize, Variant &val) {
-        switch (id) {
-                case TypeInvalid: val = Variant(); break;
-                case TypeBool: val = readBoolValue(); break;
-                case TypeUInt8: val = readUInt8(); break;
-                case TypeInt8: val = readInt8(); break;
-                case TypeUInt16: val = readUInt16(); break;
-                case TypeInt16: val = readInt16(); break;
-                case TypeUInt32: val = readUInt32(); break;
-                case TypeInt32: val = readInt32(); break;
-                case TypeUInt64: val = readUInt64(); break;
-                case TypeInt64: val = readInt64(); break;
-                case TypeFloat: val = readFloat(); break;
-                case TypeDouble: val = readDouble(); break;
-                case TypeString: val = readStringData(); break;
-                case TypeUUID: val = readUUIDData(); break;
-                case TypeUMID: val = readUMIDData(); break;
-                case TypeDateTime: val = readDateTimeData(); break;
-                case TypeTimeStamp: val = readTimeStampData(); break;
-                case TypeSize2D: {
-                        // Outer tag already consumed; inner values are
-                        // tagged primitives read via operator>>.
-                        uint32_t w = 0, h = 0;
-                        *this >> w >> h;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = Size2Du32(w, h);
-                        break;
-                }
-                case TypeRational: {
-                        int32_t num = 0, den = 1;
-                        *this >> num >> den;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = Rational<int>(num, den);
-                        break;
-                }
-                case TypeFrameRate: val = readFrameRateData(); break;
-                case TypeVideoFormat: val = readVideoFormatData(); break;
-                case TypeTimecode: val = readTimecodeData(); break;
-                case TypeColor: val = readColorData(); break;
-                case TypeColorModel: val = readColorModelData(); break;
-                case TypeMemSpace: val = readMemSpaceData(); break;
-                case TypePixelMemLayout: val = readPixelMemLayoutData(); break;
-                case TypePixelFormat: val = readPixelFormatData(); break;
-                case TypeAudioFormat: val = readAudioFormatData(); break;
-                case TypeAncFormat: val = readAncFormatData(); break;
-                case TypeEnum: val = readEnumData(); break;
-                case TypeEnumList: val = readEnumListData(); break;
-                case TypeMediaTimeStamp: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto [mts, parseErr] = MediaTimeStamp::fromString(s);
-                        if (parseErr.isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse MediaTimeStamp from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = mts;
-                        break;
-                }
-                case TypeFrameNumber: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        Error       pe;
-                        FrameNumber fn = FrameNumber::fromString(s, &pe);
-                        if (pe.isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse FrameNumber from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = fn;
-                        break;
-                }
-                case TypeFrameCount: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        Error      pe;
-                        FrameCount fc = FrameCount::fromString(s, &pe);
-                        if (pe.isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse FrameCount from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = fc;
-                        break;
-                }
-                case TypeMediaDuration: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        Error         pe;
-                        MediaDuration md = MediaDuration::fromString(s, &pe);
-                        if (pe.isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse MediaDuration from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = md;
-                        break;
-                }
-                case TypeDuration: {
-                        const int64_t ns = readInt64();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = Duration::fromNanoseconds(ns);
-                        break;
-                }
-                case TypeStringList: val = readStringListData(); break;
-                case TypeMasteringDisplay: {
-                        // Outer tag already consumed; inner values are tagged
-                        // doubles read via operator>>.  Ten doubles total:
-                        // red.x, red.y, green.x, green.y, blue.x, blue.y,
-                        // whitePoint.x, whitePoint.y, minLum, maxLum.
-                        double rx = 0.0, ry = 0.0, gx = 0.0, gy = 0.0;
-                        double bx = 0.0, by = 0.0, wx = 0.0, wy = 0.0;
-                        double minL = 0.0, maxL = 0.0;
-                        *this >> rx >> ry >> gx >> gy >> bx >> by >> wx >> wy >> minL >> maxL;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy), CIEPoint(bx, by), CIEPoint(wx, wy),
-                                               minL, maxL);
-                        break;
-                }
-                case TypeContentLightLevel: {
-                        uint32_t maxCLL = 0, maxFALL = 0;
-                        *this >> maxCLL >> maxFALL;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = ContentLightLevel(maxCLL, maxFALL);
-                        break;
-                }
-                case TypeUrl: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        Result<Url> r = Url::fromString(s);
-                        if (r.second().isError() || !r.first().isValid()) {
-                                setError(ReadCorruptData, String::sprintf("Failed to parse Url from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = r.first();
-                        break;
-                }
-                case TypeVideoCodec: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto r = VideoCodec::fromString(s);
-                        if (error(r).isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse VideoCodec from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = value(r);
-                        break;
-                }
-                case TypeAudioCodec: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto r = AudioCodec::fromString(s);
-                        if (error(r).isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse AudioCodec from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = value(r);
-                        break;
-                }
-                case TypeAudioStreamDesc: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto r = AudioStreamDesc::fromString(s);
-                        if (error(r).isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse AudioStreamDesc from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = value(r);
-                        break;
-                }
-                case TypeAudioChannelMap: {
-                        // Outer tag already consumed; the per-entry payload
-                        // is a uint32 count followed by N (streamName, role)
-                        // pairs — the same shape produced by
-                        // operator<<(DataStream&, const AudioChannelMap&).
-                        uint32_t count = 0;
-                        *this >> count;
-                        AudioChannelMap::EntryList entries;
-                        entries.reserve(count);
-                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
-                                String  streamName;
-                                int32_t roleValue = 0;
-                                *this >> streamName >> roleValue;
-                                AudioStreamDesc s = (streamName.isEmpty() || streamName == "Undefined")
-                                                            ? AudioStreamDesc()
-                                                            : AudioStreamDesc(streamName);
-                                entries.pushToBack(AudioChannelMap::Entry(s, ChannelRole(roleValue)));
-                        }
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = AudioChannelMap(std::move(entries));
-                        break;
-                }
-                case TypeAudioMarkerList: {
-                        // Outer tag already consumed; the per-entry payload
-                        // is a uint32 count followed by N (int64 offset,
-                        // int64 length, int32 type) triples — same shape
-                        // produced by
-                        // operator<<(DataStream&, const AudioMarkerList&).
-                        uint32_t count = 0;
-                        *this >> count;
-                        AudioMarkerList::EntryList entries;
-                        entries.reserve(count);
-                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
-                                int64_t offset    = 0;
-                                int64_t length    = 0;
-                                int32_t typeValue = 0;
-                                *this >> offset >> length >> typeValue;
-                                entries.pushToBack(AudioMarker(offset, length, AudioMarkerType(typeValue)));
-                        }
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = AudioMarkerList(std::move(entries));
-                        break;
-                }
-                case TypeWindowedStat: {
-                        // Outer tag already consumed; the per-entry payload
-                        // is uint32 capacity + uint32 count + N tagged
-                        // doubles — same shape produced by
-                        // operator<<(DataStream&, const WindowedStat&).
-                        uint32_t capacity = 0;
-                        uint32_t count = 0;
-                        *this >> capacity;
-                        *this >> count;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        WindowedStat ws(static_cast<int>(capacity));
-                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
-                                double v = 0.0;
-                                *this >> v;
-                                ws.push(v);
-                        }
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = ws;
-                        break;
-                }
-                case TypeVariantList: {
-                        // Outer tag already consumed; payload is uint32
-                        // count + N tagged Variants — same shape as
-                        // operator<<(DataStream&, const VariantList&)
-                        // minus the leading tag.
-                        uint32_t count = 0;
-                        *this >> count;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        VariantList list;
-                        list.reserve(count);
-                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
-                                Variant v;
-                                *this >> v;
-                                list.pushToBack(std::move(v));
-                        }
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = list;
-                        break;
-                }
-                case TypeVariantMap: {
-                        // Outer tag already consumed; payload is uint32
-                        // count + N (String key, Variant value) pairs —
-                        // same shape as operator<<(DataStream&, const
-                        // VariantMap&) minus the leading tag.
-                        uint32_t count = 0;
-                        *this >> count;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        VariantMap map;
-                        for (uint32_t i = 0; i < count && _status == Ok; ++i) {
-                                String  key;
-                                Variant entry;
-                                *this >> key >> entry;
-                                map.insert(std::move(key), std::move(entry));
-                        }
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = map;
-                        break;
-                }
-#if PROMEKI_ENABLE_NETWORK
-                case TypeSocketAddress: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto r = SocketAddress::fromString(s);
-                        if (error(r).isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse SocketAddress from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = value(r);
-                        break;
-                }
-                case TypeSdpSession: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto r = SdpSession::fromString(s);
-                        if (error(r).isError()) {
-                                setError(ReadCorruptData, "Failed to parse SdpSession from SDP text");
-                                val = Variant();
-                                break;
-                        }
-                        val = value(r);
-                        break;
-                }
-                case TypeMacAddress: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto [mac, parseErr] = MacAddress::fromString(s);
-                        if (parseErr.isError()) {
-                                setError(ReadCorruptData,
-                                         String::sprintf("Failed to parse MacAddress from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = mac;
-                        break;
-                }
-                case TypeEUI64: {
-                        String s = readStringData();
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        auto [eui, parseErr] = EUI64::fromString(s);
-                        if (parseErr.isError()) {
-                                setError(ReadCorruptData, String::sprintf("Failed to parse EUI64 from '%s'", s.cstr()));
-                                val = Variant();
-                                break;
-                        }
-                        val = eui;
-                        break;
-                }
-#endif
-                case TypeXmlDocument: {
-                        // operator<<(DataStream&, const XmlDocument&) writes the
-                        // body as a tagged String (TypeString length-prefix), so
-                        // we must consume the TypeString tag here too — not call
-                        // readStringData() directly.
-                        String s;
-                        *this >> s;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        XmlParseError perr;
-                        XmlDocument   doc = XmlDocument::parse(s, &perr);
-                        if (!perr) {
-                                setError(ReadCorruptData,
-                                         String("XmlDocument::parse failed: ") + perr.toString());
-                                val = Variant();
-                                break;
-                        }
-                        val = std::move(doc);
-                        break;
-                }
-                case TypeCea708Cdp: {
-                        // operator<<(DataStream&, const Cea708Cdp&) writes the
-                        // body as a tagged Buffer.  Consume the inner Buffer tag
-                        // and reconstruct via Cea708Cdp::fromBuffer.
-                        Buffer buf;
-                        *this >> buf;
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(buf);
-                        if (r.second().isError()) {
-                                setError(ReadCorruptData,
-                                         String("Cea708Cdp::fromBuffer failed: ") + r.second().desc());
-                                val = Variant();
-                                break;
-                        }
-                        val = std::move(r.first());
-                        break;
-                }
-                case TypeSubtitle: {
-                        // The dedicated Subtitle DataStream operators
-                        // consume the field-by-field payload; the
-                        // frame header was already eaten by
-                        // readFrameHeader() upstream, so we drop
-                        // directly into the field reader.
-                        extern Subtitle readSubtitleData(DataStream &);
-                        Subtitle        sub = readSubtitleData(*this);
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = std::move(sub);
-                        break;
-                }
-                case TypeCea608: {
-                        // Cea608Packet's DataStream operators write a
-                        // tagged channel + cc_data triple list; the
-                        // frame header was already consumed by
-                        // readFrameHeader() upstream, so dispatch
-                        // into the field reader.
-                        extern Cea608Packet readCea608PacketData(DataStream &);
-                        Cea608Packet pkt = readCea608PacketData(*this);
-                        if (_status != Ok) {
-                                val = Variant();
-                                break;
-                        }
-                        val = std::move(pkt);
-                        break;
-                }
-                default:
-                        // Forward-compatibility path: an unknown
-                        // tag is treated as a value we don't know
-                        // how to represent, but the frame header
-                        // already told us exactly how many body
-                        // bytes follow.  Consume them so the stream
-                        // is positioned at the next frame, and hand
-                        // back a default Variant — older readers
-                        // can survive newer writers without going
-                        // into a corrupt-data state.
-                        skipFrameBody(bodySize);
-                        val = Variant();
-                        (void)version;
-                        break;
-        }
-}
 
 DataStream &DataStream::operator>>(Variant &val) {
         TypeId   tag = static_cast<TypeId>(0);
         uint16_t ver = 0;
-        uint32_t sz = 0;
-        if (!readFrameHeader(tag, ver, sz)) {
+        uint32_t sz  = 0;
+        if (!peekFrameHeader(tag, ver, sz)) {
                 val = Variant();
                 return *this;
         }
-        readVariantPayload(tag, ver, sz, val);
+        const DataType       dt(tag);
+        const DataType::Data *td = dt.data();
+        if (td != nullptr && td->ops.readStream != nullptr && td->ops.defaultConstruct != nullptr) {
+                val = Variant::readFromStream(*this, dt);
+                return *this;
+        }
+        // Unknown tag — consume the cached header (so the body bytes
+        // line up) and skip past the body for forward compatibility.
+        readFrameHeader(tag, ver, sz);
+        skipFrameBody(sz);
+        val = Variant();
         return *this;
 }
-
-// ============================================================================
-// Compile-time coverage check
-//
-// For every type registered in @c PROMEKI_VARIANT_TYPES, assert that
-// a dedicated wire-format @c operator<< / @c operator>> exists for
-// the concrete type — not just an expression that happens to compile
-// via @c Variant 's implicit converting constructor.  Without this
-// strictness, a missing dedicated operator would silently fall back
-// to the @c Variant overload, which then recurses right back here
-// and either infinite-loops at runtime or writes a useless tag.
-//
-// Strategy:
-//
-//   - @c has_member_write / @c has_member_read detect an *exact-match*
-//     member function via pointer-to-member-function cast.  Pointer
-//     casts never apply user-defined conversions, so there's no way
-//     for the @c Variant ctor to mask a missing specific overload.
-//
-//   - For the handful of Variant types whose wire operator is a free
-//     function template (Size2D, Rational) or a non-member inline
-//     (MasteringDisplay, ContentLightLevel), we explicitly trait them
-//     as writable/readable.  These specialisations live right here so
-//     anyone re-routing a type away from free-function templates
-//     knows exactly what to update.
-//
-// @c std::monostate is whitelisted because @c TypeInvalid has no
-// payload — it's handled by the X-macro write dispatch and the
-// read-switch's explicit @c TypeInvalid case.
-// ============================================================================
-
-namespace {
-        // Exact-match member function detection.  Primitives are
-        // passed by value (see the many @c operator<<(int32_t val)
-        // members); everything else is passed by @c const &.  Probe
-        // both signatures so either pattern counts as "covered".
-        template <typename T, typename = void> struct has_member_write : std::false_type {};
-        template <typename T>
-        struct has_member_write<
-                T, std::void_t<decltype(static_cast<DataStream &(DataStream::*)(const T &)>(&DataStream::operator<<))>>
-            : std::true_type {};
-        template <typename T>
-        struct has_member_write<
-                T, std::void_t<decltype(static_cast<DataStream &(DataStream::*)(T)>(&DataStream::operator<<))>>
-            : std::true_type {};
-
-        template <typename T, typename = void> struct has_member_read : std::false_type {};
-        template <typename T>
-        struct has_member_read<
-                T, std::void_t<decltype(static_cast<DataStream &(DataStream::*)(T &)>(&DataStream::operator>>))>>
-            : std::true_type {};
-
-        // Free-function / inline-template allowlist.  Adding a new
-        // entry here is a deliberate acknowledgement that the type's
-        // wire operator lives outside of @c DataStream 's member
-        // functions; prefer adding a member operator for new types
-        // instead.
-        template <typename T> struct has_free_write : std::false_type {};
-        template <typename T> struct has_free_read : std::false_type {};
-        template <typename T> struct has_free_write<Size2DTemplate<T>> : std::true_type {};
-        template <typename T> struct has_free_read<Size2DTemplate<T>> : std::true_type {};
-        template <typename T> struct has_free_write<Rational<T>> : std::true_type {};
-        template <typename T> struct has_free_read<Rational<T>> : std::true_type {};
-        template <> struct has_free_write<MasteringDisplay> : std::true_type {};
-        template <> struct has_free_read<MasteringDisplay> : std::true_type {};
-        template <> struct has_free_write<ContentLightLevel> : std::true_type {};
-        template <> struct has_free_read<ContentLightLevel> : std::true_type {};
-        template <> struct has_free_write<AudioStreamDesc> : std::true_type {};
-        template <> struct has_free_read<AudioStreamDesc> : std::true_type {};
-        template <> struct has_free_write<AudioChannelMap> : std::true_type {};
-        template <> struct has_free_read<AudioChannelMap> : std::true_type {};
-        template <> struct has_free_write<AudioMarkerList> : std::true_type {};
-        template <> struct has_free_read<AudioMarkerList> : std::true_type {};
-        template <> struct has_free_write<WindowedStat> : std::true_type {};
-        template <> struct has_free_read<WindowedStat> : std::true_type {};
-        template <> struct has_free_write<VariantList> : std::true_type {};
-        template <> struct has_free_read<VariantList> : std::true_type {};
-        template <> struct has_free_write<VariantMap> : std::true_type {};
-        template <> struct has_free_read<VariantMap> : std::true_type {};
-        template <> struct has_free_write<XmlDocument> : std::true_type {};
-        template <> struct has_free_read<XmlDocument> : std::true_type {};
-        template <> struct has_free_write<Cea708Cdp> : std::true_type {};
-        template <> struct has_free_read<Cea708Cdp> : std::true_type {};
-        template <> struct has_free_write<Cea608Packet> : std::true_type {};
-        template <> struct has_free_read<Cea608Packet> : std::true_type {};
-        template <> struct has_free_write<Subtitle> : std::true_type {};
-        template <> struct has_free_read<Subtitle> : std::true_type {};
-
-        template <typename T>
-        inline constexpr bool has_datastream_write_v = has_member_write<T>::value || has_free_write<T>::value;
-        template <typename T>
-        inline constexpr bool has_datastream_read_v = has_member_read<T>::value || has_free_read<T>::value;
-
-#define X(name, type)                                                                                                  \
-        static_assert(std::is_same_v<type, std::monostate> || has_datastream_write_v<type>,                            \
-                      "Variant " #name " (" #type ") has no exact-match "                                              \
-                      "operator<<(DataStream&, const " #type "&) — add a "                                             \
-                      "DataStream member operator<< (preferred) or a free "                                            \
-                      "template specialisation entry above, then update the "                                          \
-                      "Variant write dispatch.");                                                                      \
-        static_assert(std::is_same_v<type, std::monostate> || has_datastream_read_v<type>,                             \
-                      "Variant " #name " (" #type ") has no exact-match "                                              \
-                      "operator>>(DataStream&, " #type "&) — add a "                                                   \
-                      "DataStream member operator>> (preferred) or a free "                                            \
-                      "template specialisation entry above, then update "                                              \
-                      "readVariantPayload().");
-        PROMEKI_VARIANT_TYPES
-#undef X
-} // namespace
 
 PROMEKI_NAMESPACE_END

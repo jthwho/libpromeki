@@ -12,6 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/duration.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -56,22 +57,30 @@ class DateTime {
                 static DateTime now() { return DateTime(std::chrono::system_clock::now()); }
 
                 /**
-                 * @brief Parses a DateTime from a formatted string.
+                 * @brief Parses a DateTime from a string using @ref DefaultFormat.
                  * @param str The date/time string to parse.
-                 * @param fmt The strftime-style format string (default: DefaultFormat).
-                 * @param err Optional error output; set to Error::Invalid on parse failure.
-                 * @return The parsed DateTime, or a default-constructed DateTime on failure.
+                 * @return A Result containing the parsed DateTime and
+                 *         Error::Ok on success, or a default-constructed
+                 *         DateTime and Error::ParseFailed on failure.
                  */
-                static DateTime fromString(const String &str, const char *fmt = DefaultFormat, Error *err = nullptr) {
+                static Result<DateTime> fromString(const String &str) {
+                        return fromString(str, DefaultFormat);
+                }
+
+                /**
+                 * @brief Parses a DateTime from a string with an explicit format.
+                 * @param str The date/time string to parse.
+                 * @param fmt A strftime-style format string.
+                 * @return A Result containing the parsed DateTime and
+                 *         Error::Ok on success, or a default-constructed
+                 *         DateTime and Error::ParseFailed on failure.
+                 */
+                static Result<DateTime> fromString(const String &str, const char *fmt) {
                         std::tm tm = {};
                         tm.tm_isdst = -1;
                         const char *result = strptime(str.cstr(), fmt, &tm);
-                        if (result == nullptr) {
-                                if (err != nullptr) *err = Error::Invalid;
-                                return DateTime();
-                        }
-                        if (err != nullptr) *err = Error::Ok;
-                        return DateTime(tm);
+                        if (result == nullptr) return makeError<DateTime>(Error::ParseFailed);
+                        return makeResult(DateTime(tm));
                 }
 
                 /**

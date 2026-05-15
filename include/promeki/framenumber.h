@@ -11,6 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -52,8 +53,7 @@ class FrameCount;
  * assert(x.isUnknown());
  *
  * String s = n.toString();    // "45"
- * Error err;
- * FrameNumber p = FrameNumber::fromString("  100 ", &err);
+ * auto [p, err] = FrameNumber::fromString("  100 ");
  * assert(err.isOk() && p.value() == 100);
  * @endcode
  */
@@ -78,13 +78,12 @@ class FrameNumber {
                  * - decimal integer @c >= 0 → the corresponding frame
                  *
                  * @param str The string to parse.
-                 * @param err Optional error output; set to @c Error::Ok on
-                 *            success, @c Error::ParseFailed on malformed
-                 *            input, or @c Error::OutOfRange if a parsed
-                 *            integer is negative.
-                 * @return The parsed FrameNumber, or @c Unknown on failure.
+                 * @return A Result containing the parsed FrameNumber and
+                 *         @c Error::Ok on success, or @c Unknown and
+                 *         @c Error::ParseFailed / @c Error::OutOfRange on
+                 *         failure.
                  */
-                static FrameNumber fromString(const String &str, Error *err = nullptr);
+                static Result<FrameNumber> fromString(const String &str);
 
                 /** @brief Default-constructs an @c Unknown FrameNumber. */
                 constexpr FrameNumber() = default;

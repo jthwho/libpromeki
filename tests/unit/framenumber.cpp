@@ -129,38 +129,33 @@ TEST_CASE("FrameNumber comparisons") {
 TEST_CASE("FrameNumber toString and fromString") {
         SUBCASE("Unknown round-trips through empty string") {
                 CHECK(FrameNumber::unknown().toString() == String());
-                Error       err;
-                FrameNumber fn = FrameNumber::fromString(String(), &err);
+                auto [fn, err] = FrameNumber::fromString(String());
                 CHECK(err.isOk());
                 CHECK(fn.isUnknown());
         }
         SUBCASE("Valid round-trip") {
                 CHECK(FrameNumber(42).toString() == String("42"));
-                Error       err;
-                FrameNumber fn = FrameNumber::fromString(String("42"), &err);
+                auto [fn, err] = FrameNumber::fromString(String("42"));
                 CHECK(err.isOk());
                 CHECK(fn.value() == 42);
         }
         SUBCASE("Lenient parse: surrounding whitespace") {
-                Error       err;
-                FrameNumber fn = FrameNumber::fromString(String("   100  "), &err);
+                auto [fn, err] = FrameNumber::fromString(String("   100  "));
                 CHECK(err.isOk());
                 CHECK(fn.value() == 100);
         }
         SUBCASE("Lenient parse: 'unknown' / 'unk' / '?' (case insensitive)") {
-                CHECK(FrameNumber::fromString(String("unknown")).isUnknown());
-                CHECK(FrameNumber::fromString(String("UNK")).isUnknown());
-                CHECK(FrameNumber::fromString(String("?")).isUnknown());
+                CHECK(value(FrameNumber::fromString(String("unknown"))).isUnknown());
+                CHECK(value(FrameNumber::fromString(String("UNK"))).isUnknown());
+                CHECK(value(FrameNumber::fromString(String("?"))).isUnknown());
         }
         SUBCASE("Negative numeric input is OutOfRange") {
-                Error       err;
-                FrameNumber fn = FrameNumber::fromString(String("-5"), &err);
+                auto [fn, err] = FrameNumber::fromString(String("-5"));
                 CHECK(err == Error::OutOfRange);
                 CHECK(fn.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error       err;
-                FrameNumber fn = FrameNumber::fromString(String("abc"), &err);
+                auto [fn, err] = FrameNumber::fromString(String("abc"));
                 CHECK(err == Error::ParseFailed);
                 CHECK(fn.isUnknown());
         }

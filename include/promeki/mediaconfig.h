@@ -9,6 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
+#include <promeki/color.h>
 #include <promeki/enums.h>
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
@@ -17,6 +18,10 @@
 #include <promeki/macaddress.h>
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
+#include <promeki/videoformat.h>
+#include <promeki/audiocodec.h>
+#include <promeki/videocodec.h>
+#include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

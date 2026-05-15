@@ -164,7 +164,7 @@ TEST_CASE("Color: complementary gray is gray") {
 }
 
 TEST_CASE("Color: fromString hex") {
-        Color c = Color::fromString("#ff8040");
+        Color c = value(Color::fromString("#ff8040"));
         CHECK(c.isValid());
         CHECK(c.r8() == 255);
         CHECK(c.g8() == 128);
@@ -172,24 +172,24 @@ TEST_CASE("Color: fromString hex") {
 }
 
 TEST_CASE("Color: fromString named colors") {
-        CHECK(Color::fromString("red") == Color::Red);
-        CHECK(Color::fromString("Red") == Color::Red);
-        CHECK(Color::fromString("RED") == Color::Red);
-        CHECK(Color::fromString("white") == Color::White);
-        CHECK(Color::fromString("black") == Color::Black);
-        CHECK(Color::fromString("blue") == Color::Blue);
-        CHECK(Color::fromString("green") == Color::Green);
-        CHECK(Color::fromString("yellow") == Color::Yellow);
-        CHECK(Color::fromString("cyan") == Color::Cyan);
-        CHECK(Color::fromString("magenta") == Color::Magenta);
-        CHECK(Color::fromString("orange") == Color::Orange);
-        CHECK(Color::fromString("darkgray") == Color::DarkGray);
-        CHECK(Color::fromString("lightgray") == Color::LightGray);
-        CHECK(Color::fromString("transparent") == Color::Transparent);
+        CHECK(value(Color::fromString("red")) == Color::Red);
+        CHECK(value(Color::fromString("Red")) == Color::Red);
+        CHECK(value(Color::fromString("RED")) == Color::Red);
+        CHECK(value(Color::fromString("white")) == Color::White);
+        CHECK(value(Color::fromString("black")) == Color::Black);
+        CHECK(value(Color::fromString("blue")) == Color::Blue);
+        CHECK(value(Color::fromString("green")) == Color::Green);
+        CHECK(value(Color::fromString("yellow")) == Color::Yellow);
+        CHECK(value(Color::fromString("cyan")) == Color::Cyan);
+        CHECK(value(Color::fromString("magenta")) == Color::Magenta);
+        CHECK(value(Color::fromString("orange")) == Color::Orange);
+        CHECK(value(Color::fromString("darkgray")) == Color::DarkGray);
+        CHECK(value(Color::fromString("lightgray")) == Color::LightGray);
+        CHECK(value(Color::fromString("transparent")) == Color::Transparent);
 }
 
 TEST_CASE("Color: fromString comma-separated RGB") {
-        Color c = Color::fromString("128,64,32");
+        Color c = value(Color::fromString("128,64,32"));
         CHECK(c.isValid());
         CHECK(c.r8() == 128);
         CHECK(c.g8() == 64);
@@ -198,7 +198,7 @@ TEST_CASE("Color: fromString comma-separated RGB") {
 }
 
 TEST_CASE("Color: fromString comma-separated RGBA") {
-        Color c = Color::fromString("128,64,32,200");
+        Color c = value(Color::fromString("128,64,32,200"));
         CHECK(c.isValid());
         CHECK(c.r8() == 128);
         CHECK(c.g8() == 64);
@@ -207,7 +207,7 @@ TEST_CASE("Color: fromString comma-separated RGBA") {
 }
 
 TEST_CASE("Color: fromString hex with alpha") {
-        Color c = Color::fromString("#ff804080");
+        Color c = value(Color::fromString("#ff804080"));
         CHECK(c.isValid());
         CHECK(c.r8() == 255);
         CHECK(c.g8() == 128);
@@ -216,7 +216,7 @@ TEST_CASE("Color: fromString hex with alpha") {
 }
 
 TEST_CASE("Color: fromString comma-separated with whitespace") {
-        Color c = Color::fromString("128, 64, 32");
+        Color c = value(Color::fromString("128, 64, 32"));
         CHECK(c.isValid());
         CHECK(c.r8() == 128);
         CHECK(c.g8() == 64);
@@ -225,7 +225,7 @@ TEST_CASE("Color: fromString comma-separated with whitespace") {
 }
 
 TEST_CASE("Color: fromString comma-separated RGBA with whitespace") {
-        Color c = Color::fromString(" 10 , 20 , 30 , 40 ");
+        Color c = value(Color::fromString(" 10 , 20 , 30 , 40 "));
         CHECK(c.isValid());
         CHECK(c.r8() == 10);
         CHECK(c.g8() == 20);
@@ -234,40 +234,40 @@ TEST_CASE("Color: fromString comma-separated RGBA with whitespace") {
 }
 
 TEST_CASE("Color: fromString invalid") {
-        CHECK_FALSE(Color::fromString("").isValid());
-        CHECK_FALSE(Color::fromString("notacolor").isValid());
-        CHECK_FALSE(Color::fromString("256,0,0").isValid());
-        CHECK_FALSE(Color::fromString("-1,0,0").isValid());
+        CHECK_FALSE(value(Color::fromString("")).isValid());
+        CHECK_FALSE(value(Color::fromString("notacolor")).isValid());
+        CHECK_FALSE(value(Color::fromString("256,0,0")).isValid());
+        CHECK_FALSE(value(Color::fromString("-1,0,0")).isValid());
 }
 
 TEST_CASE("Color: fromString invalid component counts") {
-        CHECK_FALSE(Color::fromString("128,64").isValid());
-        CHECK_FALSE(Color::fromString("128,64,32,200,100").isValid());
-        CHECK_FALSE(Color::fromString("128").isValid());
+        CHECK_FALSE(value(Color::fromString("128,64")).isValid());
+        CHECK_FALSE(value(Color::fromString("128,64,32,200,100")).isValid());
+        CHECK_FALSE(value(Color::fromString("128")).isValid());
 }
 
 TEST_CASE("Color: fromString out of range values") {
-        CHECK_FALSE(Color::fromString("0,0,256").isValid());
-        CHECK_FALSE(Color::fromString("0,0,0,256").isValid());
-        CHECK_FALSE(Color::fromString("0,-1,0").isValid());
-        CHECK_FALSE(Color::fromString("-1,0,0,0").isValid());
+        CHECK_FALSE(value(Color::fromString("0,0,256")).isValid());
+        CHECK_FALSE(value(Color::fromString("0,0,0,256")).isValid());
+        CHECK_FALSE(value(Color::fromString("0,-1,0")).isValid());
+        CHECK_FALSE(value(Color::fromString("-1,0,0,0")).isValid());
 }
 
 TEST_CASE("Color: fromString non-numeric comma values") {
-        CHECK_FALSE(Color::fromString("abc,def,ghi").isValid());
-        CHECK_FALSE(Color::fromString("10,abc,20").isValid());
-        CHECK_FALSE(Color::fromString("10,20,30,abc").isValid());
+        CHECK_FALSE(value(Color::fromString("abc,def,ghi")).isValid());
+        CHECK_FALSE(value(Color::fromString("10,abc,20")).isValid());
+        CHECK_FALSE(value(Color::fromString("10,20,30,abc")).isValid());
 }
 
 TEST_CASE("Color: fromString boundary values") {
-        Color c = Color::fromString("0,0,0,0");
+        Color c = value(Color::fromString("0,0,0,0"));
         CHECK(c.isValid());
         CHECK(c.r8() == 0);
         CHECK(c.g8() == 0);
         CHECK(c.b8() == 0);
         CHECK(c.a8() == 0);
 
-        Color c2 = Color::fromString("255,255,255,255");
+        Color c2 = value(Color::fromString("255,255,255,255"));
         CHECK(c2.isValid());
         CHECK(c2.r8() == 255);
         CHECK(c2.g8() == 255);
@@ -278,7 +278,7 @@ TEST_CASE("Color: fromString boundary values") {
 TEST_CASE("Color: toString/fromString round-trip") {
         Color  original(128, 64, 32);
         String str = original.toString();
-        Color  parsed = Color::fromString(str);
+        Color  parsed = value(Color::fromString(str));
         CHECK(parsed.isValid());
         CHECK(parsed.r8() == original.r8());
         CHECK(parsed.g8() == original.g8());
@@ -288,7 +288,7 @@ TEST_CASE("Color: toString/fromString round-trip") {
 TEST_CASE("Color: toString/fromString round-trip with alpha") {
         Color  original(128, 64, 32, 200);
         String str = original.toString();
-        Color  parsed = Color::fromString(str);
+        Color  parsed = value(Color::fromString(str));
         CHECK(parsed.isValid());
         CHECK(parsed.r8() == original.r8());
         CHECK(parsed.g8() == original.g8());
@@ -347,7 +347,7 @@ TEST_CASE("Color: toString AlphaNever") {
 }
 
 TEST_CASE("Color: fromString rgb() functional notation") {
-        Color c = Color::fromString("rgb(0.501961,0.25098,0.12549)");
+        Color c = value(Color::fromString("rgb(0.501961,0.25098,0.12549)"));
         CHECK(c.isValid());
         CHECK(c.r8() == 128);
         CHECK(c.g8() == 64);
@@ -356,7 +356,7 @@ TEST_CASE("Color: fromString rgb() functional notation") {
 }
 
 TEST_CASE("Color: fromString rgba() functional notation") {
-        Color c = Color::fromString("rgba(0.501961,0.25098,0.12549,0.784314)");
+        Color c = value(Color::fromString("rgba(0.501961,0.25098,0.12549,0.784314)"));
         CHECK(c.isValid());
         CHECK(c.r8() == 128);
         CHECK(c.g8() == 64);
@@ -365,42 +365,42 @@ TEST_CASE("Color: fromString rgba() functional notation") {
 }
 
 TEST_CASE("Color: fromString rgb() edge values") {
-        Color c = Color::fromString("rgb(0,0,0)");
+        Color c = value(Color::fromString("rgb(0,0,0)"));
         CHECK(c.isValid());
         CHECK(c == Color::Black);
 
-        Color c2 = Color::fromString("rgb(1,1,1)");
+        Color c2 = value(Color::fromString("rgb(1,1,1)"));
         CHECK(c2.isValid());
         CHECK(c2 == Color::White);
 }
 
 TEST_CASE("Color: fromString rgba() zero alpha") {
-        Color c = Color::fromString("rgba(0,0,0,0)");
+        Color c = value(Color::fromString("rgba(0,0,0,0)"));
         CHECK(c.isValid());
         CHECK(c == Color::Transparent);
 }
 
 TEST_CASE("Color: fromString rgb() case insensitive") {
-        CHECK(Color::fromString("RGB(1,0,0)") == Color::Red);
-        CHECK(Color::fromString("Rgb(0,1,0)") == Color::Green);
-        CHECK(Color::fromString("RGBA(0,0,1,1)") == Color::Blue);
+        CHECK(value(Color::fromString("RGB(1,0,0)")) == Color::Red);
+        CHECK(value(Color::fromString("Rgb(0,1,0)")) == Color::Green);
+        CHECK(value(Color::fromString("RGBA(0,0,1,1)")) == Color::Blue);
 }
 
 TEST_CASE("Color: fromString rgb() invalid") {
-        CHECK_FALSE(Color::fromString("rgb()").isValid());
-        CHECK_FALSE(Color::fromString("rgb(1,2)").isValid());
-        CHECK_FALSE(Color::fromString("rgb(1,0,0,0)").isValid());
-        CHECK_FALSE(Color::fromString("rgba(1,0,0)").isValid());
-        CHECK_FALSE(Color::fromString("rgb(1.5,0,0)").isValid());
-        CHECK_FALSE(Color::fromString("rgb(-0.1,0,0)").isValid());
-        CHECK_FALSE(Color::fromString("rgb(0,0,0").isValid());
+        CHECK_FALSE(value(Color::fromString("rgb()")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgb(1,2)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgb(1,0,0,0)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgba(1,0,0)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgb(1.5,0,0)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgb(-0.1,0,0)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgb(0,0,0")).isValid());
 }
 
 TEST_CASE("Color: fromString grey spelling variants") {
-        CHECK(Color::fromString("darkgrey") == Color::DarkGray);
-        CHECK(Color::fromString("DarkGrey") == Color::DarkGray);
-        CHECK(Color::fromString("lightgrey") == Color::LightGray);
-        CHECK(Color::fromString("LightGrey") == Color::LightGray);
+        CHECK(value(Color::fromString("darkgrey")) == Color::DarkGray);
+        CHECK(value(Color::fromString("DarkGrey")) == Color::DarkGray);
+        CHECK(value(Color::fromString("lightgrey")) == Color::LightGray);
+        CHECK(value(Color::fromString("LightGrey")) == Color::LightGray);
 }
 
 // --- New tests for ColorModel-aware features ---
@@ -958,20 +958,20 @@ TEST_CASE("Color: all named constants are sRGB") {
 // ── fromString edge cases ────────────────────────────────────────
 
 TEST_CASE("Color: fromString short hex is invalid") {
-        CHECK_FALSE(Color::fromString("#fff").isValid());
+        CHECK_FALSE(value(Color::fromString("#fff")).isValid());
 }
 
 TEST_CASE("Color: fromString # only is invalid") {
-        CHECK_FALSE(Color::fromString("#").isValid());
+        CHECK_FALSE(value(Color::fromString("#")).isValid());
 }
 
 TEST_CASE("Color: fromString invalid hex digits") {
-        CHECK_FALSE(Color::fromString("#gggggg").isValid());
+        CHECK_FALSE(value(Color::fromString("#gggggg")).isValid());
 }
 
 TEST_CASE("Color: fromString rgba out-of-range alpha") {
-        CHECK_FALSE(Color::fromString("rgba(0.5,0.5,0.5,1.5)").isValid());
-        CHECK_FALSE(Color::fromString("rgba(0.5,0.5,0.5,-0.1)").isValid());
+        CHECK_FALSE(value(Color::fromString("rgba(0.5,0.5,0.5,1.5)")).isValid());
+        CHECK_FALSE(value(Color::fromString("rgba(0.5,0.5,0.5,-0.1)")).isValid());
 }
 
 // ── toNative / fromNative ────────────────────────────────────────

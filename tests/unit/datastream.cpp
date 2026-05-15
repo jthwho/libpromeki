@@ -706,11 +706,12 @@ TEST_CASE("DataStream: skipRawData") {
         f.dev.seek(0);
         {
                 DataStream rs = DataStream::createReader(&f.dev);
-                // Each uint8_t value is wrapped in a frame:
-                //   tag(2) + version(1) + size(4) + body(1) = 8 bytes.
-                // Skip the first entry, then read the second.
-                ssize_t skipped = rs.skipRawData(8);
-                CHECK(skipped == 8);
+                // Each uint8_t value is wrapped in a v3 frame:
+                //   tag(2) + version(2) + size(4) + body(1) = 9 bytes.
+                // Skip the first entry entirely, then read the second.
+                const ssize_t frameBytes = static_cast<ssize_t>(DataStream::FrameHeaderSize) + 1;
+                ssize_t skipped = rs.skipRawData(frameBytes);
+                CHECK(skipped == frameBytes);
                 uint8_t val;
                 rs >> val;
                 CHECK(val == 0xBB);
@@ -865,7 +866,7 @@ TEST_CASE("DataStream: round-trip Variant all numeric subtypes") {
 
 TEST_CASE("DataStream: round-trip Variant DateTime") {
         WriterFixture f;
-        DateTime      dt = DateTime::fromString("2025-06-15 12:30:45");
+        DateTime      dt = value(DateTime::fromString("2025-06-15 12:30:45"));
         Variant       vDt(dt);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);

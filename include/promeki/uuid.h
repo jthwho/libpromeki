@@ -12,6 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/array.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -97,22 +98,13 @@ class UUID {
                 static UUID generateV7(int64_t timestampMs = -1);
 
                 /**
-                 * @brief Parses a UUID from a string representation.
-                 * @param string The UUID string (e.g. "550e8400-e29b-41d4-a716-446655440000").
-                 * @param err    Optional error output.
-                 * @return The parsed UUID, or an invalid UUID on failure.
-                 */
-                static UUID fromString(const char *string, Error *err = nullptr);
-
-                /**
                  * @brief Parses a UUID from a String.
                  * @param string The UUID string (e.g. "550e8400-e29b-41d4-a716-446655440000").
-                 * @param err    Optional error output.
-                 * @return The parsed UUID, or an invalid UUID on failure.
+                 * @return A Result containing the parsed UUID and Error::Ok on
+                 *         success, or an invalid UUID and Error::ParseFailed
+                 *         on failure.
                  */
-                static UUID fromString(const String &string, Error *err = nullptr) {
-                        return fromString(string.cstr(), err);
-                }
+                static Result<UUID> fromString(const String &string);
 
                 /** @brief Constructs an invalid (all-zero) UUID. */
                 UUID() : d{} {}

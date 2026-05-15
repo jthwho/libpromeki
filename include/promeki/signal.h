@@ -14,11 +14,12 @@
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/mutex.h>
-#include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class ObjectBase;
+class Variant;
+class VariantList;
 
 /**
  * @brief Type-safe signal/slot mechanism for decoupled event notification.

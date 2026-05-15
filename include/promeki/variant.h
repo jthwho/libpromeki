@@ -1,666 +1,610 @@
 /**
  * @file      variant.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
 
 #pragma once
 
-#include <variant>
+#include <cstddef>
 #include <cstdint>
 #include <format>
-#include <string>
+#include <initializer_list>
 #include <string_view>
-#include <promeki/function.h>
-#include <promeki/config.h>
+#include <type_traits>
+#include <typeindex>
+#include <typeinfo>
+#include <utility>
+#include <nlohmann/json_fwd.hpp>
 #include <promeki/namespace.h>
-#include <promeki/variant_fwd.h>
-#include <promeki/util.h>
+#include <promeki/config.h>
 #include <promeki/string.h>
-#include <promeki/timestamp.h>
-#include <promeki/mediatimestamp.h>
-#include <promeki/framenumber.h>
-#include <promeki/framecount.h>
-#include <promeki/duration.h>
-#include <promeki/mediaduration.h>
-#include <promeki/datetime.h>
-#include <promeki/size2d.h>
-#include <promeki/uuid.h>
-#include <promeki/umid.h>
-#include <promeki/timecode.h>
-#include <promeki/rational.h>
-#include <promeki/framerate.h>
-#include <promeki/videoformat.h>
-#include <promeki/stringlist.h>
-#include <promeki/color.h>
+#include <promeki/error.h>
+#include <promeki/function.h>
+#include <promeki/sharedptr.h>
+#include <promeki/datatype.h>
+#include <promeki/enum.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
+#include <promeki/pair.h>
 #include <promeki/uniqueptr.h>
-#include <promeki/ancformat.h>
-#include <promeki/cea608packet.h>
-#include <promeki/cea708cdp.h>
-#include <promeki/subtitle.h>
-#include <promeki/audiochannelmap.h>
-#include <promeki/audiocodec.h>
-#include <promeki/audioformat.h>
-#include <promeki/audiomarker.h>
-#include <promeki/audiostreamdesc.h>
-#include <promeki/colormodel.h>
-#include <promeki/memspace.h>
-#include <promeki/pixelmemlayout.h>
-#include <promeki/pixelformat.h>
-#include <promeki/videocodec.h>
-#include <promeki/masteringdisplay.h>
-#include <promeki/contentlightlevel.h>
-#include <promeki/enum.h>
-#include <promeki/enumlist.h>
-#include <promeki/url.h>
-#include <promeki/windowedstat.h>
-#include <promeki/xml.h>
-#if PROMEKI_ENABLE_NETWORK
-#include <promeki/socketaddress.h>
-#include <promeki/sdpsession.h>
-#include <promeki/macaddress.h>
-#include <promeki/eui64.h>
-#endif
-#if PROMEKI_ENABLE_TLS
-#include <promeki/sslcontext.h>
-#endif
-#include <nlohmann/json.hpp>
+#include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
+class VariantList;
+class VariantMap;
+
 /**
- * @brief X-macro that defines all supported Variant types.
+ * @brief Heap-allocated payload backing one @ref Variant.
+ *
+ * Lives behind a @ref SharedPtr so copying a Variant is a refcount
+ * bump and mutating a Variant performs copy-on-write.  The structure
+ * is internal — callers should not instantiate one directly; the
+ * @c Detail thunks in variant.cpp are the only legal construction
+ * site.  Member layout is exposed in this header (rather than living
+ * out of line in variant.cpp) so @c SharedPtr<VariantBox>'s
+ * @c IsSharedObject SFINAE check sees @c _promeki_refct without
+ * requiring every consumer of variant.h to include variant.cpp.
+ *
+ * The payload bytes live in trailing storage at @c payloadOffset
+ * past this header — allocated, cloned, and destroyed by the
+ * static helpers defined alongside the registered @ref DataType ops.
+ */
+struct VariantBox {
+                RefCount              _promeki_refct;
+                const DataType::Data *typeData = nullptr;
+
+                /** @brief Returns a pointer to the trailing payload bytes (mutable overload). */
+                void *payload();
+
+                /** @brief Returns a pointer to the trailing payload bytes (const overload). */
+                const void *payload() const;
+
+                /**
+                 * @brief Custom @c SharedPtr clone hook.
+                 *
+                 * Standard SharedPtr cloning would do @c new VariantBox(*this),
+                 * which slices the trailing payload.  This override allocates a
+                 * fresh, properly-sized box and forwards to the registered
+                 * @c copyConstruct op to duplicate the payload bytes.  Defined
+                 * out of line in variant.cpp.
+                 */
+                VariantBox *_promeki_clone() const;
+
+                /** @brief Returns the byte offset from this header to the first payload byte. */
+                static constexpr size_t payloadOffset(size_t typeAlign) {
+                        const size_t headerEnd = sizeof(VariantBox);
+                        const size_t alignment = typeAlign == 0 ? 1 : typeAlign;
+                        return (headerEnd + alignment - 1) & ~(alignment - 1);
+                }
+
+                /** @brief Total byte size needed to hold this header plus the payload for @p td. */
+                static size_t totalSize(const DataType::Data *td) {
+                        return payloadOffset(td->align) + td->size;
+                }
+
+                /**
+                 * @brief Allocates a new VariantBox sized for @p td, copy-constructing the payload from @p src.
+                 *
+                 * @p src may be null when the caller wants to populate
+                 * the payload manually (e.g. DataStream read).  Returns
+                 * @c nullptr if @p td is null.  Defined in variant.cpp.
+                 */
+                static VariantBox *allocate(const DataType::Data *td, const void *src);
+
+                /**
+                 * @brief Custom @c operator @c delete pair invoked by
+                 *        @c SharedPtr's @c delete @c _data path.
+                 *
+                 * Routes through the registered destroy op before
+                 * releasing the over-aligned allocation, since the
+                 * runtime cannot determine the original allocation
+                 * size or alignment on its own.  Defined in variant.cpp.
+                 */
+                static void operator delete(void *p, std::size_t sz) noexcept;
+};
+
+/**
+ * @brief Type-safe tagged value that can hold any registered @ref DataType.
  * @ingroup util
  *
- * Each entry has the form `X(EnumName, CppType)`.  The macro is expanded in
- * several contexts inside VariantImpl:
- *  - To generate the Type enum (TypeInvalid, TypeBool, ..., TypeRational).
- *  - To generate the `typeName()` lookup table.
- *  - To instantiate the `std::variant` template parameter list.
+ * Variant is the project-wide replacement for @c std::any /
+ * @c std::variant — a value type that can carry any of the types
+ * registered in the @ref DataType registry, with automatic conversion,
+ * JSON / DataStream round-tripping, and structural equality.
  *
- * The order of entries determines the numeric value of each Type enumerator
- * and **must** match the order of template arguments passed to `std::variant`.
+ * Internally a Variant is a single @c SharedPtr<VariantBox> handle —
+ * one machine word — so a default-constructed Variant is essentially
+ * free, copy is a refcount bump, and mutation transparently performs
+ * copy-on-write through the registry's @c copyConstruct op.  The
+ * runtime type tag and the @ref DataStream wire-format tag are the
+ * same integer (@ref Type), so a Variant holding a @ref UUID
+ * serializes to the same bytes as a free @c operator<<(DataStream &,
+ * const UUID &) — no extra dispatch layer, no parallel registry.
  *
- * | Enumerator    | C++ type            |
- * |---------------|---------------------|
- * | TypeInvalid   | `std::monostate`    |
- * | TypeBool      | `bool`              |
- * | TypeU8        | `uint8_t`           |
- * | TypeS8        | `int8_t`            |
- * | TypeU16       | `uint16_t`          |
- * | TypeS16       | `int16_t`           |
- * | TypeU32       | `uint32_t`          |
- * | TypeS32       | `int32_t`           |
- * | TypeU64       | `uint64_t`          |
- * | TypeS64       | `int64_t`           |
- * | TypeFloat     | `float`             |
- * | TypeDouble    | `double`            |
- * | TypeString    | `String`            |
- * | TypeDateTime  | `DateTime`          |
- * | TypeTimeStamp | `TimeStamp`         |
- * | TypeMediaTimeStamp | `MediaTimeStamp` |
- * | TypeFrameNumber | `FrameNumber`     |
- * | TypeFrameCount | `FrameCount`       |
- * | TypeMediaDuration | `MediaDuration` |
- * | TypeDuration  | `Duration`          |
- * | TypeSize2D    | `Size2Du32`            |
- * | TypeUUID      | `UUID`              |
- * | TypeUMID      | `UMID`              |
- * | TypeTimecode  | `Timecode`          |
- * | TypeRational  | `Rational<int>`     |
- * | TypeFrameRate | `FrameRate`         |
- * | TypeVideoFormat | `VideoFormat`     |
- * | TypeStringList| `StringList`        |
- * | TypeColor     | `Color`             |
- * | TypeColorModel | `ColorModel`      |
- * | TypeMemSpace  | `MemSpace`          |
- * | TypePixelMemLayout | `PixelMemLayout`     |
- * | TypePixelFormat | `PixelFormat`         |
- * | TypeVideoCodec | `VideoCodec`       |
- * | TypeAudioCodec | `AudioCodec`       |
- * | TypeAudioFormat | `AudioFormat`     |
- * | TypeAudioStreamDesc | `AudioStreamDesc` |
- * | TypeAudioChannelMap | `AudioChannelMap` |
- * | TypeAudioMarkerList | `AudioMarkerList` |
- * | TypeEnum      | `Enum`              |
- * | TypeEnumList  | `EnumList`          |
- * | TypeWindowedStat | `WindowedStat`   |
- * | TypeVariantList | `VariantList`     |
- * | TypeVariantMap  | `VariantMap`      |
- * | TypeXmlDocument | `XmlDocument`     |
- *
- * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
- *
- * | Enumerator        | C++ type            |
- * |-------------------|---------------------|
- * | TypeSocketAddress | `SocketAddress`     |
- * | TypeSdpSession    | `SdpSession`        |
- * | TypeMacAddress    | `MacAddress`        |
- * | TypeEUI64         | `EUI64`             |
- *
- * When @c PROMEKI_ENABLE_TLS is also true, one more type is registered:
- *
- * | Enumerator        | C++ type            |
- * |-------------------|---------------------|
- * | TypeSslContext    | `SslContext::Ptr`   |
- */
-#if PROMEKI_ENABLE_NETWORK
-#if PROMEKI_ENABLE_TLS
-#define PROMEKI_VARIANT_TYPES_NETWORK                                                                                  \
-        X(TypeSocketAddress, SocketAddress)                                                                            \
-        X(TypeSdpSession, SdpSession)                                                                                  \
-        X(TypeMacAddress, MacAddress)                                                                                  \
-        X(TypeEUI64, EUI64)                                                                                            \
-        X(TypeSslContext, SslContext::Ptr)
-#else
-#define PROMEKI_VARIANT_TYPES_NETWORK                                                                                  \
-        X(TypeSocketAddress, SocketAddress)                                                                            \
-        X(TypeSdpSession, SdpSession)                                                                                  \
-        X(TypeMacAddress, MacAddress)                                                                                  \
-        X(TypeEUI64, EUI64)
-#endif
-#else
-#define PROMEKI_VARIANT_TYPES_NETWORK
-#endif
-
-#define PROMEKI_VARIANT_TYPES                                                                                          \
-        X(TypeInvalid, std::monostate)                                                                                 \
-        X(TypeBool, bool)                                                                                              \
-        X(TypeU8, uint8_t)                                                                                             \
-        X(TypeS8, int8_t)                                                                                              \
-        X(TypeU16, uint16_t)                                                                                           \
-        X(TypeS16, int16_t)                                                                                            \
-        X(TypeU32, uint32_t)                                                                                           \
-        X(TypeS32, int32_t)                                                                                            \
-        X(TypeU64, uint64_t)                                                                                           \
-        X(TypeS64, int64_t)                                                                                            \
-        X(TypeFloat, float)                                                                                            \
-        X(TypeDouble, double)                                                                                          \
-        X(TypeString, String)                                                                                          \
-        X(TypeDateTime, DateTime)                                                                                      \
-        X(TypeTimeStamp, TimeStamp)                                                                                    \
-        X(TypeMediaTimeStamp, MediaTimeStamp)                                                                          \
-        X(TypeFrameNumber, FrameNumber)                                                                                \
-        X(TypeFrameCount, FrameCount)                                                                                  \
-        X(TypeMediaDuration, MediaDuration)                                                                            \
-        X(TypeDuration, Duration)                                                                                      \
-        X(TypeSize2D, Size2Du32)                                                                                       \
-        X(TypeUUID, UUID)                                                                                              \
-        X(TypeUMID, UMID)                                                                                              \
-        X(TypeTimecode, Timecode)                                                                                      \
-        X(TypeRational, Rational<int>)                                                                                 \
-        X(TypeFrameRate, FrameRate)                                                                                    \
-        X(TypeVideoFormat, VideoFormat)                                                                                \
-        X(TypeStringList, StringList)                                                                                  \
-        X(TypeColor, Color)                                                                                            \
-        X(TypeColorModel, ColorModel)                                                                                  \
-        X(TypeMemSpace, MemSpace)                                                                                      \
-        X(TypePixelMemLayout, PixelMemLayout)                                                                          \
-        X(TypePixelFormat, PixelFormat)                                                                                \
-        X(TypeVideoCodec, VideoCodec)                                                                                  \
-        X(TypeAudioCodec, AudioCodec)                                                                                  \
-        X(TypeAudioFormat, AudioFormat)                                                                                \
-        X(TypeAncFormat, AncFormat)                                                                                    \
-        X(TypeAudioStreamDesc, AudioStreamDesc)                                                                        \
-        X(TypeAudioChannelMap, AudioChannelMap)                                                                        \
-        X(TypeAudioMarkerList, AudioMarkerList)                                                                        \
-        X(TypeEnum, Enum)                                                                                              \
-        X(TypeEnumList, EnumList)                                                                                      \
-        X(TypeMasteringDisplay, MasteringDisplay)                                                                      \
-        X(TypeContentLightLevel, ContentLightLevel)                                                                    \
-        X(TypeUrl, Url)                                                                                                \
-        X(TypeWindowedStat, WindowedStat)                                                                              \
-        X(TypeVariantList, VariantList)                                                                                \
-        X(TypeVariantMap, VariantMap)                                                                                  \
-        X(TypeXmlDocument, XmlDocument)                                                                                \
-        X(TypeCea708Cdp, Cea708Cdp)                                                                                    \
-        X(TypeCea608, Cea608Packet)                                                                                    \
-        X(TypeSubtitle, Subtitle)                                                                                      \
-        PROMEKI_VARIANT_TYPES_NETWORK
-
-namespace detail {
-        /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
-        struct VariantEnd {
-                        bool operator==(const VariantEnd &) const { return true; }
-                        bool operator!=(const VariantEnd &) const { return false; }
-        };
-
-        /** @brief True for TypeRegistry wrapper types that have an integer ID. */
-        template <typename T> struct is_type_registry : std::false_type {};
-        template <> struct is_type_registry<AncFormat> : std::true_type {};
-        template <> struct is_type_registry<AudioCodec> : std::true_type {};
-        template <> struct is_type_registry<AudioFormat> : std::true_type {};
-        template <> struct is_type_registry<ColorModel> : std::true_type {};
-        template <> struct is_type_registry<MemSpace> : std::true_type {};
-        template <> struct is_type_registry<PixelMemLayout> : std::true_type {};
-        template <> struct is_type_registry<PixelFormat> : std::true_type {};
-        template <> struct is_type_registry<VideoCodec> : std::true_type {};
-        template <typename T> inline constexpr bool is_type_registry_v = is_type_registry<T>::value;
-}
-
-/**
- * @brief Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.
- *
- * VariantImpl is a thin wrapper around `std::variant` that adds a Type enum,
- * human-readable type names, and automatic type-conversion logic via the
- * templated get() method.  It is not intended to be used directly; instead use
- * the @ref Variant type alias which is instantiated with the concrete type
- * list.
+ * @par Adding a new variant alternative
+ * Any C++ type registered via @ref PROMEKI_IMPLEMENT_DATATYPE is
+ * automatically usable as a Variant payload — no edit to this header
+ * required.  See @ref DataType for the registration mechanics.
  *
  * @par Thread Safety
- * Conditionally thread-safe.  Distinct instances may be used concurrently;
- * concurrent access to a single instance — including any combination of
- * @c set() / @c get() / @c reset() — must be externally synchronized.  The
- * underlying @c std::variant is not internally synchronized.
+ * Distinct instances may be used concurrently.  Concurrent access to
+ * a single instance must be externally synchronized; the internal
+ * @c SharedPtr is itself thread-safe for refcount operations, but a
+ * mutating call on a Variant raced with another access on the same
+ * Variant is undefined.
  *
  * @par Example
  * @code
- * Variant v = 42;
- * String s = v.get<String>();  // "42"
+ * Variant v = 42;                    // implicit converting constructor
+ * String  s = v.get<String>();       // "42"
  * v.set(String("hello"));
- * bool valid = v.isValid();    // true
- * Variant::Type t = v.type();  // Variant::TypeString
+ * Variant::Type t = v.type();        // Variant::TypeString
+ * if (const String *str = v.peek<String>()) {
+ *     promekiInfo("variant holds: %s", str->cstr());
+ * }
  * @endcode
- *
- * @tparam Types  The set of types the variant can hold (generated from PROMEKI_VARIANT_TYPES).
  */
-template <typename... Types> class VariantImpl {
+class Variant {
         public:
-#define X(name, type) name,
                 /**
-                 * @brief Enumerates every type the variant can hold.
+                 * @brief Runtime tag identifying which @ref DataType a Variant holds.
                  *
-                 * The enumerator order matches the template argument order so that
-                 * `std::variant::index()` can be cast directly to a Type value.
+                 * Alias of @ref DataStream::TypeId, so the Variant runtime
+                 * tag and the DataStream wire-format tag are literally the
+                 * same value.  Each registered type pins a stable integer
+                 * here (library types in @c 0x0001 – @c 0x3FFF, user types
+                 * in @c 0x4000 – @c 0xFFFF).
                  */
-                enum Type {
-                        PROMEKI_VARIANT_TYPES
-                };
-#undef X
+                using Type = DataStream::TypeId;
 
-#define X(name, type) PROMEKI_STRINGIFY(type),
+                // ------------------------------------------------------------------
+                // Source-compatibility aliases.
+                //
+                // The legacy std::variant-backed Variant exposed an enum with
+                // names like `TypeBool`, `TypeU8`, `TypeS32`, etc.  The unified
+                // ID enum on DataStream uses `TypeUInt8`, `TypeInt32`, ... so
+                // callers that switch on `Variant::TypeU8` still resolve to the
+                // right integer without a mass sed.  Every existing well-known
+                // type that the old Variant exposed has a constant here.
+                // ------------------------------------------------------------------
+                static constexpr Type TypeInvalid          = DataStream::TypeInvalid;
+                static constexpr Type TypeBool             = DataStream::TypeBool;
+                static constexpr Type TypeU8               = DataStream::TypeUInt8;
+                static constexpr Type TypeS8               = DataStream::TypeInt8;
+                static constexpr Type TypeU16              = DataStream::TypeUInt16;
+                static constexpr Type TypeS16              = DataStream::TypeInt16;
+                static constexpr Type TypeU32              = DataStream::TypeUInt32;
+                static constexpr Type TypeS32              = DataStream::TypeInt32;
+                static constexpr Type TypeU64              = DataStream::TypeUInt64;
+                static constexpr Type TypeS64              = DataStream::TypeInt64;
+                static constexpr Type TypeFloat            = DataStream::TypeFloat;
+                static constexpr Type TypeDouble           = DataStream::TypeDouble;
+                static constexpr Type TypeString           = DataStream::TypeString;
+                static constexpr Type TypeBuffer           = DataStream::TypeBuffer;
+                static constexpr Type TypeDateTime         = DataStream::TypeDateTime;
+                static constexpr Type TypeTimeStamp        = DataStream::TypeTimeStamp;
+                static constexpr Type TypeMediaTimeStamp   = DataStream::TypeMediaTimeStamp;
+                static constexpr Type TypeFrameNumber      = DataStream::TypeFrameNumber;
+                static constexpr Type TypeFrameCount       = DataStream::TypeFrameCount;
+                static constexpr Type TypeMediaDuration    = DataStream::TypeMediaDuration;
+                static constexpr Type TypeDuration         = DataStream::TypeDuration;
+                static constexpr Type TypeSize2D           = DataStream::TypeSize2D;
+                static constexpr Type TypeUUID             = DataStream::TypeUUID;
+                static constexpr Type TypeUMID             = DataStream::TypeUMID;
+                static constexpr Type TypeTimecode         = DataStream::TypeTimecode;
+                static constexpr Type TypeRational         = DataStream::TypeRational;
+                static constexpr Type TypeFrameRate        = DataStream::TypeFrameRate;
+                static constexpr Type TypeVideoFormat      = DataStream::TypeVideoFormat;
+                static constexpr Type TypeStringList       = DataStream::TypeStringList;
+                static constexpr Type TypeColor            = DataStream::TypeColor;
+                static constexpr Type TypeColorModel       = DataStream::TypeColorModel;
+                static constexpr Type TypeMemSpace         = DataStream::TypeMemSpace;
+                static constexpr Type TypePixelMemLayout   = DataStream::TypePixelMemLayout;
+                static constexpr Type TypePixelFormat      = DataStream::TypePixelFormat;
+                static constexpr Type TypeVideoCodec       = DataStream::TypeVideoCodec;
+                static constexpr Type TypeAudioCodec       = DataStream::TypeAudioCodec;
+                static constexpr Type TypeAudioFormat      = DataStream::TypeAudioFormat;
+                static constexpr Type TypeAncFormat        = DataStream::TypeAncFormat;
+                static constexpr Type TypeAudioStreamDesc  = DataStream::TypeAudioStreamDesc;
+                static constexpr Type TypeAudioChannelMap  = DataStream::TypeAudioChannelMap;
+                static constexpr Type TypeAudioMarkerList  = DataStream::TypeAudioMarkerList;
+                static constexpr Type TypeEnum             = DataStream::TypeEnum;
+                static constexpr Type TypeEnumList         = DataStream::TypeEnumList;
+                static constexpr Type TypeMasteringDisplay = DataStream::TypeMasteringDisplay;
+                static constexpr Type TypeContentLightLevel = DataStream::TypeContentLightLevel;
+                static constexpr Type TypeUrl              = DataStream::TypeUrl;
+                static constexpr Type TypeWindowedStat     = DataStream::TypeWindowedStat;
+                static constexpr Type TypeVariantList      = DataStream::TypeVariantList;
+                static constexpr Type TypeVariantMap       = DataStream::TypeVariantMap;
+                static constexpr Type TypeXmlDocument      = DataStream::TypeXmlDocument;
+                static constexpr Type TypeCea708Cdp        = DataStream::TypeCea708Cdp;
+                static constexpr Type TypeCea608           = DataStream::TypeCea608;
+                static constexpr Type TypeSubtitle         = DataStream::TypeSubtitle;
+#if PROMEKI_ENABLE_NETWORK
+                static constexpr Type TypeSocketAddress    = DataStream::TypeSocketAddress;
+                static constexpr Type TypeSdpSession       = DataStream::TypeSdpSession;
+                static constexpr Type TypeMacAddress       = DataStream::TypeMacAddress;
+                static constexpr Type TypeEUI64            = DataStream::TypeEUI64;
+#endif
+#if PROMEKI_ENABLE_TLS
+                static constexpr Type TypeSslContext       = DataStream::TypeSslContext;
+#endif
+
                 /**
-                 * @brief Returns the human-readable C++ type name for the given Type enumerator.
-                 * @param[in] id  The Type enumerator value.
-                 * @return A null-terminated string such as `"bool"`, `"String"`, etc.
+                 * @brief Returns the human-readable type name for the given Type tag.
+                 *
+                 * Looks the tag up in the @ref DataType registry; returns
+                 * @c "Invalid" when @p id is @c TypeInvalid or otherwise
+                 * unregistered.  The returned pointer is stable for the
+                 * lifetime of the process (it is the @c name field of the
+                 * registered Data record).
                  */
-                static const char *typeName(Type id) {
-                        static const char *items[] = {PROMEKI_VARIANT_TYPES};
-                        PROMEKI_ASSERT(id < PROMEKI_ARRAY_SIZE(items));
-                        return items[id];
-                }
-#undef X
+                static const char *typeName(Type id);
 
                 /**
-                 * @brief Constructs a VariantImpl from a JSON value, inferring the best native type.
+                 * @brief Constructs a Variant from a JSON value, inferring the best native type.
                  *
                  * Mapping rules:
-                 *  - `null`            -> invalid (default-constructed) variant
-                 *  - boolean           -> `bool`
-                 *  - unsigned integer  -> `uint64_t`
-                 *  - signed integer    -> `int64_t`
-                 *  - floating-point    -> `double`
-                 *  - string            -> `String`
-                 *  - array             -> `VariantList` (recursive, every element converted via fromJson)
-                 *  - object            -> `VariantMap`  (recursive, every value converted via fromJson)
-                 *
-                 * Arrays and objects produce a typed nested tree rather than the
-                 * flattened-string fallback used historically — callers can
-                 * walk the tree, validate it against a @ref VariantSpec, and
-                 * round-trip back to JSON without losing structure.
-                 *
-                 * Defined out-of-line below the @ref VariantList / @ref VariantMap
-                 * class definitions so the body can construct those types.
-                 *
-                 * @param val  The JSON value to convert.
-                 * @return A VariantImpl holding the converted value.
+                 *  - @c null            → invalid Variant
+                 *  - @c boolean         → @c bool
+                 *  - unsigned integer   → @c uint64_t
+                 *  - signed integer     → @c int64_t
+                 *  - floating-point     → @c double
+                 *  - string             → @ref String
+                 *  - array              → @ref VariantList (recursive)
+                 *  - object             → @ref VariantMap  (recursive)
                  */
-                static VariantImpl fromJson(const nlohmann::json &val);
-
-                /** @brief Default-constructs an invalid (empty) variant holding std::monostate. */
-                VariantImpl() = default;
+                static Variant fromJson(const nlohmann::json &val);
 
                 /**
-                 * @brief Constructs a variant holding a copy of @p value.
+                 * @brief Reads a Variant of type @p dt from @p stream.
                  *
-                 * Constrained so the converting constructor only participates
-                 * in overload resolution when @c T is exactly one of the
-                 * variant's alternatives — otherwise an unrelated single-arg
-                 * call would shadow the copy/move constructors and fail with
-                 * an opaque @c std::variant template error deep in the call.
+                 * Allocates a default-constructed payload of @p dt and
+                 * forwards to its registered @c readStream op.  The
+                 * stream must be positioned at the start of a frame
+                 * whose tag matches @c dt.id() — the per-type read
+                 * operator consumes that frame.  Returns an invalid
+                 * Variant when @p dt is invalid, has no @c readStream
+                 * slot, or has no @c defaultConstruct slot.
                  *
-                 * @tparam T  The type of the value; must be one of the supported variant types.
+                 * Primarily intended for @c DataStream's tag-dispatch
+                 * read path, which uses this to materialise
+                 * user-registered Variant alternatives without a
+                 * hard-coded switch case.  Direct callers should
+                 * normally use @c DataStream::operator>>.
+                 */
+                static Variant readFromStream(DataStream &stream, const DataType &dt);
+
+                /**
+                 * @brief Returns a Variant holding a default-constructed value of @p dt.
+                 *
+                 * Uses @c dt.ops().defaultConstruct to materialise the
+                 * payload in place — no copy.  Returns an invalid
+                 * Variant when @p dt is itself invalid or when the
+                 * registered type isn't default-constructible (the
+                 * @c defaultConstruct slot is null).
+                 *
+                 * Useful for generic deserialization paths and for
+                 * @ref VariantSpec-style defaults where the C++ type
+                 * is only known at runtime.
+                 *
+                 * @param dt  Target type handle.
+                 */
+                static Variant createDefault(const DataType &dt);
+
+                // ------------------------------------------------------------------
+                // Converter registry
+                //
+                // The registry maps a (FromType, ToType) pair to a function that
+                // takes a Variant holding @c FromType and returns a Variant holding
+                // @c ToType.  The library populates the builtin cross-product at
+                // first-use; user code registers its own pairs through the public
+                // API below to make @ref get<T>(), @ref convertTo, and
+                // @ref operator== aware of cross-type conversions involving
+                // user-defined @ref DataType alternatives.
+                // ------------------------------------------------------------------
+
+                /**
+                 * @brief Type-erased converter signature: Variant in, Variant out.
+                 *
+                 * The function receives @p src already validated to be a
+                 * non-invalid Variant whose runtime type matches the
+                 * registered @c from tag.  It should peek the source
+                 * payload, run the typed conversion, and return a Variant
+                 * holding the @c to type.  On failure it should set
+                 * @c *err and return an invalid Variant.
+                 */
+                using ConverterFn = Variant (*)(const Variant &src, Error *err);
+
+                /**
+                 * @brief Registers a converter from @p from to @p to.
+                 *
+                 * Overwrites any previously-registered converter for the
+                 * same (@p from, @p to) pair.  Thread-safe.  The registry
+                 * is process-lifetime — there is no unregister.
+                 *
+                 * Most callers should prefer the typed
+                 * @ref registerConverter<auto> overload, which deduces
+                 * the From/To types and generates the peek/wrap thunk
+                 * automatically.
+                 *
+                 * @param from  Source @ref Type tag (must be a registered DataType).
+                 * @param to    Destination @ref Type tag (must be a registered DataType).
+                 * @param fn    Converter function pointer; must not be null.
+                 */
+                static void registerConverter(Type from, Type to, ConverterFn fn);
+
+                /**
+                 * @brief Typed convenience overload — registers a converter for @p Fn.
+                 *
+                 * Deduces the @c From and @c To types from @p Fn's
+                 * signature, registers the (From, To) pair, and generates
+                 * a thunk that handles the @c peek<From>() / wrap-in-Variant
+                 * boilerplate.  @p Fn must be a free-function (or
+                 * non-capturing-lambda) pointer with signature
+                 * @c To(const From&, Error*) — both types must be
+                 * registered in the @ref DataType registry.
+                 *
+                 * @code
+                 * static String myTypeToString(const MyType &val, Error *err);
+                 * Variant::registerConverter<&myTypeToString>();
+                 * @endcode
+                 */
+                template <auto Fn> static void registerConverter();
+
+                /**
+                 * @brief Returns the registered converter for (@p from, @p to), or @c nullptr.
+                 *
+                 * Useful for tooling and introspection; runtime conversion
+                 * paths should call @ref convertTo or @ref get<T> instead,
+                 * both of which handle the invalid-Variant and
+                 * unregistered-target cases for you.
+                 */
+                static ConverterFn findConverter(Type from, Type to);
+
+                /** @brief Default-constructs an invalid (empty) Variant. */
+                Variant() = default;
+
+                /** @brief Copy-constructs (refcount bump on the underlying VariantBox). */
+                Variant(const Variant &) = default;
+
+                /** @brief Move-constructs (steals the underlying box; @p other becomes invalid). */
+                Variant(Variant &&) noexcept = default;
+
+                /** @brief Copy-assigns (refcount bump on the underlying VariantBox). */
+                Variant &operator=(const Variant &) = default;
+
+                /** @brief Move-assigns (steals the underlying box; @p other becomes invalid). */
+                Variant &operator=(Variant &&) noexcept = default;
+
+                /** @brief Destructor. */
+                ~Variant() = default;
+
+                /**
+                 * @brief Implicit converting constructor for any registered type (copy path).
+                 *
+                 * Equivalent to @code Variant v; v.set(value); @endcode.
+                 *
+                 * Constrained so the converting constructor only matches when
+                 * @p T resolves to a registered @ref DataType — otherwise an
+                 * unrelated single-arg call would shadow the copy/move
+                 * constructors and yield an opaque template error.
+                 *
+                 * @tparam T  The C++ type of @p value.  Must be registered.
                  * @param value  The value to store.
                  */
                 template <typename T,
-                          typename = std::enable_if_t<std::disjunction_v<std::is_convertible<const T &, Types>...>>>
-                VariantImpl(const T &value) : v(value) {}
-
-                /** @brief Returns true if the variant holds a value other than std::monostate. */
-                bool isValid() const { return v.index() != 0; }
-
-                /**
-                 * @brief Replaces the currently held value with @p value.
-                 *
-                 * Constrained the same way as the converting constructor —
-                 * unrelated single-arg @c set calls otherwise produce an
-                 * opaque @c std::variant assignment error.
-                 *
-                 * @tparam T  The type of the new value; must be one of the supported variant types.
-                 * @param value  The value to store.
-                 */
-                template <typename T,
-                          typename = std::enable_if_t<std::disjunction_v<std::is_convertible<const T &, Types>...>>>
-                void set(const T &value) {
-                        v = value;
+                          typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, Variant> &&
+                                                      !std::is_same_v<std::decay_t<T>, VariantBox>>>
+                Variant(const T &value) {
+                        setValue<T>(value);
+                        return;
                 }
 
                 /**
-                 * @brief Converts the stored value to the requested type @p To.
+                 * @brief Implicit converting constructor for any registered type (move path).
                  *
-                 * The method uses `std::visit` with a compile-time conversion matrix.
-                 * If the stored type is already @p To, the value is returned directly.
-                 * Otherwise an appropriate conversion is attempted (numeric casts,
-                 * string parsing, `toString()` calls, etc.).  When no conversion path
-                 * exists, a default-constructed @p To is returned and @p err (if
-                 * non-null) is set to Error::Invalid.
+                 * Same shape as the copy converting constructor but routes
+                 * through the registered @c moveConstruct op, so e.g.
+                 * @code Variant v(std::move(bigString)); @endcode
+                 * relocates the payload bytes instead of deep-copying.
+                 * Constrained to rvalues only via the
+                 * @c !std::is_lvalue_reference_v constraint, leaving the
+                 * @c const T& overload to handle lvalues.
+                 */
+                template <typename T,
+                          typename = std::enable_if_t<!std::is_same_v<std::decay_t<T>, Variant> &&
+                                                      !std::is_same_v<std::decay_t<T>, VariantBox> &&
+                                                      !std::is_lvalue_reference_v<T>>>
+                Variant(T &&value) {
+                        setValueMove<std::remove_cv_t<std::remove_reference_t<T>>>(std::move(value));
+                        return;
+                }
+
+                /** @brief Returns true when the Variant holds a registered value. */
+                bool isValid() const { return _box.isValid(); }
+
+                /**
+                 * @brief Replaces the held value with @p value (copy path).
                  *
-                 * @tparam To  The desired result type.
-                 * @param err  Optional pointer to an Error that receives Error::Ok on
-                 *             success or Error::Invalid when the conversion is not
-                 *             possible.
-                 * @return The converted value, or a default-constructed @p To on failure.
+                 * The new value's type must be registered in the @ref DataType
+                 * registry.  Calling @c set with an unregistered C++ type
+                 * leaves the Variant in its invalid state and logs a warning.
+                 *
+                 * @tparam T  The C++ type of @p value.  Must be registered.
+                 * @param value  The value to store.
+                 */
+                template <typename T> void set(const T &value) {
+                        setValue<T>(value);
+                        return;
+                }
+
+                /**
+                 * @brief Replaces the held value with @p value (move path).
+                 *
+                 * Routes through the registered @c moveConstruct op so
+                 * @code v.set(std::move(bigString)); @endcode relocates
+                 * the payload bytes rather than deep-copying.  Constrained
+                 * to rvalues only; lvalues fall through to the
+                 * @c set(const T&) overload.
+                 */
+                template <typename T,
+                          typename = std::enable_if_t<!std::is_lvalue_reference_v<T> &&
+                                                      !std::is_same_v<std::decay_t<T>, Variant>>>
+                void set(T &&value) {
+                        setValueMove<std::remove_cv_t<std::remove_reference_t<T>>>(std::move(value));
+                        return;
+                }
+
+                /**
+                 * @brief Returns the held value as @p To, converting if necessary.
+                 *
+                 * The conversion path:
+                 *  - If the held type matches @c To exactly, returns by value.
+                 *  - Otherwise, looks up a registered converter @c (currentId, toId)
+                 *    in the @ref DataType registry and applies it.
+                 *  - Returns a default-constructed @c To and sets @p err to
+                 *    @c Error::Invalid when no conversion is available.
+                 *
+                 * @tparam To  Target C++ type.
+                 * @param err  Optional pointer to receive @c Error::Ok on
+                 *             success or @c Error::Invalid on failure.
                  */
                 template <typename To> To get(Error *err = nullptr) const;
 
                 /**
-                 * @brief Borrows the held value when its type is exactly @p T.
+                 * @brief Borrows a pointer to the held value when its type is exactly @p T.
                  *
-                 * Returns a non-owning pointer into the underlying
-                 * @c std::variant alternative when @p T matches the
-                 * current type, or @c nullptr otherwise.  Cheap (no
-                 * copy) and especially valuable for the heavy
-                 * alternatives — @ref VariantList, @ref VariantMap,
-                 * @ref String, @ref Buffer and similar container types — where
-                 * calling @ref get repeatedly during a tree walk would deep-copy
-                 * each container.
+                 * Returns a non-owning pointer into the Variant's payload
+                 * when @p T matches the registered type, or @c nullptr
+                 * otherwise.  Cheap (no copy), and especially valuable for
+                 * heavy alternatives such as @ref VariantList,
+                 * @ref VariantMap, @ref String, and @ref Buffer where
+                 * repeated @c get<T>() calls during a tree walk would
+                 * deep-copy each container.
                  *
-                 * @par Example
-                 * @code
-                 * if (const VariantMap *m = v.peek<VariantMap>()) {
-                 *     // walk *m without paying for a deep copy
-                 *     m->forEach([](const String &k, const Variant &v) { ... });
-                 * }
-                 * @endcode
-                 *
-                 * @tparam T  Any alternative listed in @c PROMEKI_VARIANT_TYPES.
-                 * @return    Pointer to the stored value, or @c nullptr
-                 *            when the current type is not @p T.
+                 * @tparam T  Any registered Variant alternative.
+                 * @return    Pointer to the stored value, or @c nullptr.
                  */
-                template <typename T> const T *peek() const noexcept { return std::get_if<T>(&v); }
+                template <typename T> const T *peek() const noexcept;
 
-                /** @brief Returns the Type enumerator for the currently held value. */
-                Type type() const { return static_cast<Type>(v.index()); }
+                /** @brief Returns the runtime type tag, or @c TypeInvalid for an empty Variant. */
+                Type type() const;
 
-                /** @brief Returns the human-readable type name of the currently held value. */
+                /** @brief Returns the human-readable name of the held type. */
                 const char *typeName() const { return typeName(type()); }
 
-                /**
-                 * @brief Converts complex types to their String representation, leaving simple types unchanged.
-                 *
-                 * Numeric types (integers, floating point, bool) and the
-                 * Invalid alternative are returned as-is.  Every other
-                 * Variant alternative is converted to String via
-                 * `get<String>()`.  This is driven by a type trait so
-                 * new alternatives added to PROMEKI_VARIANT_TYPES are
-                 * picked up automatically without editing this method.
-                 *
-                 * @return A new VariantImpl containing either the original value or its
-                 *         String representation.
-                 */
-                VariantImpl toStandardType() const {
-                        return std::visit(
-                                [this](const auto &val) -> VariantImpl {
-                                        using T = std::decay_t<decltype(val)>;
-                                        if constexpr (std::is_same_v<T, std::monostate> ||
-                                                      std::is_same_v<T, detail::VariantEnd> ||
-                                                      std::is_arithmetic_v<T>) {
-                                                return *this;
-                                        } else {
-                                                return get<String>();
-                                        }
-                                },
-                                v);
-                }
+                /** @brief Returns the @ref DataType handle for the held type, or an invalid handle. */
+                DataType dataType() const;
 
                 /**
-                 * @brief Formats the stored value using a type-specific format spec.
+                 * @brief Returns a const pointer to the held value's raw payload bytes.
+                 *
+                 * Primarily intended for the registry-driven DataStream
+                 * write path and other infrastructure that has the
+                 * @ref DataType::Ops in hand and needs to feed the
+                 * payload to a function-pointer slot.  Callers that
+                 * know the C++ type statically should prefer
+                 * @ref peek<T>().
+                 *
+                 * @return Pointer into the payload region of the
+                 *         underlying box, or @c nullptr if the
+                 *         Variant is invalid.
+                 */
+                const void *payloadPtr() const;
+
+                /**
+                 * @brief Converts complex types to their @ref String representation, leaving simple types unchanged.
+                 *
+                 * Numeric types and the invalid alternative are returned
+                 * as-is.  Every other Variant alternative is converted
+                 * to @ref String via @c get<String>().
+                 */
+                Variant toStandardType() const;
+
+                /**
+                 * @brief Formats the held value using a type-specific format spec.
                  *
                  * Builds the format string @c "{:<spec>}" and routes it to
                  * @c std::vformat with the held value, so the type's own
-                 * @c std::formatter specialization is invoked.  This means
-                 * rich types use their native style keywords (Timecode
-                 * accepts @c "smpte" / @c "smpte-fps" / @c "field",
-                 * VideoFormat accepts @c "smpte" / @c "named", etc.) and
-                 * primitives use the standard @c std::format spec grammar
-                 * (@c "x", @c ".2f", @c "05d", ...).
+                 * @c std::formatter specialization is invoked.  Rich types
+                 * use their native style keywords; primitives use the
+                 * standard @c std::format spec grammar.
                  *
-                 * An empty @p spec is short-circuited to @ref get<String>(),
-                 * which reproduces the existing default toString() behavior
-                 * for every supported type.  Variant alternatives that have
-                 * no @c std::formatter specialization fall back to formatting
-                 * the spec against the value's String form, so width / fill
-                 * / alignment still work for them.
-                 *
-                 * If @p spec is malformed (caught as @c std::format_error),
-                 * the default String form is returned and @p err is set to
-                 * @c Error::Invalid.
+                 * An empty @p spec short-circuits to @c get<String>().
+                 * Variants whose alternatives have no @c std::formatter
+                 * fall back to formatting the spec against the value's
+                 * String form, so width / fill / alignment still work.
                  *
                  * @param spec  Type-specific format spec, without the
                  *              surrounding @c {} or leading @c ':'.
-                 * @param err   Optional error output, set to @c Error::Ok on
-                 *              success or @c Error::Invalid if the spec
-                 *              could not be applied.
-                 * @return      The formatted String.
+                 * @param err   Optional error output, @c Error::Ok on
+                 *              success or @c Error::Invalid on a bad spec.
                  */
-                String format(const String &spec, Error *err = nullptr) const {
-                        if (err != nullptr) *err = Error::Ok;
-                        String defaultStr = get<String>();
-                        if (spec.isEmpty()) return defaultStr;
-
-                        std::string fmtStr;
-                        fmtStr.reserve(spec.byteCount() + 3);
-                        fmtStr += "{:";
-                        fmtStr.append(spec.cstr(), spec.byteCount());
-                        fmtStr += '}';
-
-                        try {
-                                return std::visit(
-                                        [&fmtStr, &defaultStr](auto &&arg) -> String {
-                                                using T = std::decay_t<decltype(arg)>;
-                                                if constexpr (std::is_same_v<T, std::monostate>) {
-                                                        (void)fmtStr;
-                                                        return String();
-                                                } else if constexpr (std::is_default_constructible_v<
-                                                                             std::formatter<T, char>>) {
-                                                        const auto &val = arg;
-                                                        return String(std::vformat(fmtStr, std::make_format_args(val)));
-                                                } else {
-                                                        std::string_view sv(defaultStr.cstr(), defaultStr.byteCount());
-                                                        return String(std::vformat(fmtStr, std::make_format_args(sv)));
-                                                }
-                                        },
-                                        v);
-                        } catch (const std::format_error &) {
-                                if (err != nullptr) *err = Error::Invalid;
-                                return defaultStr;
-                        }
-                }
+                String format(const String &spec, Error *err = nullptr) const;
 
                 /**
-                 * @brief Resolves the stored value to an Enum of the given type.
+                 * @brief Resolves the held value to an Enum of the given type.
                  *
-                 * Unlike @c get<Enum>(), which has no context about the
-                 * intended enum kind and therefore requires a fully qualified
-                 * @c "TypeName::ValueName" string, this method takes a target
-                 * @ref Enum::Type handle and uses it to resolve several more
-                 * flexible forms.  Accepted inputs:
+                 * Accepts:
+                 *  - @c TypeInvalid → returns @c Enum(enumType) (registered default).
+                 *  - @c TypeEnum holding the right type → returned directly.
+                 *  - @c TypeString @c "Type::Value", @c "Value", or a signed decimal.
+                 *  - Any integer Type → wrapped as @c Enum(enumType, int).
                  *
-                 * - @c TypeInvalid (default-constructed / missing config
-                 *   key) → returns @c Enum(enumType), i.e. the type's
-                 *   registered default value, with @c Error::Ok.  This
-                 *   makes the registered default double as the config
-                 *   fallback so callers don't need to repeat it.
-                 * - @c TypeEnum holding an @ref Enum of @p enumType → returned
-                 *   directly.
-                 * - @c TypeEnum holding an @ref Enum of a @em different type
-                 *   → error, returns an invalid @ref Enum.
-                 * - @c TypeString @c "TypeName::ValueName" (qualified) →
-                 *   parsed via @ref Enum::lookup; must match @p enumType.
-                 * - @c TypeString @c "ValueName" (unqualified) → resolved by
-                 *   name against @p enumType.
-                 * - @c TypeString decimal integer (e.g. @c "100", @c "-1")
-                 *   → wrapped as @c Enum(enumType, int).  The result may be
-                 *   out-of-list but is still valid and round-trippable.
-                 * - Any integer @c Type (bool/u8..s64) → wrapped as
-                 *   @c Enum(enumType, int).
-                 * - Anything else → error, returns an invalid @ref Enum.
-                 *
-                 * This is the canonical way to pull a typed Enum out of a
-                 * config value that may have been authored as a string,
-                 * an integer, or a typed Enum.
-                 *
-                 * @par Example
-                 * @code
-                 * Variant v = cfg.get(ConfigVideoPattern);
-                 * Error err;
-                 * Enum pat = v.asEnum(VideoPattern::Type, &err);
-                 * if(err.isError() || !pat.isValid()) pat = VideoPattern::ColorBars;
-                 * @endcode
-                 *
-                 * @param enumType  Target @ref Enum type handle.
-                 * @param err       Optional error output; set to
+                 * @param enumType  Target Enum type handle.
+                 * @param err       Optional error output:
                  *                  @c Error::InvalidArgument if @p enumType
-                 *                  is invalid, @c Error::Invalid on any
-                 *                  other conversion failure, or
-                 *                  @c Error::Ok on success.
-                 * @return The converted @ref Enum, or a default-constructed
-                 *         (invalid) @ref Enum on failure.
+                 *                  is invalid, @c Error::Invalid on other
+                 *                  conversion failure, @c Error::Ok on
+                 *                  success.
                  */
-                Enum asEnum(Enum::Type enumType, Error *err = nullptr) const {
-                        if (!enumType.isValid()) {
-                                if (err != nullptr) *err = Error::InvalidArgument;
-                                return Enum();
-                        }
-                        auto setOk = [err]() {
-                                if (err != nullptr) *err = Error::Ok;
-                        };
-                        auto setErr = [err]() {
-                                if (err != nullptr) *err = Error::Invalid;
-                        };
-                        switch (type()) {
-                                case TypeInvalid: setOk(); return Enum(enumType);
-                                case TypeEnum: {
-                                        Enum e = get<Enum>();
-                                        if (e.type() != enumType) {
-                                                setErr();
-                                                return Enum();
-                                        }
-                                        setOk();
-                                        return e;
-                                }
-                                case TypeString: {
-                                        String s = get<String>();
-                                        // Qualified "TypeName::ValueName"?
-                                        if (s.contains("::")) {
-                                                Error parseErr;
-                                                Enum  e = Enum::lookup(s, &parseErr);
-                                                if (parseErr.isOk() && e.type() == enumType) {
-                                                        setOk();
-                                                        return e;
-                                                }
-                                                setErr();
-                                                return Enum();
-                                        }
-                                        // Unqualified value name against the target type.
-                                        Enum byName(enumType, s);
-                                        if (byName.hasListedValue()) {
-                                                setOk();
-                                                return byName;
-                                        }
-                                        // Last resort: signed decimal integer.
-                                        Error intErr;
-                                        int   iv = s.template to<int>(&intErr);
-                                        if (intErr.isOk()) {
-                                                setOk();
-                                                return Enum(enumType, iv);
-                                        }
-                                        setErr();
-                                        return Enum();
-                                }
-                                case TypeBool:
-                                case TypeU8:
-                                case TypeS8:
-                                case TypeU16:
-                                case TypeS16:
-                                case TypeU32:
-                                case TypeS32:
-                                case TypeU64:
-                                case TypeS64: {
-                                        Error ge;
-                                        int   iv = get<int32_t>(&ge);
-                                        if (ge.isError()) {
-                                                setErr();
-                                                return Enum();
-                                        }
-                                        setOk();
-                                        return Enum(enumType, iv);
-                                }
-                                default: break;
-                        }
-                        setErr();
-                        return Enum();
-                }
+                Enum asEnum(Enum::Type enumType, Error *err = nullptr) const;
 
                 /**
-                 * @brief Returns true if both variants hold equal values.
+                 * @brief Returns true iff both Variants hold values that compare equal.
                  *
-                 * Comparison is performed in three tiers:
-                 *  1. **Same type** — uses the type's own operator==.
-                 *  2. **Cross-type numeric** (including bool) — promotes to a
-                 *     common representation: double when either operand is
-                 *     floating-point, otherwise a safe signed/unsigned integer
-                 *     comparison via uint64_t with a negative-value guard.
-                 *  3. **Cross-type convertible** — attempts to convert one
-                 *     operand to the other's type via get<T>().  Both
-                 *     directions are tried; if either conversion succeeds
-                 *     and the converted values compare equal, returns true.
-                 *
-                 * @par Example
-                 * @code
-                 * // Same type — direct comparison
-                 * Variant(int32_t(42)) == Variant(int32_t(42));  // true
-                 *
-                 * // Cross-type numeric promotion
-                 * Variant(int32_t(42)) == Variant(uint32_t(42)); // true
-                 * Variant(int32_t(3))  == Variant(3.0);          // true
-                 * Variant(int32_t(-1)) == Variant(uint32_t(0));  // false (negative guard)
-                 *
-                 * // Cross-type convertible
-                 * Variant(int32_t(42)) == Variant(String("42")); // true
-                 * @endcode
+                 * Three-tier comparison:
+                 *  1. Same type → uses the type's @c ops.equal.
+                 *  2. Cross-type numeric (including bool) → promotes to a
+                 *     common representation and compares.
+                 *  3. Cross-type convertible → attempts conversion in
+                 *     either direction; returns true if either succeeds
+                 *     and the converted values compare equal.
                  */
-                bool operator==(const VariantImpl &other) const;
+                bool operator==(const Variant &other) const;
 
-                /** @brief Returns true if the variants are not equal. */
-                bool operator!=(const VariantImpl &other) const { return !(*this == other); }
+                /** @brief Inequality counterpart of @ref operator==. */
+                bool operator!=(const Variant &other) const { return !(*this == other); }
+
+                /**
+                 * @brief Returns this Variant converted to type @p to via the registry.
+                 *
+                 * Looks up @c (type(), to) in the converter registry and
+                 * applies it.  Returns an invalid Variant when this
+                 * Variant is itself invalid, when no converter is
+                 * registered for the pair, or when the converter itself
+                 * fails (in which case @p *err carries the converter's
+                 * error code).
+                 *
+                 * Typed callers should normally use @ref get<T> instead;
+                 * this entry point exists for runtime-typed code that
+                 * only knows the target as a @ref Type tag.
+                 */
+                Variant convertTo(Type to, Error *err = nullptr) const;
 
         private:
-                std::variant<Types...> v;
+                /** @brief Refcounted handle to the trailing-payload box. */
+                using BoxPtr = SharedPtr<VariantBox>;
+
+                template <typename T> void setValue(const T &value);
+                template <typename T> void setValueMove(T &&value);
+
+                BoxPtr _box;
 };
 
 /**
@@ -683,10 +627,7 @@ template <typename... Types> class VariantImpl {
  * @par Element iteration
  * Iteration is exposed via raw @c Variant @c * pointers — the underlying
  * @c List<Variant> storage is contiguous, so range-for and
- * pointer arithmetic both work.  This avoids leaking
- * @c List<Variant>::iterator into the header (which would require
- * @ref Variant to be a complete type for the iterator's full
- * instantiation).
+ * pointer arithmetic both work.
  *
  * @par Thread Safety
  * Conditionally thread-safe.  Distinct instances may be used
@@ -695,23 +636,17 @@ template <typename... Types> class VariantImpl {
  */
 class VariantList {
         public:
-                /** @cond INTERNAL */
-                struct Impl;
-                /** @endcond */
-
+                /** @brief Underlying storage type. */
+                using ItemList = List<Variant>;
                 /** @brief Mutable forward iterator. */
                 using Iterator = Variant *;
                 /** @brief Const forward iterator. */
                 using ConstIterator = const Variant *;
 
-                /** @brief Constructs an empty list. */
                 VariantList();
-                /** @brief Constructs from an initializer list of Variants. */
                 VariantList(std::initializer_list<Variant> il);
-                /** @brief Constructs from an existing @c List<Variant> (deep copy). */
-                explicit VariantList(const List<Variant> &other);
-                /** @brief Constructs from an existing @c List<Variant> (move). */
-                explicit VariantList(List<Variant> &&other);
+                explicit VariantList(const ItemList &other);
+                explicit VariantList(ItemList &&other);
 
                 VariantList(const VariantList &other);
                 VariantList(VariantList &&other) noexcept;
@@ -720,127 +655,83 @@ class VariantList {
                 VariantList &operator=(const VariantList &other);
                 VariantList &operator=(VariantList &&other) noexcept;
 
-                /** @brief Returns the number of stored Variants. */
                 size_t size() const;
-                /** @brief Returns true when the list has no elements. */
-                bool isEmpty() const;
-                /** @brief Removes all elements. */
-                void clear();
-                /** @brief Pre-allocates storage for at least @p capacity elements. */
-                void reserve(size_t capacity);
+                bool   isEmpty() const;
+                void   clear();
+                void   reserve(size_t capacity);
 
-                /** @brief Returns a mutable reference to the element at @p index (no bounds check). */
-                Variant &operator[](size_t index);
-                /** @brief Returns a const reference to the element at @p index (no bounds check). */
+                Variant       &operator[](size_t index);
                 const Variant &operator[](size_t index) const;
-                /** @brief Returns a mutable reference to the element at @p index, throwing on OOB. */
-                Variant &at(size_t index);
-                /** @brief Returns a const reference to the element at @p index, throwing on OOB. */
+                Variant       &at(size_t index);
                 const Variant &at(size_t index) const;
 
-                /** @brief Appends @p v to the end of the list. */
                 void pushToBack(const Variant &v);
-                /** @brief Appends @p v to the end of the list (move overload). */
                 void pushToBack(Variant &&v);
-                /** @brief Removes the last element.  Undefined when empty. */
                 void popBack();
 
-                /** @brief Returns a pointer to the underlying contiguous storage. */
-                Variant *data();
-                /// @copydoc data()
+                Variant       *data();
                 const Variant *data() const;
 
-                /** @brief Returns iterator to the first element. */
-                Iterator begin();
-                /** @brief Returns iterator to one past the last element. */
-                Iterator end();
-                /** @brief Returns const iterator to the first element. */
+                Iterator      begin();
+                Iterator      end();
                 ConstIterator begin() const;
-                /** @brief Returns const iterator to one past the last element. */
                 ConstIterator end() const;
-                /// @copydoc begin() const
                 ConstIterator cbegin() const;
-                /// @copydoc end() const
                 ConstIterator cend() const;
 
-                /**
-                 * @brief Borrows the underlying @c List<Variant> for advanced operations.
-                 *
-                 * Use this when you need a method not surfaced on
-                 * VariantList directly (sort, contains, removeIf, etc.).
-                 * The returned reference is valid for the lifetime of
-                 * this VariantList.
-                 */
-                List<Variant> &list();
-                /// @copydoc list()
-                const List<Variant> &list() const;
+                ItemList       &list();
+                const ItemList &list() const;
 
-                /** @brief Returns true iff both lists hold equal sequences of Variants. */
                 bool operator==(const VariantList &other) const;
-                /** @brief Returns true iff the lists differ. */
                 bool operator!=(const VariantList &other) const { return !(*this == other); }
 
-                /**
-                 * @brief Renders the list as a JSON-array string.
-                 *
-                 * Each element is rendered via @ref JsonArray::addFromVariant,
-                 * which itself recurses into nested VariantList / VariantMap
-                 * entries.  Useful for passing a VariantList through interfaces
-                 * that only accept @c String values (DataStream, log lines,
-                 * config files).
-                 */
                 String toJsonString() const;
-
-                /**
-                 * @brief Parses a JSON-array string into a VariantList.
-                 *
-                 * @param json  JSON text of the form @c "[...]".  Anything
-                 *              else (including a JSON object) sets @p err to
-                 *              @ref Error::ParseFailed and returns an empty
-                 *              list.
-                 * @param err   Optional error output.
-                 * @return      The parsed list, or an empty list on failure.
-                 */
                 static VariantList fromJsonString(const String &json, Error *err = nullptr);
 
+                /**
+                 * @brief Result-shaped alias of @ref fromJsonString.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref toJsonString() via
+                 * @ref Detail::HasResultFromString.
+                 */
+                static Result<VariantList> fromString(const String &json) {
+                        Error       e;
+                        VariantList v = fromJsonString(json, &e);
+                        if (e.isError()) return makeError<VariantList>(e);
+                        return makeResult(std::move(v));
+                }
+
         private:
-                UniquePtr<Impl> _impl;
+                UniquePtr<ItemList> _list;
 };
 
 /**
  * @brief Heterogeneous string-keyed map of @ref Variant values.
  * @ingroup util
  *
- * @ref VariantMap is a Variant alternative — same shape as
- * @ref VariantList but keyed by @ref String.  Used for JSON-shaped
- * objects, RPC argument bags, dynamic config payloads.  As with
- * VariantList, the underlying @c Map<String, Variant> lives behind
- * a @ref UniquePtr handle so the type is complete with known size
- * even when @ref Variant is incomplete.
- *
- * @par Iteration
- * @c std::map storage is not contiguous, so map iteration is exposed
- * via @ref forEach and via @ref VariantMap::keys "keys" rather than raw
- * iterators.  Per-key access is via @ref value, @ref find, and
- * @ref contains.
+ * Same shape as @ref VariantList but keyed by @ref String.  Used
+ * for JSON-shaped objects, RPC argument bags, dynamic config
+ * payloads.  As with VariantList, the underlying @c Map<String,
+ * Variant> lives behind a @ref UniquePtr handle.
  *
  * @par Thread Safety
  * Conditionally thread-safe — same contract as @ref VariantList.
  */
 class VariantMap {
         public:
-                /** @cond INTERNAL */
-                struct Impl;
-                /** @endcond */
+                /** @brief Underlying storage type. */
+                using EntryMap = Map<String, Variant>;
+                /** @brief Pair shape accepted by initializer-list construction. */
+                using EntryPair = Pair<String, Variant>;
+                /** @brief Callback signature for @ref forEach. */
+                using ForEachFn = Function<void(const String &, const Variant &)>;
 
-                /** @brief Constructs an empty map. */
                 VariantMap();
-                /** @brief Constructs from an initializer list of (key, value) pairs. */
-                VariantMap(std::initializer_list<std::pair<const String, Variant>> il);
-                /** @brief Constructs from an existing @c Map<String, Variant> (deep copy). */
-                explicit VariantMap(const Map<String, Variant> &other);
-                /** @brief Constructs from an existing @c Map<String, Variant> (move). */
-                explicit VariantMap(Map<String, Variant> &&other);
+                VariantMap(std::initializer_list<EntryPair> il);
+                explicit VariantMap(const EntryMap &other);
+                explicit VariantMap(EntryMap &&other);
 
                 VariantMap(const VariantMap &other);
                 VariantMap(VariantMap &&other) noexcept;
@@ -849,203 +740,214 @@ class VariantMap {
                 VariantMap &operator=(const VariantMap &other);
                 VariantMap &operator=(VariantMap &&other) noexcept;
 
-                /** @brief Returns the number of (key, value) pairs. */
                 size_t size() const;
-                /** @brief Returns true when the map has no entries. */
-                bool isEmpty() const;
-                /** @brief Removes all entries. */
-                void clear();
+                bool   isEmpty() const;
+                void   clear();
+                bool   contains(const String &key) const;
 
-                /** @brief Returns true if @p key exists in the map. */
-                bool contains(const String &key) const;
-
-                /** @brief Inserts (or replaces) the entry for @p key. */
                 void insert(const String &key, const Variant &value);
-                /// @copydoc insert(const String &, const Variant &)
                 void insert(const String &key, Variant &&value);
-
-                /** @brief Removes the entry for @p key, returning true if it was present. */
                 bool remove(const String &key);
 
-                /**
-                 * @brief Returns the value for @p key, or an invalid Variant if absent.
-                 *
-                 * Callers can distinguish "missing" from "present but invalid" via
-                 * @ref contains.
-                 */
                 Variant value(const String &key) const;
-
-                /** @brief Returns the value for @p key, or @p defaultValue if absent. */
                 Variant value(const String &key, const Variant &defaultValue) const;
 
-                /** @brief Returns a pointer to the entry for @p key, or @c nullptr. */
-                Variant *find(const String &key);
-                /// @copydoc find(const String &)
+                Variant       *find(const String &key);
                 const Variant *find(const String &key) const;
 
-                /** @brief Returns a sorted list of all keys present in the map. */
                 StringList keys() const;
+                void       forEach(ForEachFn fn) const;
 
-                /** @brief Iterates every (key, value) pair in key order. */
-                void forEach(Function<void(const String &, const Variant &)> fn) const;
+                EntryMap       &map();
+                const EntryMap &map() const;
 
-                /**
-                 * @brief Borrows the underlying @c Map<String, Variant> for
-                 *        operations not surfaced directly.
-                 */
-                Map<String, Variant> &map();
-                /// @copydoc map()
-                const Map<String, Variant> &map() const;
-
-                /** @brief Returns true iff both maps hold equal entry sets. */
                 bool operator==(const VariantMap &other) const;
-                /** @brief Returns true iff the maps differ. */
                 bool operator!=(const VariantMap &other) const { return !(*this == other); }
 
-                /**
-                 * @brief Renders the map as a JSON-object string.
-                 *
-                 * Recursive: nested VariantList / VariantMap values become
-                 * nested JSON arrays / objects.
-                 */
                 String toJsonString() const;
-
-                /**
-                 * @brief Parses a JSON-object string into a VariantMap.
-                 *
-                 * @param json  JSON text of the form @c "{...}".  Anything
-                 *              else (including a JSON array) sets @p err to
-                 *              @ref Error::ParseFailed and returns an empty
-                 *              map.
-                 * @param err   Optional error output.
-                 * @return      The parsed map, or an empty map on failure.
-                 */
                 static VariantMap fromJsonString(const String &json, Error *err = nullptr);
 
+                /**
+                 * @brief Result-shaped alias of @ref fromJsonString.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref toJsonString() via
+                 * @ref Detail::HasResultFromString.
+                 */
+                static Result<VariantMap> fromString(const String &json) {
+                        Error      e;
+                        VariantMap v = fromJsonString(json, &e);
+                        if (e.isError()) return makeError<VariantMap>(e);
+                        return makeResult(std::move(v));
+                }
+
         private:
-                UniquePtr<Impl> _impl;
+                UniquePtr<EntryMap> _map;
 };
 
-#define X(name, type) type,
+// Inline template definitions for Variant::set / setValue / peek /
+// registerConverter must live in the header so consumer TUs can
+// instantiate them for their own types.
+
+namespace Detail {
+
 /**
- * @brief Concrete Variant type used throughout promeki.
+ * @brief Internal: allocates a new VariantBox copy-constructed from @p value.
  *
- * Implemented as a thin subclass of the @ref VariantImpl template
- * so that @c variant_fwd.h can declare @ref Variant as an incomplete
- * class and break header fan-out.  All behaviour is inherited
- * unchanged from @ref VariantImpl.
- *
- * @par JSON-shaped trees
- * @ref VariantList and @ref VariantMap are first-class Variant
- * alternatives, so a Variant can hold a recursive tree of values.
- * @ref fromJson decodes a @c nlohmann::json into a typed tree;
- * @ref VariantList::toJsonString / @ref VariantMap::toJsonString
- * round-trip back to the wire form.  Walk the tree with
- * @ref promekiResolveVariantPath using the standard
- * @c "name.sub[N].leaf" syntax.
- *
- * @code
- * nlohmann::json j = nlohmann::json::parse(R"({
- *     "title": "demo",
- *     "tags":  ["alpha", "beta"],
- *     "video": {"width": 1920, "height": 1080}
- * })");
- * Variant tree = Variant::fromJson(j);
- *
- * // Borrow the underlying VariantMap without a deep copy.
- * if (const VariantMap *m = tree.peek<VariantMap>()) {
- *     CHECK(m->value("title").get<String>() == "demo");
- * }
- *
- * // Deep lookup using the dotted/indexed path syntax.
- * Variant w = promekiResolveVariantPath(tree, "video.width");
- * CHECK(w.get<int32_t>() == 1920);
- *
- * Variant tag1 = promekiResolveVariantPath(tree, "tags[1]");
- * CHECK(tag1.get<String>() == "beta");
- * @endcode
- *
- * @par Thread Safety
- * Conditionally thread-safe — same contract as @ref VariantImpl.
+ * Defined in @c variant.cpp.  @p typeData must refer to a registered
+ * type whose @c cppType matches @c std::type_index(typeid(T)); the
+ * lambda passed to PROMEKI_IMPLEMENT_DATATYPE-style registration
+ * does that match-check at call time.  When @p typeData is null the
+ * function returns a null SharedPtr (Variant becomes invalid).
  */
-class Variant : public VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd> {
-        public:
-                using Base = VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
-                using Base::Base;
-                Variant() = default;
-                Variant(const Base &b) : Base(b) {}
-                Variant(Base &&b) : Base(std::move(b)) {}
-};
-#undef X
+SharedPtr<VariantBox> makeVariantBox(const DataType::Data *typeData, const void *value);
 
-// Out-of-line VariantImpl::fromJson — must come after VariantList /
-// VariantMap class definitions so the body can construct them.
-template <typename... Types>
-VariantImpl<Types...> VariantImpl<Types...>::fromJson(const nlohmann::json &val) {
-        if (val.is_null()) return VariantImpl();
-        if (val.is_boolean()) return val.get<bool>();
-        if (val.is_number_integer()) {
-                if (val.is_number_unsigned()) return val.get<uint64_t>();
-                return val.get<int64_t>();
-        }
-        if (val.is_number_float()) return val.get<double>();
-        if (val.is_string()) return String(val.get<std::string>());
-        if (val.is_array()) {
-                VariantList list;
-                list.reserve(val.size());
-                for (const auto &item : val) {
-                        list.pushToBack(Variant(VariantImpl::fromJson(item)));
+/**
+ * @brief Internal: allocates a new VariantBox move-constructed from @p value.
+ *
+ * Same contract as @ref makeVariantBox but routes through the
+ * registered @c moveConstruct op so the payload bytes are relocated
+ * rather than deep-copied.  Falls back to copy-construction when the
+ * type record has no @c moveConstruct slot.
+ */
+SharedPtr<VariantBox> makeVariantBoxMove(const DataType::Data *typeData, void *value);
+
+} // namespace Detail
+
+template <typename T> void Variant::setValue(const T &value) {
+        // Preserve the legacy std::variant-based behaviour where
+        // TypedEnum<X>-derived types slice to Enum on assignment.  The
+        // registry only carries the Enum entry, so derived types route
+        // through it explicitly rather than producing an invalid
+        // Variant.
+        if constexpr (std::is_base_of_v<Enum, T> && !std::is_same_v<T, Enum>) {
+                const Enum &sliced = static_cast<const Enum &>(value);
+                _box = Detail::makeVariantBox(DataType::of<Enum>().data(), &sliced);
+                return;
+        } else {
+                const DataType dt = DataType::of<T>();
+                if (dt.isValid()) {
+                        _box = Detail::makeVariantBox(dt.data(), &value);
+                        return;
                 }
-                return list;
-        }
-        if (val.is_object()) {
-                VariantMap map;
-                for (auto it = val.begin(); it != val.end(); ++it) {
-                        map.insert(String(it.key()), Variant(VariantImpl::fromJson(it.value())));
+                // Fallback: replicate legacy std::variant overload
+                // resolution for the common case where @p T is
+                // convertible to one of the registered types but is
+                // not itself registered — string literals, char
+                // arrays, @c std::string, etc.  String is the
+                // dominant "implicit landing" alternative.
+                if constexpr (!std::is_same_v<T, String> &&
+                              std::is_constructible_v<String, const T &>) {
+                        String s(value);
+                        _box = Detail::makeVariantBox(DataType::of<String>().data(), &s);
+                        return;
                 }
-                return map;
+                _box.clear();
+                return;
         }
-        return String(val.dump());
 }
 
-// ---------------------------------------------------------------------------
-// Extern template declarations.  The matching explicit instantiations live
-// in src/core/variant.cpp, so consumer TUs don't each re-instantiate the
-// ~250-line per-To get<T>() std::visit lambda or the 35²-branch operator==.
-// Keeps Variant-heavy TUs from blowing past ~1.5 GB peak RSS at compile.
-// `extern template class` requires a class-id (typedef names forbidden),
-// so the Variant alternative list is expanded via the X-macro rather than
-// spelled through the Variant::Base alias.
-// ---------------------------------------------------------------------------
+template <typename T> void Variant::setValueMove(T &&value) {
+        // T is already a value type by the time this is instantiated
+        // (the public set / converting ctor strip references), so the
+        // typedef below is just for symmetry with @ref setValue.  The
+        // Enum slicing path mirrors the copy variant: TypedEnum<X> →
+        // Enum payload via the registry's Enum entry.
+        using U = std::remove_cv_t<std::remove_reference_t<T>>;
+        if constexpr (std::is_base_of_v<Enum, U> && !std::is_same_v<U, Enum>) {
+                Enum sliced = static_cast<Enum &&>(value);
+                _box = Detail::makeVariantBoxMove(DataType::of<Enum>().data(), &sliced);
+                return;
+        } else {
+                const DataType dt = DataType::of<U>();
+                if (dt.isValid()) {
+                        U tmp(std::move(value));
+                        _box = Detail::makeVariantBoxMove(dt.data(), &tmp);
+                        return;
+                }
+                // Same String-convertible fallback as the copy path.
+                if constexpr (!std::is_same_v<U, String> &&
+                              std::is_constructible_v<String, U &&>) {
+                        String s(std::move(value));
+                        _box = Detail::makeVariantBoxMove(DataType::of<String>().data(), &s);
+                        return;
+                }
+                _box.clear();
+                return;
+        }
+}
 
-/// @cond INTERNAL
-#define X(name, type) type,
-extern template class VariantImpl<PROMEKI_VARIANT_TYPES detail::VariantEnd>;
-#undef X
+template <typename T> const T *Variant::peek() const noexcept {
+        if (_box.isNull()) return nullptr;
+        const DataType::Data *td = _box->typeData;
+        if (td == nullptr) return nullptr;
+        if (td->cppType != std::type_index(typeid(T))) return nullptr;
+        return static_cast<const T *>(_box->payload());
+}
 
-#define X(name, type) extern template type Variant::Base::get<type>(Error * err) const;
-PROMEKI_VARIANT_TYPES
-#undef X
-/// @endcond
+template <typename To> To Variant::get(Error *err) const {
+        if (err != nullptr) *err = Error::Ok;
+        if (const To *direct = peek<To>()) return *direct;
+
+        const DataType targetDt = DataType::of<To>();
+        if (!targetDt.isValid()) {
+                if (err != nullptr) *err = Error::Invalid;
+                return To{};
+        }
+        Error convErr;
+        Variant out = convertTo(targetDt.id(), &convErr);
+        if (convErr.isError()) {
+                if (err != nullptr) *err = convErr;
+                return To{};
+        }
+        if (const To *converted = out.peek<To>()) return *converted;
+        if (err != nullptr) *err = Error::Invalid;
+        return To{};
+}
+
+namespace Detail {
+
+/**
+ * @brief Function-pointer signature deducer used by @ref Variant::registerConverter<auto>.
+ *
+ * Specialized below for @c To(*)(const From&, Error*); other signatures
+ * are intentionally not matched so the typed @c registerConverter
+ * overload rejects them with a hard error rather than silently
+ * registering nothing.
+ */
+template <typename Fn> struct ConverterFnTraits;
+
+template <typename To, typename From> struct ConverterFnTraits<To (*)(const From &, Error *)> {
+                using FromType = From;
+                using ToType   = To;
+};
+
+} // namespace Detail
+
+template <auto Fn> void Variant::registerConverter() {
+        using Traits = Detail::ConverterFnTraits<decltype(Fn)>;
+        using From   = typename Traits::FromType;
+        using To     = typename Traits::ToType;
+        registerConverter(DataType::of<From>().id(), DataType::of<To>().id(),
+                          +[](const Variant &v, Error *err) -> Variant {
+                                  const From *p = v.peek<From>();
+                                  if (p == nullptr) {
+                                          if (err != nullptr) *err = Error::Invalid;
+                                          return Variant();
+                                  }
+                                  return Variant(Fn(*p, err));
+                          });
+}
 
 class DataStream;
 
-/**
- * @brief Writes a VariantList to a DataStream.
- *
- * Forwards to the generic @c operator<<(DataStream &, const List<T> &)
- * via the underlying @c List<Variant>.  Defined out-of-line in
- * @c variant.cpp so the @c List<Variant> template instantiation
- * stays in one TU.
- */
+/** @brief Writes a VariantList to a DataStream. */
 DataStream &operator<<(DataStream &stream, const VariantList &list);
-
 /** @brief Reads a VariantList from a DataStream. */
 DataStream &operator>>(DataStream &stream, VariantList &list);
-
 /** @brief Writes a VariantMap to a DataStream. */
 DataStream &operator<<(DataStream &stream, const VariantMap &map);
-
 /** @brief Reads a VariantMap from a DataStream. */
 DataStream &operator>>(DataStream &stream, VariantMap &map);
 
@@ -1054,19 +956,9 @@ DataStream &operator>>(DataStream &stream, VariantMap &map);
  * @ingroup util
  *
  * Walks @p root following the same key grammar used by
- * @ref VariantLookup (`segment ( '.' segment )*`, where
- * `segment := name ( '[' index ']' )?`), descending through nested
+ * @ref VariantLookup (@c "segment ( '.' segment )*", where
+ * @c "segment := name ( '[' index ']' )?"), descending through nested
  * @ref VariantMap and @ref VariantList alternatives as needed.
- *
- * @par Examples
- *  - `"foo"` against a VariantMap → returns the value for key `"foo"`.
- *  - `"foo.bar"` against a VariantMap → looks up `foo`, descends if it
- *    holds a VariantMap, then looks up `bar`.
- *  - `"foo[0]"` → looks up `foo`, descends if it holds a VariantList,
- *    returns element 0.
- *  - `"[0]"` against a VariantList — the leading segment is empty
- *    so the walker treats the whole @p root as the list and returns
- *    element 0.
  *
  * @par Errors
  *  - @c Error::IdNotFound — a key was missing from a VariantMap.
@@ -1075,54 +967,24 @@ DataStream &operator>>(DataStream &stream, VariantMap &map);
  *  - @c Error::Invalid     — descended into a Variant that wasn't
  *                            VariantMap / VariantList when the path
  *                            still had segments to walk.
- *
- * @param root  The Variant to walk.  Typically holds a VariantMap or VariantList.
- * @param path  The dotted/indexed path to follow.
- * @param err   Optional error output.
- * @return      The resolved Variant, or an invalid Variant on failure.
  */
 Variant promekiResolveVariantPath(const Variant &root, const String &path, Error *err = nullptr);
 
 PROMEKI_NAMESPACE_END
 
 /**
- * @brief @c std::formatter partial specialization for @ref promeki::VariantImpl.
+ * @brief @c std::formatter specialization for @ref promeki::Variant.
  *
- * Routes the held value through @c VariantImpl::get<String>(), which
- * already knows how to convert every variant alternative to a String
- * (numbers via @c String::number, library types via their @c toString,
- * collections like @c StringList via @c join, etc.).  This means
- * @ref promeki::Variant — and any other @c VariantImpl instantiation —
- * is usable as a @ref promeki::String::format argument out of the box,
- * regardless of what type it currently holds.
- *
+ * Routes the held value through @c Variant::get<String>(), which
+ * already knows how to convert every Variant alternative to a String.
  * Standard string format specifiers (width, fill, alignment) are
  * inherited from @c std::formatter<std::string_view>.
- *
- * @code
- *   Variant v;
- *   v.set(42);                              // holds int
- *   String s = String::format("v = {}", v); // "v = 42"
- *   v.set(promeki::UUID::generate());       // now holds UUID
- *   s = String::format("v = {}", v);        // "v = <uuid>"
- * @endcode
  */
-template <typename... Types> struct std::formatter<promeki::VariantImpl<Types...>> : std::formatter<std::string_view> {
+template <> struct std::formatter<promeki::Variant> : std::formatter<std::string_view> {
                 using Base = std::formatter<std::string_view>;
                 template <typename FormatContext>
-                auto format(const promeki::VariantImpl<Types...> &v, FormatContext &ctx) const {
-                        promeki::String s = v.template get<promeki::String>();
+                auto format(const promeki::Variant &v, FormatContext &ctx) const {
+                        promeki::String s = v.get<promeki::String>();
                         return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }
 };
-
-/**
- * @brief @c std::formatter specialization for @ref promeki::Variant.
- *
- * Because @ref promeki::Variant is now a concrete subclass of
- * @c promeki::VariantImpl, the template partial specialization above
- * does not match it directly — @c std::formatter selects by exact
- * type.  This specialization reuses the VariantImpl formatter via
- * its base subobject.
- */
-template <> struct std::formatter<promeki::Variant> : std::formatter<promeki::Variant::Base> {};

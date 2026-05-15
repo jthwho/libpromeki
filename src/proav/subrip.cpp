@@ -425,7 +425,7 @@ namespace {
                                 if (state.underline > 0) --state.underline;
                         } else if (iEquals(name, nameLen, "font")) {
                                 String val = extractAttr(rest, restLen, "color");
-                                Color  c = val.isEmpty() ? Color() : Color::fromString(val);
+                                Color  c = val.isEmpty() ? Color() : value(Color::fromString(val));
                                 state.colorStack.pushToBack(c);
                                 // SubRip's <font> tag is also commonly extended
                                 // with a `background` attribute (Aegisub /
@@ -434,7 +434,7 @@ namespace {
                                 // pushes both stacks and the matching </font>
                                 // pops both.
                                 String bgVal = extractAttr(rest, restLen, "background");
-                                Color  bg = bgVal.isEmpty() ? Color() : Color::fromString(bgVal);
+                                Color  bg = bgVal.isEmpty() ? Color() : value(Color::fromString(bgVal));
                                 state.bgColorStack.pushToBack(bg);
                         } else if (iEquals(name, nameLen, "/font")) {
                                 if (!state.colorStack.isEmpty()) state.colorStack.remove(state.colorStack.size() - 1);

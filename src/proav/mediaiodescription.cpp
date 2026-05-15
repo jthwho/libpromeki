@@ -232,7 +232,7 @@ MediaIODescription MediaIODescription::fromJson(const JsonObject &obj, Error *er
 
         if (obj.contains("canSeek")) d._canSeek = obj.getBool("canSeek");
         if (obj.contains("frameCount")) {
-                d._frameCount = FrameCount::fromString(obj.getString("frameCount"));
+                d._frameCount = value(FrameCount::fromString(obj.getString("frameCount")));
         }
         if (obj.contains("frameRate")) {
                 Result<FrameRate> r = FrameRate::fromString(obj.getString("frameRate"));

@@ -1046,6 +1046,13 @@ inline DataStream &operator>>(DataStream &stream, XmlDocument &doc) {
                 doc = XmlDocument();
                 return stream;
         }
+        // A default-constructed XmlDocument serializes to an empty
+        // string; round-trip it as a default rather than feeding the
+        // parser an empty buffer.
+        if (text.isEmpty()) {
+                doc = XmlDocument();
+                return stream;
+        }
         XmlParseError perr;
         doc = XmlDocument::parse(text, &perr);
         if (!perr) {
@@ -1076,6 +1083,13 @@ inline DataStream &operator>>(DataStream &stream, XmlElement &elem) {
         String text;
         stream >> text;
         if (stream.status() != DataStream::Ok) {
+                elem = XmlElement();
+                return stream;
+        }
+        // A default-constructed XmlElement serializes to an empty
+        // string; round-trip it as a default rather than feeding the
+        // parser an empty buffer.
+        if (text.isEmpty()) {
                 elem = XmlElement();
                 return stream;
         }

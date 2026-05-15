@@ -14,9 +14,11 @@
 #include <tuple>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
-#include <promeki/variant_fwd.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class Variant;
+class VariantList;
 
 /**
  * @brief Type-safe callback slot that wraps a callable with optional ownership tracking.

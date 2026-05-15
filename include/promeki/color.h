@@ -11,6 +11,7 @@
 #include <promeki/colormodel.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
+#include <promeki/result.h>
 #include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -207,8 +208,12 @@ class Color {
                  *  3. Hex string: "#RRGGBB" or "#RRGGBBAA" (sRGB).
                  *  4. Named color (case-insensitive): "black", "white", "red", etc. (sRGB).
                  *  5. Comma-separated integer values: "128,64,32" or "128,64,32,200" (sRGB).
+                 *
+                 * @return A Result containing the parsed Color and Error::Ok on
+                 *         success, or an invalid Color and Error::ParseFailed
+                 *         when no format matched.
                  */
-                static Color fromString(const String &str);
+                static Result<Color> fromString(const String &str);
 
                 /**
                  * @brief Creates a Color from native-range component values.

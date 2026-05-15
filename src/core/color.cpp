@@ -146,61 +146,65 @@ static Color parseFloatFunc(const String &str) {
         return Color(ColorModel::sRGB, (float)rv, (float)gv, (float)bv, (float)av);
 }
 
-Color Color::fromString(const String &str) {
-        if (str.isEmpty()) return Color();
+Result<Color> Color::fromString(const String &str) {
+        if (str.isEmpty()) return makeError<Color>(Error::ParseFailed);
 
         // Try model notation: "ModelName(c0,c1,c2,c3)"
         {
                 Color c = parseModelFunc(str);
-                if (c.isValid()) return c;
+                if (c.isValid()) return makeResult(c);
         }
 
         // Try functional notation: rgb(...) / rgba(...)
         {
                 Color c = parseFloatFunc(str);
-                if (c.isValid()) return c;
+                if (c.isValid()) return makeResult(c);
         }
 
         // Try hex format
-        if (str.charAt(0) == '#') return fromHex(str);
+        if (str.charAt(0) == '#') {
+                Color c = fromHex(str);
+                if (c.isValid()) return makeResult(c);
+                return makeError<Color>(Error::ParseFailed);
+        }
 
         // Try named colors (case-insensitive)
         String lower = str.toLower();
-        if (lower == "black") return Black;
-        if (lower == "white") return White;
-        if (lower == "red") return Red;
-        if (lower == "green") return Green;
-        if (lower == "blue") return Blue;
-        if (lower == "yellow") return Yellow;
-        if (lower == "cyan") return Cyan;
-        if (lower == "magenta") return Magenta;
-        if (lower == "darkgray" || lower == "darkgrey") return DarkGray;
-        if (lower == "lightgray" || lower == "lightgrey") return LightGray;
-        if (lower == "orange") return Orange;
-        if (lower == "transparent") return Transparent;
+        if (lower == "black") return makeResult(Black);
+        if (lower == "white") return makeResult(White);
+        if (lower == "red") return makeResult(Red);
+        if (lower == "green") return makeResult(Green);
+        if (lower == "blue") return makeResult(Blue);
+        if (lower == "yellow") return makeResult(Yellow);
+        if (lower == "cyan") return makeResult(Cyan);
+        if (lower == "magenta") return makeResult(Magenta);
+        if (lower == "darkgray" || lower == "darkgrey") return makeResult(DarkGray);
+        if (lower == "lightgray" || lower == "lightgrey") return makeResult(LightGray);
+        if (lower == "orange") return makeResult(Orange);
+        if (lower == "transparent") return makeResult(Transparent);
 
         // Try comma-separated integer R,G,B or R,G,B,A
         StringList parts = str.split(",");
         if (parts.size() == 3 || parts.size() == 4) {
                 Error err;
                 int   r = parts[0].trim().toInt(&err);
-                if (err.isError()) return Color();
+                if (err.isError()) return makeError<Color>(Error::ParseFailed);
                 int g = parts[1].trim().toInt(&err);
-                if (err.isError()) return Color();
+                if (err.isError()) return makeError<Color>(Error::ParseFailed);
                 int b = parts[2].trim().toInt(&err);
-                if (err.isError()) return Color();
+                if (err.isError()) return makeError<Color>(Error::ParseFailed);
                 int a = 255;
                 if (parts.size() == 4) {
                         a = parts[3].trim().toInt(&err);
-                        if (err.isError()) return Color();
+                        if (err.isError()) return makeError<Color>(Error::ParseFailed);
                 }
                 if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
-                        return Color();
+                        return makeError<Color>(Error::OutOfRange);
                 }
-                return Color((uint8_t)r, (uint8_t)g, (uint8_t)b, (uint8_t)a);
+                return makeResult(Color((uint8_t)r, (uint8_t)g, (uint8_t)b, (uint8_t)a));
         }
 
-        return Color();
+        return makeError<Color>(Error::ParseFailed);
 }
 
 static int parseHexByte(const String &str, size_t offset) {

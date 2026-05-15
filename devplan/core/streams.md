@@ -9,6 +9,18 @@
 
 What remains: TextStream type operator overloads, and ObjectBase saveState/loadState.
 
+### Journal — 2026-05-15: DataType registry, Variant rewrite, fromString standardization, converter consolidation (landed)
+
+Three interlinked layers shipped in one commit:
+
+**DataType registry** (`include/promeki/datatype.h`, `src/core/datatype.cpp`): TypeRegistry-pattern handle wrapping an immutable `Data` record per C++ type. Carries ID (alias of `DataStream::TypeId`), name, size, alignment, `type_index`, and an `Ops` table of function pointers (defaultConstruct, copyConstruct, moveConstruct, destroy, equal, toString, fromString, writeStream, readStream). `Detail::makeDefaultOps<T>` auto-populates slots via concept detection (`HasEqualityOp`, `HasMemberToString`, `HasResultFromString`, `HasDataStreamWriteV/ReadV`). Registration macros: `PROMEKI_IMPLEMENT_DATATYPE` (auto-ID) and `PROMEKI_IMPLEMENT_DATATYPE_ID` (pinned ID). New tests: `tests/unit/datatype.cpp` + `tests/unit/datatype_roundtrip.cpp` (generic round-trip across all 62 registered types; 57 round-trip, 5 skip due to no serialize op, 0 failures).
+
+**Variant rewritten to registry-driven dispatch**: now stores a refcounted `VariantBox` payload identified by `DataType::ID` instead of `std::variant`. `readVariantPayload` collapsed from a 560-line per-type switch to a 15-line registry-driven dispatch using a new one-deep frame-header lookahead (`peekFrameHeader` + `_peekedHeaderValid`) so the path works on sequential IODevices (sockets, pipes). Wire format unchanged — still v3 framed. Deletions: `variant.tpp` and `variant_fwd.h` are gone; their content moved into `variant.h` / `variant.cpp` / `datatype.h`.
+
+**fromString convention standardization**: UUID, UMID, FrameNumber, FrameCount, MediaDuration, DateTime, Color migrated to `Result<T> T::fromString(const String &)`. Added `Result<T> fromString` siblings to typereg wrappers (ColorModel, PixelMemLayout, PixelFormat, AncFormat) and to VariantList, VariantMap, Enum. `Detail::HasResultFromString<T>` concept in `datatype.h` auto-populates `ops.fromString` in `makeDefaultOps`. New `convertViaOpsFromString<T>` generic converter routes through `ops.fromString`; registered for every `(String, T)` pair via `registerStringToVia` / `registerStringToGroupVia`.
+
+**Converter registry consolidation**: grouped registrations driven by role-based tuples (`NumericGroup`, `IntegerGroup`, `TypeRegFromStringGroup`, `StringRoundTripGroup`, `ToStringOnly`, `NetworkStringRoundTripGroup`). Only pairs with a real `convertOne` path are registered. `findConverter == nullptr` is now the canonical "no path" sentinel (was previously "always-fails converter"). Stripped ~200 lines of dead `if constexpr` fromString dispatch from `convertOne`.
+
 ---
 
 ## Phase 2K: TextStream Promeki Type Operator Extensions

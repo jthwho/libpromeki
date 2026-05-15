@@ -515,7 +515,14 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span) {
 // Subtitle — construction / special members
 // ============================================================================
 
-Subtitle::Subtitle() : _d(SharedPtr<SubtitleImpl>::create()) {}
+Subtitle::Subtitle() : _d(SharedPtr<SubtitleImpl>::create()) {
+        // Enforce the same "always at least one span" invariant that
+        // the args-taking constructors and setSpans() maintain, so a
+        // default Subtitle compares structurally equal to one built
+        // through those paths from empty inputs (used by the DataStream
+        // round-trip and by other generic value-shaped consumers).
+        _d.modify()->spans.pushToBack(SubtitleSpan());
+}
 
 Subtitle::Subtitle(TimeStamp start, TimeStamp end, String text, SubtitleAnchor anchor)
     : _d(SharedPtr<SubtitleImpl>::create()) {

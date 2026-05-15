@@ -13,7 +13,6 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/buffer.h>
-#include <promeki/variant_fwd.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/set.h>
@@ -34,6 +33,9 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class Variant;
+class VariantList;
+class VariantMap;
 class JsonObject;
 class JsonArray;
 class XmlDocument;
@@ -948,6 +950,50 @@ class DataStream {
                 bool readFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize);
 
                 /**
+                 * @brief Reads a frame header but leaves it cached for the next read.
+                 *
+                 * Pulls the 8 header bytes from the device (parsing
+                 * them according to the current byte order) and
+                 * caches the parsed @c tag / @c version / @c size so
+                 * that the next call to @ref readFrameHeader (or any
+                 * @ref readFrame / @ref skipFrame, which both go
+                 * through @c readFrameHeader internally) returns the
+                 * same values without touching the device a second
+                 * time.
+                 *
+                 * The cache holds at most one frame header.  Calling
+                 * @c peekFrameHeader twice in a row returns the same
+                 * cached header without re-reading.  Consuming the
+                 * cache happens implicitly via the next
+                 * @c readFrameHeader call — there is no separate
+                 * "discard" entry point.
+                 *
+                 * Used by @c operator>>(Variant&) so that the
+                 * dispatch code can look at the tag to pick a
+                 * registered reader, then hand off to the per-type
+                 * @c operator>> overload which re-reads the header
+                 * through @c readFrame and consumes the cache
+                 * transparently.  This keeps the read path working
+                 * on sequential devices (sockets, pipes) where
+                 * seeking back is not possible.
+                 *
+                 * @par Constraint
+                 * Calling raw byte methods (@c readBytes,
+                 * @c readRawData, @c skipRawData) while a peeked
+                 * header is pending consumes bytes from the device
+                 * past the header without draining the cache, which
+                 * would mis-align subsequent frame reads.  In debug
+                 * builds those entry points assert that the cache is
+                 * empty.
+                 *
+                 * @param outTag     Receives the tag.
+                 * @param outVersion Receives the version.
+                 * @param outSize    Receives the body size.
+                 * @return @c true on success.
+                 */
+                bool peekFrameHeader(TypeId &outTag, uint16_t &outVersion, uint32_t &outSize);
+
+                /**
                  * @brief Consumes a complete frame, discarding its body.
                  *
                  * Reads the frame header via @ref readFrameHeader()
@@ -1016,30 +1062,6 @@ class DataStream {
                  * @brief Reads and validates the stream header.
                  */
                 void readHeader();
-
-                /**
-                 * @brief Reads a Variant payload for the given TypeId tag.
-                 *
-                 * Called after the frame header has been consumed
-                 * (so the caller already knows the body size).
-                 * Dispatches to the appropriate readXXXData() helper
-                 * and stores the resulting value in @p val.  When the
-                 * tag isn't in the dispatch table, the @p bodySize
-                 * bytes are skipped via @ref skipRawData and @p val
-                 * is left default-constructed — forward compat for
-                 * future types.
-                 *
-                 * @param id       The tag that was consumed.
-                 * @param version  The per-type version that was
-                 *                 consumed.  Currently informational;
-                 *                 callers may reject unfamiliar
-                 *                 versions explicitly.
-                 * @param bodySize The body size from the frame
-                 *                 header, used for the unknown-tag
-                 *                 skip path.
-                 * @param val      The Variant to populate.
-                 */
-                void readVariantPayload(TypeId id, uint16_t version, uint32_t bodySize, Variant &val);
 
                 /**
                  * @brief Reads exactly len bytes, setting status on failure.
@@ -1194,6 +1216,16 @@ class DataStream {
                 Status               _status = Ok;
                 String               _errorContext;
                 List<PendingFrame>   _frameStack;
+
+                // One-deep frame-header lookahead.  Populated by
+                // @ref peekFrameHeader and drained by the next
+                // @ref readFrameHeader so that Variant dispatch can
+                // inspect the tag without requiring a seekable
+                // device.
+                bool                 _peekedHeaderValid = false;
+                TypeId               _peekedTag         = static_cast<TypeId>(0);
+                uint16_t             _peekedVersion     = 0;
+                uint32_t             _peekedSize        = 0;
 };
 
 // ============================================================================

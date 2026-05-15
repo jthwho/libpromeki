@@ -12,6 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/array.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -104,11 +105,11 @@ class UMID {
                  * accepted.  Parsing is case-insensitive.
                  *
                  * @param str The hex string to parse.
-                 * @param err Optional error output; set to
-                 *            @c Error::Invalid on failure.
-                 * @return The parsed UMID, or an invalid UMID on failure.
+                 * @return A Result containing the parsed UMID and
+                 *         Error::Ok on success, or an invalid UMID and
+                 *         Error::ParseFailed on failure.
                  */
-                static UMID fromString(const String &str, Error *err = nullptr);
+                static Result<UMID> fromString(const String &str);
 
                 /**
                  * @brief Constructs a UMID from a raw byte buffer.

@@ -17,6 +17,8 @@ are the remaining opportunistic enhancements.
 
 Opportunistic migration: any `std::pair<T, Error>` return still in the codebase should be converted to `Result<T>` when the class is next touched. No new code should return `std::pair<T, Error>`.
 
+**2026-05-15**: `fromString` convention standardization complete. UUID, UMID, FrameNumber, FrameCount, MediaDuration, DateTime, Color, and all typereg wrappers (ColorModel, PixelMemLayout, PixelFormat, AncFormat) plus VariantList, VariantMap, Enum now all expose `static Result<T> fromString(const String &)`. The `Detail::HasResultFromString` concept in `datatype.h` auto-populates the DataType registry's `ops.fromString` slot for any conforming type.
+
 ---
 
 ## Variant Enhancements

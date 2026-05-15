@@ -221,13 +221,12 @@ class MediaDuration {
                  * - @c "<start>-<end>"    — inclusive range, converted via @ref fromFrameRange
                  *
                  * @param str The string to parse.
-                 * @param err Optional error output; set to @c Error::Ok on
-                 *            success or @c Error::ParseFailed on malformed
-                 *            input.
-                 * @return The parsed MediaDuration, or a default-constructed
-                 *         MediaDuration on failure.
+                 * @return A Result containing the parsed MediaDuration and
+                 *         @c Error::Ok on success, or a default-constructed
+                 *         MediaDuration and @c Error::ParseFailed on
+                 *         malformed input.
                  */
-                static MediaDuration fromString(const String &str, Error *err = nullptr);
+                static Result<MediaDuration> fromString(const String &str);
 
                 /**
                  * @brief Builds a MediaDuration from an inclusive FrameRange.

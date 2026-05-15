@@ -8,7 +8,46 @@
 
 #include <doctest/doctest.h>
 #include <promeki/variant.h>
+#include <promeki/uuid.h>
+#include <promeki/umid.h>
+#include <promeki/datetime.h>
+#include <promeki/timestamp.h>
+#include <promeki/timecode.h>
+#include <promeki/framerate.h>
+#include <promeki/framenumber.h>
+#include <promeki/framecount.h>
+#include <promeki/mediaduration.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/duration.h>
+#include <promeki/size2d.h>
+#include <promeki/rational.h>
+#include <promeki/videoformat.h>
+#include <promeki/stringlist.h>
+#include <promeki/color.h>
+#include <promeki/colormodel.h>
+#include <promeki/memspace.h>
+#include <promeki/pixelmemlayout.h>
+#include <promeki/pixelformat.h>
+#include <promeki/videocodec.h>
+#include <promeki/audiocodec.h>
+#include <promeki/audioformat.h>
+#include <promeki/audiochannelmap.h>
+#include <promeki/audiomarker.h>
+#include <promeki/audiostreamdesc.h>
+#include <promeki/ancformat.h>
+#include <promeki/cea608packet.h>
+#include <promeki/cea708cdp.h>
+#include <promeki/subtitle.h>
+#include <promeki/masteringdisplay.h>
+#include <promeki/contentlightlevel.h>
+#include <promeki/enum.h>
+#include <promeki/enumlist.h>
+#include <promeki/windowedstat.h>
+#include <promeki/xml.h>
+#include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
+#include <promeki/macaddress.h>
+#include <promeki/eui64.h>
 #include <promeki/url.h>
 #include <promeki/variantspec.h>
 #if PROMEKI_ENABLE_TLS
@@ -938,7 +977,7 @@ TEST_CASE("Variant_Format_String_Width") {
 
 TEST_CASE("Variant_Format_NoFormatter_FallsBack") {
         // UUID has no std::formatter — spec is applied to its String form.
-        Variant v(UUID::fromString(String("12345678-1234-1234-1234-1234567890ab")));
+        Variant v(value(UUID::fromString(String("12345678-1234-1234-1234-1234567890ab"))));
         String  full = v.format(String());
         // Width spec on a non-formattable type reuses the String form.
         String widened = v.format(">40");
@@ -1510,4 +1549,127 @@ TEST_CASE("Variant_VariantList_DeepCopy_Independence") {
         aOut.pushToBack(Variant(String("appended")));
         VariantList bAgain = b.get<VariantList>();
         CHECK(bAgain.size() == 1);
+}
+
+TEST_CASE("Variant_Move_Construct_From_Rvalue") {
+        // Building a Variant from std::move(...) must route through
+        // the registered moveConstruct op so the payload lands in
+        // the box correctly.  We don't probe the moved-from source —
+        // its state is unspecified.
+        String s("abcdefghijklmnopqrstuvwxyz0123456789-supposed-to-be-heap");
+        REQUIRE(!s.isEmpty());
+
+        Variant v(std::move(s));
+        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.get<String>() == "abcdefghijklmnopqrstuvwxyz0123456789-supposed-to-be-heap");
+}
+
+TEST_CASE("Variant_Move_Construct_Via_VariantList_Tracks_Move") {
+        // VariantList has well-defined empty moved-from state (the
+        // internal UniquePtr<ItemList> becomes null), so we can
+        // verify the source ends up empty after the move-construct
+        // path without touching unspecified-state territory.
+        VariantList vl;
+        vl.pushToBack(Variant(int32_t(7)));
+        vl.pushToBack(Variant(String("eight")));
+        REQUIRE(vl.size() == 2);
+
+        Variant v(std::move(vl));
+        CHECK(vl.isEmpty()); // moved-from VariantList becomes empty
+        const VariantList *peeked = v.peek<VariantList>();
+        REQUIRE(peeked != nullptr);
+        CHECK(peeked->size() == 2);
+}
+
+TEST_CASE("Variant_Move_Set_From_Rvalue") {
+        // set(T&&) routes through the move path the same way the
+        // converting move-ctor does.
+        Variant v;
+        VariantList vl;
+        vl.pushToBack(Variant(String("alpha")));
+        vl.pushToBack(Variant(String("beta")));
+        v.set(std::move(vl));
+
+        const VariantList *peeked = v.peek<VariantList>();
+        REQUIRE(peeked != nullptr);
+        REQUIRE(peeked->size() == 2);
+        CHECK(peeked->at(0).get<String>() == "alpha");
+        CHECK(peeked->at(1).get<String>() == "beta");
+}
+
+// User-defined From/To types for the converter-registry test below.
+// They never need to round-trip through DataStream, so a minimal
+// equality op is sufficient — DataType::registerType is happy with
+// just copy/move/destroy.
+namespace {
+        struct UserConvFrom {
+                        int value = 0;
+                        bool operator==(const UserConvFrom &o) const { return value == o.value; }
+        };
+        struct UserConvTo {
+                        String text;
+                        bool operator==(const UserConvTo &o) const { return text == o.text; }
+        };
+
+        static UserConvTo userConvFromToTo(const UserConvFrom &val, Error *err) {
+                if (err != nullptr) *err = Error::Ok;
+                UserConvTo out;
+                out.text = String("converted:") + String::number(val.value);
+                return out;
+        }
+}
+
+// Register user types so the converter test has live DataType records
+// to work with.  Done at static-init so the conversion test below has
+// everything in place before doctest dispatches the cases.
+PROMEKI_DECLARE_DATATYPE(UserConvFrom)
+PROMEKI_DECLARE_DATATYPE(UserConvTo)
+namespace {
+        [[maybe_unused]] const ::promeki::DataType _userConvFromRegistrar =
+                ::promeki::DataType::registerType<UserConvFrom>("UserConvFrom");
+        [[maybe_unused]] const ::promeki::DataType _userConvToRegistrar =
+                ::promeki::DataType::registerType<UserConvTo>("UserConvTo");
+        struct UserConvRegistrar {
+                        UserConvRegistrar() { Variant::registerConverter<&userConvFromToTo>(); }
+        };
+        [[maybe_unused]] const UserConvRegistrar _userConvRegistrar;
+}
+
+TEST_CASE("Variant_RegisterConverter_Typed_End_To_End") {
+        // The typed registerConverter<auto> overload should let a
+        // Variant<UserConvFrom> resolve to UserConvTo via get<T>()
+        // and via convertTo(targetTypeId).
+        Variant src(UserConvFrom{42});
+
+        // get<T>() takes the conversion path.
+        Error err;
+        UserConvTo via = src.get<UserConvTo>(&err);
+        CHECK(err.isOk());
+        CHECK(via.text == "converted:42");
+
+        // convertTo(Type) takes the same path with a runtime tag.
+        const Variant::Type toId = DataType::of<UserConvTo>().id();
+        Variant             out  = src.convertTo(toId, &err);
+        CHECK(err.isOk());
+        REQUIRE(out.peek<UserConvTo>() != nullptr);
+        CHECK(out.peek<UserConvTo>()->text == "converted:42");
+
+        // findConverter should surface the registered fn for inspection.
+        const Variant::Type fromId = DataType::of<UserConvFrom>().id();
+        CHECK(Variant::findConverter(fromId, toId) != nullptr);
+}
+
+TEST_CASE("Variant_RegisterConverter_FindConverter_Missing_Returns_Null") {
+        // Look up a pair we know is not registered (UserConvTo →
+        // UserConvFrom, the reverse direction).  Result must be nullptr,
+        // and convertTo must surface Error::Invalid without crashing.
+        const Variant::Type fromId = DataType::of<UserConvTo>().id();
+        const Variant::Type toId   = DataType::of<UserConvFrom>().id();
+        CHECK(Variant::findConverter(fromId, toId) == nullptr);
+
+        Variant src(UserConvTo{String("noop")});
+        Error   err;
+        Variant out = src.convertTo(toId, &err);
+        CHECK(err.isError());
+        CHECK(!out.isValid());
 }

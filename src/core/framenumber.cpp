@@ -14,33 +14,20 @@ String FrameNumber::toString() const {
         return String::number(_value);
 }
 
-FrameNumber FrameNumber::fromString(const String &str, Error *err) {
+Result<FrameNumber> FrameNumber::fromString(const String &str) {
         // Lenient accept: trim surrounding whitespace, accept common
         // sentinel words, otherwise parse as a signed decimal and
         // reject negative values (the only negative state we keep is
         // the canonical Unknown, reached by the empty-string branch).
         String t = str.trim();
-        if (t.isEmpty()) {
-                if (err != nullptr) *err = Error::Ok;
-                return FrameNumber::unknown();
-        }
+        if (t.isEmpty()) return makeResult(FrameNumber::unknown());
         String lc = t.toLower();
-        if (lc == "unknown" || lc == "unk" || lc == "?") {
-                if (err != nullptr) *err = Error::Ok;
-                return FrameNumber::unknown();
-        }
+        if (lc == "unknown" || lc == "unk" || lc == "?") return makeResult(FrameNumber::unknown());
         Error   parseErr;
         int64_t v = t.to<int64_t>(&parseErr);
-        if (parseErr.isError()) {
-                if (err != nullptr) *err = Error::ParseFailed;
-                return FrameNumber::unknown();
-        }
-        if (v < 0) {
-                if (err != nullptr) *err = Error::OutOfRange;
-                return FrameNumber::unknown();
-        }
-        if (err != nullptr) *err = Error::Ok;
-        return FrameNumber(v);
+        if (parseErr.isError()) return makeError<FrameNumber>(Error::ParseFailed);
+        if (v < 0) return makeError<FrameNumber>(Error::OutOfRange);
+        return makeResult(FrameNumber(v));
 }
 
 PROMEKI_NAMESPACE_END

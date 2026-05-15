@@ -11,6 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/framenumber.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -106,13 +107,12 @@ class FrameCount {
                  *   @c 'f' (e.g. @c "0", @c "0f", @c "50", @c "50f")
                  *
                  * @param str The string to parse.
-                 * @param err Optional error output; set to @c Error::Ok on
-                 *            success, @c Error::ParseFailed on malformed
-                 *            input, or @c Error::OutOfRange if a parsed
-                 *            integer is negative.
-                 * @return The parsed FrameCount, or @c Unknown on failure.
+                 * @return A Result containing the parsed FrameCount and
+                 *         @c Error::Ok on success, or @c Unknown and
+                 *         @c Error::ParseFailed / @c Error::OutOfRange on
+                 *         failure.
                  */
-                static FrameCount fromString(const String &str, Error *err = nullptr);
+                static Result<FrameCount> fromString(const String &str);
 
                 /** @brief Default-constructs an @c Unknown FrameCount. */
                 constexpr FrameCount() = default;

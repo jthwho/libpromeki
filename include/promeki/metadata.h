@@ -11,7 +11,13 @@
 #include <promeki/config.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/sharedptr.h>
+#include <promeki/audiomarker.h>
 #include <promeki/enums.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/framenumber.h>
+#include <promeki/mediaduration.h>
+#include <promeki/subtitle.h>
+#include <promeki/timecode.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/eui64.h>
 #endif

@@ -14,12 +14,13 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
-#include <promeki/variant_fwd.h>
 #include <promeki/sharedptr.h>
 #include <promeki/datastream.h>
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class Variant;
 
 class JsonValue;
 class JsonObject;

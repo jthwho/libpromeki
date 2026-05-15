@@ -10,6 +10,7 @@
 #include <promeki/bufferiodevice.h>
 #include <promeki/buffer.h>
 #include <promeki/size2d.h>
+#include <promeki/uuid.h>
 
 using namespace promeki;
 

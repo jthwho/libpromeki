@@ -212,6 +212,17 @@ class AncFormat {
                 static Result<AncFormat> fromName(const String &name);
 
                 /**
+                 * @brief Alias of @ref fromName matching the
+                 *        @c Result<T> @c fromString convention used
+                 *        across the library.
+                 *
+                 * Exposed so the @ref DataType registry's concept-based
+                 * @c ops.fromString detector picks AncFormat up
+                 * automatically, alongside every other typereg wrapper.
+                 */
+                static Result<AncFormat> fromString(const String &name) { return fromName(name); }
+
+                /**
                  * @brief Returns the ID for @p name, or @c Invalid when unknown.
                  *
                  * Convenience non-Result variant of @ref fromName for

@@ -244,50 +244,44 @@ TEST_CASE("MediaDuration toString and fromString") {
                 CHECK(d.toString() == String("+"));
         }
         SUBCASE("Round-trip canonical form") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String("0+50f"), &err);
+                auto [d, err] = MediaDuration::fromString(String("0+50f"));
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 50);
         }
         SUBCASE("Round-trip with whitespace") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String("  0 + 50f  "), &err);
+                auto [d, err] = MediaDuration::fromString(String("  0 + 50f  "));
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 50);
         }
         SUBCASE("Range form '<start>-<end>' is inclusive") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String("0-9"), &err);
+                auto [d, err] = MediaDuration::fromString(String("0-9"));
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 10);
         }
         SUBCASE("Range form with whitespace") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String("10 - 19"), &err);
+                auto [d, err] = MediaDuration::fromString(String("10 - 19"));
                 CHECK(err.isOk());
                 CHECK(d.start().value() == 10);
                 CHECK(d.length().value() == 10);
         }
         SUBCASE("Empty input is default Unknown") {
-                Error         err;
-                MediaDuration d = MediaDuration::fromString(String(), &err);
+                auto [d, err] = MediaDuration::fromString(String());
                 CHECK(err.isOk());
                 CHECK(d.isUnknown());
         }
         SUBCASE("Garbage parses as ParseFailed") {
-                Error err;
-                (void)MediaDuration::fromString(String("not a duration"), &err);
+                auto [d, err] = MediaDuration::fromString(String("not a duration"));
                 CHECK(err == Error::ParseFailed);
+                (void)d;
         }
         SUBCASE("Infinite length round-trips through string") {
                 MediaDuration d(FrameNumber(5), FrameCount::infinity());
                 String        s = d.toString();
                 CHECK(s == String("5+inf"));
-                Error         err;
-                MediaDuration d2 = MediaDuration::fromString(s, &err);
+                auto [d2, err] = MediaDuration::fromString(s);
                 CHECK(err.isOk());
                 CHECK(d2.start().value() == 5);
                 CHECK(d2.length().isInfinite());

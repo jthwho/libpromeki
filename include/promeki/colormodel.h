@@ -11,6 +11,8 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/array.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
 #include <promeki/ciepoint.h>
 #include <promeki/matrix3x3.h>
 
@@ -302,6 +304,23 @@ class ColorModel {
                  * @return The matching model, or an invalid model if not found.
                  */
                 static ColorModel lookup(const String &name);
+
+                /**
+                 * @brief Result-shaped sibling of @ref lookup.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can auto-detect
+                 * the inverse of @ref name() without a per-type thunk.
+                 *
+                 * @param name The model name to look up.
+                 * @return @c (model, Error::Ok) on hit, or @c (invalid,
+                 *         Error::IdNotFound) when no match exists.
+                 */
+                static Result<ColorModel> fromString(const String &name) {
+                        ColorModel m = lookup(name);
+                        if (!m.isValid()) return makeError<ColorModel>(Error::IdNotFound);
+                        return makeResult(m);
+                }
 
                 /**
                  * @brief H.273 / ISO/IEC 23091-4 codepoint triplet
