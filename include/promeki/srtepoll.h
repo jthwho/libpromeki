@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_SRT
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
@@ -272,3 +275,5 @@ class SrtEpoll {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_SRT

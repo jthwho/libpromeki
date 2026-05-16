@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -48,3 +51,5 @@ inline bool hasMapFlag(MapFlags value, MapFlags flag) {
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

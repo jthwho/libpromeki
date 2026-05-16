@@ -9,6 +9,10 @@
 #include <format>
 #include <promeki/videoformat.h>
 #include <promeki/variant.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
+#include <promeki/iodevice.h>
 
 using namespace promeki;
 
@@ -553,4 +557,54 @@ TEST_CASE("VideoFormat: Variant round-trip via String") {
         CHECK(err.isOk());
         CHECK(parsed.raster() == Size2Du32(1280, 720));
         CHECK(parsed.frameRate() == FrameRate(FrameRate::FPS_59_94));
+}
+
+TEST_CASE("VideoFormat: DataStream round-trip") {
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+
+        VideoFormat original(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
+
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << original;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+
+        dev.seek(0);
+
+        {
+                DataStream rs = DataStream::createReader(&dev);
+                VideoFormat result;
+                rs >> result;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(result.isValid());
+                CHECK(result.raster() == original.raster());
+                CHECK(result.frameRate() == original.frameRate());
+                CHECK(result.videoScanMode() == original.videoScanMode());
+        }
+}
+
+TEST_CASE("VideoFormat: DataStream round-trip invalid") {
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        VideoFormat    invalid;
+
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << invalid;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+
+        dev.seek(0);
+
+        {
+                DataStream rs = DataStream::createReader(&dev);
+                VideoFormat result;
+                rs >> result;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK_FALSE(result.isValid());
+        }
 }

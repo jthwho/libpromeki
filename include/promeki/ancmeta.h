@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/metadata.h>
 #include <promeki/variantspec.h>
@@ -209,3 +212,5 @@ inline const Metadata::ID Uuid = Metadata::declareID(
 } // namespace AncMeta
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

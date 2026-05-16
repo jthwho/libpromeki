@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/font.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
@@ -224,3 +227,5 @@ class FastFont : public Font {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cassert>
 #include <type_traits>
 #include <utility>
@@ -255,3 +258,5 @@ template <typename Derived, typename Base> UniquePtr<Derived> uniquePointerCast(
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

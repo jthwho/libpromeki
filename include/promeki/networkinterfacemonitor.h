@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/networkinterface.h>
@@ -209,3 +212,5 @@ Error networkInterfaceMonitorPlatformOpen(NetworkInterfaceMonitor *m);
 void networkInterfaceMonitorPlatformClose(NetworkInterfaceMonitor *m);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

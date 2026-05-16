@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <functional>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
@@ -324,3 +327,5 @@ class HttpResponse {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

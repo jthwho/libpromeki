@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <queue>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
@@ -490,3 +493,5 @@ template <typename T> class Queue {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <string>
 #include <cstdint>
 #include <mutex>
@@ -502,3 +505,5 @@ class StringUnicodeLiteralData : public StringData {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

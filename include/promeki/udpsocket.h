@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/buffer.h>
 #include <promeki/list.h>
 #include <promeki/abstractsocket.h>
@@ -377,3 +380,5 @@ class UdpSocket : public AbstractSocket {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

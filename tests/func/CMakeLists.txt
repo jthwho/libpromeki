@@ -41,16 +41,18 @@ if(TARGET promeki::warnings)
 endif()
 
 # Whether SDL-based functional tests can be built.  In-tree this
-# tracks the parent project's PROMEKI_BUILD_SDL; standalone we probe
-# for SDL3 directly.
+# tracks the parent project's PROMEKI_BUILD_SDL — if SDL was turned
+# off there, the standalone find_package(SDL3) fallback must NOT
+# fire, because the func test links promeki::sdl and that target
+# only exists when the parent built it.  Standalone builds (where
+# CMAKE_PROJECT_NAME is "promeki-functests") probe SDL3 directly.
+set(PROMEKI_FUNCTEST_HAVE_SDL FALSE)
 if(TARGET promeki::sdl)
     set(PROMEKI_FUNCTEST_HAVE_SDL TRUE)
-else()
+elseif(CMAKE_PROJECT_NAME STREQUAL "promeki-functests")
     find_package(SDL3 QUIET)
     if(SDL3_FOUND)
         set(PROMEKI_FUNCTEST_HAVE_SDL TRUE)
-    else()
-        set(PROMEKI_FUNCTEST_HAVE_SDL FALSE)
     endif()
 endif()
 

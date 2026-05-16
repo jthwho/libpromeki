@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 
@@ -34,3 +37,5 @@ PROMEKI_NAMESPACE_BEGIN
 using Config = VariantDatabase<"Config">;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

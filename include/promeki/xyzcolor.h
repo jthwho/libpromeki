@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/array.h>
 #include <promeki/string.h>
@@ -125,3 +128,5 @@ class XYZColor {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::XYZColor);
+
+#endif // PROMEKI_ENABLE_CORE

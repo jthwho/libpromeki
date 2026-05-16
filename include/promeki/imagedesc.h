@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/sharedptr.h>
@@ -395,3 +398,5 @@ inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::ImageDesc);
+
+#endif // PROMEKI_ENABLE_PROAV

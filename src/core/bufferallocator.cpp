@@ -6,14 +6,17 @@
  */
 
 #include <promeki/bufferallocator.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/pixelformat.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
 String DefaultBufferAllocator::name() const { return String("DefaultBufferAllocator"); }
 
+#if PROMEKI_ENABLE_PROAV
 Buffer DefaultBufferAllocator::allocateVideoPlane(const ImageDesc &desc, int planeIndex) const {
         const PixelFormat &pf = desc.pixelFormat();
         if (!pf.isValid() || !desc.size().isValid()) return Buffer();
@@ -32,6 +35,7 @@ Buffer DefaultBufferAllocator::allocateAudioChunk(const AudioDesc &desc, size_t 
         if (buf.isValid()) buf.setSize(bytes);
         return buf;
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 Buffer DefaultBufferAllocator::allocateBytes(size_t bytes, size_t align) const {
         if (bytes == 0) return Buffer();

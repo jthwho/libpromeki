@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <filesystem>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -225,3 +228,5 @@ class FilePath {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::FilePath);
+
+#endif // PROMEKI_ENABLE_CORE

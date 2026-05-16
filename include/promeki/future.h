@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <future>
 #include <chrono>
 #include <promeki/namespace.h>
@@ -234,3 +237,5 @@ template <> class Future<void> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

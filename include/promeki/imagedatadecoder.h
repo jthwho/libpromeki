@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstddef>
 #include <cstdint>
 #include <promeki/namespace.h>
@@ -236,3 +239,5 @@ class ImageDataDecoder {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

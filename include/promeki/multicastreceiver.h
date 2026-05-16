@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <functional>
 #include <promeki/function.h>
 #include <promeki/atomic.h>
@@ -348,3 +351,5 @@ class MulticastReceiver : public Thread {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

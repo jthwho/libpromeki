@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/audiodesc.h>
@@ -169,3 +172,5 @@ class AudioResampler {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

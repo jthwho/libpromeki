@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <numeric>
 #include <algorithm>
 #include <promeki/namespace.h>
@@ -153,3 +156,5 @@ PROMEKI_NAMESPACE_END
  * string format specifiers (width, fill, alignment) work automatically.
  */
 template <typename T> struct std::formatter<promeki::Rational<T>> : promeki::ToStringFormatter<promeki::Rational<T>> {};
+
+#endif // PROMEKI_ENABLE_CORE

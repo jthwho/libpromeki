@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -117,3 +120,5 @@ class MemDomain {
 inline MemDomain::MemDomain(ID id) : d(lookup(id)) {}
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

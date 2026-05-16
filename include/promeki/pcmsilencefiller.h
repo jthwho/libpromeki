@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstddef>
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
@@ -123,3 +126,5 @@ class PcmSilenceFiller {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

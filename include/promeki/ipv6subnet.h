@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/namespace.h>
 #include <promeki/ipv6address.h>
 #include <promeki/list.h>
@@ -90,3 +93,5 @@ class Ipv6Subnet {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Ipv6Subnet);
+
+#endif // PROMEKI_ENABLE_NETWORK

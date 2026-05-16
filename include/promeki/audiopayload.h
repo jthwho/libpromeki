@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <promeki/namespace.h>
 #include <promeki/mediapayload.h>
@@ -160,3 +163,5 @@ class AudioPayload : public MediaPayload {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

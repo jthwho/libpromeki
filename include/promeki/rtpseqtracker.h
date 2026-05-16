@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
@@ -317,3 +320,5 @@ class RtpSeqTracker {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -44,13 +44,9 @@
 #include <promeki/mediatimestamp.h>
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
-#if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
-#endif
-#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -622,10 +618,6 @@ void DataStream::writeFrameRateData(const FrameRate &val) {
         *this << static_cast<uint32_t>(val.denominator());
 }
 
-void DataStream::writeVideoFormatData(const VideoFormat &val) {
-        writeStringData(val.toString());
-}
-
 void DataStream::writeTimecodeData(const Timecode &val) {
         // Timecode carries a mode (format) plus digits; the canonical
         // toString() form preserves all information and round-trips through
@@ -657,6 +649,11 @@ void DataStream::writeMemSpaceData(const MemSpace &val) {
         *this << static_cast<uint32_t>(val.id());
 }
 
+#if PROMEKI_ENABLE_PROAV
+void DataStream::writeVideoFormatData(const VideoFormat &val) {
+        writeStringData(val.toString());
+}
+
 void DataStream::writePixelMemLayoutData(const PixelMemLayout &val) {
         writeStringData(val.name());
 }
@@ -670,6 +667,7 @@ void DataStream::writeAudioFormatData(const AudioFormat &val) {
 }
 
 void DataStream::writeAncFormatData(const AncFormat &val) { writeStringData(val.name()); }
+#endif // PROMEKI_ENABLE_PROAV
 
 void DataStream::writeEnumData(const Enum &val) {
         // Enum's qualified "TypeName::ValueName" form is the canonical
@@ -873,18 +871,6 @@ FrameRate DataStream::readFrameRateData() {
         return FrameRate(FrameRate::RationalType(num, den));
 }
 
-VideoFormat DataStream::readVideoFormatData() {
-        String s = readStringData();
-        if (_status != Ok) return VideoFormat();
-        if (s.isEmpty()) return VideoFormat();
-        auto [vf, err] = VideoFormat::fromString(s);
-        if (err.isError()) {
-                setError(ReadCorruptData, String::sprintf("Failed to parse VideoFormat from '%s'", s.cstr()));
-                return VideoFormat();
-        }
-        return vf;
-}
-
 Timecode DataStream::readTimecodeData() {
         String s = readStringData();
         if (_status != Ok) return Timecode();
@@ -924,6 +910,19 @@ MemSpace DataStream::readMemSpaceData() {
         return MemSpace(static_cast<MemSpace::ID>(id));
 }
 
+#if PROMEKI_ENABLE_PROAV
+VideoFormat DataStream::readVideoFormatData() {
+        String s = readStringData();
+        if (_status != Ok) return VideoFormat();
+        if (s.isEmpty()) return VideoFormat();
+        auto [vf, err] = VideoFormat::fromString(s);
+        if (err.isError()) {
+                setError(ReadCorruptData, String::sprintf("Failed to parse VideoFormat from '%s'", s.cstr()));
+                return VideoFormat();
+        }
+        return vf;
+}
+
 PixelMemLayout DataStream::readPixelMemLayoutData() {
         String s = readStringData();
         if (_status != Ok) return PixelMemLayout();
@@ -951,6 +950,7 @@ AncFormat DataStream::readAncFormatData() {
         // than triggering a stream-level read error.
         return AncFormat(AncFormat::idFromName(s));
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 Enum DataStream::readEnumData() {
         String s = readStringData();
@@ -1165,13 +1165,6 @@ DataStream &DataStream::operator<<(const FrameRate &val) {
         return *this;
 }
 
-DataStream &DataStream::operator<<(const VideoFormat &val) {
-        beginFrame(TypeVideoFormat, 1);
-        writeVideoFormatData(val);
-        endFrame();
-        return *this;
-}
-
 DataStream &DataStream::operator<<(const Timecode &val) {
         beginFrame(TypeTimecode, 1);
         writeTimecodeData(val);
@@ -1196,6 +1189,14 @@ DataStream &DataStream::operator<<(const ColorModel &val) {
 DataStream &DataStream::operator<<(const MemSpace &val) {
         beginFrame(TypeMemSpace, 1);
         writeMemSpaceData(val);
+        endFrame();
+        return *this;
+}
+
+#if PROMEKI_ENABLE_PROAV
+DataStream &DataStream::operator<<(const VideoFormat &val) {
+        beginFrame(TypeVideoFormat, 1);
+        writeVideoFormatData(val);
         endFrame();
         return *this;
 }
@@ -1227,6 +1228,7 @@ DataStream &DataStream::operator<<(const AncFormat &val) {
         endFrame();
         return *this;
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 DataStream &DataStream::operator<<(const Enum &val) {
         beginFrame(TypeEnum, 1);
@@ -1292,20 +1294,6 @@ DataStream &DataStream::operator<<(const Url &val) {
         return *this;
 }
 
-DataStream &DataStream::operator<<(const MacAddress &val) {
-        beginFrame(TypeMacAddress, 1);
-        writeStringData(val.toString());
-        endFrame();
-        return *this;
-}
-
-DataStream &DataStream::operator<<(const EUI64 &val) {
-        beginFrame(TypeEUI64, 1);
-        writeStringData(val.toString());
-        endFrame();
-        return *this;
-}
-
 DataStream &DataStream::operator<<(const StringList &val) {
         beginFrame(TypeStringList, 1);
         writeStringListData(val);
@@ -1313,6 +1301,7 @@ DataStream &DataStream::operator<<(const StringList &val) {
         return *this;
 }
 
+#if PROMEKI_ENABLE_PROAV
 DataStream &DataStream::operator<<(const VideoCodec &val) {
         // VideoCodec round-trips through its "Codec[:Backend]" string
         // form (see VideoCodec::toString / fromString), which preserves
@@ -1327,6 +1316,22 @@ DataStream &DataStream::operator<<(const AudioCodec &val) {
         // AudioCodec uses the same "Codec[:Backend]" string round-trip
         // as VideoCodec.
         beginFrame(TypeAudioCodec, 1);
+        writeStringData(val.toString());
+        endFrame();
+        return *this;
+}
+#endif // PROMEKI_ENABLE_PROAV
+
+#if PROMEKI_ENABLE_NETWORK
+DataStream &DataStream::operator<<(const MacAddress &val) {
+        beginFrame(TypeMacAddress, 1);
+        writeStringData(val.toString());
+        endFrame();
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const EUI64 &val) {
+        beginFrame(TypeEUI64, 1);
         writeStringData(val.toString());
         endFrame();
         return *this;
@@ -1352,6 +1357,7 @@ DataStream &DataStream::operator<<(const SdpSession &val) {
         endFrame();
         return *this;
 }
+#endif // PROMEKI_ENABLE_NETWORK
 
 #if PROMEKI_ENABLE_TLS
 DataStream &DataStream::operator<<(const SharedPtr<SslContext, false> &val) {
@@ -1582,15 +1588,6 @@ DataStream &DataStream::operator>>(FrameRate &val) {
         return *this;
 }
 
-DataStream &DataStream::operator>>(VideoFormat &val) {
-        if (!readFrame(TypeVideoFormat)) {
-                val = VideoFormat();
-                return *this;
-        }
-        val = readVideoFormatData();
-        return *this;
-}
-
 DataStream &DataStream::operator>>(Timecode &val) {
         if (!readFrame(TypeTimecode)) {
                 val = Timecode();
@@ -1624,6 +1621,16 @@ DataStream &DataStream::operator>>(MemSpace &val) {
                 return *this;
         }
         val = readMemSpaceData();
+        return *this;
+}
+
+#if PROMEKI_ENABLE_PROAV
+DataStream &DataStream::operator>>(VideoFormat &val) {
+        if (!readFrame(TypeVideoFormat)) {
+                val = VideoFormat();
+                return *this;
+        }
+        val = readVideoFormatData();
         return *this;
 }
 
@@ -1662,6 +1669,7 @@ DataStream &DataStream::operator>>(AncFormat &val) {
         val = readAncFormatData();
         return *this;
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 DataStream &DataStream::operator>>(Enum &val) {
         if (!readFrame(TypeEnum)) {
@@ -1790,46 +1798,6 @@ DataStream &DataStream::operator>>(Duration &val) {
         return *this;
 }
 
-DataStream &DataStream::operator>>(MacAddress &val) {
-        if (!readFrame(TypeMacAddress)) {
-                val = MacAddress();
-                return *this;
-        }
-        String s = readStringData();
-        if (_status != Ok) {
-                val = MacAddress();
-                return *this;
-        }
-        auto [mac, parseErr] = MacAddress::fromString(s);
-        if (parseErr.isError()) {
-                setError(ReadCorruptData, String::sprintf("Failed to parse MacAddress from '%s'", s.cstr()));
-                val = MacAddress();
-                return *this;
-        }
-        val = mac;
-        return *this;
-}
-
-DataStream &DataStream::operator>>(EUI64 &val) {
-        if (!readFrame(TypeEUI64)) {
-                val = EUI64();
-                return *this;
-        }
-        String s = readStringData();
-        if (_status != Ok) {
-                val = EUI64();
-                return *this;
-        }
-        auto [eui, parseErr] = EUI64::fromString(s);
-        if (parseErr.isError()) {
-                setError(ReadCorruptData, String::sprintf("Failed to parse EUI64 from '%s'", s.cstr()));
-                val = EUI64();
-                return *this;
-        }
-        val = eui;
-        return *this;
-}
-
 DataStream &DataStream::operator>>(StringList &val) {
         if (!readFrame(TypeStringList)) {
                 val = StringList();
@@ -1866,6 +1834,7 @@ DataStream &DataStream::operator>>(Url &val) {
         return *this;
 }
 
+#if PROMEKI_ENABLE_PROAV
 DataStream &DataStream::operator>>(VideoCodec &val) {
         if (!readFrame(TypeVideoCodec)) {
                 val = VideoCodec();
@@ -1903,6 +1872,48 @@ DataStream &DataStream::operator>>(AudioCodec &val) {
                 return *this;
         }
         val = value(r);
+        return *this;
+}
+#endif // PROMEKI_ENABLE_PROAV
+
+#if PROMEKI_ENABLE_NETWORK
+DataStream &DataStream::operator>>(MacAddress &val) {
+        if (!readFrame(TypeMacAddress)) {
+                val = MacAddress();
+                return *this;
+        }
+        String s = readStringData();
+        if (_status != Ok) {
+                val = MacAddress();
+                return *this;
+        }
+        auto [mac, parseErr] = MacAddress::fromString(s);
+        if (parseErr.isError()) {
+                setError(ReadCorruptData, String::sprintf("Failed to parse MacAddress from '%s'", s.cstr()));
+                val = MacAddress();
+                return *this;
+        }
+        val = mac;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(EUI64 &val) {
+        if (!readFrame(TypeEUI64)) {
+                val = EUI64();
+                return *this;
+        }
+        String s = readStringData();
+        if (_status != Ok) {
+                val = EUI64();
+                return *this;
+        }
+        auto [eui, parseErr] = EUI64::fromString(s);
+        if (parseErr.isError()) {
+                setError(ReadCorruptData, String::sprintf("Failed to parse EUI64 from '%s'", s.cstr()));
+                val = EUI64();
+                return *this;
+        }
+        val = eui;
         return *this;
 }
 
@@ -1952,6 +1963,7 @@ DataStream &DataStream::operator>>(SdpSession &val) {
         val = value(r);
         return *this;
 }
+#endif // PROMEKI_ENABLE_NETWORK
 
 #if PROMEKI_ENABLE_TLS
 DataStream &DataStream::operator>>(SharedPtr<SslContext, false> &val) {

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <set>
 #include <initializer_list>
 #include <promeki/namespace.h>
@@ -307,3 +310,5 @@ template <typename T> class Set {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

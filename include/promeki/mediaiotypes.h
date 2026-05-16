@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 
@@ -64,3 +67,5 @@ using MediaIOParams = VariantDatabase<"MediaIOParams">;
 using MediaIOParamsID = MediaIOParams::ID;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

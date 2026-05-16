@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cmath>
 #include <type_traits>
 #include <promeki/namespace.h>
@@ -298,3 +301,5 @@ PROMEKI_NAMESPACE_END
  */
 template <typename T, std::size_t NumValues>
 struct std::formatter<promeki::Point<T, NumValues>> : promeki::ToStringFormatter<promeki::Point<T, NumValues>> {};
+
+#endif // PROMEKI_ENABLE_CORE

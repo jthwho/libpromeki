@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -373,3 +376,5 @@ template <promeki::CompiledString Name> struct std::hash<promeki::StringRegistry
                         return static_cast<std::size_t>(item.id());
                 }
 };
+
+#endif // PROMEKI_ENABLE_CORE

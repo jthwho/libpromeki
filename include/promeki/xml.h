@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <functional>
 #include <utility>
 #include <promeki/function.h>
@@ -1106,3 +1109,5 @@ PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::XmlDocument);
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::XmlElement);
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <functional>
 #include <promeki/function.h>
@@ -119,3 +122,5 @@ void registerBufferCopy(MemSpace::ID srcId, MemSpace::ID dstId, BufferCopyFn fn)
 BufferCopyFn lookupBufferCopy(MemSpace::ID srcId, MemSpace::ID dstId);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

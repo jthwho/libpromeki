@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/point.h>
 
@@ -86,3 +89,5 @@ using Line4Df = Line<float, 4>;
 using Line4Dd = Line<double, 4>;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

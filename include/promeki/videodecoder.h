@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <functional>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
@@ -320,3 +323,5 @@ class VideoDecoder {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

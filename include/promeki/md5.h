@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstddef>
 #include <promeki/namespace.h>
@@ -28,3 +31,5 @@ using MD5Digest = ByteArray<16>;
 MD5Digest md5(const void *data, size_t len);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

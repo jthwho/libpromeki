@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <string>
 #include <string_view>
 #include <algorithm>
@@ -1618,3 +1621,5 @@ PROMEKI_NAMESPACE_END
                         return ::promeki::String::fromLiteralData(&_lit);                                              \
                 }                                                                                                      \
         }())
+
+#endif // PROMEKI_ENABLE_CORE

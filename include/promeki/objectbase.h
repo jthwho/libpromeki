@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <tuple>
 #include <type_traits>
 #include <functional>
@@ -648,3 +651,5 @@ PROMEKI_NAMESPACE_END
 // into every TU that includes @c objectbase.h — ~270 of them.  They
 // now live in @c objectbase.tpp; TUs that actually call those methods
 // must include @c promeki/objectbase.tpp.
+
+#endif // PROMEKI_ENABLE_CORE

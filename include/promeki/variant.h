@@ -8,6 +8,8 @@
 
 #pragma once
 
+
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -227,15 +229,11 @@ class Variant {
                 static constexpr Type TypeCea608           = DataStream::TypeCea608;
                 static constexpr Type TypeSubtitle         = DataStream::TypeSubtitle;
                 static constexpr Type TypeHdrStaticMetadata = DataStream::TypeHdrStaticMetadata;
-#if PROMEKI_ENABLE_NETWORK
                 static constexpr Type TypeSocketAddress    = DataStream::TypeSocketAddress;
                 static constexpr Type TypeSdpSession       = DataStream::TypeSdpSession;
                 static constexpr Type TypeMacAddress       = DataStream::TypeMacAddress;
                 static constexpr Type TypeEUI64            = DataStream::TypeEUI64;
-#endif
-#if PROMEKI_ENABLE_TLS
                 static constexpr Type TypeSslContext       = DataStream::TypeSslContext;
-#endif
 
                 /**
                  * @brief Returns the human-readable type name for the given Type tag.
@@ -991,3 +989,5 @@ template <> struct std::formatter<promeki::Variant> : std::formatter<std::string
                         return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }
 };
+
+#endif // PROMEKI_ENABLE_CORE

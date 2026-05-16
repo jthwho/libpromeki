@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/contentlightlevel.h>
@@ -287,3 +290,5 @@ DataStream &operator<<(DataStream &stream, const HdrStaticMetadata &md);
 DataStream &operator>>(DataStream &stream, HdrStaticMetadata &md);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

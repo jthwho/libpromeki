@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/audiodesc.h>
 #include <promeki/audiofile.h>
 #include <promeki/dedicatedthreadmediaio.h>
@@ -105,3 +108,5 @@ class AudioFileFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/fourcc.h>
@@ -164,3 +167,5 @@ class EncodedDesc {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::EncodedDesc);
+
+#endif // PROMEKI_ENABLE_PROAV

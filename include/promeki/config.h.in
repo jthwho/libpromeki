@@ -36,4 +36,70 @@
 #cmakedefine01 PROMEKI_ENABLE_SRT
 #cmakedefine01 PROMEKI_ENABLE_MEMFD
 
+/**
+ * @brief Always-on marker for the library's core surface.
+ *
+ * Every public header in @c include/promeki/ wraps its body in a
+ * @c \#if @c PROMEKI_ENABLE_* guard so the convention is uniform and
+ * a missing gate is easy to spot in review.  @c PROMEKI_ENABLE_CORE
+ * is the gate used by headers whose declarations must always be
+ * available — it has no user-facing CMake option and is hard-wired
+ * to @c 1.  See @ref header_gating below.
+ */
+#define PROMEKI_ENABLE_CORE 1
+
 #cmakedefine01 PROMEKI_HAVE_CXA_DEMANGLE
+
+/**
+ * @section header_gating Header-gating convention
+ *
+ * The library follows a strict layering chain — each level is a
+ * superset of the previous:
+ *
+ * @code
+ *   CORE  →  PROAV  →  NETWORK  →  HTTP
+ *                                ↘  TLS  →  SRT
+ * @endcode
+ *
+ * Enabling a higher level forces the lower levels on; @c CMakeLists.txt
+ * enforces this with @c FATAL_ERROR checks.  That means code at level
+ * @i N is free to use @b any type from levels @c 1..N.  In particular,
+ * @c NETWORK code can freely use @c PROAV types like @ref Frame and
+ * @ref AudioBuffer because @c PROAV is guaranteed on whenever
+ * @c NETWORK is on.  Only references in the @b other direction (lower
+ * level using higher-level types) are problematic — see the CORE
+ * exception below.
+ *
+ * Every public header in @c include/promeki/ wraps its body in a
+ * @c \#if guard naming a single @c PROMEKI_ENABLE_* flag.  Mechanical,
+ * uniform, no dual gates:
+ *
+ * @code
+ * #pragma once
+ * #include <promeki/config.h>
+ * #if PROMEKI_ENABLE_<FLAG>
+ *
+ * ... header body ...
+ *
+ * #endif // PROMEKI_ENABLE_<FLAG>
+ * @endcode
+ *
+ * The chosen flag is the @b highest level the header reaches.  For
+ * example, @c framebridge.h uses @c LocalSocket (a NETWORK type) even
+ * though it ships frames (PROAV) — its gate is @c NETWORK, not
+ * @c PROAV.  Consumers can include the header unconditionally; with
+ * @c NETWORK off the body elides to nothing.
+ *
+ * @subsection header_gating_core PROMEKI_ENABLE_CORE
+ *
+ * @c PROMEKI_ENABLE_CORE is hard-wired to @c 1.  It tags headers
+ * whose declarations must always be visible.  This includes the
+ * usual plain core types (@ref String, @ref Buffer, etc.) and also
+ * a small set of feature-implemented types referenced from ungated
+ * core code — e.g. @ref Subtitle, @ref Eui64, @ref SocketAddress
+ * are registered as @ref Variant payload types in @c variant.cpp.
+ * Their @c .cpp files still live in a feature directory and only
+ * link when that feature is ON; consumers that @i use the type get
+ * a link error in a stripped-down build, but the declaration is
+ * always available so unconditional @c \#include is safe.
+ */

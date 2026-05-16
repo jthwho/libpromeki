@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_MUSIC
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -105,3 +108,5 @@ class MusicalNote {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_MUSIC

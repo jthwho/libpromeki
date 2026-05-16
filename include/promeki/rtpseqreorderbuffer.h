@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <promeki/duration.h>
 #include <promeki/error.h>
@@ -185,3 +188,5 @@ class RtpSeqReorderBuffer {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdio>
 #include <cstdint>
 #include <promeki/namespace.h>
@@ -529,3 +532,5 @@ template <typename T> inline TextStream &operator<<(TextStream &s, const Span<T>
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

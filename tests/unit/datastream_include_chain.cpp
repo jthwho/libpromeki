@@ -14,6 +14,8 @@
 
 #include <doctest/doctest.h>
 
+#include <promeki/config.h>
+
 // The BufferIODevice header is required to set up a test fixture. It
 // does not pull in DataStream, so its presence does not help the
 // include-chain test.
@@ -22,16 +24,18 @@
 // Each test below includes ONLY the type header it's testing, so any
 // missing transitive dependency will surface as a compile error here.
 
-// ----------------------------------------------------------------------
-// audiodesc.h chain
-// ----------------------------------------------------------------------
-#include <promeki/audiodesc.h>
-
 using namespace promeki;
 
 namespace {
         constexpr size_t TestBufSize = 1024;
 } // namespace
+
+#if PROMEKI_ENABLE_PROAV
+
+// ----------------------------------------------------------------------
+// audiodesc.h chain
+// ----------------------------------------------------------------------
+#include <promeki/audiodesc.h>
 
 TEST_CASE("include chain: AudioDesc serializes through audiodesc.h alone") {
         Buffer         buf(TestBufSize);
@@ -117,6 +121,8 @@ TEST_CASE("include chain: MediaDesc serializes through mediadesc.h alone") {
                 CHECK(out.imageList()[0].width() == 640);
         }
 }
+
+#endif // PROMEKI_ENABLE_PROAV
 
 // ----------------------------------------------------------------------
 // xyzcolor.h chain

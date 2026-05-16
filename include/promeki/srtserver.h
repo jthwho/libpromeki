@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_SRT
 #include <promeki/function.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -226,3 +229,5 @@ class SrtServer : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_SRT

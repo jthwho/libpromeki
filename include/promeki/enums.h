@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/enum.h>
 
@@ -2405,3 +2408,5 @@ PROMEKI_NAMESPACE_END
 template <> struct std::hash<promeki::ChannelRole> {
                 size_t operator()(const promeki::ChannelRole &v) const noexcept { return std::hash<int>()(v.value()); }
 };
+
+#endif // PROMEKI_ENABLE_CORE

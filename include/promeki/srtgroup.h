@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_SRT
 #include <promeki/iodevice.h>
 #include <promeki/error.h>
 #include <promeki/socketaddress.h>
@@ -276,3 +279,5 @@ class SrtGroup : public IODevice {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_SRT

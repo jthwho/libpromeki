@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
+
 /**
  * @def PROMEKI_BUILD_IDENT
  * @brief Opaque per-build identity string for libpromeki.
@@ -86,4 +89,6 @@
  */
 #define PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT() \
         (::promeki::verifyBuildIdentOrAbort(PROMEKI_BUILD_IDENT))
+
+#endif // PROMEKI_ENABLE_CORE
 

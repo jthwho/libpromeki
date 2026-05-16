@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CSC
 #include <promeki/namespace.h>
 #include <promeki/pixelformat.h>
 
@@ -69,3 +72,5 @@ class CSCRegistry {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CSC

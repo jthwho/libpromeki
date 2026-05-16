@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
@@ -117,3 +120,5 @@ class MediaTimeStamp {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::MediaTimeStamp);
+
+#endif // PROMEKI_ENABLE_CORE

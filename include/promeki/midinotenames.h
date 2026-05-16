@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_MUSIC
 #include <promeki/array.h>
 #include <promeki/string.h>
 #include <promeki/midinote.h>
@@ -68,3 +71,5 @@ class MidiNoteNames {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_MUSIC

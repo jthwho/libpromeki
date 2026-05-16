@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <promeki/atomic.h>
 #include <promeki/duration.h>
@@ -257,3 +260,5 @@ class RtpDepacketizerThread : public Thread {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

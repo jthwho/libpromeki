@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/ancformat.h>
@@ -332,3 +335,5 @@ DataStream &operator<<(DataStream &stream, const AncDesc &desc);
 DataStream &operator>>(DataStream &stream, AncDesc &desc);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

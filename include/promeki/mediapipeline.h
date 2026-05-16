@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <functional>
 #include <promeki/function.h>
 #include <promeki/clock.h>
@@ -1189,3 +1192,5 @@ class MediaPipeline : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

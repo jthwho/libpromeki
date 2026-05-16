@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <promeki/atomic.h>
 #include <promeki/buffer.h>
 #include <promeki/dedicatedthreadmediaio.h>
@@ -462,3 +465,5 @@ class MjpegStreamFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

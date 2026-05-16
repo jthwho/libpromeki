@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/event.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -38,3 +41,5 @@ class TimerEvent : public Event {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

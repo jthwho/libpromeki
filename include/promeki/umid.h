@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <promeki/namespace.h>
@@ -224,3 +227,5 @@ class UMID {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::UMID);
+
+#endif // PROMEKI_ENABLE_CORE

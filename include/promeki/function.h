@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <functional>
 #include <type_traits>
 #include <utility>
@@ -183,3 +186,5 @@ template <typename R, typename... Args> class Function<R(Args...)> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

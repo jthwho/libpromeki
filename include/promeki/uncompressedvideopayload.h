@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/videopayload.h>
@@ -187,3 +190,5 @@ class UncompressedVideoPayload : public VideoPayload {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -5,10 +5,11 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/cudabufferimpl.h>
+#include <promeki/config.h>
 
 #if PROMEKI_ENABLE_CUDA
 
+#include <promeki/cudabufferimpl.h>
 #include <cuda_runtime.h>
 #include <promeki/logger.h>
 

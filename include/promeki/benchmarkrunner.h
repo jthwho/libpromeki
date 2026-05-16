@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <functional>
 #include <promeki/function.h>
@@ -654,3 +657,5 @@ class BenchmarkRunner {
                 promeki::BenchmarkRunner::registerCase(promeki::BenchmarkCase((Suite), (Name), (Description), (Fn)));
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

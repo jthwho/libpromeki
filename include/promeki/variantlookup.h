@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdlib>
 #include <functional>
 #include <optional>
@@ -2350,3 +2353,5 @@ PROMEKI_NAMESPACE_END
 #define PROMEKI_LOOKUP_REGISTER(Type)                                                                                  \
         [[maybe_unused]] static inline const ::promeki::VariantLookup<Type>::Registrar PROMEKI_CONCAT(                 \
                 _promeki_lookup_reg_, __COUNTER__) = ::promeki::VariantLookup<Type>::registrar()
+
+#endif // PROMEKI_ENABLE_CORE

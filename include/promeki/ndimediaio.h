@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
+
 #include <promeki/config.h>
-
 #if PROMEKI_ENABLE_NDI
-
+#include <promeki/namespace.h>
 #include <atomic>
 #include <thread>
 #include <promeki/audiobuffer.h>
@@ -454,5 +453,6 @@ class NdiFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
 
 #endif // PROMEKI_ENABLE_NDI

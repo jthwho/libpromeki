@@ -85,15 +85,11 @@
 #include <promeki/url.h>
 #include <promeki/windowedstat.h>
 #include <promeki/xml.h>
-#if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
-#endif
-#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
-#endif
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -121,12 +117,14 @@ template <> struct HasFreeDataStreamWrite<MasteringDisplay>            : std::tr
 template <> struct HasFreeDataStreamRead<MasteringDisplay>             : std::true_type {};
 template <> struct HasFreeDataStreamWrite<ContentLightLevel>           : std::true_type {};
 template <> struct HasFreeDataStreamRead<ContentLightLevel>            : std::true_type {};
+#if PROMEKI_ENABLE_PROAV
 template <> struct HasFreeDataStreamWrite<AudioStreamDesc>             : std::true_type {};
 template <> struct HasFreeDataStreamRead<AudioStreamDesc>              : std::true_type {};
 template <> struct HasFreeDataStreamWrite<AudioChannelMap>             : std::true_type {};
 template <> struct HasFreeDataStreamRead<AudioChannelMap>              : std::true_type {};
 template <> struct HasFreeDataStreamWrite<AudioMarkerList>             : std::true_type {};
 template <> struct HasFreeDataStreamRead<AudioMarkerList>              : std::true_type {};
+#endif
 template <> struct HasFreeDataStreamWrite<WindowedStat>                : std::true_type {};
 template <> struct HasFreeDataStreamRead<WindowedStat>                 : std::true_type {};
 template <> struct HasFreeDataStreamWrite<VariantList>                 : std::true_type {};
@@ -135,6 +133,7 @@ template <> struct HasFreeDataStreamWrite<VariantMap>                  : std::tr
 template <> struct HasFreeDataStreamRead<VariantMap>                   : std::true_type {};
 template <> struct HasFreeDataStreamWrite<XmlDocument>                 : std::true_type {};
 template <> struct HasFreeDataStreamRead<XmlDocument>                  : std::true_type {};
+#if PROMEKI_ENABLE_PROAV
 template <> struct HasFreeDataStreamWrite<Cea708Cdp>                   : std::true_type {};
 template <> struct HasFreeDataStreamRead<Cea708Cdp>                    : std::true_type {};
 template <> struct HasFreeDataStreamWrite<Cea608Packet>                : std::true_type {};
@@ -147,6 +146,7 @@ template <> struct HasFreeDataStreamWrite<Cea708DtvccPacket>           : std::tr
 template <> struct HasFreeDataStreamRead<Cea708DtvccPacket>            : std::true_type {};
 template <> struct HasFreeDataStreamWrite<HdrStaticMetadata>           : std::true_type {};
 template <> struct HasFreeDataStreamRead<HdrStaticMetadata>            : std::true_type {};
+#endif
 
 } // namespace Detail
 
@@ -402,9 +402,11 @@ String Variant::format(const String &spec, Error *err) const {
                         case TypeDouble:  return tryFormatAs<double>(fmtStr, *peek<double>(), defaultStr, handled);
                         case TypeTimecode:
                                 return tryFormatAs<Timecode>(fmtStr, *peek<Timecode>(), defaultStr, handled);
+#if PROMEKI_ENABLE_PROAV
                         case TypeVideoFormat:
                                 return tryFormatAs<VideoFormat>(fmtStr, *peek<VideoFormat>(), defaultStr,
                                                                 handled);
+#endif
                         case TypeString:  return tryFormatAs<String>(fmtStr, *peek<String>(), defaultStr, handled);
                         default: {
                                 // Fall back to formatting the spec against the
@@ -681,14 +683,16 @@ namespace {
 // Type-registry detector (parallels detail::is_type_registry_v in the
 // legacy variant.h).
 template <typename T> struct is_typereg : std::false_type {};
+template <> struct is_typereg<ColorModel>     : std::true_type {};
+template <> struct is_typereg<MemSpace>       : std::true_type {};
+#if PROMEKI_ENABLE_PROAV
 template <> struct is_typereg<AncFormat>      : std::true_type {};
 template <> struct is_typereg<AudioCodec>     : std::true_type {};
 template <> struct is_typereg<AudioFormat>    : std::true_type {};
-template <> struct is_typereg<ColorModel>     : std::true_type {};
-template <> struct is_typereg<MemSpace>       : std::true_type {};
 template <> struct is_typereg<PixelMemLayout> : std::true_type {};
 template <> struct is_typereg<PixelFormat>    : std::true_type {};
 template <> struct is_typereg<VideoCodec>     : std::true_type {};
+#endif
 template <typename T> inline constexpr bool is_typereg_v = is_typereg<T>::value;
 
 // Helper to extract the `value()` from a Result<T> in the codebase's
@@ -778,6 +782,7 @@ To convertOne(const From &val, Error *err) {
         } else if constexpr (std::is_same_v<To, MemSpace>) {
                 if constexpr (std::is_integral_v<From>) return MemSpace(static_cast<MemSpace::ID>(val));
 
+#if PROMEKI_ENABLE_PROAV
         } else if constexpr (std::is_same_v<To, PixelMemLayout>) {
                 if constexpr (std::is_integral_v<From>) return PixelMemLayout(static_cast<PixelMemLayout::ID>(val));
 
@@ -796,6 +801,7 @@ To convertOne(const From &val, Error *err) {
         } else if constexpr (std::is_same_v<To, AudioStreamDesc>) {
                 if constexpr (std::is_integral_v<From>)
                         return AudioStreamDesc(static_cast<AudioStreamDesc::ID>(val));
+#endif
 
         } else if constexpr (std::is_same_v<To, FrameNumber>) {
                 if constexpr (std::is_integral_v<From>) return FrameNumber(static_cast<int64_t>(val));
@@ -828,15 +834,17 @@ To convertOne(const From &val, Error *err) {
                 if constexpr (std::is_same_v<From, Duration>) return val.toString();
                 if constexpr (std::is_same_v<From, Rational<int>>) return val.toString();
                 if constexpr (std::is_same_v<From, FrameRate>) return val.toString();
-                if constexpr (std::is_same_v<From, VideoFormat>) return val.toString();
                 if constexpr (std::is_same_v<From, StringList>) return val.join(",");
                 if constexpr (std::is_same_v<From, VariantList>) return val.toJsonString();
                 if constexpr (std::is_same_v<From, VariantMap>) return val.toJsonString();
                 if constexpr (std::is_same_v<From, Color>) return val.toString();
+#if PROMEKI_ENABLE_PROAV
+                if constexpr (std::is_same_v<From, VideoFormat>) return val.toString();
                 if constexpr (std::is_same_v<From, VideoCodec>) return val.toString();
                 if constexpr (std::is_same_v<From, AudioCodec>) return val.toString();
                 if constexpr (std::is_same_v<From, AudioStreamDesc>) return val.toString();
                 if constexpr (std::is_same_v<From, AudioChannelMap>) return val.toString();
+#endif
                 if constexpr (is_typereg_v<From>) return val.name();
                 if constexpr (std::is_same_v<From, Enum>) return val.toString();
                 if constexpr (std::is_same_v<From, EnumList>) return val.toString();
@@ -999,11 +1007,12 @@ void registerBuiltinTypes() {
         registerBuiltin<Timecode>("Timecode", Variant::TypeTimecode);
         registerBuiltin<Rational<int>>("Rational<int>", Variant::TypeRational);
         registerBuiltin<FrameRate>("FrameRate", Variant::TypeFrameRate);
-        registerBuiltin<VideoFormat>("VideoFormat", Variant::TypeVideoFormat);
         registerBuiltin<StringList>("StringList", Variant::TypeStringList);
         registerBuiltin<Color>("Color", Variant::TypeColor);
         registerBuiltin<ColorModel>("ColorModel", Variant::TypeColorModel);
         registerBuiltin<MemSpace>("MemSpace", Variant::TypeMemSpace);
+#if PROMEKI_ENABLE_PROAV
+        registerBuiltin<VideoFormat>("VideoFormat", Variant::TypeVideoFormat);
         registerBuiltin<PixelMemLayout>("PixelMemLayout", Variant::TypePixelMemLayout);
         registerBuiltin<PixelFormat>("PixelFormat", Variant::TypePixelFormat);
         registerBuiltin<VideoCodec>("VideoCodec", Variant::TypeVideoCodec);
@@ -1013,6 +1022,7 @@ void registerBuiltinTypes() {
         registerBuiltin<AudioStreamDesc>("AudioStreamDesc", Variant::TypeAudioStreamDesc);
         registerBuiltin<AudioChannelMap>("AudioChannelMap", Variant::TypeAudioChannelMap);
         registerBuiltin<AudioMarkerList>("AudioMarkerList", Variant::TypeAudioMarkerList);
+#endif
         registerBuiltin<Enum>("Enum", Variant::TypeEnum);
         registerBuiltin<EnumList>("EnumList", Variant::TypeEnumList);
         registerBuiltin<MasteringDisplay>("MasteringDisplay", Variant::TypeMasteringDisplay);
@@ -1022,12 +1032,14 @@ void registerBuiltinTypes() {
         registerBuiltin<VariantList>("VariantList", Variant::TypeVariantList);
         registerBuiltin<VariantMap>("VariantMap", Variant::TypeVariantMap);
         registerBuiltin<XmlDocument>("XmlDocument", Variant::TypeXmlDocument);
+#if PROMEKI_ENABLE_PROAV
         registerBuiltin<Cea708Cdp>("Cea708Cdp", Variant::TypeCea708Cdp);
         registerBuiltin<Cea708Service>("Cea708Service", Variant::TypeCea708Service);
         registerBuiltin<Cea708DtvccPacket>("Cea708DtvccPacket", Variant::TypeCea708DtvccPacket);
         registerBuiltin<Cea608Packet>("Cea608Packet", Variant::TypeCea608);
         registerBuiltin<Subtitle>("Subtitle", Variant::TypeSubtitle);
         registerBuiltin<HdrStaticMetadata>("HdrStaticMetadata", Variant::TypeHdrStaticMetadata);
+#endif
 #if PROMEKI_ENABLE_NETWORK
         registerBuiltin<SocketAddress>("SocketAddress", Variant::TypeSocketAddress);
         registerBuiltin<SdpSession>("SdpSession", Variant::TypeSdpSession);
@@ -1069,28 +1081,37 @@ using NumericGroup = std::tuple<bool, uint8_t, int8_t, uint16_t, int16_t,
 // TypeRegistry-backed wrappers that accept String → wrapper via
 // lookup() / fromString().  MemSpace and AncFormat are deliberately
 // absent — they have no String → wrapper branch in @ref convertOne.
-using TypeRegFromStringGroup = std::tuple<ColorModel, PixelMemLayout, PixelFormat, VideoCodec,
-                                          AudioCodec, AudioFormat, AudioStreamDesc>;
+using TypeRegFromStringGroup = std::tuple<ColorModel>;
 
 // TypeRegistry wrappers that accept integer → wrapper via the
 // ID cast.  AncFormat is absent (no integer → AncFormat branch in
 // @ref convertOne).
-using TypeRegFromIntegerGroup = std::tuple<ColorModel, MemSpace, PixelMemLayout, PixelFormat,
-                                           VideoCodec, AudioCodec, AudioFormat, AudioStreamDesc>;
+using TypeRegFromIntegerGroup = std::tuple<ColorModel, MemSpace>;
 
 // TypeRegistry wrappers that produce wrapper → String via name() and
 // wrapper → integer via id().  Every is_typereg_v specialization in
 // @ref convertOne participates — including AncFormat.
-using TypeRegToStringIntegerGroup = std::tuple<ColorModel, MemSpace, PixelMemLayout, PixelFormat,
-                                               VideoCodec, AudioCodec, AudioFormat,
-                                               AudioStreamDesc, AncFormat>;
+using TypeRegToStringIntegerGroup = std::tuple<ColorModel, MemSpace>;
 
 // Types that round-trip through their canonical String form via
 // fromString / toString.
-using StringRoundTripGroup = std::tuple<DateTime, UUID, UMID, Timecode, FrameRate, VideoFormat,
+using StringRoundTripGroup = std::tuple<DateTime, UUID, UMID, Timecode, FrameRate,
                                         VariantList, VariantMap, Color, Enum, MediaTimeStamp,
-                                        FrameNumber, FrameCount, MediaDuration, Url, WindowedStat,
-                                        AudioChannelMap>;
+                                        FrameNumber, FrameCount, MediaDuration, Url, WindowedStat>;
+
+#if PROMEKI_ENABLE_PROAV
+// PROAV-only typereg / round-trip groups.  Mirror the core groups
+// above but only register when the PROAV layer is on, since these
+// types live in src/proav/.
+using ProavTypeRegFromStringGroup = std::tuple<PixelMemLayout, PixelFormat, VideoCodec,
+                                               AudioCodec, AudioFormat, AudioStreamDesc>;
+using ProavTypeRegFromIntegerGroup = std::tuple<PixelMemLayout, PixelFormat, VideoCodec,
+                                                AudioCodec, AudioFormat, AudioStreamDesc>;
+using ProavTypeRegToStringIntegerGroup = std::tuple<PixelMemLayout, PixelFormat, VideoCodec,
+                                                    AudioCodec, AudioFormat, AudioStreamDesc,
+                                                    AncFormat>;
+using ProavStringRoundTripGroup = std::tuple<VideoFormat, AudioChannelMap>;
+#endif
 
 // Types that have a toString() branch in @ref convertOne's To=String
 // case but no inverse (one-way to String only).
@@ -1173,6 +1194,23 @@ void registerAllBuiltinConverters() {
         registerOnePair<String, StringList>();
         registerOnePair<StringList, VariantList>();
         registerOnePair<VariantList, StringList>();
+
+#if PROMEKI_ENABLE_PROAV
+        // PROAV-side typereg + round-trip registrations mirror the core
+        // blocks above for types defined in src/proav/.
+        ProavTypeRegFromStringGroup     *proavTrFromStr = nullptr;
+        ProavTypeRegToStringIntegerGroup *proavTrToAny  = nullptr;
+        registerStringToGroupVia(proavTrFromStr);
+        registerToOneFromGroup<String>(proavTrToAny);
+
+        ProavTypeRegFromIntegerGroup *proavTrFromInt = nullptr;
+        registerGroupCross(ints, proavTrFromInt);
+        registerGroupCross(proavTrToAny, ints);
+
+        ProavStringRoundTripGroup *proavStrRT = nullptr;
+        registerStringToGroupVia(proavStrRT);
+        registerToOneFromGroup<String>(proavStrRT);
+#endif
 
 #if PROMEKI_ENABLE_NETWORK
         NetworkStringRoundTripGroup *netRT = nullptr;

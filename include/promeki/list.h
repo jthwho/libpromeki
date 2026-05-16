@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <vector>
 #include <initializer_list>
@@ -692,3 +695,5 @@ template <typename T> class List {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/atomic.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
@@ -190,3 +193,5 @@ class RtpPacketizerThread : public Thread {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

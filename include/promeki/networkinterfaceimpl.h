@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -177,3 +180,5 @@ TextStream &operator<<(TextStream &stream, const NetworkInterfaceData &data);
 TextStream &operator<<(TextStream &stream, const NetworkInterfaceStats &stats);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

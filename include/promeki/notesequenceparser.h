@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_MUSIC
 #include <promeki/string.h>
 #include <promeki/map.h>
 #include <promeki/stringlist.h>
@@ -111,3 +114,5 @@ class NoteSequenceParser {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_MUSIC

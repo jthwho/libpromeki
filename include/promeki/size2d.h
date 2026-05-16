@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdlib>
 #include <cerrno>
 #include <type_traits>
@@ -202,3 +205,5 @@ PROMEKI_NAMESPACE_END
  */
 template <typename T>
 struct std::formatter<promeki::Size2DTemplate<T>> : promeki::ToStringFormatter<promeki::Size2DTemplate<T>> {};
+
+#endif // PROMEKI_ENABLE_CORE

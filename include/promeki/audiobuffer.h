@@ -7,8 +7,10 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
+
 #include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
+#include <promeki/namespace.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiometer.h>
 #include <promeki/buffer.h>
@@ -525,3 +527,5 @@ class AudioBuffer {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

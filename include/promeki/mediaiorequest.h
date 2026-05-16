@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <functional>
 #include <utility>
 #include <promeki/function.h>
@@ -312,3 +315,5 @@ inline bool MediaIORequest::isCancelled() const {
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

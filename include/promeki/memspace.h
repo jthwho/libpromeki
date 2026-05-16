@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
 #include <promeki/string.h>
@@ -583,3 +586,5 @@ inline void MemSpace::release(MemAllocation &alloc) const {
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

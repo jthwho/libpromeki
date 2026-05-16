@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <chrono>
 #include <thread>
 #include <promeki/namespace.h>
@@ -331,3 +334,5 @@ inline Duration operator-(const TimeStamp &a, const TimeStamp &b) {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::TimeStamp);
+
+#endif // PROMEKI_ENABLE_CORE

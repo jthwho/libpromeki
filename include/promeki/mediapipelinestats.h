@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
 #include <promeki/error.h>
@@ -233,3 +236,5 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineStats &s);
 DataStream &operator>>(DataStream &stream, MediaPipelineStats &s);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

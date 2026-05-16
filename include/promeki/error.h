@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <system_error>
 #include <promeki/namespace.h>
 #include <promeki/platform.h>
@@ -229,3 +232,5 @@ class Error {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

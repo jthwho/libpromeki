@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/duration.h>
 #include <promeki/list.h>
@@ -362,3 +365,5 @@ struct FrameRate::WellKnown {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::FrameRate);
+
+#endif // PROMEKI_ENABLE_CORE

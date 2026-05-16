@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <functional>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
@@ -226,3 +229,5 @@ class Terminal {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

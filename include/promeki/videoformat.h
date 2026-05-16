@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/size2d.h>
 #include <promeki/framerate.h>
@@ -617,3 +620,5 @@ template <> struct std::formatter<promeki::VideoFormat> {
                         return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }
 };
+
+#endif // PROMEKI_ENABLE_PROAV

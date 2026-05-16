@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/anctranslator.h>
 #include <promeki/captiondecoder.h>
 #include <promeki/enumlist.h>
@@ -187,3 +190,5 @@ class SubtitleBurnFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

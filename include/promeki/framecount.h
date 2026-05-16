@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -346,3 +349,5 @@ template <> struct std::hash<promeki::FrameCount> {
                         return std::hash<int64_t>()(v.value());
                 }
 };
+
+#endif // PROMEKI_ENABLE_CORE

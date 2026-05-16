@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/abstractsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -114,3 +117,5 @@ class TcpSocket : public AbstractSocket {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

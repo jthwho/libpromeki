@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/fileformatfactory.h>
 #include <promeki/audiofile.h>
@@ -32,3 +35,5 @@ using AudioFileFactory = FileFormatFactory<AudioFile>;
 #define PROMEKI_REGISTER_AUDIOFILE_FACTORY(name) PROMEKI_REGISTER_FILE_FORMAT_FACTORY(AudioFile, name)
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

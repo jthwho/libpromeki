@@ -798,8 +798,8 @@ namespace {
                 writeReg(fd1, fd2, "EFL", static_cast<uint64_t>(r[REG_EFL]));
                 safeWrite2(fd1, fd2, "\n");
 #elif defined(PROMEKI_PLATFORM_LINUX) && defined(__aarch64__)
-                const ucontext_t        *uc = static_cast<const ucontext_t *>(ucontext);
-                const struct mcontext_t *mc = &uc->uc_mcontext;
+                const ucontext_t *uc = static_cast<const ucontext_t *>(ucontext);
+                const mcontext_t *mc = &uc->uc_mcontext;
                 safeWrite2(fd1, fd2, "\n--- CPU Registers (aarch64) ---\n");
                 writeReg(fd1, fd2, "PC ", static_cast<uint64_t>(mc->pc));
                 writeReg(fd1, fd2, "SP ", static_cast<uint64_t>(mc->sp));

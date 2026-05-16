@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/captionencoder.h>
 #include <promeki/cea708cdp.h>
@@ -362,3 +365,5 @@ class Cea608Encoder : public CaptionEncoder {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/clock.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiocommand.h>
@@ -252,3 +255,5 @@ class CommandMediaIO : public MediaIO {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

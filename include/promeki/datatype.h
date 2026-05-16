@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <cstdint>
 #include <new>
@@ -655,3 +658,5 @@ PROMEKI_NAMESPACE_END
                                 ::promeki::DataType::registerType<T>(                                                  \
                                         NAME, static_cast<::promeki::DataType::ID>(IDVAL));                            \
         }
+
+#endif // PROMEKI_ENABLE_CORE

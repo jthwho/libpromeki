@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <unordered_set>
 #include <initializer_list>
 #include <promeki/namespace.h>
@@ -236,3 +239,5 @@ template <typename T> class HashSet {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

@@ -14,6 +14,7 @@
 #include <promeki/datastream.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/buffer.h>
+#include <promeki/color.h>
 #include <promeki/json.h>
 
 using namespace promeki;

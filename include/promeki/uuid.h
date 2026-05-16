@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <promeki/namespace.h>
@@ -206,3 +209,5 @@ class UUID {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::UUID);
+
+#endif // PROMEKI_ENABLE_CORE
