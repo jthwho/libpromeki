@@ -227,6 +227,7 @@ class Variant {
                 static constexpr Type TypeCea608           = DataStream::TypeCea608;
                 static constexpr Type TypeSubtitle         = DataStream::TypeSubtitle;
                 static constexpr Type TypeHdrStaticMetadata = DataStream::TypeHdrStaticMetadata;
+                static constexpr Type TypeHdrDynamic2094_40 = DataStream::TypeHdrDynamic2094_40;
 #if PROMEKI_ENABLE_NETWORK
                 static constexpr Type TypeSocketAddress    = DataStream::TypeSocketAddress;
                 static constexpr Type TypeSdpSession       = DataStream::TypeSdpSession;

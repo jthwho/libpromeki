@@ -2111,6 +2111,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ancpayload.h
         include/promeki/anctranslateconfig.h
         include/promeki/anctranslator.h
+        include/promeki/ancframesync.h
+        include/promeki/framesyncdisposition.h
         include/promeki/captiondecoder.h
         include/promeki/captionencoder.h
         include/promeki/cea608.h
@@ -2121,6 +2123,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/cea708cdp.h
         include/promeki/cea708ext.h
         include/promeki/hdmiinfoframe.h
+        include/promeki/hdrdynamic2094_40.h
         include/promeki/hdrstaticmetadata.h
         include/promeki/st291packet.h
         include/promeki/subrip.h
@@ -2193,12 +2196,16 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/anccodec_atc.cpp
         src/proav/anccodec_cea708.cpp
         src/proav/anccodec_cea708_hlssei.cpp
+        src/proav/anccodec_hdrdynamic2094_40.cpp
+        src/proav/anccodec_hdrdynamic2094_40_st291.cpp
         src/proav/anccodec_hdrstatic.cpp
+        src/proav/anccodec_hdrstatic_st291.cpp
         src/proav/ancdesc.cpp
         src/proav/ancformat.cpp
         src/proav/ancpacket.cpp
         src/proav/ancpayload.cpp
         src/proav/anctranslator.cpp
+        src/proav/ancframesync.cpp
         src/proav/captiondecoder.cpp
         src/proav/captionencoder.cpp
         src/proav/cea608.cpp
@@ -2213,6 +2220,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/cea708service.cpp
         src/proav/cea708windowstate.cpp
         src/proav/hdmiinfoframe.cpp
+        src/proav/hdrdynamic2094_40.cpp
         src/proav/hdrstaticmetadata.cpp
         src/proav/scc.cpp
         src/proav/st291packet.cpp
@@ -3002,7 +3010,11 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/anccodec_atc.cpp
         tests/unit/anccodec_cea708.cpp
         tests/unit/anccodec_cea708_hlssei.cpp
+        tests/unit/anccodec_hdrdynamic2094_40.cpp
+        tests/unit/anccodec_hdrdynamic2094_40_st291.cpp
         tests/unit/anccodec_hdrstatic.cpp
+        tests/unit/anccodec_hdrstatic_st291.cpp
+        tests/unit/hdrdynamic2094_40.cpp
         tests/unit/hdrstaticmetadata.cpp
         tests/unit/ancdesc.cpp
         tests/unit/ancformat.cpp
@@ -3093,6 +3105,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/framenumber.cpp
         tests/unit/framerate.cpp
         tests/unit/framesync.cpp
+        tests/unit/framesyncdisposition.cpp
+        tests/unit/anctranslator_syncpolicy.cpp
+        tests/unit/ancframesync.cpp
         tests/unit/function.cpp
         tests/unit/future.cpp
         tests/unit/h264bitstream.cpp

@@ -40,12 +40,15 @@ namespace {
                 return makeResult<Variant>(Variant(rm.first()));
         }
 
-        Result<AncPacket> buildHdrStaticHdmiInfoFrame(const Variant &v, const AncTranslateConfig & /*cfg*/) {
+        Result<List<AncPacket>> buildHdrStaticHdmiInfoFrame(const Variant &v,
+                                                             const AncTranslateConfig & /*cfg*/) {
                 HdrStaticMetadata md = v.get<HdrStaticMetadata>();
                 Buffer            body = md.toBuffer();
                 HdmiInfoFrame     frame = HdmiInfoFrame::build(AncFormat(AncFormat::HdrStatic2086),
                                                                 HdrStaticMetadata::InfoFrameVersion, body);
-                return makeResult<AncPacket>(frame.packet());
+                List<AncPacket>   out;
+                out.pushToBack(frame.packet());
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
 } // namespace

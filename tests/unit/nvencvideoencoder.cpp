@@ -253,13 +253,13 @@ namespace {
         AncPayload::Ptr makeCea708AncPayload(const Cea708Cdp::CcDataList &triples) {
                 Cea708Cdp cdp(0 /*frameRateCode*/, triples, 0 /*sequenceCounter*/);
                 AncTranslator t;
-                Result<AncPacket> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
-                                              AncTransport::St291);
+                Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+                                                    AncTransport::St291);
                 REQUIRE(r.second().isOk());
                 AncDesc desc;
                 desc.setPairedVideoStreamIndex(0);
                 AncPayload::Ptr ap = AncPayload::Ptr::create(desc);
-                ap.modify()->addPacket(r.first());
+                for (const AncPacket &pkt : r.first()) ap.modify()->addPacket(pkt);
                 return ap;
         }
 

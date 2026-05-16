@@ -55,10 +55,10 @@ TEST_CASE("Cea708_HlsSei builder: zero-triple CDP emits canonical 11-byte header
         AncTranslator t;
         Cea708Cdp     cdp;
         // ccData empty by default
-        Result<AncPacket> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                        AncTransport::HlsSei);
         REQUIRE(r.second().isOk());
-        const Buffer &buf = r.first().data();
+        const Buffer &buf = r.first().front().data();
         REQUIRE(buf.size() == 11); // 10-byte ATSC header + 1-byte trailing marker
         const auto *p = static_cast<const uint8_t *>(buf.data());
         CHECK(p[0] == 0xB5);       // country code USA
@@ -80,10 +80,10 @@ TEST_CASE("Cea708_HlsSei builder: 2-triple CDP packs cc_count + per-triple bytes
         cdp.ccData.pushToBack(Cea708Cdp::CcData{true, 0, 0x94, 0x20});
         cdp.ccData.pushToBack(Cea708Cdp::CcData{true, 1, 0xAA, 0xBB});
         cdp.ccDataPresent = true;
-        Result<AncPacket> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                        AncTransport::HlsSei);
         REQUIRE(r.second().isOk());
-        const Buffer &buf = r.first().data();
+        const Buffer &buf = r.first().front().data();
         REQUIRE(buf.size() == 11 + 2 * 3);
         const auto *p = static_cast<const uint8_t *>(buf.data());
         CHECK(p[8] == (0xC0 | 0x02)); // cc_count = 2
@@ -103,11 +103,11 @@ TEST_CASE("Cea708_HlsSei builder: emits AncPacket with transport=HlsSei + format
         Cea708Cdp     cdp;
         cdp.ccData.pushToBack(Cea708Cdp::CcData{true, 0, 0x94, 0x20});
         cdp.ccDataPresent = true;
-        Result<AncPacket> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                        AncTransport::HlsSei);
         REQUIRE(r.second().isOk());
-        CHECK(r.first().transport() == AncTransport::HlsSei);
-        CHECK(r.first().format() == AncFormat(AncFormat::Cea708));
+        CHECK(r.first().front().transport() == AncTransport::HlsSei);
+        CHECK(r.first().front().format() == AncFormat(AncFormat::Cea708));
 }
 
 TEST_CASE("Cea708_HlsSei builder: > 31 cc_data triples -> OutOfRange") {
@@ -117,7 +117,7 @@ TEST_CASE("Cea708_HlsSei builder: > 31 cc_data triples -> OutOfRange") {
                 cdp.ccData.pushToBack(Cea708Cdp::CcData{true, 0, 0x80, 0x80});
         }
         cdp.ccDataPresent = true;
-        Result<AncPacket> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                        AncTransport::HlsSei);
         CHECK(r.second().code() == Error::OutOfRange);
 }
@@ -133,10 +133,10 @@ TEST_CASE("Cea708_HlsSei parser: full round-trip recovers cc_data triples") {
         orig.ccData.pushToBack(Cea708Cdp::CcData{true, 2, 0x80, 0x80});  // DTVCC triple
         orig.ccDataPresent = true;
 
-        Result<AncPacket> built = t.build(Variant(orig), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> built = t.build(Variant(orig), AncFormat(AncFormat::Cea708),
                                            AncTransport::HlsSei);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = t.parse(built.first());
+        Result<Variant> parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         Cea708Cdp recovered = parsed.first().get<Cea708Cdp>();
         REQUIRE(recovered.ccData.size() == 2);
@@ -231,18 +231,18 @@ TEST_CASE("AncTranslator::translate: St291 Cea708 -> HlsSei goes through parse+b
         Cea708Cdp cdp;
         cdp.ccData.pushToBack(Cea708Cdp::CcData{true, 0, 0xC4, 0x45});
         cdp.ccDataPresent = true;
-        Result<AncPacket> st291 = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+        Result<List<AncPacket>> st291 = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                           AncTransport::St291);
         REQUIRE(st291.second().isOk());
         // Translate to HlsSei.
-        Result<AncPacket> sei = t.translate(st291.first(), AncTransport::HlsSei);
+        Result<List<AncPacket>> sei = t.translate(st291.first().front(), AncTransport::HlsSei);
         REQUIRE(sei.second().isOk());
-        CHECK(sei.first().transport() == AncTransport::HlsSei);
+        CHECK(sei.first().front().transport() == AncTransport::HlsSei);
         // Reverse: HlsSei → St291 (caption bytes round-trip).
-        Result<AncPacket> back = t.translate(sei.first(), AncTransport::St291);
+        Result<List<AncPacket>> back = t.translate(sei.first().front(), AncTransport::St291);
         REQUIRE(back.second().isOk());
-        CHECK(back.first().transport() == AncTransport::St291);
-        Result<Variant> parsed = t.parse(back.first());
+        CHECK(back.first().front().transport() == AncTransport::St291);
+        Result<Variant> parsed = t.parse(back.first().front());
         REQUIRE(parsed.second().isOk());
         Cea708Cdp recovered = parsed.first().get<Cea708Cdp>();
         REQUIRE(recovered.ccData.size() == 1);

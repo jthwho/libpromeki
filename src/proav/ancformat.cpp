@@ -139,6 +139,8 @@ static AncFormat::Data makeHdrStatic2086() {
         d.category = AncCategory::Hdr;
         d.canonicalTransport = AncTransport::HdmiInfoFrame;
         d.hdmiInfoFrameType = 0x87; // DRM InfoFrame.
+        d.st291Did = 0x41;          // SMPTE ST 2108-1 HDR/WCG Metadata Ancillary Data Packet.
+        d.st291Sdid = 0x0C;
         return d;
 }
 
@@ -150,6 +152,8 @@ static AncFormat::Data makeHdrDynamic2094_40() {
         d.category = AncCategory::Hdr;
         d.canonicalTransport = AncTransport::HdmiInfoFrame;
         d.hdmiInfoFrameType = 0x81; // Vendor-Specific (HDR10+ OUI discriminator).
+        d.st291Did = 0x41;          // SMPTE ST 2108-2 HDR/WCG KLV Metadata Ancillary Data Packet.
+        d.st291Sdid = 0x0D;
         return d;
 }
 

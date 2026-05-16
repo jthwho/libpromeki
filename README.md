@@ -16,7 +16,7 @@ management, signal/slot event systems, and more. It is designed so
 that you can focus on your application logic instead of reinventing
 infrastructure.
 
-**[API Documentation](https://jthwho.github.io/libpromeki/main/)**
+**[API Documentation](https://jthwho.github.io/libpromeki/)**
 
 ## Guides
 

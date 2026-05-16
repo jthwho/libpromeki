@@ -109,7 +109,7 @@ namespace {
                 return makeResult<Variant>(Variant(cdp));
         }
 
-        Result<AncPacket> buildCea708HlsSei(const Variant &v, const AncTranslateConfig & /*cfg*/) {
+        Result<List<AncPacket>> buildCea708HlsSei(const Variant &v, const AncTranslateConfig & /*cfg*/) {
                 Cea708Cdp                    cdp = v.get<Cea708Cdp>();
                 const Cea708Cdp::CcDataList &ccData = cdp.ccData;
                 // SEI carries the cc_count in 5 bits, so up to 31 triples
@@ -121,7 +121,7 @@ namespace {
                         promekiWarn("Cea708HlsSei builder: %zu cc_data triples exceeds the SEI "
                                     "5-bit cc_count cap (31)",
                                     ccData.size());
-                        return makeError<AncPacket>(Error::OutOfRange);
+                        return makeError<List<AncPacket>>(Error::OutOfRange);
                 }
                 List<uint8_t> bytes;
                 bytes.reserve(11 + ccData.size() * 3);
@@ -154,9 +154,11 @@ namespace {
                 wire.setSize(bytes.size());
                 if (!bytes.isEmpty()) wire.copyFrom(bytes.data(), bytes.size(), 0);
 
-                AncPacket out(AncFormat(AncFormat::Cea708), AncTransport::HlsSei, std::move(wire),
-                              Metadata());
-                return makeResult<AncPacket>(std::move(out));
+                AncPacket pkt(AncFormat(AncFormat::Cea708), AncTransport::HlsSei, std::move(wire),
+                               Metadata());
+                List<AncPacket> out;
+                out.pushToBack(std::move(pkt));
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
 } // namespace

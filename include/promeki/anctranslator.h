@@ -12,6 +12,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
 #include <promeki/enums.h>
+#include <promeki/framesyncdisposition.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/variant.h>
@@ -88,7 +89,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * // Translate to a different transport.  Falls back to parse+build
  * // when no direct translator is registered.
- * Result<AncPacket> r2 = t.translate(myPacket, AncTransport::NdiXml);
+ * Result<List<AncPacket>> r2 = t.translate(myPacket, AncTransport::NdiXml);
  * @endcode
  *
  * @par Thread Safety
@@ -102,11 +103,44 @@ class AncTranslator {
         public:
                 // -- Handler signatures ---------------------------------------
 
-                /** @brief Parser: decode wire bytes into a typed Variant. */
+                /** @brief Parser: decode one packet's wire bytes into a typed Variant. */
                 using ParserFn = Result<Variant> (*)(const AncPacket &, const AncTranslateConfig &);
 
-                /** @brief Builder: encode a typed Variant onto a target transport. */
-                using BuilderFn = Result<AncPacket> (*)(const Variant &, const AncTranslateConfig &);
+                /**
+                 * @brief Multi-packet parser: decode a sequence of packets
+                 *        that together carry one logical message into a
+                 *        single typed Variant.
+                 *
+                 * Used by codecs whose wire format splits a single
+                 * application-level message across multiple ANC packets
+                 * — SMPTE ST 2108-2 HDR/WCG KLV is the canonical example,
+                 * with the per-packet @c Packet Count byte incrementing
+                 * across consecutive ANC packets and the per-frame
+                 * Message Length declared in the first packet's UDW.
+                 *
+                 * The framework groups packets sharing
+                 * @c (format, transport) within an @ref AncPayload, then
+                 * dispatches them as a single list to this callback.
+                 * Codecs that only ever see one packet per message
+                 * register a regular @ref ParserFn instead.
+                 */
+                using MultiParserFn = Result<Variant> (*)(const ::promeki::List<AncPacket> &,
+                                                           const AncTranslateConfig &);
+
+                /**
+                 * @brief Builder: encode a typed Variant onto a target
+                 *        transport as one or more ANC packets.
+                 *
+                 * Returns a list so codecs that legitimately need to
+                 * emit multiple ANC packets for one logical message
+                 * (SMPTE ST 2108-2 HDR10+, where the Message can exceed
+                 * a single ST 291 packet's 255-byte UDW capacity and
+                 * is split across consecutive packets with incrementing
+                 * @c Packet Count) can do so cleanly.  The common case
+                 * is a one-element list.
+                 */
+                using BuilderFn = Result<::promeki::List<AncPacket>> (*)(const Variant &,
+                                                                          const AncTranslateConfig &);
 
                 /**
                  * @brief Direct translator: wire-to-wire conversion that
@@ -115,9 +149,48 @@ class AncTranslator {
                  * Optional optimisation path; @c AncTranslator::translate
                  * falls back to the composed @c parse() → @c build()
                  * chain when no direct translator is registered.
+                 *
+                 * Returns a list for symmetry with @ref BuilderFn —
+                 * one inbound packet may legitimately fan out to many
+                 * outbound packets on transports that fragment messages.
                  */
-                using TranslatorFn = Result<AncPacket> (*)(const AncPacket &, AncTransport,
-                                                            const AncTranslateConfig &);
+                using TranslatorFn = Result<::promeki::List<AncPacket>> (*)(const AncPacket &, AncTransport,
+                                                                              const AncTranslateConfig &);
+
+                /**
+                 * @brief Frame-sync policy: transform one ANC packet according
+                 *        to a per-frame @ref FrameSyncDisposition.
+                 *
+                 * Called by @ref AncFrameSync when a pipeline stage performs
+                 * frame-rate conversion or absorbs genlock drift.  The
+                 * registered policy decides what happens to the packet under
+                 * each disposition — copy through, drop, mutate (e.g. ATC
+                 * timecode increment, CEA-708 framing-only CDP), or stash
+                 * and forward — and returns 0..N output packets:
+                 *
+                 *  - **Empty list** = drop the packet from the output frame.
+                 *  - **One packet**  = the policy's transformed packet.
+                 *  - **>1 packet**   = split / promote — used by codecs that
+                 *                      need to fan out a single inbound packet
+                 *                      across multiple outbound packets, or by
+                 *                      the SCTE-104 stash-and-forward path on
+                 *                      @c Drop.
+                 *
+                 * @c repeatIndex is @c 0 for @c Play and the first slot of a
+                 * @c Repeat run, then increments @c 1, @c 2, … for subsequent
+                 * slots within the same @c Repeat.  Codecs use it to advance
+                 * sequence-counter-like state (CEA-708 CDP @c sequence_counter,
+                 * ATC timecode) across the run.  The argument is ignored on
+                 * @c Drop.
+                 *
+                 * The key for this registry is just @c AncFormat::ID — there
+                 * is no transport dimension, since frame-rate-conversion
+                 * semantics are transport-independent.
+                 */
+                using SyncPolicyFn = Result<::promeki::List<AncPacket>> (*)(const AncPacket &,
+                                                                             FrameSyncDisposition,
+                                                                             uint8_t repeatIndex,
+                                                                             const AncTranslateConfig &);
 
                 // -- Construction --------------------------------------------
 
@@ -150,40 +223,90 @@ class AncTranslator {
                 Result<Variant> parse(const AncPacket &pkt) const;
 
                 /**
+                 * @brief Decodes a sequence of related packets carrying
+                 *        one logical message into a typed Variant.
+                 *
+                 * For codecs with a registered @ref MultiParserFn (e.g.
+                 * SMPTE ST 2108-2 HDR10+ where one message splits across
+                 * incrementing-@c PacketCount packets) this dispatches
+                 * the entire list to the multi-parser.  For codecs with
+                 * only a single-packet @ref ParserFn registered, this is
+                 * equivalent to calling @ref parse on @p pkts.front()
+                 * when @p pkts has exactly one entry; multi-element
+                 * lists return @c Error::NotSupported in that case.
+                 *
+                 * The format / transport are taken from
+                 * @c pkts.front() — callers are expected to have
+                 * pre-grouped packets by @c (format, transport).
+                 *
+                 * @param pkts Non-empty packet list belonging to one
+                 *             logical message.
+                 */
+                Result<Variant> parseGroup(const ::promeki::List<AncPacket> &pkts) const;
+
+                /**
                  * @brief Encodes a typed Variant onto the requested transport.
                  *
                  * Dispatches to the registered builder for @c (fmt,
-                 * target) using the held config.
+                 * target) using the held config.  The returned list
+                 * usually contains a single packet; codecs that split
+                 * a message across multiple ANC packets (SMPTE ST
+                 * 2108-2 HDR10+) return the full split sequence.
                  *
                  * @param v      The typed Variant carrying the format's
                  *               application-level payload (e.g.
                  *               @c Cea708Cdp, @c Timecode).
                  * @param fmt    The ANC format.
                  * @param target The target wire transport.
-                 * @return       The produced packet on success, or
+                 * @return       The produced packet list on success, or
                  *               @c Error::NotSupported when no builder
                  *               is registered.
                  */
-                Result<AncPacket> build(const Variant &v, const AncFormat &fmt,
-                                        const AncTransport &target) const;
+                Result<::promeki::List<AncPacket>> build(const Variant &v, const AncFormat &fmt,
+                                                          const AncTransport &target) const;
 
                 /**
                  * @brief Translates a packet onto the requested transport.
                  *
                  * Identity-short-circuits when @c pkt.transport() ==
-                 * @p target (returns @p pkt unchanged).  Otherwise
-                 * prefers a registered direct translator for
-                 * @c (pkt.format(), pkt.transport(), target); on miss,
-                 * falls back to the composed @c parse(pkt) → @c
-                 * build(variant, pkt.format(), target) chain.
+                 * @p target (returns the input packet in a one-element
+                 * list).  Otherwise prefers a registered direct
+                 * translator for @c (pkt.format(), pkt.transport(),
+                 * target); on miss, falls back to the composed
+                 * @c parse(pkt) → @c build(variant, pkt.format(),
+                 * target) chain.
                  *
                  * @param pkt    The packet to translate.
                  * @param target The target wire transport.
-                 * @return       The translated packet on success, or
-                 *               @c Error::NotSupported when no path
+                 * @return       The translated packet list on success,
+                 *               or @c Error::NotSupported when no path
                  *               exists.
                  */
-                Result<AncPacket> translate(const AncPacket &pkt, const AncTransport &target) const;
+                Result<::promeki::List<AncPacket>> translate(const AncPacket &pkt,
+                                                              const AncTransport &target) const;
+
+                /**
+                 * @brief Applies a frame-sync disposition to one ANC packet.
+                 *
+                 * Dispatches to the registered @ref SyncPolicyFn for the
+                 * packet's format using the held config.  When no policy is
+                 * registered for the format, applies the default fallback:
+                 * @c Drop returns an empty list, @c Play and @c Repeat
+                 * return the packet unchanged.  The default fallback is
+                 * silent at this layer — @ref AncFrameSync handles
+                 * once-per-format warning when it dispatches.
+                 *
+                 * @param pkt          The packet to transform.
+                 * @param disposition  The frame-sync disposition for this slot.
+                 * @param repeatIndex  @c 0 for @c Play and the first slot of
+                 *                     a @c Repeat run; @c 1, @c 2, … for
+                 *                     subsequent @c Repeat slots.  Ignored on
+                 *                     @c Drop.
+                 * @return The transformed packet list (empty list = drop).
+                 */
+                Result<::promeki::List<AncPacket>> applySyncPolicy(const AncPacket   &pkt,
+                                                                    FrameSyncDisposition disposition,
+                                                                    uint8_t              repeatIndex) const;
 
                 // -- Static registration -------------------------------------
 
@@ -199,6 +322,20 @@ class AncTranslator {
                  * @param fn     Free function pointer; must be non-null.
                  */
                 static void registerParser(AncFormat::ID format, const AncTransport &src, ParserFn fn);
+
+                /**
+                 * @brief Registers a multi-packet parser for @c (format, src).
+                 *
+                 * Multi-parsers take precedence over single-packet
+                 * parsers on the same key when both are registered.
+                 * Same registration policy as @ref registerParser.
+                 *
+                 * @param format ID of the ANC format the parser handles.
+                 * @param src    Source wire transport.
+                 * @param fn     Free function pointer; must be non-null.
+                 */
+                static void registerMultiParser(AncFormat::ID format, const AncTransport &src,
+                                                 MultiParserFn fn);
 
                 /**
                  * @brief Registers a builder for @c (format, dst).
@@ -224,10 +361,30 @@ class AncTranslator {
                 static void registerTranslator(AncFormat::ID format, const AncTransport &src,
                                                 const AncTransport &dst, TranslatorFn fn);
 
+                /**
+                 * @brief Registers a frame-sync policy for @p format.
+                 *
+                 * Same registration policy as @ref registerParser, but the
+                 * key is one-dimensional (no transport) — frame-rate-conversion
+                 * semantics are transport-independent.
+                 *
+                 * @param format ID of the ANC format the policy handles.
+                 * @param fn     Free function pointer; must be non-null.
+                 */
+                static void registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn);
+
                 // -- Static capability queries -------------------------------
 
-                /** @brief True when a parser is registered for @c (format, src). */
+                /**
+                 * @brief True when a parser is registered for @c (format, src).
+                 *
+                 * Returns true for either a single-packet @ref ParserFn
+                 * registration or a @ref MultiParserFn registration.
+                 */
                 static bool hasParser(const AncFormat &format, const AncTransport &src);
+
+                /** @brief True when a multi-packet parser is registered for @c (format, src). */
+                static bool hasMultiParser(const AncFormat &format, const AncTransport &src);
 
                 /** @brief True when a builder is registered for @c (format, dst). */
                 static bool hasBuilder(const AncFormat &format, const AncTransport &dst);
@@ -235,6 +392,9 @@ class AncTranslator {
                 /** @brief True when a direct translator is registered for @c (format, src, dst). */
                 static bool hasDirectTranslator(const AncFormat &format, const AncTransport &src,
                                                  const AncTransport &dst);
+
+                /** @brief True when a frame-sync policy is registered for @p format. */
+                static bool hasSyncPolicy(const AncFormat &format);
 
                 /**
                  * @brief True when a path exists from @p src to @p dst for @p format.
@@ -290,6 +450,27 @@ PROMEKI_NAMESPACE_END
         }
 
 /**
+ * @brief Registers a free function as an ANC multi-packet parser at
+ *        static-init time.
+ * @ingroup proav
+ *
+ * Mirror of @ref PROMEKI_REGISTER_ANC_PARSER for the
+ * @c MultiParserFn signature.  Used by codecs whose wire format may
+ * split one message across multiple ANC packets (e.g. SMPTE ST 2108-2
+ * HDR10+).
+ */
+#define PROMEKI_REGISTER_ANC_MULTI_PARSER(Tag, Format, Transport, Fn)                                                  \
+        namespace {                                                                                                    \
+                struct AncMultiParserRegistrar_##Tag {                                                                 \
+                                AncMultiParserRegistrar_##Tag() {                                                      \
+                                        ::promeki::AncTranslator::registerMultiParser(                                 \
+                                                ::promeki::AncFormat::Format, Transport, Fn);                          \
+                                }                                                                                      \
+                };                                                                                                     \
+                static AncMultiParserRegistrar_##Tag s_anc_multi_parser_registrar_##Tag;                               \
+        }
+
+/**
  * @brief Registers a free function as an ANC builder at static-init time.
  * @ingroup proav
  *
@@ -328,4 +509,28 @@ PROMEKI_NAMESPACE_END
                                 }                                                                                      \
                 };                                                                                                     \
                 static AncTranslatorRegistrar_##Tag s_anc_translator_registrar_##Tag;                                  \
+        }
+
+/**
+ * @brief Registers a free function as an ANC frame-sync policy at static-init.
+ * @ingroup proav
+ *
+ * Mirror of @ref PROMEKI_REGISTER_ANC_PARSER for the frame-sync policy
+ * registry.  No transport argument because the registry is keyed only
+ * on @c AncFormat::ID — frame-rate-conversion semantics are
+ * transport-independent.
+ *
+ * @param Tag    Unique suffix (typically <Format>).
+ * @param Format The @c AncFormat::ID enumerator.
+ * @param Fn     Free function with @c AncTranslator::SyncPolicyFn signature.
+ */
+#define PROMEKI_REGISTER_ANC_SYNC_POLICY(Tag, Format, Fn)                                                              \
+        namespace {                                                                                                    \
+                struct AncSyncPolicyRegistrar_##Tag {                                                                  \
+                                AncSyncPolicyRegistrar_##Tag() {                                                       \
+                                        ::promeki::AncTranslator::registerSyncPolicy(::promeki::AncFormat::Format,     \
+                                                                                      Fn);                             \
+                                }                                                                                      \
+                };                                                                                                     \
+                static AncSyncPolicyRegistrar_##Tag s_anc_sync_policy_registrar_##Tag;                                 \
         }

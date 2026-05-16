@@ -4,10 +4,10 @@
  *
  * See LICENSE file in the project root folder for license information.
  *
- * Implements the three registries that back @ref AncTranslator's
- * parse / build / translate dispatch.  Registrations are expected at
- * static-init time; each map is guarded by an internal Mutex so
- * registrations across TUs and the read path stay race-free.
+ * Implements the four registries that back @ref AncTranslator's
+ * parse / parseGroup / build / translate dispatch.  Registrations are
+ * expected at static-init time; each map is guarded by an internal
+ * Mutex so registrations across TUs and the read path stay race-free.
  */
 
 #include <promeki/anctranslator.h>
@@ -58,7 +58,7 @@ namespace {
                         }
         };
 
-        // Process-wide registry singleton.  One Mutex covers all three maps —
+        // Process-wide registry singleton.  One Mutex covers all four maps —
         // registrations happen at static-init and dispatch traffic is light
         // relative to the cost of an ANC translate, so contention is a
         // non-issue.
@@ -72,6 +72,11 @@ namespace {
                 return r;
         }
 
+        Map<ParserKey, AncTranslator::MultiParserFn> &multiParserRegistry() {
+                static Map<ParserKey, AncTranslator::MultiParserFn> r;
+                return r;
+        }
+
         Map<BuilderKey, AncTranslator::BuilderFn> &builderRegistry() {
                 static Map<BuilderKey, AncTranslator::BuilderFn> r;
                 return r;
@@ -79,6 +84,14 @@ namespace {
 
         Map<TranslatorKey, AncTranslator::TranslatorFn> &translatorRegistry() {
                 static Map<TranslatorKey, AncTranslator::TranslatorFn> r;
+                return r;
+        }
+
+        // Sync-policy registry is keyed on AncFormat::ID alone — no transport
+        // dimension, since frame-rate-conversion semantics are
+        // transport-independent.
+        Map<AncFormat::ID, AncTranslator::SyncPolicyFn> &syncPolicyRegistry() {
+                static Map<AncFormat::ID, AncTranslator::SyncPolicyFn> r;
                 return r;
         }
 
@@ -90,6 +103,15 @@ namespace {
                 ParserKey            key{format, src.value()};
                 Mutex::Locker        lock(registryMutex());
                 auto                &r = parserRegistry();
+                auto                 it = r.find(key);
+                if (it == r.end()) return nullptr;
+                return it->second;
+        }
+
+        AncTranslator::MultiParserFn findMultiParser(AncFormat::ID format, const AncTransport &src) {
+                ParserKey            key{format, src.value()};
+                Mutex::Locker        lock(registryMutex());
+                auto                &r = multiParserRegistry();
                 auto                 it = r.find(key);
                 if (it == r.end()) return nullptr;
                 return it->second;
@@ -114,6 +136,14 @@ namespace {
                 return it->second;
         }
 
+        AncTranslator::SyncPolicyFn findSyncPolicy(AncFormat::ID format) {
+                Mutex::Locker  lock(registryMutex());
+                auto          &r = syncPolicyRegistry();
+                auto           it = r.find(format);
+                if (it == r.end()) return nullptr;
+                return it->second;
+        }
+
 } // namespace
 
 // ============================================================================
@@ -127,6 +157,18 @@ void AncTranslator::registerParser(AncFormat::ID format, const AncTransport &src
         auto          &r = parserRegistry();
         if (r.contains(key)) {
                 promekiWarn("AncTranslator: re-registering parser for format=%d transport=%s",
+                            static_cast<int>(format), src.valueName().cstr());
+        }
+        r.insert(key, fn);
+}
+
+void AncTranslator::registerMultiParser(AncFormat::ID format, const AncTransport &src, MultiParserFn fn) {
+        if (fn == nullptr) return;
+        ParserKey      key{format, src.value()};
+        Mutex::Locker  lock(registryMutex());
+        auto          &r = multiParserRegistry();
+        if (r.contains(key)) {
+                promekiWarn("AncTranslator: re-registering multi-parser for format=%d transport=%s",
                             static_cast<int>(format), src.valueName().cstr());
         }
         r.insert(key, fn);
@@ -157,31 +199,67 @@ void AncTranslator::registerTranslator(AncFormat::ID format, const AncTransport 
         r.insert(key, fn);
 }
 
+void AncTranslator::registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn) {
+        if (fn == nullptr) return;
+        Mutex::Locker  lock(registryMutex());
+        auto          &r = syncPolicyRegistry();
+        if (r.contains(format)) {
+                promekiWarn("AncTranslator: re-registering sync policy for format=%d",
+                            static_cast<int>(format));
+        }
+        r.insert(format, fn);
+}
+
 // ============================================================================
 // Dispatch
 // ============================================================================
 
 Result<Variant> AncTranslator::parse(const AncPacket &pkt) const {
-        ParserFn fn = findParser(pkt.format().id(), pkt.transport());
-        if (fn == nullptr) {
-                return makeError<Variant>(Error::NotSupported);
+        const AncFormat::ID fmtId = pkt.format().id();
+        // Multi-parsers take precedence on a single-packet entry point — the
+        // wire packet may be one segment of an N-packet message, but the
+        // codec is the only thing that knows whether N == 1 or N > 1.
+        // Wrap the single packet in a one-element list and dispatch.
+        if (MultiParserFn mfn = findMultiParser(fmtId, pkt.transport()); mfn != nullptr) {
+                List<AncPacket> pkts;
+                pkts.pushToBack(pkt);
+                return mfn(pkts, _cfg);
         }
+        ParserFn fn = findParser(fmtId, pkt.transport());
+        if (fn == nullptr) return makeError<Variant>(Error::NotSupported);
         return fn(pkt, _cfg);
 }
 
-Result<AncPacket> AncTranslator::build(const Variant &v, const AncFormat &fmt,
-                                        const AncTransport &target) const {
+Result<Variant> AncTranslator::parseGroup(const List<AncPacket> &pkts) const {
+        if (pkts.isEmpty()) return makeError<Variant>(Error::InvalidArgument);
+        const AncFormat::ID fmtId = pkts.front().format().id();
+        const AncTransport &xport = pkts.front().transport();
+        if (MultiParserFn mfn = findMultiParser(fmtId, xport); mfn != nullptr) {
+                return mfn(pkts, _cfg);
+        }
+        // No multi-parser — single-packet ParserFn only handles size-1 lists.
+        if (pkts.size() != 1) return makeError<Variant>(Error::NotSupported);
+        ParserFn fn = findParser(fmtId, xport);
+        if (fn == nullptr) return makeError<Variant>(Error::NotSupported);
+        return fn(pkts.front(), _cfg);
+}
+
+Result<List<AncPacket>> AncTranslator::build(const Variant &v, const AncFormat &fmt,
+                                              const AncTransport &target) const {
         BuilderFn fn = findBuilder(fmt.id(), target);
         if (fn == nullptr) {
-                return makeError<AncPacket>(Error::NotSupported);
+                return makeError<List<AncPacket>>(Error::NotSupported);
         }
         return fn(v, _cfg);
 }
 
-Result<AncPacket> AncTranslator::translate(const AncPacket &pkt, const AncTransport &target) const {
-        // Identity short-circuit: same transport in and out, return as-is.
+Result<List<AncPacket>> AncTranslator::translate(const AncPacket &pkt, const AncTransport &target) const {
+        // Identity short-circuit: same transport in and out, return in a
+        // one-element list.
         if (pkt.transport() == target) {
-                return makeResult<AncPacket>(pkt);
+                List<AncPacket> out;
+                out.pushToBack(pkt);
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
         const AncFormat::ID fmtId = pkt.format().id();
@@ -191,15 +269,33 @@ Result<AncPacket> AncTranslator::translate(const AncPacket &pkt, const AncTransp
                 return direct(pkt, target, _cfg);
         }
 
-        // Composed path: parse on src, build on dst.
-        ParserFn p = findParser(fmtId, pkt.transport());
-        if (p == nullptr) return makeError<AncPacket>(Error::NotSupported);
+        // Composed path: parse on src, build on dst.  Note: this path only
+        // works for single-packet messages — multi-packet codecs must
+        // either register a direct translator, or callers must use
+        // parseGroup + build directly.
+        Result<Variant> parsed = parse(pkt);
+        if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
         BuilderFn b = findBuilder(fmtId, target);
-        if (b == nullptr) return makeError<AncPacket>(Error::NotSupported);
-
-        Result<Variant> parsed = p(pkt, _cfg);
-        if (parsed.second().isError()) return makeError<AncPacket>(parsed.second());
+        if (b == nullptr) return makeError<List<AncPacket>>(Error::NotSupported);
         return b(parsed.first(), _cfg);
+}
+
+Result<List<AncPacket>> AncTranslator::applySyncPolicy(const AncPacket   &pkt,
+                                                        FrameSyncDisposition disposition,
+                                                        uint8_t              repeatIndex) const {
+        const AncFormat::ID fmtId = pkt.format().id();
+        if (SyncPolicyFn fn = findSyncPolicy(fmtId); fn != nullptr) {
+                return fn(pkt, disposition, repeatIndex, _cfg);
+        }
+        // Default fallback: copy through on Play / Repeat, drop on Drop.
+        // No log here — AncFrameSync handles once-per-format warning when
+        // it dispatches.  Keeping this layer silent lets callers use the
+        // method as a pure transform without log noise.
+        List<AncPacket> out;
+        if (disposition.kind() != FrameSyncDisposition::Drop) {
+                out.pushToBack(pkt);
+        }
+        return makeResult<List<AncPacket>>(std::move(out));
 }
 
 // ============================================================================
@@ -207,7 +303,12 @@ Result<AncPacket> AncTranslator::translate(const AncPacket &pkt, const AncTransp
 // ============================================================================
 
 bool AncTranslator::hasParser(const AncFormat &format, const AncTransport &src) {
-        return findParser(format.id(), src) != nullptr;
+        return findParser(format.id(), src) != nullptr ||
+               findMultiParser(format.id(), src) != nullptr;
+}
+
+bool AncTranslator::hasMultiParser(const AncFormat &format, const AncTransport &src) {
+        return findMultiParser(format.id(), src) != nullptr;
 }
 
 bool AncTranslator::hasBuilder(const AncFormat &format, const AncTransport &dst) {
@@ -217,6 +318,10 @@ bool AncTranslator::hasBuilder(const AncFormat &format, const AncTransport &dst)
 bool AncTranslator::hasDirectTranslator(const AncFormat &format, const AncTransport &src,
                                          const AncTransport &dst) {
         return findTranslator(format.id(), src, dst) != nullptr;
+}
+
+bool AncTranslator::hasSyncPolicy(const AncFormat &format) {
+        return findSyncPolicy(format.id()) != nullptr;
 }
 
 bool AncTranslator::canTranslate(const AncFormat &format, const AncTransport &src, const AncTransport &dst) {
@@ -229,9 +334,28 @@ List<AncTransport> AncTranslator::registeredParserTransports(const AncFormat &fo
         List<AncTransport> out;
         AncFormat::ID      id = format.id();
         Mutex::Locker      lock(registryMutex());
-        auto              &r = parserRegistry();
-        for (auto it = r.cbegin(); it != r.cend(); ++it) {
-                if (it->first.format == id) out.pushToBack(AncTransport(it->first.srcTransport));
+        {
+                auto &r = parserRegistry();
+                for (auto it = r.cbegin(); it != r.cend(); ++it) {
+                        if (it->first.format == id) out.pushToBack(AncTransport(it->first.srcTransport));
+                }
+        }
+        {
+                auto &r = multiParserRegistry();
+                for (auto it = r.cbegin(); it != r.cend(); ++it) {
+                        if (it->first.format == id) {
+                                AncTransport xport(it->first.srcTransport);
+                                // Deduplicate with single-parser entries.
+                                bool already = false;
+                                for (const auto &x : out) {
+                                        if (x.value() == xport.value()) {
+                                                already = true;
+                                                break;
+                                        }
+                                }
+                                if (!already) out.pushToBack(xport);
+                        }
+                }
         }
         return out;
 }

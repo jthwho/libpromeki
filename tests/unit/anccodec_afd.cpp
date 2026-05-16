@@ -11,6 +11,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
 #include <promeki/anctranslator.h>
+#include <promeki/framesyncdisposition.h>
 #include <promeki/result.h>
 #include <promeki/st291packet.h>
 #include <promeki/variant.h>
@@ -32,18 +33,18 @@ TEST_CASE("AFD<->St291: round-trip every AFD code with AR=1") {
         AncTranslator t;
         for (uint8_t code = 0; code < 16; ++code) {
                 uint8_t           input = pack(code, true);
-                Result<AncPacket> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+                Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
                 REQUIRE(built.second().isOk());
-                CHECK(built.first().format().id() == AncFormat::Afd);
-                CHECK(built.first().transport() == AncTransport::St291);
+                CHECK(built.first().front().format().id() == AncFormat::Afd);
+                CHECK(built.first().front().transport() == AncTransport::St291);
 
-                Result<St291Packet> rp = St291Packet::from(built.first());
+                Result<St291Packet> rp = St291Packet::from(built.first().front());
                 REQUIRE(rp.second().isOk());
                 CHECK(rp.first().did() == 0x41);
                 CHECK(rp.first().sdid() == 0x05);
                 CHECK(rp.first().checksumValid());
 
-                Result<Variant> parsed = t.parse(built.first());
+                Result<Variant> parsed = t.parse(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 CHECK(parsed.first().get<uint8_t>() == input);
         }
@@ -52,18 +53,18 @@ TEST_CASE("AFD<->St291: round-trip every AFD code with AR=1") {
 TEST_CASE("AFD<->St291: round-trip AR=0 path") {
         AncTranslator     t;
         uint8_t           input = pack(0x09, false);
-        Result<AncPacket> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+        Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = t.parse(built.first());
+        Result<Variant> parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         CHECK(parsed.first().get<uint8_t>() == input);
 }
 
 TEST_CASE("AFD<->St291: built packet has 8 UDWs (bar-data slots zeroed)") {
         AncTranslator     t;
-        Result<AncPacket> built = t.build(Variant(pack(0x0A, true)), AncFormat(AncFormat::Afd), AncTransport::St291);
+        Result<List<AncPacket>> built = t.build(Variant(pack(0x0A, true)), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
-        Result<St291Packet> rp = St291Packet::from(built.first());
+        Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().dataCount() == 8);
         List<uint16_t> udw = rp.first().udw();
@@ -82,10 +83,64 @@ TEST_CASE("AFD<->St291: line / fieldB threaded from AncTranslateConfig") {
         cfg.set(AncTranslateConfig::St291BuildLine, uint16_t(13));
         cfg.set(AncTranslateConfig::St291FieldB, true);
         AncTranslator     t(cfg);
-        Result<AncPacket> built = t.build(Variant(pack(0x0A, true)), AncFormat(AncFormat::Afd), AncTransport::St291);
+        Result<List<AncPacket>> built = t.build(Variant(pack(0x0A, true)), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
-        Result<St291Packet> rp = St291Packet::from(built.first());
+        Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().line() == 13);
         CHECK(rp.first().fieldB() == true);
+}
+
+// ===========================================================================
+// Frame-sync policy: AFD is sticky / idempotent — copy through on Repeat,
+// drop on Drop, no per-frame state to advance.
+// ===========================================================================
+
+TEST_CASE("AFD sync policy: Play returns the packet unchanged") {
+        AncTranslator           t;
+        Result<List<AncPacket>> built = t.build(Variant(pack(0x0A, true)),
+                                                  AncFormat(AncFormat::Afd), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        const AncPacket &pkt = built.first().front();
+
+        Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::play(), 0);
+        REQUIRE(res.second().isOk());
+        REQUIRE(res.first().size() == 1);
+        // Bytes preserved exactly.
+        CHECK(res.first().front().data().size() == pkt.data().size());
+}
+
+TEST_CASE("AFD sync policy: Drop returns an empty list") {
+        AncTranslator           t;
+        Result<List<AncPacket>> built = t.build(Variant(pack(0x0A, true)),
+                                                  AncFormat(AncFormat::Afd), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        const AncPacket &pkt = built.first().front();
+
+        Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::drop(), 0);
+        REQUIRE(res.second().isOk());
+        CHECK(res.first().size() == 0);
+}
+
+TEST_CASE("AFD sync policy: Repeat copies the packet through at every index") {
+        AncTranslator           t;
+        Result<List<AncPacket>> built = t.build(Variant(pack(0x0A, true)),
+                                                  AncFormat(AncFormat::Afd), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        const AncPacket &pkt = built.first().front();
+
+        for (uint8_t i = 0; i < 4; ++i) {
+                Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::repeat(4), i);
+                REQUIRE(res.second().isOk());
+                REQUIRE(res.first().size() == 1);
+                // Round-trip parse to confirm the packet is still semantically
+                // identical at every repeat index.
+                Result<Variant> parsed = t.parse(res.first().front());
+                REQUIRE(parsed.second().isOk());
+                CHECK(parsed.first().get<uint8_t>() == pack(0x0A, true));
+        }
+}
+
+TEST_CASE("AFD sync policy: hasSyncPolicy reflects registration") {
+        CHECK(AncTranslator::hasSyncPolicy(AncFormat(AncFormat::Afd)));
 }

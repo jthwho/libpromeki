@@ -77,32 +77,38 @@ namespace {
                 return makeResult<Variant>(Variant(s));
         }
 
-        Result<AncPacket> stubBuildA(const Variant & /*v*/, const AncTranslateConfig & /*cfg*/) {
+        Result<List<AncPacket>> stubBuildA(const Variant & /*v*/, const AncTranslateConfig & /*cfg*/) {
                 Buffer payload;
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Built",
                                           VariantSpec().setType(Variant::TypeString).setDefault(String())),
                       String(kStubBuiltA));
-                return makeResult<AncPacket>(AncPacket(AncFormat(testFormat().id), xportA(), payload, m));
+                List<AncPacket> out;
+                out.pushToBack(AncPacket(AncFormat(testFormat().id), xportA(), payload, m));
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
-        Result<AncPacket> stubBuildB(const Variant & /*v*/, const AncTranslateConfig & /*cfg*/) {
+        Result<List<AncPacket>> stubBuildB(const Variant & /*v*/, const AncTranslateConfig & /*cfg*/) {
                 Buffer   payload(static_cast<size_t>(0));
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Built",
                                           VariantSpec().setType(Variant::TypeString).setDefault(String())),
                       String(kStubBuiltB));
-                return makeResult<AncPacket>(AncPacket(AncFormat(testFormat().id), xportB(), payload, m));
+                List<AncPacket> out;
+                out.pushToBack(AncPacket(AncFormat(testFormat().id), xportB(), payload, m));
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
-        Result<AncPacket> stubDirectAB(const AncPacket & /*pkt*/, AncTransport target,
-                                        const AncTranslateConfig & /*cfg*/) {
+        Result<List<AncPacket>> stubDirectAB(const AncPacket & /*pkt*/, AncTransport target,
+                                              const AncTranslateConfig & /*cfg*/) {
                 Buffer   payload(static_cast<size_t>(0));
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Direct",
                                           VariantSpec().setType(Variant::TypeString).setDefault(String())),
                       String(kStubDirectAB));
-                return makeResult<AncPacket>(AncPacket(AncFormat(testFormat().id), target, payload, m));
+                List<AncPacket> out;
+                out.pushToBack(AncPacket(AncFormat(testFormat().id), target, payload, m));
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
         // One-time registration of the stub handlers.  doctest does not gate
@@ -223,15 +229,17 @@ TEST_CASE("AncTranslator: parse returns NotSupported when no parser registered")
 
 TEST_CASE("AncTranslator: build dispatches to the registered handler") {
         AncTranslator     t;
-        Result<AncPacket> r = t.build(Variant(String("ignored")), AncFormat(testFormat().id), xportA());
-        CHECK(r.second().isOk());
-        CHECK(r.first().transport() == xportA());
-        CHECK(r.first().format().id() == testFormat().id);
+        Result<List<AncPacket>> r = t.build(Variant(String("ignored")), AncFormat(testFormat().id), xportA());
+        REQUIRE(r.second().isOk());
+        REQUIRE(r.first().size() == 1);
+        CHECK(r.first().front().transport() == xportA());
+        CHECK(r.first().front().format().id() == testFormat().id);
 }
 
 TEST_CASE("AncTranslator: build returns NotSupported when no builder registered") {
         AncTranslator     t;
-        Result<AncPacket> r = t.build(Variant(String("ignored")), AncFormat(testFormat().id), AncTransport::RtmpAmf);
+        Result<List<AncPacket>> r = t.build(Variant(String("ignored")), AncFormat(testFormat().id),
+                                             AncTransport::RtmpAmf);
         CHECK(r.second().code() == Error::NotSupported);
 }
 
@@ -242,10 +250,11 @@ TEST_CASE("AncTranslator: build returns NotSupported when no builder registered"
 TEST_CASE("AncTranslator: translate identity short-circuit returns packet unchanged") {
         AncTranslator     t;
         AncPacket         pkt = makeStubPacket(xportA());
-        Result<AncPacket> r = t.translate(pkt, xportA());
-        CHECK(r.second().isOk());
+        Result<List<AncPacket>> r = t.translate(pkt, xportA());
+        REQUIRE(r.second().isOk());
+        REQUIRE(r.first().size() == 1);
         // Same impl (handle compares cheaply via packet identity equality).
-        CHECK(r.first() == pkt);
+        CHECK(r.first().front() == pkt);
 }
 
 TEST_CASE("AncTranslator: translate falls back to composed parse+build path") {
@@ -256,10 +265,11 @@ TEST_CASE("AncTranslator: translate falls back to composed parse+build path") {
         // the requested target transport.
         AncTranslator     t;
         AncPacket         pkt = makeStubPacket(xportB());
-        Result<AncPacket> r = t.translate(pkt, xportA());
-        CHECK(r.second().isOk());
-        CHECK(r.first().transport() == xportA());
-        CHECK(r.first().format().id() == testFormat().id);
+        Result<List<AncPacket>> r = t.translate(pkt, xportA());
+        REQUIRE(r.second().isOk());
+        REQUIRE(r.first().size() == 1);
+        CHECK(r.first().front().transport() == xportA());
+        CHECK(r.first().front().format().id() == testFormat().id);
 }
 
 TEST_CASE("AncTranslator: translate prefers direct translator when registered") {
@@ -268,21 +278,22 @@ TEST_CASE("AncTranslator: translate prefers direct translator when registered") 
 
         AncTranslator     t;
         AncPacket         pkt = makeStubPacket(xportA());
-        Result<AncPacket> r = t.translate(pkt, xportB());
-        CHECK(r.second().isOk());
-        CHECK(r.first().transport() == xportB());
+        Result<List<AncPacket>> r = t.translate(pkt, xportB());
+        REQUIRE(r.second().isOk());
+        REQUIRE(r.first().size() == 1);
+        CHECK(r.first().front().transport() == xportB());
         // Direct path tagged the output meta with kStubDirectAB.
         Metadata::ID directKey = Metadata::declareID(
                 "AncTranslatorTest.Direct",
                 VariantSpec().setType(Variant::TypeString).setDefault(String()));
-        CHECK(r.first().meta().getAs<String>(directKey) == String(kStubDirectAB));
+        CHECK(r.first().front().meta().getAs<String>(directKey) == String(kStubDirectAB));
 }
 
 TEST_CASE("AncTranslator: translate returns NotSupported when no path exists") {
         AncTranslator     t;
         Buffer            payload(static_cast<size_t>(0));
         AncPacket         pkt(AncFormat(testFormat().id), AncTransport::RtmpAmf, payload);
-        Result<AncPacket> r = t.translate(pkt, AncTransport::HdmiInfoFrame);
+        Result<List<AncPacket>> r = t.translate(pkt, AncTransport::HdmiInfoFrame);
         CHECK(r.second().code() == Error::NotSupported);
 }
 

@@ -635,7 +635,8 @@ class NvencVideoEncoder::Impl {
                                         VideoEncoder::selectAncForSei(source, /*pairedVideoStreamIndex=*/0,
                                                                        kCaptionFormats);
                                 for (const AncPacket &pkt : ancPackets) {
-                                        Result<AncPacket> r = _ancTranslator.translate(pkt, AncTransport::HlsSei);
+                                        Result<List<AncPacket>> r =
+                                                _ancTranslator.translate(pkt, AncTransport::HlsSei);
                                         if (error(r).isError()) {
                                                 promekiWarn("NvencVideoEncoder: AncTranslator::translate("
                                                             "Cea708, %s → HlsSei) failed: %s",
@@ -643,12 +644,13 @@ class NvencVideoEncoder::Impl {
                                                             error(r).name().cstr());
                                                 continue;
                                         }
-                                        const AncPacket &out = value(r);
-                                        const Buffer    &b = out.data();
-                                        if (b.size() == 0) continue;
-                                        List<uint8_t> bytes(b.size());
-                                        std::memcpy(bytes.data(), b.data(), b.size());
-                                        slot->captionSeiPayloads.pushToBack(std::move(bytes));
+                                        for (const AncPacket &out : value(r)) {
+                                                const Buffer &b = out.data();
+                                                if (b.size() == 0) continue;
+                                                List<uint8_t> bytes(b.size());
+                                                std::memcpy(bytes.data(), b.data(), b.size());
+                                                slot->captionSeiPayloads.pushToBack(std::move(bytes));
+                                        }
                                 }
                                 if (!slot->captionSeiPayloads.isEmpty()) {
                                         slot->captionSeiArray.reserve(slot->captionSeiPayloads.size());

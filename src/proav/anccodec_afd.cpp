@@ -56,7 +56,7 @@ namespace {
                 return makeResult<Variant>(Variant(out));
         }
 
-        Result<AncPacket> buildAfdSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        Result<List<AncPacket>> buildAfdSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 uint8_t packed = v.get<uint8_t>();
                 uint8_t afdCode = static_cast<uint8_t>((packed >> 3) & 0x0F);
                 uint8_t arBit = static_cast<uint8_t>((packed >> 7) & 0x01);
@@ -70,9 +70,26 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
-                St291Packet p = St291Packet::build(AncFormat(AncFormat::Afd), udw, line,
-                                                    St291Packet::UnspecifiedHOffset, fieldB);
-                return makeResult<AncPacket>(p.packet());
+                St291Packet     p = St291Packet::build(AncFormat(AncFormat::Afd), udw, line,
+                                                        St291Packet::UnspecifiedHOffset, fieldB);
+                List<AncPacket> out;
+                out.pushToBack(p.packet());
+                return makeResult<List<AncPacket>>(std::move(out));
+        }
+
+        // AFD is sticky / idempotent — the AR + AFD code describe the
+        // current frame's framing intent and don't carry any per-frame
+        // sequence state.  Repeating an AFD packet on a held output
+        // frame is correct (downstream consumer keeps the same framing
+        // decision); dropping it is also fine (the next surviving AFD
+        // packet re-establishes intent).
+        Result<List<AncPacket>> syncPolicyAfd(const AncPacket &pkt, FrameSyncDisposition d,
+                                               uint8_t /*repeatIndex*/, const AncTranslateConfig & /*cfg*/) {
+                List<AncPacket> out;
+                if (d.kind() != FrameSyncDisposition::Drop) {
+                        out.pushToBack(pkt);
+                }
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
 } // namespace
@@ -81,3 +98,4 @@ PROMEKI_NAMESPACE_END
 
 PROMEKI_REGISTER_ANC_PARSER(Afd_St291, Afd, ::promeki::AncTransport::St291, ::promeki::parseAfdSt291)
 PROMEKI_REGISTER_ANC_BUILDER(Afd_St291, Afd, ::promeki::AncTransport::St291, ::promeki::buildAfdSt291)
+PROMEKI_REGISTER_ANC_SYNC_POLICY(Afd, Afd, ::promeki::syncPolicyAfd)

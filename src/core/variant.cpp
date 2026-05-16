@@ -80,6 +80,7 @@
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
 #include <promeki/hdrstaticmetadata.h>
+#include <promeki/hdrdynamic2094_40.h>
 #include <promeki/cea708service.h>
 #include <promeki/enumlist.h>
 #include <promeki/url.h>
@@ -147,6 +148,8 @@ template <> struct HasFreeDataStreamWrite<Cea708DtvccPacket>           : std::tr
 template <> struct HasFreeDataStreamRead<Cea708DtvccPacket>            : std::true_type {};
 template <> struct HasFreeDataStreamWrite<HdrStaticMetadata>           : std::true_type {};
 template <> struct HasFreeDataStreamRead<HdrStaticMetadata>            : std::true_type {};
+template <> struct HasFreeDataStreamWrite<HdrDynamic2094_40>           : std::true_type {};
+template <> struct HasFreeDataStreamRead<HdrDynamic2094_40>            : std::true_type {};
 
 } // namespace Detail
 
@@ -1028,6 +1031,7 @@ void registerBuiltinTypes() {
         registerBuiltin<Cea608Packet>("Cea608Packet", Variant::TypeCea608);
         registerBuiltin<Subtitle>("Subtitle", Variant::TypeSubtitle);
         registerBuiltin<HdrStaticMetadata>("HdrStaticMetadata", Variant::TypeHdrStaticMetadata);
+        registerBuiltin<HdrDynamic2094_40>("HdrDynamic2094_40", Variant::TypeHdrDynamic2094_40);
 #if PROMEKI_ENABLE_NETWORK
         registerBuiltin<SocketAddress>("SocketAddress", Variant::TypeSocketAddress);
         registerBuiltin<SdpSession>("SdpSession", Variant::TypeSdpSession);

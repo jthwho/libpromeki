@@ -421,6 +421,8 @@ class DataStream {
                                 0x61, ///< @brief Cea708DtvccPacket (uint8 sequence_number + uint32 count + N tagged Cea708Service entries)
                         TypeHdrStaticMetadata =
                                 0x62, ///< @brief HdrStaticMetadata (tagged Buffer holding the CTA-861-G DRM InfoFrame body)
+                        TypeHdrDynamic2094_40 =
+                                0x63, ///< @brief HdrDynamic2094_40 (tagged Buffer holding the canonical SMPTE ST 2094-40 bitstream)
                 };
 
                 /**

@@ -108,20 +108,16 @@ namespace {
 
         // -- Building ---------------------------------------------------------
 
-        // Resolves a builder-time AncFormat from a Variant produced by the
-        // caller.  The Variant's typed payload doesn't carry the
-        // LTC-vs-VITC1-vs-VITC2 discriminator (a Timecode is a Timecode), so
-        // the format identity comes from whichever build entry point fires
-        // (one per registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2).
-        Result<AncPacket> buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
-                                         const AncTranslateConfig &cfg) {
-                Timecode tc = v.get<Timecode>();
-
+        // Packs a Timecode's BCD digits into the SMPTE 12M-2 8-UDW layout.
+        // Factored so both the Variant-driven build entry point and the
+        // SyncPolicy re-encode path (Repeat[idx>0]) share one source of
+        // truth for the wire bit-twiddling.
+        List<uint16_t> packAtcUdw(const Timecode &tc) {
                 uint8_t hour = static_cast<uint8_t>(tc.hour());
-                uint8_t min = static_cast<uint8_t>(tc.min());
-                uint8_t sec = static_cast<uint8_t>(tc.sec());
-                uint8_t frm = static_cast<uint8_t>(tc.frame());
-                bool    df = tc.isDropFrame();
+                uint8_t min  = static_cast<uint8_t>(tc.min());
+                uint8_t sec  = static_cast<uint8_t>(tc.sec());
+                uint8_t frm  = static_cast<uint8_t>(tc.frame());
+                bool    df   = tc.isDropFrame();
 
                 List<uint16_t> udw;
                 udw.resize(8);
@@ -134,24 +130,82 @@ namespace {
                 udw[5] = static_cast<uint16_t>((min / 10) & 0x07);
                 udw[6] = static_cast<uint16_t>(hour % 10);
                 udw[7] = static_cast<uint16_t>((hour / 10) & 0x03);
+                return udw;
+        }
+
+        // Resolves a builder-time AncFormat from a Variant produced by the
+        // caller.  The Variant's typed payload doesn't carry the
+        // LTC-vs-VITC1-vs-VITC2 discriminator (a Timecode is a Timecode), so
+        // the format identity comes from whichever build entry point fires
+        // (one per registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2).
+        Result<List<AncPacket>> buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
+                                               const AncTranslateConfig &cfg) {
+                Timecode       tc = v.get<Timecode>();
+                List<uint16_t> udw = packAtcUdw(tc);
 
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
-                St291Packet p = St291Packet::build(AncFormat(fmtId), udw, line, St291Packet::UnspecifiedHOffset, fieldB);
-                return makeResult<AncPacket>(p.packet());
+                St291Packet     p = St291Packet::build(AncFormat(fmtId), udw, line, St291Packet::UnspecifiedHOffset,
+                                                        fieldB);
+                List<AncPacket> out;
+                out.pushToBack(p.packet());
+                return makeResult<List<AncPacket>>(std::move(out));
         }
 
-        Result<AncPacket> buildAtcLtcSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        Result<List<AncPacket>> buildAtcLtcSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcLtc, v, cfg);
         }
 
-        Result<AncPacket> buildAtcVitc1St291(const Variant &v, const AncTranslateConfig &cfg) {
+        Result<List<AncPacket>> buildAtcVitc1St291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcVitc1, v, cfg);
         }
 
-        Result<AncPacket> buildAtcVitc2St291(const Variant &v, const AncTranslateConfig &cfg) {
+        Result<List<AncPacket>> buildAtcVitc2St291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcVitc2, v, cfg);
+        }
+
+        // Sync policy: ATC must keep advancing across a Repeat run rather
+        // than freezing on the original timecode — receivers that decode
+        // wallclock from ATC would otherwise see the clock stop.  Output
+        // timecode = input timecode + repeatIndex (libvtc handles
+        // drop-frame rollover, so a Repeat run that crosses an
+        // xx:00:59:29 → xx:01:00:02 boundary in DF30 advances correctly
+        // without us re-implementing the rule).
+        //
+        // On Drop the packet is lost (the next surviving ATC packet
+        // re-establishes the wall clock).  On Play and Repeat[idx=0] the
+        // input packet is copied through verbatim — no re-encode, no
+        // chance of subtle byte differences from the parse/build round
+        // trip.  Only Repeat[idx>0] re-encodes.
+        Result<List<AncPacket>> syncPolicyAtc(const AncPacket &pkt, FrameSyncDisposition d,
+                                               uint8_t repeatIndex, const AncTranslateConfig &cfg) {
+                List<AncPacket> out;
+                if (d.kind() == FrameSyncDisposition::Drop) {
+                        return makeResult<List<AncPacket>>(std::move(out));
+                }
+                if (d.kind() == FrameSyncDisposition::Play || repeatIndex == 0) {
+                        out.pushToBack(pkt);
+                        return makeResult<List<AncPacket>>(std::move(out));
+                }
+
+                // Repeat[idx>0]: parse, advance by repeatIndex frames, re-encode.
+                Result<Variant> parsed = parseAtcSt291Impl(pkt, cfg);
+                if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
+                Timecode tc = parsed.first().get<Timecode>();
+                for (uint8_t i = 0; i < repeatIndex; ++i) ++tc;
+
+                // Preserve the original packet's line / fieldB so the wire
+                // framing matches the source rather than whatever defaults
+                // are baked into the held cfg.  Other cfg keys (checksum
+                // policy etc.) flow through unchanged.
+                Result<St291Packet> rp = St291Packet::from(pkt);
+                if (rp.second().isError()) return makeError<List<AncPacket>>(rp.second());
+                AncTranslateConfig overrideCfg = cfg;
+                overrideCfg.set(AncTranslateConfig::St291BuildLine, rp.first().line());
+                overrideCfg.set(AncTranslateConfig::St291FieldB, rp.first().fieldB());
+
+                return buildAtcSt291(pkt.format().id(), Variant(tc), overrideCfg);
         }
 
 } // namespace
@@ -176,3 +230,7 @@ PROMEKI_REGISTER_ANC_BUILDER(AtcVitc1_St291, AtcVitc1, ::promeki::AncTransport::
                               ::promeki::buildAtcVitc1St291)
 PROMEKI_REGISTER_ANC_BUILDER(AtcVitc2_St291, AtcVitc2, ::promeki::AncTransport::St291,
                               ::promeki::buildAtcVitc2St291)
+
+PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcLtc, AtcLtc, ::promeki::syncPolicyAtc)
+PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcVitc1, AtcVitc1, ::promeki::syncPolicyAtc)
+PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcVitc2, AtcVitc2, ::promeki::syncPolicyAtc)
