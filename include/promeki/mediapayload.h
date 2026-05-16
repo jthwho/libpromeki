@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <optional>
 #include <promeki/optional.h>
@@ -762,3 +765,5 @@ DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p);
         }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

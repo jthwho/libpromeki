@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <promeki/namespace.h>
@@ -230,3 +233,5 @@ TextStream &operator<<(TextStream &stream, const Ipv4Address &addr);
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Ipv4Address);
+
+#endif // PROMEKI_ENABLE_CORE

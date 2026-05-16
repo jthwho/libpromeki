@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -249,3 +252,5 @@ template <typename T> class Optional {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

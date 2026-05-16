@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/tcpsocket.h>
 #include <promeki/sslcontext.h>
@@ -171,3 +174,5 @@ class SslSocket : public TcpSocket {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_TLS

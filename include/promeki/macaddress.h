@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <promeki/namespace.h>
@@ -241,3 +244,5 @@ TextStream &operator<<(TextStream &stream, const MacAddress &addr);
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::MacAddress);
+
+#endif // PROMEKI_ENABLE_CORE

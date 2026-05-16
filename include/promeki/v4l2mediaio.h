@@ -7,11 +7,10 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
+
 #include <promeki/config.h>
-
 #if PROMEKI_ENABLE_V4L2
-
+#include <promeki/namespace.h>
 #include <atomic>
 #include <thread>
 #include <promeki/audiobuffer.h>
@@ -338,5 +337,6 @@ class V4l2Factory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
 
 #endif // PROMEKI_ENABLE_V4L2

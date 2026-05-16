@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 
@@ -176,3 +179,5 @@ class NumName {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

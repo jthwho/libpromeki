@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
@@ -402,3 +405,5 @@ DataStream &operator<<(DataStream &stream, const HdrDynamic2094_40 &md);
 DataStream &operator>>(DataStream &stream, HdrDynamic2094_40 &md);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/atomic.h>
 #include <promeki/clock.h>
 #include <promeki/duration.h>
@@ -197,3 +200,5 @@ class NullPacingFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

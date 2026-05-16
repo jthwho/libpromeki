@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
@@ -534,3 +537,5 @@ PROMEKI_NAMESPACE_END
                 };                                                                                                     \
                 static AncSyncPolicyRegistrar_##Tag s_anc_sync_policy_registrar_##Tag;                                 \
         }
+
+#endif // PROMEKI_ENABLE_PROAV

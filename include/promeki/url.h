@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -322,3 +325,5 @@ class Url {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Url);
+
+#endif // PROMEKI_ENABLE_CORE

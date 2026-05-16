@@ -7,6 +7,8 @@
 
 #pragma once
 
+
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/string.h>
@@ -160,3 +162,5 @@ class CudaBootstrap {
 /** @} */
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

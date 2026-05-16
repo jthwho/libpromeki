@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/pair.h>
@@ -413,3 +416,5 @@ template <> struct std::hash<promeki::AudioChannelMap> {
                         return h;
                 }
 };
+
+#endif // PROMEKI_ENABLE_PROAV

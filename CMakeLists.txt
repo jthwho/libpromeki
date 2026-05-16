@@ -146,7 +146,106 @@ set(CMAKE_CXX_FLAGS_DEVRELEASE_INIT          "-O3 -g1 -DNDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS_DEVRELEASE_INIT   "")
 set(CMAKE_SHARED_LINKER_FLAGS_DEVRELEASE_INIT "")
 
-# Default to DevRelease when no build type is specified (single-config generators only).
+# Config file ##################################################################
+#
+# Users can preconfigure a build by passing -DPROMEKI_CONFIG_FILE=<spec>
+# instead of listing every PROMEKI_* / CMAKE_* option individually on the
+# command line.  <spec> can be any of:
+#
+#   - An absolute path:                /etc/promeki/site.cmake
+#   - A path relative to the source:   etc/my-config.cmake
+#   - A bare name resolved against     cmake/configs/<spec>.cmake
+#     cmake/configs/ (the .cmake       (e.g. -DPROMEKI_CONFIG_FILE=minimal)
+#     suffix is optional)
+#
+# The config is loaded BEFORE project(), so it can also set the standard
+# CMake toolchain / build-type / compiler variables that must be in place
+# for project()'s compiler detection:
+#
+#   CMAKE_BUILD_TYPE        Debug / Release / DevRelease / ...
+#   CMAKE_TOOLCHAIN_FILE    path to a CMake toolchain file (cross-compile)
+#   CMAKE_C_COMPILER        explicit C compiler  (e.g. aarch64-linux-gnu-gcc)
+#   CMAKE_CXX_COMPILER      explicit C++ compiler
+#   CMAKE_SYSTEM_NAME       target OS for cross builds (Linux / Windows / ...)
+#   CMAKE_SYSTEM_PROCESSOR  target arch         (x86_64 / aarch64 / armv7l / ...)
+#   PROMEKI_SANITIZER       e.g. address,undefined
+#
+# Several example configs ship under cmake/configs/ — see the README there
+# for descriptions and the full list of variables a config can set.  Configs
+# are plain CMake (use set(), if(), include(), etc.) and should set values
+# through the promeki_config_* helper macros below, which use cache-FORCE
+# semantics so editing the config and re-running cmake takes effect even
+# when the cache already has a previous value.
+#
+# Precedence: values written by the config file override any -D values
+# supplied alongside it on the same cmake invocation.  To override a
+# config setting, edit the config (or copy it and point at the copy)
+# rather than relying on command-line -D.
+#
+# Caveat: CMAKE_TOOLCHAIN_FILE and the compiler variables are read by
+# project() exactly once, on the first configure of a given build
+# directory.  Changing them in the config after the fact requires
+# wiping the build directory — this is a CMake limitation, not specific
+# to this loader.
+# NOTE: declared as STRING (not FILEPATH) so a bare name like "minimal"
+# survives untouched.  FILEPATH would silently resolve relative inputs
+# against the binary dir, breaking the cmake/configs/<name> shorthand.
+set(PROMEKI_CONFIG_FILE "" CACHE STRING
+    "Path or name of a PROMEKI config file (see cmake/configs/)")
+
+# Helper macros for config files.  Cache-FORCE is intentional: a config
+# file is an authoritative preset, not a default to be silently shadowed
+# by a stale cache entry from a previous run.
+macro(promeki_config_option _name _value)
+    set(${_name} ${_value} CACHE BOOL "Set via PROMEKI_CONFIG_FILE" FORCE)
+endmacro()
+macro(promeki_config_string _name _value)
+    set(${_name} "${_value}" CACHE STRING "Set via PROMEKI_CONFIG_FILE" FORCE)
+endmacro()
+macro(promeki_config_path _name _value)
+    set(${_name} "${_value}" CACHE PATH "Set via PROMEKI_CONFIG_FILE" FORCE)
+endmacro()
+macro(promeki_config_filepath _name _value)
+    set(${_name} "${_value}" CACHE FILEPATH "Set via PROMEKI_CONFIG_FILE" FORCE)
+endmacro()
+
+if(PROMEKI_CONFIG_FILE)
+    set(_promeki_config_candidates "")
+    if(IS_ABSOLUTE "${PROMEKI_CONFIG_FILE}")
+        list(APPEND _promeki_config_candidates "${PROMEKI_CONFIG_FILE}")
+    else()
+        list(APPEND _promeki_config_candidates
+            "${CMAKE_CURRENT_SOURCE_DIR}/${PROMEKI_CONFIG_FILE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/configs/${PROMEKI_CONFIG_FILE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/configs/${PROMEKI_CONFIG_FILE}.cmake")
+    endif()
+    set(_promeki_config_resolved "")
+    foreach(_cand IN LISTS _promeki_config_candidates)
+        if(EXISTS "${_cand}" AND NOT IS_DIRECTORY "${_cand}")
+            set(_promeki_config_resolved "${_cand}")
+            break()
+        endif()
+    endforeach()
+    if(NOT _promeki_config_resolved)
+        string(REPLACE ";" "\n    " _promeki_config_tried "${_promeki_config_candidates}")
+        message(FATAL_ERROR
+            "PROMEKI_CONFIG_FILE='${PROMEKI_CONFIG_FILE}' not found.  Tried:\n"
+            "    ${_promeki_config_tried}")
+    endif()
+    message(STATUS "Loading promeki config file: ${_promeki_config_resolved}")
+    # Re-run CMake when the config file changes so a manual edit propagates
+    # without a fresh `cmake` invocation.
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${_promeki_config_resolved}")
+    include("${_promeki_config_resolved}")
+    unset(_promeki_config_candidates)
+    unset(_promeki_config_resolved)
+    unset(_promeki_config_tried)
+endif()
+
+# Default to DevRelease when no build type is specified (single-config
+# generators only).  This runs AFTER the config-file include so a config
+# that sets CMAKE_BUILD_TYPE pre-empts the default cleanly.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         set(CMAKE_BUILD_TYPE DevRelease CACHE STRING "Build type (Debug, Release, DevRelease, ...)" FORCE)
         message(STATUS "No CMAKE_BUILD_TYPE specified — defaulting to DevRelease")
@@ -577,6 +676,12 @@ endif()
 if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV")
 endif()
+if(PROMEKI_ENABLE_NETWORK AND NOT PROMEKI_ENABLE_PROAV)
+    # The library follows a strict layering chain: CORE -> PROAV -> NETWORK -> HTTP.
+    # NETWORK code is free to use PROAV types (Frame, AudioBuffer, payload classes,
+    # etc.) because PROAV is guaranteed to be on whenever NETWORK is on.
+    message(FATAL_ERROR "PROMEKI_ENABLE_NETWORK requires PROMEKI_ENABLE_PROAV")
+endif()
 if(PROMEKI_ENABLE_HTTP AND NOT PROMEKI_ENABLE_NETWORK)
     message(FATAL_ERROR "PROMEKI_ENABLE_HTTP requires PROMEKI_ENABLE_NETWORK")
 endif()
@@ -937,6 +1042,20 @@ else()
     set(PROMEKI_PUGIXML_TARGET pugixml-static)
 endif()
 
+# Cross-build detection (used by the cirf block below and by the
+# ExternalProject toolchain-propagation block further down).  CMake only
+# flips CMAKE_CROSSCOMPILING=TRUE when CMAKE_SYSTEM_NAME differs from the
+# host — so a Linux-host -> Linux-aarch64 build (same OS, different arch)
+# is not flagged as cross-compile by that variable alone.  Detect the
+# arch-mismatch case explicitly here so downstream code can branch on it.
+set(_PROMEKI_IS_CROSS_BUILD FALSE)
+if(CMAKE_CROSSCOMPILING)
+    set(_PROMEKI_IS_CROSS_BUILD TRUE)
+elseif(CMAKE_SYSTEM_PROCESSOR AND CMAKE_HOST_SYSTEM_PROCESSOR
+       AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL CMAKE_HOST_SYSTEM_PROCESSOR)
+    set(_PROMEKI_IS_CROSS_BUILD TRUE)
+endif()
+
 # --- libvtc ---
 if(PROMEKI_USE_SYSTEM_VTC)
     find_package(vtc REQUIRED)
@@ -963,12 +1082,21 @@ endif()
 # targets directly here. This avoids pulling in cirf's CMakeLists.txt
 # side effects (notably the unscoped `format` and `format-check`
 # custom targets, which collide with libvtc's same-named targets).
-# The three targets we need are:
+# The targets we wire up:
 #
-#   cirf_runtime  — static lib, single file, linked into promeki
-#   cirf_lib      — static lib, backing the code-generator binary
-#   cirf          — host executable, runs at build time to emit the
-#                   generated resource C source from a JSON config
+#   cirf_runtime  — static lib (target arch), linked into promeki
+#   cirf_lib      — static lib backing the code-generator binary (host arch)
+#   cirf          — code-generator executable (host arch), runs at build
+#                   time to emit the generated resource C source from a
+#                   JSON config
+#
+# When cross-compiling, `cirf` must be executable on the build host, not
+# the target.  We split it out into a separate host-arch ExternalProject
+# (cirf_host) that builds with the system's default toolchain rather than
+# the cross toolchain, then point CIRFAddResources.cmake at that binary
+# via the CIRF_HOST_EXECUTABLE cache variable.  cirf_runtime continues
+# to be built for the target arch in-tree because it is linked into the
+# target promeki shared library.
 #
 # CIRFAddResources.cmake is included directly so the
 # `cirf_add_resources()` function is in scope for the call below.
@@ -978,6 +1106,7 @@ if(PROMEKI_USE_SYSTEM_CIRF)
 else()
     set(PROMEKI_CIRF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/cirf)
 
+    # cirf_runtime — target-arch static lib, linked into promeki.
     add_library(cirf_runtime STATIC ${PROMEKI_CIRF_DIR}/src/runtime.c)
     target_include_directories(cirf_runtime PUBLIC
         $<BUILD_INTERFACE:${PROMEKI_CIRF_DIR}/include>
@@ -990,33 +1119,64 @@ else()
         OUTPUT_NAME cirf_runtime
     )
 
-    add_library(cirf_lib STATIC
-        ${PROMEKI_CIRF_DIR}/src/error.c
-        ${PROMEKI_CIRF_DIR}/src/json.c
-        ${PROMEKI_CIRF_DIR}/src/mime.c
-        ${PROMEKI_CIRF_DIR}/src/vfs.c
-        ${PROMEKI_CIRF_DIR}/src/glob.c
-        ${PROMEKI_CIRF_DIR}/src/config.c
-        ${PROMEKI_CIRF_DIR}/src/codegen.c
-        ${PROMEKI_CIRF_DIR}/src/writer.c
-    )
-    target_include_directories(cirf_lib PUBLIC
-        $<BUILD_INTERFACE:${PROMEKI_CIRF_DIR}/include>
-    )
-    set_target_properties(cirf_lib PROPERTIES
-        C_STANDARD 99
-        C_STANDARD_REQUIRED ON
-        POSITION_INDEPENDENT_CODE ON
-        OUTPUT_NAME cirf
-    )
+    if(_PROMEKI_IS_CROSS_BUILD)
+        # Cross build: the in-tree cirf binary would target the wrong
+        # arch and can't run at build time.  Build a host-arch cirf via
+        # ExternalProject_Add (no cross-toolchain args forwarded) and
+        # have cirf_add_resources() invoke it through CIRF_HOST_EXECUTABLE.
+        set(_PROMEKI_CIRF_HOST_PREFIX ${CMAKE_BINARY_DIR}/cirf-host)
+        set(_PROMEKI_CIRF_HOST_BINDIR ${_PROMEKI_CIRF_HOST_PREFIX}/install/bin)
+        set(_PROMEKI_CIRF_HOST_BIN    ${_PROMEKI_CIRF_HOST_BINDIR}/cirf)
 
-    add_executable(cirf ${PROMEKI_CIRF_DIR}/src/main.c)
-    target_link_libraries(cirf PRIVATE cirf_lib)
-    target_include_directories(cirf PRIVATE ${PROMEKI_CIRF_DIR}/include)
-    set_target_properties(cirf PROPERTIES
-        C_STANDARD 99
-        C_STANDARD_REQUIRED ON
-    )
+        ExternalProject_Add(
+            cirf_host
+            SOURCE_DIR ${PROMEKI_CIRF_DIR}
+            PREFIX     ${_PROMEKI_CIRF_HOST_PREFIX}
+            # No _PROMEKI_EXTPROJ_CROSS_ARGS here — this sub-build must
+            # use the host's default toolchain so the resulting `cirf`
+            # binary is executable on the build host.
+            CMAKE_ARGS
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_INSTALL_PREFIX=${_PROMEKI_CIRF_HOST_PREFIX}/install
+                -DCIRF_BUILD_GENERATOR=ON
+                -DCIRF_BUILD_RUNTIME=OFF
+                -DCIRF_BUILD_EXAMPLES=OFF
+            BUILD_BYPRODUCTS ${_PROMEKI_CIRF_HOST_BIN}
+            BUILD_ALWAYS OFF
+        )
+
+        set(CIRF_HOST_EXECUTABLE ${_PROMEKI_CIRF_HOST_BIN} CACHE FILEPATH
+            "Host-built cirf executable (set automatically by cross build)" FORCE)
+    else()
+        # Native build: cirf can be built for the host directly in-tree.
+        add_library(cirf_lib STATIC
+            ${PROMEKI_CIRF_DIR}/src/error.c
+            ${PROMEKI_CIRF_DIR}/src/json.c
+            ${PROMEKI_CIRF_DIR}/src/mime.c
+            ${PROMEKI_CIRF_DIR}/src/vfs.c
+            ${PROMEKI_CIRF_DIR}/src/glob.c
+            ${PROMEKI_CIRF_DIR}/src/config.c
+            ${PROMEKI_CIRF_DIR}/src/codegen.c
+            ${PROMEKI_CIRF_DIR}/src/writer.c
+        )
+        target_include_directories(cirf_lib PUBLIC
+            $<BUILD_INTERFACE:${PROMEKI_CIRF_DIR}/include>
+        )
+        set_target_properties(cirf_lib PROPERTIES
+            C_STANDARD 99
+            C_STANDARD_REQUIRED ON
+            POSITION_INDEPENDENT_CODE ON
+            OUTPUT_NAME cirf
+        )
+
+        add_executable(cirf ${PROMEKI_CIRF_DIR}/src/main.c)
+        target_link_libraries(cirf PRIVATE cirf_lib)
+        target_include_directories(cirf PRIVATE ${PROMEKI_CIRF_DIR}/include)
+        set_target_properties(cirf PROPERTIES
+            C_STANDARD 99
+            C_STANDARD_REQUIRED ON
+        )
+    endif()
 
     # Bring cirf_add_resources() into scope. CIRFAddResources.cmake
     # is self-contained and looks up the `cirf` / `cirf_runtime` /
@@ -1122,6 +1282,38 @@ endif()
 # --- libsrt (Haivision SRT, vendored as thirdparty/srt) ---
 # SRT 1.5.5 still uses the legacy mbedTLS ≤3.x crypto API
 # (mbedtls/aes.h, ctr_drbg.h, …), which mbedTLS 4.x relocates under
+# --- Toolchain propagation for ExternalProject_Add ---
+#
+# Vendored thirdparty libraries built via ExternalProject_Add inherit
+# the parent project's source tree but NOT its toolchain unless we
+# explicitly forward it.  In a host build this is harmless (sub-build
+# falls through to the same default compiler); in a cross-build it's
+# critical, otherwise sub-builds silently use the host gcc and produce
+# x86_64 .a files that won't link into the aarch64 (or whichever)
+# parent.  We capture the cross variables here and append them to
+# every ExternalProject_Add CMAKE_ARGS block via @c _PROMEKI_EXTPROJ_CROSS_ARGS.
+set(_PROMEKI_EXTPROJ_CROSS_ARGS)
+# _PROMEKI_IS_CROSS_BUILD was computed earlier (just before the libvtc
+# block) so the cirf section can branch on it too.
+if(_PROMEKI_IS_CROSS_BUILD)
+    if(CMAKE_TOOLCHAIN_FILE)
+        list(APPEND _PROMEKI_EXTPROJ_CROSS_ARGS
+            -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE})
+    endif()
+    list(APPEND _PROMEKI_EXTPROJ_CROSS_ARGS
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH}
+        -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM}
+        -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=${CMAKE_FIND_ROOT_PATH_MODE_LIBRARY}
+        -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=${CMAKE_FIND_ROOT_PATH_MODE_INCLUDE}
+        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=${CMAKE_FIND_ROOT_PATH_MODE_PACKAGE})
+    message(STATUS "Forwarding cross-compile toolchain to ExternalProject sub-builds "
+                   "(${CMAKE_HOST_SYSTEM_PROCESSOR} -> ${CMAKE_SYSTEM_PROCESSOR})")
+endif()
+
 # mbedtls/private/ — so SRT cannot ride on the project's main vendored
 # mbedTLS 4.x stack.  We solve this by pinning a *second* mbedTLS, the
 # 3.6 LTS branch, under thirdparty/srt-mbedtls/, and building both it
@@ -1183,6 +1375,7 @@ if(PROMEKI_ENABLE_SRT)
             srt_mbedtls_ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/srt-mbedtls
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_SRT_PREFIX}
                 -DCMAKE_INSTALL_LIBDIR:PATH=lib
                 -DCMAKE_BUILD_TYPE=Release
@@ -1211,6 +1404,7 @@ if(PROMEKI_ENABLE_SRT)
             DEPENDS srt_mbedtls_ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/srt
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_SRT_PREFIX}
                 -DCMAKE_INSTALL_LIBDIR:PATH=lib
                 -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_SRT_PREFIX}
@@ -1244,10 +1438,26 @@ if(PROMEKI_ENABLE_SRT)
         # the union of libsrt + libmbedtls/x509/crypto, with every
         # mbedTLS-3.6 symbol marked LOCAL — invisible to the linker
         # that later builds promeki.so.
-        find_program(PROMEKI_LD       NAMES ld         REQUIRED)
-        find_program(PROMEKI_OBJCOPY  NAMES objcopy    REQUIRED)
-        find_program(PROMEKI_AR       NAMES ar         REQUIRED)
-        find_program(PROMEKI_NM       NAMES nm         REQUIRED)
+        #
+        # Use the toolchain's CMAKE_<TOOL> values rather than find_program(),
+        # which would pick the host binutils — wrong for cross-compile, where
+        # we must operate on aarch64 / ${CMAKE_SYSTEM_PROCESSOR} object files.
+        # project()'s compiler detection sets these from the compiler's
+        # prefix (e.g. CMAKE_LINKER=/usr/bin/aarch64-linux-gnu-ld) when the
+        # toolchain file specifies the cross compiler.
+        set(PROMEKI_LD      "${CMAKE_LINKER}")
+        set(PROMEKI_OBJCOPY "${CMAKE_OBJCOPY}")
+        set(PROMEKI_AR      "${CMAKE_AR}")
+        set(PROMEKI_NM      "${CMAKE_NM}")
+        foreach(_tool LD OBJCOPY AR NM)
+            if(NOT PROMEKI_${_tool})
+                # Fall back to host binutils if the toolchain hasn't told
+                # us where to find each tool (typical for native builds
+                # with no toolchain file).
+                string(TOLOWER "${_tool}" _toolname)
+                find_program(PROMEKI_${_tool} NAMES ${_toolname} REQUIRED)
+            endif()
+        endforeach()
 
         add_custom_command(
             OUTPUT ${PROMEKI_SRT_BUNDLE_LIB}
@@ -1335,6 +1545,7 @@ if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
                 ${PROMEKI_ZLIB_SRC_COPY}
             SOURCE_DIR ${PROMEKI_ZLIB_SRC_COPY}
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DZLIB_COMPAT=ON
@@ -1370,6 +1581,7 @@ if(PROMEKI_ENABLE_JPEG)
             libjpeg-turbo-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg-turbo
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DENABLE_SHARED=OFF
@@ -1406,6 +1618,7 @@ if(PROMEKI_ENABLE_JPEGXS)
             svt-jpeg-xs-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/svt-jpeg-xs
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DBUILD_SHARED_LIBS=OFF
@@ -1437,6 +1650,7 @@ if(PROMEKI_ENABLE_PNG)
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libspng
             DEPENDS zlib-ng-ep
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DCMAKE_PREFIX_PATH=${PROMEKI_THIRDPARTY_PREFIX}
@@ -1469,6 +1683,7 @@ if(PROMEKI_ENABLE_AUDIO)
             libsndfile-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsndfile
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DBUILD_SHARED_LIBS=OFF
@@ -1503,6 +1718,7 @@ if(PROMEKI_ENABLE_OPUS)
             libopus-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/opus
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DBUILD_SHARED_LIBS=OFF
@@ -1539,6 +1755,7 @@ if(PROMEKI_ENABLE_AAC)
             fdkaac-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/fdk-aac
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_INSTALL_LIBDIR:PATH=lib
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
@@ -1572,6 +1789,7 @@ if(PROMEKI_ENABLE_SRC)
             libsamplerate-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsamplerate
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DBUILD_SHARED_LIBS=OFF
@@ -1600,6 +1818,7 @@ if(PROMEKI_ENABLE_FREETYPE)
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/freetype
             DEPENDS zlib-ng-ep
             CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
@@ -1771,12 +1990,10 @@ set(PROMEKI_HEADERS
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
-    src/core/amf0.cpp
     src/core/ansistream.cpp
     src/core/application.cpp
     src/core/array.cpp
     src/core/asyncbufferqueue.cpp
-    src/core/audiolevel.cpp
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
@@ -1790,24 +2007,21 @@ set(PROMEKI_SOURCES
     src/core/hostbufferimpl.cpp
     src/core/cadence.cpp
     src/core/char.cpp
-    src/core/ciepoint.cpp
     src/core/clock.cpp
     src/core/clockdomain.cpp
+    src/core/ciepoint.cpp
     src/core/cmdlineparser.cpp
     src/core/color.cpp
     src/core/colormodel.cpp
     src/core/contentlightlevel.cpp
     src/core/cpumonitor.cpp
     src/core/masteringdisplay.cpp
-    src/core/audiochannelmap.cpp
-    src/core/audiocodec.cpp
-    src/core/audioformat.cpp
+    src/core/xyzcolor.cpp
     src/core/base64.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp
     src/core/cuda.cpp
     src/core/cudabufferimpl.cpp
-    src/core/videocodec.cpp
     src/core/datastream.cpp
     src/core/datatype.cpp
     src/core/datetime.cpp
@@ -1826,8 +2040,6 @@ set(PROMEKI_SOURCES
     src/core/framecount.cpp
     src/core/framenumber.cpp
     src/core/framerate.cpp
-    src/core/h264bitstream.cpp
-    src/core/hevcbitstream.cpp
     src/core/histogram.cpp
     src/core/hmac.cpp
     src/core/iodevice.cpp
@@ -1860,8 +2072,6 @@ set(PROMEKI_SOURCES
     src/core/pacinggate.cpp
     src/core/periodiccallback.cpp
     src/core/pidcontroller.cpp
-    src/core/pixelformat.cpp
-    src/core/pixelmemlayout.cpp
     src/core/point.cpp
     src/core/process.cpp
     src/core/random.cpp
@@ -1905,11 +2115,9 @@ set(PROMEKI_SOURCES
     src/core/variant.cpp
     src/core/variantquery.cpp
     src/core/variantspec.cpp
-    src/core/videoformat.cpp
     src/core/widget.cpp
     src/core/windowedstat.cpp
     src/core/xml.cpp
-    src/core/xyzcolor.cpp
 )
 
 # Network sources
@@ -1962,6 +2170,10 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtptxthread.h
         include/promeki/rtpvideodepacketizerthread.h
         include/promeki/rxpayloadbundle.h
+        include/promeki/rtpmediaio.h
+        include/promeki/rtmpmediaio.h
+        include/promeki/framebridge.h
+        include/promeki/framebridgemediaio.h
         include/promeki/sdpsession.h
         include/promeki/socketaddress.h
         include/promeki/sslcontext.h
@@ -2020,6 +2232,10 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/rtpstreamclock.cpp
         src/network/rtptxthread.cpp
         src/network/rtpvideodepacketizerthread.cpp
+        src/proav/rtpmediaio.cpp
+        src/proav/rtmpmediaio.cpp
+        src/proav/framebridge.cpp
+        src/proav/framebridgemediaio.cpp
         src/network/sdpsession.cpp
         src/network/socketaddress.cpp
         src/network/tcpserver.cpp
@@ -2081,8 +2297,10 @@ if(PROMEKI_ENABLE_HTTP)
         include/promeki/httpserver.h
         include/promeki/httpstatus.h
         include/promeki/websocket.h
+        include/promeki/mjpegstreammediaio.h
     )
     list(APPEND PROMEKI_SOURCES
+        src/proav/mjpegstreammediaio.cpp
         src/network/debugmodules.cpp
         src/network/debugserver.cpp
         src/network/httpapi.cpp
@@ -2147,7 +2365,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/flvtag.h
         include/promeki/font.h
         include/promeki/frame.h
-        include/promeki/framebridge.h
         include/promeki/imagedesc.h
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
@@ -2181,8 +2398,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/nvdecvideodecoder.h
         include/promeki/imagefilemediaio.h
         include/promeki/quicktimemediaio.h
-        include/promeki/rtpmediaio.h
-        include/promeki/rtmpmediaio.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
@@ -2192,6 +2407,17 @@ if(PROMEKI_ENABLE_PROAV)
     )
     list(APPEND PROMEKI_SOURCES
         src/proav/aacbitstream.cpp
+        src/proav/amf0.cpp
+        src/proav/audiochannelmap.cpp
+        src/proav/audiocodec.cpp
+        src/proav/audioformat.cpp
+        src/proav/audiolevel.cpp
+        src/proav/h264bitstream.cpp
+        src/proav/hevcbitstream.cpp
+        src/proav/pixelformat.cpp
+        src/proav/pixelmemlayout.cpp
+        src/proav/videocodec.cpp
+        src/proav/videoformat.cpp
         src/proav/anccodec_afd.cpp
         src/proav/anccodec_atc.cpp
         src/proav/anccodec_cea708.cpp
@@ -2242,7 +2468,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/encodeddesc.cpp
         src/proav/flvtag.cpp
         src/proav/frame.cpp
-        src/proav/framebridge.cpp
         src/proav/framesync.cpp
         src/proav/debugmediafile.cpp
         src/proav/debugmediamediaio.cpp
@@ -2296,7 +2521,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/cscmediaio.cpp
         src/proav/srcmediaio.cpp
         src/proav/burnmediaio.cpp
-        src/proav/framebridgemediaio.cpp
         src/proav/framesyncmediaio.cpp
         src/proav/videoencodermediaio.cpp
         src/proav/videodecodermediaio.cpp
@@ -2305,11 +2529,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/rawbitstreammediaio.cpp
         src/proav/imagefilemediaio.cpp
         src/proav/inspectormediaio.cpp
-        src/proav/mjpegstreammediaio.cpp
         src/proav/nullpacingmediaio.cpp
         src/proav/quicktimemediaio.cpp
-        src/proav/rtpmediaio.cpp
-        src/proav/rtmpmediaio.cpp
         src/proav/tpgmediaio.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_422.cpp
@@ -2522,6 +2743,13 @@ if(PROMEKI_ENABLE_CIRF)
     cirf_add_resources(promeki_resources
         CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/res/resources.json
         OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
+    # In a cross build the cirf generator is built as a host ExternalProject
+    # (cirf_host).  cirf_add_resources() invokes it through CIRF_HOST_EXECUTABLE,
+    # which is a plain file path — CMake has no graph edge from the resource
+    # custom-command back to cirf_host without an explicit add_dependencies().
+    if(_PROMEKI_IS_CROSS_BUILD AND TARGET cirf_host)
+        add_dependencies(promeki_resources cirf_host)
+    endif()
     target_link_libraries(promeki PRIVATE promeki_resources)
     target_include_directories(promeki PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
@@ -3003,55 +3231,14 @@ install(FILES
 if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
         tests/unit/doctest_main.cpp
-        tests/unit/codectesthelpers.cpp
         tests/unit/algorithm.cpp
-        tests/unit/amf0.cpp
-        tests/unit/anccodec_afd.cpp
-        tests/unit/anccodec_atc.cpp
-        tests/unit/anccodec_cea708.cpp
-        tests/unit/anccodec_cea708_hlssei.cpp
-        tests/unit/anccodec_hdrdynamic2094_40.cpp
-        tests/unit/anccodec_hdrdynamic2094_40_st291.cpp
-        tests/unit/anccodec_hdrstatic.cpp
-        tests/unit/anccodec_hdrstatic_st291.cpp
-        tests/unit/hdrdynamic2094_40.cpp
-        tests/unit/hdrstaticmetadata.cpp
-        tests/unit/ancdesc.cpp
-        tests/unit/ancformat.cpp
-        tests/unit/ancpacket.cpp
-        tests/unit/ancpayload.cpp
-        tests/unit/anctranslateconfig.cpp
-        tests/unit/anctranslator.cpp
-        tests/unit/cea608.cpp
-        tests/unit/cea608decoder.cpp
-        tests/unit/cea608encoder.cpp
-        tests/unit/cea608ext.cpp
-        tests/unit/cea608packet.cpp
-        tests/unit/cea708cdp.cpp
-        tests/unit/cea708decoder.cpp
-        tests/unit/cea708encoder.cpp
-        tests/unit/cea708ext.cpp
-        tests/unit/cea708service.cpp
-        tests/unit/cea708_subrip_roundtrip.cpp
-        tests/unit/cea708windowstate.cpp
-        tests/unit/inspector_ancdata.cpp
-        tests/unit/scc.cpp
-        tests/unit/subrip.cpp
-        tests/unit/subtitleburnmediaio.cpp
-        tests/unit/subtitlerenderer.cpp
-        tests/unit/tpg_anc_captions.cpp
         tests/unit/ansistream.cpp
         tests/unit/application.cpp
         tests/unit/array.cpp
         tests/unit/asyncbufferqueue.cpp
         tests/unit/atomic.cpp
-        tests/unit/audiocodec.cpp
-        tests/unit/audioformat.cpp
-        tests/unit/audiolevel.cpp
-        tests/unit/audiomarker.cpp
         tests/unit/backendweight.cpp
         tests/unit/base64.cpp
-        tests/unit/typeregistry_isolation.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
         tests/unit/bufferallocator.cpp
@@ -3078,10 +3265,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cpumonitor.cpp
         tests/unit/crc.cpp
         tests/unit/cuda.cpp
-        tests/unit/datastream.cpp
-        tests/unit/datastream_include_chain.cpp
         tests/unit/datatype.cpp
-        tests/unit/datatype_roundtrip.cpp
         tests/unit/datetime.cpp
         tests/unit/deque.cpp
         tests/unit/dir.cpp
@@ -3104,17 +3288,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/framecount.cpp
         tests/unit/framenumber.cpp
         tests/unit/framerate.cpp
-        tests/unit/framesync.cpp
-        tests/unit/framesyncdisposition.cpp
-        tests/unit/anctranslator_syncpolicy.cpp
-        tests/unit/ancframesync.cpp
         tests/unit/function.cpp
         tests/unit/future.cpp
-        tests/unit/h264bitstream.cpp
         tests/unit/hashmap.cpp
-        tests/unit/hdmiinfoframe.cpp
         tests/unit/hashset.cpp
-        tests/unit/hevcbitstream.cpp
         tests/unit/histogram.cpp
         tests/unit/hmac.cpp
         tests/unit/iodevice.cpp
@@ -3147,7 +3324,6 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/periodiccallback.cpp
         tests/unit/pair.cpp
         tests/unit/pidcontroller.cpp
-        tests/unit/pixelmemlayout.cpp
         tests/unit/point.cpp
         tests/unit/priorityqueue.cpp
         tests/unit/process.cpp
@@ -3172,7 +3348,6 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/size2d.cpp
         tests/unit/span.cpp
         tests/unit/stack.cpp
-        tests/unit/st291packet.cpp
         tests/unit/statsaccumulator.cpp
         tests/unit/streamstring.cpp
         tests/unit/string.cpp
@@ -3195,15 +3370,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/units.cpp
         tests/unit/url.cpp
         tests/unit/uuid.cpp
-        tests/unit/variant.cpp
-        tests/unit/variantdatabase.cpp
         tests/unit/variantlookup.cpp
         tests/unit/variantquery.cpp
-        tests/unit/variantspec.cpp
-        tests/unit/videoformat.cpp
         tests/unit/waitcondition.cpp
         tests/unit/windowedstat.cpp
-        tests/unit/windowedstatsbundle.cpp
         tests/unit/xml.cpp
         tests/unit/xyzcolor.cpp
     )
@@ -3298,6 +3468,64 @@ if(PROMEKI_BUILD_TESTS)
 
     if(PROMEKI_ENABLE_PROAV)
         list(APPEND UNITTEST_SOURCES
+            tests/unit/codectesthelpers.cpp
+            tests/unit/datastream.cpp
+            tests/unit/datastream_include_chain.cpp
+            tests/unit/datatype_roundtrip.cpp
+            tests/unit/typeregistry_isolation.cpp
+            tests/unit/variant.cpp
+            tests/unit/variantdatabase.cpp
+            tests/unit/variantspec.cpp
+            tests/unit/amf0.cpp
+            tests/unit/audiocodec.cpp
+            tests/unit/audioformat.cpp
+            tests/unit/audiolevel.cpp
+            tests/unit/audiomarker.cpp
+            tests/unit/h264bitstream.cpp
+            tests/unit/hevcbitstream.cpp
+            tests/unit/pixelmemlayout.cpp
+            tests/unit/videoformat.cpp
+            tests/unit/anccodec_afd.cpp
+            tests/unit/anccodec_atc.cpp
+            tests/unit/anccodec_cea708.cpp
+            tests/unit/anccodec_cea708_hlssei.cpp
+            tests/unit/anccodec_hdrdynamic2094_40.cpp
+            tests/unit/anccodec_hdrdynamic2094_40_st291.cpp
+            tests/unit/anccodec_hdrstatic.cpp
+            tests/unit/anccodec_hdrstatic_st291.cpp
+            tests/unit/ancdesc.cpp
+            tests/unit/ancformat.cpp
+            tests/unit/ancframesync.cpp
+            tests/unit/ancpacket.cpp
+            tests/unit/ancpayload.cpp
+            tests/unit/anctranslateconfig.cpp
+            tests/unit/anctranslator.cpp
+            tests/unit/anctranslator_syncpolicy.cpp
+            tests/unit/cea608.cpp
+            tests/unit/cea608decoder.cpp
+            tests/unit/cea608encoder.cpp
+            tests/unit/cea608ext.cpp
+            tests/unit/cea608packet.cpp
+            tests/unit/cea708cdp.cpp
+            tests/unit/cea708decoder.cpp
+            tests/unit/cea708encoder.cpp
+            tests/unit/cea708ext.cpp
+            tests/unit/cea708service.cpp
+            tests/unit/cea708_subrip_roundtrip.cpp
+            tests/unit/cea708windowstate.cpp
+            tests/unit/framesync.cpp
+            tests/unit/framesyncdisposition.cpp
+            tests/unit/hdmiinfoframe.cpp
+            tests/unit/hdrdynamic2094_40.cpp
+            tests/unit/hdrstaticmetadata.cpp
+            tests/unit/inspector_ancdata.cpp
+            tests/unit/scc.cpp
+            tests/unit/st291packet.cpp
+            tests/unit/subrip.cpp
+            tests/unit/subtitleburnmediaio.cpp
+            tests/unit/subtitlerenderer.cpp
+            tests/unit/tpg_anc_captions.cpp
+            tests/unit/windowedstatsbundle.cpp
             tests/unit/audioblock.cpp
             tests/unit/audiobuffer.cpp
             tests/unit/audiochannelmap.cpp

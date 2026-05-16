@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/event.h>
 #include <promeki/string.h>
 
@@ -115,3 +118,5 @@ class KeyEvent : public Event {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

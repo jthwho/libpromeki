@@ -7,19 +7,29 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cmath>
+#include <promeki/platform.h>
+#if defined(PROMEKI_HAS_SSE2)
 #include <immintrin.h>
+#elif defined(PROMEKI_HAS_NEON)
+#include <arm_neon.h>
+#endif
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief A 3x3 floating-point matrix with SSE-accelerated operations.
+ * @brief A 3x3 floating-point matrix with SIMD-accelerated row operations.
  * @ingroup math
  *
  * Provides standard linear algebra operations including addition, subtraction,
  * multiplication, transpose, inverse, and determinant. Element-wise operations
- * and vector transforms are also supported. Uses SSE intrinsics where beneficial.
+ * and vector transforms are also supported.  Per-row methods use 128-bit
+ * intrinsics where available (SSE2 on x86_64, NEON on aarch64) with a scalar
+ * fallback on every other target.
  *
  * @par Thread Safety
  * Distinct instances may be used concurrently.  A single instance
@@ -106,10 +116,19 @@ class Matrix3x3 {
                 Matrix3x3 operator+(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
+#if defined(PROMEKI_HAS_SSE2)
                                 __m128 row = _mm_loadu_ps(data[i]);
                                 __m128 other_row = _mm_loadu_ps(other.data[i]);
-                                __m128 sum = _mm_add_ps(row, other_row);
-                                _mm_storeu_ps(result.data[i], sum);
+                                _mm_storeu_ps(result.data[i], _mm_add_ps(row, other_row));
+#elif defined(PROMEKI_HAS_NEON)
+                                float32x4_t row = vld1q_f32(data[i]);
+                                float32x4_t other_row = vld1q_f32(other.data[i]);
+                                vst1q_f32(result.data[i], vaddq_f32(row, other_row));
+#else
+                                for (int j = 0; j < 4; ++j) {
+                                        result.data[i][j] = data[i][j] + other.data[i][j];
+                                }
+#endif
                         }
                         return result;
                 }
@@ -122,10 +141,19 @@ class Matrix3x3 {
                 Matrix3x3 operator-(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
+#if defined(PROMEKI_HAS_SSE2)
                                 __m128 row = _mm_loadu_ps(data[i]);
                                 __m128 other_row = _mm_loadu_ps(other.data[i]);
-                                __m128 diff = _mm_sub_ps(row, other_row);
-                                _mm_storeu_ps(result.data[i], diff);
+                                _mm_storeu_ps(result.data[i], _mm_sub_ps(row, other_row));
+#elif defined(PROMEKI_HAS_NEON)
+                                float32x4_t row = vld1q_f32(data[i]);
+                                float32x4_t other_row = vld1q_f32(other.data[i]);
+                                vst1q_f32(result.data[i], vsubq_f32(row, other_row));
+#else
+                                for (int j = 0; j < 4; ++j) {
+                                        result.data[i][j] = data[i][j] - other.data[i][j];
+                                }
+#endif
                         }
                         return result;
                 }
@@ -156,12 +184,24 @@ class Matrix3x3 {
                  * @return The dot product of the two row vectors.
                  */
                 float dot(int row1, int row2) const {
-                        __m128 vec1 = _mm_set_ps(0.0f, data[row1][2], data[row1][1], data[row1][0]);
-                        __m128 vec2 = _mm_set_ps(0.0f, data[row2][2], data[row2][1], data[row2][0]);
+                        // Column 3 is always zero (class invariant), so a full
+                        // 4-lane multiply contributes nothing extra to the sum.
+#if defined(PROMEKI_HAS_SSE3)
+                        __m128 vec1 = _mm_loadu_ps(data[row1]);
+                        __m128 vec2 = _mm_loadu_ps(data[row2]);
                         __m128 mul = _mm_mul_ps(vec1, vec2);
                         mul = _mm_hadd_ps(mul, mul);
                         mul = _mm_hadd_ps(mul, mul);
                         return _mm_cvtss_f32(mul);
+#elif defined(PROMEKI_HAS_NEON) && defined(PROMEKI_ARCH_AARCH64)
+                        float32x4_t vec1 = vld1q_f32(data[row1]);
+                        float32x4_t vec2 = vld1q_f32(data[row2]);
+                        return vaddvq_f32(vmulq_f32(vec1, vec2));
+#else
+                        return data[row1][0] * data[row2][0] +
+                               data[row1][1] * data[row2][1] +
+                               data[row1][2] * data[row2][2];
+#endif
                 }
 
                 /** @brief Sets all matrix elements to zero. */
@@ -324,11 +364,19 @@ class Matrix3x3 {
                 Matrix3x3 elementMultiply(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
-                                __m128 row = _mm_set_ps(0.0f, data[i][2], data[i][1], data[i][0]);
-                                __m128 other_row =
-                                        _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
-                                __m128 mul = _mm_mul_ps(row, other_row);
-                                _mm_storeu_ps(result.data[i], mul);
+#if defined(PROMEKI_HAS_SSE2)
+                                __m128 row = _mm_loadu_ps(data[i]);
+                                __m128 other_row = _mm_loadu_ps(other.data[i]);
+                                _mm_storeu_ps(result.data[i], _mm_mul_ps(row, other_row));
+#elif defined(PROMEKI_HAS_NEON)
+                                float32x4_t row = vld1q_f32(data[i]);
+                                float32x4_t other_row = vld1q_f32(other.data[i]);
+                                vst1q_f32(result.data[i], vmulq_f32(row, other_row));
+#else
+                                for (int j = 0; j < 3; ++j) {
+                                        result.data[i][j] = data[i][j] * other.data[i][j];
+                                }
+#endif
                         }
                         return result;
                 }
@@ -344,15 +392,31 @@ class Matrix3x3 {
                 Matrix3x3 elementDivide(const Matrix3x3 &other) const {
                         Matrix3x3 result;
                         for (int i = 0; i < 3; ++i) {
-                                __m128 row = _mm_set_ps(0.0f, data[i][2], data[i][1], data[i][0]);
-                                __m128 other_row =
-                                        _mm_set_ps(0.0f, other.data[i][2], other.data[i][1], other.data[i][0]);
-                                // Create a mask to handle division by zero
+#if defined(PROMEKI_HAS_SSE2)
+                                __m128 row = _mm_loadu_ps(data[i]);
+                                __m128 other_row = _mm_loadu_ps(other.data[i]);
+                                // Mask out lanes where the divisor is zero so
+                                // we return 0.0f for those rather than NaN/inf.
                                 __m128 mask = _mm_cmpneq_ps(other_row, _mm_set1_ps(0.0f));
-                                __m128 div = _mm_div_ps(row, other_row);
-                                // Apply the mask to avoid NaN values due to division by zero
-                                div = _mm_and_ps(div, mask);
+                                __m128 div = _mm_and_ps(_mm_div_ps(row, other_row), mask);
                                 _mm_storeu_ps(result.data[i], div);
+#elif defined(PROMEKI_HAS_NEON) && defined(PROMEKI_ARCH_AARCH64)
+                                float32x4_t row = vld1q_f32(data[i]);
+                                float32x4_t other_row = vld1q_f32(other.data[i]);
+                                // Mask out lanes where the divisor is zero
+                                // before dividing, since on aarch64 a NaN-only
+                                // result is still a real divide.
+                                uint32x4_t zero_mask = vceqq_f32(other_row, vdupq_n_f32(0.0f));
+                                float32x4_t div = vdivq_f32(row, other_row);
+                                uint32x4_t bits = vbicq_u32(vreinterpretq_u32_f32(div), zero_mask);
+                                vst1q_f32(result.data[i], vreinterpretq_f32_u32(bits));
+#else
+                                for (int j = 0; j < 3; ++j) {
+                                        result.data[i][j] = other.data[i][j] != 0.0f
+                                                ? data[i][j] / other.data[i][j]
+                                                : 0.0f;
+                                }
+#endif
                         }
                         return result;
                 }
@@ -372,10 +436,13 @@ class Matrix3x3 {
                 }
 
         private:
-                // Padded to 4 columns so SSE _mm_loadu_ps/_mm_storeu_ps never
-                // reads or writes past the row.  Column 3 is always zero.
+                // Padded to 4 columns so the 128-bit SIMD load/store paths
+                // never read or write past the row.  Column 3 is always zero
+                // and the SIMD ops preserve that invariant.
                 float data[3][4];
 };
 
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

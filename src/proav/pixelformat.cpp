@@ -578,14 +578,35 @@ static PixelFormat::Data makeYUV10_422_v210() {
 // Planar 4:2:2 PixelFormat factory functions
 // ---------------------------------------------------------------------------
 
-static const PixelFormat::CompSemantic ycbcrSem8[] = {
-        {"Luma", "Y", 16, 235}, {"Chroma Blue", "Cb", 16, 240}, {"Chroma Red", "Cr", 16, 240}};
-static const PixelFormat::CompSemantic ycbcrSem10[] = {
-        {"Luma", "Y", 64, 940}, {"Chroma Blue", "Cb", 64, 960}, {"Chroma Red", "Cr", 64, 960}};
-static const PixelFormat::CompSemantic ycbcrSem12[] = {
-        {"Luma", "Y", 256, 3760}, {"Chroma Blue", "Cb", 256, 3840}, {"Chroma Red", "Cr", 256, 3840}};
-static const PixelFormat::CompSemantic ycbcrSem16[] = {
-        {"Luma", "Y", 4096, 60160}, {"Chroma Blue", "Cb", 4096, 61440}, {"Chroma Red", "Cr", 4096, 61440}};
+// Per-bit-depth YCbCr component-semantic tables.  Wrapped in function-
+// local statics so they're constructed lazily on first call rather than
+// at file-scope dynamic-init time.  The file-scope form is fragile here:
+// the PixelFormat registry is also a Meyers' singleton, and if any other
+// translation unit's static initializer constructs a PixelFormat (which
+// triggers the registry, which calls these factory functions), the
+// arrays might not be initialized yet — leaving every compSemantics
+// entry zero and breaking autoDeriveVideoRange.  Function-local statics
+// sidestep that entirely because they initialize on first read.
+static const PixelFormat::CompSemantic *ycbcrSem8() {
+        static const PixelFormat::CompSemantic arr[] = {
+                {"Luma", "Y", 16, 235}, {"Chroma Blue", "Cb", 16, 240}, {"Chroma Red", "Cr", 16, 240}};
+        return arr;
+}
+static const PixelFormat::CompSemantic *ycbcrSem10() {
+        static const PixelFormat::CompSemantic arr[] = {
+                {"Luma", "Y", 64, 940}, {"Chroma Blue", "Cb", 64, 960}, {"Chroma Red", "Cr", 64, 960}};
+        return arr;
+}
+static const PixelFormat::CompSemantic *ycbcrSem12() {
+        static const PixelFormat::CompSemantic arr[] = {
+                {"Luma", "Y", 256, 3760}, {"Chroma Blue", "Cb", 256, 3840}, {"Chroma Red", "Cr", 256, 3840}};
+        return arr;
+}
+static const PixelFormat::CompSemantic *ycbcrSem16() {
+        static const PixelFormat::CompSemantic arr[] = {
+                {"Luma", "Y", 4096, 60160}, {"Chroma Blue", "Cb", 4096, 61440}, {"Chroma Red", "Cr", 4096, 61440}};
+        return arr;
+}
 
 // Full-range (0..255 / 0..1023 / 0..4095 / 0..65535) YCbCr comp
 // semantics.  The library-wide YCbCr default is limited range (the
@@ -595,8 +616,11 @@ static const PixelFormat::CompSemantic ycbcrSem16[] = {
 // interop paths and by any future pipeline that needs a full-range
 // YCbCr intermediate (e.g. a CSC fast-path into a JFIF-compatible
 // JPEG encode).
-static const PixelFormat::CompSemantic ycbcrSem8Full[] = {
-        {"Luma", "Y", 0, 255}, {"Chroma Blue", "Cb", 0, 255}, {"Chroma Red", "Cr", 0, 255}};
+static const PixelFormat::CompSemantic *ycbcrSem8Full() {
+        static const PixelFormat::CompSemantic arr[] = {
+                {"Luma", "Y", 0, 255}, {"Chroma Blue", "Cb", 0, 255}, {"Chroma Red", "Cr", 0, 255}};
+        return arr;
+}
 
 static PixelFormat::Data makeYCbCrDesc(PixelFormat::ID id, const char *name, const char *desc, PixelMemLayout::ID pfId,
                                        const PixelFormat::CompSemantic *sem) {
@@ -641,25 +665,25 @@ static PixelFormat::Data makeYCbCrDescWithModel(PixelFormat::ID id, const char *
 static PixelFormat::Data makeYUV8_422_Rec709_Full() {
         return makeYCbCrDescWithModel(PixelFormat::YUV8_422_Rec709_Full, "YUV8_422_Rec709_Full",
                                       "8-bit YCbCr 4:2:2 YUYV, Rec.709, full range", PixelMemLayout::I_422_3x8,
-                                      ycbcrSem8Full, ColorModel::YCbCr_Rec709);
+                                      ycbcrSem8Full(), ColorModel::YCbCr_Rec709);
 }
 
 static PixelFormat::Data makeYUV8_422_Rec601_Full() {
         return makeYCbCrDescWithModel(PixelFormat::YUV8_422_Rec601_Full, "YUV8_422_Rec601_Full",
                                       "8-bit YCbCr 4:2:2 YUYV, Rec.601, full range", PixelMemLayout::I_422_3x8,
-                                      ycbcrSem8Full, ColorModel::YCbCr_Rec601);
+                                      ycbcrSem8Full(), ColorModel::YCbCr_Rec601);
 }
 
 static PixelFormat::Data makeYUV8_420_Planar_Rec709_Full() {
         return makeYCbCrDescWithModel(PixelFormat::YUV8_420_Planar_Rec709_Full, "YUV8_420_Planar_Rec709_Full",
                                       "8-bit YCbCr 4:2:0 planar, Rec.709, full range", PixelMemLayout::P_420_3x8,
-                                      ycbcrSem8Full, ColorModel::YCbCr_Rec709);
+                                      ycbcrSem8Full(), ColorModel::YCbCr_Rec709);
 }
 
 static PixelFormat::Data makeYUV8_420_Planar_Rec601_Full() {
         return makeYCbCrDescWithModel(PixelFormat::YUV8_420_Planar_Rec601_Full, "YUV8_420_Planar_Rec601_Full",
                                       "8-bit YCbCr 4:2:0 planar, Rec.601, full range", PixelMemLayout::P_420_3x8,
-                                      ycbcrSem8Full, ColorModel::YCbCr_Rec601);
+                                      ycbcrSem8Full(), ColorModel::YCbCr_Rec601);
 }
 
 static PixelFormat::Data makeBGRDesc(PixelFormat::ID id, const char *name, const char *desc, PixelMemLayout::ID pfId,
@@ -745,7 +769,7 @@ static PixelFormat::Data makeFloatRGBDesc(PixelFormat::ID id, const char *name, 
 static PixelFormat::Data makeYUV8_422_Planar() {
         auto d =
                 makeYCbCrDesc(PixelFormat::YUV8_422_Planar_Rec709, "YUV8_422_Planar_Rec709",
-                              "8-bit YCbCr 4:2:2 planar, Rec.709, limited range", PixelMemLayout::P_422_3x8, ycbcrSem8);
+                              "8-bit YCbCr 4:2:2 planar, Rec.709, limited range", PixelMemLayout::P_422_3x8, ycbcrSem8());
         d.fourccList = {"I422"};
         return d;
 }
@@ -753,25 +777,25 @@ static PixelFormat::Data makeYUV8_422_Planar() {
 static PixelFormat::Data makeYUV10_422_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_422_Planar_LE_Rec709, "YUV10_422_Planar_LE_Rec709",
                              "10-bit YCbCr 4:2:2 planar LE, Rec.709, limited range", PixelMemLayout::P_422_3x10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_422_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV10_422_Planar_BE_Rec709, "YUV10_422_Planar_BE_Rec709",
                              "10-bit YCbCr 4:2:2 planar BE, Rec.709, limited range", PixelMemLayout::P_422_3x10_BE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_422_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV12_422_Planar_LE_Rec709, "YUV12_422_Planar_LE_Rec709",
                              "12-bit YCbCr 4:2:2 planar LE, Rec.709, limited range", PixelMemLayout::P_422_3x12_LE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_422_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV12_422_Planar_BE_Rec709, "YUV12_422_Planar_BE_Rec709",
                              "12-bit YCbCr 4:2:2 planar BE, Rec.709, limited range", PixelMemLayout::P_422_3x12_BE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 // ---------------------------------------------------------------------------
@@ -781,7 +805,7 @@ static PixelFormat::Data makeYUV12_422_Planar_BE() {
 static PixelFormat::Data makeYUV8_420_Planar() {
         auto d =
                 makeYCbCrDesc(PixelFormat::YUV8_420_Planar_Rec709, "YUV8_420_Planar_Rec709",
-                              "8-bit YCbCr 4:2:0 planar, Rec.709, limited range", PixelMemLayout::P_420_3x8, ycbcrSem8);
+                              "8-bit YCbCr 4:2:0 planar, Rec.709, limited range", PixelMemLayout::P_420_3x8, ycbcrSem8());
         d.fourccList = {"I420"};
         return d;
 }
@@ -789,25 +813,25 @@ static PixelFormat::Data makeYUV8_420_Planar() {
 static PixelFormat::Data makeYUV10_420_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_Planar_LE_Rec709, "YUV10_420_Planar_LE_Rec709",
                              "10-bit YCbCr 4:2:0 planar LE, Rec.709, limited range", PixelMemLayout::P_420_3x10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_420_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_Planar_BE_Rec709, "YUV10_420_Planar_BE_Rec709",
                              "10-bit YCbCr 4:2:0 planar BE, Rec.709, limited range", PixelMemLayout::P_420_3x10_BE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_420_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_Planar_LE_Rec709, "YUV12_420_Planar_LE_Rec709",
                              "12-bit YCbCr 4:2:0 planar LE, Rec.709, limited range", PixelMemLayout::P_420_3x12_LE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_420_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_Planar_BE_Rec709, "YUV12_420_Planar_BE_Rec709",
                              "12-bit YCbCr 4:2:0 planar BE, Rec.709, limited range", PixelMemLayout::P_420_3x12_BE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 // ---------------------------------------------------------------------------
@@ -816,7 +840,7 @@ static PixelFormat::Data makeYUV12_420_Planar_BE() {
 
 static PixelFormat::Data makeYUV8_420_SemiPlanar() {
         auto d = makeYCbCrDesc(PixelFormat::YUV8_420_SemiPlanar_Rec709, "YUV8_420_SemiPlanar_Rec709",
-                               "8-bit YCbCr 4:2:0 NV12, Rec.709, limited range", PixelMemLayout::SP_420_8, ycbcrSem8);
+                               "8-bit YCbCr 4:2:0 NV12, Rec.709, limited range", PixelMemLayout::SP_420_8, ycbcrSem8());
         d.fourccList = {"NV12"};
         return d;
 }
@@ -824,25 +848,25 @@ static PixelFormat::Data makeYUV8_420_SemiPlanar() {
 static PixelFormat::Data makeYUV10_420_SemiPlanar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709, "YUV10_420_SemiPlanar_LE_Rec709",
                              "10-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range", PixelMemLayout::SP_420_10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_420_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_SemiPlanar_BE_Rec709, "YUV10_420_SemiPlanar_BE_Rec709",
                              "10-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range", PixelMemLayout::SP_420_10_BE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_420_SemiPlanar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_SemiPlanar_LE_Rec709, "YUV12_420_SemiPlanar_LE_Rec709",
                              "12-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range", PixelMemLayout::SP_420_12_LE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_420_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_SemiPlanar_BE_Rec709, "YUV12_420_SemiPlanar_BE_Rec709",
                              "12-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range", PixelMemLayout::SP_420_12_BE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 // ---------------------------------------------------------------------------
@@ -933,7 +957,7 @@ static PixelFormat::Data makeRGB16_BE() {
 static PixelFormat::Data makeYUV10_DPX() {
         return makeYCbCrDesc(PixelFormat::YUV10_DPX_Rec709, "YUV10_DPX_Rec709",
                              "10-bit YCbCr 4:4:4 DPX packed, Rec.709, limited range", PixelMemLayout::I_3x10_DPX,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 // ---------------------------------------------------------------------------
@@ -956,7 +980,7 @@ static PixelFormat::Data makeRGB10_DPX_LE() {
 static PixelFormat::Data makeYUV10_DPX_B() {
         return makeYCbCrDesc(PixelFormat::YUV10_DPX_B_Rec709, "YUV10_DPX_B_Rec709",
                              "10-bit YCbCr 4:4:4 DPX packed method B, Rec.709, limited range",
-                             PixelMemLayout::I_3x10_DPX_B, ycbcrSem10);
+                             PixelMemLayout::I_3x10_DPX_B, ycbcrSem10());
 }
 
 // ---------------------------------------------------------------------------
@@ -1298,37 +1322,37 @@ static PixelFormat::Data makeBGR10A2_BE() {
 
 static PixelFormat::Data makeYUV8_444() {
         return makeYCbCrDesc(PixelFormat::YUV8_Rec709, "YUV8_Rec709", "8-bit YCbCr 4:4:4, Rec.709, limited range",
-                             PixelMemLayout::I_3x8, ycbcrSem8);
+                             PixelMemLayout::I_3x8, ycbcrSem8());
 }
 
 static PixelFormat::Data makeYUV10_LE_444() {
         return makeYCbCrDesc(PixelFormat::YUV10_LE_Rec709, "YUV10_LE_Rec709",
-                             "10-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x10_LE, ycbcrSem10);
+                             "10-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x10_LE, ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_BE_444() {
         return makeYCbCrDesc(PixelFormat::YUV10_BE_Rec709, "YUV10_BE_Rec709",
-                             "10-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x10_BE, ycbcrSem10);
+                             "10-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x10_BE, ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_LE_444() {
         return makeYCbCrDesc(PixelFormat::YUV12_LE_Rec709, "YUV12_LE_Rec709",
-                             "12-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x12_LE, ycbcrSem12);
+                             "12-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x12_LE, ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_BE_444() {
         return makeYCbCrDesc(PixelFormat::YUV12_BE_Rec709, "YUV12_BE_Rec709",
-                             "12-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x12_BE, ycbcrSem12);
+                             "12-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x12_BE, ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV16_LE_444() {
         return makeYCbCrDesc(PixelFormat::YUV16_LE_Rec709, "YUV16_LE_Rec709",
-                             "16-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x16_LE, ycbcrSem16);
+                             "16-bit YCbCr 4:4:4 LE, Rec.709, limited range", PixelMemLayout::I_3x16_LE, ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_BE_444() {
         return makeYCbCrDesc(PixelFormat::YUV16_BE_Rec709, "YUV16_BE_Rec709",
-                             "16-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x16_BE, ycbcrSem16);
+                             "16-bit YCbCr 4:4:4 BE, Rec.709, limited range", PixelMemLayout::I_3x16_BE, ycbcrSem16());
 }
 
 // ---------------------------------------------------------------------------
@@ -1338,49 +1362,49 @@ static PixelFormat::Data makeYUV16_BE_444() {
 static PixelFormat::Data makeYUV10_422_UYVY_LE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV10_422_UYVY_LE_Rec2020, "YUV10_422_UYVY_LE_Rec2020",
                                       "10-bit YCbCr 4:2:2 UYVY LE, Rec.2020, limited range",
-                                      PixelMemLayout::I_422_UYVY_3x10_LE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::I_422_UYVY_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV10_422_UYVY_BE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV10_422_UYVY_BE_Rec2020, "YUV10_422_UYVY_BE_Rec2020",
                                       "10-bit YCbCr 4:2:2 UYVY BE, Rec.2020, limited range",
-                                      PixelMemLayout::I_422_UYVY_3x10_BE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::I_422_UYVY_3x10_BE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV12_422_UYVY_LE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV12_422_UYVY_LE_Rec2020, "YUV12_422_UYVY_LE_Rec2020",
                                       "12-bit YCbCr 4:2:2 UYVY LE, Rec.2020, limited range",
-                                      PixelMemLayout::I_422_UYVY_3x12_LE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::I_422_UYVY_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV12_422_UYVY_BE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV12_422_UYVY_BE_Rec2020, "YUV12_422_UYVY_BE_Rec2020",
                                       "12-bit YCbCr 4:2:2 UYVY BE, Rec.2020, limited range",
-                                      PixelMemLayout::I_422_UYVY_3x12_BE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::I_422_UYVY_3x12_BE, ycbcrSem12(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV10_420_Planar_LE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV10_420_Planar_LE_Rec2020, "YUV10_420_Planar_LE_Rec2020",
                                       "10-bit YCbCr 4:2:0 planar LE, Rec.2020, limited range",
-                                      PixelMemLayout::P_420_3x10_LE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::P_420_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV10_420_Planar_BE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV10_420_Planar_BE_Rec2020, "YUV10_420_Planar_BE_Rec2020",
                                       "10-bit YCbCr 4:2:0 planar BE, Rec.2020, limited range",
-                                      PixelMemLayout::P_420_3x10_BE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::P_420_3x10_BE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV12_420_Planar_LE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV12_420_Planar_LE_Rec2020, "YUV12_420_Planar_LE_Rec2020",
                                       "12-bit YCbCr 4:2:0 planar LE, Rec.2020, limited range",
-                                      PixelMemLayout::P_420_3x12_LE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::P_420_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec2020);
 }
 
 static PixelFormat::Data makeYUV12_420_Planar_BE_Rec2020() {
         return makeYCbCrDescWithModel(PixelFormat::YUV12_420_Planar_BE_Rec2020, "YUV12_420_Planar_BE_Rec2020",
                                       "12-bit YCbCr 4:2:0 planar BE, Rec.2020, limited range",
-                                      PixelMemLayout::P_420_3x12_BE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+                                      PixelMemLayout::P_420_3x12_BE, ycbcrSem12(), ColorModel::YCbCr_Rec2020);
 }
 
 // ---------------------------------------------------------------------------
@@ -1398,7 +1422,7 @@ static PixelFormat::Data makeYUV12_420_Planar_BE_Rec2020() {
 static PixelFormat::Data makeYUV8_422_Rec601() {
         auto d = makeYCbCrDescWithModel(PixelFormat::YUV8_422_Rec601, "YUV8_422_Rec601",
                                         "8-bit YCbCr 4:2:2, Rec.601, limited range", PixelMemLayout::I_422_3x8,
-                                        ycbcrSem8, ColorModel::YCbCr_Rec601);
+                                        ycbcrSem8(), ColorModel::YCbCr_Rec601);
         d.fourccList = {"YUY2", "YUYV"};
         return d;
 }
@@ -1406,7 +1430,7 @@ static PixelFormat::Data makeYUV8_422_Rec601() {
 static PixelFormat::Data makeYUV8_422_UYVY_Rec601() {
         auto d = makeYCbCrDescWithModel(PixelFormat::YUV8_422_UYVY_Rec601, "YUV8_422_UYVY_Rec601",
                                         "8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range",
-                                        PixelMemLayout::I_422_UYVY_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+                                        PixelMemLayout::I_422_UYVY_3x8, ycbcrSem8(), ColorModel::YCbCr_Rec601);
         d.fourccList = {"2vuy", "UYVY"};
         return d;
 }
@@ -1414,7 +1438,7 @@ static PixelFormat::Data makeYUV8_422_UYVY_Rec601() {
 static PixelFormat::Data makeYUV8_420_Planar_Rec601() {
         auto d = makeYCbCrDescWithModel(PixelFormat::YUV8_420_Planar_Rec601, "YUV8_420_Planar_Rec601",
                                         "8-bit YCbCr 4:2:0 planar, Rec.601, limited range", PixelMemLayout::P_420_3x8,
-                                        ycbcrSem8, ColorModel::YCbCr_Rec601);
+                                        ycbcrSem8(), ColorModel::YCbCr_Rec601);
         d.fourccList = {"I420"};
         return d;
 }
@@ -1422,7 +1446,7 @@ static PixelFormat::Data makeYUV8_420_Planar_Rec601() {
 static PixelFormat::Data makeYUV8_420_SemiPlanar_Rec601() {
         auto d = makeYCbCrDescWithModel(PixelFormat::YUV8_420_SemiPlanar_Rec601, "YUV8_420_SemiPlanar_Rec601",
                                         "8-bit YCbCr 4:2:0 NV12, Rec.601, limited range", PixelMemLayout::SP_420_8,
-                                        ycbcrSem8, ColorModel::YCbCr_Rec601);
+                                        ycbcrSem8(), ColorModel::YCbCr_Rec601);
         d.fourccList = {"NV12"};
         return d;
 }
@@ -1434,7 +1458,7 @@ static PixelFormat::Data makeYUV8_420_SemiPlanar_Rec601() {
 static PixelFormat::Data makeYUV8_420_NV21() {
         auto d = makeYCbCrDesc(PixelFormat::YUV8_420_NV21_Rec709, "YUV8_420_NV21_Rec709",
                                "8-bit YCbCr 4:2:0 NV21, Rec.709, limited range", PixelMemLayout::SP_420_NV21_8,
-                               ycbcrSem8);
+                               ycbcrSem8());
         d.fourccList = {"NV21"};
         return d;
 }
@@ -1442,25 +1466,25 @@ static PixelFormat::Data makeYUV8_420_NV21() {
 static PixelFormat::Data makeYUV10_420_NV21_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_NV21_LE_Rec709, "YUV10_420_NV21_LE_Rec709",
                              "10-bit YCbCr 4:2:0 NV21 LE, Rec.709, limited range", PixelMemLayout::SP_420_NV21_10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_420_NV21_BE() {
         return makeYCbCrDesc(PixelFormat::YUV10_420_NV21_BE_Rec709, "YUV10_420_NV21_BE_Rec709",
                              "10-bit YCbCr 4:2:0 NV21 BE, Rec.709, limited range", PixelMemLayout::SP_420_NV21_10_BE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_420_NV21_LE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_NV21_LE_Rec709, "YUV12_420_NV21_LE_Rec709",
                              "12-bit YCbCr 4:2:0 NV21 LE, Rec.709, limited range", PixelMemLayout::SP_420_NV21_12_LE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_420_NV21_BE() {
         return makeYCbCrDesc(PixelFormat::YUV12_420_NV21_BE_Rec709, "YUV12_420_NV21_BE_Rec709",
                              "12-bit YCbCr 4:2:0 NV21 BE, Rec.709, limited range", PixelMemLayout::SP_420_NV21_12_BE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 // ---------------------------------------------------------------------------
@@ -1469,7 +1493,7 @@ static PixelFormat::Data makeYUV12_420_NV21_BE() {
 
 static PixelFormat::Data makeYUV8_422_SemiPlanar() {
         auto d = makeYCbCrDesc(PixelFormat::YUV8_422_SemiPlanar_Rec709, "YUV8_422_SemiPlanar_Rec709",
-                               "8-bit YCbCr 4:2:2 NV16, Rec.709, limited range", PixelMemLayout::SP_422_8, ycbcrSem8);
+                               "8-bit YCbCr 4:2:2 NV16, Rec.709, limited range", PixelMemLayout::SP_422_8, ycbcrSem8());
         d.fourccList = {"NV16"};
         return d;
 }
@@ -1477,25 +1501,25 @@ static PixelFormat::Data makeYUV8_422_SemiPlanar() {
 static PixelFormat::Data makeYUV10_422_SemiPlanar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_422_SemiPlanar_LE_Rec709, "YUV10_422_SemiPlanar_LE_Rec709",
                              "10-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range", PixelMemLayout::SP_422_10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV10_422_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV10_422_SemiPlanar_BE_Rec709, "YUV10_422_SemiPlanar_BE_Rec709",
                              "10-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range", PixelMemLayout::SP_422_10_BE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeYUV12_422_SemiPlanar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV12_422_SemiPlanar_LE_Rec709, "YUV12_422_SemiPlanar_LE_Rec709",
                              "12-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range", PixelMemLayout::SP_422_12_LE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 static PixelFormat::Data makeYUV12_422_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV12_422_SemiPlanar_BE_Rec709, "YUV12_422_SemiPlanar_BE_Rec709",
                              "12-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range", PixelMemLayout::SP_422_12_BE,
-                             ycbcrSem12);
+                             ycbcrSem12());
 }
 
 // ---------------------------------------------------------------------------
@@ -1504,7 +1528,7 @@ static PixelFormat::Data makeYUV12_422_SemiPlanar_BE() {
 
 static PixelFormat::Data makeYUV8_411_Planar() {
         return makeYCbCrDesc(PixelFormat::YUV8_411_Planar_Rec709, "YUV8_411_Planar_Rec709",
-                             "8-bit YCbCr 4:1:1 planar, Rec.709, limited range", PixelMemLayout::P_411_3x8, ycbcrSem8);
+                             "8-bit YCbCr 4:1:1 planar, Rec.709, limited range", PixelMemLayout::P_411_3x8, ycbcrSem8());
 }
 
 // ---------------------------------------------------------------------------
@@ -1514,49 +1538,49 @@ static PixelFormat::Data makeYUV8_411_Planar() {
 static PixelFormat::Data makeYUV16_422_UYVY_LE() {
         return makeYCbCrDesc(PixelFormat::YUV16_422_UYVY_LE_Rec709, "YUV16_422_UYVY_LE_Rec709",
                              "16-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range", PixelMemLayout::I_422_UYVY_3x16_LE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_422_UYVY_BE() {
         return makeYCbCrDesc(PixelFormat::YUV16_422_UYVY_BE_Rec709, "YUV16_422_UYVY_BE_Rec709",
                              "16-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range", PixelMemLayout::I_422_UYVY_3x16_BE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_422_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV16_422_Planar_LE_Rec709, "YUV16_422_Planar_LE_Rec709",
                              "16-bit YCbCr 4:2:2 planar LE, Rec.709, limited range", PixelMemLayout::P_422_3x16_LE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_422_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV16_422_Planar_BE_Rec709, "YUV16_422_Planar_BE_Rec709",
                              "16-bit YCbCr 4:2:2 planar BE, Rec.709, limited range", PixelMemLayout::P_422_3x16_BE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_420_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV16_420_Planar_LE_Rec709, "YUV16_420_Planar_LE_Rec709",
                              "16-bit YCbCr 4:2:0 planar LE, Rec.709, limited range", PixelMemLayout::P_420_3x16_LE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_420_Planar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV16_420_Planar_BE_Rec709, "YUV16_420_Planar_BE_Rec709",
                              "16-bit YCbCr 4:2:0 planar BE, Rec.709, limited range", PixelMemLayout::P_420_3x16_BE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_420_SemiPlanar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV16_420_SemiPlanar_LE_Rec709, "YUV16_420_SemiPlanar_LE_Rec709",
                              "16-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range", PixelMemLayout::SP_420_16_LE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_420_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV16_420_SemiPlanar_BE_Rec709, "YUV16_420_SemiPlanar_BE_Rec709",
                              "16-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range", PixelMemLayout::SP_420_16_BE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 static PixelFormat::Data makeYUV16_422_SemiPlanar_LE() {
@@ -1567,7 +1591,7 @@ static PixelFormat::Data makeYUV16_422_SemiPlanar_LE() {
         // 16-bit container).  See docs/ndi.md for the bit-depth convention.
         auto d = makeYCbCrDesc(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, "YUV16_422_SemiPlanar_LE_Rec709",
                                "16-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range",
-                               PixelMemLayout::SP_422_16_LE, ycbcrSem16);
+                               PixelMemLayout::SP_422_16_LE, ycbcrSem16());
         d.fourccList = {"P216"};
         return d;
 }
@@ -1575,7 +1599,7 @@ static PixelFormat::Data makeYUV16_422_SemiPlanar_LE() {
 static PixelFormat::Data makeYUV16_422_SemiPlanar_BE() {
         return makeYCbCrDesc(PixelFormat::YUV16_422_SemiPlanar_BE_Rec709, "YUV16_422_SemiPlanar_BE_Rec709",
                              "16-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range", PixelMemLayout::SP_422_16_BE,
-                             ycbcrSem16);
+                             ycbcrSem16());
 }
 
 // ---------------------------------------------------------------------------
@@ -1599,9 +1623,9 @@ static PixelFormat::Data makeH264() {
         d.compressed = true;
         d.videoCodec = VideoCodec(VideoCodec::H264);
         d.fourccList = {"avc1", "avc3"};
-        d.compSemantics[0] = ycbcrSem8[0];
-        d.compSemantics[1] = ycbcrSem8[1];
-        d.compSemantics[2] = ycbcrSem8[2];
+        d.compSemantics[0] = ycbcrSem8()[0];
+        d.compSemantics[1] = ycbcrSem8()[1];
+        d.compSemantics[2] = ycbcrSem8()[2];
         return d;
 }
 
@@ -1615,9 +1639,9 @@ static PixelFormat::Data makeHEVC() {
         d.compressed = true;
         d.videoCodec = VideoCodec(VideoCodec::HEVC);
         d.fourccList = {"hvc1", "hev1"};
-        d.compSemantics[0] = ycbcrSem10[0];
-        d.compSemantics[1] = ycbcrSem10[1];
-        d.compSemantics[2] = ycbcrSem10[2];
+        d.compSemantics[0] = ycbcrSem10()[0];
+        d.compSemantics[1] = ycbcrSem10()[1];
+        d.compSemantics[2] = ycbcrSem10()[2];
         return d;
 }
 
@@ -1631,21 +1655,21 @@ static PixelFormat::Data makeAV1() {
         d.compressed = true;
         d.videoCodec = VideoCodec(VideoCodec::AV1);
         d.fourccList = {"av01"};
-        d.compSemantics[0] = ycbcrSem10[0];
-        d.compSemantics[1] = ycbcrSem10[1];
-        d.compSemantics[2] = ycbcrSem10[2];
+        d.compSemantics[0] = ycbcrSem10()[0];
+        d.compSemantics[1] = ycbcrSem10()[1];
+        d.compSemantics[2] = ycbcrSem10()[2];
         return d;
 }
 
 static PixelFormat::Data makeYUV8_444_Planar() {
         return makeYCbCrDesc(PixelFormat::YUV8_444_Planar_Rec709, "YUV8_444_Planar_Rec709",
-                             "8-bit YCbCr 4:4:4 planar, Rec.709, limited range", PixelMemLayout::P_444_3x8, ycbcrSem8);
+                             "8-bit YCbCr 4:4:4 planar, Rec.709, limited range", PixelMemLayout::P_444_3x8, ycbcrSem8());
 }
 
 static PixelFormat::Data makeYUV10_444_Planar_LE() {
         return makeYCbCrDesc(PixelFormat::YUV10_444_Planar_LE_Rec709, "YUV10_444_Planar_LE_Rec709",
                              "10-bit YCbCr 4:4:4 planar LE, Rec.709, limited range", PixelMemLayout::P_444_3x10_LE,
-                             ycbcrSem10);
+                             ycbcrSem10());
 }
 
 static PixelFormat::Data makeProRes422Desc(PixelFormat::ID id, const char *name, const char *desc, FourCC fourcc,
@@ -1660,9 +1684,9 @@ static PixelFormat::Data makeProRes422Desc(PixelFormat::ID id, const char *name,
         d.compressed = true;
         d.videoCodec = VideoCodec(codec);
         d.fourccList = {fourcc};
-        d.compSemantics[0] = ycbcrSem10[0];
-        d.compSemantics[1] = ycbcrSem10[1];
-        d.compSemantics[2] = ycbcrSem10[2];
+        d.compSemantics[0] = ycbcrSem10()[0];
+        d.compSemantics[1] = ycbcrSem10()[1];
+        d.compSemantics[2] = ycbcrSem10()[2];
         return d;
 }
 
@@ -1699,9 +1723,9 @@ static PixelFormat::Data makeProRes_4444() {
         d.alphaCompIndex = 3;
         d.videoCodec = VideoCodec(VideoCodec::ProRes_4444);
         d.fourccList = {"ap4h"};
-        d.compSemantics[0] = ycbcrSem10[0];
-        d.compSemantics[1] = ycbcrSem10[1];
-        d.compSemantics[2] = ycbcrSem10[2];
+        d.compSemantics[0] = ycbcrSem10()[0];
+        d.compSemantics[1] = ycbcrSem10()[1];
+        d.compSemantics[2] = ycbcrSem10()[2];
         d.compSemantics[3] = {"Alpha", "A", 0, 1023};
         return d;
 }
@@ -1719,9 +1743,9 @@ static PixelFormat::Data makeProRes_4444_XQ() {
         d.alphaCompIndex = 3;
         d.videoCodec = VideoCodec(VideoCodec::ProRes_4444_XQ);
         d.fourccList = {"ap4x"};
-        d.compSemantics[0] = ycbcrSem12[0];
-        d.compSemantics[1] = ycbcrSem12[1];
-        d.compSemantics[2] = ycbcrSem12[2];
+        d.compSemantics[0] = ycbcrSem12()[0];
+        d.compSemantics[1] = ycbcrSem12()[1];
+        d.compSemantics[2] = ycbcrSem12()[2];
         d.compSemantics[3] = {"Alpha", "A", 0, 4095};
         return d;
 }

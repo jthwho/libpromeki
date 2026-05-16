@@ -146,6 +146,9 @@ pool.submit([tc]() {
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_<SUBSYSTEM>
 #include <std-headers>
 #include <promeki/dependency.h>
 
@@ -172,6 +175,8 @@ class MyClass {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_<SUBSYSTEM>
 ```
 
 ### File Header Comment
@@ -183,6 +188,44 @@ The `@author` tag is optional.
 ### Include Guards
 
 Always use `#pragma once`. No `#ifndef` guards.
+
+### Subsystem Feature Guards
+
+Every header tied to an optional subsystem **must** wrap its body in
+`#if PROMEKI_ENABLE_<SUBSYSTEM>` ... `#endif` (after `#pragma once`,
+after `#include <promeki/config.h>`, and around every other include
+and declaration in the file).  This lets cross-builds and stripped-
+down configurations compile against the same source tree without
+listing per-header exclusions in CMake.
+
+Choose the guard by which `src/<subsystem>/` directory the
+implementation lives in (or *would* live in, for header-only types):
+
+| `src/` directory       | Required guard                  |
+| ---------------------- | ------------------------------- |
+| `src/core/`            | none (always built)             |
+| `src/proav/`           | `PROMEKI_ENABLE_PROAV`          |
+| `src/network/`         | `PROMEKI_ENABLE_NETWORK`        |
+| `src/music/`           | `PROMEKI_ENABLE_MUSIC`          |
+| `src/tui/`             | `PROMEKI_ENABLE_TUI`            |
+| `src/sdl/`             | `PROMEKI_ENABLE_SDL`            |
+
+A few additional fine-grained guards exist for optional dependencies
+inside an enabled subsystem (`PROMEKI_ENABLE_TLS`,
+`PROMEKI_ENABLE_PNG`, `PROMEKI_ENABLE_JPEG`,
+`PROMEKI_ENABLE_FREETYPE`, `PROMEKI_ENABLE_AUDIO`, ...).  Use these
+when a header's declarations only make sense when the corresponding
+third-party library is present; nest them inside the subsystem guard
+when applicable.
+
+A header that pulls in another subsystem's types in *some*
+configurations (e.g. a core header that exposes a proav-only
+`AudioMarkerList` overload) should guard *only* the affected
+declarations rather than the whole file, so the bulk of the header
+remains visible to all builds.
+
+Source files (`.cpp`) do **not** need the guard — CMake adds them to
+the build only when the corresponding `PROMEKI_ENABLE_*` flag is on.
 
 ### Includes
 

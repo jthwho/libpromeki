@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <functional>
@@ -127,3 +130,5 @@ template <typename ValueType = double, typename TimeType = double> class PIDCont
 
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

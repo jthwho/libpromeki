@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <chrono>
 #include <cstdint>
 #include <promeki/namespace.h>
@@ -108,3 +111,5 @@ class ElapsedTimer {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

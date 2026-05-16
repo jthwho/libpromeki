@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/cea708cdp.h>
@@ -316,3 +319,5 @@ DataStream &operator<<(DataStream &stream, const Cea708DtvccPacket &pkt);
 DataStream &operator>>(DataStream &stream, Cea708DtvccPacket &pkt);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

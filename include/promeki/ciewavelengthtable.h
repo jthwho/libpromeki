@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/ciepoint.h>
 #include <promeki/xyzcolor.h>
@@ -517,3 +520,5 @@ static const CIEWavelength cieWavelengthTable[] = {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

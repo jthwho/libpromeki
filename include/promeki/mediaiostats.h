@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/duration.h>
 #include <promeki/error.h>
@@ -198,3 +201,5 @@ class MediaIOStats : public VariantDatabase<"MediaIOStats"> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

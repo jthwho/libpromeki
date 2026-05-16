@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/iodevice.h>
 #include <promeki/error.h>
 #include <promeki/string.h>
@@ -167,3 +170,5 @@ class LocalSocket : public IODevice {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

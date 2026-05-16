@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_MUSIC
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/array.h>
@@ -147,3 +150,5 @@ class MusicalScale {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_MUSIC

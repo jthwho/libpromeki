@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cmath>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
@@ -133,3 +136,5 @@ class Benchmark {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

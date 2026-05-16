@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <atomic>
 #include <cassert>
 #include <cstdlib>
@@ -530,3 +533,5 @@ SharedPtr<Derived, CoW, Derived> sharedPointerCast(const SharedPtr<Base, CoW, ST
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

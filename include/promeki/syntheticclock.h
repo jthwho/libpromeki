@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/atomic.h>
 #include <promeki/namespace.h>
 #include <promeki/clock.h>
@@ -119,3 +122,5 @@ class SyntheticClock : public Clock {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

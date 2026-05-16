@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 /** @def PROMEKI_NAMESPACE_BEGIN
  *  @brief Starts a promeki namespace block.
  */
@@ -17,3 +20,5 @@
  *  @brief Ends a promeki namespace block.
  */
 #define PROMEKI_NAMESPACE_END }
+
+#endif // PROMEKI_ENABLE_CORE

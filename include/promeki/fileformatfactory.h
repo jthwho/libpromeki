@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -181,3 +184,5 @@ template <typename Product> class FileFormatFactory {
                 FileFormatFactory<product>::registerFactory(new name);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

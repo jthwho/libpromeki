@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <shared_mutex>
 #include <promeki/namespace.h>
 
@@ -110,3 +113,5 @@ class ReadWriteLock {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

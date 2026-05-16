@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
@@ -195,3 +198,5 @@ class MediaIOReadCache {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 
 #include <promeki/atomic.h>
@@ -284,3 +287,5 @@ class RtmpChunkStream : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

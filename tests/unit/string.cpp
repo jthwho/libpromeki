@@ -992,18 +992,24 @@ TEST_CASE("String_Format_TemplateTypes") {
 TEST_CASE("String_Format_PrimitiveLibraryTypes") {
         // Sanity check that PROMEKI_FORMAT_VIA_TOSTRING reaches the simple
         // value types in their respective headers.
-        Duration    d = Duration::fromSeconds(2.5);
-        AudioLevel  al = AudioLevel::fromDbfs(-12.0);
-        FrameRate   fr(FrameRate::RationalType(24000, 1001));
-        Ipv4Address ip(192, 168, 1, 100);
+        Duration  d = Duration::fromSeconds(2.5);
+        FrameRate fr(FrameRate::RationalType(24000, 1001));
 
         // Each test verifies the format result equals the type's own
         // toString() output (with optional surrounding text), so we don't
         // need to know the exact stringification syntax.
         CHECK(String::format("{}", d) == d.toString());
-        CHECK(String::format("{}", al) == al.toString());
         CHECK(String::format("{}", fr) == fr.toString());
+
+#if PROMEKI_ENABLE_NETWORK
+        Ipv4Address ip(192, 168, 1, 100);
         CHECK(String::format("{}", ip) == ip.toString());
+#endif
+
+#if PROMEKI_ENABLE_PROAV
+        AudioLevel al = AudioLevel::fromDbfs(-12.0);
+        CHECK(String::format("{}", al) == al.toString());
+#endif
 
         // Combined with surrounding text and standard specs.
         CHECK(String::format("rate = {:>12}", fr) ==

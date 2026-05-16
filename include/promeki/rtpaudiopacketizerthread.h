@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstddef>
 #include <cstdint>
 #include <promeki/audiobuffer.h>
@@ -183,3 +186,5 @@ class RtpAudioPacketizerThread : public RtpPacketizerThread {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
@@ -301,3 +304,5 @@ DataStream &operator<<(DataStream &stream, const Cea708Cdp &cdp);
 DataStream &operator>>(DataStream &stream, Cea708Cdp &cdp);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

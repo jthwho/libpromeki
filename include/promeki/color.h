@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/colormodel.h>
 #include <promeki/list.h>
@@ -536,3 +539,5 @@ inline const Color Color::Ignored{};
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Color);
+
+#endif // PROMEKI_ENABLE_CORE

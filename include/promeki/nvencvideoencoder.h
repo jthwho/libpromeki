@@ -7,14 +7,15 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
+
 #include <promeki/config.h>
+#if PROMEKI_ENABLE_NVENC
+#include <promeki/namespace.h>
 #include <promeki/videoencoder.h>
 #include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
-#if PROMEKI_ENABLE_NVENC
-
+#if PROMEKI_ENABLE_PROAV
 PROMEKI_NAMESPACE_BEGIN
 
 /**
@@ -117,3 +118,4 @@ class NvencVideoEncoder : public VideoEncoder {
 PROMEKI_NAMESPACE_END
 
 #endif // PROMEKI_ENABLE_NVENC
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <initializer_list>
 #include <promeki/buffer.h>
@@ -341,3 +344,5 @@ class BufferView {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

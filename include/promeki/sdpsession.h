@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/error.h>
 #include <promeki/namespace.h>
@@ -331,3 +334,5 @@ class SdpSession {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::SdpSession);
+
+#endif // PROMEKI_ENABLE_CORE

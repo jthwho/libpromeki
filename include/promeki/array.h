@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <array>
 #include <type_traits>
@@ -427,3 +430,5 @@ template <typename T, size_t NumValues> class Array {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

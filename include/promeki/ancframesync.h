@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
@@ -186,3 +189,5 @@ class AncFrameSync {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

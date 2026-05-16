@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -660,3 +663,5 @@ class AudioFormat {
 inline AudioFormat::AudioFormat(ID id) : d(lookupData(id)) {}
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

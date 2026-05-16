@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -673,3 +676,5 @@ PROMEKI_NAMESPACE_END
         static inline const ::promeki::Enum::Type Type = ::promeki::Enum::registerDefinition(&_promeki_enum_def_)
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Enum);
+
+#endif // PROMEKI_ENABLE_CORE

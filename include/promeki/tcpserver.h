@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/socketaddress.h>
@@ -143,3 +146,5 @@ class TcpServer : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

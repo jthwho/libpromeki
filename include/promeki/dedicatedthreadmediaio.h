@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/atomic.h>
 #include <promeki/commandmediaio.h>
 #include <promeki/list.h>
@@ -114,3 +117,5 @@ class DedicatedThreadMediaIO : public CommandMediaIO {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

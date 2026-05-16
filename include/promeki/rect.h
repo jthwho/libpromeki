@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <algorithm>
 #include <promeki/namespace.h>
 #include <promeki/point.h>
@@ -172,3 +175,5 @@ using Rect2Df = Rect<float>;
 using Rect2Dd = Rect<double>;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

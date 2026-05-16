@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <future>
 #include <utility>
 #include <promeki/namespace.h>
@@ -116,3 +119,5 @@ template <> class Promise<void> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

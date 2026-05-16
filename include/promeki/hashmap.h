@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <unordered_map>
 #include <initializer_list>
 #include <promeki/namespace.h>
@@ -304,3 +307,5 @@ template <typename K, typename V> class HashMap {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

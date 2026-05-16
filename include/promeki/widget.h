@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/rect.h>
@@ -302,3 +305,5 @@ class Widget : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

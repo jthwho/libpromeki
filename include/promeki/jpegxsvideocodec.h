@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_JPEGXS
 #include <promeki/namespace.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
@@ -157,3 +160,5 @@ class JpegXsVideoDecoder : public VideoDecoder {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_JPEGXS

@@ -15,6 +15,7 @@ devplan/
 ├── core/                Core library work
 │   ├── io.md            IODevice, File, FilePath, Dir (Phase 2 carry-ins)
 │   ├── streams.md       TextStream type ops, ObjectBase saveState/loadState
+│   ├── datastream-consolidation.md  DataStream / DataType / PROMEKI_DATATYPE refactor
 │   ├── utilities.md     String / Variant / RegEx enhancements
 │   ├── ownership.md     Heap-ownership Phase C migration backlog
 │   ├── logger_ring_buffer.md  Crash-handler-readable retained log
@@ -45,6 +46,7 @@ devplan/
 │   ├── benchmarking.md  BenchmarkRunner / promeki-bench remaining suites
 │   ├── promeki-test.md  Functional test runner (shipped 2026-05-05)
 │   ├── audit.md         2026-04-25 audit findings register (90 open)
+│   ├── qemu-cross-testing.md  qemu-user wiring for cross-build CI/CD (unstarted)
 │   └── valgrind.md      COMPLETE; stub retained
 └── demos/
     └── promeki-pipeline.md  Vue 3 / Vue Flow demo (all phases shipped)
@@ -75,6 +77,12 @@ devplan/
    discovery, drain hook for stateful temporal codecs, GPU-resident
    bridges. See [proav/backends.md](proav/backends.md) and
    [proav/planner.md](proav/planner.md).
+6. **ARM / cross-build robustness** — `PROMEKI_CONFIG_FILE` preset
+   system, `cmake/configs/cross-aarch64-linux.cmake` + toolchain, and
+   per-feature `#if PROMEKI_ENABLE_*` header guards shipped
+   (2026-05-15). Next: qemu-user CI lane (`infra/qemu-cross-testing.md`)
+   and `DataStream / DataType` consolidation so cross-only builds don't
+   pull in host-only type headers (`core/datastream-consolidation.md`).
 
 ## Phase status (overview)
 

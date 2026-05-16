@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
@@ -316,3 +319,5 @@ class RtmpHandshake : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <promeki/namespace.h>
 #include <promeki/enum.h>
 #include <promeki/string.h>
@@ -82,3 +85,5 @@ inline const HttpMethod HttpMethod::Connect{7};
 inline const HttpMethod HttpMethod::Trace{8};
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cmath>
 #include <limits>
 #include <promeki/namespace.h>
@@ -111,3 +114,5 @@ class AudioLevel {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioLevel);
+
+#endif // PROMEKI_ENABLE_PROAV

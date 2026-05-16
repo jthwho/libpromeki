@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -179,3 +182,5 @@ class Histogram {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Histogram);
+
+#endif // PROMEKI_ENABLE_CORE

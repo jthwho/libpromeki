@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <atomic>
 #include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
@@ -1628,3 +1631,5 @@ class RtpFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
@@ -197,3 +200,5 @@ class HttpRouter {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

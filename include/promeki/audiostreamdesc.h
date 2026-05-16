@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <functional>
 #include <promeki/namespace.h>
@@ -290,3 +293,5 @@ template <> struct std::hash<promeki::AudioStreamDesc> {
                         return std::hash<uint64_t>()(v.id());
                 }
 };
+
+#endif // PROMEKI_ENABLE_PROAV

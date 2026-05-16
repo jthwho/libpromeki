@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cassert>
 #include <cstring>
 #include <promeki/bufferview.h>
@@ -371,3 +374,5 @@ class RtpPacket : public BufferView {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

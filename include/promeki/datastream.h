@@ -7,6 +7,8 @@
 
 #pragma once
 
+
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <promeki/config.h>
@@ -41,8 +43,6 @@ class JsonArray;
 class XmlDocument;
 class XmlElement;
 class MediaTimeStamp;
-class MacAddress;
-class EUI64;
 class FrameNumber;
 class FrameCount;
 class MediaDuration;
@@ -56,23 +56,30 @@ class UMID;
 class DateTime;
 class TimeStamp;
 class FrameRate;
-class VideoFormat;
 class Timecode;
-class Color;
-class ColorModel;
 class MemSpace;
-class PixelMemLayout;
-class PixelFormat;
-class AudioFormat;
-class AncFormat;
 class Enum;
 class EnumList;
 class StringList;
 class Url;
+class Color;
+class ColorModel;
+#if PROMEKI_ENABLE_PROAV
+class VideoFormat;
+class PixelMemLayout;
+class PixelFormat;
+class AudioFormat;
+class AudioChannelMap;
+class AncFormat;
 class VideoCodec;
 class AudioCodec;
+#endif
+#if PROMEKI_ENABLE_NETWORK
+class MacAddress;
+class EUI64;
 class SocketAddress;
 class SdpSession;
+#endif
 
 /**
  * @brief Binary stream for structured, portable serialization.
@@ -650,8 +657,6 @@ class DataStream {
                 DataStream &operator<<(const TimeStamp &val);
                 /** @brief Writes a FrameRate as two uint32 values. */
                 DataStream &operator<<(const FrameRate &val);
-                /** @brief Writes a VideoFormat as its canonical string representation. */
-                DataStream &operator<<(const VideoFormat &val);
                 /** @brief Writes a Timecode as its canonical string representation. */
                 DataStream &operator<<(const Timecode &val);
                 /** @brief Writes a Color as its lossless ModelFormat string. */
@@ -660,6 +665,9 @@ class DataStream {
                 DataStream &operator<<(const ColorModel &val);
                 /** @brief Writes a MemSpace as its numeric ID. */
                 DataStream &operator<<(const MemSpace &val);
+#if PROMEKI_ENABLE_PROAV
+                /** @brief Writes a VideoFormat as its canonical string representation. */
+                DataStream &operator<<(const VideoFormat &val);
                 /** @brief Writes a PixelMemLayout as its name. */
                 DataStream &operator<<(const PixelMemLayout &val);
                 /** @brief Writes a PixelFormat as its name. */
@@ -668,6 +676,7 @@ class DataStream {
                 DataStream &operator<<(const AudioFormat &val);
                 /** @brief Writes an AncFormat as its name. */
                 DataStream &operator<<(const AncFormat &val);
+#endif
                 /** @brief Writes an Enum as its qualified "TypeName::ValueName" string. */
                 DataStream &operator<<(const Enum &val);
                 /** @brief Writes an EnumList as its type name + tagged count + tagged int32 values. */
@@ -682,22 +691,26 @@ class DataStream {
                 DataStream &operator<<(const MediaDuration &val);
                 /** @brief Writes a Duration as a tagged int64 nanoseconds count. */
                 DataStream &operator<<(const Duration &val);
-                /** @brief Writes a MacAddress as a length-prefixed string. */
-                DataStream &operator<<(const MacAddress &val);
-                /** @brief Writes an EUI64 as a length-prefixed string. */
-                DataStream &operator<<(const EUI64 &val);
                 /** @brief Writes a StringList as uint32 count + length-prefixed elements. */
                 DataStream &operator<<(const StringList &val);
                 /** @brief Writes a Url as a length-prefixed string (toString form). */
                 DataStream &operator<<(const Url &val);
+#if PROMEKI_ENABLE_PROAV
                 /** @brief Writes a VideoCodec as a length-prefixed "Codec[:Backend]" string. */
                 DataStream &operator<<(const VideoCodec &val);
                 /** @brief Writes an AudioCodec as a length-prefixed "Codec[:Backend]" string. */
                 DataStream &operator<<(const AudioCodec &val);
+#endif
+#if PROMEKI_ENABLE_NETWORK
+                /** @brief Writes a MacAddress as a length-prefixed string. */
+                DataStream &operator<<(const MacAddress &val);
+                /** @brief Writes an EUI64 as a length-prefixed string. */
+                DataStream &operator<<(const EUI64 &val);
                 /** @brief Writes a SocketAddress as a tagged "host:port" string. */
                 DataStream &operator<<(const SocketAddress &val);
                 /** @brief Writes an SdpSession as a tagged RFC 4566 SDP string. */
                 DataStream &operator<<(const SdpSession &val);
+#endif
 #if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Writes an SslContext::Ptr — opaque, only the tag is emitted.
@@ -774,8 +787,6 @@ class DataStream {
                 DataStream &operator>>(TimeStamp &val);
                 /** @brief Reads a FrameRate from two tagged uint32 values. */
                 DataStream &operator>>(FrameRate &val);
-                /** @brief Reads a VideoFormat from its canonical string representation. */
-                DataStream &operator>>(VideoFormat &val);
                 /** @brief Reads a Timecode from its canonical string representation. */
                 DataStream &operator>>(Timecode &val);
                 /** @brief Reads a Color from its lossless ModelFormat string. */
@@ -784,6 +795,9 @@ class DataStream {
                 DataStream &operator>>(ColorModel &val);
                 /** @brief Reads a MemSpace from a tagged uint32 ID. */
                 DataStream &operator>>(MemSpace &val);
+#if PROMEKI_ENABLE_PROAV
+                /** @brief Reads a VideoFormat from its canonical string representation. */
+                DataStream &operator>>(VideoFormat &val);
                 /** @brief Reads a PixelMemLayout by name. */
                 DataStream &operator>>(PixelMemLayout &val);
                 /** @brief Reads a PixelFormat by name. */
@@ -792,6 +806,7 @@ class DataStream {
                 DataStream &operator>>(AudioFormat &val);
                 /** @brief Reads an AncFormat by name. */
                 DataStream &operator>>(AncFormat &val);
+#endif
                 /** @brief Reads an Enum from its qualified "TypeName::ValueName" string. */
                 DataStream &operator>>(Enum &val);
                 /** @brief Reads an EnumList from type name + tagged count + tagged int32 values. */
@@ -806,22 +821,26 @@ class DataStream {
                 DataStream &operator>>(MediaDuration &val);
                 /** @brief Reads a Duration from a tagged int64 nanoseconds count. */
                 DataStream &operator>>(Duration &val);
-                /** @brief Reads a MacAddress from a length-prefixed string. */
-                DataStream &operator>>(MacAddress &val);
-                /** @brief Reads an EUI64 from a length-prefixed string. */
-                DataStream &operator>>(EUI64 &val);
                 /** @brief Reads a StringList from tagged count + length-prefixed elements. */
                 DataStream &operator>>(StringList &val);
                 /** @brief Reads a Url from a tagged length-prefixed string. */
                 DataStream &operator>>(Url &val);
+#if PROMEKI_ENABLE_PROAV
                 /** @brief Reads a VideoCodec from a tagged "Codec[:Backend]" string. */
                 DataStream &operator>>(VideoCodec &val);
                 /** @brief Reads an AudioCodec from a tagged "Codec[:Backend]" string. */
                 DataStream &operator>>(AudioCodec &val);
+#endif
+#if PROMEKI_ENABLE_NETWORK
+                /** @brief Reads a MacAddress from a length-prefixed string. */
+                DataStream &operator>>(MacAddress &val);
+                /** @brief Reads an EUI64 from a length-prefixed string. */
+                DataStream &operator>>(EUI64 &val);
                 /** @brief Reads a SocketAddress from a tagged "host:port" string. */
                 DataStream &operator>>(SocketAddress &val);
                 /** @brief Reads an SdpSession from a tagged RFC 4566 SDP string. */
                 DataStream &operator>>(SdpSession &val);
+#endif
 #if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Reads an SslContext::Ptr — yields a null Ptr.
@@ -1126,15 +1145,17 @@ class DataStream {
                 void writeDateTimeData(const DateTime &val);
                 void writeTimeStampData(const TimeStamp &val);
                 void writeFrameRateData(const FrameRate &val);
-                void writeVideoFormatData(const VideoFormat &val);
                 void writeTimecodeData(const Timecode &val);
                 void writeColorData(const Color &val);
                 void writeColorModelData(const ColorModel &val);
                 void writeMemSpaceData(const MemSpace &val);
+#if PROMEKI_ENABLE_PROAV
+                void writeVideoFormatData(const VideoFormat &val);
                 void writePixelMemLayoutData(const PixelMemLayout &val);
                 void writePixelFormatData(const PixelFormat &val);
                 void writeAudioFormatData(const AudioFormat &val);
                 void writeAncFormatData(const AncFormat &val);
+#endif
                 void writeEnumData(const Enum &val);
                 void writeEnumListData(const EnumList &val);
                 void writeStringListData(const StringList &val);
@@ -1158,15 +1179,17 @@ class DataStream {
                 DateTime       readDateTimeData();
                 TimeStamp      readTimeStampData();
                 FrameRate      readFrameRateData();
-                VideoFormat    readVideoFormatData();
                 Timecode       readTimecodeData();
                 Color          readColorData();
                 ColorModel     readColorModelData();
                 MemSpace       readMemSpaceData();
+#if PROMEKI_ENABLE_PROAV
+                VideoFormat    readVideoFormatData();
                 PixelMemLayout readPixelMemLayoutData();
                 PixelFormat    readPixelFormatData();
                 AudioFormat    readAudioFormatData();
                 AncFormat      readAncFormatData();
+#endif
                 Enum           readEnumData();
                 EnumList       readEnumListData();
                 StringList     readStringListData();
@@ -1783,3 +1806,5 @@ template <typename T> DataStream &operator>>(DataStream &stream, HashSet<T> &set
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

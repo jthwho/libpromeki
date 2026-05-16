@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <algorithm>
 #include <cstddef>
 #include <functional>
@@ -126,3 +129,5 @@ template <typename... Args> class Slot {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

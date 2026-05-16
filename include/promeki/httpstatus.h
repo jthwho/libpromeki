@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <promeki/namespace.h>
 #include <promeki/enum.h>
 #include <promeki/string.h>
@@ -230,3 +233,5 @@ inline const HttpStatus HttpStatus::NotExtended{510};
 inline const HttpStatus HttpStatus::NetworkAuthenticationRequired{511};
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

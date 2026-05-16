@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/udpsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -92,3 +95,5 @@ class PrioritySocket : public UdpSocket {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

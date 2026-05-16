@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <functional>
 #include <optional>
 #include <promeki/optional.h>
@@ -242,3 +245,5 @@ template <typename T> class VariantQuery {
 extern template class VariantQuery<Frame>;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

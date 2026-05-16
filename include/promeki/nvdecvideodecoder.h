@@ -7,15 +7,16 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
+
 #include <promeki/config.h>
+#if PROMEKI_ENABLE_NVDEC
+#include <promeki/namespace.h>
 #include <promeki/videodecoder.h>
 #include <promeki/mediaioallocator.h>
 #include <promeki/frame.h>
 #include <promeki/uniqueptr.h>
 
-#if PROMEKI_ENABLE_NVDEC
-
+#if PROMEKI_ENABLE_PROAV
 PROMEKI_NAMESPACE_BEGIN
 
 /**
@@ -142,3 +143,4 @@ class NvdecVideoDecoder : public VideoDecoder {
 PROMEKI_NAMESPACE_END
 
 #endif // PROMEKI_ENABLE_NVDEC
+#endif // PROMEKI_ENABLE_PROAV

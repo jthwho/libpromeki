@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <cstddef>
 #include <promeki/buffer.h>
@@ -926,3 +929,5 @@ class RtpPayloadH265 : public RtpPayload {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

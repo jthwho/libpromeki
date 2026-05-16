@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <queue>
 #include <vector>
@@ -119,3 +122,5 @@ template <typename T, typename Compare = std::less<T>> class PriorityQueue {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

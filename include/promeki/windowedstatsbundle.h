@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
@@ -167,3 +170,5 @@ DataStream &operator<<(DataStream &stream, const WindowedStatsBundle &b);
 DataStream &operator>>(DataStream &stream, WindowedStatsBundle &b);
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

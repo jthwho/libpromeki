@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_MUSIC
 #include <cstdint>
 #include <promeki/string.h>
 
@@ -402,3 +405,5 @@ class MidiNote {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_MUSIC

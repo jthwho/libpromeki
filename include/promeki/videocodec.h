@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringregistry.h>
@@ -554,3 +557,5 @@ class VideoCodec {
 inline VideoCodec::VideoCodec(ID id, Backend backend) : d(lookupData(id)), _backend(backend) {}
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

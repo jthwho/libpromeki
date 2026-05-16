@@ -17,7 +17,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 #if PROMEKI_ENABLE_MEMFD
-
 /**
  * @brief BufferImpl backed by a sealed @ref MemfdRegion (page-level CoW).
  * @ingroup util
@@ -139,5 +138,4 @@ class MemfdBufferImpl : public HostMappedBufferImpl {
 };
 
 #endif // PROMEKI_ENABLE_MEMFD
-
 PROMEKI_NAMESPACE_END

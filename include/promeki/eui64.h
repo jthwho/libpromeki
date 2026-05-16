@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
 #include <format>
@@ -217,3 +220,5 @@ template <> struct std::formatter<promeki::EUI64> {
                         return std::format_to(ctx.out(), "{}", std::string_view(s.cstr(), s.byteCount()));
                 }
 };
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/namespace.h>
 #include <promeki/packettransport.h>
 #include <promeki/buffer.h>
@@ -117,3 +120,5 @@ class LoopbackTransport : public PacketTransport {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

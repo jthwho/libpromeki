@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/color.h>
@@ -2812,3 +2815,5 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
 using MediaConfigID = MediaConfig::ID;
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

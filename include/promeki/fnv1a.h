@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstddef>
 #include <promeki/namespace.h>
@@ -110,3 +113,5 @@ constexpr uint64_t fnv1aLatin1AsCodepoints(const void *data, size_t len, uint64_
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

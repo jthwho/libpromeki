@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <optional>
 #include <type_traits>
 #include <promeki/optional.h>
@@ -1129,3 +1132,5 @@ PROMEKI_NAMESPACE_END
 #define PROMEKI_DECLARE_ID(Name, ...)                                                                                  \
         static constexpr ID                     Name = ID::literal(#Name);                                             \
         [[maybe_unused]] static inline const ID PROMEKI_CONCAT(_promeki_spec_reg_, Name) = declareID(#Name, __VA_ARGS__)
+
+#endif // PROMEKI_ENABLE_CORE

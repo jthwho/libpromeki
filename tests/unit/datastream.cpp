@@ -2580,6 +2580,7 @@ TEST_CASE("DataStream: round-trip XYZColor") {
         }
 }
 
+#if PROMEKI_ENABLE_PROAV
 TEST_CASE("DataStream: round-trip AudioDesc") {
         WriterFixture f;
         AudioDesc     desc(AudioFormat::PCMI_S16LE, 48000.0f, 2);
@@ -2659,6 +2660,7 @@ TEST_CASE("DataStream: round-trip MediaDesc") {
                 CHECK(out.metadata().get(Metadata::Title).get<String>() == String("big clip"));
         }
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 // ============================================================================
 // List<Variant> / VariantList (generic template + Variant operators)

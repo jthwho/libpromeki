@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <vector>
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
@@ -159,3 +162,5 @@ class LtcDecoder {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/audioformat.h>
@@ -391,3 +394,5 @@ inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioDesc);
+
+#endif // PROMEKI_ENABLE_PROAV

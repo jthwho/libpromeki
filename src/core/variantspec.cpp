@@ -30,12 +30,9 @@
 #include <promeki/audiomarker.h>
 #include <promeki/framecount.h>
 #include <promeki/mediaduration.h>
-#include <promeki/config.h>
-#if PROMEKI_ENABLE_NETWORK
 #include <promeki/eui64.h>
 #include <promeki/macaddress.h>
 #include <promeki/socketaddress.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -263,12 +260,14 @@ namespace {
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
+#if PROMEKI_ENABLE_PROAV
                         case Variant::TypeVideoFormat: {
                                 // See the TypeSize2D rationale above.
                                 auto r = VideoFormat::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
+#endif
                         case Variant::TypeRational: {
                                 size_t slash = str.find('/');
                                 if (slash == String::npos) break;
@@ -314,6 +313,12 @@ namespace {
                                 if (ce.isError() || !c.isValid()) break;
                                 return Variant(c);
                         }
+                        case Variant::TypeColorModel: {
+                                ColorModel cm = ColorModel::lookup(str);
+                                if (!cm.isValid()) break;
+                                return Variant(cm);
+                        }
+#if PROMEKI_ENABLE_PROAV
                         case Variant::TypePixelFormat: {
                                 // Use the error-aware lookup so the canonical
                                 // "Invalid" sentinel name still parses cleanly
@@ -331,11 +336,6 @@ namespace {
                                 PixelMemLayout pf = PixelMemLayout::lookup(str, &pe);
                                 if (pe.isError()) break;
                                 return Variant(pf);
-                        }
-                        case Variant::TypeColorModel: {
-                                ColorModel cm = ColorModel::lookup(str);
-                                if (!cm.isValid()) break;
-                                return Variant(cm);
                         }
                         case Variant::TypeVideoCodec: {
                                 auto r = VideoCodec::fromString(str);
@@ -367,6 +367,7 @@ namespace {
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
+#endif
                         case Variant::TypeEnum: {
                                 if (!enumType.isValid()) break;
                                 // Canonical empty form "::" maps back to a

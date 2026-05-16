@@ -7,8 +7,10 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_HTTP
 #include <functional>
-#include <promeki/config.h> // PROMEKI_ENABLE_TLS
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
@@ -313,3 +315,5 @@ class WebSocket : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_HTTP

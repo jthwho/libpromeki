@@ -8,11 +8,14 @@
 #include <atomic>
 #include <thread>
 #include <doctest/doctest.h>
+#include <promeki/config.h>
 #include <promeki/bufferallocator.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audioformat.h>
 #include <promeki/pixelformat.h>
+#endif
 
 using namespace promeki;
 
@@ -48,6 +51,7 @@ TEST_CASE("BufferAllocator: allocateBytes honours custom alignment") {
         CHECK(addr % 64 == 0);
 }
 
+#if PROMEKI_ENABLE_PROAV
 TEST_CASE("BufferAllocator: allocateVideoPlane sized to PixelFormat::planeSize") {
         BufferAllocator::Ptr alloc = BufferAllocator::defaultAllocator();
         ImageDesc            desc(1920, 1080, PixelFormat(PixelFormat::RGBA8_sRGB));
@@ -121,6 +125,7 @@ TEST_CASE("BufferAllocator: subclass override visible via name() and per-call co
         CHECK(typed->videoCalls.load() == 1);
         CHECK(typed->audioCalls.load() == 1);
 }
+#endif // PROMEKI_ENABLE_PROAV
 
 TEST_CASE("BufferAllocator: defaultAllocator concurrent allocateBytes is safe") {
         // The default allocator is stateless — confirm two threads

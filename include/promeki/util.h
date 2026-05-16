@@ -8,6 +8,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <stdexcept>
 #include <cstdint>
 #include <limits>
@@ -211,3 +214,5 @@ template <typename T> T promekiCubic(const Array<T, 4> &points, T t) {
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <variant>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -221,3 +224,5 @@ TextStream &operator<<(TextStream &stream, const NetworkAddress &addr);
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::NetworkAddress);
+
+#endif // PROMEKI_ENABLE_CORE

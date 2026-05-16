@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <chrono>
 #include <ctime>
 #include <promeki/namespace.h>
@@ -271,3 +274,5 @@ class DateTime {
 PROMEKI_NAMESPACE_END
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::DateTime);
+
+#endif // PROMEKI_ENABLE_CORE

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <chrono>
 #include <cstdint>
 #include <type_traits>
@@ -324,3 +327,5 @@ template <> struct std::formatter<promeki::Duration> {
                         return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }
 };
+
+#endif // PROMEKI_ENABLE_CORE

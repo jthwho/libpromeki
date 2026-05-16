@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstddef>
 #include <functional>
 #include <promeki/mediaiocommand.h>
@@ -201,3 +204,5 @@ class MediaIOStatsCollector : public ObjectBase {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <functional>
 #include <promeki/namespace.h>
@@ -389,3 +392,5 @@ template <> struct std::hash<promeki::AudioMarkerList> {
                         return h;
                 }
 };
+
+#endif // PROMEKI_ENABLE_PROAV

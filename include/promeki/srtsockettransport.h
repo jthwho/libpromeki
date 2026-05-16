@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_SRT
 #include <promeki/namespace.h>
 #include <promeki/packettransport.h>
 #include <promeki/socketaddress.h>
@@ -247,3 +250,5 @@ class SrtSocketTransport : public PacketTransport {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_SRT

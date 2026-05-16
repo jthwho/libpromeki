@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <cstdint>
 #include <promeki/namespace.h>
@@ -184,3 +187,5 @@ PROMEKI_NAMESPACE_END
                 static constexpr auto _obf = ::promeki::ObfuscatedString<sizeof(str), PROMEKI_OBFUSCATE_SEED>(str);    \
                 return _obf.decode();                                                                                  \
         }())
+
+#endif // PROMEKI_ENABLE_CORE

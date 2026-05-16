@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <utility>
 #include <tuple>
@@ -197,3 +200,5 @@ namespace std {
                         using type = B;
         };
 } // namespace std
+
+#endif // PROMEKI_ENABLE_CORE

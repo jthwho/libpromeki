@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/dedicatedthreadmediaio.h>
@@ -153,3 +156,5 @@ class QuickTimeFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

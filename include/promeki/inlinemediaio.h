@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/commandmediaio.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -59,3 +62,5 @@ class InlineMediaIO : public CommandMediaIO {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

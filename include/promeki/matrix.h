@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cmath>
 #include <promeki/namespace.h>
 #include <promeki/array.h>
@@ -589,3 +592,5 @@ template <typename T, size_t W, size_t H> class Matrix {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

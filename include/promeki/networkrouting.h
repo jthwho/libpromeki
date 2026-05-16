@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/namespace.h>
 #include <promeki/list.h>
 #include <promeki/ipv4address.h>
@@ -233,3 +236,5 @@ class NetworkRouting {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

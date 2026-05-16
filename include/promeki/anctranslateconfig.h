@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/enums.h>
@@ -254,3 +257,5 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_PROAV

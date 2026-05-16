@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_NETWORK
 #include <promeki/namespace.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/mediaiofactory.h>
@@ -91,3 +94,5 @@ class FrameBridgeFactory : public MediaIOFactory {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_NETWORK

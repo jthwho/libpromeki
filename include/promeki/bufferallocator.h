@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
@@ -15,8 +18,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+#if PROMEKI_ENABLE_PROAV
 class ImageDesc;
 class AudioDesc;
+#endif
 
 /**
  * @brief Buffer-placement seam — an injectable "where does this Buffer live?" callback.
@@ -110,6 +115,7 @@ class BufferAllocator {
                  * call them without forcing every call site to use
                  * @c modify().
                  */
+#if PROMEKI_ENABLE_PROAV
                 virtual Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const = 0;
 
                 /**
@@ -124,6 +130,7 @@ class BufferAllocator {
                  *         value (audio chunks are never under-filled).
                  */
                 virtual Buffer allocateAudioChunk(const AudioDesc &desc, size_t samples) const = 0;
+#endif // PROMEKI_ENABLE_PROAV
 
                 /**
                  * @brief Allocates a generic byte buffer.
@@ -170,9 +177,13 @@ class DefaultBufferAllocator : public BufferAllocator {
                 ~DefaultBufferAllocator() override = default;
 
                 String name() const override;
+#if PROMEKI_ENABLE_PROAV
                 Buffer allocateVideoPlane(const ImageDesc &desc, int planeIndex) const override;
                 Buffer allocateAudioChunk(const AudioDesc &desc, size_t samples) const override;
+#endif
                 Buffer allocateBytes(size_t bytes, size_t align = 0) const override;
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

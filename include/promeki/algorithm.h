@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <algorithm>
 #include <numeric>
 #include <functional>
@@ -170,3 +173,5 @@ template <typename Container, typename Value> bool contains(const Container &c, 
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

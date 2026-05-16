@@ -7,6 +7,9 @@
 
 #pragma once
 
+
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CORE
 #include <promeki/pair.h>
 #include <promeki/error.h>
 
@@ -90,3 +93,5 @@ template <typename T> bool isError(const Result<T> &r) {
 }
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE

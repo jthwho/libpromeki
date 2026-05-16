@@ -7,6 +7,8 @@
 
 #pragma once
 
+
+#if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
 #include <promeki/config.h>
 #include <promeki/variantdatabase.h>
@@ -74,6 +76,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setDefault(promeki::Timecode())
                                            .setDescription("SMPTE timecode associated with this media unit."));
 
+#if PROMEKI_ENABLE_PROAV
                 /// @brief Subtitle cue active at this media unit.
                 ///
                 /// Frame-level attribution of the (single) subtitle that
@@ -90,6 +93,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setDefault(promeki::Subtitle())
                                            .setDescription(
                                                    "Subtitle cue active at this media unit (start <= ts < end)."));
+#endif
 
                 /// @brief Gamma / transfer-function exponent.
                 PROMEKI_DECLARE_ID(Gamma, VariantSpec()
@@ -343,6 +347,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setMin(int32_t(0))
                                            .setDescription("Number of RTP packets that composed this essence."));
 
+#if PROMEKI_ENABLE_PROAV
                 /// @brief Per-payload audio event markers (@ref AudioMarkerList).
                 ///
                 /// Set by audio producers that need to annotate sample
@@ -363,6 +368,7 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                 .setDefault(AudioMarkerList())
                                 .setDescription("Per-payload audio event markers (silence fills, "
                                                 "concealed loss, discontinuities, …)."));
+#endif
 
 #if PROMEKI_ENABLE_NETWORK
                 /// @brief PTP grandmaster clock identity (EUI-64).
@@ -1027,3 +1033,5 @@ class Metadata : public VariantDatabase<"Metadata"> {
 };
 
 PROMEKI_NAMESPACE_END
+
+#endif // PROMEKI_ENABLE_CORE
