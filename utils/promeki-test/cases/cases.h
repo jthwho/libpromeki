@@ -129,6 +129,18 @@ namespace promekitest {
          */
         void registerNdiCases();
 
+        /**
+         * @brief Registers video-signal-carrier MediaConfig round-trip cases.
+         *
+         * Builds a @ref MediaConfig populated with each new carrier
+         * key (@c SdiInputSignal, @c SdiOutputSignal,
+         * @c HdmiInputSignal, @c HdmiOutputSignal, @c VideoReference)
+         * and round-trips it through JSON, DataStream, and the
+         * Variant<->String converter to verify the new types are
+         * first-class through the existing config plumbing.
+         */
+        void registerVideoCarrierCases();
+
 } // namespace promekitest
 
 PROMEKI_NAMESPACE_END

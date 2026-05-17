@@ -23,7 +23,10 @@
 #include <promeki/timecode.h>
 #include <promeki/videoformat.h>
 #include <promeki/audiocodec.h>
+#include <promeki/hdmisignalconfig.h>
+#include <promeki/sdisignalconfig.h>
 #include <promeki/videocodec.h>
+#include <promeki/videoreferenceconfig.h>
 #include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -178,6 +181,74 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                        .setDefault(int32_t(-1))
                                                        .setMin(int32_t(-1))
                                                        .setDescription("0-based video track index (-1 = auto)."));
+
+                // ============================================================
+                // Generic video carrier
+                // ============================================================
+
+                /// @brief SdiSignalConfig — SDI input port(s) + SMPTE link standard.
+                ///
+                /// Hardware MediaIO backends (NTV2, DeckLink, ST 2022-6,
+                /// ST 2110-20, …) consult this key during open to bind
+                /// the input side to a specific physical SDI port (or
+                /// dual/quad-link set) and to lock in the wire format.
+                /// File-based and synthetic backends ignore it.
+                PROMEKI_DECLARE_ID(SdiInputSignal,
+                                   VariantSpec()
+                                           .setType(DataTypeSdiSignalConfig)
+                                           .setDefault(SdiSignalConfig())
+                                           .setDescription(
+                                                   "SDI input port(s) and SMPTE link standard "
+                                                   "for hardware MediaIO backends."));
+
+                /// @brief SdiSignalConfig — SDI output port(s) + SMPTE link standard.
+                PROMEKI_DECLARE_ID(SdiOutputSignal,
+                                   VariantSpec()
+                                           .setType(DataTypeSdiSignalConfig)
+                                           .setDefault(SdiSignalConfig())
+                                           .setDescription(
+                                                   "SDI output port(s) and SMPTE link standard "
+                                                   "for hardware MediaIO backends."));
+
+                /// @brief HdmiSignalConfig — HDMI input port + spec-version hint.
+                ///
+                /// Hardware MediaIO backends that expose HDMI connectors
+                /// (NTV2 Kona HDMI cards, capture cards with HDMI input)
+                /// consult this key during open to bind the input side
+                /// to a specific physical HDMI connector and choose the
+                /// version subset to advertise on negotiation.  Backends
+                /// without HDMI ignore it.
+                PROMEKI_DECLARE_ID(HdmiInputSignal,
+                                   VariantSpec()
+                                           .setType(DataTypeHdmiSignalConfig)
+                                           .setDefault(HdmiSignalConfig())
+                                           .setDescription(
+                                                   "HDMI input port and version hint "
+                                                   "for hardware MediaIO backends."));
+
+                /// @brief HdmiSignalConfig — HDMI output port + spec-version hint.
+                PROMEKI_DECLARE_ID(HdmiOutputSignal,
+                                   VariantSpec()
+                                           .setType(DataTypeHdmiSignalConfig)
+                                           .setDefault(HdmiSignalConfig())
+                                           .setDescription(
+                                                   "HDMI output port and version hint "
+                                                   "for hardware MediaIO backends."));
+
+                /// @brief VideoReferenceConfig — device-wide reference clock config.
+                ///
+                /// Hardware MediaIO backends consult this key during
+                /// open to choose which reference (free-run, GENLOCK,
+                /// external, or a specific input signal) the device's
+                /// outputs lock to.  File-based and synthetic backends
+                /// ignore it.
+                PROMEKI_DECLARE_ID(VideoReference,
+                                   VariantSpec()
+                                           .setType(DataTypeVideoReferenceConfig)
+                                           .setDefault(VideoReferenceConfig())
+                                           .setDescription(
+                                                   "Device-wide reference clock configuration "
+                                                   "for hardware MediaIO backends."));
 
                 // ============================================================
                 // Video test pattern generator

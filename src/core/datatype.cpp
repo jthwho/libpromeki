@@ -36,10 +36,14 @@
 #include <promeki/memspace.h>
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
+#include <promeki/hdmisignalconfig.h>
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
 #include <promeki/json.h>
+#include <promeki/sdisignalconfig.h>
 #include <promeki/url.h>
+#include <promeki/videoportref.h>
+#include <promeki/videoreferenceconfig.h>
 #include <promeki/windowedstat.h>
 #include <promeki/xml.h>
 #include <promeki/xyzcolor.h>
@@ -288,6 +292,10 @@ void registerBuiltinDataTypes() {
                 registerDataType<MasteringDisplay>();
                 registerDataType<ContentLightLevel>();
                 registerDataType<Url>();
+                registerDataType<VideoPortRef>();
+                registerDataType<SdiSignalConfig>();
+                registerDataType<HdmiSignalConfig>();
+                registerDataType<VideoReferenceConfig>();
 
                 registerDataType<WindowedStat>();
                 registerDataType<VariantList>();

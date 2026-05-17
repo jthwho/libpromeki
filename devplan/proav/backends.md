@@ -93,6 +93,7 @@ that history now lives in git. What remains here is the open work.
 - **NTV2MediaIO** — AJA NTV2 SDI capture/playback. Build scaffolding
   landed 2026-05-16 (`thirdparty/libajantv2` submodule, `PROMEKI_ENABLE_NTV2`
   CMake option). MediaIO backend implementation pending; see
+  [proav/ntv2.md](ntv2.md) for the full implementation plan and
   [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest contract.
 - **SDLPlayerTask** / **SDLPlayerWidget** — SDL display sink + widget.
 - **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,

@@ -1954,6 +1954,7 @@ set(PROMEKI_HEADERS
     include/promeki/function.h
     include/promeki/future.h
     include/promeki/h264bitstream.h
+    include/promeki/hdmisignalconfig.h
     include/promeki/hevcbitstream.h
     include/promeki/hmac.h
     include/promeki/iodevice.h
@@ -1999,6 +2000,7 @@ set(PROMEKI_HEADERS
     include/promeki/rect.h
     include/promeki/regex.h
     include/promeki/resource.h
+    include/promeki/sdisignalconfig.h
     include/promeki/securemem.h
     include/promeki/selfpipe.h
     include/promeki/set.h
@@ -2037,6 +2039,8 @@ set(PROMEKI_HEADERS
     include/promeki/variantspec.h
     include/promeki/videocodec.h
     include/promeki/videoformat.h
+    include/promeki/videoportref.h
+    include/promeki/videoreferenceconfig.h
     include/promeki/waitcondition.h
     include/promeki/widget.h
     include/promeki/xml.h
@@ -2095,6 +2099,7 @@ set(PROMEKI_SOURCES
     src/core/framecount.cpp
     src/core/framenumber.cpp
     src/core/framerate.cpp
+    src/core/hdmisignalconfig.cpp
     src/core/histogram.cpp
     src/core/hmac.cpp
     src/core/iodevice.cpp
@@ -2135,6 +2140,7 @@ set(PROMEKI_SOURCES
     src/core/rect.cpp
     src/core/regex.cpp
     src/core/resource.cpp
+    src/core/sdisignalconfig.cpp
     src/core/selfpipe.cpp
     src/core/set.cpp
     src/core/sha1.cpp
@@ -2170,6 +2176,8 @@ set(PROMEKI_SOURCES
     src/core/variant.cpp
     src/core/variantquery.cpp
     src/core/variantspec.cpp
+    src/core/videoportref.cpp
+    src/core/videoreferenceconfig.cpp
     src/core/widget.cpp
     src/core/windowedstat.cpp
     src/core/xml.cpp
@@ -3440,8 +3448,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/units.cpp
         tests/unit/url.cpp
         tests/unit/uuid.cpp
+        tests/unit/hdmisignalconfig.cpp
+        tests/unit/sdisignalconfig.cpp
         tests/unit/variantlookup.cpp
         tests/unit/variantquery.cpp
+        tests/unit/videoportref.cpp
+        tests/unit/videoreferenceconfig.cpp
         tests/unit/waitcondition.cpp
         tests/unit/windowedstat.cpp
         tests/unit/xml.cpp

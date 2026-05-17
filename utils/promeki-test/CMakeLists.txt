@@ -12,6 +12,7 @@ add_executable(promeki-test
     cases/rtp.cpp
     cases/rtpchaos.cpp
     cases/rtpchaosshim.cpp
+    cases/videocarrier.cpp
 )
 
 target_include_directories(promeki-test PRIVATE

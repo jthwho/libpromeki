@@ -2393,6 +2393,243 @@ inline const CaptionCodec CaptionCodec::Cea608{0};
 inline const CaptionCodec CaptionCodec::Cea708{1};
 inline const CaptionCodec CaptionCodec::Both{2};
 
+/**
+ * @brief Physical connector kind on a video device.
+ *
+ * Identifies the family of the physical socket a video signal enters
+ * or leaves through, independent of the link standard (SDI cable
+ * count, HDMI spec level, etc.) running on the wire.  Paired with a
+ * 1-based connector index on @ref VideoPortRef to name "the second
+ * SDI input" or "the HDMI output" on a device.
+ *
+ * - @c Auto         — unspecified / defer to the backend.
+ * - @c Sdi          — coaxial SDI BNC connector (SD/HD/3G/6G/12G).
+ * - @c Hdmi         — Type-A HDMI connector.
+ * - @c DisplayPort  — Standard or Mini DisplayPort.
+ * - @c Composite    — analog composite (NTSC / PAL / SECAM).
+ * - @c Component    — analog YPbPr / RGsB component video.
+ * - @c SVideo       — analog S-Video (Y/C 4-pin mini-DIN).
+ * - @c Sfp          — SFP / SFP+ cage carrying SDI-over-IP or
+ *                     ST 2022-6 / ST 2110-20 traffic.
+ */
+class VideoConnectorKind : public TypedEnum<VideoConnectorKind> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoConnectorKind", 0, {"Auto", 0}, {"Sdi", 1}, {"Hdmi", 2},
+                                           {"DisplayPort", 3}, {"Composite", 4}, {"Component", 5},
+                                           {"SVideo", 6}, {"Sfp", 7}); // default: Auto
+
+                using TypedEnum<VideoConnectorKind>::TypedEnum;
+
+                static const VideoConnectorKind Auto;
+                static const VideoConnectorKind Sdi;
+                static const VideoConnectorKind Hdmi;
+                static const VideoConnectorKind DisplayPort;
+                static const VideoConnectorKind Composite;
+                static const VideoConnectorKind Component;
+                static const VideoConnectorKind SVideo;
+                static const VideoConnectorKind Sfp;
+};
+
+inline const VideoConnectorKind VideoConnectorKind::Auto{0};
+inline const VideoConnectorKind VideoConnectorKind::Sdi{1};
+inline const VideoConnectorKind VideoConnectorKind::Hdmi{2};
+inline const VideoConnectorKind VideoConnectorKind::DisplayPort{3};
+inline const VideoConnectorKind VideoConnectorKind::Composite{4};
+inline const VideoConnectorKind VideoConnectorKind::Component{5};
+inline const VideoConnectorKind VideoConnectorKind::SVideo{6};
+inline const VideoConnectorKind VideoConnectorKind::Sfp{7};
+
+/**
+ * @brief Link standard for an SDI signal carrier.
+ *
+ * Short identifiers spell out the link topology and the rate/standard
+ * fragment: @c SL_ for single-link, @c DL_ for dual-link, @c QL_ for
+ * quad-link.  The trailing fragment names the SMPTE family the
+ * standard belongs to (HD / 3GA / 3GB / 3G / 6G / 12G / 24G) and, for
+ * the quad-link variants, the sub-image mapping (Square Division vs.
+ * 2-Sample Interleave).  The Doxygen description for each value
+ * carries the underlying SMPTE document number.
+ *
+ * - @c Auto       — defer to the backend / source.
+ * - @c SL_SD      — SD-SDI single-link (SMPTE ST 259), 270 Mbps.
+ * - @c SL_HD      — HD-SDI single-link (SMPTE ST 292), 1.485 Gbps.
+ * - @c DL_HD      — HD-SDI dual-link (SMPTE ST 372), 2 × 1.485 Gbps.
+ * - @c SL_3GA     — 3G-SDI single-link Level A (SMPTE ST 425-1), 2.97 Gbps.
+ * - @c SL_3GB     — 3G-SDI single-link Level B carrying two HD streams.
+ * - @c DL_3GB     — 3G-SDI Level B mapped onto two physical links
+ *                   (one logical stream split across two cables).
+ * - @c DL_3G      — Dual-link 3G-SDI (SMPTE ST 425-2), 2 × 2.97 Gbps.
+ * - @c QL_3G_SQD  — Quad-link 3G-SDI Square Division (SMPTE ST 425-3).
+ * - @c QL_3G_2SI  — Quad-link 3G-SDI 2-Sample Interleave (SMPTE ST 425-5).
+ * - @c SL_6G      — 6G-SDI single-link (SMPTE ST 2081), 5.94 Gbps.
+ * - @c SL_12G     — 12G-SDI single-link (SMPTE ST 2082), 11.88 Gbps.
+ * - @c SL_24G     — 24G-SDI single-link (SMPTE ST 2083), 23.76 Gbps.
+ */
+class SdiLinkStandard : public TypedEnum<SdiLinkStandard> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SdiLinkStandard", 0,
+                                           {"Auto",       0},
+                                           {"SL_SD",      1},
+                                           {"SL_HD",      2},
+                                           {"DL_HD",      3},
+                                           {"SL_3GA",     4},
+                                           {"SL_3GB",     5},
+                                           {"DL_3GB",     6},
+                                           {"DL_3G",      7},
+                                           {"QL_3G_SQD",  8},
+                                           {"QL_3G_2SI",  9},
+                                           {"SL_6G",     10},
+                                           {"SL_12G",    11},
+                                           {"SL_24G",    12}); // default: Auto
+
+                using TypedEnum<SdiLinkStandard>::TypedEnum;
+
+                static const SdiLinkStandard Auto;
+                static const SdiLinkStandard SL_SD;
+                static const SdiLinkStandard SL_HD;
+                static const SdiLinkStandard DL_HD;
+                static const SdiLinkStandard SL_3GA;
+                static const SdiLinkStandard SL_3GB;
+                static const SdiLinkStandard DL_3GB;
+                static const SdiLinkStandard DL_3G;
+                static const SdiLinkStandard QL_3G_SQD;
+                static const SdiLinkStandard QL_3G_2SI;
+                static const SdiLinkStandard SL_6G;
+                static const SdiLinkStandard SL_12G;
+                static const SdiLinkStandard SL_24G;
+};
+
+inline const SdiLinkStandard SdiLinkStandard::Auto{0};
+inline const SdiLinkStandard SdiLinkStandard::SL_SD{1};
+inline const SdiLinkStandard SdiLinkStandard::SL_HD{2};
+inline const SdiLinkStandard SdiLinkStandard::DL_HD{3};
+inline const SdiLinkStandard SdiLinkStandard::SL_3GA{4};
+inline const SdiLinkStandard SdiLinkStandard::SL_3GB{5};
+inline const SdiLinkStandard SdiLinkStandard::DL_3GB{6};
+inline const SdiLinkStandard SdiLinkStandard::DL_3G{7};
+inline const SdiLinkStandard SdiLinkStandard::QL_3G_SQD{8};
+inline const SdiLinkStandard SdiLinkStandard::QL_3G_2SI{9};
+inline const SdiLinkStandard SdiLinkStandard::SL_6G{10};
+inline const SdiLinkStandard SdiLinkStandard::SL_12G{11};
+inline const SdiLinkStandard SdiLinkStandard::SL_24G{12};
+
+/**
+ * @brief HDMI specification version hint for an HDMI signal carrier.
+ *
+ * Tracks the version of the HDMI / CTA spec the source / sink is
+ * announcing (or negotiated to).  Used as a hint on
+ * @ref HdmiSignalConfig — the on-wire bandwidth is dictated by the
+ * @ref VideoFormat in play; the version hint tells the backend
+ * which feature subset (HDR static / dynamic metadata, ALLM, eARC,
+ * FRL vs. TMDS, …) to advertise.
+ *
+ * - @c Auto    — defer to the device's EDID / capability discovery.
+ * - @c Hdmi14  — HDMI 1.4b feature set (max 8.16 Gbps TMDS).
+ * - @c Hdmi20  — HDMI 2.0/2.0b feature set (max 17.82 Gbps TMDS).
+ * - @c Hdmi21  — HDMI 2.1 feature set (FRL up to 48 Gbps,
+ *                Dynamic HDR, ALLM, VRR, eARC, …).
+ */
+class HdmiSpecVersion : public TypedEnum<HdmiSpecVersion> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("HdmiSpecVersion", 0,
+                                           {"Auto",   0},
+                                           {"Hdmi14", 1},
+                                           {"Hdmi20", 2},
+                                           {"Hdmi21", 3}); // default: Auto
+
+                using TypedEnum<HdmiSpecVersion>::TypedEnum;
+
+                static const HdmiSpecVersion Auto;
+                static const HdmiSpecVersion Hdmi14;
+                static const HdmiSpecVersion Hdmi20;
+                static const HdmiSpecVersion Hdmi21;
+};
+
+inline const HdmiSpecVersion HdmiSpecVersion::Auto{0};
+inline const HdmiSpecVersion HdmiSpecVersion::Hdmi14{1};
+inline const HdmiSpecVersion HdmiSpecVersion::Hdmi20{2};
+inline const HdmiSpecVersion HdmiSpecVersion::Hdmi21{3};
+
+/**
+ * @brief Source of a device's reference clock.
+ *
+ * Names the origin of the timing the device locks its outputs to.
+ * Stored on @ref VideoReferenceConfig along with the rate family and
+ * (when @c FromSignal) the input port the lock is sourced from.
+ *
+ * - @c FreeRun     — no external reference; the device generates its
+ *                    own clock from a local oscillator.
+ * - @c Genlock     — lock to a black-burst / tri-level reference
+ *                    arriving on the device's dedicated REF / GENLOCK
+ *                    BNC input.
+ * - @c External    — lock to a generic external reference input
+ *                    whose semantics the backend interprets.
+ * - @c FromSignal  — lock to the signal arriving on one of the
+ *                    device's own connectors (named by
+ *                    @ref VideoReferenceConfig::signalPort).
+ * - @c Ptp         — lock to a PTP / IEEE 1588 grandmaster (future).
+ * - @c Word        — lock to a word-clock input (future).
+ */
+class VideoReferenceSource : public TypedEnum<VideoReferenceSource> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoReferenceSource", 0,
+                                           {"FreeRun",    0},
+                                           {"Genlock",    1},
+                                           {"External",   2},
+                                           {"FromSignal", 3},
+                                           {"Ptp",        4},
+                                           {"Word",       5}); // default: FreeRun
+
+                using TypedEnum<VideoReferenceSource>::TypedEnum;
+
+                static const VideoReferenceSource FreeRun;
+                static const VideoReferenceSource Genlock;
+                static const VideoReferenceSource External;
+                static const VideoReferenceSource FromSignal;
+                static const VideoReferenceSource Ptp;
+                static const VideoReferenceSource Word;
+};
+
+inline const VideoReferenceSource VideoReferenceSource::FreeRun{0};
+inline const VideoReferenceSource VideoReferenceSource::Genlock{1};
+inline const VideoReferenceSource VideoReferenceSource::External{2};
+inline const VideoReferenceSource VideoReferenceSource::FromSignal{3};
+inline const VideoReferenceSource VideoReferenceSource::Ptp{4};
+inline const VideoReferenceSource VideoReferenceSource::Word{5};
+
+/**
+ * @brief Rate family for a video reference clock.
+ *
+ * SDI / HDMI reference clocks come in two families derived from the
+ * 148.5 MHz master oscillator: the integer-Hz family (24 / 25 / 30
+ * / 50 / 60 fps) clocked at 148.5 MHz exactly, and the NTSC-derived
+ * fractional family (23.976 / 29.97 / 59.94 fps) clocked at
+ * 148.5 / 1.001 MHz.  The family pins down which lattice the device
+ * generates; the actual frame rate within that family is supplied
+ * by @ref MediaConfig::VideoFormat / @ref FrameRate.
+ *
+ * - @c Auto        — defer to the negotiated @ref VideoFormat.
+ * - @c Integer     — 148.5 MHz family (24 / 25 / 30 / 50 / 60).
+ * - @c Fractional  — 148.5/1.001 MHz family (23.976 / 29.97 / 59.94).
+ */
+class VideoReferenceRateFamily : public TypedEnum<VideoReferenceRateFamily> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("VideoReferenceRateFamily", 0,
+                                           {"Auto",       0},
+                                           {"Integer",    1},
+                                           {"Fractional", 2}); // default: Auto
+
+                using TypedEnum<VideoReferenceRateFamily>::TypedEnum;
+
+                static const VideoReferenceRateFamily Auto;
+                static const VideoReferenceRateFamily Integer;
+                static const VideoReferenceRateFamily Fractional;
+};
+
+inline const VideoReferenceRateFamily VideoReferenceRateFamily::Auto{0};
+inline const VideoReferenceRateFamily VideoReferenceRateFamily::Integer{1};
+inline const VideoReferenceRateFamily VideoReferenceRateFamily::Fractional{2};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

@@ -22,7 +22,11 @@
 #include <promeki/size2d.h>
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
+#include <promeki/hdmisignalconfig.h>
+#include <promeki/sdisignalconfig.h>
 #include <promeki/url.h>
+#include <promeki/videoportref.h>
+#include <promeki/videoreferenceconfig.h>
 #include <promeki/windowedstat.h>
 #include <promeki/audioformat.h>
 #include <promeki/audiostreamdesc.h>
@@ -423,6 +427,26 @@ namespace {
                         case DataTypeUrl: {
                                 Result<Url> r = Url::fromString(str);
                                 if (r.second().isError() || !r.first().isValid()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypeVideoPortRef: {
+                                auto r = VideoPortRef::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypeSdiSignalConfig: {
+                                auto r = SdiSignalConfig::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypeHdmiSignalConfig: {
+                                auto r = HdmiSignalConfig::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypeVideoReferenceConfig: {
+                                auto r = VideoReferenceConfig::fromString(str);
+                                if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
                         case DataTypeWindowedStat: {

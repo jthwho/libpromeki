@@ -150,6 +150,12 @@ enum DataTypeID : uint16_t {
         DataTypeCea708DtvccPacket   = 0x61,
         DataTypeHdrStaticMetadata   = 0x62,
         DataTypeHdrDynamic2094_40   = 0x63,
+
+        // Generic video signal carriers --------------------------
+        DataTypeVideoPortRef        = 0x64,
+        DataTypeSdiSignalConfig     = 0x65,
+        DataTypeHdmiSignalConfig    = 0x66,
+        DataTypeVideoReferenceConfig = 0x67,
 };
 
 /** @brief First @ref DataTypeID value available for user-defined types. */

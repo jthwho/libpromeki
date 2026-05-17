@@ -36,6 +36,8 @@ devplan/
 │   ├── inspector-pcm-marker-decoder.md  COMPLETE; stub retained
 │   ├── dsp.md           Deferred audio DSP backends
 │   ├── nvenc.md         NVENC / NVDEC follow-up work
+│   ├── video-signal-carriers.md  VideoPortRef / SdiSignalConfig / HdmiSignalConfig / VideoReferenceConfig
+│   ├── ntv2.md          AJA NTV2 SDI / HDMI MediaIO backend (build scaffolding shipped)
 │   └── quicktime.md     QuickTime writer drain-at-close (deferred)
 ├── music/               Phase 6
 │   ├── theory.md        Phase 6A/6B — unstarted

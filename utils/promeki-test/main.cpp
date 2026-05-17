@@ -566,6 +566,7 @@ int main(int argc, char **argv) {
         registerRtpCases();
         registerRtpChaosCases();
         registerNdiCases();
+        registerVideoCarrierCases();
 
         const List<TestCase> &all = TestRunner::registeredCases();
         List<TestCase>        cases = filterCases(all, opts.regexes);
