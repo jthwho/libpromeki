@@ -90,11 +90,15 @@ that history now lives in git. What remains here is the open work.
 - **MjpegStreamMediaIO** — rate-limited MJPEG HTTP preview sink.
 - **NullPacingMediaIO** — wall-clock-paced null sink.
 - **V4L2MediaIO** — Linux V4L2 capture (with ALSA pairing).
-- **NTV2MediaIO** — AJA NTV2 SDI capture/playback. Build scaffolding
-  landed 2026-05-16 (`thirdparty/libajantv2` submodule, `PROMEKI_ENABLE_NTV2`
-  CMake option). MediaIO backend implementation pending; see
-  [proav/ntv2.md](ntv2.md) for the full implementation plan and
-  [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest contract.
+- **NTV2MediaIO** — AJA NTV2 SDI capture/playback. Phase 1 + 2 shipped
+  2026-05-16: single-link SDI source mode (capture) and sink mode (playout)
+  on a single logical channel, `Ntv2Device` / `Ntv2DeviceRegistry` /
+  `Ntv2Capabilities` / `Ntv2DeviceClock` / `Ntv2Factory` / `Ntv2Format`
+  layers complete. 17 hardware-free doctest cases pass; functional hardware
+  tests deferred until an AJA card is on the rig. See
+  [proav/ntv2.md](ntv2.md) for the full implementation plan and phase
+  status, and [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest
+  contract (Phase 3).
 - **SDLPlayerTask** / **SDLPlayerWidget** — SDL display sink + widget.
 - **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,
   DebugMedia, Mjpeg, NullPacing** all carry full describe /

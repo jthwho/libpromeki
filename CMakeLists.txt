@@ -2699,6 +2699,27 @@ if(PROMEKI_ENABLE_PROAV)
             src/proav/ndimediaio.cpp
         )
     endif()
+    if(PROMEKI_ENABLE_NTV2)
+        # AJA NTV2 MediaIO backend: see devplan/proav/ntv2.md.  The
+        # libajantv2 SDK is built as a vendored static archive
+        # (thirdparty/libajantv2) and linked into promeki — see the
+        # PROMEKI_ENABLE_NTV2 block earlier in this file.  Phase 1
+        # provides single-channel SDI source capture.
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/ntv2capabilities.h
+            include/promeki/ntv2clock.h
+            include/promeki/ntv2device.h
+            include/promeki/ntv2format.h
+            include/promeki/ntv2mediaio.h
+        )
+        list(APPEND PROMEKI_SOURCES
+            src/proav/ntv2capabilities.cpp
+            src/proav/ntv2clock.cpp
+            src/proav/ntv2device.cpp
+            src/proav/ntv2format.cpp
+            src/proav/ntv2mediaio.cpp
+        )
+    endif()
     if(PROMEKI_ENABLE_CSC)
         list(APPEND PROMEKI_HEADERS
             include/promeki/cscpipeline.h
@@ -3732,6 +3753,18 @@ if(PROMEKI_BUILD_TESTS)
                 tests/unit/ndidiscovery.cpp
                 tests/unit/ndiclock.cpp
                 tests/unit/ndimediaio.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_NTV2)
+            # NTV2 unit tests cover only the hardware-free units
+            # (format mappings, clock wrap extension, sink-mode
+            # negotiation).  The functional capture/playout tests live
+            # under tests/func/ and are SKIPPED when no AJA card is
+            # present.
+            list(APPEND UNITTEST_SOURCES
+                tests/unit/ntv2format.cpp
+                tests/unit/ntv2clock.cpp
+                tests/unit/ntv2mediaio.cpp
             )
         endif()
         if(PROMEKI_ENABLE_SRC)

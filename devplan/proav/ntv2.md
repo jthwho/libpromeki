@@ -1,18 +1,21 @@
 # AJA NTV2 MediaIO Backend
 
 **Library:** `promeki` (gated by `PROMEKI_ENABLE_NTV2`)
-**Status:** Build scaffolding landed 2026-05-16 (`thirdparty/libajantv2`
-submodule pinned to `ntv2_18_0_0`, CMake flag wired, `NTV2` listed in
-the feature string). No backend code yet — this document is the
-implementation plan.
+**Status:** **Phase 1 + 2 complete (2026-05-16).** Source-mode capture
+and sink-mode playout both ship for single-link SDI on a single logical
+channel, with the device / capability / clock / format-mapping layers
+underneath.  17 doctest cases cover the hardware-free units (format
+mappings, 32→64 bit clock-counter wrap extension, sink-mode
+`proposeInput` negotiation, URL parsing).  Functional hardware tests
+remain TODO — the rig needs an AJA card present.  Phase 3 (ANC capture
++ insertion) is the next milestone.
 **Standards:** All work follows `CODING_STANDARDS.md`. Every new
 class requires complete doctest coverage. See `devplan/README.md`
 for the full requirements.
-**Depends on:** [`devplan/proav/video-signal-carriers.md`](video-signal-carriers.md)
-— the generic carrier types (`VideoPortRef`, `SdiSignalConfig`,
-`HdmiSignalConfig`, `VideoReferenceConfig`) ship in their own
-milestone first.  Phase 1 of this plan presumes those types and
-their `MediaConfig` keys are already in the library.
+**Depends on:** the generic carrier types
+(`VideoPortRef`, `SdiSignalConfig`, `HdmiSignalConfig`,
+`VideoReferenceConfig`) and their matching `MediaConfig` keys —
+shipped 2026-05-16, devplan retired.
 
 ## Goal
 
@@ -360,21 +363,22 @@ ntv2:///1                      # device 0 implicit
 CLI / JSON / Variant entry-points all accept the same config keys
 as the URL host, per the existing MediaConfig pattern.
 
-## Generic video-signal types (separate milestone)
+## Generic video-signal types (shipped 2026-05-16)
 
 The carrier-level types this backend consumes —
 `VideoPortRef`, `SdiSignalConfig`, `HdmiSignalConfig`,
 `VideoReferenceConfig`, plus the matching `MediaConfig` keys
 (`SdiInputSignal`, `SdiOutputSignal`, `HdmiInputSignal`,
-`HdmiOutputSignal`, `VideoReference`) — ship in their own
-milestone: **[`video-signal-carriers.md`](video-signal-carriers.md)**.
+`HdmiOutputSignal`, `VideoReference`) — landed as their own
+changeset and the per-type devplan retired.
 
 They are not NTV2-specific (DeckLink, ST 2022-6, ST 2110-20, and
 any future hardware-SDI / SDI-over-IP backend reuses them
 unchanged), do not depend on the AJA SDK, and are independently
-useful for tooling.  See that milestone for the full type
-definitions, `PROMEKI_DATATYPE` ids, CoW `SharedPtr<Impl>`
-conventions, and per-phase rollout.
+useful for tooling.  See `include/promeki/videoportref.h`,
+`sdisignalconfig.h`, `hdmisignalconfig.h`, and
+`videoreferenceconfig.h` for the type definitions / `PROMEKI_DATATYPE`
+ids / CoW `SharedPtr<Impl>` conventions.
 
 Short summary of the surface this backend depends on:
 
@@ -583,57 +587,116 @@ buffer to a thin `ntv2AncToPackets` converter that emits an
 Each phase ends in a working, testable, committable slice. Cut
 points chosen so we can validate against real hardware as we go.
 
-### Phase 1 — Device layer + device clock + single-channel SDI capture
+**Progress:** Phase 1 + 2 complete (2026-05-16, both same day).
+Phase 3 (ANC) is the next active milestone.
 
-**Prerequisite:** the generic carrier types and `MediaConfig`
-keys from [`video-signal-carriers.md`](video-signal-carriers.md)
-must be in the library first.  This phase consumes them; it does
-not introduce them.
+### Phase 1 — Device layer + device clock + single-channel SDI capture — **DONE 2026-05-16**
+
+**What shipped:**
 
 - `Ntv2Device`, `Ntv2DeviceRegistry`, `Ntv2Capabilities`.
-- `Ntv2DeviceClock` — sample-counter clock backing both source
-  timestamping and (Phase 2+) sink pacing. Per-device singleton
-  vended by `Ntv2Device::sampleClock()`. Includes 32→64 bit wrap
-  extension, VBI fallback path, and per-device `ClockDomain`
-  registration.
-- `Ntv2MediaIO` source mode only, single-link SDI, single channel,
-  no ANC, optional audio system 1. The clock is bound to the port
-  group via `addPortGroup(name, clock)` on Open.
-- Pixel formats: UYVY, V210 (internal — temporary CSC bridge if
-  needed), RGB8, BGR8.
-- `Ntv2Factory` registers backend; URL `ntv2://<device>/<channel>`
-  parses to config; `enumerate()` calls
-  `CNTV2DeviceScanner::GetNumDevices` and emits canonical names.
-- Doctest coverage: format-mapping helpers (no hardware),
-  `Ntv2PortSpec` round-trips, `Ntv2DeviceRegistry` refcount logic,
-  `Ntv2DeviceClock` 32→64 bit wrap extension (driven by an injected
-  fake-counter source so the test runs without hardware). The
-  device-impl mock story (see Open Questions) decides whether the
-  clock test uses an `Ntv2DeviceImpl` interface or a friend-class
-  test seam.
-- Functional test: `tests/func/ntv2-capture-smoke/` — skip when no
-  AJA card present; on real hardware it captures 60 frames from
-  `ntv2://0/1`, validates frame count / no drops, and asserts the
-  port-group clock's per-frame deltas land within
-  `± resolutionNs() * 2` of the nominal frame period (i.e. proves
-  the sample counter actually drives the clock).
+- `Ntv2DeviceClock` — sample-counter clock with VBI-fallback path,
+  per-device `ClockDomain`, and a 32→64 bit shadow-counter wrap
+  extension serialised by an internal mutex.  Per-device singleton
+  vended by `Ntv2Device::sampleClock()`; a static `createForTest`
+  factory + `setCounterSourceForTest` injection seam lets the
+  hardware-free unit tests drive the wrap arithmetic without an AJA
+  card (chose the test-seam route from the Open-Questions list
+  rather than an `Ntv2DeviceImpl` interface).  `noteVbi` takes a
+  `TimeStamp` so callers don't manually extract ns at the boundary.
+- `Ntv2MediaIO` source mode — single-link SDI, single channel, no
+  ANC, optional audio system 1.  The clock is bound to the port
+  group via `addPortGroup(name, clock)` on Open.  Audio system is
+  reserved (so the device clock can latch onto its sample counter)
+  but Phase 1 does not yet emit audio payloads to the consumer —
+  that's deferred to a follow-up.
+- Pixel formats: UYVY, YUYV, RGB8, BGR8, ARGB, ABGR, RGBA (7 first-
+  class mappings).  V210 / 10-bit RGB / 48-bit RGB land in Phase 5
+  alongside the V210 first-class PixelFormat decision.
+- `Ntv2Factory` registers backend via `PROMEKI_REGISTER_MEDIAIO_FACTORY`
+  at TU load time; URL `ntv2://<device>/<channel>` parses to config
+  (integer / name-shorthand / `serial:` host all supported);
+  `enumerate()` walks `CNTV2DeviceScanner::GetNumDevices` and emits
+  one URL per channel each card exposes; `--list-io` shows
+  `Ntv2 I/O AJA NTV2 SDI / HDMI capture and playout via libajantv2`.
+- Signal routing: per-channel single-link Connect
+  (`NTV2_XptFrameBuffer{N}_Input ← NTV2_XptSDIIn{N}`) for source.
+- Worker threads run as `Thread` subclasses (`CaptureWorker`),
+  named `ntv2cap:<deviceIdx>:<channel>` so several capture workers
+  across one or more cards stay distinguishable in `top -H` / logs.
+- All atomics / threads / sleeps use the library's `Atomic<T>` /
+  `Thread` / `Thread::sleep*` rather than `std::*` (per the
+  prefer-own-classes feedback).
 
-### Phase 2 — Single-channel SDI playout
+**Tests landed:**
 
-- `Ntv2MediaIO` sink mode, single-link SDI, single channel, no ANC.
-- AutoCirculate output path, audio system playback.
-- `proposeInput` matches the supported pixel-format table; otherwise
-  asks for the closest acceptable shape so the planner splices a
-  CSC.
-- Sink clock — default mode (card paces itself);
-  `executeCmd(SetClock)` returns `Error::NotSupported` for now.
-  External-pacing support is Phase 6.
-- The port group's clock is the device sample clock so downstream
-  consumers can still read meaningful times against the sink — even
-  without external pacing, the playout-side counter is the
-  authoritative wall time at the SDI connector.
-- Doctest: `proposeInput` covers each NTV2 frame-buffer format and
-  a few unsupported ones.
+- `tests/unit/ntv2format.cpp` — round-trip coverage for every
+  PixelFormat the table maps, every supported broadcast video
+  format (HD/SD progressive + interlaced), channel index ↔ enum,
+  SDI/HDMI port → input source, reference-source mapping, link-
+  standard cable-count check.
+- `tests/unit/ntv2clock.cpp` — `createForTest` factory, 32→64 wrap
+  arithmetic across a full counter rollover via an injected fake
+  counter, counter-source failure → `Error::DeviceError`,
+  VBI-fallback resolution / `noteVbi` advancement.
+
+**Tests still to land (need hardware):**
+
+- `tests/func/ntv2-capture-smoke/` — capture 60 frames from
+  `ntv2://0/1`; validate frame count / no drops; assert port-group
+  clock per-frame deltas land within `± resolutionNs() * 2` of the
+  nominal frame period (proves sample counter actually drives the
+  clock).
+
+### Phase 2 — Single-channel SDI playout — **DONE 2026-05-16**
+
+**What shipped:**
+
+- `Ntv2MediaIO` sink mode — single-link SDI, single channel, no ANC.
+  `openSink` / `closeSink` mirror the source-mode shape; audio
+  system reservation in place (audio frame submission deferred to a
+  follow-up, same as Phase 1 capture).
+- `AutoCirculateInitForOutput` + per-channel `PlayoutWorker` (named
+  `ntv2pb:<deviceIdx>:<channel>`) that drains a bounded
+  `WriteQueueDepth=4` queue and submits via `AutoCirculateTransfer`.
+  Pre-buffers 3 frames before calling `AutoCirculateStart` (mirrors
+  the player demo's full-pipe start).  Strand-side
+  `executeCmd(Write)` enqueues; on overflow the oldest frame is
+  dropped + counted (`StatsFramesDroppedSink`) rather than blocking
+  the strand worker.
+- Sink-side `proposeInput`: pass-through when the offered
+  PixelFormat already maps to an NTV2 frame-buffer format,
+  otherwise picks a same-color-family fallback
+  (`YUV8_422_UYVY_Rec709` for YCbCr, `RGB8_sRGB` for the rest) so
+  the planner inserts a CSC bridge instead of failing open with
+  `FormatMismatch`.  Audio-only descriptors pass through unchanged.
+- `executeCmd(SetClock)` returns `Error::NotSupported` (external
+  pacing is Phase 6).  The port group's clock is still the device
+  sample clock so downstream consumers see meaningful times against
+  the sink connector.
+- Sink-side signal routing: per-channel single-link Connect
+  (`NTV2_XptSDIOut{N}_Input ← NTV2_XptFrameBuffer{N}YUV`, or
+  `…RGB` when the format's color model is non-YCbCr).
+- Sets bi-directional SDI to transmit direction on cards with
+  `HasBiDirectionalSDI` capability.
+- Factory now advertises `canBeSink() == true`.
+
+**Tests landed:**
+
+- `tests/unit/ntv2mediaio.cpp` — factory advertises both source +
+  sink, URL parsing across the three shapes (`ntv2://0/1`,
+  `ntv2://kona5/2`, `ntv2:///3`), `proposeInput` passes every
+  supported NTV2 frame-buffer format through unchanged, requests
+  UYVY for unmapped YCbCr / RGB8 for unmapped non-YCbCr, leaves
+  audio-only descriptors untouched, and rejects a null output
+  pointer.
+
+**Tests still to land (need hardware):**
+
+- Functional playout test — feed TPG → `ntv2://0/2`, verify SDK
+  reports the expected goodXfer count over a fixed wall window,
+  hook up an SDI loop to capture and compare against a reference
+  TPG render.
 
 ### Phase 3 — ANC capture + insertion
 
@@ -720,13 +783,15 @@ not introduce them.
 
 ## Open questions
 
-- **Mock layer for unit tests.** `CNTV2Card` is hard to mock — most
-  methods are non-virtual and the SDK assumes a real driver. Options:
-  (a) inject an `Ntv2DeviceImpl` interface that production wraps
-  `CNTV2Card` and tests fake out; (b) only test format / port /
-  registry logic without touching `Ntv2Device`; (c) add a small
-  doctest gate for hardware-required tests, default-skipped.
-  Probably some combination. Decide before Phase 1 code lands.
+- **Mock layer for unit tests.** *(Resolved 2026-05-16.)*  Phase 1
+  went with option (b)+(c): no `Ntv2DeviceImpl` indirection in
+  production; the hardware-free units (format mappings, clock wrap)
+  are tested directly, and `Ntv2DeviceClock` exposes a
+  `createForTest` static factory plus a `setCounterSourceForTest`
+  injection seam (`bool (*fn)(uint32_t *, void *)`) so the wrap-
+  extension arithmetic can be exercised without an AJA card.
+  Hardware-required tests live under `tests/func/` and are SKIPPED
+  when no card is present.
 - **OEM task mode for non-acquired channels.** When the user runs
   `Ntv2RetailServices=true` we keep the retail tasks running; the
   AJA OEM task switch on `AcquireStreamForApplication` may still

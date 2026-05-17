@@ -2873,6 +2873,120 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setType(DataTypeInt32)
                                            .setDefault(int32_t(-1))
                                            .setDescription("JPEG compression quality 1-100 (-1 = device default)."));
+
+                // ============================================================
+                // AJA NTV2 (SDI / HDMI capture & playout) — Ntv2MediaIO
+                //
+                // The NTV2 MediaIO backend wraps AJA's libajantv2 SDK.
+                // One MediaIO instance represents one *logical channel*
+                // on an AJA card: a framebuffer + the SDI/HDMI port(s)
+                // bound to it + an optional audio system + an optional
+                // ANC engine.  The carrier-level configuration (which
+                // physical ports, which SMPTE link standard, which
+                // reference clock) is supplied via the generic
+                // @ref SdiInputSignal / @ref SdiOutputSignal /
+                // @ref HdmiInputSignal / @ref HdmiOutputSignal /
+                // @ref VideoReference keys.  The keys in this block are
+                // strictly AJA-specific identity / behaviour knobs.
+                // ============================================================
+
+                /// @brief int — AJA device index (0-based, as enumerated
+                /// by @c CNTV2DeviceScanner).  -1 (default) routes
+                /// identification through @ref Ntv2DeviceName instead.
+                PROMEKI_DECLARE_ID(Ntv2DeviceIndex,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(-1))
+                                           .setDescription("AJA device index (0-based); -1 = use Ntv2DeviceName."));
+
+                /// @brief String — AJA device locator: either a name
+                /// shorthand recognised by @c CNTV2DeviceScanner
+                /// (e.g. "kona5", "corvid44") or @c "serial:NNN" to bind
+                /// by the physical board serial number.  Empty (default)
+                /// means "use Ntv2DeviceIndex".
+                PROMEKI_DECLARE_ID(Ntv2DeviceName,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("AJA device locator (name shorthand or \"serial:NNN\")."));
+
+                /// @brief int — 1-based logical channel index on the
+                /// card (matches AJA's @c NTV2Channel numbering).
+                /// Identifies the framebuffer + AutoCirculate resource
+                /// this MediaIO will own.
+                PROMEKI_DECLARE_ID(Ntv2Channel,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(1))
+                                           .setRange(int32_t(1), int32_t(8))
+                                           .setDescription("1-based logical channel index on the AJA card."));
+
+                /// @brief int — Audio system to use for this channel.
+                /// -1 (default) auto-pairs with the channel index;
+                /// 1..N selects an explicit system; 0 disables audio
+                /// capture / playout for the channel.
+                PROMEKI_DECLARE_ID(Ntv2AudioSystem,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(-1))
+                                           .setRange(int32_t(-1), int32_t(8))
+                                           .setDescription("NTV2 audio system (-1 = auto-pair with channel, 0 = disabled, 1..N = explicit)."));
+
+                /// @brief bool — enable the ANC extractor (source mode)
+                /// or inserter (sink mode) for this channel.  Requires
+                /// hardware that reports @c CanDoCustomAnc; the backend
+                /// returns @c Error::NotSupported at open time if the
+                /// card lacks the ANC engine and this is true.
+                PROMEKI_DECLARE_ID(Ntv2WithAnc,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Enable ANC extractor / inserter for this channel."));
+
+                /// @brief bool — if true, leave AJA's retail services
+                /// running rather than switching to @c NTV2_OEM_TASKS
+                /// for the duration of the open.  Default false (mirror
+                /// the demo behaviour, which is the only safe choice
+                /// when libpromeki owns the card).
+                PROMEKI_DECLARE_ID(Ntv2RetailServices,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Keep AJA retail services running (default false → OEM tasks)."));
+
+                /// @brief bool — allow channels on this card to run at
+                /// independent video formats (corresponds to AJA's
+                /// @c MultiFormatMode).  Default true.
+                PROMEKI_DECLARE_ID(Ntv2MultiFormatMode,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Allow per-channel independent video formats."));
+
+                /// @brief bool — page-lock host frame buffers via
+                /// @c DMABufferLock so AutoCirculate DMA bypasses the
+                /// pinning trip on every transfer.  Default true; set
+                /// false to fall back to plain heap buffers when the
+                /// kernel rejects the pin (e.g. RLIMIT_MEMLOCK
+                /// exhausted).
+                PROMEKI_DECLARE_ID(Ntv2BufferLockMode,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Page-lock host buffers for DMA throughput."));
+
+                /// @brief int — VBI poll timeout (ms) used by the
+                /// capture / playout worker so @ref MediaIO close can
+                /// interrupt @c WaitForInputVerticalInterrupt in
+                /// finite time.  Bounds how quickly
+                /// @c cancelBlockingWork unwinds an in-flight blocking
+                /// read.
+                PROMEKI_DECLARE_ID(Ntv2VbiTimeoutMs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(50))
+                                           .setRange(int32_t(5), int32_t(1000))
+                                           .setDescription("WaitForInputVerticalInterrupt poll timeout in ms."));
 };
 
 /**
