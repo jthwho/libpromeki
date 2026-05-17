@@ -44,6 +44,9 @@ promeki_config_option(PROMEKI_ENABLE_AAC       ON)
 promeki_config_option(PROMEKI_ENABLE_SRC       ON)
 promeki_config_option(PROMEKI_ENABLE_CSC       ON)
 promeki_config_option(PROMEKI_ENABLE_CIRF      ON)
+# NTV2 is fully vendored, so it builds anywhere libudev is available —
+# pin ON for SDI ingest / playout boxes.
+promeki_config_option(PROMEKI_ENABLE_NTV2      ON)
 # V4L2 needs Linux + ALSA — leave probe-driven for portable builds, or
 # pin ON in a derived config when targeting a known capture box.
 # promeki_config_option(PROMEKI_ENABLE_V4L2    OFF)

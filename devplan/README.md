@@ -81,6 +81,12 @@ devplan/
    system, `cmake/configs/cross-aarch64-linux.cmake` + toolchain, and
    per-feature `#if PROMEKI_ENABLE_*` header guards shipped
    (2026-05-15). Next: qemu-user CI lane (`infra/qemu-cross-testing.md`).
+8. **AJA NTV2 build scaffolding** — `thirdparty/libajantv2` submodule
+   (ntv2_18_0_0), `PROMEKI_ENABLE_NTV2` CMake option, wired into
+   `promeki` as PRIVATE link target (2026-05-16). MediaIO backend
+   (`NTV2MediaIO`) lands in a follow-up changeset. See
+   [proav/backends.md](proav/backends.md) and
+   [proav/ancdata.md](proav/ancdata.md) Phase 5.
 7. **DataStream / DataType consolidation** — Phases 1-3 complete
    (2026-05-16): `PROMEKI_DATATYPE` macro, `DataTypeID` enum, 47 types
    migrated, `enum DataStream::Type` and `Variant::TypeXxx` aliases
@@ -98,7 +104,7 @@ devplan/
 | 3B    | HTTP / WebSocket / TLS               | COMPLETE                            |
 | 3C    | AV-over-IP (RTP / SDP / multicast)   | mostly complete; PtpClock pending   |
 | 3D    | SRT (Secure Reliable Transport)      | shipped; SrtMediaIO backend deferred |
-| 4     | ProAV — MediaIO framework + backends | framework + 18 backends shipped;<br>follow-ups in `proav/` |
+| 4     | ProAV — MediaIO framework + backends | framework + 18 backends shipped;<br>NTV2 scaffolding landed; backend pending; follow-ups in `proav/` |
 | 4A    | MediaPipeline                        | shipped; docs + tests pending       |
 | 4M    | MediaPipelinePlanner                 | shipped (single-hop + 2-hop codec)  |
 | 5     | TUI widgets                          | unstarted                           |

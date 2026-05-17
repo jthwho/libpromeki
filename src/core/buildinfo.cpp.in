@@ -223,6 +223,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_NDI
         features += "NDI";
 #endif
+#if PROMEKI_ENABLE_NTV2
+        features += "NTV2";
+#endif
 #if PROMEKI_ENABLE_SRT
         features += "SRT";
 #endif

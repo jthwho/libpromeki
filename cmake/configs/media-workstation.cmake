@@ -44,6 +44,8 @@ promeki_config_option(PROMEKI_ENABLE_AAC       ON)
 promeki_config_option(PROMEKI_ENABLE_SRC       ON)
 promeki_config_option(PROMEKI_ENABLE_CSC       ON)
 promeki_config_option(PROMEKI_ENABLE_CIRF      ON)
+# NTV2 is fully vendored — pin ON for desktop dev with AJA hardware.
+promeki_config_option(PROMEKI_ENABLE_NTV2      ON)
 # Probe-driven (deliberately not pinned):
 #   PROMEKI_ENABLE_JPEGXS  — x86-64 + nasm/yasm
 #   PROMEKI_ENABLE_V4L2    — Linux + ALSA + linux/videodev2.h

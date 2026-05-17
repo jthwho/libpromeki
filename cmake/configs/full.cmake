@@ -54,6 +54,7 @@ promeki_config_option(PROMEKI_ENABLE_CUDA      ON)
 promeki_config_option(PROMEKI_ENABLE_NVENC     ON)
 promeki_config_option(PROMEKI_ENABLE_NVDEC     ON)
 promeki_config_option(PROMEKI_ENABLE_NDI       ON)
+promeki_config_option(PROMEKI_ENABLE_NTV2      ON)
 
 # ---------------------------------------------------------------------------
 # External SDK paths — uncomment + edit on hosts where the SDKs live

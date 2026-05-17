@@ -569,6 +569,14 @@ else()
     message(STATUS "NDI SDK not found; set PROMEKI_NDI_SDK_DIR to enable (see docs/ndi.md)")
 endif()
 option(PROMEKI_ENABLE_NDI      "Include NDI (Network Device Interface) media transport (requires PROAV + NDI SDK)" ${PROMEKI_ENABLE_NDI_DEFAULT})
+# AJA NTV2 SDI / HDMI capture & playout: AJA's open-source libajantv2
+# library targeting their Kona / Corvid / IO / T-TAP product line.  The
+# library is fully vendored as a submodule under thirdparty/libajantv2/
+# (no separate SDK install needed), so this flag defaults to ON when
+# PROMEKI_ENABLE_PROAV is on.  Requires PROMEKI_ENABLE_PROAV.  The
+# Linux build pulls in libudev at link time — install libudev-dev (or
+# equivalent for your distro) before enabling.
+option(PROMEKI_ENABLE_NTV2     "Include AJA NTV2 SDI / HDMI capture & playout (vendored libajantv2; requires PROAV)" ON)
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
@@ -588,6 +596,7 @@ option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"   
 option(PROMEKI_USE_SYSTEM_LLHTTP        "Use system llhttp instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_MBEDTLS       "Use system mbedTLS instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SRT           "Use system libsrt instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_NTV2          "Use system libajantv2 instead of vendored"     OFF)
 
 # Build statistics wrapper #####################################################
 # When PROMEKI_BUILD_STATS is ON and the platform has GNU `/usr/bin/time -v`,
@@ -759,6 +768,9 @@ if(PROMEKI_ENABLE_NDI)
             "Set PROMEKI_NDI_SDK_DIR to the NDI SDK directory "
             "(the one containing include/Processing.NDI.Lib.h).  See docs/ndi.md.")
     endif()
+endif()
+if(PROMEKI_ENABLE_NTV2 AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_NTV2 requires PROMEKI_ENABLE_PROAV")
 endif()
 
 # Build info ###################################################################
@@ -1836,6 +1848,49 @@ if(PROMEKI_ENABLE_FREETYPE)
         )
         add_dependencies(promeki_freetype_vendored freetype-ep)
         set(PROMEKI_FREETYPE_TARGET promeki_freetype_vendored)
+    endif()
+endif()
+
+# --- AJA NTV2 (libajantv2, vendored as thirdparty/libajantv2) ---
+# libajantv2 is AJA Video Systems' open-source SDK for their NTV2-family
+# capture / playout boards (Kona, Corvid, IO, T-TAP, ...).  We bring it
+# in as a submodule pinned to the ntv2_18_0_0 release tag and build it
+# as a static library that gets linked PRIVATE into libpromeki.so.
+#
+# Build configuration:
+#   * AJANTV2_BUILD_SHARED=OFF       — static, linked into promeki.so
+#   * AJANTV2_DISABLE_DEMOS=ON       — skip sample apps
+#   * AJANTV2_DISABLE_DRIVER=ON      — skip the Linux kernel driver
+#                                      (out-of-tree module, distributed
+#                                      separately and not built here)
+#   * AJANTV2_DISABLE_TESTS=ON       — skip libajantv2's own unit tests
+#   * AJANTV2_DISABLE_TOOLS=ON       — skip command-line tools
+#   * AJANTV2_DISABLE_PLUGIN_LOAD=ON — disable libajantv2's runtime plugin
+#                                      loader, which otherwise pulls in
+#                                      its own bundled mbedTLS and would
+#                                      collide with the mbedTLS we already
+#                                      vendor for PROMEKI_ENABLE_TLS.
+#   * AJANTV2_DISABLE_RDMA=ON        — no NVIDIA GPUDirect RDMA support
+#
+# Linux platform link deps (rt, pthread, dl, udev) come through the
+# `ajantv2` INTERFACE link list automatically — installing libudev-dev
+# is a prerequisite for enabling PROMEKI_ENABLE_NTV2 on Linux.
+if(PROMEKI_ENABLE_NTV2)
+    if(PROMEKI_USE_SYSTEM_NTV2)
+        find_package(libajantv2 REQUIRED)
+        set(PROMEKI_NTV2_TARGET libajantv2::ajantv2)
+    else()
+        set(AJANTV2_BUILD_OPENSOURCE    ON  CACHE INTERNAL "")
+        set(AJANTV2_BUILD_SHARED        OFF CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_DEMOS       ON  CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_DRIVER      ON  CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_TESTS       ON  CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_TOOLS       ON  CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_PLUGIN_LOAD ON  CACHE INTERNAL "")
+        set(AJANTV2_DISABLE_RDMA        ON  CACHE INTERNAL "")
+        set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+        add_subdirectory(thirdparty/libajantv2 EXCLUDE_FROM_ALL)
+        set(PROMEKI_NTV2_TARGET ajantv2)
     endif()
 endif()
 
@@ -2917,6 +2972,15 @@ if(PROMEKI_ENABLE_PROAV)
             target_compile_definitions(promeki PRIVATE
                 PROMEKI_NDI_RUNTIME_DIR_STR="${PROMEKI_NDI_RUNTIME_DIR}")
         endif()
+    endif()
+    if(PROMEKI_ENABLE_NTV2)
+        # libajantv2 is a fully static, in-tree dependency — public
+        # includes (ajaanc/includes, ajabase, ajantv2/includes, ...) and
+        # platform link deps (rt, pthread, dl, udev on Linux) ride on the
+        # `ajantv2` target's INTERFACE properties, so nothing extra needs
+        # to be wired up here.
+        target_link_libraries(promeki PRIVATE ${PROMEKI_NTV2_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_NTV2)
     endif()
     if(PROMEKI_ENABLE_CSC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_HWY_TARGET})

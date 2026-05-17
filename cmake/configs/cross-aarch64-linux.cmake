@@ -145,3 +145,7 @@ promeki_config_option(PROMEKI_ENABLE_CUDA      OFF)
 promeki_config_option(PROMEKI_ENABLE_NVENC     OFF)
 promeki_config_option(PROMEKI_ENABLE_NVDEC     OFF)
 promeki_config_option(PROMEKI_ENABLE_NDI       OFF)
+# libajantv2 cross-builds, but needs libudev-dev:arm64 in the sysroot.
+# Pin OFF for the WIP bring-up; flip ON once the target sysroot is
+# verified to have libudev.
+promeki_config_option(PROMEKI_ENABLE_NTV2      OFF)  # WIP: needs libudev-dev:arm64 in sysroot.

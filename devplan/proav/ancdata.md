@@ -29,7 +29,7 @@ round-trip, HDR pass-through) does not have to touch raw bytes.
 | 3.5   | Subtitle file I/O + CEA-608 codec (Subtitle/SubtitleList/SubRip, Scc, Cea608Encoder/Decoder all three modes, TPG injection, round-trip func test) | **Landed** |
 | 4     | MediaIO backend integration (codec API Frame-shaped refactor + ANC pairing, Cea708 ← / → HlsSei + NVENC SEI injection) | **Partial** — YouTube delivery path landed 2026-05-12; NdiMediaIO ANC + RtmpMediaIO ANC + AncMetadataStamper pending |
 | 4.5   | Frame-sync ANC policy (FrameSyncDisposition + AncSyncPolicy registry + AncFrameSync class with stash + per-codec Play/Drop/Repeat policies for ATC, Cea708, Afd, Hdr*) | **Mostly landed** — registry + AncFrameSync (stash included) + per-codec policies for ATC/Cea708/Afd/Hdr static/Hdr dynamic landed; SCTE-104 + KLV policies wait on Phase 3 codecs; functional 23.976→60 3:2-pulldown test pending |
-| 5     | AJA NTV2 SDI ingest contract (documentation only) | **Pending** |
+| 5     | AJA NTV2 SDI ingest contract (documentation only) + build scaffolding (`thirdparty/libajantv2`, `PROMEKI_ENABLE_NTV2`) | **Scaffolding landed 2026-05-16; MediaIO backend pending** |
 | 6     | Inspector ANC JSONL, caption renderer, CEA-708 DTVCC stack, TPG 708 emission, captions.md, `captions.cea708.subrip_roundtrip` | **Mostly landed** — remaining functional matrix + `docs/proav/anc.dox` pending |
 
 The Phase 2b end-to-end slice proves the architecture: caption text
@@ -708,11 +708,16 @@ Work items:
 
 ---
 
-## Phase 5 — AJA NTV2 SDI capture contract (forward-looking)
+## Phase 5 — AJA NTV2 SDI capture contract
 
-No code lands here for AJA NTV2 — but the ANC stack ships
-with the contract the future SDI MediaIO must satisfy so
-that backend is a drop-in producer. The contract is
+**Build scaffolding landed 2026-05-16.** `thirdparty/libajantv2` is
+now a git submodule (AJA ntv2_18_0_0 / commit `4add452`).
+`PROMEKI_ENABLE_NTV2` (default ON, requires PROAV) wires `ajantv2`
+into `promeki` as a PRIVATE link target. The MediaIO backend itself
+lands in a follow-up changeset.
+
+The ANC stack ships with the contract the future SDI MediaIO must
+satisfy so that backend is a drop-in producer. The contract is
 captured here until `docs/proav/anc.dox` lands (Phase 6).
 
 - [ ] An SDI capture MediaIO that produces ANC must:
