@@ -13,8 +13,12 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Manages a list of strings.
@@ -33,6 +37,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class StringList : public List<String> {
         public:
+                PROMEKI_DATATYPE(StringList, DataTypeStringList, 1)
+
+                /** @brief Writes a tagged uint32 count followed by N tagged Strings. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged uint32 count followed by N tagged Strings. */
+                template <uint32_t V> static Result<StringList> readFromStream(DataStream &s);
+
                 using List::List;
                 using List::operator+=;
                 using List::operator=;
@@ -71,6 +82,27 @@ class StringList : public List<String> {
                                 if (it + 1 != constEnd()) result += delimiter;
                         }
                         return result;
+                }
+
+                /**
+                 * @brief Canonical String form: comma-joined elements.
+                 *
+                 * Round-trips through @ref fromString.
+                 */
+                String toString() const { return join(","); }
+
+                /**
+                 * @brief Parses a comma-separated list into a StringList.
+                 *
+                 * Empty input yields an empty list.  Never fails — provided
+                 * for symmetry with @ref toString and so the DataType ops
+                 * table picks up an auto-converter pair.
+                 */
+                static Result<StringList> fromString(const String &s) {
+                        StringList out;
+                        if (s.isEmpty()) return makeResult(std::move(out));
+                        out = s.split(",");
+                        return makeResult(std::move(out));
                 }
 
                 /**

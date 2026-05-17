@@ -267,10 +267,10 @@ class HttpServer : public ObjectBase {
                  * its operations are inert (see @ref SslContext) and
                  * the server simply does not start a TLS handshake.
                  */
-                void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
+                void setSslContext(SslContext ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
-                SslContext::Ptr sslContext() const { return _sslContext; }
+                SslContext sslContext() const { return _sslContext; }
 
                 /**
                  * @brief Reports whether this build can speak TLS.
@@ -301,7 +301,7 @@ class HttpServer : public ObjectBase {
 
                 unsigned int    _idleTimeoutMs = HttpConnection::DefaultIdleTimeoutMs;
                 int64_t         _maxBodyBytes = HttpConnection::DefaultMaxBodyBytes;
-                SslContext::Ptr _sslContext;
+                SslContext _sslContext;
 
                 // Helpers for the reflection adapters; non-template
                 // because the per-key plumbing doesn't depend on the

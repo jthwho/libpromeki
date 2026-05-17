@@ -192,7 +192,7 @@ TEST_CASE("MediaIO: defaultConfig round-trips losslessly through JSON for every 
                         // VariantDatabase::set's spec-validation
                         // warning on the way back in.
                         Variant parsed;
-                        if (onWire.type() == Variant::TypeString && !sp.acceptsType(Variant::TypeString)) {
+                        if (onWire.type() == DataTypeString && !sp.acceptsType(DataTypeString)) {
                                 Error pe;
                                 parsed = sp.parseString(onWire.get<String>(), &pe);
                                 CHECK(pe.isOk());

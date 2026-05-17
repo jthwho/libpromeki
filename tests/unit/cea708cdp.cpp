@@ -208,7 +208,7 @@ TEST_CASE("Cea708Cdp: round-trips through Variant") {
 
         Variant   v;
         v.set(original);
-        CHECK(v.type() == Variant::TypeCea708Cdp);
+        CHECK(v.type() == DataTypeCea708Cdp);
         Cea708Cdp out = v.get<Cea708Cdp>();
         CHECK(out == original);
 }

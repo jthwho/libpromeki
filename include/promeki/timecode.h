@@ -18,9 +18,12 @@
 #include <promeki/enums.h>
 #include <promeki/framenumber.h>
 #include <promeki/array.h>
+#include <promeki/datatype.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Class for holding and manipulating timecode.
@@ -39,7 +42,7 @@ PROMEKI_NAMESPACE_BEGIN
  * ++tc;  // advance to 01:00:00:01
  *
  * // Convert to string
- * auto [str, err] = tc.toString();  // "01:00:00:01"
+ * String str = tc.toString();  // "01:00:00:01"
  *
  * // From absolute frame number
  * Timecode tc2 = Timecode::fromFrameNumber(Timecode::NDF24, 86400);
@@ -51,8 +54,15 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Timecode {
         public:
+                PROMEKI_DATATYPE(Timecode, DataTypeTimecode, 1)
+
                 using DigitType = uint8_t;  ///< Type used for individual timecode digit fields.
                 using FlagsType = uint32_t; ///< Type used for timecode flag bitmasks.
+
+                /** @brief Writes the canonical SMPTE string form (body-only; framework wraps in a frame). */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical string form for wire version @p V. */
+                template <uint32_t V> static Result<Timecode> readFromStream(DataStream &s);
 
                 /** @brief Standard timecode types. */
                 enum TimecodeType {
@@ -304,9 +314,25 @@ class Timecode {
                 const VtcFormat *vtcFormat() const { return _mode.vtcFormat(); }
 
                 /** @brief Implicit conversion to String using SMPTE format. */
-                operator String() const { return toString().first(); }
+                operator String() const { return toString(); }
                 /**
-                 * @brief Converts the timecode to a string.
+                 * @brief Canonical SMPTE string form (cannot fail).
+                 *
+                 * The no-arg shape required by the project-wide
+                 * @c String @c toString convention.  Delegates to
+                 * @ref toFormatString with the default SMPTE format and
+                 * discards the (extremely rare) libvtc internal error,
+                 * returning an empty String in that case.  Callers that
+                 * need the error path or a non-default format style
+                 * should call @ref toFormatString directly.
+                 *
+                 * @return The formatted string, or empty on libvtc
+                 *         internal failure.
+                 */
+                String toString() const { return toFormatString().first(); }
+
+                /**
+                 * @brief Converts the timecode to a string with a chosen format.
                  *
                  * Always returns a non-empty, printable string:
                  * - An **invalid** timecode (no mode, not constructed with
@@ -329,9 +355,9 @@ class Timecode {
                  *         @c Error::Ok for all three cases above; an
                  *         error is only returned when libvtc itself
                  *         reports an internal failure (extremely rare).
-                 * @see fromString, TimecodePackFormat
+                 * @see toString, fromString, TimecodePackFormat
                  */
-                Result<String> toString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
+                Result<String> toFormatString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
                 /**
                  * @brief Converts the timecode to an absolute frame number.
                  *
@@ -554,7 +580,7 @@ template <> struct std::formatter<promeki::Timecode> {
                                 case Style::SmpteSpaceFps: fmt = &VTC_STR_FMT_SMPTE_SPACE_FPS; break;
                                 case Style::Field: fmt = &VTC_STR_FMT_FIELD; break;
                         }
-                        auto [s, err] = tc.toString(fmt);
+                        auto [s, err] = tc.toFormatString(fmt);
                         (void)err; // Formatter consumers do not get the error path.
                         return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
                 }

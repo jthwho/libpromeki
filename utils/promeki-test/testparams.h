@@ -54,7 +54,7 @@ namespace promekitest {
                         ///        @c Dir::temp() / "promeki-test-<timestamp>".
                         PROMEKI_DECLARE_ID(BaseFolder,
                                            VariantSpec()
-                                                   .setType(Variant::TypeString)
+                                                   .setType(DataTypeString)
                                                    .setDefault(String())
                                                    .setDescription("Base directory under which per-test folders "
                                                                    "are created."));
@@ -64,27 +64,27 @@ namespace promekitest {
                         ///        so tests that need scratch space don't have
                         ///        to reinvent the path layout.
                         PROMEKI_DECLARE_ID(TestFolder, VariantSpec()
-                                                              .setType(Variant::TypeString)
+                                                              .setType(DataTypeString)
                                                               .setDefault(String())
                                                               .setDescription("Resolved per-test scratch folder."));
 
                         /// @brief String — path to the per-test log file.
                         PROMEKI_DECLARE_ID(LogFile, VariantSpec()
-                                                           .setType(Variant::TypeString)
+                                                           .setType(DataTypeString)
                                                            .setDefault(String())
                                                            .setDescription("Path to the per-test log file."));
 
                         /// @brief Bool — true if the runner was started in verbose mode.
                         PROMEKI_DECLARE_ID(Verbose,
                                            VariantSpec()
-                                                   .setType(Variant::TypeBool)
+                                                   .setType(DataTypeBool)
                                                    .setDefault(false)
                                                    .setDescription("Verbose logging requested for this run."));
 
                         /// @brief S32 — frames per test for tests that consume one.
                         PROMEKI_DECLARE_ID(Frames,
                                            VariantSpec()
-                                                   .setType(Variant::TypeS32)
+                                                   .setType(DataTypeInt32)
                                                    .setDefault(int32_t(30))
                                                    .setRange(int32_t(1), int32_t(1000000))
                                                    .setDescription("Frame count for tests that need one."));
@@ -94,7 +94,7 @@ namespace promekitest {
                         ///        stage can't stall the whole matrix.
                         PROMEKI_DECLARE_ID(PhaseTimeoutMs,
                                            VariantSpec()
-                                                   .setType(Variant::TypeS32)
+                                                   .setType(DataTypeInt32)
                                                    .setDefault(int32_t(10000))
                                                    .setRange(int32_t(100), int32_t(3600000))
                                                    .setDescription("Per-phase watchdog timeout in milliseconds."));

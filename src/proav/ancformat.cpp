@@ -6,6 +6,7 @@
  */
 
 #include <promeki/ancformat.h>
+#include <promeki/datastream.h>
 #include <promeki/atomic.h>
 #include <promeki/map.h>
 
@@ -373,6 +374,23 @@ AncFormat AncFormat::fromMpegTsTableId(uint8_t tableId) {
                 if (data.mpegTsTableId == tableId) return AncFormat(id);
         }
         return AncFormat(Invalid);
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged String holding the registered name).
+// ============================================================================
+
+Error AncFormat::writeToStream(DataStream &s) const {
+        s << String(name());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<AncFormat> AncFormat::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<AncFormat>(s.toError());
+        return AncFormat::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

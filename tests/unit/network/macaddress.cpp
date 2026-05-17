@@ -251,7 +251,7 @@ TEST_CASE("MacAddress") {
         SUBCASE("Variant round-trip") {
                 MacAddress original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF);
                 Variant    v = original;
-                CHECK(v.type() == Variant::TypeMacAddress);
+                CHECK(v.type() == DataTypeMacAddress);
 
                 MacAddress retrieved = v.get<MacAddress>();
                 CHECK(retrieved == original);

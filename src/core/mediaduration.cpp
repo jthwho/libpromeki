@@ -7,6 +7,7 @@
 
 #include <climits>
 #include <promeki/mediaduration.h>
+#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -200,6 +201,30 @@ Result<MediaDuration> MediaDuration::fromString(const String &str) {
         auto [end, rightErr] = FrameNumber::fromString(right);
         if (rightErr.isError()) return makeError<MediaDuration>(Error::ParseFailed);
         return makeResult(fromFrameRange(FrameRange(start, end)));
+}
+
+// ============================================================================
+// DataStream wire format (v1: int64 start + int64 length raw storage).
+// ============================================================================
+
+Error MediaDuration::writeToStream(DataStream &s) const {
+        s << static_cast<int64_t>(_start.value());
+        s << static_cast<int64_t>(_length.value());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<MediaDuration> MediaDuration::readFromStream<1>(DataStream &s) {
+        int64_t start = 0, length = 0;
+        s >> start >> length;
+        if (s.status() != DataStream::Ok) return makeError<MediaDuration>(s.toError());
+        // Reconstruct FrameCount from raw int64 (preserving Unknown/Infinity sentinels).
+        FrameCount fc;
+        if (length == FrameCount::UnknownValue) fc = FrameCount::unknown();
+        else if (length == FrameCount::InfinityValue) fc = FrameCount::infinity();
+        else if (length >= 0) fc = FrameCount(length);
+        else return makeError<MediaDuration>(Error::CorruptData);
+        return makeResult(MediaDuration(FrameNumber(start), fc));
 }
 
 PROMEKI_NAMESPACE_END

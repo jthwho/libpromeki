@@ -8,6 +8,7 @@
 
 #include <cctype>
 #include <promeki/videoformat.h>
+#include <promeki/datastream.h>
 #include <promeki/structdatabase.h>
 #include <promeki/stringlist.h>
 
@@ -471,6 +472,27 @@ Result<VideoFormat> VideoFormat::fromString(const String &str, const ParseOption
         }
 
         return makeResult(VideoFormat(raster, finalRate, mode));
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical toString round-trip).
+// ============================================================================
+
+Error VideoFormat::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<VideoFormat> VideoFormat::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<VideoFormat>(s.toError());
+        // An invalid VideoFormat round-trips through an empty
+        // toString() — match that on read by returning a default
+        // (invalid) instance instead of letting fromString reject it.
+        if (str.isEmpty()) return makeResult(VideoFormat());
+        return VideoFormat::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

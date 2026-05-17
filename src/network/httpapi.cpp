@@ -31,132 +31,132 @@ const String HttpApi::DefaultVersion = "1.0.0";
 namespace {
 
         // ----------------------------------------------------------------
-        // Variant::Type → JSON Schema mapping helpers.
+        // DataTypeID → JSON Schema mapping helpers.
         // ----------------------------------------------------------------
 
-        // Returns the JSON Schema fragment for a single Variant::Type.  The
+        // Returns the JSON Schema fragment for a single DataTypeID.  The
         // `componentsOut` parameter, when non-null, receives any complex-type
         // schema definitions emitted along the way (so a single document can
         // reference them via $ref).  When null, we inline a generic object
         // schema instead — useful for the per-endpoint catalog view that
         // doesn't have a components section.
-        JsonObject schemaForType(Variant::Type type, JsonObject *componentsOut) {
+        JsonObject schemaForType(DataTypeID type, JsonObject *componentsOut) {
                 JsonObject out;
                 switch (type) {
-                        case Variant::TypeInvalid: return out;
-                        case Variant::TypeBool: out.set("type", "boolean"); return out;
-                        case Variant::TypeU8:
-                        case Variant::TypeU16:
-                        case Variant::TypeU32:
-                        case Variant::TypeU64:
+                        case DataTypeInvalid: return out;
+                        case DataTypeBool: out.set("type", "boolean"); return out;
+                        case DataTypeUInt8:
+                        case DataTypeUInt16:
+                        case DataTypeUInt32:
+                        case DataTypeUInt64:
                                 out.set("type", "integer");
                                 out.set("minimum", 0);
                                 return out;
-                        case Variant::TypeS8:
-                        case Variant::TypeS16:
-                        case Variant::TypeS32:
-                        case Variant::TypeS64: out.set("type", "integer"); return out;
-                        case Variant::TypeFloat:
-                        case Variant::TypeDouble: out.set("type", "number"); return out;
-                        case Variant::TypeString: out.set("type", "string"); return out;
-                        case Variant::TypeStringList: {
+                        case DataTypeInt8:
+                        case DataTypeInt16:
+                        case DataTypeInt32:
+                        case DataTypeInt64: out.set("type", "integer"); return out;
+                        case DataTypeFloat:
+                        case DataTypeDouble: out.set("type", "number"); return out;
+                        case DataTypeString: out.set("type", "string"); return out;
+                        case DataTypeStringList: {
                                 out.set("type", "array");
                                 JsonObject items;
                                 items.set("type", "string");
                                 out.set("items", items);
                                 return out;
                         }
-                        case Variant::TypeDateTime:
+                        case DataTypeDateTime:
                                 out.set("type", "string");
                                 out.set("format", "date-time");
                                 return out;
-                        case Variant::TypeTimeStamp:
+                        case DataTypeTimeStamp:
                                 out.set("type", "string");
                                 out.set("format", "promeki-timestamp");
                                 return out;
-                        case Variant::TypeMediaTimeStamp:
+                        case DataTypeMediaTimeStamp:
                                 out.set("type", "string");
                                 out.set("format", "promeki-mediatimestamp");
                                 return out;
-                        case Variant::TypeFrameNumber:
+                        case DataTypeFrameNumber:
                                 out.set("type", "integer");
                                 out.set("format", "promeki-framenumber");
                                 return out;
-                        case Variant::TypeFrameCount:
+                        case DataTypeFrameCount:
                                 out.set("type", "integer");
                                 out.set("format", "promeki-framecount");
                                 return out;
-                        case Variant::TypeMediaDuration:
+                        case DataTypeMediaDuration:
                                 out.set("type", "string");
                                 out.set("format", "promeki-mediaduration");
                                 return out;
-                        case Variant::TypeDuration:
+                        case DataTypeDuration:
                                 out.set("type", "string");
                                 out.set("format", "duration");
                                 return out;
-                        case Variant::TypeUUID:
+                        case DataTypeUUID:
                                 out.set("type", "string");
                                 out.set("format", "uuid");
                                 return out;
-                        case Variant::TypeUMID:
+                        case DataTypeUMID:
                                 out.set("type", "string");
                                 out.set("format", "promeki-umid");
                                 return out;
-                        case Variant::TypeTimecode:
+                        case DataTypeTimecode:
                                 out.set("type", "string");
                                 out.set("format", "promeki-timecode");
                                 return out;
-                        case Variant::TypeVideoFormat:
+                        case DataTypeVideoFormat:
                                 out.set("type", "string");
                                 out.set("format", "promeki-videoformat");
                                 return out;
-                        case Variant::TypeColorModel:
+                        case DataTypeColorModel:
                                 out.set("type", "string");
                                 out.set("format", "promeki-colormodel");
                                 return out;
-                        case Variant::TypeMemSpace:
+                        case DataTypeMemSpace:
                                 out.set("type", "string");
                                 out.set("format", "promeki-memspace");
                                 return out;
-                        case Variant::TypePixelMemLayout:
+                        case DataTypePixelMemLayout:
                                 out.set("type", "string");
                                 out.set("format", "promeki-pixelmemlayout");
                                 return out;
-                        case Variant::TypePixelFormat:
+                        case DataTypePixelFormat:
                                 out.set("type", "string");
                                 out.set("format", "promeki-pixelformat");
                                 return out;
-                        case Variant::TypeVideoCodec:
+                        case DataTypeVideoCodec:
                                 out.set("type", "string");
                                 out.set("format", "promeki-videocodec");
                                 return out;
-                        case Variant::TypeAudioCodec:
+                        case DataTypeAudioCodec:
                                 out.set("type", "string");
                                 out.set("format", "promeki-audiocodec");
                                 return out;
-                        case Variant::TypeAudioFormat:
+                        case DataTypeAudioFormat:
                                 out.set("type", "string");
                                 out.set("format", "promeki-audioformat");
                                 return out;
-                        case Variant::TypeUrl:
+                        case DataTypeUrl:
                                 out.set("type", "string");
                                 out.set("format", "uri");
                                 return out;
 #if PROMEKI_ENABLE_NETWORK
-                        case Variant::TypeSocketAddress:
+                        case DataTypeSocketAddress:
                                 out.set("type", "string");
                                 out.set("format", "promeki-socketaddress");
                                 return out;
-                        case Variant::TypeMacAddress:
+                        case DataTypeMacAddress:
                                 out.set("type", "string");
                                 out.set("format", "mac-address");
                                 return out;
-                        case Variant::TypeEUI64:
+                        case DataTypeEUI64:
                                 out.set("type", "string");
                                 out.set("format", "eui64");
                                 return out;
 #endif
-                        case Variant::TypeSize2D: {
+                        case DataTypeSize2D: {
                                 // {"width": int, "height": int}
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", "#/components/schemas/Size2D");
@@ -178,9 +178,9 @@ namespace {
                                 out.set("type", "object");
                                 return out;
                         }
-                        case Variant::TypeRational:
-                        case Variant::TypeFrameRate: {
-                                const char *name = (type == Variant::TypeFrameRate) ? "FrameRate" : "Rational";
+                        case DataTypeRational:
+                        case DataTypeFrameRate: {
+                                const char *name = (type == DataTypeFrameRate) ? "FrameRate" : "Rational";
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", String("#/components/schemas/") + name);
                                         if (!componentsOut->contains(name)) {
@@ -201,7 +201,7 @@ namespace {
                                 out.set("type", "object");
                                 return out;
                         }
-                        case Variant::TypeColor: {
+                        case DataTypeColor: {
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", "#/components/schemas/Color");
                                         if (!componentsOut->contains("Color")) {
@@ -216,7 +216,7 @@ namespace {
                                 out.set("type", "object");
                                 return out;
                         }
-                        case Variant::TypeMasteringDisplay: {
+                        case DataTypeMasteringDisplay: {
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", "#/components/schemas/MasteringDisplay");
                                         if (!componentsOut->contains("MasteringDisplay")) {
@@ -231,7 +231,7 @@ namespace {
                                 out.set("type", "object");
                                 return out;
                         }
-                        case Variant::TypeContentLightLevel: {
+                        case DataTypeContentLightLevel: {
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", "#/components/schemas/ContentLightLevel");
                                         if (!componentsOut->contains("ContentLightLevel")) {
@@ -247,7 +247,7 @@ namespace {
                                 return out;
                         }
 #if PROMEKI_ENABLE_NETWORK
-                        case Variant::TypeSdpSession: {
+                        case DataTypeSdpSession: {
                                 if (componentsOut != nullptr) {
                                         out.set("$ref", "#/components/schemas/SdpSession");
                                         if (!componentsOut->contains("SdpSession")) {
@@ -262,15 +262,15 @@ namespace {
                                 return out;
                         }
 #endif
-                        case Variant::TypeEnum:
-                        case Variant::TypeEnumList: {
+                        case DataTypeEnum:
+                        case DataTypeEnumList: {
                                 // Enum/EnumList specs carry their value list
                                 // alongside the spec's enumType — this helper
                                 // doesn't have access to that, so the schema
                                 // here is the type-only fallback.  The full
                                 // version (with enum values populated) lives
                                 // in HttpApi::variantSpecToJsonSchema below.
-                                if (type == Variant::TypeEnum) {
+                                if (type == DataTypeEnum) {
                                         out.set("type", "string");
                                 } else {
                                         out.set("type", "array");
@@ -547,7 +547,7 @@ VariantSpec HttpApi::keyParamSpec(const StringList &knownKeys) {
                 if (i > 0) desc += ", ";
                 desc += knownKeys[i];
         }
-        return VariantSpec().setType(Variant::TypeString).setDescription(desc);
+        return VariantSpec().setType(DataTypeString).setDescription(desc);
 }
 
 // ============================================================
@@ -869,7 +869,7 @@ JsonObject HttpApi::variantSpecToJsonSchema(const VariantSpec &spec, JsonObject 
         out = schemaForType(types[0], componentsOut);
 
         // EnumList items inherit the spec's enum-type values too.
-        if (types[0] == Variant::TypeEnumList && spec.hasEnumType()) {
+        if (types[0] == DataTypeEnumList && spec.hasEnumType()) {
                 JsonObject items;
                 items.set("type", "string");
                 JsonArray             values;

@@ -68,15 +68,15 @@ class SslSocket : public TcpSocket {
                 /**
                  * @brief Attaches the @ref SslContext used at handshake time.
                  *
-                 * The context's lifetime must outlive this socket;
-                 * pass a @ref SslContext::Ptr if you need shared
-                 * ownership semantics.  Setting the context is a
-                 * no-op once a handshake has started.
+                 * @ref SslContext is a value-type handle wrapping a
+                 * shared mbedTLS configuration — passing one by value
+                 * here is a refcount bump, not a deep copy.  Setting
+                 * the context is a no-op once a handshake has started.
                  */
-                void setSslContext(SslContext::Ptr ctx);
+                void setSslContext(SslContext ctx);
 
                 /** @brief Returns the attached SslContext. */
-                SslContext::Ptr sslContext() const { return _ctx; }
+                SslContext sslContext() const { return _ctx; }
 
                 /**
                  * @brief Initiates a client-side TLS handshake.
@@ -159,8 +159,8 @@ class SslSocket : public TcpSocket {
 
         private:
                 struct Impl;
-                Impl           *_d = nullptr;
-                SslContext::Ptr _ctx;
+                Impl      *_d = nullptr;
+                SslContext _ctx;
 
                 enum SslState {
                         NotEncrypted,

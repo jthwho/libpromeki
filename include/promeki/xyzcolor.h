@@ -13,8 +13,14 @@
 #include <promeki/namespace.h>
 #include <promeki/array.h>
 #include <promeki/string.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
+#include <promeki/datatype.h>
+#include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief A color in the CIE 1931 XYZ color space.
@@ -56,6 +62,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class XYZColor {
         public:
+                PROMEKI_DATATYPE(XYZColor, DataTypeXYZColor, 1)
+
+                /** @brief Writes three tagged doubles (X, Y, Z). */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads three tagged doubles (X, Y, Z). */
+                template <uint32_t V> static Result<XYZColor> readFromStream(DataStream &s);
+
                 /** @brief Underlying storage type for the three XYZ components. */
                 using DataType = Array<double, 3>;
 
@@ -120,6 +133,30 @@ class XYZColor {
 
                 /** @brief Returns a string representation of the XYZ color. */
                 String toString() const { return String::sprintf("XYZ(%g, %g, %g)", d[0], d[1], d[2]); }
+
+                /**
+                 * @brief Parses the @c "XYZ(x, y, z)" form produced by @ref toString.
+                 *
+                 * Bare comma-separated triples (without the @c XYZ wrapper or
+                 * surrounding parens) are also accepted to ease handwritten
+                 * config files.
+                 */
+                static Result<XYZColor> fromString(const String &s) {
+                        String body = s.trim();
+                        if (body.startsWith("XYZ(") || body.startsWith("xyz(")) body = body.mid(4);
+                        if (body.startsWith("(")) body = body.mid(1);
+                        if (body.endsWith(")")) body = body.left(body.length() - 1);
+                        StringList parts = body.split(",");
+                        if (parts.size() != 3) return makeError<XYZColor>(Error::ParseFailed);
+                        XYZColor out;
+                        for (size_t i = 0; i < 3; ++i) {
+                                Error  ex;
+                                double v = parts[i].trim().to<double>(&ex);
+                                if (ex.isError()) return makeError<XYZColor>(Error::ParseFailed);
+                                out.d[i] = v;
+                        }
+                        return makeResult(std::move(out));
+                }
 
         private:
                 DataType d;

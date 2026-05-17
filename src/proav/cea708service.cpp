@@ -369,65 +369,44 @@ String Cea708DtvccPacket::toString() const {
 //   for each service block:
 //     Cea708Service (tagged TypeCea708Service)
 
-void writeCea708ServiceData(DataStream &stream, const Cea708Service &svc) {
-        stream << svc.serviceNumber();
-        stream << svc.data();
+Error Cea708Service::writeToStream(DataStream &s) const {
+        s << serviceNumber();
+        s << data();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-Cea708Service readCea708ServiceData(DataStream &stream) {
+template <>
+Result<Cea708Service> Cea708Service::readFromStream<1>(DataStream &s) {
         uint8_t svcNum = 0;
         Buffer  data;
-        stream >> svcNum;
-        stream >> data;
-        return Cea708Service(svcNum, std::move(data));
+        s >> svcNum >> data;
+        if (s.status() != DataStream::Ok) return makeError<Cea708Service>(s.toError());
+        return makeResult(Cea708Service(svcNum, std::move(data)));
 }
 
-DataStream &operator<<(DataStream &stream, const Cea708Service &svc) {
-        stream.beginFrame(DataStream::TypeCea708Service, 1);
-        writeCea708ServiceData(stream, svc);
-        stream.endFrame();
-        return stream;
+Error Cea708DtvccPacket::writeToStream(DataStream &s) const {
+        s << sequenceNumber();
+        const auto &blocks = serviceBlocks();
+        s << static_cast<uint32_t>(blocks.size());
+        for (size_t i = 0; i < blocks.size(); ++i) s << blocks[i];
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-DataStream &operator>>(DataStream &stream, Cea708Service &svc) {
-        if (!stream.readFrame(DataStream::TypeCea708Service)) {
-                svc = Cea708Service();
-                return stream;
-        }
-        svc = readCea708ServiceData(stream);
-        return stream;
-}
-
-DataStream &operator<<(DataStream &stream, const Cea708DtvccPacket &pkt) {
-        stream.beginFrame(DataStream::TypeCea708DtvccPacket, 1);
-        stream << pkt.sequenceNumber();
-        const auto &blocks = pkt.serviceBlocks();
-        stream << static_cast<uint32_t>(blocks.size());
-        for (size_t i = 0; i < blocks.size(); ++i) {
-                stream << blocks[i];
-        }
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, Cea708DtvccPacket &pkt) {
-        if (!stream.readFrame(DataStream::TypeCea708DtvccPacket)) {
-                pkt = Cea708DtvccPacket();
-                return stream;
-        }
-        uint8_t  seq = 0;
+template <>
+Result<Cea708DtvccPacket> Cea708DtvccPacket::readFromStream<1>(DataStream &s) {
+        uint8_t  seq   = 0;
         uint32_t count = 0;
-        stream >> seq;
-        stream >> count;
+        s >> seq >> count;
+        if (s.status() != DataStream::Ok) return makeError<Cea708DtvccPacket>(s.toError());
         List<Cea708Service> blocks;
         blocks.reserve(count);
         for (uint32_t i = 0; i < count; ++i) {
                 Cea708Service svc;
-                stream >> svc;
+                s >> svc;
+                if (s.status() != DataStream::Ok) return makeError<Cea708DtvccPacket>(s.toError());
                 blocks.pushToBack(std::move(svc));
         }
-        pkt = Cea708DtvccPacket(seq, std::move(blocks));
-        return stream;
+        return makeResult(Cea708DtvccPacket(seq, std::move(blocks)));
 }
 
 PROMEKI_NAMESPACE_END

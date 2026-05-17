@@ -105,7 +105,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// representations (XML / JSON / AMF text forms mostly).
                 PROMEKI_DECLARE_ID(Fidelity,
                                    VariantSpec()
-                                           .setType(Variant::TypeEnum)
+                                           .setType(DataTypeEnum)
                                            .setEnumType(AncFidelity::Type)
                                            .setDefault(AncFidelity(AncFidelity::Default))
                                            .setDescription("Output verbosity for translators that have multiple valid output forms."));
@@ -114,7 +114,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// ST 291-emitting codecs handle the per-packet checksum.
                 PROMEKI_DECLARE_ID(Checksum,
                                    VariantSpec()
-                                           .setType(Variant::TypeEnum)
+                                           .setType(DataTypeEnum)
                                            .setEnumType(AncChecksumPolicy::Type)
                                            .setDefault(AncChecksumPolicy(AncChecksumPolicy::PreserveOrRecompute))
                                            .setDescription("ST 291 checksum policy for builder / translator outputs."));
@@ -123,7 +123,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// the input cannot be represented on the target transport.
                 PROMEKI_DECLARE_ID(OnUnsupported,
                                    VariantSpec()
-                                           .setType(Variant::TypeEnum)
+                                           .setType(DataTypeEnum)
                                            .setEnumType(AncOnUnsupported::Type)
                                            .setDefault(AncOnUnsupported(AncOnUnsupported::BestEffort))
                                            .setDescription("Behaviour when the input cannot be represented on the target transport."));
@@ -135,7 +135,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// caller explicitly accepts loss.
                 PROMEKI_DECLARE_ID(AllowLossy,
                                    VariantSpec()
-                                           .setType(Variant::TypeBool)
+                                           .setType(DataTypeBool)
                                            .setDefault(false)
                                            .setDescription("Permit lossy translations (truncation / downsampling) when no lossless path exists."));
 
@@ -157,7 +157,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// the produced packet.
                 PROMEKI_DECLARE_ID(St291BuildLine,
                                    VariantSpec()
-                                           .setType(Variant::TypeU16)
+                                           .setType(DataTypeUInt16)
                                            .setDefault(uint16_t(0))
                                            .setDescription("VANC line number for built ST 291 packets (0 = leave unspecified)."));
 
@@ -165,7 +165,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// stamped into @c AncMeta::St291::FieldB.
                 PROMEKI_DECLARE_ID(St291FieldB,
                                    VariantSpec()
-                                           .setType(Variant::TypeBool)
+                                           .setType(DataTypeBool)
                                            .setDefault(false)
                                            .setDescription("F-bit for built ST 291 packets (field-2 indicator)."));
 
@@ -173,7 +173,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// metadata frames.  Empty (default) lets the codec pick.
                 PROMEKI_DECLARE_ID(NdiXmlNamespace,
                                    VariantSpec()
-                                           .setType(Variant::TypeString)
+                                           .setType(DataTypeString)
                                            .setDefault(String())
                                            .setDescription("XML namespace prefix preference for built NDI metadata frames."));
 
@@ -184,7 +184,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// etc.).
                 PROMEKI_DECLARE_ID(HdmiInfoFrameOui,
                                    VariantSpec()
-                                           .setType(Variant::TypeU32)
+                                           .setType(DataTypeUInt32)
                                            .setDefault(uint32_t(0))
                                            .setDescription("OUI to stamp into built vendor-specific HDMI InfoFrames (0 = codec default)."));
 
@@ -195,7 +195,7 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// Scte104 → @c onCuePoint, …).
                 PROMEKI_DECLARE_ID(RtmpAmfObjectName,
                                    VariantSpec()
-                                           .setType(Variant::TypeString)
+                                           .setType(DataTypeString)
                                            .setDefault(String())
                                            .setDescription("AMF0 script-tag name override for built RTMP outputs (empty = codec default)."));
 

@@ -65,7 +65,7 @@ namespace {
                 // about: invalid → "--:--:--:--", valid digits without a frame
                 // rate → "HH:MM:SS:FF" digits-only, valid digits with a rate →
                 // libvtc-formatted output.  No fallback path needed.
-                return tc.toString().first();
+                return tc.toString();
         }
 
         // Real wall-clock (system_clock) nanoseconds since the UNIX epoch.
@@ -2042,7 +2042,7 @@ namespace {
                         // typed payloads (Timecode, uint8_t, etc.) fall
                         // through to setFromVariant which lands a
                         // string / scalar form into the JSON.
-                        if (v.type() == Variant::TypeCea708Cdp) {
+                        if (v.type() == DataTypeCea708Cdp) {
                                 obj.set("parsed", v.get<Cea708Cdp>().toJson());
                         } else {
                                 obj.setFromVariant("parsed", v);

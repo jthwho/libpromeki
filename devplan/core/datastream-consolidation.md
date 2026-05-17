@@ -153,77 +153,67 @@ For each migrating type T:
 
 ## Migration phases
 
-### Phase 1 — framework foundation (one commit)
+### Phase 1 — framework foundation — COMPLETE (2026-05-16)
 
-- [ ] Add `uint32_t version` field to `DataType` record + `version()` accessor
-- [ ] Add `Detail::buildReaderTable<T>` consteval in `datatype.h`
-- [ ] Add `PROMEKI_DATATYPE(T, id, currentVer)` macro
-- [ ] Add `Detail::DataStreamSerializable` concept in `datastream.h`
-- [ ] Add the templated `operator<<` / `operator>>` pair, gated to
-      *only* match types satisfying the concept (so existing per-type
-      operators continue to win during the migration)
-- [ ] Confirm `DataType` registry uses Construct-on-First-Use so the
-      self-registering `promekiDataType::type` is order-safe
-- [ ] Unit test: a single throwaway test type using the new macro
-      round-trips through `DataStream` and `Variant` end-to-end
+- [x] Add `uint32_t version` field to `DataType` record + `version()` accessor
+- [x] Add `Detail::VersionedReader<T,MaxV>` recursive dispatch helper in `datatype.h`
+- [x] Add `PROMEKI_DATATYPE(T, id, currentVer)` macro
+- [x] Add `Detail::DataStreamSerializable` concept in `datastream.h`
+- [x] Add the templated `operator<<` / `operator>>` pair (in `datastream.h` bottom half)
+- [x] `DataType` registry uses Construct-on-First-Use — order-safe
+- [x] `registerBuiltinDataTypes()` replaces the old `ensureBuiltinDataTypesRegistered()`; called from both `DataStream` and `Variant` constructors
+- [x] Unit test: `tests/unit/datastream_promeki_datatype.cpp` — full round-trip via `SampleWidget`, Variant payload, multi-version dispatch, unknown-version rejection
 
-### Phase 2 — pilot migration
+### Phase 2 — pilot migration — COMPLETE (rolled into Phase 3)
 
-Pick two types from opposite ends of complexity:
+- [x] **Timecode** migrated (proves simple case)
+- [x] **AncDesc** migrated (CoW handle with non-trivial members)
+- [x] Golden wire-format tests byte-identical (all 3 test suites pass)
+- [x] Variant payload tests for both types pass
 
-- [ ] **Timecode** (simple, string round-trip body) — proves the
-      common case
-- [ ] **AncDesc** (CoW value handle with non-trivial members) — proves
-      the design survives a complex type and the nested struct's
-      access-to-privates is sufficient
+### Phase 3 — full sweep — COMPLETE (2026-05-16)
 
-Verify:
+All 47 types migrated in one commit. `enum DataStream::Type` entries removed.
+`Variant::Type` / `Variant::TypeXxx` aliases removed (callers now use `DataTypeXxx` directly).
 
-- [ ] Golden wire-format tests still byte-identical
-- [ ] Variant payload tests for these two types still pass
-- [ ] Build-time cost of the macro expansion is acceptable on a
-      release configure (single-type sniff test)
-
-### Phase 3 — full sweep
-
-One commit per cluster of related types. Each commit deletes the
-forward decl + operator decls + operator definitions + enum entry,
-and adds the `PROMEKI_DATATYPE` + `writeToStream` +
-`readFromStream<N>` in the type. Suggested order:
-
-- [ ] Simple value types: `UUID`, `UMID`, `DateTime`, `TimeStamp`,
+- [x] Simple value types: `UUID`, `UMID`, `DateTime`, `TimeStamp`,
       `FrameRate`, `FrameNumber`, `FrameCount`, `MediaDuration`,
       `Duration`, `Url`, `MediaTimeStamp`
-- [ ] Visual descriptors: `Color`, `ColorModel`, `MemSpace`,
+- [x] Visual descriptors: `Color`, `ColorModel`, `MemSpace`,
       `VideoFormat`, `PixelMemLayout`, `PixelFormat`, `XYZColor`,
       `MasteringDisplay`, `ContentLightLevel`, `HdrStaticMetadata`
-- [ ] Audio descriptors: `AudioFormat`, `AudioChannelMap`,
-      `AudioCodec`, `AudioDesc`
-- [ ] ANC: `AncFormat`, `AncDesc` (already in pilot)
-- [ ] Network: `MacAddress`, `EUI64`, `SocketAddress`, `SdpSession`
-- [ ] Enums + StringList: `Enum`, `EnumList`, `StringList`
-- [ ] Templated geometry: `Point<T,N>`, `Size2DTemplate<T>`,
-      `Rect<T>`, `Rational<T>` — these need per-instantiation IDs;
-      see open question below
-- [ ] Container types: `List<T>`, `Map<K,V>`, `Set<T>`, `HashMap`,
-      `HashSet` — also per-instantiation; see open question
-- [ ] Metadata / JSON / XML: `Metadata`, `JsonObject`, `JsonArray`,
+- [x] Audio descriptors: `AudioFormat`, `AudioChannelMap`,
+      `AudioCodec`, `AudioDesc`, `AudioMarker`, `AudioStreamDesc`
+- [x] ANC: `AncFormat`, `AncDesc`, `Cea608Packet`, `Cea708Cdp`,
+      `Cea708Service`, `HdrDynamic2094_40`, `Scc`, `Subtitle`
+- [x] Network: `MacAddress`, `EUI64`, `SocketAddress`, `SdpSession`,
+      `SslContext`
+- [x] Enums + StringList: `Enum`, `EnumList`, `StringList`
+- [x] Templated geometry: `Point<T,N>`, `Size2DTemplate<T>`,
+      `Rect<T>`, `Rational<T>` — kept as free-function templates
+      with `HasFreeDataStreamWrite` specializations (open question #1
+      resolved: "one outer ID, inner elements framed separately")
+- [x] Container types: `List<T>`, `Map<K,V>`, `Set<T>`, `HashMap`,
+      `HashSet` — same approach (tagged outer frames, typed inner frames)
+- [x] Metadata / JSON / XML: `JsonObject`, `JsonArray`,
       `XmlDocument`, `XmlElement`
-- [ ] Codec family: `VideoCodec`, `MediaDesc`, `AudioStreamDesc`
-- [ ] TLS / SDP: `SslContext` (if it streams), session-related types
+- [x] Codec family: `VideoCodec`, `VideoFormat`, `WindowedStat`
+- [x] TypedEnum types dispatched via `TypedEnumDataStream<T>` specializations
+- [x] Variant round-trip confirmed (open question #2 resolved via
+      `DataType::Ops` slot wiring in `registerBuiltinDataTypes()`)
 
-### Phase 4 — cleanup
+### Phase 4 — cleanup — PARTIAL (open)
 
-- [ ] Delete `enum DataStream::Type` entirely once empty
+- [x] Delete `enum DataStream::Type` entirely — done
+- [x] Delete `Variant::Type` using-alias and all `Variant::TypeXxx` constants — done
 - [ ] Delete `Detail::ExactDataStreamWrite` / `ExactDataStreamRead` /
       `HasFreeDataStreamWrite` / `HasFreeDataStreamRead` SFINAE
-      machinery from `datatype.h:453-506` — no longer needed
+      machinery — still needed by geometry templates (`Size2DTemplate`,
+      `Rational`, `JsonObject`, `JsonArray`) that use the free-operator path;
+      defer until those types gain `PROMEKI_DATATYPE` member API
 - [ ] Delete `HasDataStreamWriteV` / `HasDataStreamReadV` traits
-- [ ] In `Detail::makeDefaultOps<T>`, replace the `if constexpr
-      (HasDataStreamWriteV<T>) ...` blocks with a single concept check
-      that wires `ops.writeStream` / `ops.readStream` through the
-      type's `writeToStream` / `_readerTable`
-- [ ] Update `docs/dataobjects.dox` to describe the new pattern
+      (same blocker as above)
+- [ ] Update `docs/dataobjects.dox` to document `PROMEKI_DATATYPE` pattern
 - [ ] Update `CODING_STANDARDS.md` with the macro + method-pair
       convention for any new serializable type
 

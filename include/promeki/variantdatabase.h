@@ -103,7 +103,7 @@ enum class SpecValidation {
  * using Config = VariantDatabase<"Config">;
  *
  * static inline const Config::ID Width = Config::declareID("Width",
- *     VariantSpec().setType(Variant::TypeS32).setDefault(1920)
+ *     VariantSpec().setType(DataTypeInt32).setDefault(1920)
  *                  .setRange(1, 8192).setDescription("Frame width in pixels"));
  *
  * Config cfg;
@@ -148,7 +148,7 @@ template <CompiledString Name> class VariantDatabase {
                  * @par Example
                  * @code
                  * PROMEKI_DECLARE_ID(Width,
-                 *     VariantSpec().setType(Variant::TypeS32)
+                 *     VariantSpec().setType(DataTypeInt32)
                  *                  .setDefault(1920)
                  *                  .setDescription("Frame width"));
                  * @endcode
@@ -329,7 +329,7 @@ template <CompiledString Name> class VariantDatabase {
                  * the way back.
                  *
                  * The coercion runs only when:
-                 *  - @p value is @c Variant::TypeString, and
+                 *  - @p value is @c DataTypeString, and
                  *  - a spec is registered for @p id, and
                  *  - the spec does @em not accept @c TypeString
                  *    natively (so JSON strings that are legitimately
@@ -1120,7 +1120,7 @@ PROMEKI_NAMESPACE_END
  * class Metadata : public VariantDatabase<"Metadata"> {
  *     public:
  *         PROMEKI_DECLARE_ID(Title,
- *             VariantSpec().setType(Variant::TypeString)
+ *             VariantSpec().setType(DataTypeString)
  *                          .setDefault(String())
  *                          .setDescription("Title of the media."));
  *

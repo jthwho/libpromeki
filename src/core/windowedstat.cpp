@@ -65,19 +65,19 @@ void WindowedStat::push(double value) {
 
 bool WindowedStat::push(const Variant &v) {
         switch (v.type()) {
-                case Variant::TypeBool:
-                case Variant::TypeU8:
-                case Variant::TypeS8:
-                case Variant::TypeU16:
-                case Variant::TypeS16:
-                case Variant::TypeU32:
-                case Variant::TypeS32:
-                case Variant::TypeU64:
-                case Variant::TypeS64:
-                case Variant::TypeFloat:
-                case Variant::TypeDouble: push(v.get<double>()); return true;
-                case Variant::TypeDuration: push(static_cast<double>(v.get<Duration>().nanoseconds())); return true;
-                case Variant::TypeFrameCount: {
+                case DataTypeBool:
+                case DataTypeUInt8:
+                case DataTypeInt8:
+                case DataTypeUInt16:
+                case DataTypeInt16:
+                case DataTypeUInt32:
+                case DataTypeInt32:
+                case DataTypeUInt64:
+                case DataTypeInt64:
+                case DataTypeFloat:
+                case DataTypeDouble: push(v.get<double>()); return true;
+                case DataTypeDuration: push(static_cast<double>(v.get<Duration>().nanoseconds())); return true;
+                case DataTypeFrameCount: {
                         FrameCount fc = v.get<FrameCount>();
                         if (!fc.isFinite()) return false;
                         push(static_cast<double>(fc.value()));
@@ -161,7 +161,7 @@ WindowedStat::Samples WindowedStat::values() const {
         return out;
 }
 
-String WindowedStat::toString(const ValueFormatter &formatter) const {
+String WindowedStat::toFormattedString(const ValueFormatter &formatter) const {
         const Stats s = stats();
         const auto  fmt = [&formatter](double v) -> String {
                 if (formatter) return formatter(v);
@@ -180,7 +180,7 @@ String WindowedStat::toString(const ValueFormatter &formatter) const {
         return out;
 }
 
-String WindowedStat::toSerializedString() const {
+String WindowedStat::toString() const {
         String out = "cap=";
         out += String::number(_capacity);
         out += ":[";
@@ -249,38 +249,30 @@ bool WindowedStat::operator==(const WindowedStat &other) const {
         return true;
 }
 
-DataStream &operator<<(DataStream &stream, const WindowedStat &val) {
-        stream.beginFrame(DataStream::TypeWindowedStat, 1);
-        stream << static_cast<uint32_t>(val.capacity());
-        const WindowedStat::Samples ordered = val.values();
-        stream << static_cast<uint32_t>(ordered.size());
+Error WindowedStat::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(capacity());
+        const Samples ordered = values();
+        s << static_cast<uint32_t>(ordered.size());
         for (size_t i = 0; i < ordered.size(); ++i) {
-                stream << ordered[i];
+                s << ordered[i];
         }
-        stream.endFrame();
-        return stream;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-DataStream &operator>>(DataStream &stream, WindowedStat &val) {
-        if (!stream.readFrame(DataStream::TypeWindowedStat)) {
-                val = WindowedStat();
-                return stream;
-        }
+template <>
+Result<WindowedStat> WindowedStat::readFromStream<1>(DataStream &s) {
         uint32_t capacity = 0;
-        uint32_t count = 0;
-        stream >> capacity;
-        stream >> count;
-        if (stream.status() != DataStream::Ok) {
-                val = WindowedStat();
-                return stream;
-        }
-        val = WindowedStat(static_cast<int>(capacity));
-        for (uint32_t i = 0; i < count && stream.status() == DataStream::Ok; ++i) {
+        uint32_t count    = 0;
+        s >> capacity >> count;
+        if (s.status() != DataStream::Ok) return makeError<WindowedStat>(s.toError());
+        WindowedStat val(static_cast<int>(capacity));
+        for (uint32_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
                 double v = 0.0;
-                stream >> v;
+                s >> v;
                 val.push(v);
         }
-        return stream;
+        if (s.status() != DataStream::Ok) return makeError<WindowedStat>(s.toError());
+        return makeResult(std::move(val));
 }
 
 PROMEKI_NAMESPACE_END

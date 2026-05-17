@@ -20,8 +20,11 @@
 #include <promeki/pixelmemlayout.h>
 #include <promeki/videocodec.h>
 #include <promeki/enums.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 class Image;
 class ImageDesc;
@@ -133,6 +136,13 @@ class PaintEngine;
  */
 class PixelFormat {
         public:
+                PROMEKI_DATATYPE(PixelFormat, DataTypePixelFormat, 1)
+
+                /** @brief Writes the registered format name as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the registered format name and looks it up. */
+                template <uint32_t V> static Result<PixelFormat> readFromStream(DataStream &s);
+
                 static constexpr size_t MaxComps = PixelMemLayout::MaxComps; ///< Maximum number of components.
 
                 /**
@@ -558,6 +568,9 @@ class PixelFormat {
 
                 /** @brief Returns the short name. */
                 const String &name() const { return d->name; }
+
+                /** @brief Canonical String form: the registered @ref name. */
+                String toString() const { return d->name; }
 
                 /** @brief Returns a human-readable description. */
                 const String &desc() const { return d->desc; }

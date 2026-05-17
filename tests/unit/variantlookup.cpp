@@ -77,7 +77,7 @@ PROMEKI_LOOKUP_REGISTER(LookupRoot)
                         Error    e;
                         uint32_t x = v.get<uint32_t>(&e);
                         if (e.isError()) return Error::ConversionFailed;
-                        if (v.type() == Variant::TypeString) return Error::ConversionFailed;
+                        if (v.type() == DataTypeString) return Error::ConversionFailed;
                         o.height = x;
                         return Error::Ok;
                 })
@@ -693,7 +693,7 @@ namespace {
         const VariantSpec *configTreeSpec() {
                 static const VariantSpec spec = []() {
                         VariantSpec s;
-                        s.setType(Variant::TypeVariantMap);
+                        s.setType(DataTypeVariantMap);
                         return s;
                 }();
                 return &spec;
@@ -713,7 +713,7 @@ TEST_CASE("VariantLookup: variantTree resolves terminal Name") {
         auto            v = VariantLookup<LookupTreeOwner>::resolve(o, "Config", &err);
         CHECK(err.isOk());
         REQUIRE(v.hasValue());
-        CHECK(v->type() == Variant::TypeVariantMap);
+        CHECK(v->type() == DataTypeVariantMap);
 }
 
 TEST_CASE("VariantLookup: variantTree resolves nested map key") {
@@ -772,7 +772,7 @@ TEST_CASE("VariantLookup: variantTree specFor surfaces the registered spec") {
         CHECK(err.isOk());
         REQUIRE(sp != nullptr);
         CHECK(sp->types().size() == 1);
-        CHECK(sp->types()[0] == Variant::TypeVariantMap);
+        CHECK(sp->types()[0] == DataTypeVariantMap);
 }
 
 // Spec-walker test fixture: nested Map → List → S32 so we can assert
@@ -783,10 +783,10 @@ namespace {
 
         const VariantSpec *nestedTreeSpec() {
                 static const VariantSpec spec = []() {
-                        VariantSpec leaf = VariantSpec().setType(Variant::TypeS32);
+                        VariantSpec leaf = VariantSpec().setType(DataTypeInt32);
                         VariantSpec listSpec =
-                                VariantSpec().setType(Variant::TypeVariantList).setElementSpec(leaf);
-                        return VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(listSpec);
+                                VariantSpec().setType(DataTypeVariantList).setElementSpec(leaf);
+                        return VariantSpec().setType(DataTypeVariantMap).setValueSpec(listSpec);
                 }();
                 return &spec;
         }
@@ -804,19 +804,19 @@ TEST_CASE("VariantLookup: variantTree specFor walks element/value sub-specs") {
         Error              err;
         const VariantSpec *spTop = VariantLookup<LookupTreeNested>::specFor("Tree", &err);
         REQUIRE(spTop != nullptr);
-        CHECK(spTop->types()[0] == Variant::TypeVariantMap);
+        CHECK(spTop->types()[0] == DataTypeVariantMap);
 
         const VariantSpec *spInnerList = VariantLookup<LookupTreeNested>::specFor("Tree.someKey", &err);
         CHECK(err.isOk());
         REQUIRE(spInnerList != nullptr);
-        CHECK(spInnerList->types()[0] == Variant::TypeVariantList);
+        CHECK(spInnerList->types()[0] == DataTypeVariantList);
 
         // "Tree.someKey[0]" must descend valueSpec then elementSpec —
         // the mixed-segment case the original lambda got wrong.
         const VariantSpec *spLeaf = VariantLookup<LookupTreeNested>::specFor("Tree.someKey[0]", &err);
         CHECK(err.isOk());
         REQUIRE(spLeaf != nullptr);
-        CHECK(spLeaf->types()[0] == Variant::TypeS32);
+        CHECK(spLeaf->types()[0] == DataTypeInt32);
 }
 
 TEST_CASE("VariantLookup: variantTree appears in dump output") {
@@ -837,7 +837,7 @@ TEST_CASE("VariantLookup: variantTree appears in dump output") {
 // ========================================================================
 
 TEST_CASE("VariantSpec::coerce passes value through when no coercion needed") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(DataTypeInt32);
         Error       err;
         Variant     out = spec.coerce(Variant(int32_t(42)), &err);
         CHECK(err.isOk());
@@ -845,17 +845,17 @@ TEST_CASE("VariantSpec::coerce passes value through when no coercion needed") {
 }
 
 TEST_CASE("VariantSpec::coerce parses leaf String into native type") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec spec = VariantSpec().setType(DataTypeInt32);
         Error       err;
         Variant     out = spec.coerce(Variant(String("99")), &err);
         CHECK(err.isOk());
-        CHECK(out.type() == Variant::TypeS32);
+        CHECK(out.type() == DataTypeInt32);
         CHECK(out.get<int32_t>() == 99);
 }
 
 TEST_CASE("VariantSpec::coerce walks VariantList element-spec") {
-        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+        VariantSpec elem = VariantSpec().setType(DataTypeInt32);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantList).setElementSpec(elem);
 
         VariantList src;
         src.pushToBack(Variant(String("1")));
@@ -865,17 +865,17 @@ TEST_CASE("VariantSpec::coerce walks VariantList element-spec") {
         Error   err;
         Variant out = spec.coerce(Variant(src), &err);
         CHECK(err.isOk());
-        REQUIRE(out.type() == Variant::TypeVariantList);
+        REQUIRE(out.type() == DataTypeVariantList);
         VariantList vl = out.get<VariantList>();
         REQUIRE(vl.size() == 3);
-        CHECK(vl[0].type() == Variant::TypeS32);
+        CHECK(vl[0].type() == DataTypeInt32);
         CHECK(vl[0].get<int32_t>() == 1);
         CHECK(vl[2].get<int32_t>() == 3);
 }
 
 TEST_CASE("VariantSpec::coerce walks VariantMap value-spec") {
-        VariantSpec val  = VariantSpec().setType(Variant::TypeS32);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(val);
+        VariantSpec val  = VariantSpec().setType(DataTypeInt32);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantMap).setValueSpec(val);
 
         VariantMap src;
         src.insert("a", Variant(String("10")));
@@ -885,14 +885,14 @@ TEST_CASE("VariantSpec::coerce walks VariantMap value-spec") {
         Variant out = spec.coerce(Variant(src), &err);
         CHECK(err.isOk());
         VariantMap vm = out.get<VariantMap>();
-        CHECK(vm.value("a").type() == Variant::TypeS32);
+        CHECK(vm.value("a").type() == DataTypeInt32);
         CHECK(vm.value("a").get<int32_t>() == 10);
         CHECK(vm.value("b").get<int32_t>() == 20);
 }
 
 TEST_CASE("VariantSpec::coerce reports parse failure inside nested list") {
-        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+        VariantSpec elem = VariantSpec().setType(DataTypeInt32);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantList).setElementSpec(elem);
 
         VariantList src;
         src.pushToBack(Variant(String("1")));

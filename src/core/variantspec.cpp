@@ -86,19 +86,19 @@ const VariantSpec *VariantSpec::valueSpec() const { return _valueSpec.get(); }
 
 namespace {
 
-        /// Returns true if the Variant::Type is any integer or floating-point type.
-        bool isNumericType(Variant::Type t) {
+        /// Returns true if the DataTypeID is any integer or floating-point type.
+        bool isNumericType(DataTypeID t) {
                 switch (t) {
-                        case Variant::TypeU8:
-                        case Variant::TypeS8:
-                        case Variant::TypeU16:
-                        case Variant::TypeS16:
-                        case Variant::TypeU32:
-                        case Variant::TypeS32:
-                        case Variant::TypeU64:
-                        case Variant::TypeS64:
-                        case Variant::TypeFloat:
-                        case Variant::TypeDouble: return true;
+                        case DataTypeUInt8:
+                        case DataTypeInt8:
+                        case DataTypeUInt16:
+                        case DataTypeInt16:
+                        case DataTypeUInt32:
+                        case DataTypeInt32:
+                        case DataTypeUInt64:
+                        case DataTypeInt64:
+                        case DataTypeFloat:
+                        case DataTypeDouble: return true;
                         default: return false;
                 }
         }
@@ -106,136 +106,136 @@ namespace {
         /// Returns true if @p a and @p b are both numeric types and thus
         /// interchangeable for validation purposes (Variant converts between
         /// all numeric types automatically).
-        bool numericCompatible(Variant::Type a, Variant::Type b) {
+        bool numericCompatible(DataTypeID a, DataTypeID b) {
                 return isNumericType(a) && isNumericType(b);
         }
 
-        /// Returns a short human-readable label for a single Variant::Type.
-        String singleTypeName(Variant::Type t, Enum::Type enumType) {
+        /// Returns a short human-readable label for a single DataTypeID.
+        String singleTypeName(DataTypeID t, Enum::Type enumType) {
                 switch (t) {
-                        case Variant::TypeBool: return "bool";
-                        case Variant::TypeU8: return "uint8";
-                        case Variant::TypeS8: return "int8";
-                        case Variant::TypeU16: return "uint16";
-                        case Variant::TypeS16: return "int16";
-                        case Variant::TypeU32: return "uint";
-                        case Variant::TypeS32: return "int";
-                        case Variant::TypeU64: return "uint64";
-                        case Variant::TypeS64: return "int64";
-                        case Variant::TypeFloat: return "float";
-                        case Variant::TypeDouble: return "double";
-                        case Variant::TypeString: return "String";
-                        case Variant::TypeDateTime: return "DateTime";
-                        case Variant::TypeTimeStamp: return "TimeStamp";
-                        case Variant::TypeSize2D: return "Size2D";
-                        case Variant::TypeUUID: return "UUID";
-                        case Variant::TypeUMID: return "UMID";
-                        case Variant::TypeTimecode: return "Timecode";
-                        case Variant::TypeFrameNumber: return "FrameNumber";
-                        case Variant::TypeFrameCount: return "FrameCount";
-                        case Variant::TypeMediaDuration: return "MediaDuration";
-                        case Variant::TypeDuration: return "Duration";
-                        case Variant::TypeRational: return "Rational";
-                        case Variant::TypeFrameRate: return "FrameRate";
-                        case Variant::TypeVideoFormat: return "VideoFormat";
-                        case Variant::TypeStringList: return "StringList";
-                        case Variant::TypeColor: return "Color";
-                        case Variant::TypeColorModel: return "ColorModel";
-                        case Variant::TypeMemSpace: return "MemSpace";
-                        case Variant::TypePixelMemLayout: return "PixelMemLayout";
-                        case Variant::TypePixelFormat: return "PixelFormat";
-                        case Variant::TypeVideoCodec: return "VideoCodec";
-                        case Variant::TypeAudioCodec: return "AudioCodec";
-                        case Variant::TypeAudioFormat: return "AudioFormat";
-                        case Variant::TypeAudioStreamDesc: return "AudioStreamDesc";
-                        case Variant::TypeAudioChannelMap: return "AudioChannelMap";
-                        case Variant::TypeAudioMarkerList: return "AudioMarkerList";
-                        case Variant::TypeEnum: {
+                        case DataTypeBool: return "bool";
+                        case DataTypeUInt8: return "uint8";
+                        case DataTypeInt8: return "int8";
+                        case DataTypeUInt16: return "uint16";
+                        case DataTypeInt16: return "int16";
+                        case DataTypeUInt32: return "uint";
+                        case DataTypeInt32: return "int";
+                        case DataTypeUInt64: return "uint64";
+                        case DataTypeInt64: return "int64";
+                        case DataTypeFloat: return "float";
+                        case DataTypeDouble: return "double";
+                        case DataTypeString: return "String";
+                        case DataTypeDateTime: return "DateTime";
+                        case DataTypeTimeStamp: return "TimeStamp";
+                        case DataTypeSize2D: return "Size2D";
+                        case DataTypeUUID: return "UUID";
+                        case DataTypeUMID: return "UMID";
+                        case DataTypeTimecode: return "Timecode";
+                        case DataTypeFrameNumber: return "FrameNumber";
+                        case DataTypeFrameCount: return "FrameCount";
+                        case DataTypeMediaDuration: return "MediaDuration";
+                        case DataTypeDuration: return "Duration";
+                        case DataTypeRational: return "Rational";
+                        case DataTypeFrameRate: return "FrameRate";
+                        case DataTypeVideoFormat: return "VideoFormat";
+                        case DataTypeStringList: return "StringList";
+                        case DataTypeColor: return "Color";
+                        case DataTypeColorModel: return "ColorModel";
+                        case DataTypeMemSpace: return "MemSpace";
+                        case DataTypePixelMemLayout: return "PixelMemLayout";
+                        case DataTypePixelFormat: return "PixelFormat";
+                        case DataTypeVideoCodec: return "VideoCodec";
+                        case DataTypeAudioCodec: return "AudioCodec";
+                        case DataTypeAudioFormat: return "AudioFormat";
+                        case DataTypeAudioStreamDesc: return "AudioStreamDesc";
+                        case DataTypeAudioChannelMap: return "AudioChannelMap";
+                        case DataTypeAudioMarkerList: return "AudioMarkerList";
+                        case DataTypeEnum: {
                                 if (enumType.isValid()) return String("Enum ") + enumType.name();
                                 return "Enum";
                         }
-                        case Variant::TypeEnumList: {
+                        case DataTypeEnumList: {
                                 if (enumType.isValid()) return String("EnumList ") + enumType.name();
                                 return "EnumList";
                         }
-                        case Variant::TypeUrl: return "Url";
-                        case Variant::TypeWindowedStat: return "WindowedStat";
-                        case Variant::TypeVariantList: return "VariantList";
-                        case Variant::TypeVariantMap: return "VariantMap";
+                        case DataTypeUrl: return "Url";
+                        case DataTypeWindowedStat: return "WindowedStat";
+                        case DataTypeVariantList: return "VariantList";
+                        case DataTypeVariantMap: return "VariantMap";
 #if PROMEKI_ENABLE_NETWORK
-                        case Variant::TypeSocketAddress: return "SocketAddress";
-                        case Variant::TypeSdpSession: return "SdpSession";
+                        case DataTypeSocketAddress: return "SocketAddress";
+                        case DataTypeSdpSession: return "SdpSession";
 #endif
                         default: return "unknown";
                 }
         }
 
-        /// Attempt to parse @p str as a specific Variant::Type.  Returns an
+        /// Attempt to parse @p str as a specific DataTypeID.  Returns an
         /// invalid Variant and sets @p err on failure.
-        Variant parseAsType(Variant::Type type, Enum::Type enumType, const String &str, Error *err) {
+        Variant parseAsType(DataTypeID type, Enum::Type enumType, const String &str, Error *err) {
                 Variant src(str);
                 Error   ce;
 
                 switch (type) {
-                        case Variant::TypeBool: {
+                        case DataTypeBool: {
                                 String low = str.toLower();
                                 if (low == "true" || low == "yes" || low == "1" || low == "on") return Variant(true);
                                 if (low == "false" || low == "no" || low == "0" || low == "off") return Variant(false);
                                 if (err) *err = Error::Invalid;
                                 return Variant();
                         }
-                        case Variant::TypeU8: {
+                        case DataTypeUInt8: {
                                 auto v = src.get<uint8_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeS8: {
+                        case DataTypeInt8: {
                                 auto v = src.get<int8_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeU16: {
+                        case DataTypeUInt16: {
                                 auto v = src.get<uint16_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeS16: {
+                        case DataTypeInt16: {
                                 auto v = src.get<int16_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeU32: {
+                        case DataTypeUInt32: {
                                 auto v = src.get<uint32_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeS32: {
+                        case DataTypeInt32: {
                                 auto v = src.get<int32_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeU64: {
+                        case DataTypeUInt64: {
                                 auto v = src.get<uint64_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeS64: {
+                        case DataTypeInt64: {
                                 auto v = src.get<int64_t>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeFloat: {
+                        case DataTypeFloat: {
                                 auto v = src.get<float>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeDouble: {
+                        case DataTypeDouble: {
                                 auto v = src.get<double>(&ce);
                                 if (ce.isError()) break;
                                 return Variant(v);
                         }
-                        case Variant::TypeString: return Variant(str);
-                        case Variant::TypeSize2D: {
+                        case DataTypeString: return Variant(str);
+                        case DataTypeSize2D: {
                                 // A successful parse yields a valid Variant of
                                 // type TypeSize2D regardless of whether the
                                 // resulting size is geometrically valid (W>0
@@ -250,7 +250,7 @@ namespace {
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
-                        case Variant::TypeFrameRate: {
+                        case DataTypeFrameRate: {
                                 // See the TypeSize2D rationale above — a
                                 // syntactically successful parse is a parse
                                 // success, even if the value happens to be
@@ -261,14 +261,14 @@ namespace {
                                 return Variant(r.first());
                         }
 #if PROMEKI_ENABLE_PROAV
-                        case Variant::TypeVideoFormat: {
+                        case DataTypeVideoFormat: {
                                 // See the TypeSize2D rationale above.
                                 auto r = VideoFormat::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
 #endif
-                        case Variant::TypeRational: {
+                        case DataTypeRational: {
                                 size_t slash = str.find('/');
                                 if (slash == String::npos) break;
                                 Error ne, de;
@@ -277,49 +277,48 @@ namespace {
                                 if (ne.isError() || de.isError() || d == 0) break;
                                 return Variant(Rational<int>(n, d));
                         }
-                        case Variant::TypeTimecode: {
+                        case DataTypeTimecode: {
                                 auto r = Timecode::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
-                        case Variant::TypeFrameNumber: {
+                        case DataTypeFrameNumber: {
                                 auto [fn, pe] = FrameNumber::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(fn);
                         }
-                        case Variant::TypeFrameCount: {
+                        case DataTypeFrameCount: {
                                 auto [fc, pe] = FrameCount::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(fc);
                         }
-                        case Variant::TypeMediaDuration: {
+                        case DataTypeMediaDuration: {
                                 auto [md, pe] = MediaDuration::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(md);
                         }
-                        case Variant::TypeDuration: {
-                                Error    pe;
-                                Duration d = Duration::fromString(str, &pe);
+                        case DataTypeDuration: {
+                                auto [d, pe] = Duration::fromString(str);
                                 if (pe.isError()) break;
                                 return Variant(d);
                         }
-                        case Variant::TypeDateTime: {
+                        case DataTypeDateTime: {
                                 auto [dt, de] = DateTime::fromString(str);
                                 if (de.isError()) break;
                                 return Variant(dt);
                         }
-                        case Variant::TypeColor: {
+                        case DataTypeColor: {
                                 auto [c, ce] = Color::fromString(str);
                                 if (ce.isError() || !c.isValid()) break;
                                 return Variant(c);
                         }
-                        case Variant::TypeColorModel: {
+                        case DataTypeColorModel: {
                                 ColorModel cm = ColorModel::lookup(str);
                                 if (!cm.isValid()) break;
                                 return Variant(cm);
                         }
 #if PROMEKI_ENABLE_PROAV
-                        case Variant::TypePixelFormat: {
+                        case DataTypePixelFormat: {
                                 // Use the error-aware lookup so the canonical
                                 // "Invalid" sentinel name still parses cleanly
                                 // — defaults that intentionally use Invalid as
@@ -331,44 +330,44 @@ namespace {
                                 if (pe.isError()) break;
                                 return Variant(pd);
                         }
-                        case Variant::TypePixelMemLayout: {
+                        case DataTypePixelMemLayout: {
                                 Error          pe;
                                 PixelMemLayout pf = PixelMemLayout::lookup(str, &pe);
                                 if (pe.isError()) break;
                                 return Variant(pf);
                         }
-                        case Variant::TypeVideoCodec: {
+                        case DataTypeVideoCodec: {
                                 auto r = VideoCodec::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeAudioCodec: {
+                        case DataTypeAudioCodec: {
                                 auto r = AudioCodec::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeAudioFormat: {
+                        case DataTypeAudioFormat: {
                                 auto r = AudioFormat::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeAudioStreamDesc: {
+                        case DataTypeAudioStreamDesc: {
                                 auto r = AudioStreamDesc::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeAudioChannelMap: {
+                        case DataTypeAudioChannelMap: {
                                 auto r = AudioChannelMap::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeAudioMarkerList: {
+                        case DataTypeAudioMarkerList: {
                                 auto r = AudioMarkerList::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
 #endif
-                        case Variant::TypeEnum: {
+                        case DataTypeEnum: {
                                 if (!enumType.isValid()) break;
                                 // Canonical empty form "::" maps back to a
                                 // typeless / unset Enum — defaults declared
@@ -379,46 +378,72 @@ namespace {
                                 // this by accepting an invalid Enum when an
                                 // enumType is set.
                                 if (str == "::") return Variant(Enum());
+                                // Try the short value name first (what
+                                // Enum::toString emits for in-list values).
                                 Enum e(enumType, str);
                                 if (e.hasListedValue()) return Variant(e);
-                                // Fall back to fully qualified "TypeName::ValueName".
+                                // Then the fully qualified
+                                // "TypeName::ValueName" form for cross-type
+                                // tolerance.
                                 Error lookErr;
                                 Enum  fq = Enum::lookup(str, &lookErr);
                                 if (lookErr.isOk() && fq.type() == enumType && fq.hasListedValue()) return Variant(fq);
+                                // Finally fall back to the decimal integer
+                                // form — that's what Enum::toString emits
+                                // for out-of-list values, so it must
+                                // round-trip too.
+                                Error intErr;
+                                int   iv = str.template to<int>(&intErr);
+                                if (intErr.isOk()) return Variant(Enum(enumType, iv));
                                 break;
                         }
-                        case Variant::TypeEnumList: {
+                        case DataTypeEnumList: {
                                 if (!enumType.isValid()) break;
-                                Error    listErr;
-                                EnumList list = EnumList::fromString(enumType, str, &listErr);
+                                // EnumList::fromString requires fully-qualified
+                                // entries; this VariantSpec call site has the
+                                // target enumType in hand, so accept bare names
+                                // ("Tone,Silence") by prefixing them before
+                                // handing off.
+                                StringList parts = str.trim().split(",");
+                                String     prefixed;
+                                const String typePrefix = String(enumType.name()) + "::";
+                                for (size_t i = 0; i < parts.size(); ++i) {
+                                        String entry = parts[i].trim();
+                                        if (entry.isEmpty()) continue;
+                                        if (i > 0 && !prefixed.isEmpty()) prefixed += ',';
+                                        if (entry.contains("::")) prefixed += entry;
+                                        else                      prefixed += typePrefix + entry;
+                                }
+                                auto [list, listErr] = EnumList::fromString(prefixed);
                                 if (listErr.isError()) break;
+                                if (list.isValid() && list.elementType() != enumType) break;
                                 return Variant(list);
                         }
-                        case Variant::TypeStringList: return Variant(str.split(","));
-                        case Variant::TypeUrl: {
+                        case DataTypeStringList: return Variant(str.split(","));
+                        case DataTypeUrl: {
                                 Result<Url> r = Url::fromString(str);
                                 if (r.second().isError() || !r.first().isValid()) break;
                                 return Variant(r.first());
                         }
-                        case Variant::TypeWindowedStat: {
+                        case DataTypeWindowedStat: {
                                 auto r = WindowedStat::fromString(str);
                                 if (error(r).isError()) break;
                                 return Variant(value(r));
                         }
-                        case Variant::TypeVariantList: {
+                        case DataTypeVariantList: {
                                 Error       pe;
                                 VariantList vl = VariantList::fromJsonString(str, &pe);
                                 if (pe.isError()) break;
                                 return Variant(vl);
                         }
-                        case Variant::TypeVariantMap: {
+                        case DataTypeVariantMap: {
                                 Error      pe;
                                 VariantMap vm = VariantMap::fromJsonString(str, &pe);
                                 if (pe.isError()) break;
                                 return Variant(vm);
                         }
 #if PROMEKI_ENABLE_NETWORK
-                        case Variant::TypeSocketAddress: {
+                        case DataTypeSocketAddress: {
                                 // SocketAddress() (null) serializes to an empty
                                 // String, so accept that as the canonical
                                 // sentinel form — defaults that mark "no
@@ -430,13 +455,13 @@ namespace {
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
-                        case Variant::TypeMacAddress: {
+                        case DataTypeMacAddress: {
                                 if (str.isEmpty()) return Variant(MacAddress());
                                 auto r = MacAddress::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }
-                        case Variant::TypeEUI64: {
+                        case DataTypeEUI64: {
                                 if (str.isEmpty()) return Variant(EUI64());
                                 auto r = EUI64::fromString(str);
                                 if (r.second().isError()) break;
@@ -513,14 +538,14 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
         //    an enumType is declared, so defaults like
         //    setDefault(Enum()) (used to mean "use the backend's own
         //    fallback") survive a JSON round-trip.
-        if (_enumType.isValid() && value.type() == Variant::TypeEnum) {
+        if (_enumType.isValid() && value.type() == DataTypeEnum) {
                 Enum e = value.get<Enum>();
                 if (e.isValid() && e.type() != _enumType) {
                         if (err) *err = Error::InvalidArgument;
                         return false;
                 }
         }
-        if (_enumType.isValid() && value.type() == Variant::TypeEnumList) {
+        if (_enumType.isValid() && value.type() == DataTypeEnumList) {
                 EnumList list = value.get<EnumList>();
                 if (list.elementType() != _enumType) {
                         if (err) *err = Error::InvalidArgument;
@@ -575,14 +600,14 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
 
 String VariantSpec::typeName() const {
         if (_types.isEmpty()) return "(any)";
-        auto annotate = [this](Variant::Type t) -> String {
+        auto annotate = [this](DataTypeID t) -> String {
                 String base = singleTypeName(t, _enumType);
                 // For container types, surface the element / value shape
                 // so help output and introspection can show "VariantList<int>"
                 // or "VariantMap<int>" instead of just the bare container.
-                if (t == Variant::TypeVariantList && _elementSpec.isValid()) {
+                if (t == DataTypeVariantList && _elementSpec.isValid()) {
                         base += "<" + _elementSpec->typeName() + ">";
-                } else if (t == Variant::TypeVariantMap && _valueSpec.isValid()) {
+                } else if (t == DataTypeVariantMap && _valueSpec.isValid()) {
                         base += "<" + _valueSpec->typeName() + ">";
                 }
                 return base;
@@ -600,7 +625,7 @@ namespace {
 
         /// Format a numeric Variant as a compact string (no trailing zeros for floats).
         String formatNumeric(const Variant &v) {
-                if (v.type() == Variant::TypeFloat || v.type() == Variant::TypeDouble) {
+                if (v.type() == DataTypeFloat || v.type() == DataTypeDouble) {
                         double d = v.get<double>();
                         // Use %g for compact representation (strips trailing zeros).
                         char buf[64];
@@ -626,16 +651,16 @@ String VariantSpec::rangeString() const {
 
 String VariantSpec::defaultString() const {
         if (!_default.isValid()) return "(none)";
-        if (_default.type() == Variant::TypeEnum) {
+        if (_default.type() == DataTypeEnum) {
                 Enum   e = _default.get<Enum>();
                 String vn = e.valueName();
                 return vn.isEmpty() ? "(invalid)" : vn;
         }
-        if (_default.type() == Variant::TypeString) {
+        if (_default.type() == DataTypeString) {
                 String s = _default.get<String>();
                 return s.isEmpty() ? "(empty)" : s;
         }
-        if (_default.type() == Variant::TypeFloat || _default.type() == Variant::TypeDouble) {
+        if (_default.type() == DataTypeFloat || _default.type() == DataTypeDouble) {
                 return formatNumeric(_default);
         }
         Error  se;
@@ -674,7 +699,7 @@ Variant VariantSpec::coerce(const Variant &val, Error *err) const {
         // Top-level String coercion: spec wants a non-String native type
         // and the JSON layer handed us a String — feed it through
         // parseString so the database stores the right Variant alternative.
-        if (val.type() == Variant::TypeString && !_types.isEmpty() && !acceptsType(Variant::TypeString)) {
+        if (val.type() == DataTypeString && !_types.isEmpty() && !acceptsType(DataTypeString)) {
                 Error   pe;
                 Variant parsed = parseString(val.get<String>(), &pe);
                 if (pe.isError()) {

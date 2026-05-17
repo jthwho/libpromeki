@@ -10,13 +10,18 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 class FrameCount;
 
@@ -62,6 +67,13 @@ class FrameCount;
  */
 class FrameNumber {
         public:
+                PROMEKI_DATATYPE(FrameNumber, DataTypeFrameNumber, 1)
+
+                /** @brief Writes a tagged int64 holding the raw storage value (Unknown = -1). */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged int64 and reconstructs the FrameNumber. */
+                template <uint32_t V> static Result<FrameNumber> readFromStream(DataStream &s);
+
                 /** @brief Storage sentinel meaning "unknown". */
                 static constexpr int64_t UnknownValue = -1;
 
@@ -111,6 +123,31 @@ class FrameNumber {
 
                 /** @brief Returns the raw storage value (@c -1 for @c Unknown, else the frame index). */
                 constexpr int64_t value() const { return _value; }
+
+                /**
+                 * @brief Returns the frame index as a @c double.
+                 *
+                 * @c Unknown is rendered as @c std::numeric_limits<double>::quiet_NaN()
+                 * so the round-trip through @ref fromDouble can recover it.
+                 */
+                double toDouble() const {
+                        return isValid() ? static_cast<double>(_value)
+                                         : std::numeric_limits<double>::quiet_NaN();
+                }
+
+                /**
+                 * @brief Constructs from a @c double.
+                 *
+                 * NaN maps to @c Unknown.  Negative values map to
+                 * @c Unknown (consistent with the @c int64_t ctor).
+                 * Otherwise the value is truncated to the nearest
+                 * non-negative integer.
+                 */
+                static Result<FrameNumber> fromDouble(double v) {
+                        if (std::isnan(v)) return makeResult(FrameNumber());
+                        if (!std::isfinite(v) || v < 0.0) return makeResult(FrameNumber());
+                        return makeResult(FrameNumber(static_cast<int64_t>(v)));
+                }
 
                 /** @brief Pre-increment.  Advances by one frame; @c Unknown stays @c Unknown. */
                 FrameNumber &operator++() {

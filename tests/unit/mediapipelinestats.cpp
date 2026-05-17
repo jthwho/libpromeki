@@ -186,7 +186,7 @@ TEST_CASE("MediaPipelineStats_PerStageWindowedStatsSurvive") {
                 CHECK(round == ps);
                 const Variant rebuilt =
                         round.stageStats("src").get(MediaIOStats::ID("ReadExecuteDuration"));
-                CHECK(rebuilt.type() == Variant::TypeWindowedStat);
+                CHECK(rebuilt.type() == DataTypeWindowedStat);
                 const WindowedStat ws = rebuilt.get<WindowedStat>();
                 CHECK(ws.capacity() == 8);
                 CHECK(ws.count() == 3);

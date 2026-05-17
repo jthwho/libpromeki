@@ -136,7 +136,7 @@ namespace mediaplay {
  *                   @c "EnumList <Type>" instead of @c "Enum <Type>"
  *                   and a comma-separated usage hint is appended
  *                   after the value list.  Pass @c true for keys
- *                   whose spec type is @c Variant::TypeEnumList.
+ *                   whose spec type is @c DataTypeEnumList.
  */
         [[noreturn]] void listEnumTypeAndExit(const promeki::String &keyLabel, promeki::Enum::Type type,
                                               bool isEnumList = false);

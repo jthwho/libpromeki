@@ -16,11 +16,13 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/rational.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class Error;
 class String;
+class DataStream;
 
 /**
  * @brief Time duration with nanosecond precision.
@@ -38,6 +40,13 @@ class String;
  */
 class Duration {
         public:
+                PROMEKI_DATATYPE(Duration, DataTypeDuration, 1)
+
+                /** @brief Writes a tagged int64 nanosecond count. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged int64 nanosecond count. */
+                template <uint32_t V> static Result<Duration> readFromStream(DataStream &s);
+
                 /**
                  * @brief Creates a Duration from hours.
                  * @param h Number of hours.
@@ -217,18 +226,14 @@ class Duration {
                  *    so `"3"` parses as 3 seconds.  Add a unit suffix when
                  *    you mean ms / us / ns.
                  *
-                 * Returns a default-constructed (zero) Duration on parse
-                 * failure and sets @p err.  This intentionally mirrors the
-                 * other `fromString` helpers in the library — callers that
-                 * need to distinguish "explicit zero" from "parse failed"
-                 * should pass a non-null @p err.
+                 * On parse failure the returned @ref Result carries an
+                 * @c Error::ParseFailed and a default-constructed
+                 * (zero) Duration.
                  *
                  * @param str Input string.
-                 * @param err Optional error sink.  Set to @c Error::Invalid
-                 *            on a failed parse, untouched otherwise.
-                 * @return Parsed Duration, or zero on error.
+                 * @return @ref Result wrapping the parsed @ref Duration.
                  */
-                static Duration fromString(const String &str, Error *err = nullptr);
+                static Result<Duration> fromString(const String &str);
 
                 /**
                  * @brief Returns an auto-scaled representation (e.g. "1.5 ms").

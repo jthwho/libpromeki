@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <promeki/memspace.h>
+#include <promeki/datastream.h>
 #include <promeki/securemem.h>
 #include <promeki/atomic.h>
 #include <promeki/error.h>
@@ -397,6 +398,23 @@ MemSpace::IDList MemSpace::registeredIDs() {
                 ret.pushToBack(id);
         }
         return ret;
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged uint32 holding the registered ID).
+// ============================================================================
+
+Error MemSpace::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(id());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<MemSpace> MemSpace::readFromStream<1>(DataStream &s) {
+        uint32_t idVal = 0;
+        s >> idVal;
+        if (s.status() != DataStream::Ok) return makeError<MemSpace>(s.toError());
+        return makeResult(MemSpace(static_cast<ID>(idVal)));
 }
 
 PROMEKI_NAMESPACE_END

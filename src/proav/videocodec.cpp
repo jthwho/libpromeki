@@ -6,6 +6,7 @@
  */
 
 #include <promeki/videocodec.h>
+#include <promeki/datastream.h>
 #include <promeki/pixelformat.h>
 #include <promeki/atomic.h>
 #include <promeki/map.h>
@@ -378,6 +379,23 @@ String VideoCodec::toString() const {
                 if (!bn.isEmpty()) return name() + ":" + bn;
         }
         return name();
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged "Codec[:Backend]" String).
+// ============================================================================
+
+Error VideoCodec::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<VideoCodec> VideoCodec::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<VideoCodec>(s.toError());
+        return VideoCodec::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

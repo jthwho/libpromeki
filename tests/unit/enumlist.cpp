@@ -135,7 +135,7 @@ TEST_CASE("EnumList::uniqueSorted on an empty list produces an empty list") {
 // toString / fromString
 // ============================================================================
 
-TEST_CASE("EnumList::toString produces a comma-separated list of names") {
+TEST_CASE("EnumList::toString produces a comma-separated list of short value names") {
         EnumList list(AudioPattern::Type);
         list.append(AudioPattern::Tone);
         list.append(AudioPattern::Silence);
@@ -148,9 +148,9 @@ TEST_CASE("EnumList::toString on empty returns an empty string") {
         CHECK(list.toString().isEmpty());
 }
 
-TEST_CASE("EnumList::fromString parses a comma list") {
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, "Tone,Silence,LTC", &err);
+TEST_CASE("EnumList::fromString parses a qualified comma list") {
+        auto [parsed, err] = EnumList::fromString(
+                "AudioPattern::Tone,AudioPattern::Silence,AudioPattern::LTC");
         CHECK(err.isOk());
         CHECK(parsed.size() == 3);
         CHECK(parsed[0] == AudioPattern::Tone);
@@ -159,8 +159,8 @@ TEST_CASE("EnumList::fromString parses a comma list") {
 }
 
 TEST_CASE("EnumList::fromString trims whitespace around entries") {
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, "  Tone , Silence ", &err);
+        auto [parsed, err] = EnumList::fromString(
+                "  AudioPattern::Tone , AudioPattern::Silence ");
         CHECK(err.isOk());
         CHECK(parsed.size() == 2);
         CHECK(parsed[0] == AudioPattern::Tone);
@@ -168,51 +168,65 @@ TEST_CASE("EnumList::fromString trims whitespace around entries") {
 }
 
 TEST_CASE("EnumList::fromString accepts empty input") {
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, String(), &err);
+        auto [parsed, err] = EnumList::fromString(String());
         CHECK(err.isOk());
-        CHECK(parsed.isValid());
         CHECK(parsed.isEmpty());
 }
 
 TEST_CASE("EnumList::fromString rejects an invalid name") {
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, "Tone,NotARealPattern", &err);
+        auto [parsed, err] = EnumList::fromString(
+                "AudioPattern::Tone,AudioPattern::NotARealPattern");
         CHECK(err.isError());
-        CHECK(!parsed.isValid());
 }
 
 TEST_CASE("EnumList::fromString silently drops empty entries between commas") {
-        // String::split() treats empty tokens as absent, so "Tone,,Silence"
+        // String::split() treats empty tokens as absent, so "...,,..."
         // parses as two entries — that behavior is inherited here to stay
         // consistent with the rest of the library's comma-joined parsers.
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, "Tone,,Silence", &err);
+        auto [parsed, err] = EnumList::fromString(
+                "AudioPattern::Tone,,AudioPattern::Silence");
         CHECK(err.isOk());
         CHECK(parsed.size() == 2);
         CHECK(parsed[0] == AudioPattern::Tone);
         CHECK(parsed[1] == AudioPattern::Silence);
 }
 
-TEST_CASE("EnumList::fromString falls back to decimal for out-of-list values") {
-        // 42 is not a registered value — decimal fallback should still
-        // accept it so toString/fromString round-trips cleanly when a
-        // list carries an out-of-list integer from another process.
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, "Tone,42,LTC", &err);
+TEST_CASE("EnumList::fromString accepts the qualified decimal form for out-of-list values") {
+        // "Type::N" is the canonical out-of-list form; Enum::lookup
+        // already accepts it, so EnumList parsing inherits it for free.
+        auto [parsed, err] = EnumList::fromString(
+                "AudioPattern::Tone,AudioPattern::42,AudioPattern::LTC");
         CHECK(err.isOk());
         CHECK(parsed.size() == 3);
         CHECK(parsed[1].value() == 42);
 }
 
-TEST_CASE("EnumList toString/fromString round-trips") {
+TEST_CASE("EnumList::fromString rejects mismatched types") {
+        // Once the type is deduced from the first entry, every
+        // subsequent entry must match — heterogeneous EnumLists are
+        // meaningless.
+        auto [parsed, err] = EnumList::fromString(
+                "AudioPattern::Tone,VideoPattern::Black");
+        CHECK(err.isError());
+}
+
+TEST_CASE("EnumList toString/fromString round-trips when entries are prefixed externally") {
+        // toString emits short names ("AvSync,Tone,AvSync"); the
+        // single-arg fromString needs the qualified form so we
+        // prepend the type prefix to each entry, the same shim
+        // Variant uses on the String -> EnumList path.
         EnumList original(AudioPattern::Type);
         original.append(AudioPattern::AvSync);
         original.append(AudioPattern::Tone);
         original.append(AudioPattern::AvSync);
 
-        Error    err;
-        EnumList parsed = EnumList::fromString(AudioPattern::Type, original.toString(), &err);
+        StringList shortParts = original.toString().split(",");
+        String     qualified;
+        for (size_t i = 0; i < shortParts.size(); ++i) {
+                if (i > 0) qualified += ',';
+                qualified += String(AudioPattern::Type.name()) + "::" + shortParts[i];
+        }
+        auto [parsed, err] = EnumList::fromString(qualified);
         CHECK(err.isOk());
         CHECK(parsed == original);
 }
@@ -227,7 +241,7 @@ TEST_CASE("EnumList stores and extracts from a Variant") {
         list.append(AudioPattern::Silence);
 
         Variant v(list);
-        CHECK(v.type() == Variant::TypeEnumList);
+        CHECK(v.type() == DataTypeEnumList);
 
         EnumList out = v.get<EnumList>();
         CHECK(out == list);
@@ -294,7 +308,7 @@ TEST_CASE("EnumList round-trips through a Variant DataStream dispatch") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeEnumList);
+                CHECK(out.type() == DataTypeEnumList);
                 CHECK(out.get<EnumList>() == original);
         }
 }

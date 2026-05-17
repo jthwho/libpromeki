@@ -17,8 +17,11 @@
 #include <promeki/rational.h>
 #include <promeki/result.h>
 #include <promeki/string.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 #define PROMEKI_WELL_KNOWN_FRAME_RATES                                                                                 \
         X(FPS_Invalid, "INV", 0, 1)                                                                                    \
@@ -104,6 +107,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class FrameRate {
         public:
+                PROMEKI_DATATYPE(FrameRate, DataTypeFrameRate, 1)
+
+                /** @brief Writes two tagged uint32s: numerator + denominator. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads two tagged uint32s into numerator + denominator. */
+                template <uint32_t V> static Result<FrameRate> readFromStream(DataStream &s);
+
                 /** @brief Underlying rational type used to store the frame rate. */
                 using RationalType = Rational<unsigned int>;
 
@@ -170,6 +180,27 @@ class FrameRate {
                  * @return The frame rate in frames per second.
                  */
                 double toDouble() const { return _fps.toDouble(); }
+
+                /**
+                 * @brief Constructs from a @c double using the well-known
+                 *        rate table for the NTSC-family fractions.
+                 *
+                 * Two paths:
+                 *  - the @p val is within @c 0.01 fps of a registered
+                 *    @ref WellKnownRate — that rate's exact rational
+                 *    form is used (so e.g. @c 23.976 maps back to the
+                 *    exact @c 24000/1001 rather than a near-miss);
+                 *  - the @p val is a positive integer (no fractional
+                 *    part) — constructed as @c (N, 1) exactly.
+                 *
+                 * Any other input (negative, NaN, Inf, or an unknown
+                 * non-integer rate) returns @c Error::ParseFailed.
+                 * Floating-point rationalization of arbitrary doubles
+                 * is intentionally not attempted; ambiguous inputs
+                 * round-trip lossily and the explicit @c (num, den)
+                 * constructor should be used instead.
+                 */
+                static Result<FrameRate> fromDouble(double val);
 
                 /**
                  * @brief Returns the period of one frame as a Duration.

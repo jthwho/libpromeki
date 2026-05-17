@@ -17,8 +17,11 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/array.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief SMPTE 330M Unique Material Identifier (UMID).
@@ -63,6 +66,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class UMID {
         public:
+                PROMEKI_DATATYPE(UMID, DataTypeUMID, 1)
+
+                /** @brief Writes a tagged uint8 length followed by length raw bytes. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged uint8 length followed by length raw bytes. */
+                template <uint32_t V> static Result<UMID> readFromStream(DataStream &s);
+
                 /** @brief UMID form — Basic (32 bytes) or Extended (64 bytes). */
                 enum Length {
                         Invalid = 0,  ///< @brief Not a valid UMID.

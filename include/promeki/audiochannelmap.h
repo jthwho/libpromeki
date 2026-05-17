@@ -83,6 +83,8 @@ PROMEKI_NAMESPACE_BEGIN
 class AudioChannelMap {
                 PROMEKI_SHARED_FINAL(AudioChannelMap)
         public:
+                PROMEKI_DATATYPE(AudioChannelMap, DataTypeAudioChannelMap, 1)
+
                 /** @brief One entry: a @c (stream, role) pair for a single channel. */
                 using Entry = Pair<AudioStreamDesc, ChannelRole>;
 
@@ -350,46 +352,53 @@ class AudioChannelMap {
                 bool operator==(const AudioChannelMap &o) const { return _entries == o._entries; }
                 bool operator!=(const AudioChannelMap &o) const { return !(*this == o); }
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint32 count + N (streamName, role) pairs
+                 * — streamName is the registered name (length-prefixed
+                 * String), role is an int32 ChannelRole value.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<AudioChannelMap> readFromStream(DataStream &s);
+
         private:
                 EntryList _entries;
 };
 
-/** @brief Writes an AudioChannelMap as tag + count + (streamName, role) pairs. */
-inline DataStream &operator<<(DataStream &stream, const AudioChannelMap &map) {
-        stream.beginFrame(DataStream::TypeAudioChannelMap, 1);
-        stream << static_cast<uint32_t>(map.channels());
-        for (const auto &entry : map.entries()) {
-                stream << entry.first().name();
-                stream << static_cast<int32_t>(entry.second().value());
+inline Error AudioChannelMap::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(channels());
+        for (const auto &entry : entries()) {
+                s << entry.first().name();
+                s << static_cast<int32_t>(entry.second().value());
         }
-        stream.endFrame();
-        return stream;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-/** @brief Reads an AudioChannelMap from its tagged wire format. */
-inline DataStream &operator>>(DataStream &stream, AudioChannelMap &map) {
-        if (!stream.readFrame(DataStream::TypeAudioChannelMap)) {
-                map = AudioChannelMap();
-                return stream;
-        }
+template <>
+inline Result<AudioChannelMap> AudioChannelMap::readFromStream<1>(DataStream &s) {
         uint32_t count = 0;
-        stream >> count;
+        s >> count;
+        if (s.status() != DataStream::Ok) return makeError<AudioChannelMap>(s.toError());
         AudioChannelMap::EntryList entries;
         entries.reserve(count);
         for (uint32_t i = 0; i < count; ++i) {
                 String  streamName;
                 int32_t roleValue = 0;
-                stream >> streamName >> roleValue;
-                AudioStreamDesc s = (streamName.isEmpty() || streamName == "Undefined") ? AudioStreamDesc()
-                                                                                        : AudioStreamDesc(streamName);
-                entries.pushToBack(AudioChannelMap::Entry(s, ChannelRole(roleValue)));
+                s >> streamName >> roleValue;
+                AudioStreamDesc stream = (streamName.isEmpty() || streamName == "Undefined")
+                                                 ? AudioStreamDesc()
+                                                 : AudioStreamDesc(streamName);
+                entries.pushToBack(AudioChannelMap::Entry(stream, ChannelRole(roleValue)));
         }
-        if (stream.status() != DataStream::Ok) {
-                map = AudioChannelMap();
-                return stream;
-        }
-        map = AudioChannelMap(std::move(entries));
-        return stream;
+        if (s.status() != DataStream::Ok) return makeError<AudioChannelMap>(s.toError());
+        return makeResult(AudioChannelMap(std::move(entries)));
 }
 
 PROMEKI_NAMESPACE_END

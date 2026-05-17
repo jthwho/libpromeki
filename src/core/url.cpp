@@ -6,6 +6,7 @@
  */
 
 #include <promeki/url.h>
+#include <promeki/datastream.h>
 #include <promeki/stringlist.h>
 #include <cctype>
 
@@ -421,6 +422,23 @@ bool Url::operator==(const Url &other) const {
                 if (other._query.value(k) != v) return false;
         }
         return true;
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical String round-trip).
+// ============================================================================
+
+Error Url::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<Url> Url::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<Url>(s.toError());
+        return Url::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

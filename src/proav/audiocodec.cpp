@@ -6,6 +6,7 @@
  */
 
 #include <promeki/audiocodec.h>
+#include <promeki/datastream.h>
 #include <promeki/audioformat.h>
 #include <promeki/atomic.h>
 #include <promeki/enums.h>
@@ -277,6 +278,23 @@ String AudioCodec::toString() const {
                 if (!bn.isEmpty()) return name() + ":" + bn;
         }
         return name();
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged "Codec[:Backend]" String).
+// ============================================================================
+
+Error AudioCodec::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<AudioCodec> AudioCodec::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<AudioCodec>(s.toError());
+        return AudioCodec::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

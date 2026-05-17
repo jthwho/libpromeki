@@ -219,7 +219,7 @@ class MediaDesc {
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
-        stream.beginFrame(DataStream::TypeMediaDesc, 1);
+        stream.beginFrame(DataTypeMediaDesc, 1);
         stream << desc.frameRate();
         stream << desc.imageList();
         stream << desc.audioList();
@@ -236,7 +236,7 @@ inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
-        if (!stream.readFrame(DataStream::TypeMediaDesc)) {
+        if (!stream.readFrame(DataTypeMediaDesc)) {
                 desc = MediaDesc();
                 return stream;
         }

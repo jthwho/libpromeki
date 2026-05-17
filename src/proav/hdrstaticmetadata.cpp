@@ -194,39 +194,27 @@ String HdrStaticMetadata::toString() const {
 }
 
 // ----------------------------------------------------------------------------
-// DataStream operators (also reachable through Variant's payload dispatch)
+// DataStream serialization (member-API path for PROMEKI_DATATYPE)
 // ----------------------------------------------------------------------------
 
-void writeHdrStaticMetadataData(DataStream &stream, const HdrStaticMetadata &md) {
-        Buffer buf = md.toBuffer();
-        stream << buf;
+Error HdrStaticMetadata::writeToStream(DataStream &s) const {
+        Buffer buf = toBuffer();
+        s << buf;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-HdrStaticMetadata readHdrStaticMetadataData(DataStream &stream) {
+template <>
+Result<HdrStaticMetadata> HdrStaticMetadata::readFromStream<1>(DataStream &s) {
         Buffer buf;
-        stream >> buf;
+        s >> buf;
+        if (s.status() != DataStream::Ok) return makeError<HdrStaticMetadata>(s.toError());
         Result<HdrStaticMetadata> r = HdrStaticMetadata::fromBuffer(buf);
         if (r.second().isError()) {
-                promekiWarn("HdrStaticMetadata DataStream read failed: %s", r.second().name().cstr());
-                return HdrStaticMetadata();
+                s.setError(DataStream::ReadCorruptData,
+                           String("HdrStaticMetadata::fromBuffer failed: ") + r.second().name());
+                return makeError<HdrStaticMetadata>(r.second());
         }
-        return r.first();
-}
-
-DataStream &operator<<(DataStream &stream, const HdrStaticMetadata &md) {
-        stream.beginFrame(DataStream::TypeHdrStaticMetadata, 1);
-        writeHdrStaticMetadataData(stream, md);
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, HdrStaticMetadata &md) {
-        if (!stream.readFrame(DataStream::TypeHdrStaticMetadata)) {
-                md = HdrStaticMetadata();
-                return stream;
-        }
-        md = readHdrStaticMetadataData(stream);
-        return stream;
+        return r;
 }
 
 PROMEKI_NAMESPACE_END

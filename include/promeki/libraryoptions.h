@@ -59,19 +59,19 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
 
                 /// @brief bool — install crash signal handlers (default true).
                 PROMEKI_DECLARE_ID(CrashHandler, VariantSpec()
-                                                         .setType(Variant::TypeBool)
+                                                         .setType(DataTypeBool)
                                                          .setDefault(true)
                                                          .setDescription("Install crash signal handlers."));
 
                 /// @brief bool — raise RLIMIT_CORE for core dumps (default false).
                 PROMEKI_DECLARE_ID(CoreDumps, VariantSpec()
-                                                      .setType(Variant::TypeBool)
+                                                      .setType(DataTypeBool)
                                                       .setDefault(false)
                                                       .setDescription("Enable core dumps via RLIMIT_CORE."));
 
                 /// @brief String — crash log directory (empty = Dir::temp()).
                 PROMEKI_DECLARE_ID(CrashLogDir, VariantSpec()
-                                                        .setType(Variant::TypeString)
+                                                        .setType(DataTypeString)
                                                         .setDefault(String())
                                                         .setDescription("Crash log directory (empty = system temp)."));
 
@@ -80,7 +80,7 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// contain secrets you don't want written to disk.
                 PROMEKI_DECLARE_ID(CaptureEnvironment,
                                    VariantSpec()
-                                           .setType(Variant::TypeBool)
+                                           .setType(DataTypeBool)
                                            .setDefault(true)
                                            .setDescription("Include environment variables in crash reports."));
 
@@ -118,7 +118,7 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// directory to exist should @ref Dir::mkpath the
                 /// result themselves.
                 PROMEKI_DECLARE_ID(TempDir, VariantSpec()
-                                                    .setType(Variant::TypeString)
+                                                    .setType(DataTypeString)
                                                     .setDefault(String())
                                                     .setDescription("Override for Dir::temp() (empty = OS default)."));
 
@@ -162,7 +162,7 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// result themselves.
                 PROMEKI_DECLARE_ID(IpcDir,
                                    VariantSpec()
-                                           .setType(Variant::TypeString)
+                                           .setType(DataTypeString)
                                            .setDefault(String())
                                            .setDescription("Override for Dir::ipc() (empty = platform default)."));
 
@@ -180,7 +180,7 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// @ref EventLoop.
                 PROMEKI_DECLARE_ID(TerminationSignalHandler,
                                    VariantSpec()
-                                           .setType(Variant::TypeBool)
+                                           .setType(DataTypeBool)
                                            .setDefault(true)
                                            .setDescription("Install termination signal handlers (Ctrl-C/kill)."));
 
@@ -194,7 +194,7 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                 /// themselves.
                 PROMEKI_DECLARE_ID(SignalDoubleTapExit,
                                    VariantSpec()
-                                           .setType(Variant::TypeBool)
+                                           .setType(DataTypeBool)
                                            .setDefault(true)
                                            .setDescription("Force-exit on second termination signal delivery."));
 

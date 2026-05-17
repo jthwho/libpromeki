@@ -44,7 +44,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * VariantSpec spec = VariantSpec()
- *     .setType(Variant::TypeS32)
+ *     .setType(DataTypeInt32)
  *     .setDefault(85)
  *     .setRange(1, 100)
  *     .setDescription("JPEG quality 1-100");
@@ -59,7 +59,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * VariantSpec poly = VariantSpec()
- *     .setTypes({Variant::TypeString, Variant::TypeSdpSession})
+ *     .setTypes({DataTypeString, DataTypeSdpSession})
  *     .setDescription("SDP input: file path or session object");
  * @endcode
  *
@@ -73,7 +73,7 @@ PROMEKI_NAMESPACE_BEGIN
 class VariantSpec {
         public:
                 /** @brief Convenience alias for the Variant type enumerator. */
-                using Type = Variant::Type;
+                using Type = DataTypeID;
 
                 /** @brief Convenience alias for a list of Variant type enumerators. */
                 using TypeList = ::promeki::List<Type>;

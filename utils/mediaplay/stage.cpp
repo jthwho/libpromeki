@@ -266,8 +266,8 @@ namespace mediaplay {
                         // / listPixelFormatsAndExit / etc. handler in
                         // applyStageConfig below.
                         const bool enumLike =
-                                spec.hasEnumType() || spec.acceptsType(Variant::TypePixelFormat) ||
-                                spec.acceptsType(Variant::TypeVideoCodec) || spec.acceptsType(Variant::TypeAudioCodec);
+                                spec.hasEnumType() || spec.acceptsType(DataTypePixelFormat) ||
+                                spec.acceptsType(DataTypeVideoCodec) || spec.acceptsType(DataTypeAudioCodec);
                         if (enumLike) {
                                 out << "   ";
                                 out.setForeground(palette.dim);
@@ -465,16 +465,16 @@ namespace mediaplay {
                         // Handle sentinels.
                         if (val == "list") {
                                 if (spec && spec->hasEnumType()) {
-                                        const bool isEnumList = spec->acceptsType(Variant::TypeEnumList);
+                                        const bool isEnumList = spec->acceptsType(DataTypeEnumList);
                                         listEnumTypeAndExit(label, spec->enumType(), isEnumList);
                                 }
-                                if (spec && spec->acceptsType(Variant::TypePixelFormat)) {
+                                if (spec && spec->acceptsType(DataTypePixelFormat)) {
                                         listPixelFormatsAndExit(label);
                                 }
-                                if (spec && spec->acceptsType(Variant::TypeVideoCodec)) {
+                                if (spec && spec->acceptsType(DataTypeVideoCodec)) {
                                         listVideoCodecsAndExit(label);
                                 }
-                                if (spec && spec->acceptsType(Variant::TypeAudioCodec)) {
+                                if (spec && spec->acceptsType(DataTypeAudioCodec)) {
                                         listAudioCodecsAndExit(label);
                                 }
                                 fprintf(stderr,

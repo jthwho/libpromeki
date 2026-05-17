@@ -65,7 +65,7 @@ namespace St291 {
 inline const Metadata::ID Line = Metadata::declareID(
         "AncMeta.St291.Line",
         VariantSpec()
-                .setType(Variant::TypeU16)
+                .setType(DataTypeUInt16)
                 .setDefault(uint16_t(0))
                 .setDescription("ST 291 VANC line number the packet was captured on."));
 
@@ -74,7 +74,7 @@ inline const Metadata::ID Line = Metadata::declareID(
 inline const Metadata::ID HOffset = Metadata::declareID(
         "AncMeta.St291.HOffset",
         VariantSpec()
-                .setType(Variant::TypeU16)
+                .setType(DataTypeUInt16)
                 .setDefault(uint16_t(0xFFF))
                 .setDescription("ST 291 horizontal offset within the line (0xFFF = unspecified)."));
 
@@ -84,7 +84,7 @@ inline const Metadata::ID HOffset = Metadata::declareID(
 inline const Metadata::ID FieldB = Metadata::declareID(
         "AncMeta.St291.FieldB",
         VariantSpec()
-                .setType(Variant::TypeBool)
+                .setType(DataTypeBool)
                 .setDefault(false)
                 .setDescription("ST 291 F-bit: true on field 2 of an interlaced source."));
 
@@ -93,7 +93,7 @@ inline const Metadata::ID FieldB = Metadata::declareID(
 inline const Metadata::ID CBit = Metadata::declareID(
         "AncMeta.St291.CBit",
         VariantSpec()
-                .setType(Variant::TypeBool)
+                .setType(DataTypeBool)
                 .setDefault(false)
                 .setDescription("ST 291 C-bit: true on the chrominance data stream."));
 
@@ -103,7 +103,7 @@ inline const Metadata::ID CBit = Metadata::declareID(
 inline const Metadata::ID StreamNum = Metadata::declareID(
         "AncMeta.St291.StreamNum",
         VariantSpec()
-                .setType(Variant::TypeU8)
+                .setType(DataTypeUInt8)
                 .setDefault(uint8_t(0))
                 .setDescription("ST 291 stream number (RFC 8331 StreamNum field)."));
 
@@ -117,21 +117,21 @@ namespace HdmiInfoFrame {
 inline const Metadata::ID Type = Metadata::declareID(
         "AncMeta.HdmiInfoFrame.Type",
         VariantSpec()
-                .setType(Variant::TypeU8)
+                .setType(DataTypeUInt8)
                 .setDefault(uint8_t(0))
                 .setDescription("HDMI InfoFrame type byte (0x82 AVI, 0x84 Audio, 0x87 DRM, 0x81 Vendor, ...)."));
 
 /** @brief InfoFrame version byte. */
 inline const Metadata::ID Version = Metadata::declareID(
         "AncMeta.HdmiInfoFrame.Version",
-        VariantSpec().setType(Variant::TypeU8).setDefault(uint8_t(0)).setDescription("HDMI InfoFrame version byte."));
+        VariantSpec().setType(DataTypeUInt8).setDefault(uint8_t(0)).setDescription("HDMI InfoFrame version byte."));
 
 /** @brief InfoFrame length field (bytes of payload following the
  *         4-byte header). */
 inline const Metadata::ID Length = Metadata::declareID(
         "AncMeta.HdmiInfoFrame.Length",
         VariantSpec()
-                .setType(Variant::TypeU8)
+                .setType(DataTypeUInt8)
                 .setDefault(uint8_t(0))
                 .setDescription("HDMI InfoFrame length: payload bytes after the 4-byte header."));
 
@@ -146,7 +146,7 @@ namespace RtmpAmf {
 inline const Metadata::ID ScriptName = Metadata::declareID(
         "AncMeta.RtmpAmf.ScriptName",
         VariantSpec()
-                .setType(Variant::TypeString)
+                .setType(DataTypeString)
                 .setDefault(String())
                 .setDescription("RTMP AMF0 script-tag name (onCaptionInfo, onCuePoint, onMetaData, ...)."));
 
@@ -160,7 +160,7 @@ namespace NdiXml {
 inline const Metadata::ID ElementName = Metadata::declareID(
         "AncMeta.NdiXml.ElementName",
         VariantSpec()
-                .setType(Variant::TypeString)
+                .setType(DataTypeString)
                 .setDefault(String())
                 .setDescription("NDI XML top-level element name (e.g. ndi_caption_data)."));
 
@@ -173,7 +173,7 @@ namespace MpegTsPrivate {
 inline const Metadata::ID Pid = Metadata::declareID(
         "AncMeta.MpegTsPrivate.Pid",
         VariantSpec()
-                .setType(Variant::TypeU16)
+                .setType(DataTypeUInt16)
                 .setDefault(uint16_t(0))
                 .setDescription("MPEG-TS PID the private section was carried in."));
 
@@ -181,7 +181,7 @@ inline const Metadata::ID Pid = Metadata::declareID(
 inline const Metadata::ID TableId = Metadata::declareID(
         "AncMeta.MpegTsPrivate.TableId",
         VariantSpec()
-                .setType(Variant::TypeU8)
+                .setType(DataTypeUInt8)
                 .setDefault(uint8_t(0))
                 .setDescription("MPEG-TS private-section table_id byte."));
 
@@ -194,7 +194,7 @@ namespace HlsSei {
 inline const Metadata::ID PayloadType = Metadata::declareID(
         "AncMeta.HlsSei.PayloadType",
         VariantSpec()
-                .setType(Variant::TypeU8)
+                .setType(DataTypeUInt8)
                 .setDefault(uint8_t(0))
                 .setDescription("SEI payloadType (typically 5 for user_data_registered)."));
 
@@ -203,7 +203,7 @@ inline const Metadata::ID PayloadType = Metadata::declareID(
 inline const Metadata::ID Uuid = Metadata::declareID(
         "AncMeta.HlsSei.Uuid",
         VariantSpec()
-                .setType(Variant::TypeUUID)
+                .setType(DataTypeUUID)
                 .setDefault(UUID())
                 .setDescription("UUID for SEI user_data_unregistered messages."));
 

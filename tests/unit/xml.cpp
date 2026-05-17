@@ -863,7 +863,7 @@ TEST_CASE("Variant_HoldsXmlDocument") {
         doc.setDeclaration("1.0", "UTF-8");
 
         Variant v = doc;
-        CHECK(v.type() == Variant::TypeXmlDocument);
+        CHECK(v.type() == DataTypeXmlDocument);
         XmlDocument out = v.get<XmlDocument>();
         CHECK(out == doc);
         CHECK(out.root().attribute("id") == "001");
@@ -888,7 +888,7 @@ TEST_CASE("Variant_XmlDocument_DataStreamRoundtrip") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeXmlDocument);
+                CHECK(out.type() == DataTypeXmlDocument);
                 CHECK(out.get<XmlDocument>() == original);
         }
 }

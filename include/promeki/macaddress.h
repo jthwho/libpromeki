@@ -17,6 +17,7 @@
 #include <promeki/result.h>
 #include <promeki/array.h>
 #include <promeki/list.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -24,6 +25,7 @@ class Ipv4Address;
 class Ipv6Address;
 class MacAddress;
 class TextStream;
+class DataStream;
 
 /**
  * @brief IEEE 802 MAC (Ethernet hardware) address.
@@ -50,6 +52,13 @@ class TextStream;
  */
 class MacAddress {
         public:
+                PROMEKI_DATATYPE(MacAddress, DataTypeMacAddress, 1)
+
+                /** @brief Writes the canonical "aa:bb:cc:dd:ee:ff" String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical "aa:bb:cc:dd:ee:ff" String. */
+                template <uint32_t V> static Result<MacAddress> readFromStream(DataStream &s);
+
                 /** @brief Raw 6-byte storage format for a MAC address. */
                 using DataFormat = Array<uint8_t, 6>;
 

@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <promeki/timecode.h>
+#include <promeki/datastream.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -92,7 +93,7 @@ Result<Timecode> Timecode::fromString(const String &str) {
         return makeResult(tc);
 }
 
-Result<String> Timecode::toString(const VtcStringFormat *fmt) const {
+Result<String> Timecode::toFormatString(const VtcStringFormat *fmt) const {
         // A default-constructed (or otherwise mode-invalid) Timecode has
         // no information to render.  Return the canonical "no data"
         // sentinel so callers always get a printable string and can
@@ -337,6 +338,63 @@ FrameNumber Timecode::toFrameNumber() const {
         VtcError    err = vtc_timecode_to_frames(&vtc, &frameNum);
         if (err != VTC_ERR_OK) return FrameNumber::unknown();
         return FrameNumber(static_cast<int64_t>(frameNum));
+}
+
+// ============================================================================
+// DataStream wire format (v1).
+//
+// Native binary layout — no string detour:
+//   uint32_t modeFps      // 0 when the Mode has no format attached
+//   uint32_t flags        // bit0=DropFrame, bit1=FirstField, bit2=ModeValid
+//                         // (ModeValid distinguishes Mode(0u,0u) from default)
+//   uint8_t  hour
+//   uint8_t  min
+//   uint8_t  sec
+//   uint8_t  frame
+//
+// Each scalar field rides its own tagged primitive sub-frame inside
+// the Timecode body, so endianness is handled by the primitive
+// operators and the format stays self-describing.
+// ============================================================================
+
+namespace {
+constexpr uint32_t TimecodeFlagsModeValid = 0x80000000u;
+} // namespace
+
+Error Timecode::writeToStream(DataStream &s) const {
+        const uint32_t modeFps = _mode.fps();
+        uint32_t       flagsW  = _flags;
+        if (_mode.isValid()) flagsW |= TimecodeFlagsModeValid;
+        s << modeFps;
+        s << flagsW;
+        s << static_cast<uint8_t>(_hour);
+        s << static_cast<uint8_t>(_min);
+        s << static_cast<uint8_t>(_sec);
+        s << static_cast<uint8_t>(_frame);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<Timecode> Timecode::readFromStream<1>(DataStream &s) {
+        uint32_t modeFps = 0;
+        uint32_t flagsW  = 0;
+        uint8_t  h = 0, m = 0, sc = 0, f = 0;
+        s >> modeFps >> flagsW >> h >> m >> sc >> f;
+        if (s.status() != DataStream::Ok) return makeError<Timecode>(s.toError());
+        Timecode tc;
+        const bool modeValid = (flagsW & TimecodeFlagsModeValid) != 0;
+        const uint32_t userFlags = flagsW & ~TimecodeFlagsModeValid;
+        if (modeFps > 0) {
+                tc._mode = Mode(modeFps, userFlags & DropFrame);
+        } else if (modeValid) {
+                tc._mode = Mode(0u, 0u);
+        }
+        tc._flags = userFlags;
+        tc._hour  = h;
+        tc._min   = m;
+        tc._sec   = sc;
+        tc._frame = f;
+        return makeResult(tc);
 }
 
 PROMEKI_NAMESPACE_END

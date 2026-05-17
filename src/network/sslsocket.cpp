@@ -82,7 +82,7 @@ SslSocket::~SslSocket() {
         _d = nullptr;
 }
 
-void SslSocket::setSslContext(SslContext::Ptr ctx) {
+void SslSocket::setSslContext(SslContext ctx) {
         if (_state != NotEncrypted) {
                 promekiWarn("SslSocket::setSslContext: already handshaking, ignoring");
                 return;
@@ -92,15 +92,41 @@ void SslSocket::setSslContext(SslContext::Ptr ctx) {
 
 Error SslSocket::startEncryption(const String &hostname) {
         if (_state != NotEncrypted) return Error::AlreadyOpen;
-        if (!_ctx.isValid()) return Error::Invalid;
 
-        mbedtls_ssl_config *conf = static_cast<mbedtls_ssl_config *>(_ctx->nativeConfig());
-        if (conf == nullptr) return Error::LibraryFailure;
+        // Fail-closed verify policy: refuse to start a client
+        // handshake when the caller asked for verification but did
+        // not load any CA anchors.  Without CAs the handshake would
+        // either be silently insecure (the historical mbedTLS
+        // VERIFY_NONE fallback) or pointlessly reject every cert.
+        // Either way the right answer is to surface the
+        // misconfiguration up-front so production code doesn't
+        // accidentally trust unverified servers.  Callers who really
+        // want unauthenticated TLS (loopback smoke tests, self-
+        // signed dev servers) call setVerifyPeer(false) explicitly.
+        if (_ctx.verifyPeer() && !_ctx.hasCaCertificates()) {
+                promekiWarn("SslSocket::startEncryption: refusing client handshake "
+                            "without CA chain — call setSystemCaCertificates() / "
+                            "setCaCertificates() or setVerifyPeer(false) on the "
+                            "SslContext first");
+                return Error::Invalid;
+        }
+
+        // nativeConfig lazy-initializes the underlying mbedTLS
+        // configuration on first call.  Returns nullptr only when
+        // the build does not ship TLS.
+        mbedtls_ssl_config *conf = static_cast<mbedtls_ssl_config *>(_ctx.nativeConfig());
+        if (conf == nullptr) return Error::NotSupported;
 
         // Client endpoint: we may be reusing a config that was
         // originally created in SERVER mode (the SslContext default)
         // — flip the per-context endpoint via mbedtls_ssl_conf_endpoint.
         mbedtls_ssl_conf_endpoint(conf, MBEDTLS_SSL_IS_CLIENT);
+
+        // Apply the client-side authmode policy.  Both branches are
+        // explicit so we never inherit a stale value left over from
+        // a prior server-side use of the same shared config.
+        mbedtls_ssl_conf_authmode(
+                conf, _ctx.verifyPeer() ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_NONE);
 
         int rc = mbedtls_ssl_setup(&_d->ssl, conf);
         if (rc != 0) {
@@ -124,19 +150,43 @@ Error SslSocket::startEncryption(const String &hostname) {
 
 Error SslSocket::startServerEncryption() {
         if (_state != NotEncrypted) return Error::AlreadyOpen;
-        if (!_ctx.isValid()) return Error::Invalid;
-        if (!_ctx->hasCertificate()) {
+        if (!_ctx.hasCertificate()) {
                 promekiWarn("SslSocket::startServerEncryption: SslContext has no certificate");
                 return Error::Invalid;
         }
 
-        mbedtls_ssl_config *conf = static_cast<mbedtls_ssl_config *>(_ctx->nativeConfig());
-        if (conf == nullptr) return Error::LibraryFailure;
+        // nativeConfig lazy-allocates on first call; returns nullptr
+        // only in TLS-disabled builds.
+        mbedtls_ssl_config *conf = static_cast<mbedtls_ssl_config *>(_ctx.nativeConfig());
+        if (conf == nullptr) return Error::NotSupported;
 
         // SslContext defaults to SERVER endpoint, so no flip needed
         // for the typical path.  Set explicitly anyway in case the
         // same context was previously used for a client handshake.
         mbedtls_ssl_conf_endpoint(conf, MBEDTLS_SSL_IS_SERVER);
+
+        // Apply the server-side authmode policy.  Mutual TLS is
+        // opt-in via setRequireClientCert — the default is the
+        // standard HTTPS server pattern (VERIFY_NONE, don't ask
+        // clients for a cert).  We deliberately do NOT consult
+        // verifyPeer here: that's the client-side knob for
+        // verifying the @em server's cert, and conflating the two
+        // led to a footgun where auto-loaded system CAs would
+        // silently flip a default HTTPS server into mutual-TLS
+        // mode.  When mutual TLS is requested we fail-closed if no
+        // CA chain has been loaded — there'd be no anchors to
+        // validate the client cert against.
+        if (_ctx.requireClientCert()) {
+                if (!_ctx.hasCaCertificates()) {
+                        promekiWarn("SslSocket::startServerEncryption: requireClientCert is set "
+                                    "but no CA chain is configured — call setCaCertificates() "
+                                    "with the trust anchors before requesting mutual TLS");
+                        return Error::Invalid;
+                }
+                mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+        } else {
+                mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_NONE);
+        }
 
         int rc = mbedtls_ssl_setup(&_d->ssl, conf);
         if (rc != 0) {

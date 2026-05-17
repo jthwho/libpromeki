@@ -80,9 +80,13 @@ devplan/
 6. **ARM / cross-build robustness** — `PROMEKI_CONFIG_FILE` preset
    system, `cmake/configs/cross-aarch64-linux.cmake` + toolchain, and
    per-feature `#if PROMEKI_ENABLE_*` header guards shipped
-   (2026-05-15). Next: qemu-user CI lane (`infra/qemu-cross-testing.md`)
-   and `DataStream / DataType` consolidation so cross-only builds don't
-   pull in host-only type headers (`core/datastream-consolidation.md`).
+   (2026-05-15). Next: qemu-user CI lane (`infra/qemu-cross-testing.md`).
+7. **DataStream / DataType consolidation** — Phases 1-3 complete
+   (2026-05-16): `PROMEKI_DATATYPE` macro, `DataTypeID` enum, 47 types
+   migrated, `enum DataStream::Type` and `Variant::TypeXxx` aliases
+   removed. Phase 4 cleanup (SFINAE traits, `docs/dataobjects.dox`,
+   `CODING_STANDARDS.md`) remains open.
+   See [`core/datastream-consolidation.md`](core/datastream-consolidation.md).
 
 ## Phase status (overview)
 

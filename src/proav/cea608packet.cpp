@@ -131,54 +131,38 @@ String Cea608Packet::toString() const {
 //     uint8_t b1        (TypeU8)
 //     uint8_t b2        (TypeU8)
 
-void writeCea608PacketData(DataStream &stream, const Cea608Packet &pkt) {
-        stream << static_cast<uint8_t>(pkt.channel);
-        stream << static_cast<uint32_t>(pkt.ccData.size());
-        for (size_t i = 0; i < pkt.ccData.size(); ++i) {
-                const Cea708Cdp::CcData &t = pkt.ccData[i];
-                stream << static_cast<uint8_t>(t.valid ? 1 : 0);
-                stream << static_cast<uint8_t>(t.type);
-                stream << t.b1;
-                stream << t.b2;
+Error Cea608Packet::writeToStream(DataStream &s) const {
+        s << static_cast<uint8_t>(channel);
+        s << static_cast<uint32_t>(ccData.size());
+        for (size_t i = 0; i < ccData.size(); ++i) {
+                const Cea708Cdp::CcData &t = ccData[i];
+                s << static_cast<uint8_t>(t.valid ? 1 : 0);
+                s << static_cast<uint8_t>(t.type);
+                s << t.b1;
+                s << t.b2;
         }
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-Cea608Packet readCea608PacketData(DataStream &stream) {
+template <>
+Result<Cea608Packet> Cea608Packet::readFromStream<1>(DataStream &s) {
         Cea608Packet pkt;
-        uint8_t      ch = 0;
+        uint8_t      ch    = 0;
         uint32_t     count = 0;
-        stream >> ch;
-        stream >> count;
+        s >> ch >> count;
+        if (s.status() != DataStream::Ok) return makeError<Cea608Packet>(s.toError());
         pkt.channel = static_cast<Cea608Packet::Channel>(ch);
         for (uint32_t i = 0; i < count; ++i) {
                 Cea708Cdp::CcData t;
                 uint8_t           validByte = 0;
-                uint8_t           typeByte = 0;
-                stream >> validByte;
-                stream >> typeByte;
-                stream >> t.b1;
-                stream >> t.b2;
+                uint8_t           typeByte  = 0;
+                s >> validByte >> typeByte >> t.b1 >> t.b2;
+                if (s.status() != DataStream::Ok) return makeError<Cea608Packet>(s.toError());
                 t.valid = (validByte != 0);
-                t.type = typeByte;
+                t.type  = typeByte;
                 pkt.ccData.pushToBack(t);
         }
-        return pkt;
-}
-
-DataStream &operator<<(DataStream &stream, const Cea608Packet &pkt) {
-        stream.beginFrame(DataStream::TypeCea608, 1);
-        writeCea608PacketData(stream, pkt);
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, Cea608Packet &pkt) {
-        if (!stream.readFrame(DataStream::TypeCea608)) {
-                pkt = Cea608Packet();
-                return stream;
-        }
-        pkt = readCea608PacketData(stream);
-        return stream;
+        return makeResult(std::move(pkt));
 }
 
 PROMEKI_NAMESPACE_END

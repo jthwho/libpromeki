@@ -6,6 +6,7 @@
  */
 
 #include <promeki/eui64.h>
+#include <promeki/datastream.h>
 #include <promeki/macaddress.h>
 #include <promeki/textstream.h>
 
@@ -106,6 +107,23 @@ String EUI64::toString(const EUI64Format &fmt) const {
 TextStream &operator<<(TextStream &stream, const EUI64 &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical String round-trip).
+// ============================================================================
+
+Error EUI64::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<EUI64> EUI64::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<EUI64>(s.toError());
+        return EUI64::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

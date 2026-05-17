@@ -6,6 +6,7 @@
  */
 
 #include <promeki/framecount.h>
+#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -96,6 +97,28 @@ bool FrameCount::operator<(const FrameCount &other) const {
         if (isInfinite()) return false;      // ∞ is not < anything
         if (other.isInfinite()) return true; // finite < ∞
         return _value < other._value;
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged int64 raw storage value).
+// ============================================================================
+
+Error FrameCount::writeToStream(DataStream &s) const {
+        s << static_cast<int64_t>(_value);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<FrameCount> FrameCount::readFromStream<1>(DataStream &s) {
+        int64_t v = 0;
+        s >> v;
+        if (s.status() != DataStream::Ok) return makeError<FrameCount>(s.toError());
+        FrameCount c;
+        if (v == UnknownValue) c = FrameCount::unknown();
+        else if (v == InfinityValue) c = FrameCount::infinity();
+        else if (v >= 0) c = FrameCount(v);
+        else return makeError<FrameCount>(Error::CorruptData);
+        return makeResult(c);
 }
 
 PROMEKI_NAMESPACE_END

@@ -6,6 +6,7 @@
  */
 
 #include <promeki/masteringdisplay.h>
+#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -17,6 +18,25 @@ String MasteringDisplay::toString() const {
                                "Lmin=%.4f Lmax=%.1f cd/m²",
                                _red.x(), _red.y(), _green.x(), _green.y(), _blue.x(), _blue.y(), _whitePoint.x(),
                                _whitePoint.y(), _minLum, _maxLum);
+}
+
+// ============================================================================
+// DataStream wire format (v1: ten tagged doubles).
+// ============================================================================
+
+Error MasteringDisplay::writeToStream(DataStream &s) const {
+        s << _red.x() << _red.y() << _green.x() << _green.y() << _blue.x() << _blue.y()
+          << _whitePoint.x() << _whitePoint.y() << _minLum << _maxLum;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<MasteringDisplay> MasteringDisplay::readFromStream<1>(DataStream &s) {
+        double rx = 0, ry = 0, gx = 0, gy = 0, bx = 0, by = 0, wx = 0, wy = 0, minL = 0, maxL = 0;
+        s >> rx >> ry >> gx >> gy >> bx >> by >> wx >> wy >> minL >> maxL;
+        if (s.status() != DataStream::Ok) return makeError<MasteringDisplay>(s.toError());
+        return makeResult(MasteringDisplay(CIEPoint(rx, ry), CIEPoint(gx, gy), CIEPoint(bx, by),
+                                           CIEPoint(wx, wy), minL, maxL));
 }
 
 PROMEKI_NAMESPACE_END

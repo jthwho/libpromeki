@@ -81,7 +81,7 @@ namespace {
                 Buffer payload;
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Built",
-                                          VariantSpec().setType(Variant::TypeString).setDefault(String())),
+                                          VariantSpec().setType(DataTypeString).setDefault(String())),
                       String(kStubBuiltA));
                 List<AncPacket> out;
                 out.pushToBack(AncPacket(AncFormat(testFormat().id), xportA(), payload, m));
@@ -92,7 +92,7 @@ namespace {
                 Buffer   payload(static_cast<size_t>(0));
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Built",
-                                          VariantSpec().setType(Variant::TypeString).setDefault(String())),
+                                          VariantSpec().setType(DataTypeString).setDefault(String())),
                       String(kStubBuiltB));
                 List<AncPacket> out;
                 out.pushToBack(AncPacket(AncFormat(testFormat().id), xportB(), payload, m));
@@ -104,7 +104,7 @@ namespace {
                 Buffer   payload(static_cast<size_t>(0));
                 Metadata m;
                 m.set(Metadata::declareID("AncTranslatorTest.Direct",
-                                          VariantSpec().setType(Variant::TypeString).setDefault(String())),
+                                          VariantSpec().setType(DataTypeString).setDefault(String())),
                       String(kStubDirectAB));
                 List<AncPacket> out;
                 out.pushToBack(AncPacket(AncFormat(testFormat().id), target, payload, m));
@@ -285,7 +285,7 @@ TEST_CASE("AncTranslator: translate prefers direct translator when registered") 
         // Direct path tagged the output meta with kStubDirectAB.
         Metadata::ID directKey = Metadata::declareID(
                 "AncTranslatorTest.Direct",
-                VariantSpec().setType(Variant::TypeString).setDefault(String()));
+                VariantSpec().setType(DataTypeString).setDefault(String()));
         CHECK(r.first().front().meta().getAs<String>(directKey) == String(kStubDirectAB));
 }
 

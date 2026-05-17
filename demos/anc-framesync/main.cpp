@@ -351,11 +351,8 @@ static String describeDecoded(const DecodedFrame &d) {
         StringList tokens;
 
         if (d.hasAtc) {
-                String tcStr("??:??:??:??");
-                Result<String> r = d.atc.toString();
-                if (r.second().isOk()) tcStr = r.first();
                 String variants = d.atcVariants.join(String("+"));
-                tokens.pushToBack(String::format("ATC={} ({})", tcStr, variants));
+                tokens.pushToBack(String::format("ATC={} ({})", d.atc.toString(), variants));
         }
         if (d.hasCdp) {
                 unsigned validCount = 0;

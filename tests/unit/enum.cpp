@@ -170,10 +170,10 @@ TEST_CASE("Enum: registeredTypes() contains the test types") {
         CHECK(names.contains(String("TestSeverity")));
 }
 
-TEST_CASE("Enum: toString returns \"TypeName::ValueName\"") {
-        CHECK(TestCodec::H264.toString() == String("TestCodec::H264"));
-        CHECK(TestCodec::H265.toString() == String("TestCodec::H265"));
-        CHECK(TestCodec::VP9.toString() == String("TestCodec::VP9"));
+TEST_CASE("Enum: toString returns the short value name") {
+        CHECK(TestCodec::H264.toString() == String("H264"));
+        CHECK(TestCodec::H265.toString() == String("H265"));
+        CHECK(TestCodec::VP9.toString() == String("VP9"));
 }
 
 TEST_CASE("Enum: lookup parses \"TypeName::ValueName\" back into an Enum") {
@@ -216,12 +216,12 @@ TEST_CASE("Enum: equality compares type and value") {
 TEST_CASE("Variant: holds Enum and reports TypeEnum") {
         Variant v = TestCodec::H265;
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeEnum);
+        CHECK(v.type() == DataTypeEnum);
 }
 
-TEST_CASE("Variant: get<String>() on Enum returns \"TypeName::ValueName\"") {
+TEST_CASE("Variant: get<String>() on Enum returns the short value name") {
         Variant v = TestCodec::VP9;
-        CHECK(v.get<String>() == String("TestCodec::VP9"));
+        CHECK(v.get<String>() == String("VP9"));
 }
 
 TEST_CASE("Variant: get<int>() on Enum returns the integer value") {
@@ -248,11 +248,11 @@ TEST_CASE("Variant: get<Enum>() from int is unsupported") {
         CHECK_FALSE(e.isValid());
 }
 
-TEST_CASE("Variant: toStandardType converts Enum to its String form") {
+TEST_CASE("Variant: toStandardType converts Enum to its short String form") {
         Variant v = TestCodec::H265;
         Variant s = v.toStandardType();
-        CHECK(s.type() == Variant::TypeString);
-        CHECK(s.get<String>() == String("TestCodec::H265"));
+        CHECK(s.type() == DataTypeString);
+        CHECK(s.get<String>() == String("H265"));
 }
 
 // ---------------------------------------------------------------------------
@@ -308,7 +308,7 @@ TEST_CASE("DataStream: round-trip Variant Enum") {
                 Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(vOut.type() == Variant::TypeEnum);
+                CHECK(vOut.type() == DataTypeEnum);
                 Enum e = vOut.get<Enum>();
                 CHECK(e.isValid());
                 CHECK(e == TestCodec::VP9);
@@ -338,7 +338,7 @@ TEST_CASE("DataStream: round-trip Variant Enum preserves negative value") {
                 Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(vOut.type() == Variant::TypeEnum);
+                CHECK(vOut.type() == DataTypeEnum);
                 Enum e = vOut.get<Enum>();
                 CHECK(e.isValid());
                 CHECK(e.value() == -1);
@@ -360,22 +360,26 @@ TEST_CASE("VariantDatabase: Enum round-trips through JSON as its String form") {
         TestDb     dbOut = TestDb::fromJson(json);
 
         // JSON has no way to preserve Enum's typed identity so the value
-        // comes back as a String, but get<Enum>() can recover the typed form.
+        // comes back as a String holding the short value name.
+        // get<Enum>() can recover the typed form when the qualified
+        // "TypeName::ValueName" prefix is in the string; the short
+        // form needs a target Enum::Type via asEnum.
         Variant out = dbOut.get(codec);
-        CHECK(out.type() == Variant::TypeString);
-        CHECK(out.get<String>() == String("TestCodec::H265"));
+        CHECK(out.type() == DataTypeString);
+        CHECK(out.get<String>() == String("H265"));
 
         Error err;
-        Enum  e = out.get<Enum>(&err);
+        Enum  e = out.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
         CHECK(e == TestCodec::H265);
 }
 
-TEST_CASE("VariantDatabase: getAs<Enum> recovers Enum from a stored String") {
+TEST_CASE("VariantDatabase: getAs<Enum> recovers Enum from a stored qualified String") {
         using TestDb = VariantDatabase<"EnumTestDb">;
         TestDb     db;
         TestDb::ID codec("codec2");
-        // Mimic what happens after a JSON round-trip: value arrives as String.
+        // Mimic what happens after a JSON round-trip with a qualified
+        // payload: value arrives as a "TypeName::ValueName" String.
         db.set(codec, Variant(String("TestCodec::VP9")));
 
         Error err;
@@ -393,7 +397,7 @@ TEST_CASE("Enum: toString of an out-of-list value emits the integer form") {
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
         CHECK(e.valueName().isEmpty());
-        CHECK(e.toString() == String("TestCodec::100"));
+        CHECK(e.toString() == String("100"));
 }
 
 TEST_CASE("Enum: toString of an out-of-list negative value emits the signed integer form") {
@@ -401,7 +405,7 @@ TEST_CASE("Enum: toString of an out-of-list negative value emits the signed inte
         Enum e(TestSeverity::Type, -42);
         CHECK(e.isValid());
         CHECK_FALSE(e.hasListedValue());
-        CHECK(e.toString() == String("TestSeverity::-42"));
+        CHECK(e.toString() == String("-42"));
 }
 
 TEST_CASE("Enum: toString of an invalid Enum is \"::\"") {
@@ -418,7 +422,7 @@ TEST_CASE("Enum: lookup accepts the \"TypeName::<int>\" integer form for out-of-
         CHECK_FALSE(e.hasListedValue());
         CHECK(e.type() == TestCodec::Type);
         CHECK(e.value() == 100);
-        CHECK(e.toString() == String("TestCodec::100"));
+        CHECK(e.toString() == String("100"));
 }
 
 TEST_CASE("Enum: lookup accepts a negative integer form") {
@@ -441,13 +445,16 @@ TEST_CASE("Enum: lookup still prefers name lookup when the name is a numeric-loo
         CHECK(e.valueName() == String("Debug"));
 }
 
-TEST_CASE("Enum: toString -> lookup round-trip preserves out-of-list values") {
+TEST_CASE("Enum: qualified-form round-trip preserves out-of-list values") {
+        // Round-trip via Enum::lookup needs the qualified form;
+        // toString emits the short form for readability.
         Enum   original(TestCodec::Type, 12345);
         String s = original.toString();
-        CHECK(s == String("TestCodec::12345"));
+        CHECK(s == String("12345"));
 
-        Error err;
-        Enum  round = Enum::lookup(s, &err);
+        String qualified = original.typeName() + "::" + s;
+        Error  err;
+        Enum   round = Enum::lookup(qualified, &err);
         CHECK(err.isOk());
         CHECK(round == original);
         CHECK(round.value() == 12345);
@@ -470,19 +477,19 @@ TEST_CASE("DataStream: round-trip Variant Enum with an out-of-list value") {
                 Variant    vOut;
                 rs >> vOut;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(vOut.type() == Variant::TypeEnum);
+                CHECK(vOut.type() == DataTypeEnum);
                 Enum e = vOut.get<Enum>();
                 CHECK(e.isValid());
                 CHECK_FALSE(e.hasListedValue());
                 CHECK(e.type() == TestCodec::Type);
                 CHECK(e.value() == 777);
-                CHECK(e.toString() == String("TestCodec::777"));
+                CHECK(e.toString() == String("777"));
         }
 }
 
 TEST_CASE("Variant: get<String>() on an out-of-list Enum emits the integer form") {
         Variant v = Enum(TestCodec::Type, 100);
-        CHECK(v.get<String>() == String("TestCodec::100"));
+        CHECK(v.get<String>() == String("100"));
 }
 
 TEST_CASE("Variant: get<Enum>() from \"TypeName::<int>\" String parses the out-of-list form") {
@@ -620,7 +627,7 @@ TEST_CASE("Variant::asEnum: a default-constructed Variant returns the type's reg
         // default so the registered default also serves as the config
         // default.
         Variant v;
-        CHECK(v.type() == Variant::TypeInvalid);
+        CHECK(v.type() == DataTypeInvalid);
         Error err;
         Enum  e = v.asEnum(TestCodec::Type, &err);
         CHECK(err.isOk());
@@ -694,17 +701,17 @@ TEST_CASE("Enum: valueName() is literal-backed for in-list values") {
 
 TEST_CASE("Enum: toString() is literal-backed for in-list values") {
         String s = TestCodec::H265.toString();
-        CHECK(s == String("TestCodec::H265"));
+        CHECK(s == String("H265"));
         CHECK(s.isLiteral());
 }
 
 TEST_CASE("Enum: toString() is NOT literal-backed for out-of-list values") {
-        // Out-of-list values have no pre-built qualified form, so the
-        // result falls through to a concatenation and lands in a
-        // mutable Latin1 buffer.
+        // Out-of-list values have no pre-built short form, so the
+        // result falls through to String::number and lands in a
+        // mutable buffer.
         Enum   e(TestCodec::Type, 999);
         String s = e.toString();
-        CHECK(s == String("TestCodec::999"));
+        CHECK(s == String("999"));
         CHECK_FALSE(s.isLiteral());
 }
 

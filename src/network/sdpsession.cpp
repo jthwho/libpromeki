@@ -6,6 +6,7 @@
  */
 
 #include <promeki/sdpsession.h>
+#include <promeki/datastream.h>
 #include <promeki/file.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
@@ -298,6 +299,23 @@ Error SdpSession::toFile(const String &path) const {
                 return Error::IOError;
         }
         return Error::Ok;
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical RFC 4566 SDP String round-trip).
+// ============================================================================
+
+Error SdpSession::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<SdpSession> SdpSession::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<SdpSession>(s.toError());
+        return SdpSession::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

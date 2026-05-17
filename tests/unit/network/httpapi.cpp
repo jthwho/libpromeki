@@ -83,9 +83,9 @@ TEST_CASE("HttpApi: catalog reflects registered endpoints") {
                 .name = "id",
                 .in = HttpApi::ParamIn::Path,
                 .required = true,
-                .spec = VariantSpec().setType(Variant::TypeS32).setDescription("Item ID."),
+                .spec = VariantSpec().setType(DataTypeInt32).setDescription("Item ID."),
         }};
-        ep.response = VariantSpec().setType(Variant::TypeString);
+        ep.response = VariantSpec().setType(DataTypeString);
         REQUIRE(f.api.route(ep, [](const HttpRequest &, HttpResponse &) {}).isOk());
 
         const JsonObject cat = f.api.toCatalog();
@@ -113,7 +113,7 @@ TEST_CASE("HttpApi: openapi document has the required top-level keys") {
         ep.path = "/ping"; // relative; resolves to /api/ping
         ep.method = HttpMethod::Get;
         ep.title = "Ping";
-        ep.response = VariantSpec().setType(Variant::TypeString);
+        ep.response = VariantSpec().setType(DataTypeString);
         REQUIRE(f.api.route(ep, [](const HttpRequest &, HttpResponse &) {}).isOk());
 
         const JsonObject doc = f.api.toOpenApi();
@@ -139,20 +139,20 @@ TEST_CASE("HttpApi: openapi document has the required top-level keys") {
 TEST_CASE("HttpApi::variantSpecToJsonSchema: native scalar mappings") {
         // bool → {"type":"boolean"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeBool);
+                VariantSpec s = VariantSpec().setType(DataTypeBool);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("boolean"));
         }
         // u32 → {"type":"integer","minimum":0}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeU32);
+                VariantSpec s = VariantSpec().setType(DataTypeUInt32);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("integer"));
                 CHECK(sch.getInt("minimum") == 0);
         }
         // s32 with a range → {"type":"integer","minimum":-5,"maximum":5}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeS32).setRange(-5, 5);
+                VariantSpec s = VariantSpec().setType(DataTypeInt32).setRange(-5, 5);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("integer"));
                 CHECK(sch.getInt("minimum") == -5);
@@ -160,19 +160,19 @@ TEST_CASE("HttpApi::variantSpecToJsonSchema: native scalar mappings") {
         }
         // double → {"type":"number"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeDouble);
+                VariantSpec s = VariantSpec().setType(DataTypeDouble);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("number"));
         }
         // String → {"type":"string"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeString);
+                VariantSpec s = VariantSpec().setType(DataTypeString);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("string"));
         }
         // StringList → {"type":"array","items":{"type":"string"}}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeStringList);
+                VariantSpec s = VariantSpec().setType(DataTypeStringList);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("array"));
                 CHECK(sch.getObject("items").getString("type") == String("string"));
@@ -182,28 +182,28 @@ TEST_CASE("HttpApi::variantSpecToJsonSchema: native scalar mappings") {
 TEST_CASE("HttpApi::variantSpecToJsonSchema: domain-specific format extensions") {
         // UUID → {"type":"string","format":"uuid"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeUUID);
+                VariantSpec s = VariantSpec().setType(DataTypeUUID);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("string"));
                 CHECK(sch.getString("format") == String("uuid"));
         }
         // PixelFormat → string + promeki-pixelformat.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypePixelFormat);
+                VariantSpec s = VariantSpec().setType(DataTypePixelFormat);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("string"));
                 CHECK(sch.getString("format") == String("promeki-pixelformat"));
         }
         // Url → {"type":"string","format":"uri"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeUrl);
+                VariantSpec s = VariantSpec().setType(DataTypeUrl);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("string"));
                 CHECK(sch.getString("format") == String("uri"));
         }
         // DateTime → {"type":"string","format":"date-time"}.
         {
-                VariantSpec s = VariantSpec().setType(Variant::TypeDateTime);
+                VariantSpec s = VariantSpec().setType(DataTypeDateTime);
                 JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
                 CHECK(sch.getString("type") == String("string"));
                 CHECK(sch.getString("format") == String("date-time"));
@@ -212,7 +212,7 @@ TEST_CASE("HttpApi::variantSpecToJsonSchema: domain-specific format extensions")
 
 TEST_CASE("HttpApi::variantSpecToJsonSchema: complex types $ref into components") {
         JsonObject  components;
-        VariantSpec s = VariantSpec().setType(Variant::TypeRational);
+        VariantSpec s = VariantSpec().setType(DataTypeRational);
         JsonObject  sch = HttpApi::variantSpecToJsonSchema(s, &components);
         CHECK(sch.getString("$ref") == String("#/components/schemas/Rational"));
         REQUIRE(components.contains("Rational"));
@@ -224,8 +224,8 @@ TEST_CASE("HttpApi::variantSpecToJsonSchema: complex types $ref into components"
 
 TEST_CASE("HttpApi::variantSpecToJsonSchema: polymorphic spec emits oneOf") {
         VariantSpec s = VariantSpec().setTypes({
-                Variant::TypeString,
-                Variant::TypeS32,
+                DataTypeString,
+                DataTypeInt32,
         });
         JsonObject  sch = HttpApi::variantSpecToJsonSchema(s);
         REQUIRE(sch.contains("oneOf"));
@@ -238,7 +238,7 @@ TEST_CASE("HttpApi::variantSpecToJsonSchema: polymorphic spec emits oneOf") {
 TEST_CASE("HttpApi::variantSpecToJsonSchema: enum spec emits enum values") {
         // HttpMethod is a registered TypedEnum — perfect for this test
         // because we know its members.
-        VariantSpec s = VariantSpec().setType(Variant::TypeEnum).setEnumType(Enum::findType("HttpMethod"));
+        VariantSpec s = VariantSpec().setType(DataTypeEnum).setEnumType(Enum::findType("HttpMethod"));
         REQUIRE(Enum::findType("HttpMethod").isValid());
 
         JsonObject sch = HttpApi::variantSpecToJsonSchema(s);
@@ -272,16 +272,16 @@ TEST_CASE("HttpApi: rpc() unmarshals args and renders result") {
                         .name = "a",
                         .in = HttpApi::ParamIn::Body,
                         .required = true,
-                        .spec = VariantSpec().setType(Variant::TypeS32),
+                        .spec = VariantSpec().setType(DataTypeInt32),
                 },
                 HttpApi::Param{
                         .name = "b",
                         .in = HttpApi::ParamIn::Body,
                         .required = true,
-                        .spec = VariantSpec().setType(Variant::TypeS32),
+                        .spec = VariantSpec().setType(DataTypeInt32),
                 },
         };
-        ep.response = VariantSpec().setType(Variant::TypeS32);
+        ep.response = VariantSpec().setType(DataTypeInt32);
         REQUIRE(f.api.rpc(ep, [](const VariantMap &args) -> Result<Variant> {
                              Error   e;
                              int32_t a = args.value("a").get<int32_t>(&e);

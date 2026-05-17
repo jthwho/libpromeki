@@ -225,12 +225,12 @@ static List<RuntimeControl> enumerateAndRegisterControls(int fd) {
                                 }
                                 if (!values.isEmpty()) {
                                         Enum::Type et = Enum::registerType(keyName, values, values[0].second());
-                                        vs.setType(Variant::TypeEnum).setDefault(Enum()).setEnumType(et);
+                                        vs.setType(DataTypeEnum).setDefault(Enum()).setEnumType(et);
                                 } else {
-                                        vs.setType(Variant::TypeS32).setDefault(int32_t(-1));
+                                        vs.setType(DataTypeInt32).setDefault(int32_t(-1));
                                 }
                         } else {
-                                vs.setType(Variant::TypeS32)
+                                vs.setType(DataTypeInt32)
                                         .setDefault(int32_t(-1))
                                         .setRange(int32_t(-1), static_cast<int32_t>(qc.maximum));
                         }
@@ -257,7 +257,7 @@ static List<RuntimeControl> enumerateAndRegisterControls(int fd) {
 static int32_t controlValueFromConfig(const MediaIO::Config &cfg, const MediaConfig::ID &id) {
         Variant v = cfg.get(id);
         if (!v.isValid()) return -1;
-        if (v.type() == Variant::TypeEnum) {
+        if (v.type() == DataTypeEnum) {
                 Enum e = v.get<Enum>();
                 if (!e.hasListedValue()) return -1;
                 return static_cast<int32_t>(e.value());
@@ -544,7 +544,7 @@ V4l2Factory::Config::SpecMap V4l2Factory::configSpecs() const {
         // spec's TypeEnum constraint and break the round-trip through JSON.
         for (int i = 0; i < ControlMapCount; i++) {
                 const VariantSpec *gs = MediaConfig::spec(controlMap[i].configId);
-                if (gs != nullptr && gs->acceptsType(Variant::TypeEnum) && !gs->acceptsType(Variant::TypeS32)) {
+                if (gs != nullptr && gs->acceptsType(DataTypeEnum) && !gs->acceptsType(DataTypeInt32)) {
                         specs.insert(controlMap[i].configId, *gs);
                         continue;
                 }

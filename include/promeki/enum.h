@@ -18,8 +18,11 @@
 #include <promeki/pair.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Runtime-typed enumeration value carrying a registered type and integer.
@@ -110,6 +113,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Enum {
         public:
+                PROMEKI_DATATYPE(Enum, DataTypeEnum, 1)
+
+                /** @brief Writes the qualified "TypeName::ValueName" String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the qualified "TypeName::ValueName" String. */
+                template <uint32_t V> static Result<Enum> readFromStream(DataStream &s);
+
                 /// @brief Sentinel returned by valueOf()/value() when a lookup fails.
                 static constexpr int InvalidValue = -1;
 
@@ -461,12 +471,19 @@ class Enum {
                 String typeName() const;
 
                 /**
-                 * @brief Returns the string form "TypeName::ValueName".
+                 * @brief Returns the short value-name form.
                  *
-                 * If the value has a registered name, returns
-                 * "TypeName::ValueName".  If the value is out-of-list, the
-                 * value segment is the signed decimal form of the integer
-                 * ("Codec::100").  If the type is invalid, returns "::".
+                 * If the value has a registered name, returns the
+                 * short name (e.g. @c "H265").  If the value is
+                 * out-of-list, returns the signed decimal form of the
+                 * integer (e.g. @c "100").  If the type is invalid,
+                 * returns an empty String.
+                 *
+                 * For the fully-qualified @c "TypeName::ValueName"
+                 * form that @ref lookup expects on the parse side,
+                 * use @ref typeName + @c "::" + @ref toString or
+                 * @ref valueName.  Variant's bespoke Enum path keeps
+                 * the type prefix as context.
                  */
                 String toString() const;
 

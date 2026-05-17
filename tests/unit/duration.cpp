@@ -212,79 +212,45 @@ TEST_CASE("Duration: format scaled with width") {
 }
 
 TEST_CASE("Duration: fromString unit suffixes") {
-        Error    e;
-        Duration d;
-
-        d = Duration::fromString("3s", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromSeconds(3));
-
-        d = Duration::fromString("500ms", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromMilliseconds(500));
-
-        d = Duration::fromString("100us", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromMicroseconds(100));
-
-        d = Duration::fromString("250ns", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromNanoseconds(250));
-
-        d = Duration::fromString("2m", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromMinutes(2));
-
-        d = Duration::fromString("1h", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromHours(1));
+        auto check = [](const char *in, Duration expected) {
+                auto [d, e] = Duration::fromString(in);
+                CHECK(!e.isError());
+                CHECK(d == expected);
+        };
+        check("3s", Duration::fromSeconds(3));
+        check("500ms", Duration::fromMilliseconds(500));
+        check("100us", Duration::fromMicroseconds(100));
+        check("250ns", Duration::fromNanoseconds(250));
+        check("2m", Duration::fromMinutes(2));
+        check("1h", Duration::fromHours(1));
 }
 
 TEST_CASE("Duration: fromString bare number is seconds") {
-        Error    e;
-        Duration d = Duration::fromString("5", &e);
+        auto [d, e] = Duration::fromString("5");
         CHECK(!e.isError());
         CHECK(d == Duration::fromSeconds(5));
 }
 
 TEST_CASE("Duration: fromString decimals and whitespace") {
-        Error    e;
-        Duration d;
-
-        d = Duration::fromString("1.5s", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromMilliseconds(1500));
-
-        d = Duration::fromString("0.25ms", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromMicroseconds(250));
-
-        d = Duration::fromString("  3 s ", &e);
-        CHECK(!e.isError());
-        CHECK(d == Duration::fromSeconds(3));
+        auto check = [](const char *in, Duration expected) {
+                auto [d, e] = Duration::fromString(in);
+                CHECK(!e.isError());
+                CHECK(d == expected);
+        };
+        check("1.5s", Duration::fromMilliseconds(1500));
+        check("0.25ms", Duration::fromMicroseconds(250));
+        check("  3 s ", Duration::fromSeconds(3));
 }
 
 TEST_CASE("Duration: fromString rejects garbage") {
-        Error e;
-        Duration::fromString("", &e);
-        CHECK(e.isError());
-
-        e = Error();
-        Duration::fromString("abc", &e);
-        CHECK(e.isError());
-
-        e = Error();
-        Duration::fromString("3 weeks", &e);
-        CHECK(e.isError());
-
-        e = Error();
-        Duration::fromString("ms", &e);  // unit only, no magnitude
-        CHECK(e.isError());
+        CHECK(Duration::fromString("").second().isError());
+        CHECK(Duration::fromString("abc").second().isError());
+        CHECK(Duration::fromString("3 weeks").second().isError());
+        CHECK(Duration::fromString("ms").second().isError()); // unit only, no magnitude
 }
 
 TEST_CASE("Duration: fromString negative values") {
-        Error    e;
-        Duration d = Duration::fromString("-500ms", &e);
+        auto [d, e] = Duration::fromString("-500ms");
         CHECK(!e.isError());
         CHECK(d == Duration::fromMilliseconds(-500));
         CHECK(d.isNegative());

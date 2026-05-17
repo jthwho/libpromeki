@@ -505,7 +505,7 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         uint8_t *raw = static_cast<uint8_t *>(f1.buf.data());
         CHECK(raw[6] == 'B');   // byte-order marker
         CHECK(raw[16] == 0x00); // tag high byte (big-endian)
-        CHECK(raw[17] == DataStream::TypeUInt32);
+        CHECK(raw[17] == DataTypeUInt32);
         CHECK(raw[18] == 0x00); // version high byte (big-endian)
         CHECK(raw[19] == 0x01); // version low byte = 1
         CHECK(raw[20] == 0x00); // size high byte (big-endian)
@@ -534,7 +534,7 @@ TEST_CASE("DataStream: big-endian vs little-endian wire format") {
         }
         raw = static_cast<uint8_t *>(f2.buf.data());
         CHECK(raw[6] == 'L');                     // byte-order marker
-        CHECK(raw[16] == DataStream::TypeUInt32); // tag low byte (little-endian)
+        CHECK(raw[16] == DataTypeUInt32); // tag low byte (little-endian)
         CHECK(raw[17] == 0x00);                   // tag high byte (little-endian)
         CHECK(raw[18] == 0x01);                   // version low byte (little-endian) = 1
         CHECK(raw[19] == 0x00);                   // version high byte
@@ -568,7 +568,7 @@ TEST_CASE("DataStream: byte order for 16-bit values") {
         // body starts at offset 24.
         uint8_t *raw = static_cast<uint8_t *>(f.buf.data());
         CHECK(raw[16] == 0x00); // tag high byte
-        CHECK(raw[17] == DataStream::TypeUInt16);
+        CHECK(raw[17] == DataTypeUInt16);
         CHECK(raw[18] == 0x00); // version high byte
         CHECK(raw[19] == 0x01); // version low byte = 1
         CHECK(raw[20] == 0x00); // size = 2, big-endian
@@ -879,7 +879,7 @@ TEST_CASE("DataStream: round-trip Variant DateTime") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeDateTime);
+                CHECK(val.type() == DataTypeDateTime);
                 CHECK(val.get<DateTime>() == dt);
         }
 }
@@ -899,7 +899,7 @@ TEST_CASE("DataStream: round-trip Variant UUID") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeUUID);
+                CHECK(val.type() == DataTypeUUID);
                 CHECK(val.get<UUID>() == id);
         }
 }
@@ -919,7 +919,7 @@ TEST_CASE("DataStream: round-trip Variant UMID (Extended)") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeUMID);
+                CHECK(val.type() == DataTypeUMID);
                 UMID out = val.get<UMID>();
                 CHECK(out.isValid());
                 CHECK(out.length() == UMID::Extended);
@@ -942,7 +942,7 @@ TEST_CASE("DataStream: round-trip Variant UMID (Basic)") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeUMID);
+                CHECK(val.type() == DataTypeUMID);
                 UMID out = val.get<UMID>();
                 CHECK(out.isValid());
                 CHECK(out.length() == UMID::Basic);
@@ -1045,7 +1045,7 @@ TEST_CASE("DataStream: round-trip Variant Color") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeColor);
+                CHECK(val.type() == DataTypeColor);
                 Color out = val.get<Color>();
                 CHECK(out.r8() == 128);
                 CHECK(out.g8() == 64);
@@ -1068,7 +1068,7 @@ TEST_CASE("DataStream: round-trip Variant Color named constants") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeColor);
+                CHECK(val.type() == DataTypeColor);
                 Color out = val.get<Color>();
                 CHECK(out.r8() == 255);
                 CHECK(out.g8() == 255);
@@ -1095,7 +1095,7 @@ TEST_CASE("DataStream: round-trip Variant TimeStamp") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeTimeStamp);
+                CHECK(val.type() == DataTypeTimeStamp);
                 TimeStamp out = val.get<TimeStamp>();
                 CHECK(out.nanoseconds() == ts.nanoseconds());
         }
@@ -1116,7 +1116,7 @@ TEST_CASE("DataStream: round-trip Variant Size2D") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeSize2D);
+                CHECK(val.type() == DataTypeSize2D);
                 Size2Du32 out = val.get<Size2Du32>();
                 CHECK(out.width() == 1920);
                 CHECK(out.height() == 1080);
@@ -1138,7 +1138,7 @@ TEST_CASE("DataStream: round-trip Variant Rational") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeRational);
+                CHECK(val.type() == DataTypeRational);
                 Rational<int> out = val.get<Rational<int>>();
                 CHECK(out.numerator() == 24000);
                 CHECK(out.denominator() == 1001);
@@ -1160,7 +1160,7 @@ TEST_CASE("DataStream: round-trip Variant FrameRate") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeFrameRate);
+                CHECK(val.type() == DataTypeFrameRate);
                 FrameRate out = val.get<FrameRate>();
                 CHECK(out.numerator() == 30000u);
                 CHECK(out.denominator() == 1001u);
@@ -1186,7 +1186,7 @@ TEST_CASE("DataStream: round-trip Variant StringList") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeStringList);
+                CHECK(val.type() == DataTypeStringList);
                 StringList out = val.get<StringList>();
                 REQUIRE(out.size() == 4);
                 CHECK(out[0] == String("alpha"));
@@ -1211,7 +1211,7 @@ TEST_CASE("DataStream: round-trip Variant empty StringList") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeStringList);
+                CHECK(val.type() == DataTypeStringList);
                 CHECK(val.get<StringList>().size() == 0);
         }
 }
@@ -1231,7 +1231,7 @@ TEST_CASE("DataStream: round-trip Variant ColorModel") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeColorModel);
+                CHECK(val.type() == DataTypeColorModel);
                 ColorModel out = val.get<ColorModel>();
                 CHECK(out.id() == ColorModel::Rec709);
         }
@@ -1252,7 +1252,7 @@ TEST_CASE("DataStream: round-trip Variant MemSpace") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeMemSpace);
+                CHECK(val.type() == DataTypeMemSpace);
                 MemSpace out = val.get<MemSpace>();
                 CHECK(out.id() == MemSpace::SystemSecure);
         }
@@ -1273,7 +1273,7 @@ TEST_CASE("DataStream: round-trip Variant PixelMemLayout") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypePixelMemLayout);
+                CHECK(val.type() == DataTypePixelMemLayout);
                 PixelMemLayout out = val.get<PixelMemLayout>();
                 CHECK(out.id() == PixelMemLayout::I_4x8);
         }
@@ -1294,7 +1294,7 @@ TEST_CASE("DataStream: round-trip Variant PixelFormat") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypePixelFormat);
+                CHECK(val.type() == DataTypePixelFormat);
                 PixelFormat out = val.get<PixelFormat>();
                 CHECK(out.id() == PixelFormat::RGB8_sRGB);
         }
@@ -1315,7 +1315,7 @@ TEST_CASE("DataStream: round-trip Variant Timecode") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeTimecode);
+                CHECK(val.type() == DataTypeTimecode);
                 Timecode out = val.get<Timecode>();
                 CHECK(out.hour() == 10);
                 CHECK(out.min() == 20);
@@ -1338,7 +1338,7 @@ TEST_CASE("DataStream: round-trip Variant Enum") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeEnum);
+                CHECK(val.type() == DataTypeEnum);
                 Enum out = val.get<Enum>();
                 CHECK(out == VideoPattern::Crosshatch);
         }
@@ -1363,7 +1363,7 @@ TEST_CASE("DataStream: round-trip Variant DateTime preserves value") {
                 Variant    val;
                 rs >> val;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(val.type() == Variant::TypeDateTime);
+                CHECK(val.type() == DataTypeDateTime);
                 CHECK(val.get<DateTime>() == dt);
         }
 }
@@ -1685,9 +1685,9 @@ TEST_CASE("DataStream: direct write can be read as Variant") {
                 Variant    a, b;
                 rs >> a >> b;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(a.type() == Variant::TypeUUID);
+                CHECK(a.type() == DataTypeUUID);
                 CHECK(a.get<UUID>() == id);
-                CHECK(b.type() == Variant::TypeSize2D);
+                CHECK(b.type() == DataTypeSize2D);
                 CHECK(b.get<Size2Du32>() == sz);
         }
 }
@@ -2692,7 +2692,7 @@ TEST_CASE("DataStream: round-trip VariantList") {
                 CHECK(out[2].get<bool>() == true);
                 CHECK(out[3].get<double>() == doctest::Approx(3.14));
                 CHECK_FALSE(out[4].isValid());
-                CHECK(out[5].type() == Variant::TypeUUID);
+                CHECK(out[5].type() == DataTypeUUID);
                 CHECK(out[5].get<UUID>() == list[5].get<UUID>());
         }
 }
@@ -2903,7 +2903,7 @@ TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
         WriterFixture    f;
         MasteringDisplay md = MasteringDisplay::HDR10;
         Variant          v(md);
-        REQUIRE(v.type() == Variant::TypeMasteringDisplay);
+        REQUIRE(v.type() == DataTypeMasteringDisplay);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -2915,7 +2915,7 @@ TEST_CASE("DataStream: round-trip Variant MasteringDisplay") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeMasteringDisplay);
+                CHECK(out.type() == DataTypeMasteringDisplay);
                 CHECK(out.get<MasteringDisplay>() == md);
         }
 }
@@ -2924,7 +2924,7 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
         WriterFixture     f;
         ContentLightLevel cll(4000, 1200);
         Variant           v(cll);
-        REQUIRE(v.type() == Variant::TypeContentLightLevel);
+        REQUIRE(v.type() == DataTypeContentLightLevel);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -2936,7 +2936,7 @@ TEST_CASE("DataStream: round-trip Variant ContentLightLevel") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeContentLightLevel);
+                CHECK(out.type() == DataTypeContentLightLevel);
                 CHECK(out.get<ContentLightLevel>() == cll);
         }
 }
@@ -2946,7 +2946,7 @@ TEST_CASE("DataStream: round-trip Variant Url") {
         Url           u = Url::fromString("pmfb://bridge?FrameBridgeRingDepth=4&FrameBridgeSyncMode=false").first();
         REQUIRE(u.isValid());
         Variant v(u);
-        REQUIRE(v.type() == Variant::TypeUrl);
+        REQUIRE(v.type() == DataTypeUrl);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -2958,7 +2958,7 @@ TEST_CASE("DataStream: round-trip Variant Url") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeUrl);
+                CHECK(out.type() == DataTypeUrl);
                 CHECK(out.get<Url>() == u);
         }
 }
@@ -3009,7 +3009,7 @@ TEST_CASE("DataStream: round-trip Variant Duration") {
         WriterFixture  f;
         const Duration in = Duration::fromMilliseconds(42);
         Variant        v(in);
-        REQUIRE(v.type() == Variant::TypeDuration);
+        REQUIRE(v.type() == DataTypeDuration);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -3021,7 +3021,7 @@ TEST_CASE("DataStream: round-trip Variant Duration") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeDuration);
+                CHECK(out.type() == DataTypeDuration);
                 CHECK(out.get<Duration>().nanoseconds() == in.nanoseconds());
         }
 }
@@ -3032,7 +3032,7 @@ TEST_CASE("DataStream: round-trip Variant VideoCodec") {
         REQUIRE_FALSE(error(r).isError());
         const VideoCodec in = value(r);
         Variant          v(in);
-        REQUIRE(v.type() == Variant::TypeVideoCodec);
+        REQUIRE(v.type() == DataTypeVideoCodec);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -3044,7 +3044,7 @@ TEST_CASE("DataStream: round-trip Variant VideoCodec") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeVideoCodec);
+                CHECK(out.type() == DataTypeVideoCodec);
                 CHECK(out.get<VideoCodec>().toString() == in.toString());
         }
 }
@@ -3055,7 +3055,7 @@ TEST_CASE("DataStream: round-trip Variant AudioCodec") {
         REQUIRE_FALSE(error(r).isError());
         const AudioCodec in = value(r);
         Variant          v(in);
-        REQUIRE(v.type() == Variant::TypeAudioCodec);
+        REQUIRE(v.type() == DataTypeAudioCodec);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -3067,7 +3067,7 @@ TEST_CASE("DataStream: round-trip Variant AudioCodec") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeAudioCodec);
+                CHECK(out.type() == DataTypeAudioCodec);
                 CHECK(out.get<AudioCodec>().toString() == in.toString());
         }
 }
@@ -3079,7 +3079,7 @@ TEST_CASE("DataStream: round-trip Variant SocketAddress") {
         REQUIRE_FALSE(error(r).isError());
         const SocketAddress in = value(r);
         Variant             v(in);
-        REQUIRE(v.type() == Variant::TypeSocketAddress);
+        REQUIRE(v.type() == DataTypeSocketAddress);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -3091,7 +3091,7 @@ TEST_CASE("DataStream: round-trip Variant SocketAddress") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeSocketAddress);
+                CHECK(out.type() == DataTypeSocketAddress);
                 CHECK(out.get<SocketAddress>() == in);
         }
 }
@@ -3112,7 +3112,7 @@ TEST_CASE("DataStream: round-trip Variant SdpSession") {
         REQUIRE_FALSE(error(r).isError());
         const SdpSession in = value(r);
         Variant          v(in);
-        REQUIRE(v.type() == Variant::TypeSdpSession);
+        REQUIRE(v.type() == DataTypeSdpSession);
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
                 ws << v;
@@ -3124,7 +3124,7 @@ TEST_CASE("DataStream: round-trip Variant SdpSession") {
                 Variant    out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
-                CHECK(out.type() == Variant::TypeSdpSession);
+                CHECK(out.type() == DataTypeSdpSession);
                 // Compare via toString — equality on SdpSession would
                 // require field-wise comparison which isn't the goal
                 // of this wire-level test.
@@ -3155,11 +3155,11 @@ TEST_CASE("DataStream: readFrameHeader returns tag, version, size") {
         }
         f.dev.seek(0);
         DataStream rs = DataStream::createReader(&f.dev);
-        DataStream::TypeId tag = static_cast<DataStream::TypeId>(0);
+        DataTypeID tag = static_cast<DataTypeID>(0);
         uint16_t           ver = 0;
         uint32_t           sz = 0;
         REQUIRE(rs.readFrameHeader(tag, ver, sz));
-        CHECK(tag == DataStream::TypeUInt32);
+        CHECK(tag == DataTypeUInt32);
         CHECK(ver == 1);
         CHECK(sz == 4);
 }
@@ -3172,7 +3172,7 @@ TEST_CASE("DataStream: readFrame rejects future versions") {
         dev.open(IODevice::ReadWrite);
         {
                 DataStream ws = DataStream::createWriter(&dev);
-                ws.beginFrame(DataStream::TypeUInt32, /*version=*/2);
+                ws.beginFrame(DataTypeUInt32, /*version=*/2);
                 uint32_t v = 0xCAFEBABE;
                 ws.writeRawData(&v, sizeof(v));
                 ws.endFrame();
@@ -3181,7 +3181,7 @@ TEST_CASE("DataStream: readFrame rejects future versions") {
         DataStream rs = DataStream::createReader(&dev);
         uint16_t   ver = 0;
         // Default maxVersion = 1 → reader rejects v=2.
-        CHECK(!rs.readFrame(DataStream::TypeUInt32, 1, &ver));
+        CHECK(!rs.readFrame(DataTypeUInt32, 1, &ver));
         CHECK(rs.status() == DataStream::ReadCorruptData);
         CHECK(rs.errorContext().contains("version"));
 }
@@ -3192,7 +3192,7 @@ TEST_CASE("DataStream: readFrame accepts future versions when maxVersion permits
         dev.open(IODevice::ReadWrite);
         {
                 DataStream ws = DataStream::createWriter(&dev);
-                ws.beginFrame(DataStream::TypeUInt32, /*version=*/2);
+                ws.beginFrame(DataTypeUInt32, /*version=*/2);
                 uint32_t v = 0xCAFEBABE;
                 ws.writeRawData(&v, sizeof(v));
                 ws.endFrame();
@@ -3203,7 +3203,7 @@ TEST_CASE("DataStream: readFrame accepts future versions when maxVersion permits
         uint32_t   sz = 0;
         // maxVersion = 2 admits version 2.  Status stays Ok and the
         // reported version reflects what was on the wire.
-        REQUIRE(rs.readFrame(DataStream::TypeUInt32, 2, &ver, &sz));
+        REQUIRE(rs.readFrame(DataTypeUInt32, 2, &ver, &sz));
         CHECK(ver == 2);
         CHECK(sz == 4);
         CHECK(rs.status() == DataStream::Ok);
@@ -3240,7 +3240,7 @@ TEST_CASE("DataStream: Variant read silently skips unknown tags") {
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 // "Unknown" type — a value reserved for user types.
-                auto unknownTag = static_cast<DataStream::TypeId>(DataStream::UserTypeIdEnd);
+                auto unknownTag = static_cast<DataTypeID>(DataTypeUserEnd);
                 ws.beginFrame(unknownTag, /*version=*/1);
                 // Some arbitrary body bytes the reader must skip past.
                 const char body[] = {'\x01', '\x02', '\x03', '\x04', '\x05'};
@@ -3255,11 +3255,11 @@ TEST_CASE("DataStream: Variant read silently skips unknown tags") {
         Variant    skipped;
         rs >> skipped;
         CHECK(rs.status() == DataStream::Ok); // forward-compat: no error
-        CHECK(skipped.type() == Variant::TypeInvalid);
+        CHECK(skipped.type() == DataTypeInvalid);
         Variant follow;
         rs >> follow;
         CHECK(rs.status() == DataStream::Ok);
-        REQUIRE(follow.type() == Variant::TypeS32);
+        REQUIRE(follow.type() == DataTypeInt32);
         CHECK(follow.get<int32_t>() == 0x12345678);
 }
 
@@ -3270,7 +3270,7 @@ TEST_CASE("DataStream: nested frames flush in correct order") {
         WriterFixture f;
         {
                 DataStream ws = DataStream::createWriter(&f.dev);
-                ws.beginFrame(DataStream::TypeList, 1);
+                ws.beginFrame(DataTypeList, 1);
                 ws << static_cast<uint32_t>(2);
                 ws << String("alpha");
                 ws << String("beta");
@@ -3280,7 +3280,7 @@ TEST_CASE("DataStream: nested frames flush in correct order") {
         DataStream rs = DataStream::createReader(&f.dev);
         uint16_t   ver = 0;
         uint32_t   sz = 0;
-        REQUIRE(rs.readFrame(DataStream::TypeList, 1, &ver, &sz));
+        REQUIRE(rs.readFrame(DataTypeList, 1, &ver, &sz));
         CHECK(ver == 1);
         // sz captures the entire nested body — non-zero proves the
         // parent frame buffered the children correctly.
@@ -3311,7 +3311,7 @@ TEST_CASE("DataStream: writeRawData inside an open frame lands in body") {
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
         const uint8_t  payload[] = {0xDE, 0xAD, 0xBE, 0xEF, 0x42};
-        const auto     userTag = static_cast<DataStream::TypeId>(DataStream::UserTypeIdBegin);
+        const auto     userTag = static_cast<DataTypeID>(DataTypeUserBegin);
         {
                 DataStream ws = DataStream::createWriter(&dev);
                 ws.beginFrame(userTag, /*version=*/1);
@@ -3320,7 +3320,7 @@ TEST_CASE("DataStream: writeRawData inside an open frame lands in body") {
         }
         dev.seek(0);
         DataStream rs = DataStream::createReader(&dev);
-        DataStream::TypeId tag = static_cast<DataStream::TypeId>(0);
+        DataTypeID tag = static_cast<DataTypeID>(0);
         uint16_t           ver = 0;
         uint32_t           sz = 0;
         REQUIRE(rs.readFrameHeader(tag, ver, sz));
@@ -3420,7 +3420,7 @@ TEST_CASE("DataStream: beginFrame/endFrame are no-ops when status is not Ok") {
         ws.setError(DataStream::WriteFailed, String("synthetic"));
         REQUIRE(ws.status() == DataStream::WriteFailed);
         // beginFrame on errored stream must not push.
-        ws.beginFrame(DataStream::TypeUInt32, 1);
+        ws.beginFrame(DataTypeUInt32, 1);
         // endFrame on errored stream (and empty stack) must not
         // overwrite the existing error or crash.
         ws.endFrame();
@@ -3464,7 +3464,7 @@ TEST_CASE("DataStream: oversized frame body is rejected on read") {
                 // Write the frame header manually with an absurd size.
                 uint8_t hdr[DataStream::FrameHeaderSize] = {};
                 hdr[0] = 0x00;
-                hdr[1] = static_cast<uint8_t>(DataStream::TypeUInt32);
+                hdr[1] = static_cast<uint8_t>(DataTypeUInt32);
                 // version = 1, big-endian uint16
                 hdr[2] = 0x00;
                 hdr[3] = 0x01;

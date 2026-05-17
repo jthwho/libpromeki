@@ -17,8 +17,11 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/duration.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Wall-clock date and time based on std::chrono::system_clock.
@@ -50,6 +53,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class DateTime {
         public:
+                PROMEKI_DATATYPE(DateTime, DataTypeDateTime, 1)
+
+                /** @brief Writes a tagged int64 of nanoseconds since the system_clock epoch. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged int64 of nanoseconds since the system_clock epoch. */
+                template <uint32_t V> static Result<DateTime> readFromStream(DataStream &s);
+
                 /** @brief Default strftime format string ("%F %T" = "YYYY-MM-DD HH:MM:SS"). */
                 constexpr static const char *DefaultFormat = "%F %T";
 

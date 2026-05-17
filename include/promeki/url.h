@@ -16,8 +16,11 @@
 #include <promeki/map.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Uniform Resource Locator / Identifier.
@@ -69,6 +72,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Url {
         public:
+                PROMEKI_DATATYPE(Url, DataTypeUrl, 1)
+
+                /** @brief Writes the canonical String form. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical String form. */
+                template <uint32_t V> static Result<Url> readFromStream(DataStream &s);
+
                 /** @brief Sentinel for @ref port indicating "not specified". */
                 static constexpr int PortUnset = -1;
 

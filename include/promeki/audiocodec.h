@@ -18,6 +18,7 @@
 #include <promeki/enums.h>
 #include <promeki/result.h>
 #include <promeki/error.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,6 +26,7 @@ class AudioEncoder;
 class AudioDecoder;
 class AudioFormat;
 class MediaConfig;
+class DataStream;
 
 /**
  * @brief Compile-time tag for the AudioCodec backend StringRegistry.
@@ -84,6 +86,13 @@ using AudioCodecBackendRegistry = StringRegistry<"AudioCodecBackend">;
  */
 class AudioCodec {
         public:
+                PROMEKI_DATATYPE(AudioCodec, DataTypeAudioCodec, 1)
+
+                /** @brief Writes the canonical "Codec[:Backend]" String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical "Codec[:Backend]" String. */
+                template <uint32_t V> static Result<AudioCodec> readFromStream(DataStream &s);
+
                 /**
                  * @brief Identifies an audio codec family.
                  *

@@ -108,15 +108,15 @@ namespace {
         // appear in the table.
         String formatVariant(StatUnit unit, const Variant &v) {
                 switch (v.type()) {
-                        case Variant::TypeString:
+                        case DataTypeString:
                                 return v.get<String>();
-                        case Variant::TypeBool:
+                        case DataTypeBool:
                                 return v.get<bool>() ? String("true") : String("false");
-                        case Variant::TypeDuration: {
+                        case DataTypeDuration: {
                                 const Duration d = v.get<Duration>();
                                 return Units::fromDurationNs(static_cast<double>(d.nanoseconds()));
                         }
-                        case Variant::TypeFrameCount: {
+                        case DataTypeFrameCount: {
                                 const FrameCount fc = v.get<FrameCount>();
                                 if (fc.isUnknown()) return String("?");
                                 if (fc.isInfinite()) return String("inf");
@@ -316,7 +316,7 @@ StringList MediaPipelineStats::describe() const {
                                 r.kind = kindName;
                                 r.statName = id.name();
                                 const StatUnit unit = unitFor(r.statName);
-                                r.value = ws.toString([unit](double v) { return formatScalar(unit, v); });
+                                r.value = ws.toFormattedString([unit](double v) { return formatScalar(unit, v); });
                                 rows.pushToBack(r);
                         });
                 }
@@ -389,7 +389,7 @@ bool MediaPipelineStats::operator==(const MediaPipelineStats &other) const {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const MediaPipelineStats &s) {
-        stream.beginFrame(DataStream::TypeMediaPipelineStats, 1);
+        stream.beginFrame(DataTypeMediaPipelineStats, 1);
         const MediaPipelineStats::StageList &stages = s.stages();
         stream << static_cast<uint32_t>(stages.size());
         for (size_t i = 0; i < stages.size(); ++i) {
@@ -401,7 +401,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineStats &s) {
 
 DataStream &operator>>(DataStream &stream, MediaPipelineStats &s) {
         s.clear();
-        if (!stream.readFrame(DataStream::TypeMediaPipelineStats)) {
+        if (!stream.readFrame(DataTypeMediaPipelineStats)) {
                 return stream;
         }
         uint32_t stageCount = 0;

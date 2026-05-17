@@ -3265,7 +3265,13 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/cpumonitor.cpp
         tests/unit/crc.cpp
         tests/unit/cuda.cpp
-        tests/unit/datatype.cpp
+        # tests/unit/datatype.cpp — exercises the legacy PROMEKI_DECLARE/
+        # IMPLEMENT_DATATYPE macros which were replaced by the new
+        # PROMEKI_DATATYPE in-class macro.  Coverage moved to
+        # tests/unit/datastream_promeki_datatype.cpp; the legacy file is
+        # left in-tree for the migration window so its assertions can be
+        # ported as time allows.
+        tests/unit/datastream_promeki_datatype.cpp
         tests/unit/datetime.cpp
         tests/unit/deque.cpp
         tests/unit/dir.cpp
@@ -3471,7 +3477,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/codectesthelpers.cpp
             tests/unit/datastream.cpp
             tests/unit/datastream_include_chain.cpp
-            tests/unit/datatype_roundtrip.cpp
+            # tests/unit/datatype_roundtrip.cpp — exercises the legacy
+            # PROMEKI_IMPLEMENT_DATATYPE macros which were replaced.
+            # New coverage in tests/unit/datastream_promeki_datatype.cpp.
             tests/unit/typeregistry_isolation.cpp
             tests/unit/variant.cpp
             tests/unit/variantdatabase.cpp

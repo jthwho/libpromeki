@@ -16,8 +16,11 @@
 #include <promeki/namespace.h>
 #include <promeki/result.h>
 #include <promeki/string.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief A color value in any supported color model.
@@ -108,6 +111,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Color {
         public:
+                PROMEKI_DATATYPE(Color, DataTypeColor, 1)
+
+                /** @brief Writes the ColorModel name + four float components. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the ColorModel name + four float components. */
+                template <uint32_t V> static Result<Color> readFromStream(DataStream &s);
+
                 /**
                  * @brief Output format for toString().
                  *

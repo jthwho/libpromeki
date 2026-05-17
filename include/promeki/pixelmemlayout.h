@@ -15,8 +15,11 @@
 #include <promeki/list.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Describes the memory layout of pixel data without color semantics.
@@ -109,6 +112,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class PixelMemLayout {
         public:
+                PROMEKI_DATATYPE(PixelMemLayout, DataTypePixelMemLayout, 1)
+
+                /** @brief Writes the registered layout name as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the registered layout name and looks it up. */
+                template <uint32_t V> static Result<PixelMemLayout> readFromStream(DataStream &s);
+
                 static constexpr size_t MaxComps = 8;  ///< Maximum number of components per pixel.
                 static constexpr size_t MaxPlanes = 4; ///< Maximum number of planes per format.
 
@@ -422,6 +432,9 @@ class PixelMemLayout {
 
                 /** @brief Returns the short name of this pixel format. */
                 const String &name() const { return d->name; }
+
+                /** @brief Canonical String form: the registered @ref name. */
+                String toString() const { return d->name; }
 
                 /** @brief Returns a human-readable description of this pixel format. */
                 const String &desc() const { return d->desc; }

@@ -63,6 +63,8 @@ class Variant;
  */
 class WindowedStat {
         public:
+                PROMEKI_DATATYPE(WindowedStat, DataTypeWindowedStat, 1)
+
                 /** @brief Sample list type returned by @ref values. */
                 using Samples = ::promeki::List<double>;
 
@@ -95,14 +97,14 @@ class WindowedStat {
                 };
 
                 /**
-                 * @brief Per-value formatter used by @ref toString to render
-                 *        each numeric component with custom units.
+                 * @brief Per-value formatter used by @ref toFormattedString
+                 *        to render each numeric component with custom units.
                  *
                  * The formatter is invoked once per scalar (avg, stddev,
                  * min, max) so callers can humanise values via the
                  * @ref Units helpers (e.g. ms, MB) without WindowedStat
                  * needing to know the underlying physical unit.  When
-                 * empty (the default), @ref toString falls back to
+                 * empty (the default), the formatter falls back to
                  * @ref String::number for every value.
                  */
                 using ValueFormatter = Function<String(double)>;
@@ -257,7 +259,7 @@ class WindowedStat {
                  *                  empty, defaults to numeric output.
                  * @return The formatted summary line.
                  */
-                String toString(const ValueFormatter &formatter = ValueFormatter()) const;
+                String toFormattedString(const ValueFormatter &formatter = ValueFormatter()) const;
 
                 /**
                  * @brief Renders the window as the canonical
@@ -268,10 +270,11 @@ class WindowedStat {
                  * elided.  This is the form parsed by @ref fromString
                  * and is the string @c Variant::get<String>() returns
                  * for a @c TypeWindowedStat payload, so JSON snapshots
-                 * survive a load / save cycle even though
-                 * @ref toString itself is no longer round-trippable.
+                 * survive a load / save cycle.  Use
+                 * @ref toFormattedString for the human-readable
+                 * "avg, min, max, σ" summary form.
                  */
-                String toSerializedString() const;
+                String toString() const;
 
                 /**
                  * @brief Parses the canonical @c "cap=N:[...]" form
@@ -292,25 +295,31 @@ class WindowedStat {
                 /** @brief Inverse of @ref operator==. */
                 bool operator!=(const WindowedStat &other) const { return !(*this == other); }
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body (frame header is emitted by the framework
+                 * operator):  uint32 capacity + uint32 sample count +
+                 * N @c double values (oldest-first order).  Mirrors the
+                 * in-memory snapshot semantics so a round-trip preserves
+                 * both the configured capacity and the visible sample
+                 * order.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<WindowedStat> readFromStream(DataStream &s);
+
         private:
                 Samples _samples;      ///< Ring storage; size grows up to _capacity.
                 int     _capacity = 0; ///< Configured ring capacity.
                 int     _head = 0;     ///< Next write index (only meaningful once _full).
                 bool    _full = false; ///< True once _samples has reached _capacity.
 };
-
-/**
- * @brief Writes a WindowedStat to a DataStream.
- *
- * Wire format: tag + uint32 capacity + uint32 sample count + N
- * @c double values (oldest-first order).  Mirrors the in-memory
- * snapshot semantics so a round-trip preserves both the configured
- * capacity and the visible sample order.
- */
-DataStream &operator<<(DataStream &stream, const WindowedStat &val);
-
-/** @brief Reads a WindowedStat from a DataStream. */
-DataStream &operator>>(DataStream &stream, WindowedStat &val);
 
 PROMEKI_NAMESPACE_END
 

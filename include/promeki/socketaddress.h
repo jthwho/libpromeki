@@ -16,6 +16,7 @@
 #include <promeki/result.h>
 #include <promeki/platform.h>
 #include <promeki/networkaddress.h>
+#include <promeki/datatype.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <winsock2.h>
@@ -28,6 +29,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class TextStream;
+class DataStream;
 
 /**
  * @brief Network address with port number.
@@ -54,6 +56,13 @@ class TextStream;
  */
 class SocketAddress {
         public:
+                PROMEKI_DATATYPE(SocketAddress, DataTypeSocketAddress, 1)
+
+                /** @brief Writes the canonical "host:port" String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical "host:port" String. */
+                template <uint32_t V> static Result<SocketAddress> readFromStream(DataStream &s);
+
                 /**
                  * @brief Parses a "host:port" string into a SocketAddress.
                  *

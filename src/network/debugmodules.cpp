@@ -305,7 +305,7 @@ namespace {
                                 .in = HttpApi::ParamIn::Body,
                                 .required = true,
                                 .spec = VariantSpec()
-                                                .setType(Variant::TypeS32)
+                                                .setType(DataTypeInt32)
                                                 .setRange(static_cast<int>(Logger::Force),
                                                           static_cast<int>(Logger::Err))
                                                 .setDescription("New minimum log level."),
@@ -348,7 +348,7 @@ namespace {
                                         .in = HttpApi::ParamIn::Path,
                                         .required = true,
                                         .spec = VariantSpec()
-                                                        .setType(Variant::TypeString)
+                                                        .setType(DataTypeString)
                                                         .setDescription("Channel name."),
                                 },
                                 HttpApi::Param{
@@ -356,7 +356,7 @@ namespace {
                                         .in = HttpApi::ParamIn::Body,
                                         .required = true,
                                         .spec = VariantSpec()
-                                                        .setType(Variant::TypeBool)
+                                                        .setType(DataTypeBool)
                                                         .setDescription("New enabled flag."),
                                 },
                         };

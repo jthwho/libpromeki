@@ -75,24 +75,24 @@ class DemoConfig : public VariantDatabase<"DemoConfig"> {
                 }
 
                 PROMEKI_DECLARE_ID(Greeting, VariantSpec()
-                                                     .setType(Variant::TypeString)
+                                                     .setType(DataTypeString)
                                                      .setDefault(String("hello, promeki"))
                                                      .setDescription("Greeting string returned by /echo."));
 
                 PROMEKI_DECLARE_ID(Quality, VariantSpec()
-                                                    .setType(Variant::TypeS32)
+                                                    .setType(DataTypeInt32)
                                                     .setDefault(85)
                                                     .setRange(1, 100)
                                                     .setDescription("JPEG-style quality, 1..100."));
 
                 PROMEKI_DECLARE_ID(Verbose, VariantSpec()
-                                                    .setType(Variant::TypeBool)
+                                                    .setType(DataTypeBool)
                                                     .setDefault(false)
                                                     .setDescription("If true, /echo includes a sequence "
                                                                     "number alongside the text."));
 
                 PROMEKI_DECLARE_ID(MaxSize, VariantSpec()
-                                                    .setType(Variant::TypeU32)
+                                                    .setType(DataTypeUInt32)
                                                     .setDefault(uint32_t{1024})
                                                     .setRange(uint32_t{1}, uint32_t{1u << 20})
                                                     .setDescription("Upper bound on the echoed message "
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
                         .in = HttpApi::ParamIn::Body,
                         .required = false,
                         .spec = VariantSpec()
-                                        .setType(Variant::TypeString)
+                                        .setType(DataTypeString)
                                         .setDescription("Text to echo back; defaults "
                                                         "to DemoConfig.Greeting."),
                 },
@@ -241,13 +241,13 @@ int main(int argc, char **argv) {
                         .in = HttpApi::ParamIn::Body,
                         .required = false,
                         .spec = VariantSpec()
-                                        .setType(Variant::TypeBool)
+                                        .setType(DataTypeBool)
                                         .setDescription("If true, prepend the live "
                                                         "counter; defaults to "
                                                         "DemoConfig.Verbose."),
                 },
         };
-        echoEp.response = VariantSpec().setType(Variant::TypeString).setDescription("Echoed message.");
+        echoEp.response = VariantSpec().setType(DataTypeString).setDescription("Echoed message.");
 
         // Helper that falls back to the registered spec default
         // when no explicit value has been stored in the database.

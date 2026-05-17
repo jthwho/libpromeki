@@ -190,6 +190,8 @@ class AudioMarker {
 class AudioMarkerList {
                 PROMEKI_SHARED_FINAL(AudioMarkerList)
         public:
+                PROMEKI_DATATYPE(AudioMarkerList, DataTypeAudioMarkerList, 1)
+
                 /** @brief Single-marker entry alias. */
                 using Entry = AudioMarker;
 
@@ -311,46 +313,52 @@ class AudioMarkerList {
                 bool operator==(const AudioMarkerList &o) const { return _entries == o._entries; }
                 bool operator!=(const AudioMarkerList &o) const { return !(*this == o); }
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint32 count + N (offset, length, type)
+                 * triples — offset and length as int64, type as int32
+                 * carrying the enum value.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<AudioMarkerList> readFromStream(DataStream &s);
+
         private:
                 EntryList _entries;
 };
 
-/** @brief Writes an AudioMarkerList as tag + count + N (offset, length, type). */
-inline DataStream &operator<<(DataStream &stream, const AudioMarkerList &list) {
-        stream.beginFrame(DataStream::TypeAudioMarkerList, 1);
-        stream << static_cast<uint32_t>(list.size());
-        for (const auto &e : list.entries()) {
-                stream << static_cast<int64_t>(e.offset());
-                stream << static_cast<int64_t>(e.length());
-                stream << static_cast<int32_t>(e.type().value());
+inline Error AudioMarkerList::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(size());
+        for (const auto &e : entries()) {
+                s << static_cast<int64_t>(e.offset());
+                s << static_cast<int64_t>(e.length());
+                s << static_cast<int32_t>(e.type().value());
         }
-        stream.endFrame();
-        return stream;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-/** @brief Reads an AudioMarkerList from its tagged wire format. */
-inline DataStream &operator>>(DataStream &stream, AudioMarkerList &list) {
-        if (!stream.readFrame(DataStream::TypeAudioMarkerList)) {
-                list = AudioMarkerList();
-                return stream;
-        }
+template <>
+inline Result<AudioMarkerList> AudioMarkerList::readFromStream<1>(DataStream &s) {
         uint32_t count = 0;
-        stream >> count;
+        s >> count;
+        if (s.status() != DataStream::Ok) return makeError<AudioMarkerList>(s.toError());
         AudioMarkerList::EntryList entries;
         entries.reserve(count);
-        for (uint32_t i = 0; i < count && stream.status() == DataStream::Ok; ++i) {
+        for (uint32_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
                 int64_t offset    = 0;
                 int64_t length    = 0;
                 int32_t typeValue = 0;
-                stream >> offset >> length >> typeValue;
+                s >> offset >> length >> typeValue;
                 entries.pushToBack(AudioMarker(offset, length, AudioMarkerType(typeValue)));
         }
-        if (stream.status() != DataStream::Ok) {
-                list = AudioMarkerList();
-                return stream;
-        }
-        list = AudioMarkerList(std::move(entries));
-        return stream;
+        if (s.status() != DataStream::Ok) return makeError<AudioMarkerList>(s.toError());
+        return makeResult(AudioMarkerList(std::move(entries)));
 }
 
 PROMEKI_NAMESPACE_END

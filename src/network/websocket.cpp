@@ -210,9 +210,11 @@ Error WebSocket::connectToUrl(const String &urlStr) {
 #if PROMEKI_ENABLE_TLS
         if (_useTls) {
                 SslSocket *ssl = new SslSocket(this);
-                if (!_sslContext.isValid()) {
-                        _sslContext = SslContext::Ptr::takeOwnership(new SslContext());
-                }
+                // SslContext's default constructor already auto-loads
+                // the system CA bundle, so passing the existing
+                // _sslContext (default or user-supplied) directly is
+                // enough.  Fail-closed handshake in SslSocket
+                // surfaces "no CAs" with a clear error.
                 ssl->setSslContext(_sslContext);
                 _socket = ssl;
         } else {

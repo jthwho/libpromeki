@@ -8,6 +8,7 @@
 #include <cstring>
 #include <new>
 #include <promeki/enum.h>
+#include <promeki/datastream.h>
 #include <promeki/map.h>
 #include <promeki/readwritelock.h>
 #include <promeki/logger.h>
@@ -390,23 +391,26 @@ String Enum::typeName() const {
 }
 
 String Enum::toString() const {
+        // A default-constructed (type-invalid) Enum is a sentinel for
+        // "no value / use registered default" — variantspec.cpp's
+        // round-trip code recognises @c "::" as the canonical form for
+        // this case, so we keep emitting it here.
         if (_def == nullptr) return String("::");
         const Entry *entry = _def->findByValue(_value);
         if (entry != nullptr) {
-                // In-list: return the pre-built qualified literal directly.
-                // Two Enums with the same value hand back Strings backed by
-                // the same StringLiteralData, so subsequent String ==
-                // comparisons short-circuit on pointer identity.
+                // In-list: return the pre-built short-name literal
+                // directly.  Two Enums with the same value hand back
+                // Strings backed by the same StringLiteralData, so
+                // subsequent String == comparisons short-circuit on
+                // pointer identity.
                 const size_t index = static_cast<size_t>(entry - _def->entries);
-                return String::fromLiteralData(&_def->entryQualifiedLits[index]);
+                return String::fromLiteralData(&_def->entryNameLits[index]);
         }
-        // Out-of-list: no pre-built form exists, so we fall back to
-        // concatenation.  Seeding with the literal-backed type name keeps
-        // the first half zero-copy; the subsequent += triggers COW.
-        String out = String::fromLiteralData(_def->nameLit);
-        out += "::";
-        out += String::number(static_cast<int32_t>(_value));
-        return out;
+        // Out-of-list: no pre-built form exists, so fall back to the
+        // decimal integer form.  Callers that need the type prefix
+        // can prepend @ref typeName themselves; the short-form output
+        // matches the convention in @ref EnumList::toString.
+        return String::number(static_cast<int32_t>(_value));
 }
 
 bool Enum::isValid() const {
@@ -416,6 +420,40 @@ bool Enum::isValid() const {
 bool Enum::hasListedValue() const {
         if (_def == nullptr) return false;
         return _def->findByValue(_value) != nullptr;
+}
+
+// ============================================================================
+// DataStream wire format (v1: qualified "TypeName::ValueName" String).
+//
+// The wire format intentionally diverges from @ref toString — the
+// public toString returns the short value name for readability, but
+// the wire form needs the type prefix so @ref readFromStream can
+// resolve the value without external context.
+// ============================================================================
+
+Error Enum::writeToStream(DataStream &s) const {
+        String wire;
+        if (_def == nullptr) {
+                wire = String("::");
+        } else {
+                wire = typeName();
+                wire += "::";
+                wire += toString();
+        }
+        s << wire;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<Enum> Enum::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<Enum>(s.toError());
+        if (str == "::") return makeResult(Enum());
+        Error e;
+        Enum  out = Enum::lookup(str, &e);
+        if (e.isError()) return makeError<Enum>(e);
+        return makeResult(out);
 }
 
 PROMEKI_NAMESPACE_END

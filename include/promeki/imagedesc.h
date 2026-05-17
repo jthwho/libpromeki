@@ -355,7 +355,7 @@ class ImageDesc {
  * @return The stream, for chaining.
  */
 inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
-        stream.beginFrame(DataStream::TypeImageDesc, 1);
+        stream.beginFrame(DataTypeImageDesc, 1);
         stream << desc.size();
         stream << desc.pixelFormat();
         stream << static_cast<uint64_t>(desc.linePad());
@@ -373,7 +373,7 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
  * @return The stream, for chaining.
  */
 inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
-        if (!stream.readFrame(DataStream::TypeImageDesc)) {
+        if (!stream.readFrame(DataTypeImageDesc)) {
                 desc = ImageDesc();
                 return stream;
         }

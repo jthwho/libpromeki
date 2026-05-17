@@ -97,6 +97,22 @@ using AudioStreamDescRegistry = StringRegistry<"AudioStreamDesc">;
  */
 class AudioStreamDesc {
         public:
+                PROMEKI_DATATYPE(AudioStreamDesc, DataTypeAudioStreamDesc, 1)
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: a single length-prefixed registered name.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<AudioStreamDesc> readFromStream(DataStream &s);
+
                 /** @brief ID type — a registered name's @ref StringRegistry slot. */
                 using ID = uint64_t;
 
@@ -244,36 +260,22 @@ class AudioStreamDesc {
                 }
 };
 
-/** @brief Writes an AudioStreamDesc as tag + registered name (length-prefixed). */
-inline DataStream &operator<<(DataStream &stream, const AudioStreamDesc &desc) {
-        stream.beginFrame(DataStream::TypeAudioStreamDesc, 1);
-        stream << desc.name();
-        stream.endFrame();
-        return stream;
+inline Error AudioStreamDesc::writeToStream(DataStream &s) const {
+        s << name();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-/** @brief Reads an AudioStreamDesc from tag + name. */
-inline DataStream &operator>>(DataStream &stream, AudioStreamDesc &desc) {
-        if (!stream.readFrame(DataStream::TypeAudioStreamDesc)) {
-                desc = AudioStreamDesc();
-                return stream;
-        }
+template <>
+inline Result<AudioStreamDesc> AudioStreamDesc::readFromStream<1>(DataStream &s) {
         String name;
-        stream >> name;
-        if (stream.status() != DataStream::Ok) {
-                desc = AudioStreamDesc();
-                return stream;
-        }
-        if (name.isEmpty() || name == "Undefined") {
-                desc = AudioStreamDesc();
-        } else {
-                // Re-register the name so cross-process round-trips are
-                // self-consistent — the receiving side may not have seen
-                // this name yet.  Names containing reserved delimiters
-                // produce Undefined and a warning (handled by the ctor).
-                desc = AudioStreamDesc(name);
-        }
-        return stream;
+        s >> name;
+        if (s.status() != DataStream::Ok) return makeError<AudioStreamDesc>(s.toError());
+        if (name.isEmpty() || name == "Undefined") return makeResult(AudioStreamDesc());
+        // Re-register the name so cross-process round-trips are
+        // self-consistent — the receiving side may not have seen this
+        // name yet.  Names containing reserved delimiters produce
+        // Undefined and a warning (handled by the ctor).
+        return makeResult(AudioStreamDesc(name));
 }
 
 PROMEKI_NAMESPACE_END

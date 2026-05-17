@@ -242,7 +242,7 @@ TEST_CASE("HdrDynamic2094_40: round-trips through Variant") {
         HdrDynamic2094_40 original = fullSingleWindow();
         Variant           v;
         v.set(original);
-        CHECK(v.type() == Variant::TypeHdrDynamic2094_40);
+        CHECK(v.type() == DataTypeHdrDynamic2094_40);
         HdrDynamic2094_40 out = v.get<HdrDynamic2094_40>();
         CHECK(out == original);
 }

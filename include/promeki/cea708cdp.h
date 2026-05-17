@@ -97,7 +97,7 @@ class DataStream;
  *
  * @par Variant integration
  *
- * @c Cea708Cdp is registered as @c Variant::TypeCea708Cdp so that
+ * @c Cea708Cdp is registered as @c DataTypeCea708Cdp so that
  * parsers / builders can return it through the @ref AncTranslator
  * @c Result<Variant> interfaces.
  *
@@ -110,6 +110,8 @@ class DataStream;
  */
 class Cea708Cdp {
         public:
+                PROMEKI_DATATYPE(Cea708Cdp, DataTypeCea708Cdp, 1)
+
                 /** @brief Magic identifier word at the start of every CDP. */
                 static constexpr uint16_t Identifier = 0x9669;
 
@@ -295,13 +297,23 @@ class Cea708Cdp {
                  * for log lines, not machine consumption.
                  */
                 String toString() const;
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: the canonical CDP byte stream (the same
+                 * bytes @ref toBuffer produces) length-prefixed as a
+                 * @ref Buffer.  Round-trips through @ref fromBuffer.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<Cea708Cdp> readFromStream(DataStream &s);
 };
-
-/** @brief Writes a @ref Cea708Cdp to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const Cea708Cdp &cdp);
-
-/** @brief Reads a @ref Cea708Cdp from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, Cea708Cdp &cdp);
 
 PROMEKI_NAMESPACE_END
 

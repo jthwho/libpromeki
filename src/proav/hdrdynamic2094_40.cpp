@@ -523,39 +523,27 @@ String HdrDynamic2094_40::toString() const {
 }
 
 // ---------------------------------------------------------------------------
-// DataStream operators
+// DataStream serialization (member-API path for PROMEKI_DATATYPE)
 // ---------------------------------------------------------------------------
 
-void writeHdrDynamic2094_40Data(DataStream &stream, const HdrDynamic2094_40 &md) {
-        Buffer buf = md.toBuffer();
-        stream << buf;
+Error HdrDynamic2094_40::writeToStream(DataStream &s) const {
+        Buffer buf = toBuffer();
+        s << buf;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-HdrDynamic2094_40 readHdrDynamic2094_40Data(DataStream &stream) {
+template <>
+Result<HdrDynamic2094_40> HdrDynamic2094_40::readFromStream<1>(DataStream &s) {
         Buffer buf;
-        stream >> buf;
+        s >> buf;
+        if (s.status() != DataStream::Ok) return makeError<HdrDynamic2094_40>(s.toError());
         Result<HdrDynamic2094_40> r = HdrDynamic2094_40::fromBuffer(buf);
         if (r.second().isError()) {
-                promekiWarn("HdrDynamic2094_40 DataStream read failed: %s", r.second().name().cstr());
-                return HdrDynamic2094_40();
+                s.setError(DataStream::ReadCorruptData,
+                           String("HdrDynamic2094_40::fromBuffer failed: ") + r.second().name());
+                return makeError<HdrDynamic2094_40>(r.second());
         }
-        return r.first();
-}
-
-DataStream &operator<<(DataStream &stream, const HdrDynamic2094_40 &md) {
-        stream.beginFrame(DataStream::TypeHdrDynamic2094_40, 1);
-        writeHdrDynamic2094_40Data(stream, md);
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, HdrDynamic2094_40 &md) {
-        if (!stream.readFrame(DataStream::TypeHdrDynamic2094_40)) {
-                md = HdrDynamic2094_40();
-                return stream;
-        }
-        md = readHdrDynamic2094_40Data(stream);
-        return stream;
+        return r;
 }
 
 PROMEKI_NAMESPACE_END

@@ -780,6 +780,25 @@ class XmlElement {
  */
 class XmlDocument {
         public:
+                PROMEKI_DATATYPE(XmlDocument, DataTypeXmlDocument, 1)
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: a single length-prefixed @ref String holding
+                 * the canonical XML serialization (matching the JSON
+                 * pattern).  An invalid / default-constructed document
+                 * round-trips as an empty string.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<XmlDocument> readFromStream(DataStream &s);
+
                 /**
                  * @brief Parses an XML document from a string.
                  * @param str The XML source to parse.
@@ -792,6 +811,19 @@ class XmlDocument {
                  * and check @ref isValid on the returned handle.
                  */
                 static XmlDocument parse(const String &str, XmlParseError *err = nullptr);
+
+                /**
+                 * @brief Result-shaped wrapper around @ref parse.
+                 *
+                 * Mirrors the project-wide @c static Result<T>
+                 * @c fromString convention so the @ref DataType registry
+                 * can auto-detect the inverse of @ref toString via
+                 * @ref Detail::HasResultFromString.  The rich
+                 * @ref XmlParseError is collapsed to an @ref Error code
+                 * — callers that need full parse diagnostics should
+                 * call @ref parse directly.
+                 */
+                static Result<XmlDocument> fromString(const String &str);
 
                 /**
                  * @brief Loads an XML document from a filesystem or resource path.
@@ -1026,50 +1058,10 @@ class XmlNode {
 // ============================================================================
 
 /**
- * @brief Writes an XmlDocument as a tagged, length-prefixed XML string.
- */
-inline DataStream &operator<<(DataStream &stream, const XmlDocument &doc) {
-        stream.beginFrame(DataStream::TypeXmlDocument, 1);
-        stream << doc.toString(0);
-        stream.endFrame();
-        return stream;
-}
-
-/**
- * @brief Reads an XmlDocument from a tagged, length-prefixed XML string.
- */
-inline DataStream &operator>>(DataStream &stream, XmlDocument &doc) {
-        if (!stream.readFrame(DataStream::TypeXmlDocument)) {
-                doc = XmlDocument();
-                return stream;
-        }
-        String text;
-        stream >> text;
-        if (stream.status() != DataStream::Ok) {
-                doc = XmlDocument();
-                return stream;
-        }
-        // A default-constructed XmlDocument serializes to an empty
-        // string; round-trip it as a default rather than feeding the
-        // parser an empty buffer.
-        if (text.isEmpty()) {
-                doc = XmlDocument();
-                return stream;
-        }
-        XmlParseError perr;
-        doc = XmlDocument::parse(text, &perr);
-        if (!perr) {
-                stream.setError(DataStream::ReadCorruptData,
-                                String("XmlDocument::parse failed: ") + perr.toString());
-        }
-        return stream;
-}
-
-/**
  * @brief Writes an XmlElement as a tagged, length-prefixed XML string.
  */
 inline DataStream &operator<<(DataStream &stream, const XmlElement &elem) {
-        stream.beginFrame(DataStream::TypeXmlElement, 1);
+        stream.beginFrame(DataTypeXmlElement, 1);
         stream << elem.toString(0);
         stream.endFrame();
         return stream;
@@ -1079,7 +1071,7 @@ inline DataStream &operator<<(DataStream &stream, const XmlElement &elem) {
  * @brief Reads an XmlElement from a tagged, length-prefixed XML string.
  */
 inline DataStream &operator>>(DataStream &stream, XmlElement &elem) {
-        if (!stream.readFrame(DataStream::TypeXmlElement)) {
+        if (!stream.readFrame(DataTypeXmlElement)) {
                 elem = XmlElement();
                 return stream;
         }

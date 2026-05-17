@@ -16,8 +16,11 @@
 #include <promeki/list.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Ordered, duplicate-preserving list of @ref Enum values sharing one type.
@@ -43,11 +46,11 @@ PROMEKI_NAMESPACE_BEGIN
  * list.append(AudioPattern::Tone);
  * list.append(AudioPattern::Silence);
  * list.append(AudioPattern::Tone);
- * String s = list.toString();          // "Tone,Silence,Tone"
+ * String s = list.toString();
+ *   // "AudioPattern::Tone,AudioPattern::Silence,AudioPattern::Tone"
  *
- * Error err;
- * EnumList parsed = EnumList::fromString(AudioPattern::Type,
- *                                        "Tone,Silence", &err);
+ * auto [parsed, err] = EnumList::fromString(
+ *     "AudioPattern::Tone,AudioPattern::Silence");
  * @endcode
  *
  * @note Enum value names used by libpromeki are expected to be
@@ -61,6 +64,21 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class EnumList {
         public:
+                PROMEKI_DATATYPE(EnumList, DataTypeEnumList, 1)
+
+                /**
+                 * @brief Writes the element type name + count + tagged int32 values.
+                 *
+                 * Storing each element as a plain integer keeps round-trips
+                 * lossless for out-of-list values: toString() would collapse
+                 * them to a decimal that then re-parses through fromString(),
+                 * but only via the string detour.  The integer form avoids
+                 * that and matches how we serialize primitives.
+                 */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads element type name + count + N tagged int32 values. */
+                template <uint32_t V> static Result<EnumList> readFromStream(DataStream &s);
+
                 /** @brief Default-constructs an invalid EnumList (no element type bound). */
                 EnumList() = default;
 
@@ -173,36 +191,49 @@ class EnumList {
                 // --------------------------------------------------------------
 
                 /**
-                 * @brief Serializes the list as a comma-separated value name list.
+                 * @brief Serializes the list as a comma-separated list of value names.
                  *
-                 * Each element is rendered via @ref Enum::valueName.  Elements
-                 * whose integer value has no registered name are rendered as
-                 * the decimal integer so the round-trip through
-                 * @ref fromString still succeeds.
+                 * Each element is rendered as its short value name
+                 * (e.g. @c "Tone").  Out-of-list values fall back to a
+                 * decimal integer so the round-trip through a
+                 * type-aware parser still works.  The element type is
+                 * @em not embedded — the readable short form is the
+                 * intended output.
                  *
-                 * @return The comma-joined string, or an empty string when the
-                 *         list is empty.  An invalid (unbound) list returns
-                 *         the empty string.
+                 * Round-trip via @ref fromString alone requires the
+                 * qualified @c "TypeName::ValueName" form on input.
+                 * Callers that already know the destination type
+                 * (e.g. the @ref Variant String -> EnumList path) can
+                 * prepend the prefix before handing off.
+                 *
+                 * @return The comma-joined string, or an empty string
+                 *         when the list is empty.  An invalid (unbound)
+                 *         list returns the empty string.
                  */
                 String toString() const;
 
                 /**
-                 * @brief Parses a comma-separated value name list into an EnumList.
+                 * @brief Parses a comma-separated list of @c "TypeName::ValueName" entries.
                  *
-                 * Whitespace around each entry is trimmed.  An entry whose
-                 * text is not a registered name is parsed as a decimal
-                 * integer before failing.  Empty strings produce an empty
-                 * (but valid) list bound to @p type.
+                 * Whitespace around each entry is trimmed.  Each entry
+                 * must carry a @c "TypeName::ValueName" (or
+                 * @c "TypeName::N" decimal-fallback) prefix — every
+                 * entry's type must match, and the type is deduced
+                 * from the first entry.  Empty input yields an empty,
+                 * unbound list.
                  *
-                 * @param type Element type the list will be bound to.
-                 * @param text Comma-separated input.
-                 * @param err  Optional error output; @c Error::InvalidArgument
-                 *             when @p type is invalid or an entry fails to
-                 *             resolve.
-                 * @return The parsed list, or an invalid (unbound) list on
-                 *         total failure.
+                 * The short-form output of @ref toString is @em not
+                 * round-trippable through this function alone; it
+                 * needs context from a destination type, which the
+                 * @ref Variant String -> EnumList path supplies by
+                 * pre-pending @c "TypeName::" to each short entry.
+                 *
+                 * @param text Comma-separated qualified input.
+                 * @return @ref Result wrapping the parsed list, or
+                 *         @c Error::ParseFailed on a malformed entry,
+                 *         a mismatched type, or an unknown type name.
                  */
-                static EnumList fromString(Enum::Type type, const String &text, Error *err = nullptr);
+                static Result<EnumList> fromString(const String &text);
 
                 // --------------------------------------------------------------
                 // Equality

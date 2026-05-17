@@ -78,7 +78,7 @@ Error SubtitleBurnMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // decode fallback (or priority, depending on order).
         _sources = EnumList::forType<SubtitleSource>();
         const Variant &srcVar = cfg.get(MediaConfig::VideoSubtitleBurnSources);
-        if (srcVar.type() == Variant::TypeEnumList) {
+        if (srcVar.type() == DataTypeEnumList) {
                 EnumList parsed = srcVar.get<EnumList>();
                 if (parsed.elementType() == SubtitleSource::Type) {
                         _sources = parsed;
@@ -180,7 +180,7 @@ bool SubtitleBurnMediaIO::sourceEnabled(const SubtitleSource &src) const {
 Subtitle SubtitleBurnMediaIO::tryMetadataSource(const Frame &input) {
         if (!input.metadata().contains(Metadata::Subtitle)) return Subtitle();
         Variant v = input.metadata().get(Metadata::Subtitle);
-        if (v.type() != Variant::TypeSubtitle) return Subtitle();
+        if (v.type() != DataTypeSubtitle) return Subtitle();
         Subtitle s = v.get<Subtitle>();
         if (s.isEmpty()) return Subtitle();
         return s;
@@ -221,7 +221,7 @@ Subtitle SubtitleBurnMediaIO::tryAncSource(const Frame &input, CaptionCodec code
                         if (pkt.format().id() != AncFormat::Cea708) continue;
                         Result<Variant> parsed = _ancTranslator.parse(pkt);
                         if (!parsed.second().isOk()) continue;
-                        if (parsed.first().type() != Variant::TypeCea708Cdp) continue;
+                        if (parsed.first().type() != DataTypeCea708Cdp) continue;
                         const Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                         if (cdp.ccData.isEmpty()) continue;
                         dec->pushFrame(frameNumber, ts, cdp.ccData);

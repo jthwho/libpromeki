@@ -317,10 +317,10 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
 #if defined(PROMEKI_ENABLE_TLS)
         _isTls = isTls;
         if (isTls) {
-                if (!_sslContext.isValid()) {
-                        _sslContext = SslContext::Ptr::takeOwnership(new SslContext());
-                }
                 SslSocket *ssl = new SslSocket();
+                // SslContext's default constructor already auto-loads
+                // the system CA bundle.  SslSocket fails-closed if no
+                // anchors are available.
                 ssl->setSslContext(_sslContext);
                 _socket = UniquePtr<TcpSocket>::takeOwnership(ssl);
         } else {

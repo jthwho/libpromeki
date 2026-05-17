@@ -303,7 +303,7 @@ TEST_CASE("AncFormat: registerData installs a custom format and is retrievable")
 TEST_CASE("AncFormat: Variant round-trip preserves identity") {
         AncFormat fmt(AncFormat::Cea708);
         Variant   v(fmt);
-        CHECK(v.type() == Variant::TypeAncFormat);
+        CHECK(v.type() == DataTypeAncFormat);
         AncFormat back = v.get<AncFormat>();
         CHECK(back == fmt);
         CHECK(back.id() == AncFormat::Cea708);

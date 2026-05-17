@@ -18,8 +18,11 @@
 #include <promeki/result.h>
 #include <promeki/framenumber.h>
 #include <promeki/framecount.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief A run of media frames described by a start frame plus a length.
@@ -58,6 +61,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MediaDuration {
         public:
+                PROMEKI_DATATYPE(MediaDuration, DataTypeMediaDuration, 1)
+
+                /** @brief Writes start (int64) + length (int64) directly. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads start (int64) + length (int64) directly. */
+                template <uint32_t V> static Result<MediaDuration> readFromStream(DataStream &s);
+
                 /**
                  * @brief Inclusive [start, end] frame range.
                  *

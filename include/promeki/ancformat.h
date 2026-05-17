@@ -17,8 +17,11 @@
 #include <promeki/enums.h>
 #include <promeki/result.h>
 #include <promeki/error.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief First-class identifier for an ancillary-data format family.
@@ -97,6 +100,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class AncFormat {
         public:
+                PROMEKI_DATATYPE(AncFormat, DataTypeAncFormat, 1)
+
+                /** @brief Writes the registered format name as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the registered format name and looks it up. */
+                template <uint32_t V> static Result<AncFormat> readFromStream(DataStream &s);
+
                 /**
                  * @brief Identifies an ancillary-data format family.
                  *

@@ -8,6 +8,7 @@
 #include <climits>
 #include <cmath>
 #include <promeki/color.h>
+#include <promeki/datastream.h>
 #include <promeki/error.h>
 #include <promeki/stringlist.h>
 
@@ -354,6 +355,31 @@ bool Color::isClose(const Color &other, float epsilon) const {
         if (_model != other._model) return false;
         return std::fabs(_c[0] - other._c[0]) <= epsilon && std::fabs(_c[1] - other._c[1]) <= epsilon &&
                std::fabs(_c[2] - other._c[2]) <= epsilon && std::fabs(_c[3] - other._c[3]) <= epsilon;
+}
+
+// ============================================================================
+// DataStream wire format (v1: ColorModel name + 4 floats).
+//
+// Invalid Color (no ColorModel) is emitted as an empty name and four
+// zero floats so the read path can reconstruct the same invalid state.
+// ============================================================================
+
+Error Color::writeToStream(DataStream &s) const {
+        s << (_model.isValid() ? String(_model.name()) : String());
+        s << _c[0] << _c[1] << _c[2] << _c[3];
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<Color> Color::readFromStream<1>(DataStream &s) {
+        String  name;
+        float   c0 = 0, c1 = 0, c2 = 0, c3 = 0;
+        s >> name >> c0 >> c1 >> c2 >> c3;
+        if (s.status() != DataStream::Ok) return makeError<Color>(s.toError());
+        if (name.isEmpty()) return makeResult(Color());
+        Result<ColorModel> mr = ColorModel::fromString(name);
+        if (mr.second().isError()) return makeError<Color>(mr.second());
+        return makeResult(Color(mr.first(), c0, c1, c2, c3));
 }
 
 PROMEKI_NAMESPACE_END

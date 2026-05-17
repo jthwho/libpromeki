@@ -17,8 +17,11 @@
 #include <promeki/list.h>
 #include <promeki/error.h>
 #include <promeki/memdomain.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 struct MemAllocation;
 
@@ -51,6 +54,13 @@ struct MemAllocation;
  */
 class MemSpace {
         public:
+                PROMEKI_DATATYPE(MemSpace, DataTypeMemSpace, 1)
+
+                /** @brief Writes a tagged uint32 holding the registered ID. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged uint32, resolving back to the registered MemSpace. */
+                template <uint32_t V> static Result<MemSpace> readFromStream(DataStream &s);
+
                 /**
                  * @brief Identifies a memory space.
                  *
@@ -370,6 +380,9 @@ class MemSpace {
                  * @return The name string.
                  */
                 const String &name() const { return d->name; }
+
+                /** @brief Canonical String form: the registered @ref name. */
+                String toString() const { return d->name; }
 
                 /**
                  * @brief Returns the memory space identifier.

@@ -85,7 +85,7 @@ TEST_CASE("HdrStatic<->St291: mastering display + CLL round-trip through AncTran
 
         Result<Variant> parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
-        REQUIRE(parsed.first().type() == Variant::TypeHdrStaticMetadata);
+        REQUIRE(parsed.first().type() == DataTypeHdrStaticMetadata);
         HdrStaticMetadata out = parsed.first().get<HdrStaticMetadata>();
 
         // ST 2108-1 carries no EOTF — parse resets to Unspecified.

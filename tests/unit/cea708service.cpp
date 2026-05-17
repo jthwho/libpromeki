@@ -308,7 +308,7 @@ TEST_CASE("Cea708Service: round-trips through Variant") {
         Cea708Service original(5, bytesBuf({0x91, 0x52, 0x20, 0x41}));
         Variant       v;
         v.set(original);
-        CHECK(v.type() == Variant::TypeCea708Service);
+        CHECK(v.type() == DataTypeCea708Service);
         Cea708Service out = v.get<Cea708Service>();
         CHECK(out == original);
 }
@@ -319,7 +319,7 @@ TEST_CASE("Cea708DtvccPacket: round-trips through Variant") {
         original.serviceBlocks().pushToBack(Cea708Service(7, bytesBuf({0x91, 0x20})));
         Variant v;
         v.set(original);
-        CHECK(v.type() == Variant::TypeCea708DtvccPacket);
+        CHECK(v.type() == DataTypeCea708DtvccPacket);
         Cea708DtvccPacket out = v.get<Cea708DtvccPacket>();
         CHECK(out == original);
 }
@@ -384,7 +384,7 @@ TEST_CASE("Cea708DtvccPacket: DataStream round-trip via tagged Variant") {
                 DataStream r = DataStream::createReader(&dev);
                 r >> restored;
         }
-        REQUIRE(restored.type() == Variant::TypeCea708DtvccPacket);
+        REQUIRE(restored.type() == DataTypeCea708DtvccPacket);
         Cea708DtvccPacket out = restored.get<Cea708DtvccPacket>();
         CHECK(out == original);
 }

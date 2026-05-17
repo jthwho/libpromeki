@@ -38,6 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 class VariantList;
 class VariantMap;
+class JsonObject;
 
 /**
  * @brief Heap-allocated payload backing one @ref Variant.
@@ -123,12 +124,14 @@ struct VariantBox {
  * free, copy is a refcount bump, and mutation transparently performs
  * copy-on-write through the registry's @c copyConstruct op.  The
  * runtime type tag and the @ref DataStream wire-format tag are the
- * same integer (@ref Type), so a Variant holding a @ref UUID
- * serializes to the same bytes as a free @c operator<<(DataStream &,
- * const UUID &) — no extra dispatch layer, no parallel registry.
+ * same integer (@ref DataTypeID), so a Variant holding a @ref UUID
+ * serializes to the same bytes as the type's framework
+ * @c operator<<(DataStream &, const UUID &) — no extra dispatch
+ * layer, no parallel registry.
  *
  * @par Adding a new variant alternative
- * Any C++ type registered via @ref PROMEKI_IMPLEMENT_DATATYPE is
+ * Any C++ type registered via @ref PROMEKI_DATATYPE plus
+ * @ref registerDataType<T> (called once at program init) is
  * automatically usable as a Variant payload — no edit to this header
  * required.  See @ref DataType for the registration mechanics.
  *
@@ -144,7 +147,7 @@ struct VariantBox {
  * Variant v = 42;                    // implicit converting constructor
  * String  s = v.get<String>();       // "42"
  * v.set(String("hello"));
- * Variant::Type t = v.type();        // Variant::TypeString
+ * DataTypeID t = v.type();           // DataTypeString
  * if (const String *str = v.peek<String>()) {
  *     promekiInfo("variant holds: %s", str->cstr());
  * }
@@ -153,99 +156,14 @@ struct VariantBox {
 class Variant {
         public:
                 /**
-                 * @brief Runtime tag identifying which @ref DataType a Variant holds.
-                 *
-                 * Alias of @ref DataStream::TypeId, so the Variant runtime
-                 * tag and the DataStream wire-format tag are literally the
-                 * same value.  Each registered type pins a stable integer
-                 * here (library types in @c 0x0001 – @c 0x3FFF, user types
-                 * in @c 0x4000 – @c 0xFFFF).
-                 */
-                using Type = DataStream::TypeId;
-
-                // ------------------------------------------------------------------
-                // Source-compatibility aliases.
-                //
-                // The legacy std::variant-backed Variant exposed an enum with
-                // names like `TypeBool`, `TypeU8`, `TypeS32`, etc.  The unified
-                // ID enum on DataStream uses `TypeUInt8`, `TypeInt32`, ... so
-                // callers that switch on `Variant::TypeU8` still resolve to the
-                // right integer without a mass sed.  Every existing well-known
-                // type that the old Variant exposed has a constant here.
-                // ------------------------------------------------------------------
-                static constexpr Type TypeInvalid          = DataStream::TypeInvalid;
-                static constexpr Type TypeBool             = DataStream::TypeBool;
-                static constexpr Type TypeU8               = DataStream::TypeUInt8;
-                static constexpr Type TypeS8               = DataStream::TypeInt8;
-                static constexpr Type TypeU16              = DataStream::TypeUInt16;
-                static constexpr Type TypeS16              = DataStream::TypeInt16;
-                static constexpr Type TypeU32              = DataStream::TypeUInt32;
-                static constexpr Type TypeS32              = DataStream::TypeInt32;
-                static constexpr Type TypeU64              = DataStream::TypeUInt64;
-                static constexpr Type TypeS64              = DataStream::TypeInt64;
-                static constexpr Type TypeFloat            = DataStream::TypeFloat;
-                static constexpr Type TypeDouble           = DataStream::TypeDouble;
-                static constexpr Type TypeString           = DataStream::TypeString;
-                static constexpr Type TypeBuffer           = DataStream::TypeBuffer;
-                static constexpr Type TypeDateTime         = DataStream::TypeDateTime;
-                static constexpr Type TypeTimeStamp        = DataStream::TypeTimeStamp;
-                static constexpr Type TypeMediaTimeStamp   = DataStream::TypeMediaTimeStamp;
-                static constexpr Type TypeFrameNumber      = DataStream::TypeFrameNumber;
-                static constexpr Type TypeFrameCount       = DataStream::TypeFrameCount;
-                static constexpr Type TypeMediaDuration    = DataStream::TypeMediaDuration;
-                static constexpr Type TypeDuration         = DataStream::TypeDuration;
-                static constexpr Type TypeSize2D           = DataStream::TypeSize2D;
-                static constexpr Type TypeUUID             = DataStream::TypeUUID;
-                static constexpr Type TypeUMID             = DataStream::TypeUMID;
-                static constexpr Type TypeTimecode         = DataStream::TypeTimecode;
-                static constexpr Type TypeRational         = DataStream::TypeRational;
-                static constexpr Type TypeFrameRate        = DataStream::TypeFrameRate;
-                static constexpr Type TypeVideoFormat      = DataStream::TypeVideoFormat;
-                static constexpr Type TypeStringList       = DataStream::TypeStringList;
-                static constexpr Type TypeColor            = DataStream::TypeColor;
-                static constexpr Type TypeColorModel       = DataStream::TypeColorModel;
-                static constexpr Type TypeMemSpace         = DataStream::TypeMemSpace;
-                static constexpr Type TypePixelMemLayout   = DataStream::TypePixelMemLayout;
-                static constexpr Type TypePixelFormat      = DataStream::TypePixelFormat;
-                static constexpr Type TypeVideoCodec       = DataStream::TypeVideoCodec;
-                static constexpr Type TypeAudioCodec       = DataStream::TypeAudioCodec;
-                static constexpr Type TypeAudioFormat      = DataStream::TypeAudioFormat;
-                static constexpr Type TypeAncFormat        = DataStream::TypeAncFormat;
-                static constexpr Type TypeAudioStreamDesc  = DataStream::TypeAudioStreamDesc;
-                static constexpr Type TypeAudioChannelMap  = DataStream::TypeAudioChannelMap;
-                static constexpr Type TypeAudioMarkerList  = DataStream::TypeAudioMarkerList;
-                static constexpr Type TypeEnum             = DataStream::TypeEnum;
-                static constexpr Type TypeEnumList         = DataStream::TypeEnumList;
-                static constexpr Type TypeMasteringDisplay = DataStream::TypeMasteringDisplay;
-                static constexpr Type TypeContentLightLevel = DataStream::TypeContentLightLevel;
-                static constexpr Type TypeUrl              = DataStream::TypeUrl;
-                static constexpr Type TypeWindowedStat     = DataStream::TypeWindowedStat;
-                static constexpr Type TypeVariantList      = DataStream::TypeVariantList;
-                static constexpr Type TypeVariantMap       = DataStream::TypeVariantMap;
-                static constexpr Type TypeXmlDocument      = DataStream::TypeXmlDocument;
-                static constexpr Type TypeCea708Cdp        = DataStream::TypeCea708Cdp;
-                static constexpr Type TypeCea708Service    = DataStream::TypeCea708Service;
-                static constexpr Type TypeCea708DtvccPacket = DataStream::TypeCea708DtvccPacket;
-                static constexpr Type TypeCea608           = DataStream::TypeCea608;
-                static constexpr Type TypeSubtitle         = DataStream::TypeSubtitle;
-                static constexpr Type TypeHdrStaticMetadata = DataStream::TypeHdrStaticMetadata;
-                static constexpr Type TypeHdrDynamic2094_40 = DataStream::TypeHdrDynamic2094_40;
-                static constexpr Type TypeSocketAddress    = DataStream::TypeSocketAddress;
-                static constexpr Type TypeSdpSession       = DataStream::TypeSdpSession;
-                static constexpr Type TypeMacAddress       = DataStream::TypeMacAddress;
-                static constexpr Type TypeEUI64            = DataStream::TypeEUI64;
-                static constexpr Type TypeSslContext       = DataStream::TypeSslContext;
-
-                /**
-                 * @brief Returns the human-readable type name for the given Type tag.
+                 * @brief Returns the human-readable type name for the given @ref DataTypeID.
                  *
                  * Looks the tag up in the @ref DataType registry; returns
-                 * @c "Invalid" when @p id is @c TypeInvalid or otherwise
+                 * @c "Invalid" when @p id is @c DataTypeInvalid or otherwise
                  * unregistered.  The returned pointer is stable for the
-                 * lifetime of the process (it is the @c name field of the
-                 * registered Data record).
+                 * lifetime of the process.
                  */
-                static const char *typeName(Type id);
+                static const char *typeName(DataTypeID id);
 
                 /**
                  * @brief Constructs a Variant from a JSON value, inferring the best native type.
@@ -334,11 +252,11 @@ class Variant {
                  * the From/To types and generates the peek/wrap thunk
                  * automatically.
                  *
-                 * @param from  Source @ref Type tag (must be a registered DataType).
-                 * @param to    Destination @ref Type tag (must be a registered DataType).
+                 * @param from  Source @ref DataTypeID tag (must be a registered DataType).
+                 * @param to    Destination @ref DataTypeID tag (must be a registered DataType).
                  * @param fn    Converter function pointer; must not be null.
                  */
-                static void registerConverter(Type from, Type to, ConverterFn fn);
+                static void registerConverter(DataTypeID from, DataTypeID to, ConverterFn fn);
 
                 /**
                  * @brief Typed convenience overload — registers a converter for @p Fn.
@@ -359,6 +277,26 @@ class Variant {
                 template <auto Fn> static void registerConverter();
 
                 /**
+                 * @brief Registers all of the library's bespoke built-in
+                 *        converter pairs (numeric Cartesian, FrameRate
+                 *        arithmetic, TypeRegistry ID casts, FrameNumber /
+                 *        FrameCount numeric, Enum → integer, ...).
+                 *
+                 * Auto-discoverable @c String <-> @p T converters are
+                 *  @em not registered here — those are wired up by
+                 * @ref Detail::registerAutoConverters as each
+                 * @ref DataType is registered through
+                 * @ref registerDataType.  This entry point handles the
+                 * remaining hand-rolled pairs that have no concept-based
+                 * discovery path.
+                 *
+                 * Invoked from @ref registerBuiltinDataTypes after every
+                 * builtin @ref DataType is in the registry.  Internally
+                 * guarded so repeated calls are no-ops.
+                 */
+                static void registerBuiltinConverters();
+
+                /**
                  * @brief Returns the registered converter for (@p from, @p to), or @c nullptr.
                  *
                  * Useful for tooling and introspection; runtime conversion
@@ -366,10 +304,18 @@ class Variant {
                  * both of which handle the invalid-Variant and
                  * unregistered-target cases for you.
                  */
-                static ConverterFn findConverter(Type from, Type to);
+                static ConverterFn findConverter(DataTypeID from, DataTypeID to);
 
-                /** @brief Default-constructs an invalid (empty) Variant. */
-                Variant() = default;
+                /**
+                 * @brief Default-constructs an invalid (empty) Variant.
+                 *
+                 * Triggers @ref registerBuiltinDataTypes on first call so
+                 * that every library built-in @ref DataType (and its
+                 * auto-discoverable Variant converters) are visible
+                 * before any caller queries the registry through this
+                 * Variant.
+                 */
+                Variant() { registerBuiltinDataTypes(); }
 
                 /** @brief Copy-constructs (refcount bump on the underlying VariantBox). */
                 Variant(const Variant &) = default;
@@ -494,8 +440,8 @@ class Variant {
                  */
                 template <typename T> const T *peek() const noexcept;
 
-                /** @brief Returns the runtime type tag, or @c TypeInvalid for an empty Variant. */
-                Type type() const;
+                /** @brief Returns the runtime type tag, or @c DataTypeInvalid for an empty Variant. */
+                DataTypeID type() const;
 
                 /** @brief Returns the human-readable name of the held type. */
                 const char *typeName() const { return typeName(type()); }
@@ -529,6 +475,21 @@ class Variant {
                 Variant toStandardType() const;
 
                 /**
+                 * @brief Canonical String form of the held value.
+                 *
+                 * Calls the underlying type's registered
+                 * @c DataType::Ops::toString slot.  Returns an empty
+                 * String when the Variant is invalid or the held type
+                 * has no @c toString op populated.
+                 *
+                 * @param err  Optional error output: @c Error::Ok on
+                 *             success, the type's own error code on a
+                 *             failed format, or @c Error::Invalid when
+                 *             the held type has no @c toString op.
+                 */
+                String toString(Error *err = nullptr) const;
+
+                /**
                  * @brief Formats the held value using a type-specific format spec.
                  *
                  * Builds the format string @c "{:<spec>}" and routes it to
@@ -553,7 +514,7 @@ class Variant {
                  * @brief Resolves the held value to an Enum of the given type.
                  *
                  * Accepts:
-                 *  - @c TypeInvalid → returns @c Enum(enumType) (registered default).
+                 *  - @c DataTypeInvalid → returns @c Enum(enumType) (registered default).
                  *  - @c TypeEnum holding the right type → returned directly.
                  *  - @c TypeString @c "Type::Value", @c "Value", or a signed decimal.
                  *  - Any integer Type → wrapped as @c Enum(enumType, int).
@@ -595,9 +556,9 @@ class Variant {
                  *
                  * Typed callers should normally use @ref get<T> instead;
                  * this entry point exists for runtime-typed code that
-                 * only knows the target as a @ref Type tag.
+                 * only knows the target as a @ref DataTypeID tag.
                  */
-                Variant convertTo(Type to, Error *err = nullptr) const;
+                Variant convertTo(DataTypeID to, Error *err = nullptr) const;
 
         private:
                 /** @brief Refcounted handle to the trailing-payload box. */
@@ -638,6 +599,8 @@ class Variant {
  */
 class VariantList {
         public:
+                PROMEKI_DATATYPE(VariantList, DataTypeVariantList, 1)
+
                 /** @brief Underlying storage type. */
                 using ItemList = List<Variant>;
                 /** @brief Mutable forward iterator. */
@@ -691,6 +654,16 @@ class VariantList {
                 static VariantList fromJsonString(const String &json, Error *err = nullptr);
 
                 /**
+                 * @brief Canonical String form: JSON.
+                 *
+                 * Mirrors the project-wide @c String @c toString convention
+                 * so the @ref DataType registry can auto-detect the pair
+                 * via @ref Detail::HasMemberToString.  Delegates to
+                 * @ref toJsonString.
+                 */
+                String toString() const { return toJsonString(); }
+
+                /**
                  * @brief Result-shaped alias of @ref fromJsonString.
                  *
                  * Mirrors the project-wide @c Result<T> @c fromString
@@ -704,6 +677,23 @@ class VariantList {
                         if (e.isError()) return makeError<VariantList>(e);
                         return makeResult(std::move(v));
                 }
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint32 count + N tagged @ref Variant
+                 * entries.  Each entry carries its own DataType tag so
+                 * heterogeneous lists round-trip without an external
+                 * schema.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<VariantList> readFromStream(DataStream &s);
 
         private:
                 UniquePtr<ItemList> _list;
@@ -723,6 +713,8 @@ class VariantList {
  */
 class VariantMap {
         public:
+                PROMEKI_DATATYPE(VariantMap, DataTypeVariantMap, 1)
+
                 /** @brief Underlying storage type. */
                 using EntryMap = Map<String, Variant>;
                 /** @brief Pair shape accepted by initializer-list construction. */
@@ -770,6 +762,16 @@ class VariantMap {
                 static VariantMap fromJsonString(const String &json, Error *err = nullptr);
 
                 /**
+                 * @brief Canonical String form: JSON.
+                 *
+                 * Mirrors the project-wide @c String @c toString convention
+                 * so the @ref DataType registry can auto-detect the pair
+                 * via @ref Detail::HasMemberToString.  Delegates to
+                 * @ref toJsonString.
+                 */
+                String toString() const { return toJsonString(); }
+
+                /**
                  * @brief Result-shaped alias of @ref fromJsonString.
                  *
                  * Mirrors the project-wide @c Result<T> @c fromString
@@ -783,6 +785,22 @@ class VariantMap {
                         if (e.isError()) return makeError<VariantMap>(e);
                         return makeResult(std::move(v));
                 }
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint32 count + N (String key, tagged
+                 * @ref Variant value) entries.  Same per-entry shape
+                 * as @ref VariantList.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<VariantMap> readFromStream(DataStream &s);
 
         private:
                 UniquePtr<EntryMap> _map;
@@ -942,16 +960,339 @@ template <auto Fn> void Variant::registerConverter() {
                           });
 }
 
-class DataStream;
+namespace Detail {
 
-/** @brief Writes a VariantList to a DataStream. */
-DataStream &operator<<(DataStream &stream, const VariantList &list);
-/** @brief Reads a VariantList from a DataStream. */
-DataStream &operator>>(DataStream &stream, VariantList &list);
-/** @brief Writes a VariantMap to a DataStream. */
-DataStream &operator<<(DataStream &stream, const VariantMap &map);
-/** @brief Reads a VariantMap from a DataStream. */
-DataStream &operator>>(DataStream &stream, VariantMap &map);
+/**
+ * @brief Auto-discoverable Variant converter helper: @c String -> @p T.
+ *
+ * Invoked when a (String, T) converter has been registered against the
+ * Variant registry by @ref registerAutoConverters<T>.  Pulls the source
+ * String, default-constructs a @p T into a Variant-owned payload, and
+ * fills it via @c DataType::Ops::fromString.  No bespoke per-type
+ * branching — relies entirely on the registered ops slot.
+ */
+template <typename T>
+inline Variant variantConvertStringTo(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const String *s = src.peek<String>();
+        if (s == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.fromString == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        T     tmp{};
+        Error e;
+        if (!td->ops.fromString(*s, &tmp, &e)) {
+                if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
+                return Variant();
+        }
+        return Variant(std::move(tmp));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @p T -> @c String.
+ *
+ * Inverse of @ref variantConvertStringTo.  Pulls @p T out of @p src,
+ * calls the registered @c DataType::Ops::toString, and returns the
+ * resulting String wrapped in a Variant.
+ */
+template <typename T>
+inline Variant variantConvertToString(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const T *p = src.peek<T>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.toString == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        Error  e;
+        String result = td->ops.toString(p, &e);
+        if (e.isError()) {
+                if (err != nullptr) *err = e;
+                return Variant();
+        }
+        return Variant(std::move(result));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @c Integer -> @p T.
+ *
+ * Invoked when an (Integer, T) converter has been registered through
+ * @ref registerAutoConverters because @p T populated its
+ * @c DataType::Ops::fromInt slot.  Pulls the source integer, calls
+ * @c ops.fromInt against a default-constructed @p T payload, and
+ * returns the result.
+ */
+template <typename Integer, typename T>
+inline Variant variantConvertIntegerTo(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const Integer *p = src.peek<Integer>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.fromInt == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        T     tmp{};
+        Error e;
+        if (!td->ops.fromInt(static_cast<int64_t>(*p), &tmp, &e)) {
+                if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
+                return Variant();
+        }
+        return Variant(std::move(tmp));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @p T -> @c Integer.
+ *
+ * Inverse of @ref variantConvertIntegerTo.  Pulls @p T out of @p src,
+ * calls the registered @c DataType::Ops::toInt, and returns the
+ * result narrowed to the destination integer type.
+ */
+template <typename T, typename Integer>
+inline Variant variantConvertToInteger(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const T *p = src.peek<T>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.toInt == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        Error   e;
+        int64_t raw = td->ops.toInt(p, &e);
+        if (e.isError()) {
+                if (err != nullptr) *err = e;
+                return Variant();
+        }
+        return Variant(static_cast<Integer>(raw));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @c Float -> @p T.
+ *
+ * Invoked when a (Float, T) converter has been registered through
+ * @ref registerAutoConverters because @p T populated its
+ * @c DataType::Ops::fromFloat slot.
+ */
+template <typename Float, typename T>
+inline Variant variantConvertFloatTo(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const Float *p = src.peek<Float>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.fromFloat == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        T     tmp{};
+        Error e;
+        if (!td->ops.fromFloat(static_cast<double>(*p), &tmp, &e)) {
+                if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
+                return Variant();
+        }
+        return Variant(std::move(tmp));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @p T -> @c Float.
+ *
+ * Inverse of @ref variantConvertFloatTo.  Pulls @p T out of @p src,
+ * calls the registered @c DataType::Ops::toFloat, and narrows the
+ * result to the destination floating-point type.
+ */
+template <typename T, typename Float>
+inline Variant variantConvertToFloat(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const T *p = src.peek<T>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.toFloat == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        Error  e;
+        double raw = td->ops.toFloat(p, &e);
+        if (e.isError()) {
+                if (err != nullptr) *err = e;
+                return Variant();
+        }
+        return Variant(static_cast<Float>(raw));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @c JsonObject -> @p T.
+ *
+ * Invoked when a (JsonObject, T) converter has been registered through
+ * @ref registerAutoConverters because @p T populated its
+ * @c DataType::Ops::fromJson slot.
+ */
+template <typename T>
+inline Variant variantConvertJsonObjectTo(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const DataType jsonDt = DataType::byCppType(std::type_index(typeid(JsonObject)));
+        if (!jsonDt.isValid()) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const void *raw = src.payloadPtr();
+        if (raw == nullptr || src.type() != jsonDt.id()) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const JsonObject     *p  = static_cast<const JsonObject *>(raw);
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.fromJson == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        T     tmp{};
+        Error e;
+        if (!td->ops.fromJson(*p, &tmp, &e)) {
+                if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
+                return Variant();
+        }
+        return Variant(std::move(tmp));
+}
+
+/**
+ * @brief Auto-discoverable Variant converter helper: @p T -> @c JsonObject.
+ *
+ * Inverse of @ref variantConvertJsonObjectTo.  Pulls @p T out of
+ * @p src, calls the registered @c DataType::Ops::toJson, and wraps
+ * the result back in a Variant.
+ */
+template <typename T>
+inline Variant variantConvertToJsonObject(const Variant &src, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const T *p = src.peek<T>();
+        if (p == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        const DataType        dt = DataType::of<T>();
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.toJson == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        Error      e;
+        JsonObject result = td->ops.toJson(p, &e);
+        if (e.isError()) {
+                if (err != nullptr) *err = e;
+                return Variant();
+        }
+        return Variant(std::move(result));
+}
+
+template <typename T> inline void registerAutoConverters(const DataType &dt) {
+        if (!dt.isValid()) return;
+        // String is a builtin DataType and must be registered before any
+        // type's auto-converters are wired up — registerBuiltinDataTypes
+        // installs it first.  Skip silently when called outside that
+        // sequence (e.g. on a corrupted registry).
+        const DataType stringDt = DataType::byCppType(std::type_index(typeid(String)));
+        if (!stringDt.isValid()) return;
+        if (dt == stringDt) return;
+        if (dt.ops().fromString != nullptr) {
+                Variant::registerConverter(stringDt.id(), dt.id(), &variantConvertStringTo<T>);
+        }
+        if (dt.ops().toString != nullptr) {
+                Variant::registerConverter(dt.id(), stringDt.id(), &variantConvertToString<T>);
+        }
+        // JsonObject <-> T auto-wiring.  Only the types that populated
+        // ops.toJson / ops.fromJson get a converter; everyone else
+        // continues to round-trip through String like before.
+        const DataType jsonDt = DataType::byCppType(std::type_index(typeid(JsonObject)));
+        if (jsonDt.isValid() && dt != jsonDt) {
+                if (dt.ops().fromJson != nullptr) {
+                        Variant::registerConverter(jsonDt.id(), dt.id(),
+                                                   &variantConvertJsonObjectTo<T>);
+                }
+                if (dt.ops().toJson != nullptr) {
+                        Variant::registerConverter(dt.id(), jsonDt.id(),
+                                                   &variantConvertToJsonObject<T>);
+                }
+        }
+        // Integer <-> T auto-wiring.  Each (Integer, T) pair is
+        // registered against the live converter registry only when the
+        // type's ops table populates the matching toInt / fromInt
+        // slot.  TypeRegistry wrappers, FrameNumber, FrameCount and
+        // Enum participate; Enum populates only the toInt direction.
+        auto wireIntPair = [&dt]<typename Integer>() {
+                const DataType intDt = DataType::byCppType(std::type_index(typeid(Integer)));
+                if (!intDt.isValid()) return;
+                if (dt.ops().fromInt != nullptr) {
+                        Variant::registerConverter(intDt.id(), dt.id(),
+                                                   &variantConvertIntegerTo<Integer, T>);
+                }
+                if (dt.ops().toInt != nullptr) {
+                        Variant::registerConverter(dt.id(), intDt.id(),
+                                                   &variantConvertToInteger<T, Integer>);
+                }
+        };
+        if (dt.ops().toInt != nullptr || dt.ops().fromInt != nullptr) {
+                wireIntPair.template operator()<bool>();
+                wireIntPair.template operator()<uint8_t>();
+                wireIntPair.template operator()<int8_t>();
+                wireIntPair.template operator()<uint16_t>();
+                wireIntPair.template operator()<int16_t>();
+                wireIntPair.template operator()<uint32_t>();
+                wireIntPair.template operator()<int32_t>();
+                wireIntPair.template operator()<uint64_t>();
+                wireIntPair.template operator()<int64_t>();
+        }
+        // Float <-> T auto-wiring mirrors the integer pattern above;
+        // the ops slot carries double (the widest float) and the
+        // narrowing happens in @ref variantConvertToFloat / promoting
+        // happens in @ref variantConvertFloatTo.
+        auto wireFloatPair = [&dt]<typename Float>() {
+                const DataType floatDt = DataType::byCppType(std::type_index(typeid(Float)));
+                if (!floatDt.isValid()) return;
+                if (dt.ops().fromFloat != nullptr) {
+                        Variant::registerConverter(floatDt.id(), dt.id(),
+                                                   &variantConvertFloatTo<Float, T>);
+                }
+                if (dt.ops().toFloat != nullptr) {
+                        Variant::registerConverter(dt.id(), floatDt.id(),
+                                                   &variantConvertToFloat<T, Float>);
+                }
+        };
+        if (dt.ops().toFloat != nullptr || dt.ops().fromFloat != nullptr) {
+                wireFloatPair.template operator()<float>();
+                wireFloatPair.template operator()<double>();
+        }
+        return;
+}
+
+} // namespace Detail
 
 /**
  * @brief Resolves a dotted/indexed path against a @ref Variant tree.

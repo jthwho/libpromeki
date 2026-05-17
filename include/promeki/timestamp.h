@@ -15,8 +15,12 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/duration.h>
+#include <promeki/datatype.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief A monotonic timestamp based on std::chrono::steady_clock.
@@ -41,6 +45,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class TimeStamp {
         public:
+                PROMEKI_DATATYPE(TimeStamp, DataTypeTimeStamp, 1)
+
+                /** @brief Writes a tagged int64 nanoseconds-since-epoch on the steady clock. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged int64 nanoseconds-since-epoch on the steady clock. */
+                template <uint32_t V> static Result<TimeStamp> readFromStream(DataStream &s);
+
                 /** @brief Underlying clock type. */
                 using Clock = std::chrono::steady_clock;
                 /** @brief Time point value type. */
@@ -202,6 +213,21 @@ class TimeStamp {
                  * @return A String containing the seconds value.
                  */
                 String toString() const { return String::number(seconds()); }
+
+                /**
+                 * @brief Parses the seconds-since-epoch form produced by @ref toString.
+                 *
+                 * Accepts any floating-point literal @ref String::to<double>
+                 * recognizes; returns @c Error::ParseFailed on malformed input.
+                 */
+                static Result<TimeStamp> fromString(const String &s) {
+                        Error  e;
+                        double v = s.to<double>(&e);
+                        if (e.isError()) return makeError<TimeStamp>(Error::ParseFailed);
+                        TimeStamp ts;
+                        ts.setValue(Value(secondsToDuration(v)));
+                        return makeResult(std::move(ts));
+                }
 
                 /** @brief Returns true if both timestamps represent the same time point. */
                 bool operator==(const TimeStamp &other) const { return _value == other._value; }

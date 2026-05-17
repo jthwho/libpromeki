@@ -459,7 +459,7 @@ DataStream &operator<<(DataStream &stream, const SubtitleSpan &span) {
         //   int32_t foregroundOpacity   (SubtitleOpacity value)
         //   int32_t backgroundOpacity
         //   int32_t edgeOpacity
-        stream.beginFrame(DataStream::TypeSubtitleSpan, 1);
+        stream.beginFrame(DataTypeSubtitleSpan, 1);
         stream << span.text();
         stream << packStyleFlags(span);
         stream << span.color();
@@ -475,7 +475,7 @@ DataStream &operator<<(DataStream &stream, const SubtitleSpan &span) {
 }
 
 DataStream &operator>>(DataStream &stream, SubtitleSpan &span) {
-        if (!stream.readFrame(DataStream::TypeSubtitleSpan)) {
+        if (!stream.readFrame(DataTypeSubtitleSpan)) {
                 span = SubtitleSpan();
                 return stream;
         }
@@ -717,74 +717,54 @@ String Subtitle::toString() const {
 }
 
 // ============================================================================
-// Subtitle — DataStream operators
+// Subtitle — DataStream serialization
 // ============================================================================
+//
+// Wire layout (each field tagged via its own DataStream operator):
+//   TimeStamp start          (TypeTimeStamp)
+//   TimeStamp end            (TypeTimeStamp)
+//   int32_t   anchor.value() (TypeS32)
+//   int32_t   mode.value()   (TypeS32 — CaptionMode)
+//   int32_t   rollUpRows     (TypeS32 — 0 = encoder default)
+//   Rect2Di32 region         (free-function operator<< template)
+//   String    speaker        (TypeString)
+//   Metadata  metadata       (VariantDatabase template operator<<)
+//   List<SubtitleSpan> spans (TypeList of TypeSubtitleSpan)
+//
+// The cached @ref Subtitle::text is reconstructed from spans on read,
+// so it does not need its own wire field.
 
-void writeSubtitleData(DataStream &stream, const Subtitle &sub) {
-        // Wire layout (each field tagged via its own DataStream operator):
-        //   TimeStamp start          (TypeTimeStamp)
-        //   TimeStamp end            (TypeTimeStamp)
-        //   int32_t   anchor.value() (TypeS32)
-        //   int32_t   mode.value()   (TypeS32 — CaptionMode)
-        //   int32_t   rollUpRows     (TypeS32 — 0 = encoder default)
-        //   Rect2Di32 region         (free-function operator<< template)
-        //   String    speaker        (TypeString)
-        //   Metadata  metadata       (VariantDatabase template operator<<)
-        //   List<SubtitleSpan> spans (TypeList of TypeSubtitleSpan)
-        //
-        // The cached @ref Subtitle::text is reconstructed from spans on
-        // read, so it does not need its own wire field.
-        stream << sub.start();
-        stream << sub.end();
-        stream << static_cast<int32_t>(sub.anchor().value());
-        stream << static_cast<int32_t>(sub.mode().value());
-        stream << static_cast<int32_t>(sub.rollUpRows());
-        stream << sub.region();
-        stream << sub.speaker();
-        stream << sub.metadata();
-        stream << sub.spans();
+Error Subtitle::writeToStream(DataStream &s) const {
+        s << start();
+        s << end();
+        s << static_cast<int32_t>(anchor().value());
+        s << static_cast<int32_t>(mode().value());
+        s << static_cast<int32_t>(rollUpRows());
+        s << region();
+        s << speaker();
+        s << metadata();
+        s << spans();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-Subtitle readSubtitleData(DataStream &stream) {
+template <>
+Result<Subtitle> Subtitle::readFromStream<1>(DataStream &s) {
         TimeStamp          start;
         TimeStamp          end;
         int32_t            anchorValue = 0;
-        int32_t            modeValue = 0;
-        int32_t            rollUpRows = 0;
+        int32_t            modeValue   = 0;
+        int32_t            rollUpRows  = 0;
         Rect2Di32          region;
         String             speaker;
         Metadata           metadata;
         SubtitleSpan::List spans;
-        stream >> start;
-        stream >> end;
-        stream >> anchorValue;
-        stream >> modeValue;
-        stream >> rollUpRows;
-        stream >> region;
-        stream >> speaker;
-        stream >> metadata;
-        stream >> spans;
-        Subtitle s(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
-                   std::move(metadata));
-        s.setMode(CaptionMode(modeValue));
-        s.setRollUpRows(static_cast<int>(rollUpRows));
-        return s;
-}
-
-DataStream &operator<<(DataStream &stream, const Subtitle &sub) {
-        stream.beginFrame(DataStream::TypeSubtitle, 1);
-        writeSubtitleData(stream, sub);
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, Subtitle &sub) {
-        if (!stream.readFrame(DataStream::TypeSubtitle)) {
-                sub = Subtitle();
-                return stream;
-        }
-        sub = readSubtitleData(stream);
-        return stream;
+        s >> start >> end >> anchorValue >> modeValue >> rollUpRows >> region >> speaker >> metadata >> spans;
+        if (s.status() != DataStream::Ok) return makeError<Subtitle>(s.toError());
+        Subtitle sub(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
+                     std::move(metadata));
+        sub.setMode(CaptionMode(modeValue));
+        sub.setRollUpRows(static_cast<int>(rollUpRows));
+        return makeResult(std::move(sub));
 }
 
 // ============================================================================

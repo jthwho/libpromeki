@@ -6,6 +6,7 @@
  */
 
 #include <promeki/macaddress.h>
+#include <promeki/datastream.h>
 #include <promeki/ipv4address.h>
 #include <promeki/ipv6address.h>
 #include <promeki/textstream.h>
@@ -81,6 +82,23 @@ String MacAddress::toString(char separator) const {
 TextStream &operator<<(TextStream &stream, const MacAddress &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical "aa:bb:cc:dd:ee:ff" String).
+// ============================================================================
+
+Error MacAddress::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<MacAddress> MacAddress::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<MacAddress>(s.toError());
+        return MacAddress::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

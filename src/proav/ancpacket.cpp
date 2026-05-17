@@ -91,14 +91,14 @@ AncPacket readAncPacketData(DataStream &stream) {
 }
 
 DataStream &operator<<(DataStream &stream, const AncPacket &pkt) {
-        stream.beginFrame(DataStream::TypeAncPacket, 1);
+        stream.beginFrame(DataTypeAncPacket, 1);
         writeAncPacketData(stream, pkt);
         stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, AncPacket &pkt) {
-        if (!stream.readFrame(DataStream::TypeAncPacket)) {
+        if (!stream.readFrame(DataTypeAncPacket)) {
                 pkt = AncPacket();
                 return stream;
         }

@@ -132,7 +132,7 @@ TEST_CASE("WindowedStat_StringRoundTrip") {
         ws.push(-2.25);
         ws.push(3.75);
 
-        const String s = ws.toSerializedString();
+        const String s = ws.toString();
         // Canonical "cap=N:[v1,v2,...]" form.
         CHECK(s.startsWith("cap=6:["));
         CHECK(s.endsWith("]"));
@@ -143,7 +143,7 @@ TEST_CASE("WindowedStat_StringRoundTrip") {
         CHECK(round == ws);
 }
 
-TEST_CASE("WindowedStat_ToStringIsHumanSummary") {
+TEST_CASE("WindowedStat_ToFormattedStringIsHumanSummary") {
         WindowedStat ws(8);
         ws.push(1.0);
         ws.push(2.0);
@@ -151,7 +151,7 @@ TEST_CASE("WindowedStat_ToStringIsHumanSummary") {
 
         // Default (no formatter) renders raw doubles via String::number;
         // every field is space-separated, no commas.
-        const String summary = ws.toString();
+        const String summary = ws.toFormattedString();
         CHECK(summary.contains("Avg: "));
         CHECK(summary.contains("StdDev: "));
         CHECK(summary.contains("Min: "));
@@ -162,7 +162,7 @@ TEST_CASE("WindowedStat_ToStringIsHumanSummary") {
         // A custom formatter is used for every numeric field; the
         // sample-count field stays as the raw integer.
         const String custom =
-                ws.toString([](double v) { return String("[") + String::number(v) + String("]"); });
+                ws.toFormattedString([](double v) { return String("[") + String::number(v) + String("]"); });
         CHECK(custom.contains("Avg: [2"));
         CHECK(custom.contains("Min: [1"));
         CHECK(custom.contains("Max: [3"));
@@ -232,7 +232,7 @@ TEST_CASE("WindowedStat_VariantRoundTrip") {
         ws.push(1.0);
         ws.push(2.0);
         Variant v(ws);
-        CHECK(v.type() == Variant::TypeWindowedStat);
+        CHECK(v.type() == DataTypeWindowedStat);
 
         const String s = v.get<String>();
         CHECK(s.startsWith("cap=3:["));
@@ -268,7 +268,7 @@ TEST_CASE("WindowedStat_VariantDataStreamRoundTrip") {
                 r >> round;
                 CHECK(r.status() == DataStream::Ok);
         }
-        CHECK(round.type() == Variant::TypeWindowedStat);
+        CHECK(round.type() == DataTypeWindowedStat);
         CHECK(round.get<WindowedStat>() == ws);
 }
 

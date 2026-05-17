@@ -19,8 +19,11 @@
 #include <promeki/pair.h>
 #include <promeki/result.h>
 #include <promeki/sharedptr.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief SDP media description (m= section).
@@ -200,6 +203,13 @@ class SdpMediaDescription {
 class SdpSession {
                 PROMEKI_SHARED_FINAL(SdpSession)
         public:
+                PROMEKI_DATATYPE(SdpSession, DataTypeSdpSession, 1)
+
+                /** @brief Writes the RFC 4566 SDP body as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the RFC 4566 SDP body from a tagged String. */
+                template <uint32_t V> static Result<SdpSession> readFromStream(DataStream &s);
+
                 /** @brief Shared pointer type. */
                 using Ptr = SharedPtr<SdpSession>;
 

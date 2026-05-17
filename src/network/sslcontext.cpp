@@ -10,6 +10,7 @@
 #include <promeki/file.h>
 #include <promeki/fileinfo.h>
 #include <promeki/logger.h>
+#include <promeki/memspace.h>
 #if PROMEKI_ENABLE_TLS
 #include <psa/crypto.h>
 #include <mbedtls/ssl.h>
@@ -55,8 +56,19 @@ namespace {
 
 // ============================================================
 // Pimpl: hold mbedTLS state out of the public header.
+//
+// PROMEKI_SHARED_FINAL gives the impl a native @c RefCount so
+// @c SharedPtr<Impl, false> in the @ref SslContext handle can
+// refcount it directly without the proxy.  The mbedTLS state has
+// identity (free / init / parse calls all mutate fields in place),
+// so we deliberately do not enable CoW — the @c <false> template
+// argument keeps @c SharedPtr::modify off the clone path, which
+// would otherwise abort at runtime because @c mbedtls_ssl_config /
+// @c mbedtls_x509_crt are not copy-constructible.
 // ============================================================
 struct SslContext::Impl {
+                PROMEKI_SHARED_FINAL(Impl)
+
                 mbedtls_ssl_config conf{};
                 mbedtls_x509_crt   ownCert{};
                 bool               hasOwnCert = false;
@@ -73,8 +85,13 @@ struct SslContext::Impl {
                 bool configReady = false;
 
                 SslProtocol protocol = SecureProtocols;
-                bool        verifyPeer = true;
-                int         verifyDepth = 9;
+                // Client-side: verify the server's certificate.
+                bool verifyPeer = true;
+                // Server-side: require + verify a client cert (mutual
+                // TLS).  Defaults to false — the standard HTTPS
+                // server pattern of not asking clients for a cert.
+                bool requireClientCert = false;
+                int  verifyDepth = 9;
 
                 Impl() {
                         mbedtls_ssl_config_init(&conf);
@@ -83,6 +100,18 @@ struct SslContext::Impl {
                         mbedtls_x509_crt_init(&caChain);
                 }
                 ~Impl() {
+                        // Each of these mbedTLS _free helpers invokes
+                        // mbedtls_platform_zeroize on the underlying
+                        // storage before releasing it:
+                        //  - mbedtls_ssl_config_free  zeros mbedtls_ssl_config
+                        //  - mbedtls_pk_free          zeros mbedtls_pk_context
+                        //                             and the nested
+                        //                             RSA / EC keypair (mbedtls_mpi_free
+                        //                             zeroizes each bignum limb)
+                        //  - mbedtls_x509_crt_free    zeros mbedtls_x509_crt
+                        // So sensitive material is wiped before the
+                        // pages are returned to the heap — we don't
+                        // need to re-zeroize from this side.
                         mbedtls_ssl_config_free(&conf);
                         if (hasOwnCert) mbedtls_x509_crt_free(&ownCert);
                         if (hasOwnKey) mbedtls_pk_free(&ownKey);
@@ -102,9 +131,10 @@ struct SslContext::Impl {
                         }
                         // No mbedtls_ssl_conf_rng required: with PSA Crypto
                         // initialized, the SSL layer pulls randomness from
-                        // PSA automatically.
+                        // PSA automatically.  Authmode stays at the
+                        // server-default VERIFY_NONE; SslSocket sets
+                        // the role-appropriate value at handshake time.
                         applyProtocol();
-                        applyAuthMode();
                         configReady = true;
                         return Error::Ok;
                 }
@@ -126,37 +156,18 @@ struct SslContext::Impl {
                         }
                 }
 
-                void applyAuthMode() {
-                        // mbedTLS authmode is *symmetric* — for SERVER
-                        // endpoints it controls whether to require a client
-                        // certificate, and for CLIENT endpoints it controls
-                        // whether to verify the server's certificate.  The
-                        // common production shapes are:
-                        //
-                        //   - HTTPS server: NEVER require client cert (the
-                        //     web norm).  Only switch to REQUIRED when the
-                        //     deployment is actually doing mutual TLS and
-                        //     a CA chain is registered as the trust anchor.
-                        //   - HTTPS client: ALWAYS verify the server cert.
-                        //
-                        // We approximate that by mapping verifyPeer=true to
-                        // REQUIRED only when a CA chain has been loaded.
-                        // Server contexts that just have a server cert /
-                        // key (no CA chain) become VERIFY_NONE — no
-                        // client-cert requirement.  Client contexts that
-                        // load a CA bundle become VERIFY_REQUIRED (the safe
-                        // default).  Callers can explicitly opt into
-                        // mutual TLS by configuring a CA chain on the
-                        // server-side context.
-                        int mode;
-                        if (!verifyPeer)
-                                mode = MBEDTLS_SSL_VERIFY_NONE;
-                        else if (hasCaChain)
-                                mode = MBEDTLS_SSL_VERIFY_REQUIRED;
-                        else
-                                mode = MBEDTLS_SSL_VERIFY_NONE;
-                        mbedtls_ssl_conf_authmode(&conf, mode);
-                }
+                // No applyAuthMode helper: mbedTLS authmode is
+                // role-specific (on a server it controls "require
+                // client cert", on a client it controls "verify
+                // server cert"), and a single shared SslContext does
+                // not know which role any given SslSocket will use it
+                // for.  @ref SslSocket sets the authmode explicitly
+                // in @c startEncryption / @c startServerEncryption
+                // based on the @c verifyPeer / @c hasCaChain
+                // intent recorded here.  mbedtls_ssl_config_defaults
+                // initializes the conf with @c MBEDTLS_SSL_VERIFY_NONE
+                // (the server-side default), which is a safe state to
+                // park in until SslSocket runs.
 };
 
 // ============================================================
@@ -167,15 +178,35 @@ bool SslContext::hasTlsSupport() {
         return true;
 }
 
-SslContext::SslContext() : _d(ImplPtr::create()) {}
-// Out-of-line destructor: required because Impl is incomplete in the
-// header, so the compiler-generated UniquePtr<Impl> destructor cannot
-// be emitted there.
+SslContext::SslContext() : _d(SharedPtr<Impl, false>::create()) {
+        // Best-effort load of the system CA bundle.  Failure is
+        // non-fatal here — the fail-closed verify policy in
+        // SslSocket surfaces "no CAs configured" at handshake time
+        // with a clear error.  We deliberately do not warn from the
+        // constructor because that would fire on every default
+        // construction in a build without a system bundle, drowning
+        // the real signal at handshake.
+        (void)setSystemCaCertificates();
+}
+// Out-of-line destructor / copy / move: required because Impl is
+// incomplete in the header, so the compiler-generated SharedPtr<Impl,
+// false> internals cannot be emitted there without falling through
+// the IsSharedObject<Impl> trait (which itself can't see the
+// _promeki_refct member of an incomplete type).
 SslContext::~SslContext() = default;
+SslContext::SslContext(const SslContext &other) = default;
+SslContext &SslContext::operator=(const SslContext &other) = default;
+SslContext::SslContext(SslContext &&other) noexcept = default;
+SslContext &SslContext::operator=(SslContext &&other) noexcept = default;
+
+bool SslContext::isValid() const {
+        return _d.isValid();
+}
 
 void SslContext::setProtocol(SslProtocol protocol) {
-        _d->protocol = protocol;
-        if (_d->configReady) _d->applyProtocol();
+        Impl *p = _d.modify();
+        p->protocol = protocol;
+        if (p->configReady) p->applyProtocol();
 }
 
 SslContext::SslProtocol SslContext::protocol() const {
@@ -183,16 +214,25 @@ SslContext::SslProtocol SslContext::protocol() const {
 }
 
 void SslContext::setVerifyPeer(bool enable) {
-        _d->verifyPeer = enable;
-        if (_d->configReady) _d->applyAuthMode();
+        // No live re-apply: SslSocket reads verifyPeer() at handshake
+        // start and sets the role-appropriate authmode on the conf.
+        _d.modify()->verifyPeer = enable;
 }
 
 bool SslContext::verifyPeer() const {
         return _d->verifyPeer;
 }
 
+void SslContext::setRequireClientCert(bool require) {
+        _d.modify()->requireClientCert = require;
+}
+
+bool SslContext::requireClientCert() const {
+        return _d->requireClientCert;
+}
+
 void SslContext::setVerifyDepth(int depth) {
-        _d->verifyDepth = depth;
+        _d.modify()->verifyDepth = depth;
 }
 int SslContext::verifyDepth() const {
         return _d->verifyDepth;
@@ -205,13 +245,40 @@ bool SslContext::hasCaCertificates() const {
         return _d->hasCaChain;
 }
 
+String SslContext::toString() const {
+        if (!isValid()) return "SslContext(moved-from)";
+        const char *proto = "SecureProtocols";
+        switch (_d->protocol) {
+                case TlsV1_2: proto = "TlsV1_2"; break;
+                case TlsV1_3: proto = "TlsV1_3"; break;
+                case SecureProtocols: proto = "SecureProtocols"; break;
+        }
+        String s = String::sprintf("SslContext(protocol=%s, verifyPeer=%s",
+                                   proto, _d->verifyPeer ? "true" : "false");
+        if (_d->hasOwnCert) s += ", hasCert";
+        if (_d->hasOwnKey) s += ", hasKey";
+        if (_d->hasCaChain) s += ", hasCa";
+        s += ")";
+        return s;
+}
+
+Error SslContext::writeToStream(DataStream &) const {
+        // Refuse to put certs / private keys / CA chains onto the
+        // DataStream wire — anywhere a Variant gets persisted or
+        // transmitted, this body would be the leak path.  Declared
+        // only to satisfy the PROMEKI_DATATYPE member-API surface;
+        // see the header for the full rationale.
+        return Error::NotSupported;
+}
+
 void *SslContext::nativeConfig() const {
         // ensureConfig is the lazy-init point: callers that drive
         // mbedtls_ssl_setup against this config need it populated.
-        // UniquePtr<Impl>::operator-> returns a mutable Impl * even
-        // from a const context, so no const_cast is required.
-        _d->ensureConfig();
-        return &_d->conf;
+        // Does not flip the @c attached flag — SslSocket pokes this
+        // accessor as part of its handshake plumbing and should not
+        // promote an unattached context to attached.
+        _d.modify()->ensureConfig();
+        return &_d.modify()->conf;
 }
 
 // ----------------------------------------------------
@@ -222,14 +289,23 @@ namespace {
 
         // Read an entire file into a heap Buffer plus a NUL terminator;
         // the latter is required by mbedTLS's PEM auto-detection.
-        static Error readWholeFile(const FilePath &path, Buffer &out) {
+        //
+        // When @p secure is true the temp Buffer is allocated from
+        // @ref MemSpace::SystemSecure — the backing memory is
+        // page-locked (no swap), marked @c MADV_DONTDUMP (excluded
+        // from core dumps), and @c explicit_bzero'd on destruction.
+        // Used for private-key reads so the PEM bytes do not linger
+        // in freed heap memory after parsing.  Cert / CA reads can
+        // skip this — those payloads are public material.
+        static Error readWholeFile(const FilePath &path, Buffer &out, bool secure) {
                 File  f(path.toString());
                 Error err = f.open(IODevice::ReadOnly);
                 if (err.isError()) return err;
                 auto sizeRes = f.size();
                 if (sizeRes.second().isError()) return sizeRes.second();
                 const int64_t sz = sizeRes.first();
-                Buffer        b(static_cast<size_t>(sz) + 1);
+                const MemSpace ms = secure ? MemSpace(MemSpace::SystemSecure) : MemSpace::Default;
+                Buffer        b(static_cast<size_t>(sz) + 1, Buffer::DefaultAlign, ms);
                 int64_t       got = f.read(b.data(), sz);
                 if (got < 0) return Error::IOError;
                 static_cast<char *>(b.data())[got] = '\0';
@@ -254,7 +330,7 @@ namespace {
 
 Error SslContext::setCertificate(const FilePath &file) {
         Buffer b;
-        Error  e = readWholeFile(file, b);
+        Error  e = readWholeFile(file, b, /*secure=*/false);
         if (e.isError()) return e;
         return setCertificate(b);
 }
@@ -267,36 +343,42 @@ Error SslContext::setCertificate(const Buffer &certData) {
         // doing anything else still get a working parse.
         Error psa = ensurePsaCrypto();
         if (psa.isError()) return psa;
-        if (_d->hasOwnCert) {
-                mbedtls_x509_crt_free(&_d->ownCert);
-                mbedtls_x509_crt_init(&_d->ownCert);
-                _d->hasOwnCert = false;
+        Impl *p = _d.modify();
+        if (p->hasOwnCert) {
+                mbedtls_x509_crt_free(&p->ownCert);
+                mbedtls_x509_crt_init(&p->ownCert);
+                p->hasOwnCert = false;
         }
-        const int rc = mbedtls_x509_crt_parse(&_d->ownCert, static_cast<const unsigned char *>(certData.data()),
+        const int rc = mbedtls_x509_crt_parse(&p->ownCert, static_cast<const unsigned char *>(certData.data()),
                                               certData.size());
         Error     e = mbedtlsErrorToError(rc, "x509_crt_parse(cert)");
         if (e.isError()) return e;
-        _d->hasOwnCert = true;
-        if (_d->hasOwnKey) {
-                if (_d->ensureConfig().isError()) return Error::LibraryFailure;
-                int crc = mbedtls_ssl_conf_own_cert(&_d->conf, &_d->ownCert, &_d->ownKey);
+        p->hasOwnCert = true;
+        if (p->hasOwnKey) {
+                if (p->ensureConfig().isError()) return Error::LibraryFailure;
+                int crc = mbedtls_ssl_conf_own_cert(&p->conf, &p->ownCert, &p->ownKey);
                 if (crc != 0) return mbedtlsErrorToError(crc, "ssl_conf_own_cert");
         }
         return Error::Ok;
 }
 
 Error SslContext::setPrivateKey(const FilePath &file, const String &passphrase) {
+        // Route the on-disk PEM bytes through a page-locked,
+        // wipe-on-destroy Buffer — the temp goes out of scope as
+        // soon as @ref setPrivateKey returns and we don't want the
+        // raw key material to linger in freed heap pages.
         Buffer b;
-        Error  e = readWholeFile(file, b);
+        Error  e = readWholeFile(file, b, /*secure=*/true);
         if (e.isError()) return e;
         return setPrivateKey(b, passphrase);
 }
 
 Error SslContext::setPrivateKey(const Buffer &keyData, const String &passphrase) {
-        if (_d->hasOwnKey) {
-                mbedtls_pk_free(&_d->ownKey);
-                mbedtls_pk_init(&_d->ownKey);
-                _d->hasOwnKey = false;
+        Impl *p = _d.modify();
+        if (p->hasOwnKey) {
+                mbedtls_pk_free(&p->ownKey);
+                mbedtls_pk_init(&p->ownKey);
+                p->hasOwnKey = false;
         }
         Error psa = ensurePsaCrypto();
         if (psa.isError()) return psa;
@@ -304,15 +386,15 @@ Error SslContext::setPrivateKey(const Buffer &keyData, const String &passphrase)
         // mbedtls_pk_parse_key — entropy is sourced from PSA when
         // the key format demands it.
         const int rc = mbedtls_pk_parse_key(
-                &_d->ownKey, static_cast<const unsigned char *>(keyData.data()), keyData.size(),
+                &p->ownKey, static_cast<const unsigned char *>(keyData.data()), keyData.size(),
                 passphrase.isEmpty() ? nullptr : reinterpret_cast<const unsigned char *>(passphrase.cstr()),
                 passphrase.byteCount());
         Error e = mbedtlsErrorToError(rc, "pk_parse_key");
         if (e.isError()) return e;
-        _d->hasOwnKey = true;
-        if (_d->hasOwnCert) {
-                if (_d->ensureConfig().isError()) return Error::LibraryFailure;
-                int crc = mbedtls_ssl_conf_own_cert(&_d->conf, &_d->ownCert, &_d->ownKey);
+        p->hasOwnKey = true;
+        if (p->hasOwnCert) {
+                if (p->ensureConfig().isError()) return Error::LibraryFailure;
+                int crc = mbedtls_ssl_conf_own_cert(&p->conf, &p->ownCert, &p->ownKey);
                 if (crc != 0) return mbedtlsErrorToError(crc, "ssl_conf_own_cert");
         }
         return Error::Ok;
@@ -324,7 +406,7 @@ Error SslContext::setPrivateKey(const Buffer &keyData, const String &passphrase)
 
 Error SslContext::setCaCertificates(const FilePath &caFile) {
         Buffer b;
-        Error  e = readWholeFile(caFile, b);
+        Error  e = readWholeFile(caFile, b, /*secure=*/false);
         if (e.isError()) return e;
         return setCaCertificates(b);
 }
@@ -332,22 +414,23 @@ Error SslContext::setCaCertificates(const FilePath &caFile) {
 Error SslContext::setCaCertificates(const Buffer &caData) {
         Error psa = ensurePsaCrypto();
         if (psa.isError()) return psa;
-        if (_d->hasCaChain) {
-                mbedtls_x509_crt_free(&_d->caChain);
-                mbedtls_x509_crt_init(&_d->caChain);
-                _d->hasCaChain = false;
+        Impl *p = _d.modify();
+        if (p->hasCaChain) {
+                mbedtls_x509_crt_free(&p->caChain);
+                mbedtls_x509_crt_init(&p->caChain);
+                p->hasCaChain = false;
         }
         const int rc =
-                mbedtls_x509_crt_parse(&_d->caChain, static_cast<const unsigned char *>(caData.data()), caData.size());
+                mbedtls_x509_crt_parse(&p->caChain, static_cast<const unsigned char *>(caData.data()), caData.size());
         Error e = mbedtlsErrorToError(rc, "x509_crt_parse(ca)");
         if (e.isError()) return e;
-        _d->hasCaChain = true;
-        if (_d->ensureConfig().isError()) return Error::LibraryFailure;
-        mbedtls_ssl_conf_ca_chain(&_d->conf, &_d->caChain, nullptr);
-        // Re-apply authmode now that hasCaChain has flipped:
-        // verifyPeer=true with a fresh CA chain promotes the mode
-        // to VERIFY_REQUIRED.
-        _d->applyAuthMode();
+        p->hasCaChain = true;
+        if (p->ensureConfig().isError()) return Error::LibraryFailure;
+        mbedtls_ssl_conf_ca_chain(&p->conf, &p->caChain, nullptr);
+        // No applyAuthMode here: SslSocket reads hasCaCertificates()
+        // at handshake start and sets the role-appropriate authmode
+        // (client REQUIRED if verifyPeer + CAs loaded; server NONE
+        // unless explicitly doing mutual TLS).
         return Error::Ok;
 }
 
@@ -386,8 +469,11 @@ Error SslContext::setSystemCaCertificates() {
 // ============================================================
 
 struct SslContext::Impl {
+                PROMEKI_SHARED_FINAL(Impl)
+
                 SslProtocol protocol = SecureProtocols;
                 bool        verifyPeer = true;
+                bool        requireClientCert = false;
                 int         verifyDepth = 9;
 };
 
@@ -395,28 +481,49 @@ bool SslContext::hasTlsSupport() {
         return false;
 }
 
-SslContext::SslContext() : _d(ImplPtr::create()) {}
-// Out-of-line destructor: required because Impl is incomplete in the
-// header, so the compiler-generated UniquePtr<Impl> destructor cannot
-// be emitted there.
+SslContext::SslContext() : _d(SharedPtr<Impl, false>::create()) {
+        // No system-CA auto-load: setSystemCaCertificates returns
+        // NotSupported in this build, and trying to call it would
+        // be wasted work.
+}
+// Out-of-line destructor / copy / move: required because Impl is
+// incomplete in the header, so the compiler-generated SharedPtr<Impl,
+// false> internals cannot be emitted there without falling through
+// the IsSharedObject<Impl> trait (which itself can't see the
+// _promeki_refct member of an incomplete type).
 SslContext::~SslContext() = default;
+SslContext::SslContext(const SslContext &other) = default;
+SslContext &SslContext::operator=(const SslContext &other) = default;
+SslContext::SslContext(SslContext &&other) noexcept = default;
+SslContext &SslContext::operator=(SslContext &&other) noexcept = default;
+
+bool SslContext::isValid() const {
+        return _d.isValid();
+}
 
 void SslContext::setProtocol(SslProtocol protocol) {
-        _d->protocol = protocol;
+        _d.modify()->protocol = protocol;
 }
 SslContext::SslProtocol SslContext::protocol() const {
         return _d->protocol;
 }
 
 void SslContext::setVerifyPeer(bool enable) {
-        _d->verifyPeer = enable;
+        _d.modify()->verifyPeer = enable;
 }
 bool SslContext::verifyPeer() const {
         return _d->verifyPeer;
 }
 
+void SslContext::setRequireClientCert(bool require) {
+        _d.modify()->requireClientCert = require;
+}
+bool SslContext::requireClientCert() const {
+        return _d->requireClientCert;
+}
+
 void SslContext::setVerifyDepth(int depth) {
-        _d->verifyDepth = depth;
+        _d.modify()->verifyDepth = depth;
 }
 int SslContext::verifyDepth() const {
         return _d->verifyDepth;
@@ -427,6 +534,27 @@ bool SslContext::hasCertificate() const {
 }
 bool SslContext::hasCaCertificates() const {
         return false;
+}
+
+String SslContext::toString() const {
+        if (!isValid()) return "SslContext(moved-from, tls-disabled)";
+        const char *proto = "SecureProtocols";
+        switch (_d->protocol) {
+                case TlsV1_2: proto = "TlsV1_2"; break;
+                case TlsV1_3: proto = "TlsV1_3"; break;
+                case SecureProtocols: proto = "SecureProtocols"; break;
+        }
+        return String::sprintf("SslContext(protocol=%s, verifyPeer=%s, tls-disabled)",
+                               proto, _d->verifyPeer ? "true" : "false");
+}
+
+Error SslContext::writeToStream(DataStream &) const {
+        // Same rationale as the TLS-enabled build — even though this
+        // stub configuration carries no cert / key material, refusing
+        // here keeps the surface identical so callers can't rely on
+        // wire-serialization being available in one build and not the
+        // other.
+        return Error::NotSupported;
 }
 
 void *SslContext::nativeConfig() const {

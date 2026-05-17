@@ -31,7 +31,7 @@ StringList WindowedStatsBundle::describe(const ValueFormatter &formatter) const 
                 if (formatter) perValue = formatter(it->first);
                 String line = it->first.name();
                 line += ": ";
-                line += it->second.toString(perValue);
+                line += it->second.toFormattedString(perValue);
                 out.pushToBack(line);
         }
         return out;
@@ -43,7 +43,7 @@ JsonObject WindowedStatsBundle::toJson() const {
                 // Each entry's value is the canonical
                 // "cap=N:[...]" form so a JSON consumer can re-hydrate
                 // it via WindowedStat::fromString.
-                j.set(it->first.name(), it->second.toSerializedString());
+                j.set(it->first.name(), it->second.toString());
         }
         return j;
 }
@@ -53,7 +53,7 @@ WindowedStatsBundle WindowedStatsBundle::fromJson(const JsonObject &obj, Error *
         bool                good = true;
         obj.forEach([&](const String &key, const Variant &val) {
                 String s;
-                if (val.type() == Variant::TypeString) {
+                if (val.type() == DataTypeString) {
                         s = val.get<String>();
                 } else {
                         // Tolerate non-string payloads by routing
@@ -76,7 +76,7 @@ WindowedStatsBundle WindowedStatsBundle::fromJson(const JsonObject &obj, Error *
 }
 
 DataStream &operator<<(DataStream &stream, const WindowedStatsBundle &b) {
-        stream.beginFrame(DataStream::TypeWindowedStatsBundle, 1);
+        stream.beginFrame(DataTypeWindowedStatsBundle, 1);
         const WindowedStatsBundle::Map &m = b.windows();
         stream << static_cast<uint32_t>(m.size());
         for (auto it = m.cbegin(); it != m.cend(); ++it) {
@@ -89,7 +89,7 @@ DataStream &operator<<(DataStream &stream, const WindowedStatsBundle &b) {
 
 DataStream &operator>>(DataStream &stream, WindowedStatsBundle &b) {
         b.clear();
-        if (!stream.readFrame(DataStream::TypeWindowedStatsBundle)) return stream;
+        if (!stream.readFrame(DataTypeWindowedStatsBundle)) return stream;
         uint32_t count = 0;
         stream >> count;
         for (uint32_t i = 0; i < count && stream.status() == DataStream::Ok; ++i) {

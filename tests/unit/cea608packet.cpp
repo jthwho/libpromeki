@@ -170,7 +170,7 @@ TEST_CASE("Cea608Packet: Variant payload type round-trips") {
         }());
 
         Variant v(pkt);
-        CHECK(v.type() == Variant::TypeCea608);
+        CHECK(v.type() == DataTypeCea608);
         const Cea608Packet &got = v.get<Cea608Packet>();
         CHECK(got == pkt);
 }

@@ -163,9 +163,12 @@ class WebSocket : public ObjectBase {
                 /**
                  * @brief Attaches an SslContext used for @c wss:// connects.
                  *
-                 * Without one, a default-constructed @ref SslContext
-                 * (no CA chain → effectively no peer verification) is
-                 * created lazily.  Mirrors @ref HttpClient.
+                 * Optional — a default-constructed @ref SslContext
+                 * already auto-loads the system CA bundle.
+                 * Configure a custom context only when you need a
+                 * private CA, client certificates, or to disable
+                 * verification (@c setVerifyPeer(false)).  Mirrors
+                 * @ref HttpClient.
                  *
                  * Always available regardless of @c PROMEKI_ENABLE_TLS;
                  * in a TLS-disabled build the context is stored but
@@ -173,10 +176,10 @@ class WebSocket : public ObjectBase {
                  * an actual @c wss connect is later rejected with
                  * @ref Error::NotImplemented.
                  */
-                void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
+                void setSslContext(SslContext ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
-                SslContext::Ptr sslContext() const { return _sslContext; }
+                SslContext sslContext() const { return _sslContext; }
 
                 /**
                  * @brief Reports whether this build can speak TLS.
@@ -288,7 +291,7 @@ class WebSocket : public ObjectBase {
                 bool    _useTls = false;
                 bool    _handshakeDone = false; ///< TLS handshake done (wss://)
 
-                SslContext::Ptr _sslContext;
+                SslContext _sslContext;
 
                 void onIoReady(int fd, uint32_t events);
                 void readSome();

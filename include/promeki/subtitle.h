@@ -254,8 +254,8 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span);
  *
  * @par Variant / DataStream integration
  *
- * Registered as @c Variant::TypeSubtitle with tag
- * @c DataStream::TypeSubtitle (0x5C).  Frame metadata: a Subtitle
+ * Registered as @c DataTypeSubtitle with tag
+ * @c DataTypeSubtitle (0x5C).  Frame metadata: a Subtitle
  * can ride on a @c Metadata::Subtitle key on the @ref Frame where
  * its display window starts.
  *
@@ -269,6 +269,8 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span);
  */
 class Subtitle {
         public:
+                PROMEKI_DATATYPE(Subtitle, DataTypeSubtitle, 1)
+
                 // -- Construction / destruction (out-of-line for pimpl) ---
 
                 /** @brief Default-constructs an empty subtitle. */
@@ -467,15 +469,26 @@ class Subtitle {
                 /// @brief Short human-readable summary.
                 String toString() const;
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: start, end, anchor, mode, rollUpRows,
+                 * region, speaker, metadata, spans — each field
+                 * carrying its own DataType tag.  Cached @ref text is
+                 * reconstructed from spans on read.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<Subtitle> readFromStream(DataStream &s);
+
         private:
                 SharedPtr<SubtitleImpl> _d;
 };
-
-/** @brief Writes a @ref Subtitle to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const Subtitle &sub);
-
-/** @brief Reads a @ref Subtitle from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, Subtitle &sub);
 
 // ============================================================================
 // SubtitleList

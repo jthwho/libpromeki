@@ -1194,6 +1194,13 @@ XmlDocument XmlDocument::parse(const String &str, XmlParseError *err) {
         return ret;
 }
 
+Result<XmlDocument> XmlDocument::fromString(const String &str) {
+        XmlParseError perr;
+        XmlDocument   doc = parse(str, &perr);
+        if (!doc.isValid()) return makeError<XmlDocument>(Error::ParseFailed);
+        return makeResult(std::move(doc));
+}
+
 namespace {
 /**
  * @brief Synthesises a pugi parse result for a file-IO failure.
@@ -1468,6 +1475,30 @@ bool XmlNode::operator==(const XmlNode &other) const {
                 case Undefined: return true;
         }
         return false;
+}
+
+Error XmlDocument::writeToStream(DataStream &s) const {
+        s << toString(0);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<XmlDocument> XmlDocument::readFromStream<1>(DataStream &s) {
+        String text;
+        s >> text;
+        if (s.status() != DataStream::Ok) return makeError<XmlDocument>(s.toError());
+        // A default-constructed XmlDocument serializes to an empty
+        // string; round-trip it as a default rather than feeding the
+        // parser an empty buffer.
+        if (text.isEmpty()) return makeResult(XmlDocument());
+        XmlParseError perr;
+        XmlDocument   doc = XmlDocument::parse(text, &perr);
+        if (!perr) {
+                s.setError(DataStream::ReadCorruptData,
+                           String("XmlDocument::parse failed: ") + perr.toString());
+                return makeError<XmlDocument>(Error::CorruptData);
+        }
+        return makeResult(std::move(doc));
 }
 
 PROMEKI_NAMESPACE_END

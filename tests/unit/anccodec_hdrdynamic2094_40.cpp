@@ -85,7 +85,7 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: round-trip via AncTranslator parse
 
         Result<Variant> parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
-        REQUIRE(parsed.first().type() == Variant::TypeHdrDynamic2094_40);
+        REQUIRE(parsed.first().type() == DataTypeHdrDynamic2094_40);
 
         HdrDynamic2094_40 out = parsed.first().get<HdrDynamic2094_40>();
         CHECK(out == src);

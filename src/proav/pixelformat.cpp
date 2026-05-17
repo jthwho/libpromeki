@@ -6,6 +6,7 @@
  */
 
 #include <promeki/pixelformat.h>
+#include <promeki/datastream.h>
 #include <promeki/atomic.h>
 #include <promeki/map.h>
 #include <promeki/paintengine.h>
@@ -2288,6 +2289,23 @@ size_t PixelFormat::planeSize(size_t planeIndex, const ImageDesc &desc) const {
 PaintEngine PixelFormat::createPaintEngine(const UncompressedVideoPayload &payload) const {
         if (d->createPaintEngineFunc == nullptr) return PaintEngine();
         return d->createPaintEngineFunc(d, payload);
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged String holding the registered name).
+// ============================================================================
+
+Error PixelFormat::writeToStream(DataStream &s) const {
+        s << String(name());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<PixelFormat> PixelFormat::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<PixelFormat>(s.toError());
+        return PixelFormat::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

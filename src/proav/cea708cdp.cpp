@@ -40,14 +40,9 @@ namespace {
         }
 
         // Encode an MM/SS/HH/Frame BCD nibble pair into the SMPTE 12M form
-        // used by the CDP time-code section: high nibble = tens, low
-        // nibble = units.  Tens are masked to the small range each field
-        // legally allows (0..2 for hours, 0..5 for min/sec, 0..3 for
-        // frame).
-        uint8_t bcd(uint8_t value) {
-                return static_cast<uint8_t>(((value / 10) << 4) | (value % 10));
-        }
-
+        // used by the CDP time-code section: high nibble = tens (masked
+        // to the small range each field legally allows — 0..2 for hours,
+        // 0..5 for min/sec, 0..3 for frame), low nibble = units.
         uint8_t bcdHigh(uint8_t value, uint8_t tensMask) {
                 uint8_t tens = static_cast<uint8_t>((value / 10) & tensMask);
                 uint8_t units = static_cast<uint8_t>(value % 10);
@@ -280,8 +275,7 @@ JsonObject Cea708Cdp::toJson() const {
         obj.set("captionServiceActive", captionServiceActive);
 
         if (timeCodePresent) {
-                auto [tcStr, err] = timeCode.toString();
-                if (err.isOk()) obj.set("timeCode", tcStr);
+                obj.set("timeCode", timeCode.toString());
         }
 
         if (ccDataPresent) {
@@ -332,11 +326,8 @@ String Cea708Cdp::toString() const {
         s += ", cc=";
         s += String::number(static_cast<int>(ccData.size()));
         if (timeCodePresent) {
-                auto [tcStr, err] = timeCode.toString();
-                if (err.isOk()) {
-                        s += ", tc=";
-                        s += tcStr;
-                }
+                s += ", tc=";
+                s += timeCode.toString();
         }
         if (svcInfoPresent) s += ", svcInfo";
         if (captionServiceActive) s += ", active";
@@ -345,39 +336,27 @@ String Cea708Cdp::toString() const {
 }
 
 // ============================================================================
-// DataStream operators (wire bytes via toBuffer / fromBuffer)
+// DataStream serialization (wire bytes via toBuffer / fromBuffer)
 // ============================================================================
 
-void writeCea708CdpData(DataStream &stream, const Cea708Cdp &cdp) {
-        Buffer buf = cdp.toBuffer();
-        stream << buf;
+Error Cea708Cdp::writeToStream(DataStream &s) const {
+        Buffer buf = toBuffer();
+        s << buf;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
-Cea708Cdp readCea708CdpData(DataStream &stream) {
+template <>
+Result<Cea708Cdp> Cea708Cdp::readFromStream<1>(DataStream &s) {
         Buffer buf;
-        stream >> buf;
+        s >> buf;
+        if (s.status() != DataStream::Ok) return makeError<Cea708Cdp>(s.toError());
         Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(buf);
         if (r.second().isError()) {
-                promekiWarn("Cea708Cdp DataStream read failed: %s", r.second().name().cstr());
-                return Cea708Cdp();
+                s.setError(DataStream::ReadCorruptData,
+                           String("Cea708Cdp::fromBuffer failed: ") + r.second().name());
+                return makeError<Cea708Cdp>(r.second());
         }
-        return r.first();
-}
-
-DataStream &operator<<(DataStream &stream, const Cea708Cdp &cdp) {
-        stream.beginFrame(DataStream::TypeCea708Cdp, 1);
-        writeCea708CdpData(stream, cdp);
-        stream.endFrame();
-        return stream;
-}
-
-DataStream &operator>>(DataStream &stream, Cea708Cdp &cdp) {
-        if (!stream.readFrame(DataStream::TypeCea708Cdp)) {
-                cdp = Cea708Cdp();
-                return stream;
-        }
-        cdp = readCea708CdpData(stream);
-        return stream;
+        return r;
 }
 
 PROMEKI_NAMESPACE_END

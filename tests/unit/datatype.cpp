@@ -36,7 +36,7 @@ class SamplePoint {
 };
 
 // Canonical framed wire format: outer frame carries SamplePoint's
-// registered DataType::ID so a Variant holding a SamplePoint
+// registered DataTypeID so a Variant holding a SamplePoint
 // round-trips through the v3 framing.
 DataStream &operator<<(DataStream &s, const SamplePoint &p) {
         s.beginFrame(::promeki::DataType::of<SamplePoint>().id(), 1);
@@ -95,7 +95,7 @@ template <> struct HasFreeDataStreamWrite<SamplePoint> : std::true_type {};
 template <> struct HasFreeDataStreamRead<SamplePoint>  : std::true_type {};
 } }
 
-// Auto-allocated user ID (drawn from DataType::UserBegin range).
+// Auto-allocated user ID (drawn from DataTypeUserBegin range).
 PROMEKI_IMPLEMENT_DATATYPE(SamplePoint, "SamplePoint")
 // Pinned user ID — exercises the PROMEKI_IMPLEMENT_DATATYPE_ID path
 // and lets us assert the wire-format ID survives across instantiations.
@@ -110,8 +110,8 @@ TEST_CASE("DataType: registration round-trip via PROMEKI_IMPLEMENT_DATATYPE") {
         CHECK(dt.alignment() == alignof(SamplePoint));
         CHECK(dt.cppType() == std::type_index(typeid(SamplePoint)));
         // Auto-allocated IDs must land in the user range.
-        CHECK(static_cast<uint16_t>(dt.id()) >= static_cast<uint16_t>(DataType::UserBegin));
-        CHECK(static_cast<uint16_t>(dt.id()) <= static_cast<uint16_t>(DataType::UserEnd));
+        CHECK(static_cast<uint16_t>(dt.id()) >= static_cast<uint16_t>(DataTypeUserBegin));
+        CHECK(static_cast<uint16_t>(dt.id()) <= static_cast<uint16_t>(DataTypeUserEnd));
 }
 
 TEST_CASE("DataType: PROMEKI_IMPLEMENT_DATATYPE_ID pins the wire-format ID") {
@@ -131,14 +131,14 @@ TEST_CASE("DataType: byId / byName lookup matches of<T>") {
         CHECK(byNameHandle == expected);
 
         // Missing lookups return invalid handles.
-        CHECK_FALSE(DataType::byId(static_cast<DataType::ID>(0x3FFE)).isValid());
+        CHECK_FALSE(DataType::byId(static_cast<DataTypeID>(0x3FFE)).isValid());
         CHECK_FALSE(DataType::byName("NoSuchType").isValid());
 }
 
 TEST_CASE("DataType: default-constructed handle is invalid") {
         DataType dt;
         CHECK_FALSE(dt.isValid());
-        CHECK(dt.id() == DataType::NoType);
+        CHECK(dt.id() == DataTypeInvalid);
         CHECK(String(dt.name()) == "Invalid");
         CHECK(dt.size() == 0);
         CHECK(dt.alignment() == 1);
@@ -234,7 +234,7 @@ TEST_CASE("DataType: rejected registrations return invalid handles") {
         // ID collision against the already-registered SampleLabel.
         struct Collider {};
         DataType clash = DataType::registerType<Collider>("Collider",
-                                                          static_cast<DataType::ID>(0xFFF0));
+                                                          static_cast<DataTypeID>(0xFFF0));
         CHECK_FALSE(clash.isValid());
 
         // Empty name.
@@ -250,7 +250,7 @@ TEST_CASE("DataType: implicit ID -> DataType conversion via constructor") {
         DataType viaId(source.id());
         CHECK(viaId == source);
 
-        DataType viaInvalid(DataType::NoType);
+        DataType viaInvalid(DataTypeInvalid);
         CHECK_FALSE(viaInvalid.isValid());
 }
 

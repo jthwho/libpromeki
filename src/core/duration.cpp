@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <promeki/duration.h>
+#include <promeki/datastream.h>
 #include <promeki/error.h>
 #include <promeki/string.h>
 #include <promeki/units.h>
@@ -42,12 +43,9 @@ String Duration::toScaledString(int precision) const {
         return Units::fromDurationNs(static_cast<double>(nanoseconds()), precision);
 }
 
-Duration Duration::fromString(const String &str, Error *err) {
+Result<Duration> Duration::fromString(const String &str) {
         const String s = str.trim();
-        if (s.isEmpty()) {
-                if (err) *err = Error::Invalid;
-                return Duration();
-        }
+        if (s.isEmpty()) return makeError<Duration>(Error::ParseFailed);
 
         // Walk past the magnitude — sign + digits + optional decimal —
         // to find the unit suffix.  We hand the magnitude prefix to
@@ -68,10 +66,7 @@ Duration Duration::fromString(const String &str, Error *err) {
                         sawDigit = true;
                 }
         }
-        if (!sawDigit) {
-                if (err) *err = Error::Invalid;
-                return Duration();
-        }
+        if (!sawDigit) return makeError<Duration>(Error::ParseFailed);
 
         // Optional whitespace between magnitude and unit.
         const String magStr = s.left(i);
@@ -81,10 +76,7 @@ Duration Duration::fromString(const String &str, Error *err) {
 
         Error  pe;
         double mag = magStr.to<double>(&pe);
-        if (pe.isError() || !std::isfinite(mag)) {
-                if (err) *err = Error::Invalid;
-                return Duration();
-        }
+        if (pe.isError() || !std::isfinite(mag)) return makeError<Duration>(Error::ParseFailed);
 
         // Map the suffix to a nanosecond multiplier.  An empty suffix
         // is interpreted as seconds — see the doxygen on the
@@ -96,13 +88,27 @@ Duration Duration::fromString(const String &str, Error *err) {
         else if (unit == "ns")                                          nsPerUnit = 1.0;
         else if (unit == "m")                                           nsPerUnit = 60.0 * 1'000'000'000.0;
         else if (unit == "h")                                           nsPerUnit = 3600.0 * 1'000'000'000.0;
-        else {
-                if (err) *err = Error::Invalid;
-                return Duration();
-        }
+        else                                                            return makeError<Duration>(Error::ParseFailed);
 
         const double ns = mag * nsPerUnit;
-        return Duration::fromNanoseconds(static_cast<int64_t>(ns));
+        return makeResult(Duration::fromNanoseconds(static_cast<int64_t>(ns)));
+}
+
+// ============================================================================
+// DataStream wire format (v1: int64 nanosecond count).
+// ============================================================================
+
+Error Duration::writeToStream(DataStream &s) const {
+        s << static_cast<int64_t>(nanoseconds());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<Duration> Duration::readFromStream<1>(DataStream &s) {
+        int64_t ns = 0;
+        s >> ns;
+        if (s.status() != DataStream::Ok) return makeError<Duration>(s.toError());
+        return makeResult(Duration::fromNanoseconds(ns));
 }
 
 PROMEKI_NAMESPACE_END

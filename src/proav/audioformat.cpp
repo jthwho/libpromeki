@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <promeki/audioformat.h>
+#include <promeki/datastream.h>
 #include <promeki/atomic.h>
 #include <promeki/buffer.h>
 #include <promeki/map.h>
@@ -1179,6 +1180,23 @@ Error AudioFormat::convertTo(const AudioFormat &dst, void *out, const void *in, 
         }
         dst.floatToSamples(static_cast<uint8_t *>(out), t, totalFloats);
         return Error::Ok;
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged String holding the registered name).
+// ============================================================================
+
+Error AudioFormat::writeToStream(DataStream &s) const {
+        s << String(name());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<AudioFormat> AudioFormat::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<AudioFormat>(s.toError());
+        return AudioFormat::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

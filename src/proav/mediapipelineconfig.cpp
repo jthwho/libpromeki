@@ -657,7 +657,7 @@ StringList MediaPipelineConfig::describe() const {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Stage &s) {
-        stream.beginFrame(DataStream::TypeMediaPipelineStage, 1);
+        stream.beginFrame(DataTypeMediaPipelineStage, 1);
         stream << s.name;
         stream << s.type;
         stream << s.path;
@@ -671,7 +671,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Stage &s) 
 }
 
 DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Stage &s) {
-        if (!stream.readFrame(DataStream::TypeMediaPipelineStage)) {
+        if (!stream.readFrame(DataTypeMediaPipelineStage)) {
                 s = MediaPipelineConfig::Stage();
                 return stream;
         }
@@ -689,7 +689,7 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Stage &s) {
 }
 
 DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Route &r) {
-        stream.beginFrame(DataStream::TypeMediaPipelineRoute, 1);
+        stream.beginFrame(DataTypeMediaPipelineRoute, 1);
         stream << r.from;
         stream << r.to;
         stream << r.fromTrack;
@@ -699,7 +699,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig::Route &r) 
 }
 
 DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Route &r) {
-        if (!stream.readFrame(DataStream::TypeMediaPipelineRoute)) {
+        if (!stream.readFrame(DataTypeMediaPipelineRoute)) {
                 r = MediaPipelineConfig::Route();
                 return stream;
         }
@@ -711,7 +711,7 @@ DataStream &operator>>(DataStream &stream, MediaPipelineConfig::Route &r) {
 }
 
 DataStream &operator<<(DataStream &stream, const MediaPipelineConfig &c) {
-        stream.beginFrame(DataStream::TypeMediaPipelineConfig, 1);
+        stream.beginFrame(DataTypeMediaPipelineConfig, 1);
         stream << c.pipelineMetadata();
         stream << c.stages();
         stream << c.routes();
@@ -724,7 +724,7 @@ DataStream &operator<<(DataStream &stream, const MediaPipelineConfig &c) {
 }
 
 DataStream &operator>>(DataStream &stream, MediaPipelineConfig &c) {
-        if (!stream.readFrame(DataStream::TypeMediaPipelineConfig)) {
+        if (!stream.readFrame(DataTypeMediaPipelineConfig)) {
                 c = MediaPipelineConfig();
                 return stream;
         }

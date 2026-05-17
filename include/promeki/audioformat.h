@@ -21,8 +21,11 @@
 #include <promeki/audiocodec.h>
 #include <promeki/result.h>
 #include <promeki/system.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief First-class audio sample-format descriptor.
@@ -89,6 +92,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class AudioFormat {
         public:
+                PROMEKI_DATATYPE(AudioFormat, DataTypeAudioFormat, 1)
+
+                /** @brief Writes the registered format name as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the registered format name and looks it up. */
+                template <uint32_t V> static Result<AudioFormat> readFromStream(DataStream &s);
+
                 /** @brief Minimum value of a signed 24-bit integer. */
                 static constexpr int32_t MinS24 = -8388608;
                 /** @brief Maximum value of a signed 24-bit integer. */

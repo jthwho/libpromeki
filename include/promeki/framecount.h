@@ -10,14 +10,19 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/framenumber.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Count of frames, optionally empty, unknown, or infinite.
@@ -74,6 +79,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class FrameCount {
         public:
+                PROMEKI_DATATYPE(FrameCount, DataTypeFrameCount, 1)
+
+                /** @brief Writes a tagged int64 holding the raw storage value. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads a tagged int64 and reconstructs the FrameCount. */
+                template <uint32_t V> static Result<FrameCount> readFromStream(DataStream &s);
+
                 /** @brief Storage sentinel meaning "unknown". */
                 static constexpr int64_t UnknownValue = -1;
                 /** @brief Storage sentinel meaning "infinity". */
@@ -149,6 +161,34 @@ class FrameCount {
 
                 /** @brief Returns the raw storage value (includes sentinel values). */
                 constexpr int64_t value() const { return _value; }
+
+                /**
+                 * @brief Returns the count as a @c double.
+                 *
+                 * Sentinels map to the matching IEEE values:
+                 * @c Unknown → @c quiet_NaN, @c Infinity →
+                 * @c +infinity.  @ref fromDouble inverts the mapping.
+                 */
+                double toDouble() const {
+                        if (isUnknown()) return std::numeric_limits<double>::quiet_NaN();
+                        if (isInfinite()) return std::numeric_limits<double>::infinity();
+                        return static_cast<double>(_value);
+                }
+
+                /**
+                 * @brief Constructs from a @c double.
+                 *
+                 * NaN maps to @c Unknown; @c +/-infinity maps to
+                 * @c Infinity; negative values map to @c Unknown;
+                 * finite non-negative values are truncated to the
+                 * nearest integer count.
+                 */
+                static Result<FrameCount> fromDouble(double v) {
+                        if (std::isnan(v)) return makeResult(FrameCount::unknown());
+                        if (std::isinf(v)) return makeResult(FrameCount::infinity());
+                        if (v < 0.0) return makeResult(FrameCount::unknown());
+                        return makeResult(FrameCount(static_cast<int64_t>(v)));
+                }
 
                 /** @brief In-place addition of an integer.  Unknown poisons; Infinity is absorbing; negative results poison to Unknown. */
                 FrameCount &operator+=(int64_t n);

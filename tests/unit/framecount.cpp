@@ -179,7 +179,7 @@ TEST_CASE("FrameCount toString and fromString") {
 TEST_CASE("FrameCount Variant integration") {
         SUBCASE("Round-trip via Variant") {
                 Variant v(FrameCount(123));
-                CHECK(v.type() == Variant::TypeFrameCount);
+                CHECK(v.type() == DataTypeFrameCount);
                 FrameCount c = v.get<FrameCount>();
                 CHECK(c.value() == 123);
         }

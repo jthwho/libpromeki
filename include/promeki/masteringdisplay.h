@@ -13,8 +13,13 @@
 #include <promeki/namespace.h>
 #include <promeki/ciepoint.h>
 #include <promeki/string.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Mastering display color volume metadata (SMPTE ST 2086).
@@ -57,6 +62,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MasteringDisplay {
         public:
+                PROMEKI_DATATYPE(MasteringDisplay, DataTypeMasteringDisplay, 1)
+
+                /** @brief Writes ten tagged doubles: r/g/b/wp x/y pairs, minLum, maxLum. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads ten tagged doubles. */
+                template <uint32_t V> static Result<MasteringDisplay> readFromStream(DataStream &s);
+
                 static const MasteringDisplay HDR10;
 
                 MasteringDisplay() = default;

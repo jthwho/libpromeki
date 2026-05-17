@@ -371,7 +371,7 @@ TEST_CASE("RtmpFactory::urlToConfig populates RtmpUrl and Type") {
         REQUIRE(fac->urlToConfig(u, &cfg) == Error::Ok);
         CHECK(cfg.getAs<String>(MediaConfig::Type, String()) == String("Rtmp"));
         Variant urlVar = cfg.get(MediaConfig::RtmpUrl);
-        REQUIRE(urlVar.type() == Variant::TypeUrl);
+        REQUIRE(urlVar.type() == DataTypeUrl);
         CHECK(urlVar.get<Url>().toString() == u.toString());
 }
 

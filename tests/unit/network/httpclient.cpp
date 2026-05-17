@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/httpclient.h>
 #include <promeki/httpserver.h>
+#include <promeki/sslcontext.h>
 #include <promeki/thread.h>
 #include <promeki/eventloop.h>
 #include <promeki/socketaddress.h>
@@ -224,6 +225,40 @@ TEST_CASE("HttpClient - https request reaches the network layer") {
         // wired in.  Acceptable terminal errors include host-not-
         // found, connection-refused, timeout, or transport reset —
         // not NotImplemented or Invalid.
+        //
+        // The fail-closed verify policy refuses to handshake without
+        // a CA bundle, so attach a context with verifyPeer=false to
+        // isolate this test from system-CA availability (CI runners
+        // may not have a bundle installed).  We're testing the
+        // request plumbing, not actual verification.
+        ClientFixture     f;
+        std::atomic<bool> done{false};
+        f.clientThread.threadEventLoop()->postCallable([&]() {
+                SslContext ctx;
+                ctx.setVerifyPeer(false);
+                f.client->setSslContext(ctx);
+                f.client->setTimeoutMs(50);
+                done = true;
+        });
+        for (int i = 0; i < 200 && !done; ++i) {
+                Thread::sleepMs(2);
+        }
+        auto [res, err] = f.request([&](HttpClient &c) { return c.get("https://127.0.0.1:1/"); }, /*timeoutMs=*/2000);
+        CHECK(err != Error::NotImplemented);
+        CHECK(err != Error::Invalid);
+}
+
+TEST_CASE("HttpClient - https request fails closed without CA bundle or opt-out") {
+        // No setSslContext call: HttpClient's internal default
+        // SslContext is constructed for us.  Its constructor
+        // best-effort-loads the system CA bundle, so on a normal
+        // Linux machine the request proceeds to the network and
+        // fails with a transport error against 127.0.0.1:1.  On a
+        // hypothetical machine with no system bundle the handshake
+        // refuses with Error::Invalid (fail-closed).  Either is a
+        // valid outcome; the test only asserts what is @em not
+        // allowed: a silent successful handshake against an
+        // unauthenticated peer.
         ClientFixture     f;
         std::atomic<bool> done{false};
         f.clientThread.threadEventLoop()->postCallable([&]() {
@@ -235,7 +270,7 @@ TEST_CASE("HttpClient - https request reaches the network layer") {
         }
         auto [res, err] = f.request([&](HttpClient &c) { return c.get("https://127.0.0.1:1/"); }, /*timeoutMs=*/2000);
         CHECK(err != Error::NotImplemented);
-        CHECK(err != Error::Invalid);
+        CHECK(err != Error::Ok);
 }
 
 TEST_CASE("HttpClient - rejects empty/invalid URL up front") {

@@ -70,7 +70,7 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
         // partitioned out below and reported as a separate count so
         // regressions on a type that used to round-trip are easy to see.
 
-        const List<DataType::ID> ids = DataType::registeredIds();
+        const List<DataTypeID> ids = DataType::registeredIds();
         REQUIRE(ids.size() > 0);
 
         size_t roundTripped       = 0;
@@ -78,17 +78,17 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
         size_t skippedNoDefault   = 0;
         size_t skippedBadDefault  = 0;   // type's default doesn't round-trip cleanly
 
-        List<DataType::ID> failedTypes;
+        List<DataTypeID> failedTypes;
         // Library builtins (id < UserBegin) must all advertise
         // writeStream + readStream — there's no opt-out.  User-space
         // types may legitimately register without serialize ops
         // (and several test fixtures in this binary do exactly that
         // to exercise the no-serialize code path).  Anything that
         // lands here is a real library gap.
-        List<DataType::ID> librarySkippedNoSerialize;
+        List<DataTypeID> librarySkippedNoSerialize;
 
         for (size_t i = 0; i < ids.size(); ++i) {
-                const DataType::ID id = ids[i];
+                const DataTypeID id = ids[i];
                 const DataType dt(id);
                 REQUIRE(dt.isValid());
 
@@ -104,7 +104,7 @@ TEST_CASE("DataType: every registered type round-trips Variant default -> DataSt
 
                 if (ops.writeStream == nullptr || ops.readStream == nullptr) {
                         ++skippedNoSerialize;
-                        if (static_cast<unsigned>(id) < static_cast<unsigned>(DataType::UserBegin)) {
+                        if (static_cast<unsigned>(id) < static_cast<unsigned>(DataTypeUserBegin)) {
                                 librarySkippedNoSerialize.pushToBack(id);
                         }
                         continue;
@@ -201,12 +201,12 @@ TEST_CASE("DataType: HdrStaticMetadata / Cea708Service / Cea708DtvccPacket round
         // regresses (and verifies they sit in the round-trippable
         // bucket, not the no-serialize one).
 
-        const Variant::Type ids[] = {
-                Variant::TypeHdrStaticMetadata,
-                Variant::TypeCea708Service,
-                Variant::TypeCea708DtvccPacket,
+        const DataTypeID ids[] = {
+                DataTypeHdrStaticMetadata,
+                DataTypeCea708Service,
+                DataTypeCea708DtvccPacket,
         };
-        for (Variant::Type id : ids) {
+        for (DataTypeID id : ids) {
                 const DataType dt(id);
                 REQUIRE_MESSAGE(dt.isValid(), "missing DataType registration for id=", id);
 
@@ -266,7 +266,7 @@ TEST_CASE("DataType: registered user type via PROMEKI_IMPLEMENT_DATATYPE is reac
 }
 
 TEST_CASE("DataType: registry enumeration is stable and includes builtins") {
-        const List<DataType::ID> ids = DataType::registeredIds();
+        const List<DataTypeID> ids = DataType::registeredIds();
         REQUIRE(ids.size() > 0);
 
         // Spot check: the StageDLabel registration above must show up.
@@ -277,8 +277,8 @@ TEST_CASE("DataType: registry enumeration is stable and includes builtins") {
                 const DataType dt(ids[i]);
                 if (!dt.isValid()) continue;
                 if (String(dt.name()) == "StageDLabel") sawUserType = true;
-                if (ids[i] == Variant::TypeString) sawString = true;
-                if (ids[i] == Variant::TypeBool) sawBool = true;
+                if (ids[i] == DataTypeString) sawString = true;
+                if (ids[i] == DataTypeBool) sawBool = true;
         }
         CHECK(sawUserType);
         CHECK(sawString);

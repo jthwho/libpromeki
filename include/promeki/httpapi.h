@@ -92,7 +92,7 @@ class HttpServer;
  *         .title   = "Health check",
  *         .summary = "Returns 200 when the service is responsive.",
  *         .tags    = {"system"},
- *         .response = VariantSpec().setType(Variant::TypeString),
+ *         .response = VariantSpec().setType(DataTypeString),
  *     },
  *     [](const auto &, auto &res) { res.setText("ok"); });
  *
@@ -755,7 +755,7 @@ template <typename T> Error HttpApi::exposeLookup(const String &mountPath, const
                 .name = "path",
                 .in = ParamIn::Path,
                 .required = true,
-                .spec = VariantSpec().setType(Variant::TypeString).setDescription("Greedy lookup path."),
+                .spec = VariantSpec().setType(DataTypeString).setDescription("Greedy lookup path."),
         }};
         ep.response = VariantSpec().setDescription("JSON object {\"value\": <variant>}.");
         return addEndpointDescriptor(ep);

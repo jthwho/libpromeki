@@ -61,8 +61,8 @@ class DataStream;
  *
  * @par Variant / DataStream integration
  *
- * Registered as @c Variant::TypeScc with tag
- * @c DataStream::TypeScc (0x5E).
+ * Registered as @c DataTypeScc with tag
+ * @c DataTypeScc (0x5E).
  *
  * @par Thread Safety
  *

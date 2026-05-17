@@ -173,7 +173,7 @@ TEST_CASE("EUI64: comparison") {
 TEST_CASE("EUI64: Variant round-trip") {
         EUI64   original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11);
         Variant v = original;
-        CHECK(v.type() == Variant::TypeEUI64);
+        CHECK(v.type() == DataTypeEUI64);
 
         EUI64 retrieved = v.get<EUI64>();
         CHECK(retrieved == original);

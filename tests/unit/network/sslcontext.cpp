@@ -8,6 +8,8 @@
 #include <doctest/doctest.h>
 #include <promeki/sslcontext.h>
 #include <promeki/buffer.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
 #include <cstring>
 
 using namespace promeki;
@@ -107,7 +109,11 @@ TEST_CASE("SslContext - default state") {
         CHECK(ctx.protocol() == SslContext::SecureProtocols);
         CHECK(ctx.verifyPeer());
         CHECK_FALSE(ctx.hasCertificate());
-        CHECK_FALSE(ctx.hasCaCertificates());
+        // hasCaCertificates() depends on whether the host has a
+        // system CA bundle — the default constructor best-effort
+        // loads /etc/ssl/certs/...  Don't assert either way here;
+        // the dedicated "load CA certificates" test below covers
+        // the positive path with an in-memory bundle.
 }
 
 TEST_CASE("SslContext - protocol set/get") {
@@ -124,6 +130,25 @@ TEST_CASE("SslContext - verifyPeer toggle") {
         CHECK_FALSE(ctx.verifyPeer());
         ctx.setVerifyPeer(true);
         CHECK(ctx.verifyPeer());
+}
+
+TEST_CASE("SslContext - requireClientCert defaults to false and is independent of verifyPeer") {
+        SslContext ctx;
+        // Server-side mutual-TLS opt-in defaults to off — the
+        // standard HTTPS server pattern.
+        CHECK_FALSE(ctx.requireClientCert());
+        // Client-side verifyPeer is independent: enabling
+        // verification does not also enable mutual TLS.  This is
+        // the split that prevents auto-loaded system CAs from
+        // silently flipping a default server into mutual-auth mode.
+        CHECK(ctx.verifyPeer());
+        CHECK_FALSE(ctx.requireClientCert());
+        ctx.setRequireClientCert(true);
+        CHECK(ctx.requireClientCert());
+        // Flipping requireClientCert leaves verifyPeer alone.
+        CHECK(ctx.verifyPeer());
+        ctx.setRequireClientCert(false);
+        CHECK_FALSE(ctx.requireClientCert());
 }
 
 TEST_CASE("SslContext - load valid cert + key") {
@@ -157,4 +182,40 @@ TEST_CASE("SslContext - load CA certificates") {
 TEST_CASE("SslContext - nativeConfig is non-null after init") {
         SslContext ctx;
         CHECK(ctx.nativeConfig() != nullptr);
+}
+
+TEST_CASE("SslContext - toString reports state without leaking cert bytes") {
+        SslContext ctx;
+        ctx.setProtocol(SslContext::TlsV1_3);
+        String s1 = ctx.toString();
+        CHECK(s1.contains("protocol=TlsV1_3"));
+        CHECK(s1.contains("verifyPeer=true"));
+        CHECK_FALSE(s1.contains("hasCert"));
+
+        REQUIRE(ctx.setCertificate(pemBuffer(kTestCertPem)).isOk());
+        REQUIRE(ctx.setPrivateKey(pemBuffer(kTestKeyPem)).isOk());
+        String s2 = ctx.toString();
+        CHECK(s2.contains("hasCert"));
+        CHECK(s2.contains("hasKey"));
+        // The diagnostic must not embed the PEM bytes themselves.
+        CHECK_FALSE(s2.contains("BEGIN CERTIFICATE"));
+        CHECK_FALSE(s2.contains("BEGIN PRIVATE KEY"));
+}
+
+TEST_CASE("SslContext - writeToStream refuses to serialize credentials") {
+        // PROMEKI_DATATYPE participation requires the member API to
+        // exist, but the body refuses by design — TLS state must not
+        // ride the DataStream wire.
+        SslContext ctx;
+        REQUIRE(ctx.setCertificate(pemBuffer(kTestCertPem)).isOk());
+
+        Buffer          buf(64);
+        BufferIODevice  dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        DataStream      writer = DataStream::createWriter(&dev);
+        CHECK(ctx.writeToStream(writer) == Error::NotSupported);
+
+        DataStream reader = DataStream::createReader(&dev);
+        auto       rd = SslContext::readFromStream<1>(reader);
+        CHECK(rd.second() == Error::NotSupported);
 }

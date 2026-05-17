@@ -18,8 +18,11 @@
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/string.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief X-macro defining the well-known video raster sizes.
@@ -194,6 +197,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class VideoFormat {
         public:
+                PROMEKI_DATATYPE(VideoFormat, DataTypeVideoFormat, 1)
+
+                /** @brief Writes the canonical String form. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical String form. */
+                template <uint32_t V> static Result<VideoFormat> readFromStream(DataStream &s);
+
                 /** @brief Identifiers for well-known raster sizes. */
                 enum WellKnownRaster {
                         Raster_NotWellKnown = 0,

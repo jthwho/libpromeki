@@ -548,7 +548,7 @@ TEST_CASE("VideoFormat: broadcast / cinema / integer-cadence queries") {
 TEST_CASE("VideoFormat: Variant round-trip via String") {
         VideoFormat vf(VideoFormat::Raster_HD, FrameRate(FrameRate::FPS_29_97), VideoScanMode::Interlaced);
         Variant     v(vf);
-        CHECK(v.type() == Variant::TypeVideoFormat);
+        CHECK(v.type() == DataTypeVideoFormat);
         CHECK(v.get<String>() == "1080i59.94");
 
         Variant     s(String("720p59.94"));

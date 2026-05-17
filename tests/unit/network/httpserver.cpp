@@ -252,13 +252,13 @@ using TestDB = VariantDatabase<"HttpServerTestDB">;
 // are non-negative and TypeS64 when negative; specs that want to
 // round-trip through JSON should accept the union.
 static const TestDB::ID kDbWidth = TestDB::declareID("Width", VariantSpec()
-                                                                      .setTypes({Variant::TypeS64, Variant::TypeU64})
+                                                                      .setTypes({DataTypeInt64, DataTypeUInt64})
                                                                       .setDefault(int64_t{1920})
                                                                       .setRange(int64_t{1}, int64_t{8192})
                                                                       .setDescription("Frame width in pixels"));
 
 static const TestDB::ID kDbHeight = TestDB::declareID("Height", VariantSpec()
-                                                                        .setTypes({Variant::TypeS64, Variant::TypeU64})
+                                                                        .setTypes({DataTypeInt64, DataTypeUInt64})
                                                                         .setDefault(int64_t{1080})
                                                                         .setDescription("Frame height in pixels"));
 

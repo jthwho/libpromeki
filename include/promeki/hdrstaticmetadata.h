@@ -103,7 +103,7 @@ class DataStream;
  *
  * @par Variant integration
  *
- * Registered as @c Variant::TypeHdrStaticMetadata so @ref
+ * Registered as @c DataTypeHdrStaticMetadata so @ref
  * AncTranslator parse / build functions return / consume it
  * through their @c Result<Variant> interfaces.
  *
@@ -117,6 +117,8 @@ class DataStream;
  */
 class HdrStaticMetadata {
         public:
+                PROMEKI_DATATYPE(HdrStaticMetadata, DataTypeHdrStaticMetadata, 1)
+
                 /** @brief CTA-861-G DRM InfoFrame Type byte. */
                 static constexpr uint8_t InfoFrameType = 0x87;
 
@@ -277,17 +279,27 @@ class HdrStaticMetadata {
                 /** @brief Returns a short human-readable summary. */
                 String toString() const;
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: the canonical DRM InfoFrame byte stream
+                 * (the same bytes @ref toBuffer produces) length-prefixed
+                 * as a @ref Buffer.  Round-trips through @ref fromBuffer.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<HdrStaticMetadata> readFromStream(DataStream &s);
+
         private:
                 TransferCharacteristics _eotf = TransferCharacteristics::Unspecified;
                 MasteringDisplay        _md;
                 ContentLightLevel       _cll;
 };
-
-/** @brief Writes an @ref HdrStaticMetadata to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const HdrStaticMetadata &md);
-
-/** @brief Reads an @ref HdrStaticMetadata from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, HdrStaticMetadata &md);
 
 PROMEKI_NAMESPACE_END
 

@@ -6,6 +6,7 @@
  */
 
 #include <promeki/framenumber.h>
+#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -27,6 +28,23 @@ Result<FrameNumber> FrameNumber::fromString(const String &str) {
         int64_t v = t.to<int64_t>(&parseErr);
         if (parseErr.isError()) return makeError<FrameNumber>(Error::ParseFailed);
         if (v < 0) return makeError<FrameNumber>(Error::OutOfRange);
+        return makeResult(FrameNumber(v));
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged int64 storage value).
+// ============================================================================
+
+Error FrameNumber::writeToStream(DataStream &s) const {
+        s << static_cast<int64_t>(_value);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<FrameNumber> FrameNumber::readFromStream<1>(DataStream &s) {
+        int64_t v = 0;
+        s >> v;
+        if (s.status() != DataStream::Ok) return makeError<FrameNumber>(s.toError());
         return makeResult(FrameNumber(v));
 }
 

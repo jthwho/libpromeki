@@ -2526,10 +2526,10 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 Variant    sdpVar = cfg.get(MediaConfig::RtpSdp);
                 SdpSession sdp;
                 bool       haveSdp = false;
-                if (sdpVar.type() == Variant::TypeSdpSession) {
+                if (sdpVar.type() == DataTypeSdpSession) {
                         sdp = sdpVar.get<SdpSession>();
                         haveSdp = true;
-                } else if (sdpVar.type() == Variant::TypeString) {
+                } else if (sdpVar.type() == DataTypeString) {
                         String path = sdpVar.get<String>();
                         if (!path.isEmpty()) {
                                 Result<SdpSession> r = SdpSession::fromFile(path);

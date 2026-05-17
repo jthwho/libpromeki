@@ -115,7 +115,7 @@ TEST_CASE("MediaTimeStamp: Variant round-trip") {
         TimeStamp      ts = TimeStamp::now();
         MediaTimeStamp original(ts, ClockDomain::Synthetic);
         Variant        v = original;
-        CHECK(v.type() == Variant::TypeMediaTimeStamp);
+        CHECK(v.type() == DataTypeMediaTimeStamp);
 
         MediaTimeStamp retrieved = v.get<MediaTimeStamp>();
         CHECK(retrieved.isValid());

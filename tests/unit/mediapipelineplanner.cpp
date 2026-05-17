@@ -198,10 +198,10 @@ namespace {
                         Config::SpecMap configSpecs() const override {
                                 Config::SpecMap m;
                                 m.insert(PlannerProducedDesc,
-                                         VariantSpec().setType(Variant::TypePixelFormat).setDefault(
+                                         VariantSpec().setType(DataTypePixelFormat).setDefault(
                                                  PixelFormat(PixelFormat::RGBA8_sRGB)));
                                 m.insert(PlannerProducedRate, VariantSpec()
-                                                                      .setType(Variant::TypeFrameRate)
+                                                                      .setType(DataTypeFrameRate)
                                                                       .setDefault(FrameRate(FrameRate::FPS_30)));
                                 return m;
                         }
@@ -226,10 +226,10 @@ namespace {
                         Config::SpecMap configSpecs() const override {
                                 Config::SpecMap m;
                                 m.insert(PlannerAcceptedDesc,
-                                         VariantSpec().setType(Variant::TypePixelFormat).setDefault(
+                                         VariantSpec().setType(DataTypePixelFormat).setDefault(
                                                  PixelFormat(PixelFormat::RGBA8_sRGB)));
                                 m.insert(PlannerAcceptedRate, VariantSpec()
-                                                                      .setType(Variant::TypeFrameRate)
+                                                                      .setType(DataTypeFrameRate)
                                                                       .setDefault(FrameRate(FrameRate::FPS_30)));
                                 return m;
                         }

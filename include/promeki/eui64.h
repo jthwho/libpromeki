@@ -18,11 +18,13 @@
 #include <promeki/result.h>
 #include <promeki/array.h>
 #include <promeki/enums.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class MacAddress;
 class TextStream;
+class DataStream;
 
 /**
  * @brief IEEE EUI-64 extended unique identifier.
@@ -57,6 +59,13 @@ class TextStream;
  */
 class EUI64 {
         public:
+                PROMEKI_DATATYPE(EUI64, DataTypeEUI64, 1)
+
+                /** @brief Writes the canonical String form. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical String form. */
+                template <uint32_t V> static Result<EUI64> readFromStream(DataStream &s);
+
                 /** @brief Raw 8-byte storage format. */
                 using DataFormat = Array<uint8_t, 8>;
 

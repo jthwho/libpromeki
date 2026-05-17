@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <promeki/mediatimestamp.h>
+#include <promeki/datastream.h>
 #include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -58,6 +59,23 @@ bool MediaTimeStamp::operator==(const MediaTimeStamp &other) const {
 
 bool MediaTimeStamp::operator!=(const MediaTimeStamp &other) const {
         return !(*this == other);
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical "domain ts offset" String).
+// ============================================================================
+
+Error MediaTimeStamp::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<MediaTimeStamp> MediaTimeStamp::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<MediaTimeStamp>(s.toError());
+        return MediaTimeStamp::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

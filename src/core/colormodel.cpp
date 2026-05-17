@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <promeki/colormodel.h>
+#include <promeki/datastream.h>
 #include <promeki/atomic.h>
 #include <promeki/map.h>
 #include <promeki/util.h>
@@ -1065,6 +1066,23 @@ ColorModel::H273 ColorModel::toH273(ID id) {
                 case HSL_sRGB:
                 default: return {};
         }
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged String holding the registered name).
+// ============================================================================
+
+Error ColorModel::writeToStream(DataStream &s) const {
+        s << String(name());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<ColorModel> ColorModel::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<ColorModel>(s.toError());
+        return ColorModel::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

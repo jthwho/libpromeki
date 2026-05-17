@@ -63,8 +63,8 @@ class DataStream;
  *
  * @par Variant / DataStream integration
  *
- * Registered as @c Variant::TypeCea708Service with tag
- * @c DataStream::TypeCea708Service (@c 0x60).
+ * Registered as @c DataTypeCea708Service with tag
+ * @c DataTypeCea708Service (@c 0x60).
  *
  * @par Thread Safety
  *
@@ -76,6 +76,8 @@ class DataStream;
  */
 class Cea708Service {
         public:
+                PROMEKI_DATATYPE(Cea708Service, DataTypeCea708Service, 1)
+
                 /// @brief Maximum @c service_number representable in
                 ///        the wire format (6 bits).
                 static constexpr uint8_t MaxServiceNumber = 63;
@@ -165,16 +167,25 @@ class Cea708Service {
                 bool operator==(const Cea708Service &o) const;
                 bool operator!=(const Cea708Service &o) const { return !(*this == o); }
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint8 service_number + length-prefixed
+                 * @ref Buffer of payload bytes.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<Cea708Service> readFromStream(DataStream &s);
+
         private:
                 uint8_t _serviceNumber = 0;
                 Buffer  _data;
 };
-
-/** @brief Writes a @ref Cea708Service to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const Cea708Service &svc);
-
-/** @brief Reads a @ref Cea708Service from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, Cea708Service &svc);
 
 /**
  * @brief One CEA-708 DTVCC packet.
@@ -217,13 +228,15 @@ DataStream &operator>>(DataStream &stream, Cea708Service &svc);
  *
  * @par Variant / DataStream integration
  *
- * Registered as @c Variant::TypeCea708DtvccPacket with tag
- * @c DataStream::TypeCea708DtvccPacket (@c 0x61).
+ * Registered as @c DataTypeCea708DtvccPacket with tag
+ * @c DataTypeCea708DtvccPacket (@c 0x61).
  *
  * @see Cea708Service, Cea708Cdp::CcData
  */
 class Cea708DtvccPacket {
         public:
+                PROMEKI_DATATYPE(Cea708DtvccPacket, DataTypeCea708DtvccPacket, 1)
+
                 /// @brief Maximum payload bytes (the spec's
                 ///        @c packet_size_code = 0 wire value).
                 static constexpr uint8_t MaxPayloadBytes = 127;
@@ -307,16 +320,25 @@ class Cea708DtvccPacket {
                 }
                 bool operator!=(const Cea708DtvccPacket &o) const { return !(*this == o); }
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint8 sequence_number + uint32 count +
+                 * N tagged @ref Cea708Service blocks.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<Cea708DtvccPacket> readFromStream(DataStream &s);
+
         private:
                 uint8_t             _sequenceNumber = 0;
                 List<Cea708Service> _serviceBlocks;
 };
-
-/** @brief Writes a @ref Cea708DtvccPacket to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const Cea708DtvccPacket &pkt);
-
-/** @brief Reads a @ref Cea708DtvccPacket from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, Cea708DtvccPacket &pkt);
 
 PROMEKI_NAMESPACE_END
 

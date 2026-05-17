@@ -204,7 +204,7 @@ TEST_CASE("HdrStaticMetadata: round-trips through Variant") {
         HdrStaticMetadata original = hdr10Sample();
         Variant           v;
         v.set(original);
-        CHECK(v.type() == Variant::TypeHdrStaticMetadata);
+        CHECK(v.type() == DataTypeHdrStaticMetadata);
         HdrStaticMetadata out = v.get<HdrStaticMetadata>();
         // Equality across the chromaticity-quantisation step requires
         // either accepting the quantised round-trip or comparing via

@@ -55,8 +55,8 @@ class DataStream;
  *
  * @par Variant / DataStream integration
  *
- * Registered as @c Variant::TypeCea608 with tag
- * @c DataStream::TypeCea608 (@c 0x5F).
+ * Registered as @c DataTypeCea608 with tag
+ * @c DataTypeCea608 (@c 0x5F).
  *
  * @par Thread Safety
  * Plain value type — copies are independent.  Distinct instances may
@@ -67,6 +67,8 @@ class DataStream;
  */
 class Cea608Packet {
         public:
+                PROMEKI_DATATYPE(Cea608Packet, DataTypeCea608, 1)
+
                 /** @brief Channel selector (mirror of the encoder /
                  *         decoder Channel enums for the typed-value
                  *         interchange path).  CC1 / CC2 live in field
@@ -169,13 +171,22 @@ class Cea608Packet {
                  *        @c "CC4" for the @c Channel enum value.
                  */
                 static String channelName(Channel c);
+
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: uint8 channel + uint32 count + N (valid,
+                 * type, b1, b2) quadruples of bytes.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<Cea608Packet> readFromStream(DataStream &s);
 };
-
-/** @brief Writes a @ref Cea608Packet to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const Cea608Packet &pkt);
-
-/** @brief Reads a @ref Cea608Packet from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, Cea608Packet &pkt);
 
 PROMEKI_NAMESPACE_END
 

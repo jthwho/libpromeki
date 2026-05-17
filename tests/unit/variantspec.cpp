@@ -40,28 +40,28 @@ TEST_CASE("VariantSpec_Default") {
 }
 
 TEST_CASE("VariantSpec_SingleType") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeS32).setDefault(42).setDescription("An integer value");
+        VariantSpec s = VariantSpec().setType(DataTypeInt32).setDefault(42).setDescription("An integer value");
         CHECK(s.isValid());
         CHECK(s.types().size() == 1);
-        CHECK(s.types()[0] == Variant::TypeS32);
+        CHECK(s.types()[0] == DataTypeInt32);
         CHECK(!s.isPolymorphic());
-        CHECK(s.acceptsType(Variant::TypeS32));
-        CHECK(!s.acceptsType(Variant::TypeString));
+        CHECK(s.acceptsType(DataTypeInt32));
+        CHECK(!s.acceptsType(DataTypeString));
         CHECK(s.description() == "An integer value");
         Variant v = s;
         CHECK(v.get<int32_t>() == 42);
 }
 
 TEST_CASE("VariantSpec_Polymorphic") {
-        VariantSpec s = VariantSpec().setTypes({Variant::TypeString, Variant::TypeS32}).setDefault(String("hello"));
+        VariantSpec s = VariantSpec().setTypes({DataTypeString, DataTypeInt32}).setDefault(String("hello"));
         CHECK(s.isPolymorphic());
-        CHECK(s.acceptsType(Variant::TypeString));
-        CHECK(s.acceptsType(Variant::TypeS32));
-        CHECK(!s.acceptsType(Variant::TypeBool));
+        CHECK(s.acceptsType(DataTypeString));
+        CHECK(s.acceptsType(DataTypeInt32));
+        CHECK(!s.acceptsType(DataTypeBool));
 }
 
 TEST_CASE("VariantSpec_Range") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeS32).setDefault(85).setRange(1, 100);
+        VariantSpec s = VariantSpec().setType(DataTypeInt32).setDefault(85).setRange(1, 100);
         CHECK(s.hasRange());
         CHECK(s.hasMin());
         CHECK(s.hasMax());
@@ -78,7 +78,7 @@ TEST_CASE("VariantSpec_Range") {
 }
 
 TEST_CASE("VariantSpec_MinOnly") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeDouble).setMin(0.0);
+        VariantSpec s = VariantSpec().setType(DataTypeDouble).setMin(0.0);
         CHECK(s.hasMin());
         CHECK(!s.hasMax());
         CHECK(s.validate(Variant(0.0)));
@@ -87,7 +87,7 @@ TEST_CASE("VariantSpec_MinOnly") {
 }
 
 TEST_CASE("VariantSpec_MaxOnly") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeS32).setMax(127);
+        VariantSpec s = VariantSpec().setType(DataTypeInt32).setMax(127);
         CHECK(!s.hasMin());
         CHECK(s.hasMax());
         CHECK(s.validate(Variant(int32_t(0))));
@@ -96,7 +96,7 @@ TEST_CASE("VariantSpec_MaxOnly") {
 }
 
 TEST_CASE("VariantSpec_TypeValidation") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeBool).setDefault(true);
+        VariantSpec s = VariantSpec().setType(DataTypeBool).setDefault(true);
 
         CHECK(s.validate(Variant(true)));
         CHECK(s.validate(Variant(false)));
@@ -108,10 +108,10 @@ TEST_CASE("VariantSpec_TypeValidation") {
 }
 
 TEST_CASE("VariantSpec_OperatorVariant") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeString).setDefault(String("default_path"));
+        VariantSpec s = VariantSpec().setType(DataTypeString).setDefault(String("default_path"));
 
         Variant v = s;
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
         CHECK(v.get<String>() == "default_path");
 }
 
@@ -123,12 +123,12 @@ TEST_CASE("VariantDatabase_DeclareID") {
         using DB = VariantDatabase<"TestSpec">;
         static const DB::ID TestWidth = DB::declareID(
                 "TestWidth",
-                VariantSpec().setType(Variant::TypeS32).setDefault(1920).setDescription("Width in pixels"));
+                VariantSpec().setType(DataTypeInt32).setDefault(1920).setDescription("Width in pixels"));
 
         const VariantSpec *s = DB::spec(TestWidth);
         REQUIRE(s != nullptr);
         CHECK(s->types().size() == 1);
-        CHECK(s->types()[0] == Variant::TypeS32);
+        CHECK(s->types()[0] == DataTypeInt32);
         CHECK(s->defaultValue().get<int32_t>() == 1920);
         CHECK(s->description() == "Width in pixels");
 }
@@ -142,8 +142,8 @@ TEST_CASE("VariantDatabase_SpecReturnsNull") {
 TEST_CASE("VariantDatabase_FromSpecs") {
         using DB = VariantDatabase<"TestSpec">;
         DB::SpecMap specs;
-        DB::ID      a = DB::declareID("SpecA", VariantSpec().setType(Variant::TypeS32).setDefault(10));
-        DB::ID      b = DB::declareID("SpecB", VariantSpec().setType(Variant::TypeBool).setDefault(true));
+        DB::ID      a = DB::declareID("SpecA", VariantSpec().setType(DataTypeInt32).setDefault(10));
+        DB::ID      b = DB::declareID("SpecB", VariantSpec().setType(DataTypeBool).setDefault(true));
         specs.insert(a, *DB::spec(a));
         specs.insert(b, *DB::spec(b));
 
@@ -155,7 +155,7 @@ TEST_CASE("VariantDatabase_FromSpecs") {
 TEST_CASE("VariantDatabase_ValidationWarn") {
         using DB = VariantDatabase<"TestSpec">;
         DB::ID quality =
-                DB::declareID("Quality", VariantSpec().setType(Variant::TypeS32).setDefault(85).setRange(1, 100));
+                DB::declareID("Quality", VariantSpec().setType(DataTypeInt32).setDefault(85).setRange(1, 100));
 
         DB db;
         db.setValidation(SpecValidation::Warn);
@@ -167,7 +167,7 @@ TEST_CASE("VariantDatabase_ValidationWarn") {
 
 TEST_CASE("VariantDatabase_ValidationStrict") {
         using DB = VariantDatabase<"TestSpec">;
-        DB::ID level = DB::declareID("Level", VariantSpec().setType(Variant::TypeS32).setDefault(5).setRange(0, 10));
+        DB::ID level = DB::declareID("Level", VariantSpec().setType(DataTypeInt32).setDefault(5).setRange(0, 10));
 
         DB db;
         db.setValidation(SpecValidation::Strict);
@@ -181,7 +181,7 @@ TEST_CASE("VariantDatabase_ValidationStrict") {
 
 TEST_CASE("VariantDatabase_ValidationNone") {
         using DB = VariantDatabase<"TestSpec">;
-        DB::ID x = DB::declareID("X", VariantSpec().setType(Variant::TypeS32).setDefault(0).setRange(0, 10));
+        DB::ID x = DB::declareID("X", VariantSpec().setType(DataTypeInt32).setDefault(0).setRange(0, 10));
 
         DB db;
         db.setValidation(SpecValidation::None);
@@ -194,23 +194,23 @@ TEST_CASE("VariantDatabase_ValidationNone") {
 // ============================================================================
 
 TEST_CASE("VariantSpec_TypeName_Single") {
-        CHECK(VariantSpec().setType(Variant::TypeBool).typeName() == "bool");
-        CHECK(VariantSpec().setType(Variant::TypeS32).typeName() == "int");
-        CHECK(VariantSpec().setType(Variant::TypeDouble).typeName() == "double");
-        CHECK(VariantSpec().setType(Variant::TypeString).typeName() == "String");
-        CHECK(VariantSpec().setType(Variant::TypeFrameRate).typeName() == "FrameRate");
-        CHECK(VariantSpec().setType(Variant::TypeSize2D).typeName() == "Size2D");
-        CHECK(VariantSpec().setType(Variant::TypeTimecode).typeName() == "Timecode");
-        CHECK(VariantSpec().setType(Variant::TypePixelFormat).typeName() == "PixelFormat");
+        CHECK(VariantSpec().setType(DataTypeBool).typeName() == "bool");
+        CHECK(VariantSpec().setType(DataTypeInt32).typeName() == "int");
+        CHECK(VariantSpec().setType(DataTypeDouble).typeName() == "double");
+        CHECK(VariantSpec().setType(DataTypeString).typeName() == "String");
+        CHECK(VariantSpec().setType(DataTypeFrameRate).typeName() == "FrameRate");
+        CHECK(VariantSpec().setType(DataTypeSize2D).typeName() == "Size2D");
+        CHECK(VariantSpec().setType(DataTypeTimecode).typeName() == "Timecode");
+        CHECK(VariantSpec().setType(DataTypePixelFormat).typeName() == "PixelFormat");
 }
 
 TEST_CASE("VariantSpec_TypeName_Enum") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeEnum).setEnumType(VideoPattern::Type);
+        VariantSpec s = VariantSpec().setType(DataTypeEnum).setEnumType(VideoPattern::Type);
         CHECK(s.typeName() == "Enum VideoPattern");
 }
 
 TEST_CASE("VariantSpec_TypeName_Polymorphic") {
-        VariantSpec s = VariantSpec().setTypes({Variant::TypeString, Variant::TypeS32});
+        VariantSpec s = VariantSpec().setTypes({DataTypeString, DataTypeInt32});
         CHECK(s.typeName() == "String | int");
 }
 
@@ -266,7 +266,7 @@ TEST_CASE("VariantSpec_DefaultString_Bool") {
 
 TEST_CASE("VariantSpec_DefaultString_Enum") {
         VariantSpec s = VariantSpec()
-                                .setType(Variant::TypeEnum)
+                                .setType(DataTypeEnum)
                                 .setDefault(VideoPattern::ColorBars)
                                 .setEnumType(VideoPattern::Type);
         CHECK(s.defaultString() == "ColorBars");
@@ -289,7 +289,7 @@ TEST_CASE("VariantSpec_DefaultString_None") {
 // ============================================================================
 
 TEST_CASE("VariantSpec_ParseString_Bool") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeBool);
+        VariantSpec s = VariantSpec().setType(DataTypeBool);
         CHECK(s.parseString("true").get<bool>() == true);
         CHECK(s.parseString("false").get<bool>() == false);
         CHECK(s.parseString("yes").get<bool>() == true);
@@ -304,7 +304,7 @@ TEST_CASE("VariantSpec_ParseString_Bool") {
 }
 
 TEST_CASE("VariantSpec_ParseString_Int") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeS32);
+        VariantSpec s = VariantSpec().setType(DataTypeInt32);
         CHECK(s.parseString("42").get<int32_t>() == 42);
         CHECK(s.parseString("-7").get<int32_t>() == -7);
         Error err;
@@ -313,13 +313,13 @@ TEST_CASE("VariantSpec_ParseString_Int") {
 }
 
 TEST_CASE("VariantSpec_ParseString_Double") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeDouble);
+        VariantSpec s = VariantSpec().setType(DataTypeDouble);
         CHECK(s.parseString("3.14").get<double>() == doctest::Approx(3.14));
         CHECK(s.parseString("-20").get<double>() == doctest::Approx(-20.0));
 }
 
 TEST_CASE("VariantSpec_ParseString_String") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeString);
+        VariantSpec s = VariantSpec().setType(DataTypeString);
         CHECK(s.parseString("hello world").get<String>() == "hello world");
         CHECK(s.parseString("").get<String>().isEmpty());
 }
@@ -329,7 +329,7 @@ TEST_CASE("VariantSpec_ParseString_String") {
 // ============================================================================
 
 TEST_CASE("VariantSpec_ParseString_Size2D") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeSize2D);
+        VariantSpec s = VariantSpec().setType(DataTypeSize2D);
         Variant     v = s.parseString("1920x1080");
         REQUIRE(v.isValid());
         Size2Du32 sz = v.get<Size2Du32>();
@@ -341,20 +341,20 @@ TEST_CASE("VariantSpec_ParseString_Size2D") {
 }
 
 TEST_CASE("VariantSpec_ParseString_FrameRate") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeFrameRate);
+        VariantSpec s = VariantSpec().setType(DataTypeFrameRate);
         Variant     v = s.parseString("29.97");
         REQUIRE(v.isValid());
         CHECK(v.get<FrameRate>().isValid());
 }
 
 TEST_CASE("VariantSpec_ParseString_Timecode") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeTimecode);
+        VariantSpec s = VariantSpec().setType(DataTypeTimecode);
         Variant     v = s.parseString("01:00:00:00");
         REQUIRE(v.isValid());
 }
 
 TEST_CASE("VariantSpec_ParseString_PixelFormat") {
-        VariantSpec s = VariantSpec().setType(Variant::TypePixelFormat);
+        VariantSpec s = VariantSpec().setType(DataTypePixelFormat);
         Variant     v = s.parseString("RGB8_sRGB");
         REQUIRE(v.isValid());
         CHECK(v.get<PixelFormat>() == PixelFormat(PixelFormat::RGB8_sRGB));
@@ -364,7 +364,7 @@ TEST_CASE("VariantSpec_ParseString_PixelFormat") {
 }
 
 TEST_CASE("VariantSpec_ParseString_PixelMemLayout") {
-        VariantSpec s = VariantSpec().setType(Variant::TypePixelMemLayout);
+        VariantSpec s = VariantSpec().setType(DataTypePixelMemLayout);
         Variant     v = s.parseString("4x8");
         REQUIRE(v.isValid());
         CHECK(v.get<PixelMemLayout>() == PixelMemLayout(PixelMemLayout::I_4x8));
@@ -374,7 +374,7 @@ TEST_CASE("VariantSpec_ParseString_PixelMemLayout") {
 }
 
 TEST_CASE("VariantSpec_ParseString_AudioFormat") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeAudioFormat);
+        VariantSpec s = VariantSpec().setType(DataTypeAudioFormat);
         Variant     v = s.parseString("PCMI_S16LE");
         REQUIRE(v.isValid());
         CHECK(v.get<AudioFormat>().id() == AudioFormat::PCMI_S16LE);
@@ -386,7 +386,7 @@ TEST_CASE("VariantSpec_ParseString_AudioFormat") {
 TEST_CASE("VariantSpec_ParseString_VideoCodec_BareName") {
         // Bare "H264" (no backend pin) must still parse after the switch
         // from lookup() to fromString() — common config-file form.
-        VariantSpec s = VariantSpec().setType(Variant::TypeVideoCodec);
+        VariantSpec s = VariantSpec().setType(DataTypeVideoCodec);
         Variant     v = s.parseString("H264");
         REQUIRE(v.isValid());
         CHECK(v.get<VideoCodec>().id() == VideoCodec::H264);
@@ -396,7 +396,7 @@ TEST_CASE("VariantSpec_ParseString_VideoCodec_BareName") {
 }
 
 TEST_CASE("VariantSpec_ParseString_AudioCodec_BareName") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeAudioCodec);
+        VariantSpec s = VariantSpec().setType(DataTypeAudioCodec);
         Variant     v = s.parseString("AAC");
         REQUIRE(v.isValid());
         CHECK(v.get<AudioCodec>().id() == AudioCodec::AAC);
@@ -406,7 +406,7 @@ TEST_CASE("VariantSpec_ParseString_AudioCodec_BareName") {
 }
 
 TEST_CASE("VariantSpec_ParseString_Enum") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeEnum).setEnumType(VideoPattern::Type);
+        VariantSpec s = VariantSpec().setType(DataTypeEnum).setEnumType(VideoPattern::Type);
         Variant     v = s.parseString("Grid");
         REQUIRE(v.isValid());
         CHECK(v.get<Enum>().value() == VideoPattern::Grid.value());
@@ -422,7 +422,7 @@ TEST_CASE("VariantSpec_ParseString_Enum") {
 }
 
 TEST_CASE("VariantSpec_ParseString_StringList") {
-        VariantSpec s = VariantSpec().setType(Variant::TypeStringList);
+        VariantSpec s = VariantSpec().setType(DataTypeStringList);
         Variant     v = s.parseString("a,b,c");
         REQUIRE(v.isValid());
         StringList sl = v.get<StringList>();
@@ -438,14 +438,14 @@ TEST_CASE("VariantSpec_ParseString_StringList") {
 
 TEST_CASE("VariantSpec_ParseString_Polymorphic") {
         // String | int: string "42" should parse as String (first type tried)
-        VariantSpec s = VariantSpec().setTypes({Variant::TypeString, Variant::TypeS32});
+        VariantSpec s = VariantSpec().setTypes({DataTypeString, DataTypeInt32});
         Variant     v = s.parseString("42");
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
 
         // int | String: "42" should parse as int (first type tried)
-        VariantSpec s2 = VariantSpec().setTypes({Variant::TypeS32, Variant::TypeString});
+        VariantSpec s2 = VariantSpec().setTypes({DataTypeInt32, DataTypeString});
         Variant     v2 = s2.parseString("42");
-        CHECK(v2.type() == Variant::TypeS32);
+        CHECK(v2.type() == DataTypeInt32);
         CHECK(v2.get<int32_t>() == 42);
 }
 
@@ -453,7 +453,7 @@ TEST_CASE("VariantSpec_ParseString_NoType") {
         // No type constraint — returns as String
         VariantSpec s;
         Variant     v = s.parseString("anything");
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
         CHECK(v.get<String>() == "anything");
 }
 
@@ -463,7 +463,7 @@ TEST_CASE("VariantSpec_ParseString_NoType") {
 
 TEST_CASE("VariantSpec_DetailsString") {
         VariantSpec s = VariantSpec()
-                                .setType(Variant::TypeS32)
+                                .setType(DataTypeInt32)
                                 .setDefault(85)
                                 .setRange(1, 100)
                                 .setDescription("JPEG quality 1-100.");
@@ -482,7 +482,7 @@ TEST_CASE("VariantSpec_DetailsString") {
 
 TEST_CASE("VariantSpec_DetailsString_Enum") {
         VariantSpec s = VariantSpec()
-                                .setType(Variant::TypeEnum)
+                                .setType(DataTypeEnum)
                                 .setDefault(VideoPattern::ColorBars)
                                 .setEnumType(VideoPattern::Type)
                                 .setDescription("Selected test pattern.");

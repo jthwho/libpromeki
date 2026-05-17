@@ -291,7 +291,7 @@ TEST_CASE("MediaDuration toString and fromString") {
 TEST_CASE("MediaDuration Variant integration") {
         SUBCASE("Round-trip via Variant") {
                 Variant v(MediaDuration(FrameNumber(0), FrameCount(50)));
-                CHECK(v.type() == Variant::TypeMediaDuration);
+                CHECK(v.type() == DataTypeMediaDuration);
                 MediaDuration d = v.get<MediaDuration>();
                 CHECK(d.start().value() == 0);
                 CHECK(d.length().value() == 50);

@@ -120,7 +120,7 @@ class DataStream;
  *
  * @par Variant integration
  *
- * Registered as @c Variant::TypeHdrDynamic2094_40 so @ref
+ * Registered as @c DataTypeHdrDynamic2094_40 so @ref
  * AncTranslator parse / build functions return / consume it through
  * their @c Result<Variant> interfaces.
  *
@@ -134,6 +134,8 @@ class DataStream;
  */
 class HdrDynamic2094_40 {
         public:
+                PROMEKI_DATATYPE(HdrDynamic2094_40, DataTypeHdrDynamic2094_40, 1)
+
                 /** @brief Maximum @c num_windows value (u(2) wire field). */
                 static constexpr uint8_t MaxWindows = 3;
 
@@ -388,6 +390,22 @@ class HdrDynamic2094_40 {
                 /** @brief Returns a short human-readable summary. */
                 String toString() const;
 
+                /**
+                 * @brief DataStream body writer for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 *
+                 * Wire body: the canonical ST 2094-40 byte stream
+                 * (the same bytes @ref toBuffer produces) length-prefixed
+                 * as a @ref Buffer.  Round-trips through @ref fromBuffer.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream body reader for the
+                 *        @ref PROMEKI_DATATYPE member-API path.
+                 */
+                template <uint32_t V> static Result<HdrDynamic2094_40> readFromStream(DataStream &s);
+
         private:
                 uint8_t                _applicationVersion = 0;
                 uint8_t                _numWindows = 1;
@@ -397,12 +415,6 @@ class HdrDynamic2094_40 {
                 List<WindowProcessing> _windowProcessing;
                 ActualPeakLuminance    _masteringDisplayActualPeakLuminance;
 };
-
-/** @brief Writes an @ref HdrDynamic2094_40 to a @ref DataStream. */
-DataStream &operator<<(DataStream &stream, const HdrDynamic2094_40 &md);
-
-/** @brief Reads an @ref HdrDynamic2094_40 from a @ref DataStream. */
-DataStream &operator>>(DataStream &stream, HdrDynamic2094_40 &md);
 
 PROMEKI_NAMESPACE_END
 

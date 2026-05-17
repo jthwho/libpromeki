@@ -22,19 +22,19 @@ namespace {
 // child nodes.
 nlohmann::json encodeVariant(const Variant &val) {
         switch (val.type()) {
-                case Variant::TypeInvalid: return nullptr;
-                case Variant::TypeBool: return val.get<bool>();
-                case Variant::TypeU8: return val.get<uint8_t>();
-                case Variant::TypeS8: return val.get<int8_t>();
-                case Variant::TypeU16: return val.get<uint16_t>();
-                case Variant::TypeS16: return val.get<int16_t>();
-                case Variant::TypeU32: return val.get<uint32_t>();
-                case Variant::TypeS32: return val.get<int32_t>();
-                case Variant::TypeU64: return val.get<uint64_t>();
-                case Variant::TypeS64: return val.get<int64_t>();
-                case Variant::TypeFloat: return val.get<float>();
-                case Variant::TypeDouble: return val.get<double>();
-                case Variant::TypeVariantList: {
+                case DataTypeInvalid: return nullptr;
+                case DataTypeBool: return val.get<bool>();
+                case DataTypeUInt8: return val.get<uint8_t>();
+                case DataTypeInt8: return val.get<int8_t>();
+                case DataTypeUInt16: return val.get<uint16_t>();
+                case DataTypeInt16: return val.get<int16_t>();
+                case DataTypeUInt32: return val.get<uint32_t>();
+                case DataTypeInt32: return val.get<int32_t>();
+                case DataTypeUInt64: return val.get<uint64_t>();
+                case DataTypeInt64: return val.get<int64_t>();
+                case DataTypeFloat: return val.get<float>();
+                case DataTypeDouble: return val.get<double>();
+                case DataTypeVariantList: {
                         nlohmann::json     arr = nlohmann::json::array();
                         const VariantList *vl = val.peek<VariantList>();
                         if (vl != nullptr) {
@@ -43,7 +43,7 @@ nlohmann::json encodeVariant(const Variant &val) {
                         }
                         return arr;
                 }
-                case Variant::TypeVariantMap: {
+                case DataTypeVariantMap: {
                         nlohmann::json    obj = nlohmann::json::object();
                         const VariantMap *vm = val.peek<VariantMap>();
                         if (vm != nullptr) {

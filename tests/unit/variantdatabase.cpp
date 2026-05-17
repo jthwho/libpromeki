@@ -445,7 +445,7 @@ TEST_CASE("VariantDatabase: setFromJson coerces JSON strings via registered spec
         using DB = VariantDatabase<"SpecCoerceTag">;
         const DB::ID sizeId = DB::declareID(
                 "size",
-                VariantSpec().setType(Variant::TypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
+                VariantSpec().setType(DataTypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
 
         DB db;
         CHECK(db.set(sizeId, Size2Du32(1920, 1080)));
@@ -457,7 +457,7 @@ TEST_CASE("VariantDatabase: setFromJson coerces JSON strings via registered spec
         JsonObject reparsed = JsonObject::parse(text);
 
         DB db2 = DB::fromJson(reparsed);
-        CHECK(db2.get(sizeId).type() == Variant::TypeSize2D);
+        CHECK(db2.get(sizeId).type() == DataTypeSize2D);
         CHECK(db2.get(sizeId).get<Size2Du32>() == Size2Du32(1920, 1080));
 }
 
@@ -466,13 +466,13 @@ TEST_CASE("VariantDatabase: setFromJson leaves legitimate strings alone") {
         // in memory — no reparsing should kick in.
         using DB = VariantDatabase<"SpecStringPassthruTag">;
         const DB::ID nameId = DB::declareID(
-                "name", VariantSpec().setType(Variant::TypeString).setDefault(String()).setDescription("Any string."));
+                "name", VariantSpec().setType(DataTypeString).setDefault(String()).setDescription("Any string."));
 
         DB db;
         db.set(nameId, String("hello world"));
         DB db2 = DB::fromJson(db.toJson());
 
-        CHECK(db2.get(nameId).type() == Variant::TypeString);
+        CHECK(db2.get(nameId).type() == DataTypeString);
         CHECK(db2.get(nameId).get<String>() == "hello world");
 }
 
@@ -505,7 +505,7 @@ TEST_CASE("VariantDatabase: set surfaces validator error in Strict mode") {
         // out-param.
         using DB = VariantDatabase<"StrictRangeTag">;
         const DB::ID rangedId = DB::declareID("ranged", VariantSpec()
-                                                                .setType(Variant::TypeS32)
+                                                                .setType(DataTypeInt32)
                                                                 .setDefault(int32_t(50))
                                                                 .setRange(int32_t(1), int32_t(100))
                                                                 .setDescription("Ranged int."));
@@ -534,7 +534,7 @@ TEST_CASE("VariantDatabase: setFromJson surfaces parseString failure for unparse
         using DB = VariantDatabase<"ParseFailTag">;
         const DB::ID sizeId = DB::declareID(
                 "size",
-                VariantSpec().setType(Variant::TypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
+                VariantSpec().setType(DataTypeSize2D).setDefault(Size2Du32()).setDescription("Image size."));
 
         DB    db;
         Error err = db.setFromJson(sizeId, Variant(String("not-a-size")));
@@ -550,7 +550,7 @@ TEST_CASE("VariantDatabase: setFromJson returns Error::Invalid on Strict spec re
         // back out through setFromJson.
         using DB = VariantDatabase<"StrictRejectTag">;
         const DB::ID id = DB::declareID("port", VariantSpec()
-                                                        .setType(Variant::TypeS32)
+                                                        .setType(DataTypeInt32)
                                                         .setDefault(int32_t(8080))
                                                         .setRange(int32_t(1), int32_t(65535))
                                                         .setDescription("TCP port."));
@@ -568,7 +568,7 @@ TEST_CASE("VariantDatabase: setFromJson returns Ok in Warn mode even when valida
         // semantics.
         using DB = VariantDatabase<"WarnModeTag">;
         const DB::ID id = DB::declareID("warn.port", VariantSpec()
-                                                             .setType(Variant::TypeS32)
+                                                             .setType(DataTypeInt32)
                                                              .setDefault(int32_t(8080))
                                                              .setRange(int32_t(1), int32_t(65535))
                                                              .setDescription("TCP port."));
@@ -944,15 +944,15 @@ namespace {
                         // strings like ["1","2","3"] parse through to int32.
                         PROMEKI_DECLARE_ID(IntList,
                                            VariantSpec()
-                                                   .setType(Variant::TypeVariantList)
-                                                   .setElementSpec(VariantSpec().setType(Variant::TypeS32)));
+                                                   .setType(DataTypeVariantList)
+                                                   .setElementSpec(VariantSpec().setType(DataTypeInt32)));
         };
 
         struct CoerceMapDB : public VariantDatabase<"CoerceTagMapOfInts"> {
                         PROMEKI_DECLARE_ID(IntMap,
                                            VariantSpec()
-                                                   .setType(Variant::TypeVariantMap)
-                                                   .setValueSpec(VariantSpec().setType(Variant::TypeS32)));
+                                                   .setType(DataTypeVariantMap)
+                                                   .setValueSpec(VariantSpec().setType(DataTypeInt32)));
         };
 } // namespace
 
@@ -969,10 +969,10 @@ TEST_CASE("VariantDatabase: setFromJson coerces nested list elements") {
         CHECK(err.isOk());
 
         Variant stored = db.get(CoerceDB::IntList);
-        REQUIRE(stored.type() == Variant::TypeVariantList);
+        REQUIRE(stored.type() == DataTypeVariantList);
         VariantList out = stored.get<VariantList>();
         REQUIRE(out.size() == 3);
-        CHECK(out[0].type() == Variant::TypeS32);
+        CHECK(out[0].type() == DataTypeInt32);
         CHECK(out[0].get<int32_t>() == 1);
         CHECK(out[1].get<int32_t>() == 2);
         CHECK(out[2].get<int32_t>() == 3);
@@ -988,9 +988,9 @@ TEST_CASE("VariantDatabase: setFromJson coerces nested map values") {
         CHECK(err.isOk());
 
         Variant stored = db.get(CoerceMapDB::IntMap);
-        REQUIRE(stored.type() == Variant::TypeVariantMap);
+        REQUIRE(stored.type() == DataTypeVariantMap);
         VariantMap out = stored.get<VariantMap>();
-        CHECK(out.value("a").type() == Variant::TypeS32);
+        CHECK(out.value("a").type() == DataTypeInt32);
         CHECK(out.value("a").get<int32_t>() == 10);
         CHECK(out.value("b").get<int32_t>() == 20);
 }
@@ -1019,7 +1019,7 @@ TEST_CASE("VariantDatabase: fromJson round-trips through nested coercion") {
         DB          db = DB::fromJson(jo);
         VariantList out = db.get(CoerceDB::IntList).get<VariantList>();
         REQUIRE(out.size() == 3);
-        CHECK(out[0].type() == Variant::TypeS32);
+        CHECK(out[0].type() == DataTypeInt32);
         CHECK(out[0].get<int32_t>() == 7);
         CHECK(out[2].get<int32_t>() == 9);
 }

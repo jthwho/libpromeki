@@ -8,6 +8,7 @@
 #include <chrono>
 #include <ctime>
 #include <promeki/umid.h>
+#include <promeki/datastream.h>
 #include <promeki/random.h>
 #include <promeki/logger.h>
 
@@ -196,6 +197,36 @@ String UMID::toString() const {
         }
         *out = '\0';
         return String(buf, n * 2);
+}
+
+// ============================================================================
+// DataStream wire format (v1: uint8 length followed by N raw bytes;
+// length = 0 for Invalid, 32 for Basic, 64 for Extended).
+// ============================================================================
+
+Error UMID::writeToStream(DataStream &s) const {
+        const uint8_t n = static_cast<uint8_t>(byteSize());
+        s << n;
+        if (n > 0) s.writeRawData(raw(), n);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<UMID> UMID::readFromStream<1>(DataStream &s) {
+        uint8_t n = 0;
+        s >> n;
+        if (s.status() != DataStream::Ok) return makeError<UMID>(s.toError());
+        if (n != 0 && n != BasicSize && n != ExtendedSize) {
+                return makeError<UMID>(Error::CorruptData);
+        }
+        if (n == 0) return makeResult(UMID());
+        uint8_t tmp[ExtendedSize] = {};
+        if (s.readRawData(tmp, n) != static_cast<ssize_t>(n)) {
+                return makeError<UMID>(s.toError());
+        }
+        UMID u = UMID::fromBytes(tmp, n);
+        if (!u.isValid()) return makeError<UMID>(Error::CorruptData);
+        return makeResult(u);
 }
 
 PROMEKI_NAMESPACE_END

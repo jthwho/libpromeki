@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <promeki/datetime.h>
+#include <promeki/datastream.h>
 #include <promeki/map.h>
 #include <promeki/stringlist.h>
 #include <promeki/logger.h>
@@ -139,6 +140,26 @@ DateTime DateTime::fromNow(const String &description) {
         future_time = system_clock::from_time_t(normalized_time_t);
 
         return DateTime(future_time);
+}
+
+// ============================================================================
+// DataStream wire format (v1: int64 nanoseconds since system_clock epoch).
+// ============================================================================
+
+Error DateTime::writeToStream(DataStream &s) const {
+        const int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                   _value.time_since_epoch())
+                                   .count();
+        s << ns;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<DateTime> DateTime::readFromStream<1>(DataStream &s) {
+        int64_t ns = 0;
+        s >> ns;
+        if (s.status() != DataStream::Ok) return makeError<DateTime>(s.toError());
+        return makeResult(DateTime(Value(std::chrono::nanoseconds(ns))));
 }
 
 PROMEKI_NAMESPACE_END

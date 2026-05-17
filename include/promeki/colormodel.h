@@ -18,8 +18,11 @@
 #include <promeki/result.h>
 #include <promeki/ciepoint.h>
 #include <promeki/matrix3x3.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Single source of truth for a color model and its associated color space.
@@ -139,6 +142,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class ColorModel {
         public:
+                PROMEKI_DATATYPE(ColorModel, DataTypeColorModel, 1)
+
+                /** @brief Writes the registered model name as a tagged String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the registered model name and looks it up. */
+                template <uint32_t V> static Result<ColorModel> readFromStream(DataStream &s);
+
                 /**
                  * @brief Identifies a color model.
                  *
@@ -391,6 +401,9 @@ class ColorModel {
 
                 /** @brief Returns the human-readable name of this model. */
                 const String &name() const { return _d->name; }
+
+                /** @brief Canonical String form: the registered @ref name. */
+                String toString() const { return _d->name; }
 
                 /** @brief Returns a longer description of this model. */
                 const String &desc() const { return _d->desc; }

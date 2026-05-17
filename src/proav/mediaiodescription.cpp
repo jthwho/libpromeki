@@ -277,7 +277,7 @@ bool MediaIODescription::operator==(const MediaIODescription &other) const {
 // ============================================================================
 
 DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
-        stream.beginFrame(DataStream::TypeMediaIODescription, 1);
+        stream.beginFrame(DataTypeMediaIODescription, 1);
         stream << d.backendName();
         stream << d.backendDescription();
         stream << d.name();
@@ -299,7 +299,7 @@ DataStream &operator<<(DataStream &stream, const MediaIODescription &d) {
 
 DataStream &operator>>(DataStream &stream, MediaIODescription &d) {
         d = MediaIODescription();
-        if (!stream.readFrame(DataStream::TypeMediaIODescription)) return stream;
+        if (!stream.readFrame(DataTypeMediaIODescription)) return stream;
 
         String          backendName, backendDescription, name, probeMessage;
         bool            canBeSource = false, canBeSink = false, canBeTransform = false;

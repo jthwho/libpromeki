@@ -114,11 +114,16 @@ class RtmpClient : public ObjectBase {
                  *        peer verification when the URL scheme is
                  *        @c rtmps:.
                  *
-                 * Must be called before @ref open.  When unset the
-                 * client builds a default @ref SslContext that
-                 * trusts the system CA bundle.
+                 * Optional — a default-constructed @ref SslContext
+                 * already auto-loads the system CA bundle, so
+                 * @c rtmps:// against publicly-trusted servers
+                 * works without any setup.  Configure a custom
+                 * context when you need a private CA or to disable
+                 * verification (@c setVerifyPeer(false)) for
+                 * self-signed test servers.  Must be called before
+                 * @ref open.
                  */
-                void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
+                void setSslContext(SslContext ctx) { _sslContext = std::move(ctx); }
 #endif
 
                 /**
@@ -319,7 +324,7 @@ class RtmpClient : public ObjectBase {
                 UniquePtr<ReaderThread>      _reader;
 
 #if defined(PROMEKI_ENABLE_TLS)
-                SslContext::Ptr              _sslContext;
+                SslContext              _sslContext;
                 bool                         _isTls = false;
 #endif
 

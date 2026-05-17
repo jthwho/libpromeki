@@ -164,7 +164,7 @@ TEST_CASE("FrameNumber toString and fromString") {
 TEST_CASE("FrameNumber Variant integration") {
         SUBCASE("Round-trip via Variant") {
                 Variant v(FrameNumber(99));
-                CHECK(v.type() == Variant::TypeFrameNumber);
+                CHECK(v.type() == DataTypeFrameNumber);
                 FrameNumber fn = v.get<FrameNumber>();
                 CHECK(fn.value() == 99);
         }

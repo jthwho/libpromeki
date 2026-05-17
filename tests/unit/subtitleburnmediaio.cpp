@@ -165,7 +165,7 @@ TEST_CASE("SubtitleBurnMediaIO: passes ANC payload, metadata, captureTime, and c
         // --- Metadata::Subtitle is still on the output ---
         REQUIRE(out.metadata().contains(Metadata::Subtitle));
         Variant subVar = out.metadata().get(Metadata::Subtitle);
-        REQUIRE(subVar.type() == Variant::TypeSubtitle);
+        REQUIRE(subVar.type() == DataTypeSubtitle);
         Subtitle outCue = subVar.get<Subtitle>();
         CHECK_FALSE(outCue.isEmpty());
 

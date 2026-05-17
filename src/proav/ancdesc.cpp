@@ -132,7 +132,7 @@ bool AncDesc::operator==(const AncDesc &other) const {
 // ---------------------------------------------------------------------------
 
 DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
-        stream.beginFrame(DataStream::TypeAncDesc, 1);
+        stream.beginFrame(DataTypeAncDesc, 1);
         stream << desc.sourceRaster();
         stream << desc.scanMode();
         stream << desc.frameRate();
@@ -150,7 +150,7 @@ DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
 }
 
 DataStream &operator>>(DataStream &stream, AncDesc &desc) {
-        if (!stream.readFrame(DataStream::TypeAncDesc)) {
+        if (!stream.readFrame(DataTypeAncDesc)) {
                 desc = AncDesc();
                 return stream;
         }

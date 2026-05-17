@@ -162,7 +162,7 @@ namespace {
 // ============================================================================
 
 DataStream &operator<<(DataStream &s, const MediaPayload::Ptr &p) {
-        s.beginFrame(DataStream::TypeMediaPayload, 1);
+        s.beginFrame(DataTypeMediaPayload, 1);
         const bool valid = p.isValid();
         s << static_cast<uint32_t>(valid ? p->subclassFourCC() : 0u);
         if (!valid) return s;
@@ -203,7 +203,7 @@ DataStream &operator<<(DataStream &s, const MediaPayload::Ptr &p) {
 
 DataStream &operator>>(DataStream &s, MediaPayload::Ptr &p) {
         p = MediaPayload::Ptr();
-        if (!s.readFrame(DataStream::TypeMediaPayload)) return s;
+        if (!s.readFrame(DataTypeMediaPayload)) return s;
 
         uint32_t fourcc = 0;
         s >> fourcc;
@@ -428,7 +428,7 @@ PROMEKI_LOOKUP_REGISTER(MediaPayload)
                         // Accept either the string form (comma-separated
                         // names / bit indices emitted by the getter) or
                         // a raw integer mask for programmatic callers.
-                        if (v.type() == Variant::TypeString) {
+                        if (v.type() == DataTypeString) {
                                 Error  e;
                                 String s = v.get<String>(&e);
                                 if (e.isError()) return Error::ConversionFailed;

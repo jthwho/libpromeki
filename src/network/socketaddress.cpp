@@ -6,6 +6,7 @@
  */
 
 #include <promeki/socketaddress.h>
+#include <promeki/datastream.h>
 #include <promeki/textstream.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -111,6 +112,23 @@ size_t SocketAddress::toSockAddr(struct sockaddr_storage *storage) const {
 TextStream &operator<<(TextStream &stream, const SocketAddress &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: canonical "host:port" String).
+// ============================================================================
+
+Error SocketAddress::writeToStream(DataStream &s) const {
+        s << toString();
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<SocketAddress> SocketAddress::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<SocketAddress>(s.toError());
+        return SocketAddress::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

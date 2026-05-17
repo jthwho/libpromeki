@@ -6,6 +6,7 @@
  */
 
 #include <promeki/pixelmemlayout.h>
+#include <promeki/datastream.h>
 #include <promeki/atomic.h>
 #include <promeki/map.h>
 #include <promeki/util.h>
@@ -1439,6 +1440,23 @@ PixelMemLayout::IDList PixelMemLayout::registeredIDs() {
                 if (id != Invalid) ret.pushToBack(id);
         }
         return ret;
+}
+
+// ============================================================================
+// DataStream wire format (v1: tagged String holding the registered name).
+// ============================================================================
+
+Error PixelMemLayout::writeToStream(DataStream &s) const {
+        s << String(name());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<PixelMemLayout> PixelMemLayout::readFromStream<1>(DataStream &s) {
+        String str;
+        s >> str;
+        if (s.status() != DataStream::Ok) return makeError<PixelMemLayout>(s.toError());
+        return PixelMemLayout::fromString(str);
 }
 
 PROMEKI_NAMESPACE_END

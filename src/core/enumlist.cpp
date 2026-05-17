@@ -6,6 +6,7 @@
  */
 
 #include <promeki/enumlist.h>
+#include <promeki/datastream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -75,63 +76,90 @@ EnumList EnumList::uniqueSorted() const {
 
 String EnumList::toString() const {
         if (_values.isEmpty()) return String();
+        if (!_type.isValid()) return String();
         String out;
         for (size_t i = 0; i < _values.size(); ++i) {
                 if (i > 0) out += ',';
-                // Prefer the registered name; fall back to the decimal
-                // integer for out-of-list values so fromString() can
-                // still round-trip the result.
+                // Emit just the short value name for readability.  The
+                // single-arg fromString round-trip needs the qualified
+                // form; Variant supplies the type via the bespoke
+                // String -> EnumList path in @c variantspec.cpp when
+                // the destination is known from context.  Out-of-list
+                // values fall back to the decimal integer.
                 String name = Enum::nameOf(_type, _values[i]);
-                if (name.isEmpty()) {
-                        out += String::number(_values[i]);
-                } else {
-                        out += name;
-                }
+                if (name.isEmpty()) out += String::number(_values[i]);
+                else                out += name;
         }
         return out;
 }
 
-EnumList EnumList::fromString(Enum::Type type, const String &text, Error *err) {
-        EnumList out(type);
-        if (!type.isValid()) {
-                if (err) *err = Error::InvalidArgument;
-                return EnumList();
-        }
-        if (err) *err = Error::Ok;
-
+Result<EnumList> EnumList::fromString(const String &text) {
         String trimmedText = text.trim();
         if (trimmedText.isEmpty()) {
-                // Empty input is legal: yields a valid, empty list.
-                return out;
+                // Empty input is legal: yields an empty, unbound list.
+                return makeResult(EnumList());
         }
 
         StringList parts = trimmedText.split(",");
+        Enum::Type type;
+        EnumList   out;
         for (size_t i = 0; i < parts.size(); ++i) {
                 String entry = parts[i].trim();
                 if (entry.isEmpty()) {
-                        if (err) *err = Error::InvalidArgument;
-                        return EnumList();
+                        // Tolerate empty entries between commas — they
+                        // mirror the legacy parser's behavior and keep
+                        // trailing-comma input working.
+                        continue;
                 }
-
-                // Try the registered name first; fall back to integer
-                // parsing so out-of-list decimal values round-trip
-                // through toString() / fromString() cleanly.
-                auto lookup = Enum::valueOf(type, entry);
-                int  v = 0;
-                if (lookup.second().isOk()) {
-                        v = lookup.first();
-                } else {
-                        Error intErr;
-                        int   parsed = entry.to<int>(&intErr);
-                        if (intErr.isError()) {
-                                if (err) *err = Error::InvalidArgument;
-                                return EnumList();
-                        }
-                        v = parsed;
+                Error  le;
+                Enum   e = Enum::lookup(entry, &le);
+                if (le.isError() || !e.type().isValid()) {
+                        return makeError<EnumList>(Error::ParseFailed);
                 }
-                out._values.pushToBack(v);
+                if (!type.isValid()) {
+                        type = e.type();
+                        out = EnumList(type);
+                } else if (e.type() != type) {
+                        // Every entry must share the type deduced from
+                        // the first entry — mixing types in a single
+                        // EnumList is meaningless.
+                        return makeError<EnumList>(Error::ParseFailed);
+                }
+                out._values.pushToBack(e.value());
         }
-        return out;
+        return makeResult(std::move(out));
+}
+
+// ============================================================================
+// DataStream wire format (v1: element type name + uint32 count + N int32 values).
+// ============================================================================
+
+Error EnumList::writeToStream(DataStream &s) const {
+        // Element type name (empty for an invalid EnumList).
+        s << String(elementType().name());
+        s << static_cast<uint32_t>(_values.size());
+        for (size_t i = 0; i < _values.size(); ++i) {
+                s << static_cast<int32_t>(_values[i]);
+        }
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<EnumList> EnumList::readFromStream<1>(DataStream &s) {
+        String typeName;
+        uint32_t count = 0;
+        s >> typeName >> count;
+        if (s.status() != DataStream::Ok) return makeError<EnumList>(s.toError());
+        if (count > (256u * 1024u * 1024u)) return makeError<EnumList>(Error::CorruptData);
+        Enum::Type t = typeName.isEmpty() ? Enum::Type() : Enum::findType(typeName);
+        EnumList out(t);
+        for (uint32_t i = 0; i < count; ++i) {
+                int32_t v = 0;
+                s >> v;
+                if (s.status() != DataStream::Ok) return makeError<EnumList>(s.toError());
+                out._values.pushToBack(static_cast<int>(v));
+        }
+        return makeResult(std::move(out));
 }
 
 PROMEKI_NAMESPACE_END

@@ -10,9 +10,12 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <numeric>
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <numeric>
 #include <promeki/namespace.h>
+#include <promeki/result.h>
 #include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -125,6 +128,31 @@ template <typename T = int> class Rational {
                 double toDouble() const {
                         if (!isValid()) return 0.0;
                         return static_cast<double>(_num) / static_cast<double>(_den);
+                }
+
+                /**
+                 * @brief Constructs a Rational from a @c double.
+                 *
+                 * Conservative: accepts only finite integer values
+                 * (where the input round-trips exactly via
+                 * @c static_cast<T>) and produces @c Rational(N, 1).
+                 * Non-integer inputs intentionally fail with
+                 * @c Error::ParseFailed — rationalization of an
+                 * arbitrary double is ambiguous and lossy, and silent
+                 * approximation tends to lose more information than
+                 * it preserves.  Callers that have a known rational
+                 * to encode should use the explicit @c Rational(num,
+                 * den) constructor instead.
+                 */
+                static Result<Rational<T>> fromDouble(double val) {
+                        if (!std::isfinite(val)) return makeError<Rational<T>>(Error::ParseFailed);
+                        double rounded = std::nearbyint(val);
+                        if (rounded != val) return makeError<Rational<T>>(Error::ParseFailed);
+                        if (rounded < static_cast<double>(std::numeric_limits<T>::lowest()) ||
+                            rounded > static_cast<double>(std::numeric_limits<T>::max())) {
+                                return makeError<Rational<T>>(Error::OutOfRange);
+                        }
+                        return makeResult(Rational<T>(static_cast<T>(rounded), T(1)));
                 }
 
                 /** @brief Converts to a String in "num/den" format. */

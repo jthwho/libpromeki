@@ -19,8 +19,11 @@
 #include <promeki/enums.h>
 #include <promeki/result.h>
 #include <promeki/error.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 class PixelFormat;
 class VideoEncoder;
@@ -116,6 +119,13 @@ using VideoCodecBackendRegistry = StringRegistry<"VideoCodecBackend">;
  */
 class VideoCodec {
         public:
+                PROMEKI_DATATYPE(VideoCodec, DataTypeVideoCodec, 1)
+
+                /** @brief Writes the canonical "Codec[:Backend]" string. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical "Codec[:Backend]" string. */
+                template <uint32_t V> static Result<VideoCodec> readFromStream(DataStream &s);
+
                 /**
                  * @brief Identifies a video codec family.
                  *

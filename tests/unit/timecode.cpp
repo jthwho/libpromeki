@@ -290,42 +290,42 @@ TEST_CASE("Timecode fromString") {
 TEST_CASE("Timecode toString") {
         SUBCASE("DF30 default format uses semicolon") {
                 Timecode tc(Timecode::DF30, 1, 2, 3, 4);
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("01:02:03;04"));
         }
 
         SUBCASE("NDF30 default format uses colons") {
                 Timecode tc(Timecode::NDF30, 1, 2, 3, 4);
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("01:02:03:04"));
         }
 
         SUBCASE("NDF24") {
                 Timecode tc(Timecode::NDF24, 0, 0, 0, 23);
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("00:00:00:23"));
         }
 
         SUBCASE("NDF25") {
                 Timecode tc(Timecode::NDF25, 12, 34, 56, 24);
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("12:34:56:24"));
         }
 
         SUBCASE("SMPTE with fps suffix") {
                 Timecode tc(Timecode::NDF30, 1, 2, 3, 4);
-                auto [s, e] = tc.toString(&VTC_STR_FMT_SMPTE_WITH_FPS);
+                auto [s, e] = tc.toFormatString(&VTC_STR_FMT_SMPTE_WITH_FPS);
                 CHECK(e.isOk());
                 CHECK(s == String("01:02:03:04/30"));
         }
 
         SUBCASE("Invalid timecode renders as the canonical sentinel") {
                 Timecode tc;
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("--:--:--:--"));
         }
@@ -334,7 +334,7 @@ TEST_CASE("Timecode toString") {
                 // Valid digits, no frame rate (Mode(0u, 0u)) — toString
                 // lays out the digits ourselves rather than failing.
                 Timecode tc(1, 2, 3, 4);
-                auto [s, e] = tc.toString();
+                auto [s, e] = tc.toFormatString();
                 CHECK(e.isOk());
                 CHECK(s == String("01:02:03:04"));
         }
@@ -708,9 +708,7 @@ TEST_CASE("Timecode vtcFormat access") {
 TEST_CASE("Timecode invalid renders as the canonical sentinel string") {
         Timecode tc; // default-constructed; isValid() == false
         REQUIRE_FALSE(tc.isValid());
-        auto r = tc.toString();
-        REQUIRE(r.second().isOk());
-        CHECK(r.first() == String("--:--:--:--"));
+        CHECK(tc.toString() == String("--:--:--:--"));
 }
 
 TEST_CASE("Timecode format-less renders as plain digits") {
@@ -720,9 +718,7 @@ TEST_CASE("Timecode format-less renders as plain digits") {
         Timecode tc(1, 23, 45, 12);
         REQUIRE(tc.isValid());
         CHECK_FALSE(tc.mode().hasFormat());
-        auto r = tc.toString();
-        REQUIRE(r.second().isOk());
-        CHECK(r.first() == String("01:23:45:12"));
+        CHECK(tc.toString() == String("01:23:45:12"));
 }
 
 TEST_CASE("Timecode fromString accepts the invalid sentinel") {
@@ -731,9 +727,7 @@ TEST_CASE("Timecode fromString accepts the invalid sentinel") {
         CHECK_FALSE(r.first().isValid());
         // And it round-trips: the invalid Timecode renders back to
         // the same sentinel string.
-        auto r2 = r.first().toString();
-        REQUIRE(r2.second().isOk());
-        CHECK(r2.first() == String("--:--:--:--"));
+        CHECK(r.first().toString() == String("--:--:--:--"));
 }
 
 TEST_CASE("Timecode fromString accepts empty as invalid") {
@@ -760,9 +754,7 @@ TEST_CASE("Timecode fromBcd64 produces format-less digits when given no mode") {
         CHECK(tc.sec() == 45);
         CHECK(tc.frame() == 12);
 
-        auto rs = tc.toString();
-        REQUIRE(rs.second().isOk());
-        CHECK(rs.first() == String("01:23:45:12"));
+        CHECK(tc.toString() == String("01:23:45:12"));
 
         FrameNumber rf = tc.toFrameNumber();
         CHECK(rf.isUnknown());

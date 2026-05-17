@@ -66,7 +66,7 @@ using namespace promeki;
 TEST_CASE("Variant_Default") {
         Variant v;
         CHECK(!v.isValid());
-        CHECK(v.type() == Variant::TypeInvalid);
+        CHECK(v.type() == DataTypeInvalid);
 }
 
 // ============================================================================
@@ -76,7 +76,7 @@ TEST_CASE("Variant_Default") {
 TEST_CASE("Variant_Bool") {
         Variant v(true);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeBool);
+        CHECK(v.type() == DataTypeBool);
         CHECK(v.get<bool>() == true);
 
         Variant v2(false);
@@ -85,41 +85,41 @@ TEST_CASE("Variant_Bool") {
 
 TEST_CASE("Variant_Int") {
         Variant v(int32_t(42));
-        CHECK(v.type() == Variant::TypeS32);
+        CHECK(v.type() == DataTypeInt32);
         CHECK(v.get<int32_t>() == 42);
 
         Variant v2(int64_t(-99));
-        CHECK(v2.type() == Variant::TypeS64);
+        CHECK(v2.type() == DataTypeInt64);
         CHECK(v2.get<int64_t>() == -99);
 }
 
 TEST_CASE("Variant_UInt") {
         Variant v(uint32_t(100));
-        CHECK(v.type() == Variant::TypeU32);
+        CHECK(v.type() == DataTypeUInt32);
         CHECK(v.get<uint32_t>() == 100);
 
         Variant v2(uint64_t(12345));
-        CHECK(v2.type() == Variant::TypeU64);
+        CHECK(v2.type() == DataTypeUInt64);
         CHECK(v2.get<uint64_t>() == 12345);
 }
 
 TEST_CASE("Variant_Float") {
         Variant v(3.14f);
-        CHECK(v.type() == Variant::TypeFloat);
+        CHECK(v.type() == DataTypeFloat);
         CHECK(v.get<float>() > 3.13f);
         CHECK(v.get<float>() < 3.15f);
 }
 
 TEST_CASE("Variant_Double") {
         Variant v(2.718281828);
-        CHECK(v.type() == Variant::TypeDouble);
+        CHECK(v.type() == DataTypeDouble);
         CHECK(v.get<double>() > 2.71);
         CHECK(v.get<double>() < 2.72);
 }
 
 TEST_CASE("Variant_String") {
         Variant v(String("hello"));
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
         CHECK(v.get<String>() == "hello");
 }
 
@@ -219,11 +219,11 @@ TEST_CASE("Variant_Set") {
 
         v.set(int32_t(42));
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeS32);
+        CHECK(v.type() == DataTypeInt32);
         CHECK(v.get<int32_t>() == 42);
 
         v.set(String("changed"));
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
         CHECK(v.get<String>() == "changed");
 }
 
@@ -293,7 +293,7 @@ TEST_CASE("Variant_EqualityCrossNumeric") {
 TEST_CASE("Variant_EqualityCrossConvertible") {
         // Timecode <-> String
         Timecode tc = Timecode::fromFrameNumber(Timecode::NDF24, 86400);
-        auto [tcStr, strErr] = tc.toString();
+        String   tcStr = tc.toString();
         CHECK(Variant(tc) == Variant(tcStr));
 
         // UUID <-> String
@@ -327,7 +327,7 @@ TEST_CASE("Variant_StringList") {
 
         Variant v(sl);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeStringList);
+        CHECK(v.type() == DataTypeStringList);
 
         StringList out = v.get<StringList>();
         CHECK(out.size() == 3);
@@ -380,7 +380,7 @@ TEST_CASE("Variant_VariantListFromJson") {
         // the flattened form.
         nlohmann::json j = nlohmann::json::array({"foo", "bar", "baz"});
         Variant        v = Variant::fromJson(j);
-        CHECK(v.type() == Variant::TypeVariantList);
+        CHECK(v.type() == DataTypeVariantList);
 
         VariantList vl = v.get<VariantList>();
         REQUIRE(vl.size() == 3);
@@ -404,7 +404,7 @@ TEST_CASE("Variant_StringListToStandardType") {
 
         Variant v(sl);
         Variant standard = v.toStandardType();
-        CHECK(standard.type() == Variant::TypeString);
+        CHECK(standard.type() == DataTypeString);
         CHECK(standard.get<String>() == "one,two");
 }
 
@@ -412,7 +412,7 @@ TEST_CASE("Variant_EmptyStringList") {
         StringList sl;
         Variant    v(sl);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeStringList);
+        CHECK(v.type() == DataTypeStringList);
         CHECK(v.get<StringList>().isEmpty());
         CHECK(v.get<String>() == "");
 }
@@ -424,7 +424,7 @@ TEST_CASE("Variant_EmptyStringList") {
 TEST_CASE("Variant_Color") {
         Variant v(Color::Red);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeColor);
+        CHECK(v.type() == DataTypeColor);
         CHECK(v.get<Color>() == Color::Red);
 }
 
@@ -456,7 +456,7 @@ TEST_CASE("Variant_ColorEquality") {
 TEST_CASE("Variant_ColorToStandardType") {
         Variant v(Color(255, 128, 64));
         Variant standard = v.toStandardType();
-        CHECK(standard.type() == Variant::TypeString);
+        CHECK(standard.type() == DataTypeString);
         CHECK(standard.get<String>() == "sRGB(1,0.501961,0.25098,1)");
 }
 
@@ -470,7 +470,7 @@ TEST_CASE("Variant_ColorCrossTypeEquality") {
 TEST_CASE("Variant_ColorCopy") {
         Variant v1(Color(10, 20, 30, 40));
         Variant v2 = v1;
-        CHECK(v2.type() == Variant::TypeColor);
+        CHECK(v2.type() == DataTypeColor);
         CHECK(v2.get<Color>().r8() == 10);
         CHECK(v2.get<Color>().g8() == 20);
         CHECK(v2.get<Color>().b8() == 30);
@@ -481,7 +481,7 @@ TEST_CASE("Variant_ColorSet") {
         Variant v;
         v.set(Color::Blue);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeColor);
+        CHECK(v.type() == DataTypeColor);
         CHECK(v.get<Color>() == Color::Blue);
 }
 
@@ -521,7 +521,7 @@ TEST_CASE("Variant_ColorCommaStringConversion") {
 TEST_CASE("Variant_FrameRate_Store") {
         Variant v(FrameRate(FrameRate::FPS_29_97));
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeFrameRate);
+        CHECK(v.type() == DataTypeFrameRate);
         CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_29_97));
 }
 
@@ -603,7 +603,7 @@ TEST_CASE("Variant_FrameRate_FromRational") {
 TEST_CASE("Variant_FrameRate_ToStandardType") {
         Variant v(FrameRate(FrameRate::FPS_24));
         Variant standard = v.toStandardType();
-        CHECK(standard.type() == Variant::TypeString);
+        CHECK(standard.type() == DataTypeString);
         CHECK_FALSE(standard.get<String>().isEmpty());
 }
 
@@ -615,7 +615,7 @@ TEST_CASE("Variant_FrameRate_TypeName") {
 TEST_CASE("Variant_FrameRate_Copy") {
         Variant v1(FrameRate(FrameRate::FPS_60));
         Variant v2 = v1;
-        CHECK(v2.type() == Variant::TypeFrameRate);
+        CHECK(v2.type() == DataTypeFrameRate);
         CHECK(v2.get<FrameRate>() == FrameRate(FrameRate::FPS_60));
 }
 
@@ -623,7 +623,7 @@ TEST_CASE("Variant_FrameRate_Set") {
         Variant v;
         v.set(FrameRate(FrameRate::FPS_50));
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeFrameRate);
+        CHECK(v.type() == DataTypeFrameRate);
         CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_50));
 }
 
@@ -635,7 +635,7 @@ TEST_CASE("Variant_PixelMemLayout_RoundTrip") {
         PixelMemLayout pf(PixelMemLayout::I_4x8);
         Variant        v(pf);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypePixelMemLayout);
+        CHECK(v.type() == DataTypePixelMemLayout);
         CHECK(v.get<PixelMemLayout>() == pf);
 }
 
@@ -671,7 +671,7 @@ TEST_CASE("Variant_PixelFormat_RoundTrip") {
         PixelFormat pd(PixelFormat::RGBA8_sRGB);
         Variant     v(pd);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypePixelFormat);
+        CHECK(v.type() == DataTypePixelFormat);
         CHECK(v.get<PixelFormat>() == pd);
 }
 
@@ -707,7 +707,7 @@ TEST_CASE("Variant_ColorModel_RoundTrip") {
         ColorModel cm(ColorModel::sRGB);
         Variant    v(cm);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeColorModel);
+        CHECK(v.type() == DataTypeColorModel);
         CHECK(v.get<ColorModel>() == cm);
 }
 
@@ -739,7 +739,7 @@ TEST_CASE("Variant_MemSpace_RoundTrip") {
         MemSpace ms(MemSpace::System);
         Variant  v(ms);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeMemSpace);
+        CHECK(v.type() == DataTypeMemSpace);
         CHECK(v.get<MemSpace>() == ms);
 }
 
@@ -777,7 +777,7 @@ TEST_CASE("Variant_ColorModel_FromInt64") {
 TEST_CASE("Variant_SocketAddress_TypedRoundtrip") {
         SocketAddress addr(Ipv4Address(239, 1, 2, 3), 5004);
         Variant       v(addr);
-        CHECK(v.type() == Variant::TypeSocketAddress);
+        CHECK(v.type() == DataTypeSocketAddress);
         SocketAddress back = v.get<SocketAddress>();
         CHECK(back == addr);
 }
@@ -819,7 +819,7 @@ TEST_CASE("Variant_SdpSession_TypedRoundtrip") {
         sdp.setSessionName("test-session");
         sdp.setOrigin("user", 42, 1, "IN", "IP4", "10.0.0.1");
         Variant v(sdp);
-        CHECK(v.type() == Variant::TypeSdpSession);
+        CHECK(v.type() == DataTypeSdpSession);
         CHECK(v.isValid());
         SdpSession back = v.get<SdpSession>();
         CHECK(back == sdp);
@@ -891,23 +891,27 @@ TEST_CASE("Variant_SdpSession_ToStringViaGetString") {
 
 #if PROMEKI_ENABLE_TLS
 
-TEST_CASE("Variant_SslContext_NullPtrRoundtrip") {
-        // Default-constructed SslContext::Ptr is null; the Variant should
-        // accept it by type and report TypeSslContext.
-        SslContext::Ptr ptr;
-        Variant         v(ptr);
-        CHECK(v.type() == Variant::TypeSslContext);
-        SslContext::Ptr back = v.get<SslContext::Ptr>();
-        CHECK(back.isNull());
+TEST_CASE("Variant_SslContext_DefaultRoundtrip") {
+        // A default-constructed SslContext (system-CA-loaded out of
+        // the box) round-trips through Variant by reference.
+        SslContext ctx;
+        REQUIRE(ctx.isValid());
+        Variant v(ctx);
+        CHECK(v.type() == DataTypeSslContext);
+        SslContext back = v.get<SslContext>();
+        CHECK(back == ctx);  // identity equality: same underlying impl
 }
 
-TEST_CASE("Variant_SslContext_LiveCtxRoundtrip") {
-        // A non-null context survives the Variant by reference (not deep-cloned).
-        SslContext::Ptr ptr = SharedPtr<SslContext, false>::create();
-        Variant         v(ptr);
-        CHECK(v.type() == Variant::TypeSslContext);
-        SslContext::Ptr back = v.get<SslContext::Ptr>();
-        CHECK(back == ptr);  // same underlying object
+TEST_CASE("Variant_SslContext_ConfiguredRoundtrip") {
+        // Mutations made through one handle are observable through a
+        // Variant round-trip, since the impl is shared (not CoW).
+        SslContext ctx;
+        ctx.setProtocol(SslContext::TlsV1_3);
+        Variant v(ctx);
+        CHECK(v.type() == DataTypeSslContext);
+        SslContext back = v.get<SslContext>();
+        CHECK(back == ctx);
+        CHECK(back.protocol() == SslContext::TlsV1_3);
 }
 
 #endif // PROMEKI_ENABLE_TLS
@@ -920,7 +924,7 @@ TEST_CASE("Variant_SslContext_LiveCtxRoundtrip") {
 
 TEST_CASE("Variant_VideoCodec_RoundTrip") {
         Variant v(VideoCodec(VideoCodec::H264));
-        CHECK(v.type() == Variant::TypeVideoCodec);
+        CHECK(v.type() == DataTypeVideoCodec);
         CHECK(v.get<VideoCodec>() == VideoCodec(VideoCodec::H264));
         // Round-trip via String — name() in, lookup() out.
         CHECK(v.get<String>() == "H264");
@@ -930,7 +934,7 @@ TEST_CASE("Variant_VideoCodec_RoundTrip") {
 
 TEST_CASE("Variant_AudioCodec_RoundTrip") {
         Variant v(AudioCodec(AudioCodec::Opus));
-        CHECK(v.type() == Variant::TypeAudioCodec);
+        CHECK(v.type() == DataTypeAudioCodec);
         CHECK(v.get<AudioCodec>() == AudioCodec(AudioCodec::Opus));
         CHECK(v.get<String>() == "Opus");
         Variant w(String("AAC"));
@@ -1006,7 +1010,7 @@ TEST_CASE("Variant_Url_RoundTrip") {
         Url     u = Url::fromString("pmfb://studio-a?FrameBridgeRingDepth=4").first();
         Variant v(u);
         CHECK(v.isValid());
-        CHECK(v.type() == Variant::TypeUrl);
+        CHECK(v.type() == DataTypeUrl);
         Url out = v.get<Url>();
         CHECK(out == u);
 }
@@ -1018,17 +1022,17 @@ TEST_CASE("Variant_Url_ToString") {
 }
 
 TEST_CASE("VariantSpec_Url_ParseString") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeUrl);
+        VariantSpec spec = VariantSpec().setType(DataTypeUrl);
         Error       err;
         Variant     parsed = spec.parseString("pmfb://bridge", &err);
         CHECK_FALSE(err.isError());
-        CHECK(parsed.type() == Variant::TypeUrl);
+        CHECK(parsed.type() == DataTypeUrl);
         CHECK(parsed.get<Url>().scheme() == "pmfb");
         CHECK(parsed.get<Url>().host() == "bridge");
 }
 
 TEST_CASE("VariantSpec_Url_ParseString_Rejects_Malformed") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeUrl);
+        VariantSpec spec = VariantSpec().setType(DataTypeUrl);
         Error       err = Error::Ok;
         Variant     parsed = spec.parseString("no-scheme-here", &err);
         CHECK(err.isError());
@@ -1039,7 +1043,7 @@ TEST_CASE("Variant_Url_FromStringVariant") {
         // Exercises the From==String branch in variant.tpp: converting a
         // TypeString Variant to Url via get<Url>().
         Variant sv(String("pmfb://relay"));
-        REQUIRE(sv.type() == Variant::TypeString);
+        REQUIRE(sv.type() == DataTypeString);
         Url u = sv.get<Url>();
         CHECK(u.isValid());
         CHECK(u.scheme() == "pmfb");
@@ -1059,14 +1063,14 @@ TEST_CASE("Variant_Url_FromStringVariant_Malformed") {
 TEST_CASE("VariantSpec_Duration_ParseString") {
         // Exercises the TypeDuration branch in VariantSpec::parseString,
         // which wires Duration::fromString into the CLI --dc key:value flow.
-        VariantSpec spec = VariantSpec().setType(Variant::TypeDuration);
+        VariantSpec spec = VariantSpec().setType(DataTypeDuration);
         Error       err;
 
         // Millisecond suffix.
         {
                 Variant parsed = spec.parseString("1500ms", &err);
                 CHECK_FALSE(err.isError());
-                CHECK(parsed.type() == Variant::TypeDuration);
+                CHECK(parsed.type() == DataTypeDuration);
                 CHECK(parsed.get<Duration>().milliseconds() == 1500);
         }
         // Second suffix.
@@ -1091,7 +1095,7 @@ TEST_CASE("VariantSpec_Duration_ParseString") {
 }
 
 TEST_CASE("VariantSpec_Duration_ParseString_Rejects_Unknown_Unit") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeDuration);
+        VariantSpec spec = VariantSpec().setType(DataTypeDuration);
         Error       err;
         Variant     parsed = spec.parseString("3 weeks", &err);
         CHECK(err.isError());
@@ -1109,7 +1113,7 @@ TEST_CASE("Variant_VariantList_Alternative") {
         vl.pushToBack(Variant(true));
 
         Variant v(vl);
-        CHECK(v.type() == Variant::TypeVariantList);
+        CHECK(v.type() == DataTypeVariantList);
         CHECK(v.isValid());
 
         VariantList out = v.get<VariantList>();
@@ -1134,7 +1138,7 @@ TEST_CASE("Variant_VariantMap_Alternative") {
         vm.insert("name", Variant(String("Main")));
 
         Variant v(vm);
-        CHECK(v.type() == Variant::TypeVariantMap);
+        CHECK(v.type() == DataTypeVariantMap);
         CHECK(v.isValid());
 
         VariantMap out = v.get<VariantMap>();
@@ -1164,14 +1168,14 @@ TEST_CASE("Variant_NestedTree_FromJson_Round_Trip") {
         })";
         nlohmann::json j = nlohmann::json::parse(json);
         Variant        v = Variant::fromJson(j);
-        REQUIRE(v.type() == Variant::TypeVariantMap);
+        REQUIRE(v.type() == DataTypeVariantMap);
 
         VariantMap top = v.get<VariantMap>();
         CHECK(top.value("title").get<String>() == "demo");
         CHECK(top.value("size").get<int64_t>() == 42);
 
         Variant tagsV = top.value("tags");
-        REQUIRE(tagsV.type() == Variant::TypeVariantList);
+        REQUIRE(tagsV.type() == DataTypeVariantList);
         VariantList tags = tagsV.get<VariantList>();
         REQUIRE(tags.size() == 3);
         CHECK(tags[0].get<String>() == "alpha");
@@ -1179,7 +1183,7 @@ TEST_CASE("Variant_NestedTree_FromJson_Round_Trip") {
         CHECK(tags[2].get<String>() == "gamma");
 
         Variant nestedV = top.value("nested");
-        REQUIRE(nestedV.type() == Variant::TypeVariantMap);
+        REQUIRE(nestedV.type() == DataTypeVariantMap);
         VariantMap nested = nestedV.get<VariantMap>();
         CHECK(nested.value("a").get<int64_t>() == 1);
         CHECK(nested.value("b").get<bool>() == true);
@@ -1232,10 +1236,10 @@ TEST_CASE("Variant_VariantList_PimplDeep_Recursion") {
         outer.pushToBack(Variant(String("after")));
 
         Variant v(outer);
-        CHECK(v.type() == Variant::TypeVariantList);
+        CHECK(v.type() == DataTypeVariantList);
         VariantList check = v.get<VariantList>();
         REQUIRE(check.size() == 2);
-        REQUIRE(check[0].type() == Variant::TypeVariantList);
+        REQUIRE(check[0].type() == DataTypeVariantList);
         VariantList innerOut = check[0].get<VariantList>();
         REQUIRE(innerOut.size() == 2);
         CHECK(innerOut[0].get<int32_t>() == 1);
@@ -1247,8 +1251,8 @@ TEST_CASE("VariantSpec_VariantList_ElementValidation") {
         // A spec for TypeVariantList can carry a per-element spec.
         // Lists whose elements all satisfy the inner spec validate;
         // lists with a single rogue element are rejected.
-        VariantSpec elem = VariantSpec().setType(Variant::TypeS32).setRange(0, 100);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+        VariantSpec elem = VariantSpec().setType(DataTypeInt32).setRange(0, 100);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantList).setElementSpec(elem);
 
         CHECK(spec.hasElementSpec());
         REQUIRE(spec.elementSpec() != nullptr);
@@ -1270,8 +1274,8 @@ TEST_CASE("VariantSpec_VariantList_ElementValidation") {
 }
 
 TEST_CASE("VariantSpec_VariantMap_ValueValidation") {
-        VariantSpec val  = VariantSpec().setType(Variant::TypeString);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(val);
+        VariantSpec val  = VariantSpec().setType(DataTypeString);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantMap).setValueSpec(val);
 
         CHECK(spec.hasValueSpec());
 
@@ -1288,21 +1292,21 @@ TEST_CASE("VariantSpec_VariantMap_ValueValidation") {
 
 TEST_CASE("VariantSpec_VariantList_TypeName_Annotated") {
         // typeName() surfaces the element-spec shape for help output.
-        VariantSpec elem = VariantSpec().setType(Variant::TypeS32);
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList).setElementSpec(elem);
+        VariantSpec elem = VariantSpec().setType(DataTypeInt32);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantList).setElementSpec(elem);
         CHECK(spec.typeName() == "VariantList<int>");
 
-        VariantSpec valSpec  = VariantSpec().setType(Variant::TypeString);
-        VariantSpec mapSpec  = VariantSpec().setType(Variant::TypeVariantMap).setValueSpec(valSpec);
+        VariantSpec valSpec  = VariantSpec().setType(DataTypeString);
+        VariantSpec mapSpec  = VariantSpec().setType(DataTypeVariantMap).setValueSpec(valSpec);
         CHECK(mapSpec.typeName() == "VariantMap<String>");
 }
 
 TEST_CASE("VariantSpec_VariantList_ParseString") {
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantList);
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantList);
         Error       err;
         Variant     v = spec.parseString("[1, 2, 3]", &err);
         CHECK(err.isOk());
-        REQUIRE(v.type() == Variant::TypeVariantList);
+        REQUIRE(v.type() == DataTypeVariantList);
         CHECK(v.get<VariantList>().size() == 3);
 }
 
@@ -1435,7 +1439,7 @@ TEST_CASE("Variant_ResolvePath_EmptyPath_ReturnsRoot") {
         Error   err;
         Variant out = promekiResolveVariantPath(root, String(), &err);
         CHECK(err.isOk());
-        CHECK(out.type() == Variant::TypeVariantMap);
+        CHECK(out.type() == DataTypeVariantMap);
         CHECK(out.get<VariantMap>().size() == 1);
 }
 
@@ -1443,14 +1447,14 @@ TEST_CASE("Variant_VariantSpec_Coerce_TypeMismatch_Passes_Through") {
         // Spec wants a VariantMap with string values, but the supplied
         // Variant is a VariantList.  Without a value-spec match, coerce
         // returns the value untouched (no spurious error).
-        VariantSpec spec = VariantSpec().setType(Variant::TypeVariantMap)
-                                .setValueSpec(VariantSpec().setType(Variant::TypeString));
+        VariantSpec spec = VariantSpec().setType(DataTypeVariantMap)
+                                .setValueSpec(VariantSpec().setType(DataTypeString));
         VariantList vl;
         vl.pushToBack(Variant(int32_t(1)));
         Error   err;
         Variant out = spec.coerce(Variant(vl), &err);
         CHECK(err.isOk());
-        CHECK(out.type() == Variant::TypeVariantList);
+        CHECK(out.type() == DataTypeVariantList);
         CHECK(out.get<VariantList>().size() == 1);
 }
 
@@ -1480,15 +1484,15 @@ TEST_CASE("Variant_DataStream_DeeplyNested_RoundTrip") {
         Variant    out;
         rs >> out;
         REQUIRE(rs.status() == DataStream::Ok);
-        REQUIRE(out.type() == Variant::TypeVariantMap);
+        REQUIRE(out.type() == DataTypeVariantMap);
 
         VariantMap topOut = out.get<VariantMap>();
         REQUIRE(topOut.contains("x"));
         Variant xV = topOut.value("x");
-        REQUIRE(xV.type() == Variant::TypeVariantList);
+        REQUIRE(xV.type() == DataTypeVariantList);
         VariantList xList = xV.get<VariantList>();
         REQUIRE(xList.size() == 1);
-        REQUIRE(xList[0].type() == Variant::TypeVariantMap);
+        REQUIRE(xList[0].type() == DataTypeVariantMap);
         VariantMap innerOut = xList[0].get<VariantMap>();
         CHECK(innerOut.value("k").get<int32_t>() == 7);
 }
@@ -1560,7 +1564,7 @@ TEST_CASE("Variant_Move_Construct_From_Rvalue") {
         REQUIRE(!s.isEmpty());
 
         Variant v(std::move(s));
-        CHECK(v.type() == Variant::TypeString);
+        CHECK(v.type() == DataTypeString);
         CHECK(v.get<String>() == "abcdefghijklmnopqrstuvwxyz0123456789-supposed-to-be-heap");
 }
 
@@ -1620,15 +1624,20 @@ namespace {
 }
 
 // Register user types so the converter test has live DataType records
-// to work with.  Done at static-init so the conversion test below has
-// everything in place before doctest dispatches the cases.
-PROMEKI_DECLARE_DATATYPE(UserConvFrom)
-PROMEKI_DECLARE_DATATYPE(UserConvTo)
+// to work with.  Uses the new low-level @ref DataType::registerType
+// API directly since @ref PROMEKI_DATATYPE expects a class-body slot
+// and the test fixtures are plain structs here.
 namespace {
         [[maybe_unused]] const ::promeki::DataType _userConvFromRegistrar =
-                ::promeki::DataType::registerType<UserConvFrom>("UserConvFrom");
+                ::promeki::DataType::registerType(
+                        static_cast<::promeki::DataTypeID>(0xFFC0), "UserConvFrom", /*version=*/1,
+                        std::type_index(typeid(UserConvFrom)), sizeof(UserConvFrom), alignof(UserConvFrom),
+                        ::promeki::Detail::makeDefaultOps<UserConvFrom>());
         [[maybe_unused]] const ::promeki::DataType _userConvToRegistrar =
-                ::promeki::DataType::registerType<UserConvTo>("UserConvTo");
+                ::promeki::DataType::registerType(
+                        static_cast<::promeki::DataTypeID>(0xFFC1), "UserConvTo", /*version=*/1,
+                        std::type_index(typeid(UserConvTo)), sizeof(UserConvTo), alignof(UserConvTo),
+                        ::promeki::Detail::makeDefaultOps<UserConvTo>());
         struct UserConvRegistrar {
                         UserConvRegistrar() { Variant::registerConverter<&userConvFromToTo>(); }
         };
@@ -1648,14 +1657,14 @@ TEST_CASE("Variant_RegisterConverter_Typed_End_To_End") {
         CHECK(via.text == "converted:42");
 
         // convertTo(Type) takes the same path with a runtime tag.
-        const Variant::Type toId = DataType::of<UserConvTo>().id();
+        const DataTypeID toId = DataType::of<UserConvTo>().id();
         Variant             out  = src.convertTo(toId, &err);
         CHECK(err.isOk());
         REQUIRE(out.peek<UserConvTo>() != nullptr);
         CHECK(out.peek<UserConvTo>()->text == "converted:42");
 
         // findConverter should surface the registered fn for inspection.
-        const Variant::Type fromId = DataType::of<UserConvFrom>().id();
+        const DataTypeID fromId = DataType::of<UserConvFrom>().id();
         CHECK(Variant::findConverter(fromId, toId) != nullptr);
 }
 
@@ -1663,8 +1672,8 @@ TEST_CASE("Variant_RegisterConverter_FindConverter_Missing_Returns_Null") {
         // Look up a pair we know is not registered (UserConvTo →
         // UserConvFrom, the reverse direction).  Result must be nullptr,
         // and convertTo must surface Error::Invalid without crashing.
-        const Variant::Type fromId = DataType::of<UserConvTo>().id();
-        const Variant::Type toId   = DataType::of<UserConvFrom>().id();
+        const DataTypeID fromId = DataType::of<UserConvTo>().id();
+        const DataTypeID toId   = DataType::of<UserConvFrom>().id();
         CHECK(Variant::findConverter(fromId, toId) == nullptr);
 
         Variant src(UserConvTo{String("noop")});

@@ -13,8 +13,13 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Content light level information (CTA-861.3 / ITU-T H.265 Annex D).
@@ -48,6 +53,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class ContentLightLevel {
         public:
+                PROMEKI_DATATYPE(ContentLightLevel, DataTypeContentLightLevel, 1)
+
+                /** @brief Writes two tagged uint32s: maxCLL, maxFALL. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads two tagged uint32s. */
+                template <uint32_t V> static Result<ContentLightLevel> readFromStream(DataStream &s);
+
                 ContentLightLevel() = default;
 
                 ContentLightLevel(uint32_t maxCLL, uint32_t maxFALL) : _maxCLL(maxCLL), _maxFALL(maxFALL) {}

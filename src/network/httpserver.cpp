@@ -265,7 +265,12 @@ void HttpServer::onNewConnection() {
                 TcpSocket *sock = nullptr;
                 bool       needsHandshake = false;
 #if PROMEKI_ENABLE_TLS
-                if (_sslContext.isValid()) {
+                // hasCertificate() — not isValid() — is the right
+                // signal for "TLS termination configured": a default-
+                // constructed SslContext auto-loads system CAs and is
+                // therefore always handle-valid, but a server can't
+                // terminate TLS without a server cert + key.
+                if (_sslContext.hasCertificate()) {
                         SslSocket *ssl = new SslSocket();
                         ssl->setSslContext(_sslContext);
                         sock = ssl;

@@ -6,9 +6,12 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <promeki/framerate.h>
+#include <promeki/datastream.h>
 #include <promeki/structdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -65,6 +68,35 @@ FrameRate::WellKnownRate FrameRate::wellKnownRate() const {
 }
 
 
+Result<FrameRate> FrameRate::fromDouble(double val) {
+        if (std::isnan(val) || std::isinf(val) || val <= 0.0) {
+                return makeError<FrameRate>(Error::ParseFailed);
+        }
+        // Snap to a well-known rate when we're within 0.01 fps — that's
+        // tight enough to disambiguate 23.976 (24000/1001 ≈ 23.976024)
+        // from neighbouring entries (24.0, 25.0) and loose enough to
+        // catch the common "23.98" rounding.
+        constexpr double kTolerance = 0.01;
+        for (const auto &pair : db.database()) {
+                if (pair.first == FPS_Invalid) continue;
+                if (std::abs(pair.second.fpsd - val) <= kTolerance) {
+                        return makeResult(FrameRate(pair.first));
+                }
+        }
+        // Positive integer exact match — construct the (N, 1)
+        // rational directly so e.g. 90.0 fps round-trips through
+        // toDouble() exactly even though it isn't in the well-known
+        // table.
+        if (val < static_cast<double>(std::numeric_limits<unsigned int>::max())) {
+                double rounded = std::nearbyint(val);
+                if (rounded == val && rounded >= 1.0) {
+                        return makeResult(FrameRate(FrameRate::RationalType(
+                                static_cast<unsigned int>(rounded), 1u)));
+                }
+        }
+        return makeError<FrameRate>(Error::ParseFailed);
+}
+
 Result<FrameRate> FrameRate::fromString(const String &str) {
         // Canonical sentinel forms — the default-constructed
         // FrameRate() carries a 0/1 Rational, which Rational::toString
@@ -97,6 +129,25 @@ Result<FrameRate> FrameRate::fromString(const String &str) {
         }
 
         return makeError<FrameRate>(Error::Invalid);
+}
+
+// ============================================================================
+// DataStream wire format (v1: two tagged uint32 fields, numerator/denominator).
+// ============================================================================
+
+Error FrameRate::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(_fps.numerator());
+        s << static_cast<uint32_t>(_fps.denominator());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<FrameRate> FrameRate::readFromStream<1>(DataStream &s) {
+        uint32_t num = 0, den = 1;
+        s >> num >> den;
+        if (s.status() != DataStream::Ok) return makeError<FrameRate>(s.toError());
+        if (den == 0) return makeError<FrameRate>(Error::CorruptData);
+        return makeResult(FrameRate(RationalType(num, den)));
 }
 
 PROMEKI_NAMESPACE_END

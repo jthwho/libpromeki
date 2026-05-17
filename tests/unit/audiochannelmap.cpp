@@ -407,7 +407,7 @@ TEST_CASE("AudioChannelMap: per-channel form mixes Undefined and named streams")
 
 TEST_CASE("AudioStreamDesc: round-trips through Variant<->String") {
         Variant v(AudioStreamDesc("Main"));
-        CHECK(v.type() == Variant::TypeAudioStreamDesc);
+        CHECK(v.type() == DataTypeAudioStreamDesc);
         CHECK(v.get<String>() == "Main");
         Variant         fromStr(v.get<String>());
         AudioStreamDesc back = fromStr.get<AudioStreamDesc>();
@@ -426,7 +426,7 @@ TEST_CASE("AudioStreamDesc: Variant rejects names with reserved delimiters") {
 
 TEST_CASE("AudioChannelMap: round-trips through Variant<->String") {
         Variant v(AudioChannelMap{ChannelRole::FrontLeft, ChannelRole::FrontRight});
-        CHECK(v.type() == Variant::TypeAudioChannelMap);
+        CHECK(v.type() == DataTypeAudioChannelMap);
         CHECK(v.get<String>() == "Stereo");
         Variant         fromStr(v.get<String>());
         AudioChannelMap back = fromStr.get<AudioChannelMap>();

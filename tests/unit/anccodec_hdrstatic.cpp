@@ -64,7 +64,7 @@ TEST_CASE("HdrStatic<->HdmiInfoFrame: round-trip via AncTranslator parse + build
 
         Result<Variant> parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
-        REQUIRE(parsed.first().type() == Variant::TypeHdrStaticMetadata);
+        REQUIRE(parsed.first().type() == DataTypeHdrStaticMetadata);
 
         HdrStaticMetadata out = parsed.first().get<HdrStaticMetadata>();
         // Compare via wire bytes — the in-memory CIEPoint doubles round

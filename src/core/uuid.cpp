@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <promeki/uuid.h>
+#include <promeki/datastream.h>
 #include <promeki/list.h>
 #include <promeki/random.h>
 #include <promeki/md5.h>
@@ -233,6 +234,23 @@ String UUID::toString() const {
         str += 2;
         *str = 0;
         return buf;
+}
+
+// ============================================================================
+// DataStream wire format (v1: 16 raw bytes, no internal framing — the
+// framework wraps this in a DataTypeUUID frame around the call).
+// ============================================================================
+
+Error UUID::writeToStream(DataStream &s) const {
+        s.writeRawData(raw(), 16);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<UUID> UUID::readFromStream<1>(DataStream &s) {
+        UUID u;
+        if (s.readRawData(u.d.data(), 16) != 16) return makeError<UUID>(s.toError());
+        return makeResult(u);
 }
 
 PROMEKI_NAMESPACE_END

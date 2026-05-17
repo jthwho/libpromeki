@@ -288,7 +288,7 @@ DataStream &operator<<(DataStream &stream, const Scc &scc) {
         // re-parse (the rate isn't carried in the canonical "HH:MM:SS:FF"
         // form), so we serialise the digits + DF bit directly to keep
         // round-trip equality stable.
-        stream.beginFrame(DataStream::TypeScc, 1);
+        stream.beginFrame(DataTypeScc, 1);
         const Scc::LineList &lines = scc.lines();
         const uint32_t       n = static_cast<uint32_t>(lines.size());
         stream << n;
@@ -313,7 +313,7 @@ DataStream &operator<<(DataStream &stream, const Scc &scc) {
 
 DataStream &operator>>(DataStream &stream, Scc &scc) {
         scc = Scc();
-        if (!stream.readFrame(DataStream::TypeScc)) {
+        if (!stream.readFrame(DataTypeScc)) {
                 return stream;
         }
         uint32_t n = 0;

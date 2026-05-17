@@ -94,7 +94,7 @@ struct HttpClient::Pending {
 
                 SharedPtr<Pending, false> selfPin;
 #if PROMEKI_ENABLE_TLS
-                SslContext::Ptr sslContext;
+                SslContext sslContext;
 #endif
 
                 void start();
@@ -300,19 +300,12 @@ void HttpClient::Pending::start() {
 #if PROMEKI_ENABLE_TLS
         if (useTls) {
                 SslSocket *ssl = new SslSocket();
-                // Lazy-create a default SslContext when the caller
-                // did not configure one — without it
-                // SslSocket::startEncryption returns Invalid before
-                // we get a chance to surface the real handshake or
-                // network error.  The default context has
-                // verifyPeer=true with no CA chain, which folds to
-                // VERIFY_NONE per applyAuthMode's CA-aware policy
-                // — sufficient for "talk to a real server but skip
-                // verification" smoke calls; production users
-                // configure their own context.
-                if (!sslContext.isValid()) {
-                        sslContext = SslContext::Ptr::takeOwnership(new SslContext());
-                }
+                // SslContext's default constructor already auto-loads
+                // the system CA bundle, so handing the (possibly
+                // default) sslContext through is sufficient — no
+                // lazy-load needed here.  If the system bundle was
+                // unavailable the handshake fails-closed in
+                // SslSocket::startEncryption with a clear error.
                 ssl->setSslContext(sslContext);
                 socket = ssl;
         } else {

@@ -366,7 +366,7 @@ TEST_CASE("AudioFormat: DataStream round-trip by name") {
 
 TEST_CASE("AudioFormat: Variant holds an AudioFormat") {
         Variant v(AudioFormat(AudioFormat::PCMI_S16LE));
-        CHECK(v.type() == Variant::TypeAudioFormat);
+        CHECK(v.type() == DataTypeAudioFormat);
         AudioFormat back = v.get<AudioFormat>();
         CHECK(back.id() == AudioFormat::PCMI_S16LE);
 }

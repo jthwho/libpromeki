@@ -17,8 +17,11 @@
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/array.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Universally Unique Identifier (UUID).
@@ -43,6 +46,8 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class UUID {
         public:
+                PROMEKI_DATATYPE(UUID, DataTypeUUID, 1)
+
                 /** @brief Raw 16-byte storage format for a UUID. */
                 using DataFormat = Array<uint8_t, 16>;
 
@@ -201,6 +206,20 @@ class UUID {
                  * @return A pointer to the first byte of the UUID.
                  */
                 const uint8_t *raw() const { return d.data(); }
+
+                /**
+                 * @brief Writes the 16 raw UUID bytes into @p s.
+                 *
+                 * Body-only — framing is supplied by the dispatcher.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief Version-dispatched body reader.
+                 *
+                 * Wire format v1: 16 raw bytes in the order returned by @ref raw.
+                 */
+                template <uint32_t V> static Result<UUID> readFromStream(DataStream &s);
 
         private:
                 DataFormat d;

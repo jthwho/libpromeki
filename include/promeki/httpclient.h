@@ -170,13 +170,17 @@ class HttpClient : public ObjectBase {
                 /**
                  * @brief Attaches the @ref SslContext used for @c https:// requests.
                  *
-                 * Without a context the client falls back to the
-                 * default-constructed @ref SslContext (TLS 1.2 / 1.3,
-                 * peer verification on, no CA bundle) which will
-                 * fail verification against any real server — set a
-                 * proper context (with @ref SslContext::setSystemCaCertificates
-                 * for the system trust store, for example) before
-                 * making @c https:// requests.
+                 * Optional — a default-constructed @ref SslContext
+                 * already auto-loads the system CA bundle, so
+                 * @c https requests against publicly-trusted servers
+                 * "just work" without any setup.  Configure a custom
+                 * context when you need a private CA, client
+                 * certificates, or want to disable verification for
+                 * development (@c setVerifyPeer(false)).
+                 *
+                 * If no system CA bundle is available the handshake
+                 * fails-closed (returns @ref Error::Invalid) rather
+                 * than silently skipping verification.
                  *
                  * Always available regardless of @c PROMEKI_ENABLE_TLS;
                  * in a TLS-disabled build the supplied context is
@@ -184,10 +188,10 @@ class HttpClient : public ObjectBase {
                  * @ref SslContext) and an actual @c https request is
                  * later rejected with @ref Error::NotSupported.
                  */
-                void setSslContext(SslContext::Ptr ctx) { _sslContext = std::move(ctx); }
+                void setSslContext(SslContext ctx) { _sslContext = std::move(ctx); }
 
                 /** @brief Returns the attached SslContext, or null. */
-                SslContext::Ptr sslContext() const { return _sslContext; }
+                SslContext sslContext() const { return _sslContext; }
 
                 /**
                  * @brief Reports whether this build can speak TLS.
@@ -214,7 +218,7 @@ class HttpClient : public ObjectBase {
                 unsigned int     _timeoutMs = DefaultTimeoutMs;
                 int64_t          _maxBodyBytes = DefaultMaxBodyBytes;
                 List<PendingPtr> _active;
-                SslContext::Ptr  _sslContext;
+                SslContext  _sslContext;
 
                 Future<HttpResponse> dispatch(HttpRequest request);
                 void                 resolveTargetUrl(HttpRequest &request) const;

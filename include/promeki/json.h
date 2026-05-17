@@ -18,12 +18,16 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/sharedptr.h>
-#include <promeki/datastream.h>
+#include <promeki/datatype.h>
+#include <promeki/uuid.h>
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class Variant;
+class VariantList;
+class VariantMap;
+class DataStream;
 
 class JsonValue;
 class JsonObject;
@@ -251,6 +255,21 @@ class JsonObject {
                                 if (err) *err = Error::Invalid;
                                 return JsonObject();
                         }
+                }
+
+                /**
+                 * @brief Result-shaped wrapper around @ref parse.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can
+                 * auto-wire the inverse of @ref toString via
+                 * @ref Detail::HasResultFromString.
+                 */
+                static Result<JsonObject> fromString(const String &str) {
+                        Error      e;
+                        JsonObject o = parse(str, &e);
+                        if (e.isError()) return makeError<JsonObject>(e);
+                        return makeResult(std::move(o));
                 }
 
                 /** @brief Constructs a JsonObject from a VariantMap. */
@@ -557,6 +576,20 @@ class JsonArray {
                                 if (err) *err = Error::Invalid;
                                 return JsonArray();
                         }
+                }
+
+                /**
+                 * @brief Result-shaped wrapper around @ref parse.
+                 *
+                 * Mirrors the project-wide @c Result<T> @c fromString
+                 * convention so the @ref DataType registry can
+                 * auto-wire the inverse of @ref toString.
+                 */
+                static Result<JsonArray> fromString(const String &str) {
+                        Error     e;
+                        JsonArray a = parse(str, &e);
+                        if (e.isError()) return makeError<JsonArray>(e);
+                        return makeResult(std::move(a));
                 }
 
                 /** @brief Constructs a JsonArray from a VariantList. */
@@ -948,84 +981,11 @@ inline void JsonArray::add(JsonArray &&val) { _d.modify()->j.push_back(std::move
 
 inline JsonValue JsonArray::const_iterator::operator*() const { return _arr->at(_index); }
 
-// ============================================================================
-// DataStream serialization
-// ============================================================================
-//
-// JsonObject and JsonArray are serialized as their compact JSON text form.
-// This keeps the wire format stable across nlohmann::json upgrades and makes
-// cross-reading with json text-based tools trivial. Readers that see a
-// truncated or malformed payload are marked as ReadCorruptData.
-
-/**
- * @brief Writes a JsonObject as a tagged, length-prefixed JSON string.
- * @param stream The DataStream to write to.
- * @param obj    The JsonObject to serialize.
- * @return The stream, for chaining.
- */
-inline DataStream &operator<<(DataStream &stream, const JsonObject &obj) {
-        stream.beginFrame(DataStream::TypeJsonObject, 1);
-        stream << obj.toString(0);
-        stream.endFrame();
-        return stream;
-}
-
-/**
- * @brief Reads a JsonObject from a tagged, length-prefixed JSON string.
- * @param stream The DataStream to read from.
- * @param obj    The JsonObject to populate.
- * @return The stream, for chaining.
- */
-inline DataStream &operator>>(DataStream &stream, JsonObject &obj) {
-        if (!stream.readFrame(DataStream::TypeJsonObject)) {
-                obj = JsonObject();
-                return stream;
-        }
-        String text;
-        stream >> text;
-        if (stream.status() != DataStream::Ok) {
-                obj = JsonObject();
-                return stream;
-        }
-        Error err;
-        obj = JsonObject::parse(text, &err);
-        if (err.isError()) {
-                stream.setError(DataStream::ReadCorruptData, String("JsonObject::parse failed"));
-        }
-        return stream;
-}
-
-/**
- * @brief Writes a JsonArray as a tagged, length-prefixed JSON string.
- */
-inline DataStream &operator<<(DataStream &stream, const JsonArray &arr) {
-        stream.beginFrame(DataStream::TypeJsonArray, 1);
-        stream << arr.toString(0);
-        stream.endFrame();
-        return stream;
-}
-
-/**
- * @brief Reads a JsonArray from a tagged, length-prefixed JSON string.
- */
-inline DataStream &operator>>(DataStream &stream, JsonArray &arr) {
-        if (!stream.readFrame(DataStream::TypeJsonArray)) {
-                arr = JsonArray();
-                return stream;
-        }
-        String text;
-        stream >> text;
-        if (stream.status() != DataStream::Ok) {
-                arr = JsonArray();
-                return stream;
-        }
-        Error err;
-        arr = JsonArray::parse(text, &err);
-        if (err.isError()) {
-                stream.setError(DataStream::ReadCorruptData, String("JsonArray::parse failed"));
-        }
-        return stream;
-}
+// The DataStream <<, >> operators for JsonObject / JsonArray live in
+// datastream.h's bottom half (after json.h is pulled in) so this
+// header can stay free of any datastream.h dependency — that's what
+// lets datastream.h's @ref Detail::makeDefaultOps populate the
+// @c toJson / @c fromJson Ops slots without a circular include.
 
 PROMEKI_NAMESPACE_END
 

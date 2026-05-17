@@ -1074,7 +1074,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
 
         // URL is required.
         Variant urlVar = cfg.get(MediaConfig::RtmpUrl);
-        if (urlVar.type() != Variant::TypeUrl) {
+        if (urlVar.type() != DataTypeUrl) {
                 promekiErr("RtmpMediaIO: RtmpUrl config key is required");
                 return Error::InvalidArgument;
         }
@@ -1141,12 +1141,14 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 [this](Error err) { onClientDisconnected(err); }, this);
 
 #if defined(PROMEKI_ENABLE_TLS)
+        // If the caller wired an SslContext through the MediaConfig
+        // database, hand it to the underlying client.  The Variant
+        // type-tag guards against a populated-but-empty slot; the
+        // shared SslContext itself is always handle-valid post-
+        // construction so we don't filter further here.
         Variant tlsVar = cfg.get(MediaConfig::RtmpTlsContext);
-        if (tlsVar.type() == Variant::TypeSslContext) {
-                SslContext::Ptr ctx = tlsVar.get<SslContext::Ptr>();
-                if (ctx.isValid()) {
-                        _client->setSslContext(ctx);
-                }
+        if (tlsVar.type() == DataTypeSslContext) {
+                _client->setSslContext(tlsVar.get<SslContext>());
         }
 #endif
 

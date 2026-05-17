@@ -16,8 +16,11 @@
 #include <promeki/duration.h>
 #include <promeki/clockdomain.h>
 #include <promeki/result.h>
+#include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief Self-describing timestamp that pairs a time value with its clock domain and offset.
@@ -51,6 +54,13 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MediaTimeStamp {
         public:
+                PROMEKI_DATATYPE(MediaTimeStamp, DataTypeMediaTimeStamp, 1)
+
+                /** @brief Writes the canonical "domain ts offset" string. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical "domain ts offset" string. */
+                template <uint32_t V> static Result<MediaTimeStamp> readFromStream(DataStream &s);
+
                 /** @brief Constructs an invalid MediaTimeStamp (no domain). */
                 MediaTimeStamp() = default;
 

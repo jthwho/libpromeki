@@ -108,18 +108,18 @@ namespace {
                                 Atomic<bool> clientReady(false);
                                 serverThread.threadEventLoop()->postCallable([this, &serverReady]() {
                                         server = new HttpServer();
-                                        SslContext::Ptr ctx = SslContext::Ptr::takeOwnership(new SslContext());
-                                        REQUIRE(ctx.modify()->setCertificate(pemBuffer(kCertPem)).isOk());
-                                        REQUIRE(ctx.modify()->setPrivateKey(pemBuffer(kKeyPem)).isOk());
+                                        SslContext ctx;
+                                        REQUIRE(ctx.setCertificate(pemBuffer(kCertPem)).isOk());
+                                        REQUIRE(ctx.setPrivateKey(pemBuffer(kKeyPem)).isOk());
                                         server->setSslContext(ctx);
                                         serverReady.setValue(true);
                                 });
                                 clientThread.threadEventLoop()->postCallable([this, &clientReady]() {
                                         client = new HttpClient();
-                                        SslContext::Ptr ctx = SslContext::Ptr::takeOwnership(new SslContext());
+                                        SslContext ctx;
                                         // Self-signed: disable peer verification so
                                         // the client doesn't reject the handshake.
-                                        ctx.modify()->setVerifyPeer(false);
+                                        ctx.setVerifyPeer(false);
                                         client->setSslContext(ctx);
                                         clientReady.setValue(true);
                                 });

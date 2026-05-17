@@ -332,13 +332,13 @@ namespace {
         // inside Variant's own cross-type conversion has the same limitation.
         static Variant coerceLiteralToKey(const Variant &literal, const String &keyPath, const Variant &context,
                                           const detail::VariantQueryContext &ctx) {
-                if (literal.type() != Variant::TypeString) return literal;
+                if (literal.type() != DataTypeString) return literal;
 
                 Variant parsed = literal;
                 bool    parsedViaSpec = false;
                 if (ctx.specFor) {
                         const VariantSpec *sp = ctx.specFor(keyPath);
-                        if (sp != nullptr && !sp->acceptsType(Variant::TypeString)) {
+                        if (sp != nullptr && !sp->acceptsType(DataTypeString)) {
                                 Error   pe;
                                 Variant candidate = sp->parseString(literal.get<String>(), &pe);
                                 if (pe.isOk()) {
@@ -357,7 +357,7 @@ namespace {
                 // parsed value so comparisons go through the digit-accurate
                 // toFrameNumber path.
                 auto promoteTimecode = [&context](Variant v) -> Variant {
-                        if (v.type() != Variant::TypeTimecode || context.type() != Variant::TypeTimecode) return v;
+                        if (v.type() != DataTypeTimecode || context.type() != DataTypeTimecode) return v;
                         Timecode tc = v.get<Timecode>();
                         Timecode ref = context.get<Timecode>();
                         if (ref.isValid() && tc.mode() != ref.mode()) {
@@ -376,7 +376,7 @@ namespace {
                 // through to @ref Variant::operator== which already performs
                 // cross-type conversion (e.g. PixelFormat from String via its
                 // own string constructor).
-                if (context.type() == Variant::TypeTimecode) {
+                if (context.type() == DataTypeTimecode) {
                         auto [tc, pe] = Timecode::fromString(literal.get<String>());
                         if (pe.isOk()) return promoteTimecode(Variant(tc));
                 }
@@ -403,7 +403,7 @@ namespace {
                         }
                 }
                 // Timecode path — if either side is a Timecode, try both-as-Timecode.
-                if (a.type() == Variant::TypeTimecode || b.type() == Variant::TypeTimecode) {
+                if (a.type() == DataTypeTimecode || b.type() == DataTypeTimecode) {
                         err = Error::Ok;
                         Timecode ta = a.get<Timecode>(&err);
                         if (err.isOk() && ta.isValid()) {

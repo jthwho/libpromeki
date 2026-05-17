@@ -16,25 +16,54 @@
 #include <promeki/filepath.h>
 #include <promeki/error.h>
 #include <promeki/sharedptr.h>
-#include <promeki/uniqueptr.h>
 #include <promeki/list.h>
+#include <promeki/datatype.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class DataStream;
 
 /**
  * @brief TLS/SSL configuration shared across @ref SslSocket instances.
  * @ingroup network
  *
- * @ref SslContext owns the certificate / private-key / trust-store
- * material plus the protocol-version policy that an @ref SslSocket
- * uses when handshaking.  One context is typically built once at
- * startup (server side) or program init (client side) and shared by
- * every socket.
+ * @ref SslContext is a value-type handle that wraps an internal
+ * @c SharedPtr to its mbedTLS state.  Copying an @ref SslContext is
+ * a refcount bump on that shared state, so a single configured
+ * context can ride into many @ref SslSocket / @ref HttpClient /
+ * @ref HttpServer / @ref WebSocket / @ref RtmpClient instances by
+ * value without deep-cloning the certificate / private-key / trust-
+ * store material.
  *
- * Underneath, the context wraps mbedTLS's @c mbedtls_ssl_config,
- * @c mbedtls_x509_crt, and @c mbedtls_pk_context types — the
- * pImpl is heap-allocated lazily so simply default-constructing an
- * @ref SslContext does not pull in mbedTLS state.
+ * Underneath, the impl wraps mbedTLS's @c mbedtls_ssl_config,
+ * @c mbedtls_x509_crt, and @c mbedtls_pk_context types.  In a build
+ * without @c PROMEKI_ENABLE_TLS the public surface stays the same so
+ * consumer code is shape-stable across feature configurations, but
+ * every mutator returns @ref Error::NotSupported and
+ * @ref nativeConfig returns @c nullptr.
+ *
+ * @par Default state
+ * A default-constructed @ref SslContext is ready for typical
+ * client-side use: the constructor best-effort-loads the system CA
+ * bundle via @ref setSystemCaCertificates (no error is reported
+ * when the bundle is unavailable — the fail-closed verify policy
+ * in @ref SslSocket surfaces the misconfiguration at handshake
+ * time with a clear error).  Consumers can therefore pass a
+ * default-constructed @ref SslContext directly to a client and get
+ * publicly-trusted @c https / @c wss / @c rtmps handshakes out of
+ * the box.  Server-side TLS termination requires
+ * @ref setCertificate and @ref setPrivateKey on top of the default
+ * — consumers detect a TLS-configured server by checking
+ * @ref hasCertificate.
+ *
+ * @par Sharing semantics
+ * Copies of an @ref SslContext refer to the same underlying state
+ * — mutators applied through any handle are visible through every
+ * other handle that names the same impl.  This matches the intended
+ * use case (build the context once, hand it to many sockets) and is
+ * why @ref SslContext does @b not implement copy-on-write the way
+ * @ref Buffer / @ref Frame / @ref String do.
  *
  * @par Thread Safety
  * Mixed.  Configuration calls (@ref setCertificate,
@@ -45,20 +74,92 @@ PROMEKI_NAMESPACE_BEGIN
  * @c mbedtls_ssl_config is documented as safe to share across
  * handshakes once initialized.
  *
+ * @par Security model
+ * Sensitive material handling:
+ *  - **mbedTLS internal state** (the @c mbedtls_pk_context,
+ *    @c mbedtls_x509_crt, and @c mbedtls_ssl_config) is wiped via
+ *    @c mbedtls_platform_zeroize inside the matching @c _free
+ *    functions, which run from the impl's destructor.  Key bignum
+ *    limbs are zeroized by @c mbedtls_mpi_free for every key type.
+ *  - **Reading a private key from a file path**
+ *    (@ref setPrivateKey(const FilePath &, const String &)) stages
+ *    the on-disk PEM through a @ref MemSpace::SystemSecure buffer:
+ *    page-locked (excluded from swap), @c MADV_DONTDUMP (excluded
+ *    from core dumps), and @c explicit_bzero'd on destruction.
+ *    Cert and CA reads use a regular host buffer — those payloads
+ *    are public material.
+ *  - **Diagnostic output** (@ref toString) never embeds cert / key
+ *    bytes.
+ *  - **DataStream serialization** is intentionally refused (see
+ *    @ref writeToStream) so a @ref Variant carrying an
+ *    @ref SslContext cannot leak credentials through a persistence
+ *    or IPC path.
+ *
+ * @par Verify policy
+ * The class records two @em independent verify intents — one for
+ * each handshake role — and @ref SslSocket applies the role-
+ * appropriate mbedTLS authmode at handshake time:
+ *  - **Client side** consults @ref verifyPeer (default @c true,
+ *    "verify the server's cert"):
+ *    - @c true with a CA chain loaded → VERIFY_REQUIRED.
+ *    - @c true with no CA chain → @ref Error::Invalid up-front
+ *      (fail-closed; silently going VERIFY_NONE here is the classic
+ *      TLS footgun).
+ *    - @c false → VERIFY_NONE.  Loopback / self-signed / dev work
+ *      opts out explicitly this way.
+ *  - **Server side** consults @ref requireClientCert (default
+ *    @c false, "ask the client for a cert and validate it"):
+ *    - @c false → VERIFY_NONE.  Standard HTTPS server, doesn't
+ *      request client certs.
+ *    - @c true with a CA chain loaded → VERIFY_REQUIRED (mutual
+ *      TLS).
+ *    - @c true with no CA chain → @ref Error::Invalid up-front
+ *      (no anchors to verify a client cert against).
+ *
+ * The two flags are deliberately separate.  An earlier design
+ * conflated them through @ref verifyPeer + @ref hasCaCertificates,
+ * but combining auto-loaded system CAs with the server's mutual-TLS
+ * trigger silently turned any HTTPS server into a mutual-auth
+ * server, which is the opposite of what callers want.
+ *
+ * Because the default constructor pre-loads the system CA bundle,
+ * the typical client path lands in the @c VERIFY_REQUIRED branch
+ * automatically: @c https / @c wss / @c rtmps against publicly-
+ * trusted servers verifies out of the box, and a missing or
+ * unreadable bundle fails-closed at handshake time rather than
+ * going silently insecure.
+ *
+ * What this class does @b not do:
+ *  - It does not override mbedTLS's allocator, so heap allocations
+ *    mbedTLS makes during key parsing / handshake stay in normal
+ *    pageable memory.  Cleartext key material spends only a brief
+ *    window in those buffers — mbedTLS zeroizes before freeing —
+ *    but a swap-out during that window is theoretically observable.
+ *    Applications that need stronger guarantees should mlock the
+ *    whole process or set @c RLIMIT_MEMLOCK + use a kernel that
+ *    enforces locked-pages, and disable core dumps with
+ *    @c prctl(PR_SET_DUMPABLE, 0).
+ *  - When the caller supplies a key Buffer through
+ *    @ref setPrivateKey(const Buffer &, const String &), the
+ *    Buffer's backing memory is the caller's responsibility — use
+ *    a @ref MemSpace::SystemSecure buffer if the key bytes should
+ *    be wiped on destruction.
+ *  - The passphrase passed to @ref setPrivateKey is consumed
+ *    transiently but not zeroized by this class — the @ref String
+ *    is the caller's lifetime.
+ *
  * @par Example
  * @code
  * SslContext ctx;
- * ctx.setProtocol(SslContext::SecureProtocols);
+ * ctx.setProtocol(SslContext::SecureProtocols);   // lazy-allocates impl
  * ctx.setCertificate(FilePath("/etc/server.crt"));
  * ctx.setPrivateKey (FilePath("/etc/server.key"));
- * httpServer.setSslContext(ctx);
+ * httpServer.setSslContext(ctx);                  // copy = refcount bump
  * @endcode
  */
 class SslContext {
-                PROMEKI_SHARED_FINAL(SslContext)
         public:
-                /** @brief Shared pointer type for SslContext. */
-                using Ptr = SharedPtr<SslContext, false>;
+                PROMEKI_DATATYPE(SslContext, DataTypeSslContext, 1)
 
                 /** @brief List of contexts. */
                 using List = ::promeki::List<SslContext>;
@@ -87,21 +188,82 @@ class SslContext {
                  */
                 static bool hasTlsSupport();
 
-                /** @brief Constructs an empty context with @ref SecureProtocols. */
+                /**
+                 * @brief Constructs a context with default secure settings.
+                 *
+                 * Best-effort-loads the system CA bundle via
+                 * @ref setSystemCaCertificates so the context is
+                 * ready for client use against publicly-trusted
+                 * servers.  If no system bundle is available
+                 * (@ref Error::NotExist) the context is still
+                 * constructed but has no CA anchors — the
+                 * fail-closed verify policy in @ref SslSocket
+                 * surfaces this at handshake time.
+                 */
                 SslContext();
 
                 /** @brief Destructor. */
                 ~SslContext();
 
-                /// @brief Non-copyable: the underlying mbedTLS state has identity.
-                SslContext(const SslContext &) = delete;
-                /// @brief Non-copy-assignable for the same reason.
-                SslContext &operator=(const SslContext &) = delete;
+                // The copy / move special members are defined
+                // out-of-line because @ref Impl is incomplete here —
+                // an inline @c =default would instantiate the
+                // @c SharedPtr internals against the forward-declared
+                // type, miss the @c IsSharedObject trait, and route
+                // through @c SharedPtrProxy<Impl>::~SharedPtrProxy()
+                // which would invoke @c delete on an incomplete type.
+
+                /// @brief Copy = refcount bump on the underlying impl.
+                SslContext(const SslContext &other);
+
+                /// @brief Copy-assign = refcount bump on the underlying impl.
+                SslContext &operator=(const SslContext &other);
+
+                /// @brief Move = handoff of the underlying impl.
+                SslContext(SslContext &&other) noexcept;
+
+                /// @brief Move-assign = handoff of the underlying impl.
+                SslContext &operator=(SslContext &&other) noexcept;
+
+                /**
+                 * @brief True when the handle refers to a live impl.
+                 *
+                 * Returns @c false only after the handle has been
+                 * moved-from.  Use the specific predicates
+                 * (@ref hasCertificate, @ref hasCaCertificates,
+                 * @ref verifyPeer) when checking configuration
+                 * state — "valid" here means "the SharedPtr is
+                 * non-null," not "configured for TLS termination."
+                 */
+                bool isValid() const;
+
+                /** @brief Identity equality (same underlying impl). */
+                bool operator==(const SslContext &other) const { return _d == other._d; }
+
+                /** @brief Identity inequality. */
+                bool operator!=(const SslContext &other) const { return !(*this == other); }
+
+                /**
+                 * @brief Returns a debug-readable summary of the context state.
+                 *
+                 * Examples:
+                 * @code
+                 * SslContext()                                 // "SslContext(unattached)"
+                 * after setProtocol(TlsV1_3)                   // "SslContext(protocol=TlsV1_3, verifyPeer=true)"
+                 * after setCertificate + setPrivateKey         // "SslContext(protocol=SecureProtocols, verifyPeer=true, hasCert, hasKey)"
+                 * @endcode
+                 *
+                 * Diagnostic-only; cert / key bytes are deliberately
+                 * not included.  There is no @c fromString counterpart
+                 * — round-tripping a TLS configuration through a
+                 * string has no useful meaning.
+                 */
+                String toString() const;
 
                 /** @brief Sets the allowed protocol version range. */
                 void setProtocol(SslProtocol protocol);
 
-                /** @brief Returns the current protocol policy. */
+                /** @brief Returns the current protocol policy (default @ref SecureProtocols when null). */
                 SslProtocol protocol() const;
 
                 // ----------------------------------------------------
@@ -129,7 +291,18 @@ class SslContext {
                  */
                 Error setPrivateKey(const FilePath &file, const String &passphrase = String());
 
-                /** @brief Loads the server's private key from memory. */
+                /**
+                 * @brief Loads the server's private key from memory.
+                 *
+                 * The Buffer's backing memory is the caller's
+                 * responsibility — for keys that should be wiped on
+                 * destruction, allocate the Buffer from
+                 * @ref MemSpace::SystemSecure so the bytes are
+                 * page-locked and @c explicit_bzero'd when the
+                 * Buffer falls out of scope.  The file-path overload
+                 * above does this automatically for the temp
+                 * read-buffer.
+                 */
                 Error setPrivateKey(const Buffer &keyData, const String &passphrase = String());
 
                 // ----------------------------------------------------
@@ -157,17 +330,50 @@ class SslContext {
                 Error setSystemCaCertificates();
 
                 /**
-                 * @brief Enables or disables peer-certificate verification.
+                 * @brief Enables or disables client-side server-cert verification.
                  *
-                 * Defaults to @c true.  Disable only for development
-                 * (e.g. self-signed loopback testing).  When disabled
-                 * a verification failure is tolerated but still
-                 * reported via @ref SslSocket::sslErrorsSignal.
+                 * Client-side knob only — controls whether
+                 * @ref SslSocket validates the server's certificate
+                 * during the handshake.  Defaults to @c true.
+                 * Handshakes fail-closed when verification is
+                 * enabled but no CA chain has been loaded (the
+                 * default constructor pre-loads the system bundle,
+                 * so the typical client path passes).  Set @c false
+                 * for development against self-signed servers;
+                 * mbedTLS verification problems are still reported
+                 * via @ref SslSocket::sslErrorsSignal for visibility.
+                 *
+                 * Server-side handshakes ignore this flag; use
+                 * @ref setRequireClientCert to opt into mutual TLS.
                  */
                 void setVerifyPeer(bool enable);
 
-                /** @brief Returns whether peer verification is enabled. */
+                /** @brief Returns the client-side server-cert verification flag (default @c true). */
                 bool verifyPeer() const;
+
+                /**
+                 * @brief Enables or disables mutual TLS on the server side.
+                 *
+                 * Server-side knob only — when @c true, the server
+                 * requires connecting clients to present a
+                 * certificate verifiable against the loaded CA
+                 * chain (see @ref setCaCertificates).  Defaults to
+                 * @c false: the standard HTTPS server pattern of
+                 * not requesting a client cert.
+                 *
+                 * When enabled, @ref SslSocket fail-closes the
+                 * server handshake with @ref Error::Invalid if no CA
+                 * chain has been loaded — there'd be no anchors to
+                 * validate the client cert against.
+                 *
+                 * Client-side handshakes ignore this flag; use
+                 * @ref setVerifyPeer to control server-cert
+                 * verification.
+                 */
+                void setRequireClientCert(bool require);
+
+                /** @brief Returns the server-side mutual-TLS flag (default @c false). */
+                bool requireClientCert() const;
 
                 /** @brief Sets the maximum certificate-chain depth for verification. */
                 void setVerifyDepth(int depth);
@@ -184,18 +390,58 @@ class SslContext {
                 /**
                  * @brief Returns the underlying mbedTLS configuration handle.
                  *
-                 * Exposed for @ref SslSocket; opaque @c void* avoids
-                 * leaking mbedTLS headers into consumer compilations.
-                 * Cast to @c mbedtls_ssl_config* in implementation
-                 * files that include @c mbedtls/ssl.h directly.
+                 * Lazy-initializes the @c mbedtls_ssl_config_defaults
+                 * the first time it's requested.  Exposed for
+                 * @ref SslSocket; opaque @c void* avoids leaking
+                 * mbedTLS headers into consumer compilations.  Cast to
+                 * @c mbedtls_ssl_config* in implementation files that
+                 * include @c mbedtls/ssl.h directly.  Returns
+                 * @c nullptr in a build with @c PROMEKI_ENABLE_TLS off.
                  */
                 void *nativeConfig() const;
 
+                /**
+                 * @brief DataStream wire serializer — intentionally @b not supported.
+                 *
+                 * Always returns @ref Error::NotSupported.  An
+                 * @ref SslContext carries certificate and private-key
+                 * material, and the @ref DataStream surface is used
+                 * for persistence (config files, IPC, network frames,
+                 * Variant-typed databases).  Putting cert / key bytes
+                 * on that surface would leak them anywhere a
+                 * @ref Variant gets serialized.  The method exists
+                 * only so the type can host @ref PROMEKI_DATATYPE.
+                 */
+                Error writeToStream(DataStream &s) const;
+
+                /**
+                 * @brief DataStream wire reader — intentionally @b not supported.
+                 *
+                 * Always returns @ref Error::NotSupported for the
+                 * same reason as @ref writeToStream.  Required only
+                 * to satisfy the @ref PROMEKI_DATATYPE dispatch
+                 * trait.
+                 */
+                template <uint32_t V> static Result<SslContext> readFromStream(DataStream &s);
+
         private:
                 struct Impl;
-                using ImplPtr = UniquePtr<Impl>;
-                ImplPtr _d;
+
+                // mutable: @c nativeConfig is a @c const accessor but
+                // lazy-initializes the underlying @c mbedtls_ssl_config
+                // on first call, so the @c SharedPtr handle has to be
+                // reachable through a non-const @c modify() path.
+                mutable SharedPtr<Impl, false> _d;
 };
+
+// Primary template for @ref SslContext::readFromStream: always
+// reports @ref Error::NotSupported, regardless of wire version, for
+// the reasons documented on the declaration.  Inline so the
+// @ref PROMEKI_DATATYPE @c dispatchRead body can resolve it without
+// dragging the cpp into header consumers.
+template <uint32_t V> inline Result<SslContext> SslContext::readFromStream(DataStream &) {
+        return Result<SslContext>(SslContext(), Error::NotSupported);
+}
 
 PROMEKI_NAMESPACE_END
 

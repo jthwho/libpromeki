@@ -63,6 +63,12 @@ using promeki::VideoCodec;
 namespace promekipipeline {
 
         namespace {
+                // The DataTypeXxx enumerators used below now live at
+                // namespace scope in @c promeki rather than under
+                // @c Variant.  Bring the whole namespace in for the
+                // tiny helper file so switch-statement bodies stay
+                // readable.
+                using namespace ::promeki;
 
                 // ---------------------------------------------------------------
                 // Small JSON helpers shared by the route handlers.
@@ -90,10 +96,10 @@ namespace promekipipeline {
                 // both surface as `{type, values}` and render as a dropdown.  Doing
                 // the synthesis here at the JSON-emit boundary keeps the library's
                 // VariantSpec free of TypeRegistry awareness.
-                JsonObject typeRegistryEnum(Variant::Type primary) {
+                JsonObject typeRegistryEnum(promeki::DataTypeID primary) {
                         JsonObject info;
                         switch (primary) {
-                                case Variant::TypePixelFormat: {
+                                case DataTypePixelFormat: {
                                         info.set("type", String("PixelFormat"));
                                         JsonArray                 vals;
                                         const PixelFormat::IDList ids = PixelFormat::registeredIDs();
@@ -105,7 +111,7 @@ namespace promekipipeline {
                                         info.set("values", vals);
                                         return info;
                                 }
-                                case Variant::TypePixelMemLayout: {
+                                case DataTypePixelMemLayout: {
                                         info.set("type", String("PixelMemLayout"));
                                         JsonArray                    vals;
                                         const PixelMemLayout::IDList ids = PixelMemLayout::registeredIDs();
@@ -117,7 +123,7 @@ namespace promekipipeline {
                                         info.set("values", vals);
                                         return info;
                                 }
-                                case Variant::TypeVideoCodec: {
+                                case DataTypeVideoCodec: {
                                         info.set("type", String("VideoCodec"));
                                         JsonArray                vals;
                                         const VideoCodec::IDList ids = VideoCodec::registeredIDs();
@@ -147,9 +153,9 @@ namespace promekipipeline {
                 // (the user picks from the listed values).  The frontend renders
                 // presets as a `<select>` plus a "Custom..." option that reveals the
                 // underlying free-form editor.
-                JsonArray typePresets(Variant::Type primary) {
+                JsonArray typePresets(promeki::DataTypeID primary) {
                         JsonArray out;
-                        if (primary == Variant::TypeFrameRate) {
+                        if (primary == DataTypeFrameRate) {
                                 const List<FrameRate::WellKnown> rates = FrameRate::wellKnownRates();
                                 for (size_t i = 0; i < rates.size(); ++i) {
                                         JsonObject entry;
