@@ -735,8 +735,9 @@ class RtpSession : public ObjectBase {
                 ///        threads (RTCP scheduler, stats path).
                 uint32_t      _srObservedCount = 0;
                 /// @brief Local steady-clock timestamp of the
-                ///        first SR observed.  Default-constructed
-                ///        until the first SR arrives.  Used by
+                ///        first SR observed.  Invalid until the
+                ///        first SR arrives — callers detect that
+                ///        via @c isValid().  Used by
                 ///        @ref firstSrAt + @ref RtpMediaIO to
                 ///        compute @c firstSrLatency.
                 TimeStamp     _firstSrAt;

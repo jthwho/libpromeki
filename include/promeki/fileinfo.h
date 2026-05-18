@@ -209,7 +209,7 @@ class FileInfo {
                  * Used by HTTP responses (ETag / Last-Modified) and
                  * anywhere a wall-clock view of file mtime is needed.
                  *
-                 * @return The last-modified time, or epoch on failure.
+                 * @return The last-modified time, or an invalid @ref DateTime on failure.
                  */
                 DateTime lastModified() const {
                         std::error_code ec;

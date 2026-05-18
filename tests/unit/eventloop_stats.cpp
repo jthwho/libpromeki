@@ -66,10 +66,12 @@ class StatsTestReceiver : public ObjectBase {
 
 } // namespace
 
-TEST_CASE("EventLoopStats: peekStats returns zero with no monitor") {
+TEST_CASE("EventLoopStats: peekStats returns invalid with no monitor") {
         EventLoop loop;
         EventLoop::Report r = loop.peekStats();
-        CHECK(r.wallElapsed.nanoseconds() == 0);
+        // No monitor → no measurement; Duration fields stay at their
+        // default (invalid).
+        CHECK_FALSE(r.wallElapsed.isValid());
         CHECK_FALSE(loop.hasMonitor());
 }
 
@@ -193,7 +195,7 @@ TEST_CASE("EventLoopStats: peekStats is non-destructive") {
         loop.removeMonitor();
 }
 
-TEST_CASE("EventLoopStats: removeMonitor stops timer + zeros snapshot") {
+TEST_CASE("EventLoopStats: removeMonitor stops timer + invalidates snapshot") {
         EventLoop loop;
         loop.installMonitor(Duration::fromMilliseconds(50));
         CHECK(loop.hasMonitor());
@@ -201,7 +203,9 @@ TEST_CASE("EventLoopStats: removeMonitor stops timer + zeros snapshot") {
         CHECK_FALSE(loop.hasMonitor());
 
         EventLoop::Report r = loop.consumeStats();
-        CHECK(r.wallElapsed.nanoseconds() == 0);
+        // Monitor removed → no measurement; Duration fields stay at
+        // their default (invalid).
+        CHECK_FALSE(r.wallElapsed.isValid());
         CHECK(r.callablesCount == 0);
 }
 

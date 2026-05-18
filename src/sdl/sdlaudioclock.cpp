@@ -67,7 +67,7 @@ namespace {
 } // namespace
 
 SDLAudioClock::SDLAudioClock(SDLAudioOutput *output)
-    : Clock(output->clockDomain(), Duration(),
+    : Clock(output->clockDomain(), Duration::zero(),
             // @ref onPause freezes raw() at the pause-time value
             // (_rawAtPause) and resets the interpolation
             // checkpoint + rate baseline on resume, so the clock

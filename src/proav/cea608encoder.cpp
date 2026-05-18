@@ -39,7 +39,7 @@ namespace {
         /// @brief Converts a media-relative @ref TimeStamp (epoch =
         ///        media t=0) into milliseconds since epoch.
         int64_t timeStampToMs(const TimeStamp &ts) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(ts.value().time_since_epoch()).count();
+                return ts.milliseconds();
         }
 
         /// @brief Rounds a media-relative @ref TimeStamp to the nearest

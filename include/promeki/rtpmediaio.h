@@ -1491,7 +1491,8 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 ///        @c executeCmd(MediaIOCommandOpen) entered
                 ///        in reader mode.  Used to compute the
                 ///        @c StatsRxFirstSrLatencyUs reading.  Reset
-                ///        on @ref resetAll.
+                ///        on @ref resetAll.  Invalid until open —
+                ///        callers detect that via @c isValid().
                 TimeStamp _openedAt;
                 /// @brief Owned per-RtpMediaIO aggregator thread.
                 ///        Spawned on reader-mode open after the

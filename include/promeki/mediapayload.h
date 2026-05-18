@@ -256,13 +256,13 @@ class MediaPayload {
 
                 /**
                  * @brief Returns the wall-clock duration spanned by this
-                 *        payload, or a zero @ref Duration when no
+                 *        payload, or an invalid @ref Duration when no
                  *        duration is available.
                  *
                  * Polymorphic hook — the base default returns
-                 * @c Duration() because @ref MediaPayload does not
-                 * itself own any state from which a duration could be
-                 * derived.  Subclasses override:
+                 * @c Duration() (invalid) because @ref MediaPayload
+                 * does not itself own any state from which a duration
+                 * could be derived.  Subclasses override:
                  *
                  *  - @ref AudioPayload computes @c sampleCount() /
                  *    @c desc().sampleRate() — one source of truth, no
@@ -272,10 +272,10 @@ class MediaPayload {
                  *    (typically @ref MediaIO stamps one frame of the
                  *    session frame rate when the producer did not).
                  *
-                 * A zero @ref Duration from a payload whose
-                 * @ref hasDuration returns @c true means "no value
-                 * has been stamped yet" — @ref MediaIO uses that
-                 * combination as its fill trigger.
+                 * An invalid or zero @ref Duration from a payload
+                 * whose @ref hasDuration returns @c true means "no
+                 * value has been stamped yet" — @ref MediaIO uses
+                 * either as its fill trigger.
                  */
                 virtual Duration duration() const { return Duration(); }
 

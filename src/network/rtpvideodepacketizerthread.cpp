@@ -195,8 +195,8 @@ void RtpVideoDepacketizerThread::emitFrame() {
         _lastFrameTime = emitTime;
         _hasLastFrame = true;
 
-        TimeStamp captureTime;
-        NtpTime   wallclockNtp;
+        TimeStamp  captureTime;
+        NtpTime    wallclockNtp;
         const bool hasSr = _ctx.hasSr != nullptr && *_ctx.hasSr;
         const bool clockValid = _ctx.streamClock != nullptr &&
                                 _ctx.streamClock->isValid();
@@ -204,13 +204,11 @@ void RtpVideoDepacketizerThread::emitFrame() {
                 wallclockNtp = _ctx.streamClock->toNtp(frameRtpTimestamp);
                 TimeStamp steady;
                 if (_ctx.ntpToSteady) steady = _ctx.ntpToSteady(wallclockNtp);
-                if (steady.nanoseconds() != 0) captureTime = steady;
+                if (steady.isValid()) captureTime = steady;
         }
-        if (captureTime.nanoseconds() == 0) {
-                captureTime = captureTimeForRtpTs(frameRtpTimestamp);
-        }
-        if (captureTime.nanoseconds() == 0) captureTime = firstPktArrival;
-        if (captureTime.nanoseconds() == 0) captureTime = emitTime;
+        if (!captureTime.isValid()) captureTime = captureTimeForRtpTs(frameRtpTimestamp);
+        if (!captureTime.isValid()) captureTime = firstPktArrival;
+        if (!captureTime.isValid()) captureTime = emitTime;
 
         MediaTimeStamp capMts(captureTime, _ctx.clockDomain);
         {

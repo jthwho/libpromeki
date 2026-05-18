@@ -164,10 +164,8 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                                         // the strand's own per-frame
                                         // cadence and does not accumulate.
                                         const Duration interval = rate.frameDuration();
-                                        const Duration perPacket = nPackets > 1
-                                                ? Duration::fromNanoseconds(interval.nanoseconds() /
-                                                                            static_cast<int64_t>(nPackets))
-                                                : interval;
+                                        const Duration perPacket =
+                                                nPackets > 1 ? interval / static_cast<int64_t>(nPackets) : interval;
                                         Cadence pacer(perPacket);
                                         pacer.anchor(TimeStamp::now());
                                         err = Error::Ok;
@@ -2404,6 +2402,8 @@ void RtpMediaIO::refreshStreamClock(ReaderStream &s) {
 }
 
 TimeStamp RtpMediaIO::ntpToSteady(const NtpTime &ntp) const {
+        // Invalid return on the "no anchor yet" path — callers detect
+        // that via @c isValid().
         if (!_readerHasAnchor) return TimeStamp();
         // Compute the signed difference (ntp - ntpAnchor) in 1/2^32 s
         // units, then convert to nanoseconds.  Using @c uint64_t
@@ -3657,15 +3657,15 @@ Error RtpMediaIO::executeCmd(MediaIOCommandStats &cmd) {
                         srObserved +=
                                 static_cast<int64_t>(s.session->srObservedCount());
                         const RtpSession::ReceivedSr sr = s.session->receivedSr();
-                        if (sr.valid && sr.arrivedAt.nanoseconds() != 0) {
-                                if (newestSr.nanoseconds() == 0 ||
+                        if (sr.valid && sr.arrivedAt.isValid()) {
+                                if (!newestSr.isValid() ||
                                     (sr.arrivedAt - newestSr).nanoseconds() > 0) {
                                         newestSr = sr.arrivedAt;
                                 }
                         }
                         const TimeStamp first = s.session->firstSrAt();
-                        if (first.nanoseconds() != 0) {
-                                if (earliestFirstSr.nanoseconds() == 0 ||
+                        if (first.isValid()) {
+                                if (!earliestFirstSr.isValid() ||
                                     (earliestFirstSr - first).nanoseconds() > 0) {
                                         earliestFirstSr = first;
                                 }
@@ -3675,12 +3675,11 @@ Error RtpMediaIO::executeCmd(MediaIOCommandStats &cmd) {
                 for (const AudioReaderStream &as : _audioReaders) foldRtcp(as);
                 for (const DataReaderStream &ds : _dataReaders) foldRtcp(ds);
                 cmd.stats.set(StatsRxSrObserved, srObserved);
-                if (newestSr.nanoseconds() != 0) {
+                if (newestSr.isValid()) {
                         const Duration age = TimeStamp::now() - newestSr;
                         cmd.stats.set(StatsRxLastSrAgeUs, age.microseconds());
                 }
-                if (earliestFirstSr.nanoseconds() != 0 &&
-                    _openedAt.nanoseconds() != 0) {
+                if (earliestFirstSr.isValid() && _openedAt.isValid()) {
                         const Duration latency = earliestFirstSr - _openedAt;
                         cmd.stats.set(StatsRxFirstSrLatencyUs, latency.microseconds());
                 }

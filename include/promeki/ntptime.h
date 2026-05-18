@@ -164,7 +164,7 @@ class NtpTime {
                 }
 
                 /// @brief See @ref operator+(const Duration &).
-                NtpTime operator-(const Duration &d) const { return *this + Duration::fromNanoseconds(-d.nanoseconds()); }
+                NtpTime operator-(const Duration &d) const { return *this + (-d); }
 
         private:
                 uint32_t _seconds = 0;

@@ -15,6 +15,8 @@
 PROMEKI_NAMESPACE_BEGIN
 
 String Duration::toString() const {
+        if (!isValid()) return String("invalid");
+
         int64_t total = nanoseconds();
         bool    neg = total < 0;
         if (neg) total = -total;
@@ -40,12 +42,14 @@ String Duration::toString() const {
 }
 
 String Duration::toScaledString(int precision) const {
+        if (!isValid()) return String("invalid");
         return Units::fromDurationNs(static_cast<double>(nanoseconds()), precision);
 }
 
 Result<Duration> Duration::fromString(const String &str) {
         const String s = str.trim();
         if (s.isEmpty()) return makeError<Duration>(Error::ParseFailed);
+        if (s == "invalid") return makeResult(Duration());
 
         // Walk past the magnitude — sign + digits + optional decimal —
         // to find the unit suffix.  We hand the magnitude prefix to
@@ -99,7 +103,9 @@ Result<Duration> Duration::fromString(const String &str) {
 // ============================================================================
 
 Error Duration::writeToStream(DataStream &s) const {
-        s << static_cast<int64_t>(nanoseconds());
+        // Write the raw ns count.  Invalid serializes as Duration::Invalid
+        // (INT64_MIN) and round-trips through readFromStream below.
+        s << static_cast<int64_t>(_ns);
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 

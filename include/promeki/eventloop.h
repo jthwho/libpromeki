@@ -425,7 +425,7 @@ class EventLoop {
                         };
 
                         String   loopName;          ///< From @ref setName; empty if never set.
-                        Duration wallElapsed;       ///< Wall time covered by this snapshot.
+                        Duration wallElapsed;       ///< Wall time covered by this snapshot.  Invalid when no monitor.
                         Duration sleep;             ///< Time blocked in poll() / wake fd (POSIX wait path).
                         Duration queueWait;         ///< Time blocked in @c Queue::pop (non-POSIX fallback).  0 on POSIX.
                         Duration timers;            ///< Time inside timer callbacks.

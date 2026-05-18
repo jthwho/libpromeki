@@ -186,3 +186,21 @@ TEST_CASE("MediaTimeStamp: equality") {
         MediaTimeStamp c(ts, ClockDomain::SystemMonotonic, offset);
         CHECK(a != c);
 }
+
+TEST_CASE("MediaTimeStamp: nanoseconds() combines timeStamp + offset") {
+        TimeStamp      ts(int64_t{1'000'000'000}); // 1 s since epoch
+        Duration       offset = Duration::fromMilliseconds(500);
+        MediaTimeStamp mts(ts, ClockDomain::Synthetic, offset);
+        CHECK(mts.nanoseconds() == 1'500'000'000LL);
+}
+
+TEST_CASE("MediaTimeStamp: nanoseconds() with zero offset") {
+        TimeStamp      ts(int64_t{2'000'000'000});
+        MediaTimeStamp mts(ts, ClockDomain::Synthetic);
+        CHECK(mts.nanoseconds() == 2'000'000'000LL);
+}
+
+TEST_CASE("MediaTimeStamp: nanoseconds() invalid ts returns Invalid") {
+        MediaTimeStamp mts; // default — invalid ts
+        CHECK(mts.nanoseconds() == TimeStamp::Invalid);
+}

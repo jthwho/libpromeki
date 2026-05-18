@@ -21,7 +21,7 @@ namespace {
         // or a real hardware source.
         class FakeClock : public Clock {
                 public:
-                        FakeClock(const Duration &fixedOffset = Duration(),
+                        FakeClock(const Duration &fixedOffset = Duration::zero(),
                                   ClockPauseMode pauseMode = ClockPauseMode::CannotPause, ClockFilter *filter = nullptr)
                             : Clock(ClockDomain(ClockDomain::Synthetic), fixedOffset, pauseMode, filter) {}
 
@@ -33,7 +33,7 @@ namespace {
                         bool lastPauseArg() const { return _lastPauseArg; }
 
                         int64_t     resolutionNs() const override { return 1; }
-                        ClockJitter jitter() const override { return ClockJitter{Duration(), Duration()}; }
+                        ClockJitter jitter() const override { return ClockJitter{Duration::zero(), Duration::zero()}; }
 
                 protected:
                         Result<int64_t> raw() const override {
@@ -160,7 +160,7 @@ TEST_SUITE("Clock") {
         }
 
         TEST_CASE("pause with raw-keeps-running: reported time frozen then seamless") {
-                FakeClock c(Duration(), ClockPauseMode::PausesRawKeepsRunning);
+                FakeClock c(Duration::zero(), ClockPauseMode::PausesRawKeepsRunning);
                 c.setRaw(1000);
                 CHECK(value(c.nowNs()) == 1000);
 
@@ -187,7 +187,7 @@ TEST_SUITE("Clock") {
         }
 
         TEST_CASE("pause with raw-stops: no accumulator growth on resume") {
-                FakeClock c(Duration(), ClockPauseMode::PausesRawStops);
+                FakeClock c(Duration::zero(), ClockPauseMode::PausesRawStops);
                 c.setRaw(1000);
                 CHECK(value(c.nowNs()) == 1000);
 
@@ -219,7 +219,7 @@ TEST_SUITE("Clock") {
         }
 
         TEST_CASE("sleepUntil returns ClockPaused when clock is paused") {
-                FakeClock c(Duration(), ClockPauseMode::PausesRawKeepsRunning);
+                FakeClock c(Duration::zero(), ClockPauseMode::PausesRawKeepsRunning);
                 c.setRaw(0);
                 TimeStamp      ts{TimeStamp::Clock::time_point(std::chrono::nanoseconds(1000))};
                 MediaTimeStamp deadline(ts, c.domain());

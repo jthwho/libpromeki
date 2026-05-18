@@ -860,7 +860,7 @@ Error NdiMediaIO::sendAudio(const PcmAudioPayload &ap) {
                 ? Duration::fromNanoseconds(static_cast<int64_t>(
                           static_cast<double>(samples) * 1.0e9 /
                           static_cast<double>(_audioSampleRate)))
-                : Duration();
+                : Duration::zero();
         if (_audioGate.hasClock() && !audioAdvance.isZero() && _audioGate.period().isZero()) {
                 // Seed the period with the first observed block size
                 // so skip / reanchor thresholds default to something

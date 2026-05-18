@@ -1447,7 +1447,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (_firstCaptureFrame < 0) {
                         _firstCaptureTime = ct;
                         _firstCaptureFrame = _frameCount.value();
-                } else if (_lastCaptureTime.nanoseconds() > 0) {
+                } else if (_lastCaptureTime.isValid()) {
                         double delta = (ct - _lastCaptureTime).toSecondsDouble();
                         if (delta > 0.0) {
                                 _frameDeltaSum += delta;

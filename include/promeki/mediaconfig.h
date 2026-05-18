@@ -735,7 +735,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                 PROMEKI_DECLARE_ID(TpgAncCaptionsOffset,
                                    VariantSpec()
                                            .setType(DataTypeDuration)
-                                           .setDefault(Duration())
+                                           .setDefault(Duration::zero())
                                            .setDescription("Offset applied to SubRip cue times before scheduling."));
 
                 /// @brief int — VANC line number the TPG stamps on emitted

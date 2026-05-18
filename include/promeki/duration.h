@@ -28,19 +28,27 @@ class DataStream;
  * @brief Time duration with nanosecond precision.
  * @ingroup time
  *
- * Simple value type wrapping std::chrono::nanoseconds. Provides
- * static factories for construction and accessors for various
- * time units. No PROMEKI_SHARED_FINAL.
+ * Stores a single @c int64_t nanosecond count.  Default-constructed
+ * instances carry the @ref Invalid sentinel and report
+ * @c isValid() == false; @ref zero / @c fromNanoseconds(0) returns
+ * an explicit zero-length duration.
  *
  * @par Thread Safety
  * Trivially thread-safe.  Duration is a value-type wrapper around
- * a single @c std::chrono::nanoseconds; distinct instances may be
- * used concurrently and a single instance carries no mutable
- * shared state.
+ * a single @c int64_t; distinct instances may be used concurrently
+ * and a single instance carries no mutable shared state.
  */
 class Duration {
         public:
                 PROMEKI_DATATYPE(Duration, DataTypeDuration, 1)
+
+                /**
+                 * @brief Sentinel ns value that marks a Duration as invalid.
+                 *
+                 * Chosen as @c INT64_MIN so that every other @c int64_t
+                 * value remains a representable nanosecond count.
+                 */
+                static constexpr int64_t Invalid = INT64_MIN;
 
                 /** @brief Writes a tagged int64 nanosecond count. */
                 Error writeToStream(DataStream &s) const;
@@ -48,12 +56,20 @@ class Duration {
                 template <uint32_t V> static Result<Duration> readFromStream(DataStream &s);
 
                 /**
+                 * @brief Returns an explicit zero-length Duration.
+                 *
+                 * Use when intent is "no time", as opposed to the
+                 * default-constructed Duration which is @ref Invalid.
+                 */
+                static Duration zero() { return Duration(int64_t{0}); }
+
+                /**
                  * @brief Creates a Duration from hours.
                  * @param h Number of hours.
                  * @return The Duration.
                  */
                 static Duration fromHours(int64_t h) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::hours(h)));
+                        return Duration(h * 3'600'000'000'000LL);
                 }
 
                 /**
@@ -62,7 +78,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMinutes(int64_t m) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::minutes(m)));
+                        return Duration(m * 60'000'000'000LL);
                 }
 
                 /**
@@ -71,7 +87,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromSeconds(int64_t s) {
-                        return Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(s)));
+                        return Duration(s * 1'000'000'000LL);
                 }
 
                 /**
@@ -80,8 +96,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMilliseconds(int64_t ms) {
-                        return Duration(
-                                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(ms)));
+                        return Duration(ms * 1'000'000LL);
                 }
 
                 /**
@@ -90,8 +105,7 @@ class Duration {
                  * @return The Duration.
                  */
                 static Duration fromMicroseconds(int64_t us) {
-                        return Duration(
-                                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds(us)));
+                        return Duration(us * 1'000LL);
                 }
 
                 /**
@@ -99,18 +113,18 @@ class Duration {
                  * @param ns Number of nanoseconds.
                  * @return The Duration.
                  */
-                static Duration fromNanoseconds(int64_t ns) { return Duration(std::chrono::nanoseconds(ns)); }
+                static Duration fromNanoseconds(int64_t ns) { return Duration(ns); }
 
                 /**
                  * @brief Computes the wall-clock duration spanned by
                  *        @p count samples at integer rate @p rate.
                  *
                  * Integer overload.  Rate is interpreted as samples
-                 * per second.  A zero rate yields a zero Duration.
+                 * per second.  A zero rate yields @ref zero.
                  */
                 template <typename Int, std::enable_if_t<std::is_integral_v<Int>, int> = 0>
                 static Duration fromSamples(int64_t count, Int rate) {
-                        if (rate == 0) return Duration();
+                        if (rate == 0) return zero();
                         return fromNanoseconds(count * 1'000'000'000LL / static_cast<int64_t>(rate));
                 }
 
@@ -119,11 +133,11 @@ class Duration {
                  *        @p count samples at floating-point rate @p rate.
                  *
                  * Rate is interpreted as samples per second.  A zero or
-                 * non-finite rate yields a zero Duration.
+                 * non-finite rate yields @ref zero.
                  */
                 template <typename Float, std::enable_if_t<std::is_floating_point_v<Float>, int> = 0>
                 static Duration fromSamples(int64_t count, Float rate) {
-                        if (!(rate > Float(0))) return Duration();
+                        if (!(rate > Float(0))) return zero();
                         const double ns = static_cast<double>(count) * 1'000'000'000.0 / static_cast<double>(rate);
                         return fromNanoseconds(static_cast<int64_t>(ns));
                 }
@@ -135,81 +149,113 @@ class Duration {
                  * Rate is interpreted as samples per second.  Retains
                  * full precision of the rational — commonly useful for
                  * fractional video frame rates (24000/1001, 30000/1001).
-                 * An invalid or zero-numerator rate yields a zero
-                 * Duration.
+                 * An invalid or zero-numerator rate yields @ref zero.
                  */
                 template <typename T> static Duration fromSamples(int64_t count, const Rational<T> &rate) {
                         if (!rate.isValid() || rate.numerator() == 0) {
-                                return Duration();
+                                return zero();
                         }
                         const int64_t num = static_cast<int64_t>(rate.numerator());
                         const int64_t den = static_cast<int64_t>(rate.denominator());
                         return fromNanoseconds(count * den * 1'000'000'000LL / num);
                 }
 
-                /** @brief Default constructor. Creates a zero duration. */
-                Duration() : _ns(0) {}
+                /** @brief Default constructor — produces an invalid Duration.  See @ref Invalid. */
+                Duration() = default;
+
+                /** @brief True if this Duration carries a real value (not @ref Invalid). */
+                bool isValid() const { return _ns != Invalid; }
 
                 /**
                  * @brief Returns the total number of whole hours.
+                 *
+                 * Returns @c 0 for an invalid Duration.
+                 *
                  * @return Hours as int64_t.
                  */
-                int64_t hours() const { return std::chrono::duration_cast<std::chrono::hours>(_ns).count(); }
+                int64_t hours() const { return isValid() ? _ns / 3'600'000'000'000LL : 0; }
 
                 /**
                  * @brief Returns the total number of whole minutes.
+                 *
+                 * Returns @c 0 for an invalid Duration.
+                 *
                  * @return Minutes as int64_t.
                  */
-                int64_t minutes() const { return std::chrono::duration_cast<std::chrono::minutes>(_ns).count(); }
+                int64_t minutes() const { return isValid() ? _ns / 60'000'000'000LL : 0; }
 
                 /**
                  * @brief Returns the total number of whole seconds.
+                 *
+                 * Returns @c 0 for an invalid Duration.
+                 *
                  * @return Seconds as int64_t.
                  */
-                int64_t seconds() const { return std::chrono::duration_cast<std::chrono::seconds>(_ns).count(); }
+                int64_t seconds() const { return isValid() ? _ns / 1'000'000'000LL : 0; }
 
                 /**
                  * @brief Returns the total number of whole milliseconds.
+                 *
+                 * Returns @c 0 for an invalid Duration.
+                 *
                  * @return Milliseconds as int64_t.
                  */
-                int64_t milliseconds() const {
-                        return std::chrono::duration_cast<std::chrono::milliseconds>(_ns).count();
-                }
+                int64_t milliseconds() const { return isValid() ? _ns / 1'000'000LL : 0; }
 
                 /**
                  * @brief Returns the total number of whole microseconds.
+                 *
+                 * Returns @c 0 for an invalid Duration.
+                 *
                  * @return Microseconds as int64_t.
                  */
-                int64_t microseconds() const {
-                        return std::chrono::duration_cast<std::chrono::microseconds>(_ns).count();
-                }
+                int64_t microseconds() const { return isValid() ? _ns / 1'000LL : 0; }
 
                 /**
-                 * @brief Returns the total number of nanoseconds.
-                 * @return Nanoseconds as int64_t.
+                 * @brief Returns the raw nanosecond count.
+                 *
+                 * For an invalid Duration this returns @ref Invalid
+                 * (@c INT64_MIN) rather than @c 0 — callers that want
+                 * "0 if invalid" should branch on @ref isValid.
+                 *
+                 * @return Nanoseconds as int64_t, or @ref Invalid.
                  */
-                int64_t nanoseconds() const { return _ns.count(); }
+                int64_t nanoseconds() const { return _ns; }
 
                 /**
                  * @brief Returns the duration as a fractional number of seconds.
+                 *
+                 * Returns @c 0.0 for an invalid Duration.
+                 *
                  * @return Seconds as a double.
                  */
-                double toSecondsDouble() const { return std::chrono::duration<double>(_ns).count(); }
+                double toSecondsDouble() const {
+                        return isValid() ? static_cast<double>(_ns) / 1'000'000'000.0 : 0.0;
+                }
 
                 /**
                  * @brief Returns true if the duration is exactly zero.
+                 *
+                 * An invalid Duration is not considered zero.
+                 *
                  * @return True if zero.
                  */
-                bool isZero() const { return _ns.count() == 0; }
+                bool isZero() const { return _ns == 0; }
 
                 /**
-                 * @brief Returns true if the duration is negative.
+                 * @brief Returns true if the duration is strictly negative.
+                 *
+                 * An invalid Duration is not considered negative.
+                 *
                  * @return True if negative.
                  */
-                bool isNegative() const { return _ns.count() < 0; }
+                bool isNegative() const { return isValid() && _ns < 0; }
 
                 /**
                  * @brief Returns a human-readable HMS representation (e.g. "1h 23m 45.123s").
+                 *
+                 * Invalid Durations render as @c "invalid".
+                 *
                  * @return Formatted string.
                  */
                 String toString() const;
@@ -225,10 +271,12 @@ class Duration {
                  *  - Bare numbers (no unit) are interpreted as **seconds** —
                  *    so `"3"` parses as 3 seconds.  Add a unit suffix when
                  *    you mean ms / us / ns.
+                 *  - The literal `"invalid"` round-trips to a
+                 *    default-constructed Duration.
                  *
                  * On parse failure the returned @ref Result carries an
                  * @c Error::ParseFailed and a default-constructed
-                 * (zero) Duration.
+                 * (invalid) Duration.
                  *
                  * @param str Input string.
                  * @return @ref Result wrapping the parsed @ref Duration.
@@ -238,38 +286,56 @@ class Duration {
                 /**
                  * @brief Returns an auto-scaled representation (e.g. "1.5 ms").
                  *
-                 * Delegates to @ref Units::fromDurationNs.
+                 * Delegates to @ref Units::fromDurationNs.  Invalid
+                 * Durations render as @c "invalid".
                  *
                  * @param precision Number of significant decimal digits.
                  * @return Formatted string.
                  */
                 String toScaledString(int precision = 2) const;
 
-                /** @brief Addition operator. */
-                Duration operator+(const Duration &o) const { return Duration(_ns + o._ns); }
-                /** @brief Subtraction operator. */
-                Duration operator-(const Duration &o) const { return Duration(_ns - o._ns); }
-                /** @brief Scalar multiplication operator. */
-                Duration operator*(int64_t s) const { return Duration(_ns * s); }
-                /** @brief Scalar division operator. */
-                Duration operator/(int64_t s) const { return Duration(_ns / s); }
+                /** @brief Addition operator — invalid operands propagate. */
+                Duration operator+(const Duration &o) const {
+                        if (!isValid() || !o.isValid()) return Duration();
+                        return Duration(_ns + o._ns);
+                }
+                /** @brief Subtraction operator — invalid operands propagate. */
+                Duration operator-(const Duration &o) const {
+                        if (!isValid() || !o.isValid()) return Duration();
+                        return Duration(_ns - o._ns);
+                }
+                /** @brief Scalar multiplication operator — an invalid Duration stays invalid. */
+                Duration operator*(int64_t s) const {
+                        if (!isValid()) return Duration();
+                        return Duration(_ns * s);
+                }
+                /** @brief Scalar division operator — an invalid Duration stays invalid. */
+                Duration operator/(int64_t s) const {
+                        if (!isValid()) return Duration();
+                        return Duration(_ns / s);
+                }
+                /** @brief Unary minus — invalid stays invalid. */
+                Duration operator-() const {
+                        if (!isValid()) return Duration();
+                        return Duration(-_ns);
+                }
 
-                /** @brief Equality comparison. */
+                /** @brief Equality comparison (two Invalid Durations compare equal). */
                 bool operator==(const Duration &o) const { return _ns == o._ns; }
                 /** @brief Inequality comparison. */
                 bool operator!=(const Duration &o) const { return _ns != o._ns; }
-                /** @brief Less-than comparison. */
+                /** @brief Less-than comparison on raw ns.  Invalid sorts below all valid Durations. */
                 bool operator<(const Duration &o) const { return _ns < o._ns; }
-                /** @brief Greater-than comparison. */
+                /** @brief Greater-than comparison on raw ns. */
                 bool operator>(const Duration &o) const { return _ns > o._ns; }
-                /** @brief Less-than-or-equal comparison. */
+                /** @brief Less-than-or-equal comparison on raw ns. */
                 bool operator<=(const Duration &o) const { return _ns <= o._ns; }
-                /** @brief Greater-than-or-equal comparison. */
+                /** @brief Greater-than-or-equal comparison on raw ns. */
                 bool operator>=(const Duration &o) const { return _ns >= o._ns; }
 
         private:
-                explicit Duration(std::chrono::nanoseconds ns) : _ns(ns) {}
-                std::chrono::nanoseconds _ns;
+                explicit Duration(int64_t ns) : _ns(ns) {}
+                int64_t _ns = Invalid;
 };
 
 PROMEKI_NAMESPACE_END

@@ -70,13 +70,20 @@ class MediaTimeStamp {
                  * @param domain The clock domain that produced @p ts.
                  * @param offset Fixed offset from the domain's epoch (default zero).
                  */
-                MediaTimeStamp(const TimeStamp &ts, const ClockDomain &domain, const Duration &offset = Duration());
+                MediaTimeStamp(const TimeStamp &ts, const ClockDomain &domain, const Duration &offset = Duration::zero());
 
                 /**
-                 * @brief Returns true if the domain is valid.
-                 * @return True if this MediaTimeStamp carries a valid clock domain.
+                 * @brief Returns true if both the clock domain and the
+                 *        underlying @ref TimeStamp are valid.
+                 *
+                 * The offset is not part of the validity check — a
+                 * default-constructed offset is treated as
+                 * @ref Duration::zero by the constructors used in
+                 * practice — but a missing domain or a missing
+                 * @ref TimeStamp would make the stamp meaningless to
+                 * any consumer doing arithmetic on it.
                  */
-                bool isValid() const { return _domain.isValid(); }
+                bool isValid() const { return _domain.isValid() && _timeStamp.isValid(); }
 
                 /** @brief Returns the timestamp value. */
                 const TimeStamp &timeStamp() const { return _timeStamp; }
@@ -86,6 +93,31 @@ class MediaTimeStamp {
 
                 /** @brief Returns the offset from the domain's epoch. */
                 const Duration &offset() const { return _offset; }
+
+                /**
+                 * @brief Absolute time in nanoseconds — @c timeStamp + @c offset.
+                 *
+                 * Returns @ref TimeStamp::Invalid when the underlying
+                 * @ref timeStamp is invalid.  An invalid @ref offset
+                 * is treated as zero (the constructor default is
+                 * @ref Duration::zero in every code path that
+                 * constructs a MediaTimeStamp explicitly, so a
+                 * sentinel offset can only appear on a half-
+                 * initialised instance).
+                 *
+                 * Shorthand for the
+                 * @c timeStamp().nanoseconds() + offset().nanoseconds()
+                 * idiom that appears throughout the inspector / sync
+                 * paths.
+                 *
+                 * @return Combined nanoseconds, or @ref TimeStamp::Invalid
+                 *         if the underlying TimeStamp is invalid.
+                 */
+                int64_t nanoseconds() const {
+                        if (!_timeStamp.isValid()) return TimeStamp::Invalid;
+                        const int64_t offsetNs = _offset.isValid() ? _offset.nanoseconds() : 0;
+                        return _timeStamp.nanoseconds() + offsetNs;
+                }
 
                 /** @brief Sets the timestamp value.
                  *  @param ts The new timestamp. */

@@ -13,7 +13,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 MediaIOClock::MediaIOClock(MediaIOPortGroup *group)
         : Clock(ClockDomain(ClockDomain::Synthetic),
-                Duration(),
+                Duration::zero(),
                 ClockPauseMode::PausesRawKeepsRunning),
           _group(group) {}
 

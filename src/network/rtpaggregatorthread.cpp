@@ -139,7 +139,7 @@ void RtpAggregatorThread::drainAudioIntoFifoBefore(const TimeStamp &windowEnd) {
                                     perr.desc().cstr());
                         return;
                 }
-                if (windowEnd.nanoseconds() != 0 && c.captureTime.nanoseconds() != 0 &&
+                if (windowEnd.isValid() && c.captureTime.isValid() &&
                     (c.captureTime - windowEnd).nanoseconds() >= 0) {
                         break;
                 }
@@ -150,9 +150,8 @@ bool RtpAggregatorThread::drainAncBefore(const TimeStamp &windowEnd,
                                          RxAncFrame &out) {
         bool have = false;
         if (_hasPendingAnc) {
-                const bool windowOpen = windowEnd.nanoseconds() == 0;
-                const bool pendingUnstamped =
-                        _pendingAnc.captureTime.nanoseconds() == 0;
+                const bool windowOpen = !windowEnd.isValid();
+                const bool pendingUnstamped = !_pendingAnc.captureTime.isValid();
                 const bool pendingFitsWindow =
                         windowOpen || pendingUnstamped ||
                         (_pendingAnc.captureTime - windowEnd).nanoseconds() < 0;
@@ -169,8 +168,7 @@ bool RtpAggregatorThread::drainAncBefore(const TimeStamp &windowEnd,
         for (;;) {
                 Result<RxAncFrame> r = _ctx.anc.payloadQueue->tryPop();
                 if (r.second().isError()) break;
-                if (windowEnd.nanoseconds() != 0 &&
-                    r.first().captureTime.nanoseconds() != 0 &&
+                if (windowEnd.isValid() && r.first().captureTime.isValid() &&
                     (r.first().captureTime - windowEnd).nanoseconds() >= 0) {
                         _pendingAnc = std::move(r.first());
                         _hasPendingAnc = true;
@@ -186,9 +184,8 @@ bool RtpAggregatorThread::drainDataBefore(const TimeStamp &windowEnd,
                                           RxDataMessage &out) {
         bool have = false;
         if (_hasPendingData) {
-                const bool windowOpen = windowEnd.nanoseconds() == 0;
-                const bool pendingUnstamped =
-                        _pendingData.captureTime.nanoseconds() == 0;
+                const bool windowOpen = !windowEnd.isValid();
+                const bool pendingUnstamped = !_pendingData.captureTime.isValid();
                 const bool pendingFitsWindow =
                         windowOpen || pendingUnstamped ||
                         (_pendingData.captureTime - windowEnd).nanoseconds() < 0;
@@ -205,8 +202,7 @@ bool RtpAggregatorThread::drainDataBefore(const TimeStamp &windowEnd,
         for (;;) {
                 Result<RxDataMessage> r = _ctx.data.payloadQueue->tryPop();
                 if (r.second().isError()) break;
-                if (windowEnd.nanoseconds() != 0 &&
-                    r.first().captureTime.nanoseconds() != 0 &&
+                if (windowEnd.isValid() && r.first().captureTime.isValid() &&
                     (r.first().captureTime - windowEnd).nanoseconds() >= 0) {
                         _pendingData = std::move(r.first());
                         _hasPendingData = true;
@@ -255,7 +251,7 @@ bool RtpAggregatorThread::stepVideoMode(unsigned int popMs) {
         const int64_t nowNs = TimeStamp::now().nanoseconds();
         const int64_t silenceNs = nowNs - lastArrivalNs;
         if (silenceNs < kStallNFrames * fd.nanoseconds()) return false;
-        if (_emittedFrameCursor.nanoseconds() != 0 &&
+        if (_emittedFrameCursor.isValid() &&
             nowNs < (_emittedFrameCursor.nanoseconds() + fd.nanoseconds())) {
                 return false;
         }
@@ -270,14 +266,15 @@ void RtpAggregatorThread::emitFrameForVideo(RxVideoFrame video,
         // frame's captureTime forward to one frame past the cursor
         // so downstream consumers see monotonic stamps across the
         // stall.
-        if (_emittedFrameCursor.nanoseconds() != 0 &&
-            video.captureTime.nanoseconds() != 0 &&
+        if (_emittedFrameCursor.isValid() && video.captureTime.isValid() &&
             (video.captureTime - _emittedFrameCursor).nanoseconds() <= 0 &&
-            fd.nanoseconds() > 0) {
+            fd.isValid() && fd.nanoseconds() > 0) {
                 video.captureTime = _emittedFrameCursor + fd;
         }
+        // Invalid windowEnd means "no window cap" — drainAudioIntoFifoBefore
+        // / drainAncBefore / drainDataBefore treat that as drain-everything.
         TimeStamp windowEnd;
-        if (video.captureTime.nanoseconds() != 0 && fd.nanoseconds() > 0) {
+        if (video.captureTime.isValid() && fd.isValid() && fd.nanoseconds() > 0) {
                 windowEnd = video.captureTime + fd;
         }
         drainAudioIntoFifoBefore(windowEnd);
@@ -353,7 +350,7 @@ void RtpAggregatorThread::emitFrameForVideo(RxVideoFrame video,
 }
 
 void RtpAggregatorThread::emitWatchdogFrame(const Duration &fd) {
-        if (_emittedFrameCursor.nanoseconds() == 0) {
+        if (!_emittedFrameCursor.isValid()) {
                 _emittedFrameCursor = TimeStamp::now();
         } else {
                 _emittedFrameCursor += fd;

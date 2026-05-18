@@ -79,9 +79,10 @@ struct StreamAnchor {
                  *        from the anchor.
                  *
                  * @param rtpTs The packet's 32-bit RTP timestamp.
-                 * @return Interpolated steady-clock TimeStamp, or
-                 *         a default-constructed TimeStamp if the
-                 *         anchor is not yet valid.
+                 * @return Interpolated steady-clock TimeStamp, or an
+                 *         invalid @ref TimeStamp if the anchor is
+                 *         not yet valid — callers detect that via
+                 *         @c isValid.
                  */
                 TimeStamp captureTimeFor(uint32_t rtpTs) const {
                         if (!isValid()) return TimeStamp();

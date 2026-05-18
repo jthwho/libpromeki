@@ -59,8 +59,9 @@ struct PacingResult {
                 /// the gate slept (the magnitude is roughly the sleep
                 /// duration).  Negative means the deadline had already
                 /// passed by that much (the magnitude is the lag).
-                /// Zero on the first wait after a re-anchor and on
-                /// no-op (null clock) returns.
+                /// Invalid (default-constructed) on no-op (null clock)
+                /// returns and on error paths that did not measure a
+                /// real wait — callers detect that via @c isValid().
                 Duration slack;
 
                 /// @brief Number of complete period intervals the gate
@@ -152,7 +153,7 @@ class PacingGate {
                  * @param clock  The pacing clock; may be null.
                  * @param period Per-tick interval used by the no-arg @ref wait.
                  */
-                explicit PacingGate(const Clock::Ptr &clock, const Duration &period = Duration());
+                explicit PacingGate(const Clock::Ptr &clock, const Duration &period = Duration::zero());
 
                 // ---- Configuration ----
 
@@ -339,11 +340,18 @@ class PacingGate {
 
         private:
                 Clock::Ptr     _clock;
-                Duration       _period;
-                Duration       _skipThreshold;
-                Duration       _reanchorThreshold;
+                // _period defaults to zero so the documented
+                // "defaults to zero — the no-arg @ref wait is a
+                // no-op" contract still holds for callers that
+                // don't supply a period at construction.
+                Duration       _period = Duration::zero();
+                Duration       _skipThreshold = Duration::zero();
+                Duration       _reanchorThreshold = Duration::zero();
                 MediaTimeStamp _anchor;
-                Duration       _accumulated;
+                // _accumulated is incremented per wait() — start at
+                // an explicit zero so the first += produces a valid
+                // sum (rather than invalid + valid = invalid).
+                Duration       _accumulated = Duration::zero();
                 bool           _armed = false;
                 bool           _customSkipThreshold = false;
                 bool           _customReanchorThreshold = false;

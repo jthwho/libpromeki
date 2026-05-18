@@ -792,9 +792,8 @@ TEST_CASE("RtpSession") {
                 CHECK(got.ntp == srNtp);
                 CHECK(got.rtpTs == 72000u);
                 // arrivedAt was sampled when the receive thread
-                // processed the packet — it must be a non-default
-                // timestamp (i.e. past the steady-clock epoch).
-                CHECK(got.arrivedAt.nanoseconds() != 0);
+                // processed the packet — it must be a real value.
+                CHECK(got.arrivedAt.isValid());
                 // The RTCP packet must NOT have been delivered to the
                 // post-reorder queue — RTCP demux happens before the
                 // RTP path.
@@ -852,7 +851,7 @@ TEST_CASE("RtpSession") {
                 CHECK(session.srObservedCount() == 3u);
                 // firstSrAt was set on the first arrival and must
                 // not move when subsequent SRs arrive.
-                CHECK(firstSeenAfter1.nanoseconds() != 0);
+                CHECK(firstSeenAfter1.isValid());
                 CHECK(session.firstSrAt() == firstSeenAfter1);
 
                 session.stopReceiving();
@@ -873,7 +872,7 @@ TEST_CASE("RtpSession") {
                 REQUIRE(session.startReceiving(makeReceiverList(tr, 96, 90000)).isOk());
 
                 CHECK(session.srObservedCount() == 0u);
-                CHECK(session.firstSrAt().nanoseconds() == 0);
+                CHECK_FALSE(session.firstSrAt().isValid());
                 CHECK_FALSE(session.receivedSr().valid);
 
                 session.stopReceiving();

@@ -157,7 +157,7 @@ MediaIOFactory::Config::SpecMap TpgFactory::configSpecs() const {
         // CcDataList into a CEA-708 CDP on every emitted frame.
         s(MediaConfig::TpgAncCaptionsEnabled, false);
         s(MediaConfig::TpgAncCaptionsFile, String());
-        s(MediaConfig::TpgAncCaptionsOffset, Duration());
+        s(MediaConfig::TpgAncCaptionsOffset, Duration::zero());
         s(MediaConfig::TpgAncCaptionsLine, int32_t(11));
         s(MediaConfig::TpgAncCaptionsScc, String());
         s(MediaConfig::TpgAncCaptionsCodec, CaptionCodec::Cea608);
@@ -399,7 +399,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _ancCaptionsEnabled = cfg.getAs<bool>(MediaConfig::TpgAncCaptionsEnabled, false);
         if (_ancCaptionsEnabled) {
                 _ancCaptionsFile = cfg.getAs<String>(MediaConfig::TpgAncCaptionsFile, String());
-                _ancCaptionsOffset = cfg.getAs<Duration>(MediaConfig::TpgAncCaptionsOffset, Duration());
+                _ancCaptionsOffset = cfg.getAs<Duration>(MediaConfig::TpgAncCaptionsOffset, Duration::zero());
                 _ancCaptionsLine = static_cast<uint16_t>(
                         cfg.getAs<int32_t>(MediaConfig::TpgAncCaptionsLine, int32_t(11)));
                 _ancSequenceCounter = 0;
@@ -540,7 +540,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         // Negative offsets that would push a cue's start
                         // below t=0 are detected later by the encoder's
                         // pre-roll check (Error::OutOfRange).
-                        if (_ancCaptionsOffset.nanoseconds() != 0) {
+                        if (_ancCaptionsOffset.isValid() && !_ancCaptionsOffset.isZero()) {
                                 using ClockDur = TimeStamp::Value::duration;
                                 const ClockDur shift = std::chrono::duration_cast<ClockDur>(
                                         std::chrono::nanoseconds(_ancCaptionsOffset.nanoseconds()));
@@ -619,10 +619,8 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                                         promekiWarn(
                                                 "TpgMediaIO: dropping caption cue %lld..%lld (\"%s\") — too "
                                                 "close to t=0 or overlaps the prior cue's wire stream",
-                                                static_cast<long long>(
-                                                        d.start().value().time_since_epoch().count()),
-                                                static_cast<long long>(
-                                                        d.end().value().time_since_epoch().count()),
+                                                static_cast<long long>(d.start().nanoseconds()),
+                                                static_cast<long long>(d.end().nanoseconds()),
                                                 d.text().cstr());
                                 }
                                 _ancCaptions = kept;
@@ -737,7 +735,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandClose &cmd) {
         _burnTextTemplate = String();
         _ancCaptionsEnabled = false;
         _ancCaptionsFile = String();
-        _ancCaptionsOffset = Duration();
+        _ancCaptionsOffset = Duration::zero();
         _ancSequenceCounter = 0;
         _ancFrameRateCode = 0;
         _ancDesc = AncDesc();

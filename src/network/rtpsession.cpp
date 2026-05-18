@@ -526,7 +526,7 @@ void RtpSession::handleRtcp(const uint8_t *data, size_t size) {
                 _lastReceivedSr.arrivedAt = now;
                 _lastReceivedSr.valid = true;
                 _srObservedCount += static_cast<uint32_t>(srs.size());
-                if (_firstSrAt.nanoseconds() == 0) _firstSrAt = now;
+                if (!_firstSrAt.isValid()) _firstSrAt = now;
         }
         const auto byeSsrcs = RtcpPacket::findByeSources(data, size);
         for (size_t i = 0; i < byeSsrcs.size(); i++) {

@@ -56,19 +56,12 @@ namespace {
         /// @brief Converts a millisecond offset into a media-relative
         ///        @ref TimeStamp (epoch = media t=0).
         TimeStamp timeStampFromMs(int64_t totalMs) {
-                // TimeStamp wraps a chrono::time_point<steady_clock>;
-                // the time_point's epoch is implementation-defined but
-                // we only use it as a media-relative offset, so we
-                // construct one directly from a chrono::milliseconds
-                // duration cast into the clock's native unit.
-                using ClockDur = TimeStamp::Value::duration;
-                return TimeStamp(TimeStamp::Value(std::chrono::duration_cast<ClockDur>(
-                        std::chrono::milliseconds(totalMs))));
+                return TimeStamp(totalMs * 1'000'000LL);
         }
 
         /// @brief Inverse of @ref timeStampFromMs.
         int64_t timeStampToMs(const TimeStamp &ts) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(ts.value().time_since_epoch()).count();
+                return ts.milliseconds();
         }
 
         /// @brief Parses one `HH:MM:SS,mmm` (or `HH:MM:SS.mmm`) timecode

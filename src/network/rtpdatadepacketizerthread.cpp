@@ -102,8 +102,8 @@ void RtpDataDepacketizerThread::emitMessage() {
         }
         Metadata m = Metadata::fromJson(obj);
 
-        TimeStamp captureTime;
-        NtpTime   wallclockNtp;
+        TimeStamp  captureTime;
+        NtpTime    wallclockNtp;
         const bool hasSr = _ctx.hasSr != nullptr && *_ctx.hasSr;
         const bool clockValid = _ctx.streamClock != nullptr &&
                                 _ctx.streamClock->isValid();
@@ -111,13 +111,11 @@ void RtpDataDepacketizerThread::emitMessage() {
                 wallclockNtp = _ctx.streamClock->toNtp(dataRtpTimestamp);
                 TimeStamp steady;
                 if (_ctx.ntpToSteady) steady = _ctx.ntpToSteady(wallclockNtp);
-                if (steady.nanoseconds() != 0) captureTime = steady;
+                if (steady.isValid()) captureTime = steady;
         }
-        if (captureTime.nanoseconds() == 0) {
-                captureTime = captureTimeForRtpTs(dataRtpTimestamp);
-        }
-        if (captureTime.nanoseconds() == 0) captureTime = firstPktArrival;
-        if (captureTime.nanoseconds() == 0) captureTime = TimeStamp::now();
+        if (!captureTime.isValid()) captureTime = captureTimeForRtpTs(dataRtpTimestamp);
+        if (!captureTime.isValid()) captureTime = firstPktArrival;
+        if (!captureTime.isValid()) captureTime = TimeStamp::now();
 
         MediaTimeStamp capMts(captureTime, _ctx.clockDomain);
         m.set(Metadata::CaptureTime, capMts);

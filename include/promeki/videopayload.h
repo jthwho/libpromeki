@@ -100,10 +100,11 @@ class VideoPayload : public MediaPayload {
                  *
                  * Video payloads have no intrinsic rate — the enclosing
                  * pipeline (MediaIO / frame-rate converter) is the one
-                 * that knows how long a frame represents.  A
-                 * zero-valued duration is the "not yet stamped"
-                 * sentinel; @ref MediaIO treats that case as a fill
-                 * site and assigns one frame of the session rate.
+                 * that knows how long a frame represents.  A default-
+                 * constructed (invalid) or zero duration is the
+                 * "not yet stamped" sentinel; @ref MediaIO treats
+                 * either as a fill site and assigns one frame of the
+                 * session rate.
                  */
                 Duration duration() const override { return _duration; }
 
@@ -121,7 +122,10 @@ class VideoPayload : public MediaPayload {
                  * answers "is a duration meaningful for this payload
                  * kind?" rather than "has one been assigned?"  Callers
                  * that want the latter should test
-                 * @c duration().isZero().
+                 * @c !duration().isValid() — a default-constructed
+                 * payload's duration is invalid until either
+                 * @ref setDuration is called or @ref MediaIO fills it
+                 * with the session frame rate.
                  */
                 bool hasDuration() const override { return true; }
 

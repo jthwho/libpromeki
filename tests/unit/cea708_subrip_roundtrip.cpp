@@ -82,10 +82,7 @@ namespace {
                 // trailing hide transaction always completes.
                 int64_t lastEndMs = 0;
                 for (size_t i = 0; i < in.size(); ++i) {
-                        const auto &c = in[i];
-                        const int64_t e = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                  c.end().value().time_since_epoch())
-                                                  .count();
+                        const int64_t e = in[i].end().milliseconds();
                         if (e > lastEndMs) lastEndMs = e;
                 }
                 const double  fpsVal = fps.toDouble();

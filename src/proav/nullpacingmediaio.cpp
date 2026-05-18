@@ -110,9 +110,9 @@ Error NullPacingMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 _gate.setClock(Clock::Ptr::takeOwnership(new WallClock()));
                 _gate.setPeriod(_period);
         } else {
-                _period = Duration();
+                _period = Duration::zero();
                 _gate.setClock(Clock::Ptr());
-                _gate.setPeriod(Duration());
+                _gate.setPeriod(Duration::zero());
         }
 
         _burnTimings = cfg.getAs<bool>(MediaConfig::NullPacingBurnTimings, false);

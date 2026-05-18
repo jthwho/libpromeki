@@ -64,10 +64,12 @@ String DateTime::strftime(const std::tm &tm, const char *fmt) {
 }
 
 String DateTime::toString(const char *fmt) const {
+        if (!isValid()) return String("invalid");
         bool   jumpSecond;
-        auto   ns = std::chrono::duration_cast<std::chrono::nanoseconds>(_value.time_since_epoch()) % 1000000000;
+        auto   tp = value();
+        auto   ns = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()) % 1000000000;
         String newfmt = addSubsecondToFormat(std::chrono::duration<double>(ns).count(), fmt, jumpSecond);
-        auto   t = std::chrono::system_clock::to_time_t(_value);
+        auto   t = std::chrono::system_clock::to_time_t(tp);
         if (jumpSecond) t++;
         std::tm tm = {};
         localtime_r(&t, &tm);
@@ -147,10 +149,9 @@ DateTime DateTime::fromNow(const String &description) {
 // ============================================================================
 
 Error DateTime::writeToStream(DataStream &s) const {
-        const int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                   _value.time_since_epoch())
-                                   .count();
-        s << ns;
+        // Write the raw ns count.  Invalid serializes as DateTime::Invalid
+        // (INT64_MIN) and round-trips through readFromStream below.
+        s << _ns;
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
@@ -159,6 +160,7 @@ Result<DateTime> DateTime::readFromStream<1>(DataStream &s) {
         int64_t ns = 0;
         s >> ns;
         if (s.status() != DataStream::Ok) return makeError<DateTime>(s.toError());
+        if (ns == DateTime::Invalid) return makeResult(DateTime());
         return makeResult(DateTime(Value(std::chrono::nanoseconds(ns))));
 }
 

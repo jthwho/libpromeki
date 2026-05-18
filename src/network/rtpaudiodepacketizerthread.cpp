@@ -89,14 +89,12 @@ void RtpAudioDepacketizerThread::handlePacket(const RtpPacket &pkt) {
                 chunk.wallclockNtp = _ctx.streamClock->toNtp(pkt.timestamp());
                 TimeStamp steady;
                 if (_ctx.ntpToSteady) steady = _ctx.ntpToSteady(chunk.wallclockNtp);
-                chunk.captureTime = (steady.nanoseconds() != 0)
-                                            ? steady
-                                            : captureTimeForRtpTs(pkt.timestamp());
+                chunk.captureTime = steady.isValid() ? steady : captureTimeForRtpTs(pkt.timestamp());
         } else {
                 chunk.captureTime = captureTimeForRtpTs(pkt.timestamp());
         }
         chunk.firstPacketArrival = pkt.arrivalSteady;
-        if (chunk.captureTime.nanoseconds() == 0) {
+        if (!chunk.captureTime.isValid()) {
                 chunk.captureTime = TimeStamp::now();
         }
 

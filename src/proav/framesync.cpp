@@ -42,7 +42,7 @@ static constexpr double kSourceRateTimeConstantS = 1.0;
 static bool firstTimestampNs(const MediaPayload &payload, int64_t &outNs) {
         const MediaTimeStamp &mts = payload.pts();
         if (!mts.isValid()) return false;
-        outNs = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+        outNs = mts.nanoseconds();
         return true;
 }
 

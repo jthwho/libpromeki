@@ -39,7 +39,7 @@ namespace {
                         int  sleepCalls() const { return _sleepCalls; }
 
                         int64_t     resolutionNs() const override { return 1; }
-                        ClockJitter jitter() const override { return ClockJitter{Duration(), Duration()}; }
+                        ClockJitter jitter() const override { return ClockJitter{Duration::zero(), Duration::zero()}; }
 
                 protected:
                         Result<int64_t> raw() const override {
@@ -84,11 +84,13 @@ TEST_SUITE("PacingGate") {
                 CHECK(gate.period().isZero());
         }
 
-        TEST_CASE("no clock: every wait returns OnTime + zero slack and does nothing") {
+        TEST_CASE("no clock: every wait returns OnTime + invalid slack and does nothing") {
                 PacingGate   gate;
                 PacingResult r = gate.wait(kPeriod);
                 CHECK(r.verdict == PacingVerdict::OnTime);
-                CHECK(r.slack.isZero());
+                // No measurement happened — slack stays at its
+                // default (invalid).
+                CHECK_FALSE(r.slack.isValid());
                 CHECK(r.error == Error::Ok);
                 CHECK(r.skippedTicks == 0);
                 // Ticks counters do not advance for the null-clock no-op
@@ -107,7 +109,9 @@ TEST_SUITE("PacingGate") {
                 PacingResult r = gate.wait();
                 CHECK(r.verdict == PacingVerdict::OnTime);
                 CHECK(r.error == Error::Ok);
-                CHECK(r.slack.isZero());
+                // First-wait arming path returns before any slack
+                // measurement — leaves the default (invalid) slack.
+                CHECK_FALSE(r.slack.isValid());
                 CHECK(gate.isArmed());
                 CHECK(gate.ticksOnTime() == 1);
                 CHECK(gate.accumulated().isZero());
@@ -228,7 +232,8 @@ TEST_SUITE("PacingGate") {
 
                 PacingResult r = gate.wait();
                 CHECK(r.verdict == PacingVerdict::OnTime);
-                CHECK(r.slack.isZero());
+                // No-clock path — no slack measured.
+                CHECK_FALSE(r.slack.isValid());
                 CHECK(r.error == Error::Ok);
         }
 
@@ -249,7 +254,10 @@ TEST_SUITE("PacingGate") {
 
                 PacingResult r = gate.wait();
                 CHECK(r.verdict == PacingVerdict::OnTime);
-                CHECK(r.slack.isZero());
+                // First wait after rearm is the arming call — no
+                // slack measurement happens, so it stays at its
+                // default (invalid).
+                CHECK_FALSE(r.slack.isValid());
                 CHECK(gate.isArmed());
                 // Anchor latched to 99,999,999; the next wait should
                 // sleep against 99,999,999 + period.

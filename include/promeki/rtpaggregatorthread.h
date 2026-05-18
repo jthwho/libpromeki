@@ -505,8 +505,9 @@ class RtpAggregatorThread : public Thread {
                 ///        Frame.  Watchdog continuation emissions
                 ///        advance it by exactly one frame so
                 ///        consumers see monotonic stamps across
-                ///        the stall.  Zero until the first
-                ///        emission.
+                ///        the stall.  Invalid until the first
+                ///        emission — callers detect that via
+                ///        @c isValid().
                 TimeStamp _emittedFrameCursor;
 
                 /// @brief @c true while a watchdog interval is

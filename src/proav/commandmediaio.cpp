@@ -139,6 +139,10 @@ void CommandMediaIO::configChanged(const MediaConfig &delta) {
 MediaIOPortGroup *CommandMediaIO::addPortGroup(const String &name, const Clock::Ptr &clock) {
         if (!clock.isValid()) return nullptr;
         auto *group = new MediaIOPortGroup(this, name, clock);
+        // Stamp the origin so the synthetic-pts arithmetic in the
+        // read/write paths (originTime() + cumulative ns) produces a
+        // valid TimeStamp from the very first frame.
+        group->setOriginTime(TimeStamp::now());
         _portGroups += group;
         return group;
 }
@@ -154,6 +158,9 @@ MediaIOPortGroup *CommandMediaIO::addPortGroup(const String &name) {
         Clock::Ptr clockPtr = Clock::Ptr::takeOwnership(rawClock);
         auto      *group = new MediaIOPortGroup(this, name, clockPtr);
         rawClock->setGroup(group);
+        // Stamp the origin so the synthetic-pts arithmetic in the
+        // read/write paths produces a valid TimeStamp from frame 0.
+        group->setOriginTime(TimeStamp::now());
         _portGroups += group;
         return group;
 }

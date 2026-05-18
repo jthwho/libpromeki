@@ -12,10 +12,19 @@
 
 using namespace promeki;
 
-TEST_CASE("Duration: default is zero") {
+TEST_CASE("Duration: default construction is invalid") {
         Duration d;
-        CHECK(d.isZero());
-        CHECK(d.nanoseconds() == 0);
+        CHECK_FALSE(d.isValid());
+        CHECK_FALSE(d.isZero()); // invalid is distinct from zero
+        CHECK_FALSE(d.isNegative()); // invalid is not negative
+        CHECK(d.nanoseconds() == Duration::Invalid);
+}
+
+TEST_CASE("Duration: zero() factory is the explicit zero value") {
+        Duration z = Duration::zero();
+        CHECK(z.isValid());
+        CHECK(z.isZero());
+        CHECK(z.nanoseconds() == 0);
 }
 
 TEST_CASE("Duration: fromHours") {
@@ -65,7 +74,7 @@ TEST_CASE("Duration: toSecondsDouble") {
 TEST_CASE("Duration: isNegative") {
         Duration pos = Duration::fromSeconds(1);
         Duration neg = Duration::fromSeconds(-1);
-        Duration zero;
+        Duration zero = Duration::zero();
         CHECK_FALSE(pos.isNegative());
         CHECK(neg.isNegative());
         CHECK_FALSE(zero.isNegative());
@@ -105,7 +114,7 @@ TEST_CASE("Duration: toString basic") {
 }
 
 TEST_CASE("Duration: toString zero") {
-        Duration d;
+        Duration d = Duration::zero();
         String   s = d.toString();
         CHECK(s.contains("0s"));
 }
@@ -254,4 +263,69 @@ TEST_CASE("Duration: fromString negative values") {
         CHECK(!e.isError());
         CHECK(d == Duration::fromMilliseconds(-500));
         CHECK(d.isNegative());
+}
+
+// ============================================================================
+// Validity sentinel
+// ============================================================================
+
+TEST_CASE("Duration: Invalid sentinel is INT64_MIN") {
+        CHECK(Duration::Invalid == INT64_MIN);
+}
+
+TEST_CASE("Duration: -1ns and 0ns are distinguishable from invalid") {
+        Duration negOne = Duration::fromNanoseconds(-1);
+        Duration zero = Duration::zero();
+        Duration invalid;
+        CHECK(negOne.isValid());
+        CHECK(negOne.isNegative());
+        CHECK(zero.isValid());
+        CHECK_FALSE(invalid.isValid());
+        CHECK(negOne != zero);
+        CHECK(zero != invalid);
+}
+
+TEST_CASE("Duration: arithmetic with invalid propagates") {
+        Duration valid = Duration::fromSeconds(1);
+        Duration invalid;
+        CHECK_FALSE((valid + invalid).isValid());
+        CHECK_FALSE((invalid + valid).isValid());
+        CHECK_FALSE((valid - invalid).isValid());
+        CHECK_FALSE((invalid * 2).isValid());
+        CHECK_FALSE((invalid / 2).isValid());
+}
+
+TEST_CASE("Duration: accessors on invalid return safe zero") {
+        Duration invalid;
+        CHECK(invalid.hours() == 0);
+        CHECK(invalid.minutes() == 0);
+        CHECK(invalid.seconds() == 0);
+        CHECK(invalid.milliseconds() == 0);
+        CHECK(invalid.microseconds() == 0);
+        CHECK(invalid.nanoseconds() == Duration::Invalid);
+        CHECK(invalid.toSecondsDouble() == doctest::Approx(0.0));
+}
+
+TEST_CASE("Duration: invalid Durations compare equal") {
+        Duration a;
+        Duration b;
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("Duration: toString invalid round-trips") {
+        Duration invalid;
+        CHECK(invalid.toString() == "invalid");
+        CHECK(invalid.toScaledString() == "invalid");
+        auto parsed = Duration::fromString("invalid");
+        CHECK(parsed.second().isOk());
+        CHECK_FALSE(parsed.first().isValid());
+}
+
+TEST_CASE("Duration: fromSamples with bad rate returns explicit zero") {
+        // Bad rate is treated as zero rate — historically returned zero,
+        // not invalid, and pipeline math relies on that behaviour.
+        Duration d = Duration::fromSamples(int64_t(1000), int64_t(0));
+        CHECK(d.isValid());
+        CHECK(d.isZero());
 }

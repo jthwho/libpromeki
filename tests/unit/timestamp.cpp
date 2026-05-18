@@ -11,10 +11,14 @@
 
 using namespace promeki;
 
-TEST_CASE("TimeStamp: default construction") {
+TEST_CASE("TimeStamp: default construction is invalid") {
         TimeStamp ts;
-        // Default is epoch, so seconds should be 0
+        CHECK_FALSE(ts.isValid());
+        // Accessors must report the sentinel without crashing.
         CHECK(ts.seconds() == doctest::Approx(0.0));
+        CHECK(ts.milliseconds() == 0);
+        CHECK(ts.microseconds() == 0);
+        CHECK(ts.nanoseconds() == TimeStamp::Invalid);
 }
 
 TEST_CASE("TimeStamp: now returns non-zero") {
@@ -216,4 +220,82 @@ TEST_CASE("TimeStamp: Duration interop does not modify original") {
         TimeStamp result = ts + d;
         CHECK(ts == original); // original unchanged
         CHECK(result != original);
+}
+
+// ============================================================================
+// Validity sentinel
+// ============================================================================
+
+TEST_CASE("TimeStamp: Invalid sentinel is INT64_MIN") {
+        CHECK(TimeStamp::Invalid == INT64_MIN);
+}
+
+TEST_CASE("TimeStamp: TimeStamp(0) explicitly addresses the epoch and is valid") {
+        TimeStamp ts(int64_t{0});
+        CHECK(ts.isValid());
+        CHECK(ts.nanoseconds() == 0);
+        CHECK(ts.seconds() == doctest::Approx(0.0));
+}
+
+TEST_CASE("TimeStamp: TimeStamp::now() is valid") {
+        TimeStamp ts = TimeStamp::now();
+        CHECK(ts.isValid());
+}
+
+TEST_CASE("TimeStamp: invalidate() resets to default") {
+        TimeStamp ts = TimeStamp::now();
+        CHECK(ts.isValid());
+        ts.invalidate();
+        CHECK_FALSE(ts.isValid());
+        CHECK(ts == TimeStamp());
+}
+
+TEST_CASE("TimeStamp: arithmetic with invalid operands stays invalid") {
+        TimeStamp invalid;
+        Duration  d = Duration::fromMilliseconds(100);
+        CHECK_FALSE((invalid + d).isValid());
+        CHECK_FALSE((invalid - d).isValid());
+
+        TimeStamp valid = TimeStamp::now();
+        Duration  invalidD;
+        CHECK_FALSE((valid + invalidD).isValid());
+        CHECK_FALSE((valid - invalidD).isValid());
+}
+
+TEST_CASE("TimeStamp: subtraction of invalid timestamps yields invalid Duration") {
+        TimeStamp invalid;
+        TimeStamp valid = TimeStamp::now();
+        CHECK_FALSE((valid - invalid).isValid());
+        CHECK_FALSE((invalid - valid).isValid());
+        CHECK_FALSE((invalid - invalid).isValid());
+}
+
+TEST_CASE("TimeStamp: invalid timestamps compare equal") {
+        TimeStamp a;
+        TimeStamp b;
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("TimeStamp: invalid sleepUntil and elapsed return safe zero defaults") {
+        TimeStamp invalid;
+        invalid.sleepUntil(); // must not crash or hang
+        CHECK(invalid.elapsedSeconds() == doctest::Approx(0.0));
+        CHECK(invalid.elapsedMilliseconds() == 0);
+        CHECK(invalid.elapsedMicroseconds() == 0);
+        CHECK(invalid.elapsedNanoseconds() == 0);
+}
+
+TEST_CASE("TimeStamp: toString round-trip preserves validity") {
+        TimeStamp invalid;
+        CHECK(invalid.toString() == "invalid");
+        auto parsed = TimeStamp::fromString(invalid.toString());
+        CHECK(parsed.second().isOk());
+        CHECK_FALSE(parsed.first().isValid());
+
+        TimeStamp epoch(int64_t{0});
+        auto      r2 = TimeStamp::fromString(epoch.toString());
+        CHECK(r2.second().isOk());
+        CHECK(r2.first().isValid());
+        CHECK(r2.first().nanoseconds() == 0);
 }

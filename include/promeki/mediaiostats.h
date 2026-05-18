@@ -56,13 +56,13 @@ class MediaIOStats : public VariantDatabase<"MediaIOStats"> {
                 PROMEKI_DECLARE_ID(ExecuteDuration,
                                    VariantSpec()
                                            .setType(DataTypeDuration)
-                                           .setDefault(Duration())
+                                           .setDefault(Duration::zero())
                                            .setDescription("Wall time spent executing the command."));
                 /// @brief Duration — wall time the command waited in the strand queue.
                 PROMEKI_DECLARE_ID(QueueWaitDuration,
                                    VariantSpec()
                                            .setType(DataTypeDuration)
-                                           .setDefault(Duration())
+                                           .setDefault(Duration::zero())
                                            .setDescription("Wall time spent in the strand queue."));
                 /// @brief int64_t — payload bytes produced / consumed by this command.
                 PROMEKI_DECLARE_ID(BytesProcessed,

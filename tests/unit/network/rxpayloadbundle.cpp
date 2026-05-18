@@ -25,8 +25,8 @@ TEST_CASE("RxVideoFrame: default shape") {
         CHECK(f.rtpTimestamp == 0u);
         CHECK(f.packetCount == 0);
         CHECK_FALSE(f.wallclockNtp.isValid());
-        CHECK(f.captureTime == TimeStamp());
-        CHECK(f.firstPacketArrival == TimeStamp());
+        CHECK_FALSE(f.captureTime.isValid());
+        CHECK_FALSE(f.firstPacketArrival.isValid());
         CHECK_FALSE(f.keyframe);
         CHECK(f.streamFrameIndex.isUnknown());
 }
@@ -73,8 +73,8 @@ TEST_CASE("RxAudioChunk: default shape") {
         CHECK(c.rtpTimestamp == 0u);
         CHECK(c.sampleCount == 0u);
         CHECK_FALSE(c.wallclockNtp.isValid());
-        CHECK(c.captureTime == TimeStamp());
-        CHECK(c.firstPacketArrival == TimeStamp());
+        CHECK_FALSE(c.captureTime.isValid());
+        CHECK_FALSE(c.firstPacketArrival.isValid());
 }
 
 TEST_CASE("RxAudioChunk: copy preserves every field") {
@@ -114,8 +114,8 @@ TEST_CASE("RxDataMessage: default shape") {
         CHECK(m.rtpTimestamp == 0u);
         CHECK(m.packetCount == 0);
         CHECK_FALSE(m.wallclockNtp.isValid());
-        CHECK(m.captureTime == TimeStamp());
-        CHECK(m.firstPacketArrival == TimeStamp());
+        CHECK_FALSE(m.captureTime.isValid());
+        CHECK_FALSE(m.firstPacketArrival.isValid());
 }
 
 TEST_CASE("RxDataMessage: copy preserves every field") {

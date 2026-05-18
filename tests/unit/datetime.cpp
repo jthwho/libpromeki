@@ -10,10 +10,11 @@
 
 using namespace promeki;
 
-TEST_CASE("DateTime: default construction") {
+TEST_CASE("DateTime: default construction is invalid") {
         DateTime dt;
-        // Default-constructed chrono time_point is epoch
+        CHECK_FALSE(dt.isValid());
         CHECK(dt.toTimeT() == 0);
+        CHECK(dt.toDouble() == doctest::Approx(0.0));
 }
 
 TEST_CASE("DateTime: now returns non-zero") {
@@ -158,4 +159,65 @@ TEST_CASE("DateTime: fromNow returns a valid DateTime") {
         DateTime future = DateTime::fromNow("1 hour");
         // Should produce a non-epoch time
         CHECK(future.toTimeT() > 0);
+}
+
+// ============================================================================
+// Validity sentinel
+// ============================================================================
+
+TEST_CASE("DateTime: Invalid sentinel is INT64_MIN") {
+        CHECK(DateTime::Invalid == INT64_MIN);
+}
+
+TEST_CASE("DateTime: now() and time_t/tm ctors are valid") {
+        CHECK(DateTime::now().isValid());
+        CHECK(DateTime(time_t{1000000}).isValid());
+        CHECK(DateTime(time_t{0}).isValid()); // Unix epoch is explicit and valid
+}
+
+TEST_CASE("DateTime: invalidate() resets to default") {
+        DateTime dt = DateTime::now();
+        CHECK(dt.isValid());
+        dt.invalidate();
+        CHECK_FALSE(dt.isValid());
+        CHECK(dt == DateTime());
+}
+
+TEST_CASE("DateTime: arithmetic with invalid propagates") {
+        DateTime invalid;
+        Duration d = Duration::fromSeconds(10);
+        CHECK_FALSE((invalid + d).isValid());
+        CHECK_FALSE((invalid - d).isValid());
+        CHECK_FALSE((invalid + 1.0).isValid());
+        CHECK_FALSE((invalid - 1.0).isValid());
+
+        DateTime valid(time_t{1000});
+        Duration invalidD;
+        CHECK_FALSE((valid + invalidD).isValid());
+        CHECK_FALSE((valid - invalidD).isValid());
+}
+
+TEST_CASE("DateTime: subtraction with invalid operands yields invalid Duration") {
+        DateTime invalid;
+        DateTime valid(time_t{1000});
+        CHECK_FALSE((valid - invalid).isValid());
+        CHECK_FALSE((invalid - valid).isValid());
+}
+
+TEST_CASE("DateTime: invalid DateTimes compare equal") {
+        DateTime a;
+        DateTime b;
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("DateTime: toString on invalid renders 'invalid'") {
+        DateTime invalid;
+        CHECK(invalid.toString() == "invalid");
+}
+
+TEST_CASE("DateTime: fromString('invalid') round-trips") {
+        auto parsed = DateTime::fromString("invalid");
+        CHECK(parsed.second().isOk());
+        CHECK_FALSE(parsed.first().isValid());
 }

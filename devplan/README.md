@@ -95,6 +95,14 @@ devplan/
    removed. Phase 4 cleanup (SFINAE traits, `docs/dataobjects.dox`,
    `CODING_STANDARDS.md`) remains open.
    See [`core/datastream-consolidation.md`](core/datastream-consolidation.md).
+9. **Validity sentinels on `TimeStamp` / `Duration` / `DateTime`**
+   — SHIPPED 2026-05-17. `INT64_MIN` as `Invalid`; default-construct
+   = invalid; `Duration::zero()` for explicit zero; arithmetic
+   propagates invalid; `MediaTimeStamp::isValid()` requires both
+   domain and inner `TimeStamp` to be valid; `MediaTimeStamp::nanoseconds()`
+   convenience accessor added.  All consuming sites updated
+   (`PacingGate`, `EventLoop`, `RtpSession`, all MediaIO backends).
+   See [`proav/timestamps.md`](proav/timestamps.md).
 
 ## Phase status (overview)
 

@@ -138,7 +138,9 @@ TEST_CASE("AncPayload: hasFormat / hasCategory predicates") {
 
 TEST_CASE("AncPayload: setDuration / duration round-trips") {
         AncPayload p;
-        CHECK(p.duration().nanoseconds() == 0);
+        // Default-constructed payload has no duration yet — invalid
+        // until the producer or MediaIO stamps one.
+        CHECK_FALSE(p.duration().isValid());
         p.setDuration(Duration::fromNanoseconds(16666666));
         CHECK(p.duration().nanoseconds() == 16666666);
 }

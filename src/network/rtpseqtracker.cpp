@@ -174,13 +174,10 @@ void RtpSeqTracker::updateJitterLocked(uint32_t rtpTs, const TimeStamp &arrivalS
         // ns since arbitrary epoch * clockRate / 1e9 — performed in
         // 64-bit and truncated to 32-bit, matching the RFC's assumed
         // wraparound behaviour for transit values.
-        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::steady_clock::time_point(arrivalSteady).time_since_epoch())
-                                .count();
+        const int64_t ns = arrivalSteady.nanoseconds();
         const int64_t arrivalRtpTs64 =
-                (static_cast<int64_t>(ns) / 1'000'000'000) * static_cast<int64_t>(_clockRateHz)
-                + ((static_cast<int64_t>(ns) % 1'000'000'000) * static_cast<int64_t>(_clockRateHz)) /
-                          1'000'000'000;
+                (ns / 1'000'000'000) * static_cast<int64_t>(_clockRateHz)
+                + ((ns % 1'000'000'000) * static_cast<int64_t>(_clockRateHz)) / 1'000'000'000;
         const uint32_t arrivalRtpTs = static_cast<uint32_t>(arrivalRtpTs64);
 
         // RFC 3550 §A.8: D = transit_now - transit_prev,

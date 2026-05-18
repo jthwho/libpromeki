@@ -106,7 +106,7 @@ namespace {
         /// @brief Converts an absolute @ref TimeStamp value (epoch =
         ///        media t=0) into total milliseconds since epoch.
         int64_t timeStampToMs(const TimeStamp &ts) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(ts.value().time_since_epoch()).count();
+                return ts.milliseconds();
         }
 
         /// @brief Packs the boolean style flags into a single byte for
@@ -921,9 +921,7 @@ SubtitleList SubtitleList::snapToFrames(const FrameRate &frameRate) const {
         // for exact rational arithmetic on NTSC fractional rates.
         const int64_t nsPerSec = 1'000'000'000;
         const auto    snapToFrame = [&](const TimeStamp &ts) -> TimeStamp {
-                const int64_t ns =
-                        std::chrono::duration_cast<std::chrono::nanoseconds>(ts.value().time_since_epoch())
-                                .count();
+                const int64_t ns = ts.nanoseconds();
                 // Convert ns → fractional frame index → nearest integer.
                 // frame = ns * num / (nsPerSec * den), rounded.
                 const int64_t num = static_cast<int64_t>(frameRate.numerator());

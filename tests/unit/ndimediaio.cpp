@@ -22,6 +22,7 @@
 #include <promeki/audiomarker.h>
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
+#include <promeki/datetime.h>
 #include <promeki/enums.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
@@ -104,7 +105,7 @@ TEST_CASE("NdiFactory: defaultConfig populates NDI keys") {
         // Spot-check a couple of keys that should have non-empty defaults.
         CHECK(cfg.getAs<String>(MediaConfig::NdiSendName, String()).isEmpty() == false);
         CHECK(cfg.getAs<int>(MediaConfig::NdiCaptureTimeoutMs, 0) > 0);
-        CHECK(cfg.getAs<Duration>(MediaConfig::NdiFindWait, Duration()).milliseconds() > 0);
+        CHECK(cfg.getAs<Duration>(MediaConfig::NdiFindWait, Duration::zero()).milliseconds() > 0);
 }
 
 TEST_CASE("NdiMediaIO: open as Sink, write a synthetic UYVY frame, close") {
@@ -116,8 +117,7 @@ TEST_CASE("NdiMediaIO: open as Sink, write a synthetic UYVY frame, close") {
         // Pick a unique-enough send name so this test can run alongside
         // other NDI senders on the same box without name collisions.
         const String sendName = String::sprintf("PromekiTestSink-%lld",
-                                                static_cast<long long>(
-                                                        std::chrono::system_clock::now().time_since_epoch().count()));
+                                                static_cast<long long>(DateTime::now().nanoseconds()));
 
         MediaIO::Config cfg = MediaIOFactory::defaultConfig("Ndi");
         cfg.set(MediaConfig::OpenMode, MediaIOOpenMode(MediaIOOpenMode::Write));
@@ -320,8 +320,7 @@ TEST_CASE("NdiMediaIO: hermetic sender->receiver round-trip in one process") {
         // overkill but cheap.
         const String sendName = String::sprintf(
                 "PromekiRoundTrip-%lld",
-                static_cast<long long>(
-                        std::chrono::system_clock::now().time_since_epoch().count()));
+                static_cast<long long>(DateTime::now().nanoseconds()));
 
         // ---- Build the sink ----
         MediaIO::Config sinkCfg = MediaIOFactory::defaultConfig("Ndi");

@@ -928,7 +928,7 @@ void RtmpMediaIO::resetAll() {
         _handshakeDurationMs = 0;
         _videoPacingMode = RtmpVideoPacing::Internal;
         _videoPaceGate.setClock(Clock::Ptr());
-        _videoPaceGate.setPeriod(Duration());
+        _videoPaceGate.setPeriod(Duration::zero());
         _frameRate = FrameRate();
         _paceSkipThresholdMs = 0;
         _paceReanchorThresholdMs = 0;

@@ -17,6 +17,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
+#include <promeki/datetime.h>
 #include <promeki/dir.h>
 #include <promeki/enumlist.h>
 #include <promeki/enums.h>
@@ -55,9 +56,7 @@ PROMEKI_REGISTER_MEDIAIO_FACTORY(InspectorFactory)
 namespace {
 
         double monotonicWallSeconds() {
-                using namespace std::chrono;
-                const auto now = steady_clock::now().time_since_epoch();
-                return duration_cast<duration<double>>(now).count();
+                return TimeStamp::now().seconds();
         }
 
         String renderTc(const Timecode &tc) {
@@ -73,8 +72,7 @@ namespace {
         // epoch is "some time in the past" (boot on Linux), which makes no
         // sense when rendering ISO-8601.
         int64_t wallClockEpochNs() {
-                using namespace std::chrono;
-                return duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count();
+                return DateTime::now().nanoseconds();
         }
 
         // ISO-8601 UTC rendering of an epoch nanosecond value, with
@@ -779,8 +777,7 @@ void InspectorMediaIO::ingestAudio(const Frame &frame, InspectorEvent &event) {
         // count BEFORE the push.
         const MediaTimeStamp &mts = uap->pts();
         if (mts.isValid()) {
-                const int64_t actualPts =
-                        mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                const int64_t actualPts = mts.nanoseconds();
                 if (!_audioStreamAnchored) {
                         // First valid PTS — anchor stream sample 0 here.
                         _audioStreamStartNs = actualPts;
@@ -922,8 +919,7 @@ void InspectorMediaIO::runImageDataCheck(const Frame &frame, InspectorEvent &eve
                 rec.frame48 = frameId & 0x0000ffffffffffffULL;
                 rec.streamId = static_cast<uint8_t>((frameId >> 56) & 0xffu);
                 const MediaTimeStamp &vMts = vp->pts();
-                rec.videoWallNs =
-                        vMts.isValid() ? vMts.timeStamp().nanoseconds() + vMts.offset().nanoseconds() : 0;
+                rec.videoWallNs = vMts.isValid() ? vMts.nanoseconds() : 0;
                 _videoFrameHistory.pushToBack(rec);
                 while (_videoFrameHistory.size() > kVideoFrameHistoryMax) {
                         _videoFrameHistory.remove(0);
@@ -1443,7 +1439,7 @@ void InspectorMediaIO::runTimestampCheck(const Frame &frame, InspectorEvent &eve
                 const MediaTimeStamp &mts = vids[0]->pts();
                 if (mts.isValid()) {
                         event.videoTimestampValid = true;
-                        event.videoTimestampNs = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                        event.videoTimestampNs = mts.nanoseconds();
                 }
         }
         auto auds = frame.audioPayloads();
@@ -1451,7 +1447,7 @@ void InspectorMediaIO::runTimestampCheck(const Frame &frame, InspectorEvent &eve
                 const MediaTimeStamp &mts = auds[0]->pts();
                 if (mts.isValid()) {
                         event.audioTimestampValid = true;
-                        event.audioTimestampNs = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                        event.audioTimestampNs = mts.nanoseconds();
                 }
         }
 
@@ -1878,7 +1874,7 @@ void InspectorMediaIO::runCaptureStats(const Frame &frame, const InspectorEvent 
 
                         const MediaTimeStamp &mts = vp.pts();
                         if (mts.isValid()) {
-                                const int64_t ns = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                                const int64_t ns = mts.nanoseconds();
                                 videoTsNs = String::number(ns);
                                 videoClockName = mts.domain().name();
                         }
@@ -1924,7 +1920,7 @@ void InspectorMediaIO::runCaptureStats(const Frame &frame, const InspectorEvent 
 
                         const MediaTimeStamp &mts = ap.pts();
                         if (mts.isValid()) {
-                                const int64_t ns = mts.timeStamp().nanoseconds() + mts.offset().nanoseconds();
+                                const int64_t ns = mts.nanoseconds();
                                 audioTsNs = String::number(ns);
                                 audioClockName = mts.domain().name();
                         }

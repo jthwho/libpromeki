@@ -109,13 +109,11 @@ void RtpAncDepacketizerThread::emitFrame() {
                 wallclockNtp = _ctx.streamClock->toNtp(ancRtpTimestamp);
                 TimeStamp steady;
                 if (_ctx.ntpToSteady) steady = _ctx.ntpToSteady(wallclockNtp);
-                if (steady.nanoseconds() != 0) captureTime = steady;
+                if (steady.isValid()) captureTime = steady;
         }
-        if (captureTime.nanoseconds() == 0) {
-                captureTime = captureTimeForRtpTs(ancRtpTimestamp);
-        }
-        if (captureTime.nanoseconds() == 0) captureTime = firstPktArrival;
-        if (captureTime.nanoseconds() == 0) captureTime = TimeStamp::now();
+        if (!captureTime.isValid()) captureTime = captureTimeForRtpTs(ancRtpTimestamp);
+        if (!captureTime.isValid()) captureTime = firstPktArrival;
+        if (!captureTime.isValid()) captureTime = TimeStamp::now();
 
         RxAncFrame bundle;
         bundle.desc = _ctx.desc;

@@ -176,7 +176,7 @@ class Clock {
                  *                   ownership.  @c nullptr disables
                  *                   filtering.
                  */
-                Clock(const ClockDomain &domain, const Duration &fixedOffset = Duration(),
+                Clock(const ClockDomain &domain, const Duration &fixedOffset = Duration::zero(),
                       ClockPauseMode pauseMode = ClockPauseMode::CannotPause, ClockFilter *filter = nullptr);
 
                 /** @brief Virtual destructor. */

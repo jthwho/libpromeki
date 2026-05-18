@@ -10,10 +10,10 @@
 PROMEKI_NAMESPACE_BEGIN
 
 SyntheticClock::SyntheticClock(const ClockDomain &domain)
-    : Clock(domain, Duration(), ClockPauseMode::PausesRawKeepsRunning) {}
+    : Clock(domain, Duration::zero(), ClockPauseMode::PausesRawKeepsRunning) {}
 
 SyntheticClock::SyntheticClock(const FrameRate &frameRate, const ClockDomain &domain)
-    : Clock(domain, Duration(), ClockPauseMode::PausesRawKeepsRunning),
+    : Clock(domain, Duration::zero(), ClockPauseMode::PausesRawKeepsRunning),
       _frameRate(frameRate) {
         recomputePeriod();
 }
@@ -42,7 +42,7 @@ int64_t SyntheticClock::resolutionNs() const {
 ClockJitter SyntheticClock::jitter() const {
         // A SyntheticClock is perfect — its reported time is exactly
         // frame × period, by construction.
-        return ClockJitter{Duration(), Duration()};
+        return ClockJitter{Duration::zero(), Duration::zero()};
 }
 
 Result<int64_t> SyntheticClock::raw() const {

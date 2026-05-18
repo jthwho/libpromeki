@@ -397,11 +397,11 @@ unsigned int EventLoop::nextTimerTimeout() const {
         TimeStamp    now = TimeStamp::now();
         unsigned int minMs = UINT_MAX;
         for (const auto &timer : _timers) {
-                if (now.value() >= timer.nextFire.value()) {
+                if (now >= timer.nextFire) {
                         return 1; // Fire immediately on next iteration
                 }
-                auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(timer.nextFire.value() - now.value());
-                unsigned int ms = static_cast<unsigned int>(diff.count());
+                const int64_t  diffNs = (timer.nextFire - now).nanoseconds();
+                unsigned int ms = static_cast<unsigned int>(diffNs / 1'000'000LL);
                 if (ms == 0) ms = 1; // Sub-millisecond remaining, wake soon
                 if (ms < minMs) minMs = ms;
         }
@@ -702,9 +702,7 @@ namespace {
 // per-key map entry — otherwise time attributed to eventsByType
 // or callablesByLabel would leak back into overhead.
 void finalizeBuckets(EventLoop::Report &out, const TimeStamp &now, const TimeStamp &lastSnapshot) {
-        Duration wall = (lastSnapshot.value().time_since_epoch().count() == 0)
-                                ? Duration()
-                                : (now - lastSnapshot);
+        Duration wall = !lastSnapshot.isValid() ? Duration::zero() : (now - lastSnapshot);
         out.wallElapsed = wall;
         int64_t sumNs = out.sleep.nanoseconds() + out.queueWait.nanoseconds() +
                         out.timers.nanoseconds() + out.events.nanoseconds() +

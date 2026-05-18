@@ -29,6 +29,18 @@
 - Metadata IDs: `CaptureTime`, `PresentationTime` (now
   `TypeMediaTimeStamp`), plus `MediaTimeStamp`, `RtpTimestamp`,
   `RtpPacketCount`, `PtpGrandmasterId`, `PtpDomainNumber`.
+- **Validity sentinels on `TimeStamp`, `Duration`, `DateTime`**
+  (2026-05-17): all three classes now use a single `int64_t _ns`
+  member with `static constexpr int64_t Invalid = INT64_MIN`.
+  Default construction yields `Invalid`; `isValid()` checks
+  `_ns != Invalid`.  `Duration::zero()` is the explicit
+  zero-length factory.  Arithmetic propagates invalid.
+  `toString()` / `fromString()` round-trip the literal `"invalid"`.
+  `MediaTimeStamp::isValid()` now requires **both** domain and inner
+  `TimeStamp` to be valid.  `MediaTimeStamp::nanoseconds()` added as
+  a convenience combining `timeStamp().nanoseconds() + offset().nanoseconds()`.
+  `MediaIO`'s payload duration-fill trigger treats both invalid and
+  `isZero()` as "not yet stamped".
 
 ## Remaining
 

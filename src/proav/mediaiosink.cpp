@@ -35,13 +35,18 @@ String defaultSinkName(const String &name, int index) {
 // frame produced or consumed by any backend ships fully-stamped.
 void ensurePayloadTiming(Frame &frame, const MediaTimeStamp &synMts, const FrameRate &frameRate) {
         if (!frame.isValid()) return;
-        const Duration oneFrame = frameRate.isValid() ? frameRate.frameDuration() : Duration();
+        const Duration oneFrame = frameRate.isValid() ? frameRate.frameDuration() : Duration::zero();
         for (size_t i = 0; i < frame.payloadList().size(); ++i) {
                 const MediaPayload::Ptr &p = frame.payloadList()[i];
                 if (!p.isValid()) continue;
                 MediaPayload *mp = frame.payloadList()[i].modify();
                 if (!mp->pts().isValid()) mp->setPts(synMts);
-                if (mp->hasDuration() && mp->duration().isZero() && !oneFrame.isZero()) {
+                // Fill in the duration if the payload supports one and
+                // hasn't been stamped yet — both "invalid" (default-
+                // constructed) and "zero" (legacy not-yet-set sentinel)
+                // count as unstamped.
+                if (mp->hasDuration() && (!mp->duration().isValid() || mp->duration().isZero()) &&
+                    !oneFrame.isZero()) {
                         mp->setDuration(oneFrame);
                 }
         }

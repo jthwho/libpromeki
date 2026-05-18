@@ -27,7 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
 namespace {
 
         int64_t timeStampToMs(const TimeStamp &ts) {
-                return std::chrono::duration_cast<std::chrono::milliseconds>(ts.value().time_since_epoch()).count();
+                return ts.milliseconds();
         }
 
         int64_t timeStampToFrame(const TimeStamp &ts, const FrameRate &fps) {

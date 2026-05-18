@@ -54,7 +54,7 @@ void PacingGate::setReanchorThreshold(const Duration &t) {
 
 void PacingGate::rearm() {
         _armed = false;
-        _accumulated = Duration();
+        _accumulated = Duration::zero();
 }
 
 PacingResult PacingGate::wait(const Duration &advance) {
@@ -77,7 +77,7 @@ PacingResult PacingGate::wait(const Duration &advance) {
                         return result;
                 }
                 _anchor = nowR.first();
-                _accumulated = Duration();
+                _accumulated = Duration::zero();
                 _armed = true;
                 ++_ticksOnTime;
                 return result;
@@ -100,8 +100,8 @@ PacingResult PacingGate::wait(const Duration &advance) {
                 return result;
         }
 
-        const int64_t deadlineNs = deadline.timeStamp().value().time_since_epoch().count();
-        const int64_t nowNs = nowR.first().timeStamp().value().time_since_epoch().count();
+        const int64_t deadlineNs = deadline.timeStamp().nanoseconds();
+        const int64_t nowNs = nowR.first().timeStamp().nanoseconds();
         const int64_t slackNs = deadlineNs - nowNs;
         result.slack = Duration::fromNanoseconds(slackNs);
 
@@ -126,7 +126,7 @@ PacingResult PacingGate::wait(const Duration &advance) {
         // already-stale timeline.
         if (!_reanchorThreshold.isZero() && lagNs >= _reanchorThreshold.nanoseconds()) {
                 _anchor = nowR.first();
-                _accumulated = Duration();
+                _accumulated = Duration::zero();
                 result.verdict = PacingVerdict::Reanchor;
                 ++_reanchors;
                 return result;
@@ -159,7 +159,7 @@ bool PacingGate::tryAcquire(const Duration &advance) {
                 Result<MediaTimeStamp> nowR = _clock->now();
                 if (nowR.second().isError()) return false;
                 _anchor = nowR.first();
-                _accumulated = Duration();
+                _accumulated = Duration::zero();
                 _armed = true;
                 ++_ticksOnTime;
                 return true;
@@ -175,8 +175,8 @@ bool PacingGate::tryAcquire(const Duration &advance) {
         Result<MediaTimeStamp> nowR = _clock->now();
         if (nowR.second().isError()) return false;
 
-        const int64_t deadlineNs = deadline.timeStamp().value().time_since_epoch().count();
-        const int64_t nowNs = nowR.first().timeStamp().value().time_since_epoch().count();
+        const int64_t deadlineNs = deadline.timeStamp().nanoseconds();
+        const int64_t nowNs = nowR.first().timeStamp().nanoseconds();
 
         if (nowNs < deadlineNs) {
                 // Too early — drop.  Timeline unchanged.
@@ -194,7 +194,7 @@ bool PacingGate::tryAcquire(const Duration &advance) {
         const int64_t lagNs = nowNs - deadlineNs;
         if (!_reanchorThreshold.isZero() && lagNs >= _reanchorThreshold.nanoseconds()) {
                 _anchor = nowR.first();
-                _accumulated = Duration();
+                _accumulated = Duration::zero();
                 ++_reanchors;
         } else {
                 ++_ticksOnTime;

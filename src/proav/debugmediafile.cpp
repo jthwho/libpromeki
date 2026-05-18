@@ -11,6 +11,7 @@
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
+#include <promeki/datetime.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediapayload.h>
@@ -79,8 +80,7 @@ namespace {
         }
 
         static int64_t currentTimeUs() {
-                using namespace std::chrono;
-                return duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+                return DateTime::now().nanoseconds() / 1'000LL;
         }
 
         // Write a 16-byte chunk header at the current file position.

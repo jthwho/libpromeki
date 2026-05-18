@@ -23,7 +23,7 @@ void InlineMediaIO::submit(MediaIOCommand::Ptr cmd) {
         // other strategies' stats reporting.
         const TimeStamp dispatchTime = TimeStamp::now();
         MediaIOCommand *raw = cmd.modify();
-        raw->stats.set(MediaIOStats::QueueWaitDuration, Duration());
+        raw->stats.set(MediaIOStats::QueueWaitDuration, Duration::zero());
         if (cmd->cancelled.value()) {
                 raw->result = Error::Cancelled;
         } else {

@@ -273,9 +273,9 @@ TEST_CASE("MediaPayload: timestamps and duration on any subclass") {
         p.setDts(dts);
         // hasDuration is a type-level predicate: VideoPayload
         // supports durations unconditionally.  A fresh payload's
-        // duration is zero until a stage stamps one.
+        // duration is invalid until a stage stamps one.
         CHECK(p.hasDuration());
-        CHECK(p.duration().isZero());
+        CHECK_FALSE(p.duration().isValid());
         Error e = p.setDuration(Duration::fromMilliseconds(33));
         CHECK(e.isOk());
 
@@ -300,17 +300,20 @@ TEST_CASE("MediaPayload: audio duration is derived from sample count and rate") 
 
 TEST_CASE("MediaPayload: hasDuration is a type-level predicate") {
         // Video: supports durations regardless of whether one has
-        // been stamped.
+        // been stamped — default is invalid until set.
         UncompressedVideoPayload uvp;
         CHECK(uvp.hasDuration());
-        CHECK(uvp.duration().isZero());
+        CHECK_FALSE(uvp.duration().isValid());
         CompressedVideoPayload cvp;
         CHECK(cvp.hasDuration());
-        CHECK(cvp.duration().isZero());
+        CHECK_FALSE(cvp.duration().isValid());
 
-        // Audio: supports durations regardless of sample count.
+        // Audio: derives from intrinsic sample count / rate.
+        // A zero-sample payload has a real, valid, zero-length
+        // duration (not "not stamped yet").
         PcmAudioPayload empty;
         CHECK(empty.hasDuration());
+        CHECK(empty.duration().isValid());
         CHECK(empty.duration().isZero());
 }
 

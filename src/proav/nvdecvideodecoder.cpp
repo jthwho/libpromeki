@@ -511,7 +511,7 @@ class NvdecVideoDecoder::Impl {
                         srcPkt.payload_size = static_cast<unsigned long>(view.size());
                         if (payload.pts().isValid()) {
                                 srcPkt.timestamp = static_cast<CUvideotimestamp>(
-                                        payload.pts().timeStamp().value().time_since_epoch().count());
+                                        payload.pts().timeStamp().nanoseconds());
                                 srcPkt.flags |= CUVID_PKT_TIMESTAMP;
                         }
                         CUresult r = gCuvid.ParseVideoData(_parser, &srcPkt);

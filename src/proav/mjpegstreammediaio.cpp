@@ -222,7 +222,7 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         Rational<int> configuredFps = cfg.getAs<Rational<int>>(MediaConfig::MjpegMaxFps, Rational<int>(15, 1));
         if (configuredFps.numerator() <= 0 || configuredFps.denominator() <= 0) {
                 _maxRate = FrameRate();
-                _period = Duration();
+                _period = Duration::zero();
         } else {
                 FrameRate::RationalType r(static_cast<unsigned int>(configuredFps.numerator()),
                                           static_cast<unsigned int>(configuredFps.denominator()));
@@ -358,8 +358,7 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         }
 
         const TimeStamp drain = TimeStamp::now();
-        const Duration  encDur = Duration::fromNanoseconds(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(drain.value() - arrival.value()).count());
+        const Duration  encDur = drain - arrival;
         const int64_t encUs = encDur.microseconds();
         const int64_t bytes = jpeg.isValid() ? static_cast<int64_t>(jpeg.size()) : 0;
 

@@ -181,7 +181,10 @@ class Thread : public ObjectBase {
                 /**
                  * @brief Sleeps the calling thread for the given @ref Duration.
                  *
-                 * Negative or zero durations return immediately.
+                 * Negative, zero, or invalid durations return
+                 * immediately (an invalid Duration's @c nanoseconds
+                 * is @c INT64_MIN, which the @ref sleepNs early-out
+                 * treats the same as a negative value).
                  *
                  * @param d Duration to sleep.
                  */

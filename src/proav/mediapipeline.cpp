@@ -1571,7 +1571,10 @@ void MediaPipeline::unsubscribe(int id) {
 }
 
 void MediaPipeline::publish(PipelineEvent ev) {
-        if (ev.timestamp().nanoseconds() == 0) {
+        // PipelineEvent's _ts is default-constructed (invalid) when
+        // the caller didn't stamp it.  Stamp it now so subscribers
+        // always see a real time.
+        if (!ev.timestamp().isValid()) {
                 ev.setTimestamp(TimeStamp::now());
         }
 
