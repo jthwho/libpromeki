@@ -1,14 +1,53 @@
 # AJA NTV2 MediaIO Backend
 
 **Library:** `promeki` (gated by `PROMEKI_ENABLE_NTV2`)
-**Status:** **Phase 1 + 2 complete (2026-05-16).** Source-mode capture
-and sink-mode playout both ship for single-link SDI on a single logical
-channel, with the device / capability / clock / format-mapping layers
-underneath.  17 doctest cases cover the hardware-free units (format
-mappings, 32→64 bit clock-counter wrap extension, sink-mode
-`proposeInput` negotiation, URL parsing).  Functional hardware tests
-remain TODO — the rig needs an AJA card present.  Phase 3 (ANC capture
-+ insertion) is the next milestone.
+**Status:** **Phases 1–6 complete (2026-05-17), including the
+Phase 6.4 HDR/colorimetry VPID work that was originally deferred.**
+Source-mode capture and sink-mode playout both ship for single-link
+SDI and multi-link (QL_3G_SQD, QL_3G_2SI, SL_12G) topologies; the
+capture and emit paths carry ancillary data through
+`AUTOCIRCULATE_WITH_ANC` with the `ntv2anc.{h,cpp}` GUMP↔`AncPayload`
+converters; per-frame PTS and CaptureTime ride on AutoCirculate's
+`FRAME_STAMP`; multiple channels on the same card open concurrently
+against a shared refcounted `Ntv2Device` with exclusive channel /
+port / audio-system reservations, deadlock-free error rollbacks,
+and the device-wide reference-clock conflict warning path; the
+pixel-format mapping covers UYVY / YUY2 / 8-bit RGB family / V210 /
+10-bit DPX (both endians) / 48-bit RGB; on-board CSC widgets bridge
+framebuffer-vs-wire colour-family mismatches inside the routing
+fabric and the negotiator honours an `Ntv2DisableOnBoardCsc`
+opt-out; sinks fan one outbound signal across N port groups via the
+`SdiOutputFanoutConfig` carrier and `Ntv2MirrorOutputs` config key;
+the capture worker now polls `GetInputVideoFormat` every
+`Ntv2SignalPollIntervalVbi` VBIs and emits
+`errorOccurredSignal(Error::SignalLoss)` on present→absent
+transitions; sink channels accept a caller-supplied `Clock::Ptr`
+through `executeCmd(MediaIOCommandSetClock)` and wait on an
+embedded `PacingGate` before each `AutoCirculateTransfer` so two
+cards can be locked to a shared external reference without a
+hardware genlock cable; `Ntv2DeviceClock::rateRatio()` returns a
+long-window drift estimate of device-counter vs host wall time;
+SMPTE ST 352 VPID byte-4 (transfer / colorimetry / luminance /
+RGB range) is stamped on sink outputs from the framestore colour
+model + per-frame metadata + configurable `Ntv2Vpid*Override` keys,
+and the capture worker reads the incoming VPID at open + each
+signal-poll cycle and stamps the decoded transfer / colorimetry /
+range on every captured Frame's metadata.
+74 doctest cases cover the hardware-free units (format mappings,
+32→64 bit clock-counter wrap extension, `mediaTimeStampFromSamples`
+for FRAME_STAMP → device-clock-domain conversion, drift-aware
+rateRatio convergence + VBI-mode 1.0 invariant, ANC encode/decode
+round-trips including F2 + unregistered DID/SDID, reservation
+atomicity + idempotency + busy conflicts, reference-clock
+apply-new-on-conflict, single-link + quad-link Squares + quad-link
+2SI + 12G + CSC-inserted + fanned-out crosspoint routing tables,
+sink-mode `proposeInput` negotiation including the CSC opt-out
+path, fanout-config string round-trip, URL parsing,
+`Error::SignalLoss` identity, factory configSpecs for the new
+Phase-6 keys, VPID transfer / colorimetry / luminance / RGB-range
+mapping round-trips + SDR fall-through + out-of-range clamps).
+Functional hardware tests remain TODO — the rig needs an AJA card
+present.
 **Standards:** All work follows `CODING_STANDARDS.md`. Every new
 class requires complete doctest coverage. See `devplan/README.md`
 for the full requirements.
@@ -243,14 +282,19 @@ class Ntv2DeviceClock : public Clock {
 };
 ```
 
-`raw()` reads `CNTV2Card::ReadAudioLastIn(audioSys)` (capture-side
-counter) or `ReadAudioLastOut(audioSys)` (playout-side counter) —
-whichever direction the device is primarily serving. The register
-is 32-bit and wraps every ~24.8 hours at 48 kHz; the clock keeps a
-64-bit shadow that gets advanced atomically on every read by
-comparing the new sample value against the last-seen one and
-incrementing the high 32 bits on detected wrap. `raw()` then
-converts to nanoseconds via the audio sample rate.
+`raw()` reads `CNTV2Card::GetRawAudioTimer()` — the FPGA-resident
+`kRegAud1Counter`, a single free-running 48 kHz counter that ticks
+from FPGA load at power-up and is independent of any audio system
+being reserved or capturing.  That's the same register the AJA
+driver pre-extends and reports as `FRAME_STAMP::acAudioClockTimeStamp`
+on every captured frame, which is what lets the capture loop bind a
+per-frame PTS via `mediaTimeStampFromSamples` and land in the exact
+same time base as `now()`.  The register is 32-bit and wraps every
+~24.8 hours at 48 kHz; the clock keeps a 64-bit shadow that gets
+advanced atomically on every read by comparing the new sample value
+against the last-seen one and incrementing the high 32 bits on
+detected wrap. `raw()` then converts to nanoseconds via the audio
+sample rate.
 
 `sleepUntilNs(target)` does a coarse sleep down to one VBI period
 of the target, then short-polls the counter to land within one
@@ -273,23 +317,25 @@ This means:
 - Cross-card stamps go through `ClockDomain` translation as usual
   (a different `Ntv2DeviceClock` per device, different domain).
 
-### Fallback when no audio system is enabled
+### Fallback when no FPGA audio counter exists
 
-The sample counter requires an active audio system. If a logical
-channel opens with `Ntv2AudioSystem=disabled` and no other channel
-on the device has an audio system enabled either, the clock
-constructs in **VBI-fallback mode**:
+The `kRegAud1Counter` register is part of the audio subsystem in
+every shipping NTV2 FPGA, so in practice this fallback is dead
+code on real hardware.  It exists as a safety net for hypothetical
+future cards that ship without the audio subsystem entirely
+(`Ntv2Capabilities::hasAudioCounter() == false`), in which case the
+clock constructs in **VBI-fallback mode**:
 
 - `raw()` returns the host-side wall time at the most-recent
   `SubscribeInputVerticalEvent` wake (one tick per frame period).
 - `resolutionNs()` reports one frame period.
 - `jitter()` widens to ± half a frame period.
 
-A warning logs once when this happens. The clock auto-promotes to
-sample-counter mode if a later-opened channel turns on an audio
-system, but only on the device-shared instance — once consumers
-have latched onto the lower-resolution clock the resolution
-upgrade is silent (their stamps just get more precise).
+A warning logs once when this happens.  Mode is latched at clock
+construction — there is no runtime promotion path, since silently
+upgrading resolution mid-stream would break the monotonic-clamp
+contract for consumers already latched onto the lower-resolution
+clock.
 
 ### Sink-side pacing
 
@@ -463,7 +509,7 @@ Ntv2DeviceIndex          int        0     Device index, or -1 to use Ntv2DeviceN
 Ntv2DeviceName           String     ""    Device name shorthand or "serial:NNN".
 Ntv2Channel              int        1     Logical channel (1-based).
 Ntv2AudioSystem          int        -1    Audio system index (-1 = auto-pair with channel,
-                                          0..N = explicit, 9999 = disabled).
+                                          0 = disabled, 1..N = explicit).
 Ntv2WithAnc              bool       true  Enable ANC extractor (sources) / inserter (sinks).
 Ntv2RetailServices       bool       false If true, leave AJA retail services enabled.
                                           Default is to switch to OEM tasks for the duration
@@ -475,6 +521,13 @@ Ntv2BufferLockMode       Enum       Auto     Page-lock host frame buffers for DM
 Ntv2CaptureTimeoutMs     int        100      AutoCirculate poll timeout.
 Ntv2VbiTimeoutMs         int        50       SubscribeInputVerticalEvent poll timeout
                                               used by cancelBlockingWork.
+Ntv2DisableOnBoardCsc    bool       false    Force a software CSC bridge on every RGB↔YCbCr
+                                              boundary instead of using the card's on-board CSC
+                                              widgets.
+Ntv2MirrorOutputs        SdiOutputFanoutConfig {} Multi-destination SDI fanout — one outbound
+                                              signal driven out N matching port groups.  Supersedes
+                                              SdiOutputSignal when set.  String form
+                                              "standard:p1+p2,p3+p4".
 ```
 
 Existing keys honoured: `VideoSize`, `VideoPixelFormat`, `FrameRate`,
@@ -504,34 +557,97 @@ SdiInputSignal  = {standard: QL_3G_2SI,
 VideoSize       = 3840x2160
 ```
 
-## Pixel-format mapping (initial scope)
+## Pixel-format mapping
 
-| NTV2 frame-buffer format       | promeki `PixelFormat`                  |
-|--------------------------------|----------------------------------------|
-| `NTV2_FBF_8BIT_YCBCR` (UYVY)   | `YUV8_422_UYVY_Rec709`                 |
-| `NTV2_FBF_8BIT_YCBCR_YUY2`     | `YUV8_422_YUYV_Rec709`                 |
-| `NTV2_FBF_10BIT_YCBCR` (V210)  | `YUV10_422_V210_Rec709` (new — see below) |
-| `NTV2_FBF_24BIT_RGB`           | `RGB8_sRGB`                            |
-| `NTV2_FBF_24BIT_BGR`           | `BGR8_sRGB`                            |
-| `NTV2_FBF_ARGB`                | `ARGB8_sRGB`                           |
-| `NTV2_FBF_ABGR`                | `ABGR8_sRGB`                           |
-| `NTV2_FBF_RGBA`                | `RGBA8_sRGB`                           |
-| `NTV2_FBF_10BIT_RGB`           | `RGB10_DPX_Be` (existing `I_3x10_DPX_B`) |
-| `NTV2_FBF_48BIT_RGB`           | `RGB16_sRGB`                           |
-| `NTV2_FBF_10BIT_YCBCRA`        | (Phase 5) — needs alpha-capable YUV    |
-| `NTV2_FBF_10BIT_DPX`           | (Phase 5)                              |
+| NTV2 frame-buffer format          | promeki `PixelFormat`             | Notes                              |
+|-----------------------------------|-----------------------------------|------------------------------------|
+| `NTV2_FBF_8BIT_YCBCR` (UYVY)      | `YUV8_422_UYVY_Rec709`            | Default capture/playout format     |
+| `NTV2_FBF_8BIT_YCBCR_YUY2`        | `YUV8_422_Rec709`                 |                                    |
+| `NTV2_FBF_10BIT_YCBCR` (V210)     | `YUV10_422_v210_Rec709`           | AJA-native 10-bit YCbCr packing    |
+| `NTV2_FBF_24BIT_RGB`              | `RGB8_sRGB`                       |                                    |
+| `NTV2_FBF_24BIT_BGR`              | `BGR8_sRGB`                       |                                    |
+| `NTV2_FBF_ARGB`                   | `ARGB8_sRGB`                      |                                    |
+| `NTV2_FBF_ABGR`                   | `ABGR8_sRGB`                      |                                    |
+| `NTV2_FBF_RGBA`                   | `RGBA8_sRGB`                      |                                    |
+| `NTV2_FBF_10BIT_DPX`              | `RGB10_DPX_sRGB`                  | DPX Method A (big-endian on wire)  |
+| `NTV2_FBF_10BIT_DPX_LE`           | `RGB10_DPX_LE_sRGB`               | DPX little-endian variant          |
+| `NTV2_FBF_48BIT_RGB`              | `RGB16_LE_sRGB`                   | 16 bits per channel, host order    |
+| `NTV2_FBF_10BIT_YCBCRA`           | — (no alpha-capable YUV yet)      | Add when an RGBA-style YUV ships   |
+| `NTV2_FBF_10BIT_RGB`              | — (RGB10A2 packing, byte-order TBD) | Wire when a card needs it        |
+| `NTV2_FBF_10BIT_RGB_PACKED`       | — (3x10 packed RGB)               | Wire when a card needs it          |
 
-Anything outside the table is rejected with a `proposeInput` /
-`proposeOutput` answer that asks the planner to splice a CSC in
-front of / behind the channel. The planner already knows how.
+Anything outside the table flows through the negotiator's
+fallback path (see "On-board CSC negotiation" below): the
+planner is either handed a same-family alternative or, when the
+on-board CSC is in play, a cross-family target that the routing
+fabric bridges in hardware.
 
-`YUV10_422_V210_Rec709` is a possible new addition to the PixelFormat
-registry — V210 (32-bit-aligned 6-component 10-bit packing) is the
-de-facto AJA / Blackmagic 10-bit YUV wire format. If the new
-PixelFormat is too invasive for Phase 1 we'll temporarily land it as
-an internal-only mapping that CSCs to/from `YUV10_422_SemiPlanar_LE_Rec709`
-on the channel boundary and add the real PixelFormat in Phase 5
-once we've decided how V210 fits into the well-known set.
+### On-board CSC negotiation
+
+AJA cards expose per-channel Colour-Space Converter widgets that
+can bridge an RGB ↔ YCbCr mismatch between a framestore and the
+wire inside the routing fabric — much cheaper than a host-side
+CSC pass.  @ref Ntv2Routing::Config carries
+`framebufferRgb`, `signalRgb`, and `allowOnBoardCsc` toggles; the
+helper inserts one CSC per quadrant when the families differ and
+`allowOnBoardCsc` is true.
+
+The negotiator (`Ntv2MediaIO::proposeInput`) decides whether a
+cross-family request needs CSC at all:
+
+- Default (CSC enabled via @c Ntv2DisableOnBoardCsc=false): an
+  upstream offering an RGB framestore for an SDI source is
+  accepted as-is — the on-board CSC handles the wire-to-FB
+  conversion at routing time.
+- `Ntv2DisableOnBoardCsc=true`: the negotiator falls back to the
+  wire's colour family so the routing path never picks up a CSC.
+  Users with a tuned host CSC pipeline (GPU / SIMD) reach for
+  this to keep the on-board CSCs reserved for routing they drive
+  themselves.
+
+Wire colour family is presently fixed at YCbCr (SDI is YCbCr
+overwhelmingly).  Dual-link RGB and HDMI RGB paths will flip
+`signalRgb` once those wire kinds ship.
+
+## Output fanout (one signal → many SDI destinations)
+
+The AJA crosspoint fabric lets one framestore-output crosspoint
+drive multiple SDIOut-input crosspoints simultaneously, which is
+the right primitive for monitor-out / redundancy / loop-thru use
+cases.  Exposed as a new carrier type @ref SdiOutputFanoutConfig
+and the @ref MediaConfig::Ntv2MirrorOutputs key:
+
+- @ref SdiOutputFanoutConfig pairs a single @ref SdiLinkStandard
+  with @em multiple port groups.  Each group must have exactly
+  @c cablesFor(standard) ports — single-link standards take
+  1 port per group, dual-link 2, quad-link 4.  String form:
+  `standard:g1ports,g2ports,...` with `+` between ports inside a
+  group and `,` between groups.
+- When @c Ntv2MirrorOutputs is set on the sink config, it
+  supersedes @c SdiOutputSignal.  The first group is the primary
+  destination; subsequent groups are mirrors.  The open path
+  reserves @em every port across all groups, switches each one to
+  transmit via @c SetSDITransmitEnable, and asks the routing
+  helper for the fanned-out crosspoint list.
+- @ref Ntv2Routing::Config now carries a @c mirrorPortStarts list
+  — additional 1-based SDI port starts to replay the same routing
+  pattern against, all sourced from the same framestore.  Source
+  mode ignores @c mirrorPortStarts (mirroring an SDI input has no
+  meaning).
+
+Examples (string form passed in as @c Ntv2MirrorOutputs):
+
+| String                                 | Effect                                                  |
+|----------------------------------------|---------------------------------------------------------|
+| `sl_3ga:sdi1`                          | Single-link, no fanout — equivalent to `SdiOutputSignal`. |
+| `sl_hd:sdi1,sdi2,sdi3`                 | Single-link HD signal driven out SDI 1, 2, and 3.       |
+| `dl_3g:sdi1+sdi2,sdi3+sdi4`            | Dual-link signal on (SDI 1, SDI 2) plus a mirror on (SDI 3, SDI 4). |
+| `ql_3g_2si:sdi1+sdi2+sdi3+sdi4,sdi5+sdi6+sdi7+sdi8` | Quad-link 2SI signal across 8 SDI outputs (one source, two destination groups). |
+
+Dual-link and SL_24G routing tables are still empty (the helper
+returns no connections), so dual-link fanout will land when the
+DL routing table itself does; the carrier type and config plumbing
+are in place either way.
 
 ## Video-format mapping
 
@@ -587,8 +703,12 @@ buffer to a thin `ntv2AncToPackets` converter that emits an
 Each phase ends in a working, testable, committable slice. Cut
 points chosen so we can validate against real hardware as we go.
 
-**Progress:** Phase 1 + 2 complete (2026-05-16, both same day).
-Phase 3 (ANC) is the next active milestone.
+**Progress:** Phases 1 + 2 complete (2026-05-16, both same day);
+Phase 3 (ANC capture + insertion) complete (2026-05-17);
+Phase 4 (multi-channel concurrent) complete (2026-05-17);
+Phase 5 (multi-link 4K Quad-Link + 12G) complete (2026-05-17);
+Phase 6 (genlock + signal-loss detection + external pacing +
+drift-aware clock + HDR / colorimetry VPID) complete (2026-05-17).
 
 ### Phase 1 — Device layer + device clock + single-channel SDI capture — **DONE 2026-05-16**
 
@@ -607,9 +727,10 @@ Phase 3 (ANC) is the next active milestone.
 - `Ntv2MediaIO` source mode — single-link SDI, single channel, no
   ANC, optional audio system 1.  The clock is bound to the port
   group via `addPortGroup(name, clock)` on Open.  Audio system is
-  reserved (so the device clock can latch onto its sample counter)
-  but Phase 1 does not yet emit audio payloads to the consumer —
-  that's deferred to a follow-up.
+  reserved when requested for future audio-payload emission, but
+  is **no longer load-bearing for clocking** — `Ntv2DeviceClock`
+  reads the shared FPGA `kRegAud1Counter`, which ticks regardless
+  of any audio system being captured.
 - Pixel formats: UYVY, YUYV, RGB8, BGR8, ARGB, ABGR, RGBA (7 first-
   class mappings).  V210 / 10-bit RGB / 48-bit RGB land in Phase 5
   alongside the V210 first-class PixelFormat decision.
@@ -638,7 +759,9 @@ Phase 3 (ANC) is the next active milestone.
 - `tests/unit/ntv2clock.cpp` — `createForTest` factory, 32→64 wrap
   arithmetic across a full counter rollover via an injected fake
   counter, counter-source failure → `Error::DeviceError`,
-  VBI-fallback resolution / `noteVbi` advancement.
+  `mediaTimeStampFromSamples` conversion across multiple sample
+  rates and beyond the 32-bit range, VBI-fallback resolution /
+  `noteVbi` advancement.
 
 **Tests still to land (need hardware):**
 
@@ -698,69 +821,401 @@ Phase 3 (ANC) is the next active milestone.
   hook up an SDI loop to capture and compare against a reference
   TPG render.
 
-### Phase 3 — ANC capture + insertion
+### Phase 3 — ANC capture + insertion — **DONE 2026-05-17**
 
-- `ntv2AncToPackets` / `packetsToNtv2Anc` converters.
-- Source: optional ANC extractor wired into the capture loop,
-  builds `AncPayload` per the Phase 5 contract above.
-- Sink: optional ANC inserter consumes the frame's `AncPayloads`,
-  injects per-line.
-- Functional test: `tests/func/ntv2-anc-roundtrip/` — TPG with
-  CEA-708 captions → NTV2 sink → physical SDI loop → NTV2 source →
-  Inspector AncData → byte-exact compare of the cc_data triples.
-  (Requires SDI loopback cabling on the test rig.)
+**What shipped:**
 
-### Phase 4 — Multi-channel concurrent
+- `ntv2anc.{h,cpp}` — pure conversion helpers between AJA's GUMP
+  per-field byte buffers and libpromeki's `AncPayload` /
+  `AncPacket(St291)` types.  `ntv2AncToPackets` parses F1 and F2
+  separately so the F-bit (`AncMeta::St291::FieldB`) survives on
+  the produced packets; `packetsToNtv2Anc` is the inverse, using
+  `AJAAncillaryList::GetTransmitData` to fill the GUMP buffers.
+  Unknown DID/SDID pairs round-trip as `AncFormat::Invalid` (wire
+  fidelity preserved).
+- `Ntv2MediaIO` capture path requests `AUTOCIRCULATE_WITH_ANC`
+  when `Ntv2WithAnc=true` (the default) and the card exposes the
+  custom-ANC engine; attaches resident 2 KB F1/F2 buffers to
+  every `AutoCirculateTransfer` via `xfer.SetAncBuffers`; decodes
+  to an `AncPayload` after each transfer; attaches the payload
+  alongside the video on the produced `Frame`.  Frames are now
+  assembled on the capture thread and queued whole so the strand's
+  `executeCmd(Read)` is a pure drain.  Downgrades gracefully (warns
+  once + continues video-only) on cards without `CanDoCustomAnc`.
+- `Ntv2MediaIO` sink path symmetric: requests
+  `AUTOCIRCULATE_WITH_ANC`; pulls every `AncPayload` off the
+  incoming `Frame`; encodes via `packetsToNtv2Anc` into the
+  resident F1/F2 buffers (using the cached interlaced
+  `f2StartLine` derived from `NTV2SmpteLineNumber::GetLastLine`);
+  attaches via `xfer.SetAncBuffers`.  Multi-payload frames merge
+  before encode.  Out-of-range lines log a warning and the rest
+  of the frame still ships (per the contract).
+- `MediaIOStats::Ntv2AncPacketsReceived` and
+  `Ntv2AncPacketsSent` telemetry IDs added so consumers can see
+  ANC throughput per channel.
 
-- N independent `Ntv2MediaIO`s on one card open at once.
-- Validate `MultiFormatMode` (each channel free to run its own
-  format).
-- Device-wide setting conflicts: when channel A sets
-  `Ntv2ReferenceStandard=Hz_1_1` and channel B opens with
-  `Hz_1_1001`, log a warning naming both channels but apply B's
-  value (the user-explicit setting wins; the prior channel doesn't
-  fail). Test covers the warning path.
-- Audio-system arbitration: `Ntv2AudioSystem=-1` auto-pairs with
-  the channel index; explicit values reject double-allocation.
-- Card teardown happens on the last release.
-- Functional test: capture from two channels concurrently to two
-  files, compare per-channel frame counts.
+**Tests landed:**
 
-### Phase 5 — Multi-link 4K (Quad-Link + 12G)
+- `tests/unit/ntv2anc.cpp` — four hardware-free round-trip cases:
+  single CEA-708 packet through GUMP encode → decode with full
+  wire-byte verification; mixed CEA-708 + ATC LTC + an
+  unregistered DID/SDID packet across F1 and F2 on interlaced
+  1080i59.94; empty payload produces a zeroed buffer that
+  decodes to no packets; null-F1-buffer rejection.
 
-- `Ntv2PortSpec` with 4 ports + `QuadLinkSquareDivision` /
-  `QuadLink2SI`; `Ntv2Device::reservePhysicalPorts` enforces no
-  overlap.
-- Signal routing builds the SDR / 2SI routing tree across the four
-  framestores under one logical channel.
-- 12G single-link as the simpler analogue: one port, one channel,
-  but routing differs from 3G single-link.
-- Pixel-format additions if needed: `YUV10_422_V210_Rec709`
-  promoted to a first-class PixelFormat with full Variant /
-  DataStream registration, replacing the Phase-1 internal-only
-  bridge.
-- Functional test: 4K60 capture via Quad-Link 2SI on hardware that
-  has the four required SDI inputs.
+**Tests still to land (need hardware):**
 
-### Phase 6 — Genlock, external pacing, drift-aware clock
+- `tests/func/ntv2-anc-roundtrip/` — TPG with CEA-708 captions →
+  NTV2 sink → physical SDI loop → NTV2 source → Inspector AncData
+  → byte-exact compare of the cc_data triples.  (Requires SDI
+  loopback cabling on the test rig.)
 
-- Genlock support: `Ntv2ReferenceSource=Genlock` (or `External`) on
-  the device, with signal-loss detection on the reference input.
-  Loss surfaces as `MediaIO::errorOccurred(Error::SignalLoss)` and
-  an `InspectorDiscontinuity` event so downstream stages can react.
-- Sink external pacing: `executeCmd(SetClock)` on sinks accepts a
-  caller-supplied `Clock::Ptr`; `executeCmd(Write)` blocks on a
-  `PacingGate` against that clock before submitting to
-  AutoCirculate. Enables locking two AJA cards (different
-  `Ntv2DeviceClock` domains) to a shared external reference such
-  as PTP or another card's sample clock.
-- Drift-aware `rateRatio()`: long-window estimate of the device
-  sample clock vs. wall clock so downstream drift correction (audio
-  resamplers, video frame-syncs) can pull the true rate from
-  `clock->rateRatio()` instead of measuring it themselves.
-- HDR / colorimetry signaling — HDR Static Metadata on SDI rides
-  ANC-side, but the device may need to be told to allow the VPID
-  bits that advertise it.
+### Phase 4 — Multi-channel concurrent — **DONE 2026-05-17**
+
+**What shipped:**
+
+- `Ntv2MediaIO` open paths (source + sink) refactored to release
+  the device mutex before any `closeSource()` / `closeSink()`
+  rollback.  `promeki::Mutex` wraps a non-recursive `std::mutex`,
+  and the previous code held the device mutex across half the
+  open routine while every error branch called the close path —
+  which itself takes the mutex.  A second channel open hitting
+  one of those error paths would have deadlocked the first
+  channel's strand.  The fix is a tight `do { Mutex::Locker
+  lk(...); ... } while (false);` scope plus a deferred
+  `Error configErr` check so close runs after the lock releases.
+- `Ntv2DeviceTestAccess` (declared as a friend struct since
+  Phase 1, defined now) hardware-free seam: builds an
+  `Ntv2Device` with a hand-crafted `Ntv2Capabilities` and a null
+  `_card`, plus inspectors for the channel-owner, port-owner,
+  audio-system-owner tables and the reference-clock state.
+- `Ntv2Capabilities::createForTest` static factory hands the
+  test seam a populated capability snapshot without touching a
+  real `CNTV2Card`.
+- `MultiFormatMode` continues to be applied on the first
+  `Ntv2DeviceRegistry::acquire` call (`ntv2device.cpp` line 124,
+  unchanged); the per-acquire `multiFormat` flag is honoured
+  only on the first acquire (subsequent acquires of the same
+  card see the existing entry).
+- Audio-system arbitration confirmed: `Ntv2AudioSystem=-1`
+  auto-pairs with the channel index (openSource line 274), `0`
+  disables, explicit `1..N` either succeeds or — on conflict —
+  warns and continues video-only on the channel without
+  blocking the open (the channel-level reservation still
+  succeeds, so the open as a whole proceeds).
+- Device-wide reference conflict already implemented in
+  `Ntv2Device::setReference`: warns when the requester changes
+  under concurrent owners but applies the new request and
+  updates `_refOwner`.  The prior owner doesn't retroactively
+  fail.
+- Card teardown on last release already in `Ntv2DeviceRegistry::release`:
+  refcount transition to zero calls `Ntv2Device::shutdown` which
+  drops the shared `Clock::Ptr`, releases the stream, and resets
+  the `CNTV2Card` handle.
+
+**Tests landed:**
+
+- `tests/unit/ntv2device.cpp` (six cases, 66 assertions):
+  - Channel reservation double-allocation → `Error::Busy`;
+    idempotent same-owner re-reservation; release-then-reclaim;
+    out-of-range channel index → `Error::InvalidArgument`.
+  - Port reservation atomicity on conflict — partial requests
+    leave no half-state behind, so the same owner can still
+    claim the conflict-free ports afterwards.
+  - `releasePortsOwnedBy` releases only the requester's ports;
+    other owners' reservations untouched.
+  - Audio-system double-allocation → `Error::Busy`; idempotent
+    same-owner re-reservation; release-then-reclaim;
+    out-of-range index rejection.
+  - `setReference` apply-new-on-conflict: ownership transfers
+    to the new requester, the raw NTV2ReferenceSource value
+    updates, idempotent same-owner reissue is a no-op.
+  - Two-owner concurrent reservation: channel + ports + audio
+    system independently allocated on the same device, a
+    one-owner close leaves the other untouched.
+
+**Tests still to land (need hardware):**
+
+- Two concurrent `mediaplay` captures from `ntv2://0/1` and
+  `ntv2://0/2` on a real card, comparing per-channel frame
+  counts.
+- Device-wide reference change between two captures with
+  different rate families; verify the warning fires and the
+  card's reference register reflects the second request.
+
+### Phase 5 — Multi-link 4K (Quad-Link + 12G) — **DONE 2026-05-17**
+
+**What shipped:**
+
+- `Ntv2Routing` (`ntv2routing.{h,cpp}`) — pure connection-list
+  builder for single-link, Quad-link Squares, Quad-link 2SI, and
+  12G single-link source + sink crosspoint topologies.  Inputs:
+  `SdiLinkStandard`, 1-based framestore start, 1-based SDI port
+  start, the card's `CanDo12gRouting` capability, the
+  framestore RGB flag.  Outputs: `Ntv2Routing::ConnectionList`
+  (one `(input, output)` crosspoint pair per `CNTV2Card::Connect`
+  call).  Dual-link (`DL_HD`, `DL_3G`, `DL_3GB`) and `SL_24G`
+  return an empty list — the open path translates that to
+  `Error::NotSupported`.  12G single-link gracefully falls back
+  to 2SI on cards lacking the dedicated 12G crosspoint
+  (`CanDo12gRouting() == false`).
+- `Ntv2Routing::needsTsi` / `needsSquares` helpers gate
+  `CNTV2Card::SetTsiFrameEnable(true, ...)` and
+  `Set4kSquaresEnable(true, ...)` so the framestore-grouping bit
+  is programmed before any crosspoints are wired (the AJA helpers
+  compute crosspoint ids assuming the grouping mode is already
+  set).
+- `Ntv2MediaIO::routeSdiInput` / `routeSdiOutput` rewritten to
+  consume the resolved `SdiLinkStandard` from the caller's
+  `SdiSignalConfig` (no more hardcoded single-link table).  The
+  open paths pass `sdiSignal.standard()`, the channel start, the
+  reserved SDI port start, and the framebuffer-RGB flag.
+- `unittest-promeki` link line gained `${PROMEKI_NTV2_TARGET}`
+  under `PROMEKI_ENABLE_NTV2` so the routing tests can anchor
+  their expected crosspoint ids against AJA's own
+  `GetFrameStoreInputXptFromChannel` / `GetTSIMuxInputXptFromChannel`
+  / `GetInputSourceOutputXpt` / `GetSDIOutputInputXpt` helpers —
+  the test verifies the routing module's idea of "which ids go
+  together" matches the SDK's.
+
+**Tests landed:**
+
+- `tests/unit/ntv2routing.cpp` (12 cases, 35 assertions):
+  single-link FB ← SDIIn pairing at default and offset channel
+  starts; Auto-standard default to single-link; SL_12G follows
+  the single-link path when `can12g=true` and the 2SI fallback
+  when `can12g=false`; QL_3G_SQD yields 4 parallel pairs;
+  QL_3G_2SI yields 8 TSI-mux + FB pairs and verifies the right
+  mux/LinkA/B/SDI mapping per quadrant; sink-side single-link
+  and QL_3G_2SI; dual-link and SL_24G return empty;
+  `needsTsi` / `needsSquares` reflect the link standard.
+
+**Follow-on landed same day (2026-05-17):**
+
+- High-bit-depth pixel formats wired into the mapping —
+  `YUV10_422_v210_Rec709` (V210), `RGB10_DPX_sRGB` /
+  `RGB10_DPX_LE_sRGB` (DPX-A / DPX-LE), and `RGB16_LE_sRGB`
+  (`NTV2_FBF_48BIT_RGB`) all round-trip through
+  `Ntv2Format::toNtv2PixelFormat` / `fromNtv2PixelFormat`.  V210
+  was always a first-class `PixelFormat::ID` in the registry; the
+  Phase 5 plan called for a "promotion" that turned out to be a
+  no-op — the lookup was already there, just unused.
+- **On-board CSC routing** — `Ntv2Routing::Config` now carries
+  `signalRgb` + `allowOnBoardCsc` toggles.  When the framestore
+  and wire colour families differ and CSC is allowed, the helper
+  inserts a per-channel (per-quadrant for QL) CSC widget in the
+  crosspoint list: source path goes `SDIIn → CSC → FB`, sink path
+  goes `FB → CSC → SDIOut`.  `Ntv2MediaIO`'s open paths
+  populate the Config from the framestore's `colorModel().type()`
+  and `Ntv2Capabilities::cscCount()`.
+- **`MediaConfig::Ntv2DisableOnBoardCsc`** — bool, default false.
+  When true, both the routing helper and `proposeInput` keep
+  on-board CSCs out of the path; the negotiator falls back to
+  the wire colour family so the planner inserts a software CSC
+  (or asks upstream for native-wire-family producers).
+- `Ntv2Capabilities` gained `cscCount()` so the negotiator /
+  routing path knows how many CSC widgets the card has.
+  Reported by `toString()` and surfaced in the test factory.
+
+**Still deferred (smaller scope than originally planned):**
+
+- Dual-link routing tables — none of the current cards under
+  development use them; the helper returns an empty list and the
+  open path surfaces `Error::NotSupported` cleanly so a future
+  ask just adds the missing path.
+- Dual-link RGB / HDMI RGB wires — `signalRgb` is wired through
+  the Config struct but the open paths hard-code `false`.  Flip
+  when HDMI sources / dual-link RGB SDI signal types land.
+- `NTV2_FBF_10BIT_YCBCRA` (alpha-capable 10-bit YCbCr) and the
+  RGB10-packed formats — no first-class `PixelFormat::ID` yet;
+  add when a card actually needs them.
+
+**Tests still to land (need hardware):**
+
+- 4K60 capture via Quad-Link 2SI on a card with 4 SDI inputs;
+  verify per-frame raster + correct field ordering.
+- 4K30 capture via 12G single-link on a Kona 5 / Corvid 44
+  (cards that expose `CanDo12gRouting`).
+- 4K playout via QL_3G_SQD, verifying the four output ports all
+  carry the expected quadrant data.
+
+### Phase 6 — Genlock, external pacing, drift-aware clock — **DONE 2026-05-17**
+
+**What shipped:**
+
+- **`Error::SignalLoss`** added — a discrete code distinct from
+  `NotReady` (which means "never came up") so callers can tell
+  "input cable yanked mid-stream" apart from "no signal at open."
+- **Capture-side signal-loss detection** — the capture worker
+  counts VBI poll waits and consults
+  `CNTV2Card::GetInputVideoFormat` every
+  `MediaConfig::Ntv2SignalPollIntervalVbi` VBIs (default 15 ≈
+  1 Hz at 60 fps).  On a present→absent transition it emits
+  `MediaIO::errorOccurredSignal(Error::SignalLoss)` and logs a
+  warning naming the affected port; on the inverse transition it
+  logs an info line and increments the re-acquire counter.  New
+  stats IDs `Ntv2SignalLoss` + `Ntv2SignalReacquired` expose the
+  per-channel counters.  (The `InspectorDiscontinuity` event that
+  the original devplan called out lives in the inspector test
+  pipeline rather than at the MediaIO layer, so it doesn't apply
+  here — `errorOccurredSignal` is the right surface for hardware
+  signal-loss events.)
+- **Genlock plumbing** — `VideoReferenceConfig` was already wired
+  through `MediaConfig::VideoReference` from Phase 1; the open
+  paths still call `_device->setReference(refCfg, this)` and the
+  device-wide warn-on-conflict path from Phase 4 handles the
+  multi-channel arbitration.  No new code was needed beyond
+  documenting the existing behaviour.
+- **Sink external pacing** — `executeCmd(MediaIOCommandSetClock)`
+  no longer returns `NotSupported` in sink mode.  A non-null
+  `cmd.clock` binds the gate via `PacingGate::setClock`, refreshes
+  the period from `_frameRate`, and applies the configured skip /
+  reanchor thresholds (`Ntv2PaceSkipThresholdMs` /
+  `Ntv2PaceReanchorThresholdMs`).  The playout worker checks
+  `_paceClockExternal` on every loop iteration and waits on the
+  gate before each `AutoCirculateTransfer`; `Skip` verdicts drop
+  the frame (counted via `StatsFramesDroppedSink`), `Reanchor`
+  verdicts log a warning and proceed.  A null `cmd.clock` unbinds
+  cleanly, restoring Phase-2 card-paced behaviour.  Source mode
+  still returns `NotSupported` (the capture cadence is driven by
+  the wire and can't be meaningfully replaced).  New stats IDs
+  `Ntv2PacingTicksOnTime` / `…Late` / `…Skipped` /
+  `Ntv2PacingReanchors` mirror the gate counters into MediaIOStats.
+- **Drift-aware `Ntv2DeviceClock::rateRatio()`** — `raw()` now
+  captures (counter ns, wall ns) pairs on every read.  After a
+  5-second baseline window (`kRateBaselineMinWindowNs`) the
+  estimator publishes a slowly-tracking LPF average of
+  `counterDelta / wallDelta` so downstream consumers (audio
+  resamplers, frame-syncs) can pull the true device-vs-host rate
+  without measuring it themselves.  Clamped to [0.95, 1.05] to
+  defend against a first-read transient.  Test seam
+  `setWallTimeSourceForTest` lets unit tests synthesise wall +
+  counter advance pairs without sleeping.  VBI-fallback mode
+  always returns 1.0 (the "device" and host clocks are the same
+  in that configuration).
+- **New `MediaConfig` keys** — `Ntv2SignalPollIntervalVbi`,
+  `Ntv2PaceSkipThresholdMs`, `Ntv2PaceReanchorThresholdMs`,
+  `Ntv2VpidEnable`, `Ntv2VpidTransferOverride`,
+  `Ntv2VpidColorimetryOverride`, `Ntv2VpidRangeOverride`, all
+  wired into `Ntv2Factory::configSpecs` for tooling visibility.
+- **HDR / colorimetry VPID signaling (Phase 6.4)** — landed in
+  the same changeset as the rest of Phase 6.  Surface:
+  - `ntv2vpid.{h,cpp}` — pure namespace-level helpers translating
+    promeki's `TransferCharacteristics` / `ColorPrimaries` /
+    `MatrixCoefficients` / `VideoRange` enums to and from AJA's
+    `NTV2VPIDTransferCharacteristics` /
+    `NTV2VPIDColorimetry` / `NTV2VPIDLuminance` /
+    `NTV2VPIDRGBRange` (returned as `int` so non-NTV2 TUs don't
+    drag AJA headers, same pattern as `ntv2format`).  PQ / HLG /
+    Unspecified round-trip cleanly; every SDR variant collapses
+    to `NTV2_VPID_TC_SDR_TV` per SMPTE ST 352; BT.709 / BT.2020
+    round-trip through Rec709 / UHDTV; SMPTE2085 triggers the
+    ICtCp luminance flag.
+  - **Sink side (`applySinkVpid`)** — `openSink` resolves the
+    four byte-4 fields with three-tier precedence: explicit
+    `MediaConfig::Ntv2Vpid*Override` keys win, then per-frame
+    H.273 derivation from the framestore `PixelFormat`'s
+    `ColorModel::toH273()`, then the card's auto-derivation
+    (override flag stays disabled).  Writes via
+    `CNTV2Card::SetSDIOutVPIDTransferCharacteristics` /
+    `Colorimetry` / `Luminance` / `RGBRange`.  Best-effort —
+    individual setter failures warn but don't fail the open
+    (cards lacking specific VPID overrides still benefit from
+    the partial set).  Honours an `Ntv2VpidEnable=false` opt-out
+    for legacy SDR pipelines that prefer the card's auto-derived
+    VPID.
+  - **Source side (`pollSourceVpid`)** — `openSource` reads the
+    decoded byte-4 fields via `CNTV2Card::GetVPIDTransferCharacteristics`
+    / `Colorimetry` / `RGBRange` at open time so the very first
+    captured Frame already carries the wire's colour claim; the
+    periodic signal-loss poll re-reads on its same cadence so
+    mid-stream HDR transitions (producer flipping from SDR to PQ
+    on the same physical port) reflect in subsequent captured
+    frames.  When the wire claims PQ or HLG, the framestore's
+    @ref PixelFormat is upgraded to the matching BT.2100 HDR
+    variant (e.g. `YUV10_422_UYVY_LE_Rec709` →
+    `YUV10_422_UYVY_LE_Rec2020_PQ`) so the colour-description
+    claim travels with the image through every downstream
+    consumer via the @ref ColorModel HDR entries — no per-frame
+    metadata stamping required.  See the **Path C catalog
+    extension** note below for the underlying core change.
+  - **HDR static metadata (mastering display / MaxCLL / MaxFALL)**
+    rides ANC-side through the existing
+    `AncFormat::HdrStatic2086` codec registered in Phase 3 — no
+    additional plumbing was needed; producers that put an
+    `HdrStaticMetadata` packet on the Frame's ANC list get it
+    inserted into the SDI VANC region for free.
+  - **Path C catalog extension (core)** — `ColorModel` gained
+    five HDR-aware entries (`Rec2020_PQ`, `Rec2020_HLG`,
+    `DCI_P3_PQ`, `YCbCr_Rec2020_PQ`, `YCbCr_Rec2020_HLG`) with
+    spec-correct SMPTE ST 2084 PQ and ITU-R BT.2100 HLG OETF /
+    EOTF implementations and matching `toH273` codepoints
+    (transfer = 16 / 18, primaries = 9 / 12, matrix = 0 / 9 as
+    appropriate).  `PixelFormat` gained 17 HDR variants spanning
+    the layouts that practically carry HDR — 10/12-bit YCbCr
+    4:2:2 UYVY (SDI HDR), 10/12-bit YCbCr 4:2:0 planar and
+    semi-planar (codec / P010 HDR outputs), 16-bit YCbCr 4:2:2
+    semi-planar (NDI P216), 10-bit packed RGB10A2, 16-bit RGB,
+    half-float linear BT.2020, and 16-bit DCI-P3 PQ.  This
+    pivots the project's HDR signalling onto the @ref PixelFormat
+    identity itself rather than parallel @ref Metadata keys
+    (which remain only as a manual override path for the rare
+    case of buffer-vs-claim mismatch).
+
+**Tests landed:**
+
+- `tests/unit/ntv2clock.cpp` — three new cases:
+  rateRatio defaults to 1.0 before the baseline window
+  stabilises; rateRatio tracks a synthesised 1.001 (1000 ppm)
+  drift to within ±0.0005 after the LPF converges; rateRatio
+  stays at exactly 1.0 in VBI-fallback mode.
+- `tests/unit/ntv2mediaio.cpp` — two new cases: the factory
+  configSpecs map exposes the three new Phase-6 keys with the
+  documented defaults; `Error::SignalLoss` is a distinct
+  registered error code with non-empty name + description.
+- `tests/unit/ntv2vpid.cpp` — eight new cases covering the
+  Ntv2Vpid mapping helpers: PQ / HLG / Unspecified round-trips
+  exactly; every SDR transfer collapses to `NTV2_VPID_TC_SDR_TV`
+  and the reverse picks BT709 as the canonical SDR claim;
+  `Auto` resolves to Unspecified (the open path provides
+  context); BT.709 / BT.2020 colorimetry round-trip; every other
+  primary maps to `NTV2_VPID_Color_Unknown`; SMPTE2085 toggles
+  the ICtCp luminance flag and every other matrix maps to
+  YCbCr; Full / Limited / Unknown range mappings; out-of-range
+  integers clamp to safe defaults without asserting.
+- `tests/unit/colormodel.cpp` — three new cases covering the
+  HDR catalog extension: `toH273` returns the correct H.273
+  codepoints (PQ = 16, HLG = 18) for each HDR ColorModel; PQ
+  and HLG OETF / EOTF round-trip mid-scale values to within
+  1e-5; HDR YCbCr models inherit the BT.2020 NCL matrix from
+  the SDR `YCbCr_Rec2020` variant unchanged.
+- `tests/unit/pixelformat.cpp` — two new cases: every HDR
+  PixelFormat resolves to the matching HDR `ColorModel`; the
+  PixelFormat → ColorModel → toH273 chain yields the correct
+  transfer codepoint on its own (no metadata stamping needed).
+
+**Tests still to land (need hardware):**
+
+- Loss + recovery: pull the SDI cable mid-capture; verify
+  `errorOccurredSignal(Error::SignalLoss)` fires within
+  `(Ntv2SignalPollIntervalVbi / frame_rate)` seconds and
+  re-acquire fires when the cable is re-seated.
+- External pacing: drive two NTV2 sinks against a shared
+  `SyntheticClock` (or a third card's `Ntv2DeviceClock`) and
+  verify the per-channel frame stamps stay coherent over a
+  60-second run within the pacing gate's skip threshold.
+- Drift sanity: capture for an hour and verify the published
+  `rateRatio()` stays within 100 ppm of 1.0 on a healthy
+  genlock — the host crystal vs FPGA crystal drift should be
+  small enough that the LPF lands near the absolute floor.
+- VPID loopback: play out an HDR signal with
+  `Ntv2VpidTransferOverride=SMPTE2084` /
+  `Ntv2VpidColorimetryOverride=BT2020`, capture on a second
+  channel over an SDI cable, verify the captured Frame's
+  `Metadata::VideoTransferCharacteristics` reports `SMPTE2084`
+  and `VideoColorPrimaries` reports `BT2020`.  Also flip the
+  override mid-stream and verify the next captured Frame after
+  the signal-poll cadence picks up the new claim.
 
 ## Cross-cutting / library follow-ups likely surfaced
 
@@ -820,18 +1275,24 @@ Phase 3 (ANC) is the next active milestone.
   to surface that as `errorOccurred(DeviceError)` and fail-close, or
   attempt automatic recovery on the next VBI.
 - **Which audio-system counter drives the device clock when both
-  source and sink channels are open on the same card?** Capture-
-  channels naturally read `ReadAudioLastIn` and playout-channels
-  naturally read `ReadAudioLastOut`. The two run off the same
-  reference so their rates match, but their epochs differ by the
-  output FIFO depth. Pick one canonically and document; probably
-  `In` when any source channel is open, `Out` otherwise.
+  source and sink channels are open on the same card?**
+  *(Resolved 2026-05-17.)* The clock reads `kRegAud1Counter` via
+  `CNTV2Card::GetRawAudioTimer` — a single FPGA-resident
+  free-running counter that is independent of any audio system's
+  In/Out address.  There is no In/Out arbitration to make.  The
+  same register is what AJA's driver pre-extends into
+  `FRAME_STAMP::acAudioClockTimeStamp`, so the device clock's
+  `now()` and per-frame PTS read by `mediaTimeStampFromSamples`
+  share a time base exactly.
 - **Sample-counter availability on T-Tap / playback-only cards.**
-  Capture-side `ReadAudioLastIn` may not be meaningful on a card
-  with no input. Validate the capability via
-  `Ntv2Capabilities::hasAudioCounter` (computed at device acquire
-  time) and pick the right register or fall back to VBI mode
-  accordingly.
+  *(Resolved 2026-05-17.)* `kRegAud1Counter` ticks from FPGA load
+  at power-up and does not depend on capture or playout being
+  active, so playback-only cards (T-Tap) read it just fine.
+  `Ntv2Capabilities::hasAudioCounter` now gates only on whether
+  the device has an audio subsystem at all (`_audioSystems > 0`),
+  not on capture capability.  VBI fallback is therefore dead code
+  on every shipping NTV2 card; the gate stays as a safety net for
+  hypothetical future hardware without the subsystem.
 - **`Ntv2DeviceClock` epoch on first open vs. after device close +
   reopen.** The sample counter is free-running on the card across
   process restarts; our 64-bit shadow starts at zero on every

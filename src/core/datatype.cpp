@@ -40,6 +40,7 @@
 #include <promeki/masteringdisplay.h>
 #include <promeki/contentlightlevel.h>
 #include <promeki/json.h>
+#include <promeki/sdioutputfanoutconfig.h>
 #include <promeki/sdisignalconfig.h>
 #include <promeki/url.h>
 #include <promeki/videoportref.h>
@@ -294,6 +295,7 @@ void registerBuiltinDataTypes() {
                 registerDataType<Url>();
                 registerDataType<VideoPortRef>();
                 registerDataType<SdiSignalConfig>();
+                registerDataType<SdiOutputFanoutConfig>();
                 registerDataType<HdmiSignalConfig>();
                 registerDataType<VideoReferenceConfig>();
 

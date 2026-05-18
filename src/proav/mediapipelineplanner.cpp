@@ -9,6 +9,7 @@
 
 #include <promeki/audiodesc.h>
 #include <promeki/audioformat.h>
+#include <promeki/colormodel.h>
 #include <promeki/imagedesc.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
@@ -261,14 +262,39 @@ namespace {
                 if (policy.excludedBridges.contains("VideoEncoder")) return false;
 
                 // Construct a plausible intermediate: same raster + frame rate
-                // as `to`, NV12 4:2:0 8-bit Rec.709 — the lingua franca that
-                // every decoder can output and every encoder accepts in
-                // practice.  Refine when we encounter a codec that needs
-                // something else.
+                // as `to`.  Default lingua franca is NV12 4:2:0 8-bit Rec.709
+                // — every decoder can output it and every encoder accepts it
+                // — but HDR sources and HDR targets need a 10-bit BT.2020
+                // carrier instead, otherwise the planner would silently
+                // downconvert HDR-to-HDR transcodes through SDR Rec.709.
+                // Pick the P010 HDR sibling matching the prevailing
+                // colorimetry (PQ if either side is PQ; HLG only if both
+                // sides agree on HLG).  Mixed PQ/HLG keeps PQ as the
+                // safer container — receivers can downconvert PQ→HLG more
+                // reliably than the other way around.
                 MediaDesc intermediate = to;
                 if (!intermediate.imageList().isEmpty()) {
+                        const ColorModel::ID fromCm = fromPd.colorModel().id();
+                        const ColorModel::ID toCm   = toPd.colorModel().id();
+                        auto isHdrPq = [](ColorModel::ID id) {
+                                return id == ColorModel::Rec2020_PQ ||
+                                       id == ColorModel::YCbCr_Rec2020_PQ ||
+                                       id == ColorModel::DCI_P3_PQ;
+                        };
+                        auto isHdrHlg = [](ColorModel::ID id) {
+                                return id == ColorModel::Rec2020_HLG ||
+                                       id == ColorModel::YCbCr_Rec2020_HLG;
+                        };
+                        PixelFormat::ID intermediateId = PixelFormat::YUV8_420_SemiPlanar_Rec709;
+                        if (isHdrPq(fromCm) || isHdrPq(toCm)) {
+                                intermediateId = PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ;
+                        } else if (isHdrHlg(fromCm) && isHdrHlg(toCm)) {
+                                intermediateId = PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG;
+                        } else if (isHdrHlg(fromCm) || isHdrHlg(toCm)) {
+                                intermediateId = PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG;
+                        }
                         ImageDesc &img = intermediate.imageList()[0];
-                        img.setPixelFormat(PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709));
+                        img.setPixelFormat(PixelFormat(intermediateId));
                 }
 
                 BridgeStep dec, enc;

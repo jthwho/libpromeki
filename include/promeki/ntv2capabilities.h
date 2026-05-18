@@ -95,6 +95,18 @@ class Ntv2Capabilities {
                 /** @brief Total number of framebuffer channels (logical I/O slots). */
                 int channelCount() const { return _channels; }
 
+                /**
+                 * @brief Number of on-board Colour-Space Converter widgets.
+                 *
+                 * Each CSC widget can bridge an RGB ↔ YCbCr mismatch
+                 * between a framestore and the wire (SDI or HDMI)
+                 * inside the routing fabric, saving a CPU-side CSC
+                 * pass.  Phase-5-plus uses one CSC per quadrant for
+                 * multi-link 4K paths, so a card with four CSCs can
+                 * cover Quad-Link 2SI / Squares end-to-end on its own.
+                 */
+                int cscCount() const { return _cscs; }
+
                 // ---- Feature flags ----
 
                 /**
@@ -124,14 +136,20 @@ class Ntv2Capabilities {
                 // ---- Derived ----
 
                 /**
-                 * @brief @c true when @ref Ntv2DeviceClock can read a
-                 *        sample-counter audio register on this card.
+                 * @brief @c true when @ref Ntv2DeviceClock can read the
+                 *        FPGA's free-running 48 kHz sample counter
+                 *        (@c kRegAud1Counter) on this card.
                  *
-                 * False on playback-only cards with no audio capture
-                 * counter, in which case the clock falls back to VBI
-                 * mode.
+                 * The counter is part of the audio subsystem in the
+                 * FPGA and is present on every shipping NTV2 card,
+                 * including playback-only cards like the T-Tap — it
+                 * doesn't require an audio system to be in capture or
+                 * playout to tick.  This cap exists as a safety net
+                 * for hypothetical future hardware that lacks the
+                 * audio subsystem entirely; @ref Ntv2DeviceClock falls
+                 * back to VBI mode when it returns @c false.
                  */
-                bool hasAudioCounter() const { return _audioSystems > 0 && _canCapture; }
+                bool hasAudioCounter() const { return _audioSystems > 0; }
 
                 /**
                  * @brief @c true when this card has enough SDI cables
@@ -163,6 +181,26 @@ class Ntv2Capabilities {
                  */
                 String toString() const;
 
+                /**
+                 * @brief Hand-builds a populated capability snapshot
+                 *        without touching a real @c CNTV2Card.
+                 *
+                 * Used by the hardware-free reservation / multi-channel
+                 * tests so they can construct an @ref Ntv2Device shape
+                 * matching a synthetic card.  Production code never
+                 * calls this — @ref probe is the authoritative path.
+                 *
+                 * Every NTV2 frame-buffer format is marked as supported
+                 * since the test cases don't exercise the pixel-format
+                 * negotiator.
+                 */
+                static Ntv2Capabilities createForTest(int channelCount, int audioSystemCount,
+                                                      int sdiInputs, int sdiOutputs,
+                                                      bool canMultiFormat = true,
+                                                      bool hasBiSdi      = true,
+                                                      bool canDoAnc      = true,
+                                                      int  cscCount      = 4);
+
         private:
                 bool _valid               = false;
                 int  _sdiInputs           = 0;
@@ -171,6 +209,7 @@ class Ntv2Capabilities {
                 int  _hdmiOutputs         = 0;
                 int  _audioSystems        = 0;
                 int  _channels            = 0;
+                int  _cscs                = 0;
                 bool _canDoMultiFormat    = false;
                 bool _hasBiDirectionalSdi = false;
                 bool _canDoCustomAnc      = false;

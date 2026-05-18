@@ -111,7 +111,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
                      "Library build identity does not match caller's compile-time identity (stale binary)"),
         DEFINE_ERROR(NotReady, NONE, "Resource exists but is not yet in the state required for this operation"),
         DEFINE_ERROR(AuthenticationRequired, NONE, "Peer demanded an authentication challenge response we don't produce"),
-        DEFINE_ERROR(ProtocolError, NONE, "Peer sent a protocol-level violation or unmodelled status code")};
+        DEFINE_ERROR(ProtocolError, NONE, "Peer sent a protocol-level violation or unmodelled status code"),
+        DEFINE_ERROR(SignalLoss, NONE, "Hardware input lost its incoming signal or reference lock after being healthy")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

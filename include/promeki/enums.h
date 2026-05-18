@@ -473,6 +473,81 @@ inline const CscPath CscPath::Optimized{0};
 inline const CscPath CscPath::Scalar{1};
 
 /**
+ * @brief Well-known Enum type for HDR tone-mapping policy on CSC pipelines.
+ *
+ * Used as the value type for the @ref MediaConfig::CscToneMapping
+ * config key.  @c Auto enables ITU-R BT.2390 perceptual tone-mapping
+ * automatically whenever the pipeline crosses an HDR boundary
+ * (source is PQ / HLG, destination is SDR) — the default since
+ * SDR clipping is rarely the desired behaviour for HDR-to-SDR
+ * conversions.  @c Enabled forces tone-mapping on regardless of
+ * the colorimetry of either end (callers who know they need
+ * compression even between two HDR targets with mismatched peak
+ * luminance).  @c Disabled bypasses tone-mapping entirely — the
+ * pipeline lets the existing transfer / gamut chain produce
+ * whatever clipping naturally falls out.
+ */
+class CscToneMapping : public TypedEnum<CscToneMapping> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("CscToneMapping", 0, {"Auto", 0}, {"Enabled", 1}, {"Disabled", 2});
+
+                using TypedEnum<CscToneMapping>::TypedEnum;
+
+                static const CscToneMapping Auto;
+                static const CscToneMapping Enabled;
+                static const CscToneMapping Disabled;
+};
+
+inline const CscToneMapping CscToneMapping::Auto{0};
+inline const CscToneMapping CscToneMapping::Enabled{1};
+inline const CscToneMapping CscToneMapping::Disabled{2};
+
+/**
+ * @brief Well-known Enum type for HDR tone-mapping operator selection.
+ *
+ * Used as the value type for the @ref MediaConfig::CscToneMapOperator
+ * config key.  The enum reserves slots for all the operators the
+ * library plans to support so callers can pin a choice today and the
+ * runtime picks the matching kernel when it lands.  Until the kernel
+ * for a given operator is registered, the pipeline falls back to
+ * @ref Bt2390 with a one-shot warning.
+ *
+ * - @c Bt2390  — ITU-R BT.2390-9 Annex B.2.5 EETF.  Per-channel Hermite
+ *               spline in PQ-encoded space.  Broadcast / display
+ *               standard, simple and well-behaved.  Default.
+ * - @c Reinhard — `L / (1 + L)` operator in linear scene-referred
+ *               space.  Cheap, perceptually reasonable for typical
+ *               content; popular in games.  Not yet implemented.
+ * - @c Hable    — Uncharted 2 filmic curve in linear space (shoulder
+ *               + toe).  Popular for game / cinematic content.  Not
+ *               yet implemented.
+ * - @c Aces     — Academy Color Encoding System RRT+ODT in linear
+ *               space.  Film-industry standard; usually shipped via
+ *               Stephen Hill's polynomial fit.  Not yet implemented.
+ * - @c Bt2446a  — ITU-R BT.2446 Method A — broadcast HDR-to-HDR
+ *               peak-luminance compression.  Not yet implemented.
+ */
+class CscToneMapOperator : public TypedEnum<CscToneMapOperator> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("CscToneMapOperator", 0, {"Bt2390", 0}, {"Reinhard", 1}, {"Hable", 2},
+                                           {"Aces", 3}, {"Bt2446a", 4});
+
+                using TypedEnum<CscToneMapOperator>::TypedEnum;
+
+                static const CscToneMapOperator Bt2390;
+                static const CscToneMapOperator Reinhard;
+                static const CscToneMapOperator Hable;
+                static const CscToneMapOperator Aces;
+                static const CscToneMapOperator Bt2446a;
+};
+
+inline const CscToneMapOperator CscToneMapOperator::Bt2390{0};
+inline const CscToneMapOperator CscToneMapOperator::Reinhard{1};
+inline const CscToneMapOperator CscToneMapOperator::Hable{2};
+inline const CscToneMapOperator CscToneMapOperator::Aces{3};
+inline const CscToneMapOperator CscToneMapOperator::Bt2446a{4};
+
+/**
  * @brief Well-known Enum type for QuickTime / ISO-BMFF container layout.
  *
  * Used as the value type for the @ref MediaConfig::QuickTimeLayout config

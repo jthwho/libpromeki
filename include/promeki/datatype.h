@@ -156,6 +156,7 @@ enum DataTypeID : uint16_t {
         DataTypeSdiSignalConfig     = 0x65,
         DataTypeHdmiSignalConfig    = 0x66,
         DataTypeVideoReferenceConfig = 0x67,
+        DataTypeSdiOutputFanoutConfig = 0x68,
 };
 
 /** @brief First @ref DataTypeID value available for user-defined types. */

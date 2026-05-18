@@ -2000,6 +2000,7 @@ set(PROMEKI_HEADERS
     include/promeki/rect.h
     include/promeki/regex.h
     include/promeki/resource.h
+    include/promeki/sdioutputfanoutconfig.h
     include/promeki/sdisignalconfig.h
     include/promeki/securemem.h
     include/promeki/selfpipe.h
@@ -2140,6 +2141,7 @@ set(PROMEKI_SOURCES
     src/core/rect.cpp
     src/core/regex.cpp
     src/core/resource.cpp
+    src/core/sdioutputfanoutconfig.cpp
     src/core/sdisignalconfig.cpp
     src/core/selfpipe.cpp
     src/core/set.cpp
@@ -2706,18 +2708,24 @@ if(PROMEKI_ENABLE_PROAV)
         # PROMEKI_ENABLE_NTV2 block earlier in this file.  Phase 1
         # provides single-channel SDI source capture.
         list(APPEND PROMEKI_HEADERS
+            include/promeki/ntv2anc.h
             include/promeki/ntv2capabilities.h
             include/promeki/ntv2clock.h
             include/promeki/ntv2device.h
             include/promeki/ntv2format.h
             include/promeki/ntv2mediaio.h
+            include/promeki/ntv2routing.h
+            include/promeki/ntv2vpid.h
         )
         list(APPEND PROMEKI_SOURCES
+            src/proav/ntv2anc.cpp
             src/proav/ntv2capabilities.cpp
             src/proav/ntv2clock.cpp
             src/proav/ntv2device.cpp
             src/proav/ntv2format.cpp
             src/proav/ntv2mediaio.cpp
+            src/proav/ntv2routing.cpp
+            src/proav/ntv2vpid.cpp
         )
     endif()
     if(PROMEKI_ENABLE_CSC)
@@ -2733,6 +2741,8 @@ if(PROMEKI_ENABLE_PROAV)
             src/proav/csc/unpack.cpp
             src/proav/csc/pack.cpp
             src/proav/csc/transfer.cpp
+            src/proav/csc/hdrtransfer.cpp
+            src/proav/csc/tonemap.cpp
             src/proav/csc/matrix.cpp
             src/proav/csc/chroma.cpp
             src/proav/csc/alpha.cpp
@@ -3470,6 +3480,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/url.cpp
         tests/unit/uuid.cpp
         tests/unit/hdmisignalconfig.cpp
+        tests/unit/sdioutputfanoutconfig.cpp
         tests/unit/sdisignalconfig.cpp
         tests/unit/variantlookup.cpp
         tests/unit/variantquery.cpp
@@ -3762,9 +3773,13 @@ if(PROMEKI_BUILD_TESTS)
             # under tests/func/ and are SKIPPED when no AJA card is
             # present.
             list(APPEND UNITTEST_SOURCES
+                tests/unit/ntv2anc.cpp
+                tests/unit/ntv2device.cpp
                 tests/unit/ntv2format.cpp
                 tests/unit/ntv2clock.cpp
                 tests/unit/ntv2mediaio.cpp
+                tests/unit/ntv2routing.cpp
+                tests/unit/ntv2vpid.cpp
             )
         endif()
         if(PROMEKI_ENABLE_SRC)
@@ -3803,6 +3818,13 @@ if(PROMEKI_BUILD_TESTS)
     target_link_libraries(unittest-promeki PRIVATE promeki promeki::warnings)
     if(PROMEKI_BUILD_DEMOS AND PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
         target_link_libraries(unittest-promeki PRIVATE promeki-pipeline-core)
+    endif()
+    if(PROMEKI_ENABLE_NTV2)
+        # Routing-helper tests anchor against AJA's own crosspoint id
+        # helpers so the expected connections track the SDK's idea of
+        # which (input, output) crosspoint ids go together — pulls
+        # in the libajantv2 include set transitively.
+        target_link_libraries(unittest-promeki PRIVATE ${PROMEKI_NTV2_TARGET})
     endif()
     # Precompile the largest test-side common headers so each of the ~250
     # unit-test TUs doesn't re-parse them at -O3 + debug-info, which was

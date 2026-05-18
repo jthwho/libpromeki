@@ -1406,3 +1406,68 @@ TEST_CASE("PixelFormat: lookup-by-name covers every registered ID and Invalid") 
         CHECK(err.isOk());
         CHECK(back.id() == PixelFormat::Invalid);
 }
+
+TEST_CASE("PixelFormat: HDR variants anchor matching HDR ColorModel") {
+        // Every new BT.2100 HDR PixelFormat must resolve to the
+        // matching HDR ColorModel so downstream consumers reading
+        // ColorModel::toH273 get the correct transfer codepoint
+        // (PQ = 16, HLG = 18) without any per-frame metadata stamping.
+        struct Pair {
+                PixelFormat::ID pf;
+                ColorModel::ID  cm;
+        };
+        const Pair pairs[] = {
+                // YCbCr 4:2:2 UYVY (SDI HDR wire formats)
+                {PixelFormat::YUV10_422_UYVY_LE_Rec2020_PQ,  ColorModel::YCbCr_Rec2020_PQ},
+                {PixelFormat::YUV10_422_UYVY_LE_Rec2020_HLG, ColorModel::YCbCr_Rec2020_HLG},
+                {PixelFormat::YUV12_422_UYVY_LE_Rec2020_PQ,  ColorModel::YCbCr_Rec2020_PQ},
+                {PixelFormat::YUV12_422_UYVY_LE_Rec2020_HLG, ColorModel::YCbCr_Rec2020_HLG},
+                // YCbCr 4:2:0 planar / semi-planar (codec HDR outputs)
+                {PixelFormat::YUV10_420_Planar_LE_Rec2020_PQ,      ColorModel::YCbCr_Rec2020_PQ},
+                {PixelFormat::YUV10_420_Planar_LE_Rec2020_HLG,     ColorModel::YCbCr_Rec2020_HLG},
+                {PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ,  ColorModel::YCbCr_Rec2020_PQ},
+                {PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG, ColorModel::YCbCr_Rec2020_HLG},
+                {PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ,  ColorModel::YCbCr_Rec2020_PQ},
+                {PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG, ColorModel::YCbCr_Rec2020_HLG},
+                // RGB HDR
+                {PixelFormat::RGB10A2_LE_Rec2020_PQ,    ColorModel::Rec2020_PQ},
+                {PixelFormat::RGB10A2_LE_Rec2020_HLG,   ColorModel::Rec2020_HLG},
+                {PixelFormat::RGB16_LE_Rec2020_PQ,      ColorModel::Rec2020_PQ},
+                {PixelFormat::RGB16_LE_Rec2020_HLG,     ColorModel::Rec2020_HLG},
+                {PixelFormat::RGBAF16_LE_LinearRec2020, ColorModel::LinearRec2020},
+                {PixelFormat::RGBF16_LE_LinearRec2020,  ColorModel::LinearRec2020},
+                {PixelFormat::RGB16_LE_DCI_P3_PQ,       ColorModel::DCI_P3_PQ},
+        };
+        for (const Pair &p : pairs) {
+                PixelFormat pf(p.pf);
+                CAPTURE(pf.name());
+                CHECK(pf.isValid());
+                CHECK(pf.colorModel().id() == p.cm);
+        }
+}
+
+TEST_CASE("PixelFormat: HDR variants report correct H.273 transfer via ColorModel") {
+        // A producer that picks an HDR PixelFormat should not need to
+        // stamp anything else for downstream H.273 derivation to
+        // work — the PixelFormat → ColorModel → toH273 chain must
+        // yield the right transfer code on its own.
+        {
+                const auto h = ColorModel::toH273(
+                        PixelFormat(PixelFormat::YUV10_422_UYVY_LE_Rec2020_PQ).colorModel().id());
+                CHECK(h.transfer == 16); // PQ
+                CHECK(h.primaries == 9); // BT.2020
+                CHECK(h.matrix == 9);    // BT.2020 NCL
+        }
+        {
+                const auto h = ColorModel::toH273(
+                        PixelFormat(PixelFormat::YUV10_422_UYVY_LE_Rec2020_HLG).colorModel().id());
+                CHECK(h.transfer == 18); // HLG
+        }
+        {
+                const auto h = ColorModel::toH273(
+                        PixelFormat(PixelFormat::RGB16_LE_DCI_P3_PQ).colorModel().id());
+                CHECK(h.transfer == 16);  // PQ
+                CHECK(h.primaries == 12); // SMPTE-432 (P3-D65)
+                CHECK(h.matrix == 0);     // RGB
+        }
+}

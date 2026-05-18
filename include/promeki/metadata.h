@@ -687,6 +687,15 @@ class Metadata : public VariantDatabase<"Metadata"> {
                 // / @c Colorimetric keys above — those carry SMPTE 268M
                 // codepoints from DPX files, while these carry H.273
                 // codepoints from a compressed bitstream.
+                //
+                // Producers should prefer picking a @ref PixelFormat that
+                // already encodes the colour space (e.g.
+                // @c YUV10_422_UYVY_LE_BT2020_PQ) when one exists — the
+                // codec / device side derives transfer / primaries /
+                // matrix / range from the @ref ColorModel via
+                // @ref ColorModel::toH273.  These keys remain as the
+                // explicit override path for cases where the buffer's
+                // colour family doesn't match the wire / bitstream claim.
 
                 /// @brief Color primaries observed in the decoded bitstream.
                 PROMEKI_DECLARE_ID(VideoColorPrimaries,

@@ -82,6 +82,99 @@ TEST_CASE("NdiFormat: every 10/12/16-bit semi-planar 4:2:2 promeki format maps t
         CHECK(NdiFormat::pixelFormatToFourcc(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709) == kFourCC_P216);
 }
 
+TEST_CASE("NdiFormat: P216 HDR variants share the SDR FourCC (signalling rides p_metadata)") {
+        // The HDR P216 PixelFormats carry the same wire bytes as the
+        // SDR sibling; the BT.2020 + PQ / HLG signalling is handled
+        // out-of-band by sendVideo's <ndi_color_info ...> metadata.
+        // Both HDR variants therefore must reuse the SDR FourCC so
+        // the sink does not reject them as unsupported.
+        CHECK(NdiFormat::pixelFormatToFourcc(PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ) == kFourCC_P216);
+        CHECK(NdiFormat::pixelFormatToFourcc(PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG) == kFourCC_P216);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: empty / missing metadata returns SDR id unchanged") {
+        // No metadata at all — most common SDR case.  The helper must
+        // be cheap and return the input verbatim without parsing.
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, String()) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec709);
+
+        // Metadata with other tags but no ndi_color_info — also a
+        // pass-through; the early-out string search guards the parse.
+        CHECK(NdiFormat::upgradeForHdrMetadata(
+                      PixelFormat::YUV16_422_SemiPlanar_LE_Rec709,
+                      String("<ndi_capture_info no_clock=\"true\"/>")) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec709);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: PQ transfer upgrades P216 family to Rec2020 PQ") {
+        // SMPTE ST 2084 transfer_function=16 — the HDR10 PQ codepoint.
+        // All three P216 bit-depth siblings must upgrade to the 16-bit
+        // HDR variant; the wire layout is identical so promoting to
+        // YUV16 lets downstream consumers see the right bit depth on
+        // the bound ColorModel without losing data.
+        const String pq = String(
+                "<ndi_color_info colour_primaries=\"9\" transfer_function=\"16\" "
+                "matrix_coefficients=\"9\" video_range=\"0\"/>");
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV10_422_SemiPlanar_LE_Rec709, pq) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ);
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV12_422_SemiPlanar_LE_Rec709, pq) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ);
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, pq) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: HLG transfer upgrades P216 family to Rec2020 HLG") {
+        // ITU-R BT.2100 HLG = transfer_function 18.
+        const String hlg = String(
+                "<ndi_color_info colour_primaries=\"9\" transfer_function=\"18\" "
+                "matrix_coefficients=\"9\" video_range=\"0\"/>");
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV10_422_SemiPlanar_LE_Rec709, hlg) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG);
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, hlg) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: SDR transfer leaves the id unchanged") {
+        // BT.709 transfer = 1, BT.601 = 6, sRGB = 13 — all SDR, none
+        // should trigger an HDR upgrade.  The receiver must continue
+        // to surface the SDR PixelFormat that fourccToPixelFormat
+        // picked from the wire FourCC.
+        const String bt709 = String(
+                "<ndi_color_info colour_primaries=\"1\" transfer_function=\"1\" "
+                "matrix_coefficients=\"1\" video_range=\"0\"/>");
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV16_422_SemiPlanar_LE_Rec709, bt709) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec709);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: non-P216 inputs never upgrade") {
+        // 8-bit inputs (UYVY, NV12, BGRA, RGBA) cannot carry HDR over
+        // NDI today — there is no wire path with enough bit depth.
+        // Even when the metadata claims PQ, the SDR id must pass
+        // through unchanged so the receiver does not advertise a
+        // BT.2020 PixelFormat backed by 8-bit Rec.709 samples.
+        const String pq = String(
+                "<ndi_color_info colour_primaries=\"9\" transfer_function=\"16\" "
+                "matrix_coefficients=\"9\" video_range=\"0\"/>");
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::YUV8_422_UYVY_Rec709, pq) ==
+              PixelFormat::YUV8_422_UYVY_Rec709);
+        CHECK(NdiFormat::upgradeForHdrMetadata(PixelFormat::BGRA8_sRGB, pq) ==
+              PixelFormat::BGRA8_sRGB);
+}
+
+TEST_CASE("NdiFormat::upgradeForHdrMetadata: malformed metadata is ignored, no crash") {
+        // Corrupted XML — never crash, never partially upgrade; return
+        // the SDR id so the receiver continues to function.
+        CHECK(NdiFormat::upgradeForHdrMetadata(
+                      PixelFormat::YUV16_422_SemiPlanar_LE_Rec709,
+                      String("<ndi_color_info transfer_function=")) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec709);
+        // Wrong type in transfer_function attribute.
+        CHECK(NdiFormat::upgradeForHdrMetadata(
+                      PixelFormat::YUV16_422_SemiPlanar_LE_Rec709,
+                      String("<ndi_color_info transfer_function=\"abc\"/>")) ==
+              PixelFormat::YUV16_422_SemiPlanar_LE_Rec709);
+}
+
 TEST_CASE("NdiFormat: deferred FourCCs return Invalid") {
         // YV12, UYVA, PA16 are intentionally unsupported in v1 — see
         // the deferred-work list in the NDI MediaIO plan / docs/ndi.md.

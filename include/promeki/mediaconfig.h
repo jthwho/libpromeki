@@ -24,6 +24,7 @@
 #include <promeki/videoformat.h>
 #include <promeki/audiocodec.h>
 #include <promeki/hdmisignalconfig.h>
+#include <promeki/sdioutputfanoutconfig.h>
 #include <promeki/sdisignalconfig.h>
 #include <promeki/videocodec.h>
 #include <promeki/videoreferenceconfig.h>
@@ -1732,6 +1733,55 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                     .setEnumType(promeki::CscPath::Type)
                                                     .setDescription("CSC processing path (Optimized or Scalar)."));
 
+                /// @brief Enum @ref CscToneMapping — when to apply HDR
+                /// tone-mapping (@c Auto enables it automatically on
+                /// HDR → SDR boundaries, @c Enabled forces it on,
+                /// @c Disabled bypasses entirely).
+                PROMEKI_DECLARE_ID(CscToneMapping,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::CscToneMapping::Auto)
+                                           .setEnumType(promeki::CscToneMapping::Type)
+                                           .setDescription("HDR tone-mapping policy (Auto / Enabled / Disabled)."));
+
+                /// @brief Enum @ref CscToneMapOperator — which HDR tone-map
+                /// operator to apply when tone-mapping is active
+                /// (@c Bt2390 default; other slots reserved for future
+                /// kernel work and fall back to @c Bt2390 with a warning).
+                PROMEKI_DECLARE_ID(CscToneMapOperator,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::CscToneMapOperator::Bt2390)
+                                           .setEnumType(promeki::CscToneMapOperator::Type)
+                                           .setDescription("HDR tone-mapping operator "
+                                                           "(Bt2390 / Reinhard / Hable / Aces / Bt2446a)."));
+
+                /// @brief float — source HDR peak luminance in cd/m² (nits)
+                /// for tone-mapping.  Defaults to 1000 nits, matching the
+                /// HDR10 master display reference; common alternatives are
+                /// 4000 nits (cinema HDR) or whatever the source's
+                /// @ref MasteringDisplay metadata reports.  Consumed by
+                /// operators that need a source peak (BT.2390, BT.2446).
+                PROMEKI_DECLARE_ID(CscHdrPeakNits,
+                                   VariantSpec()
+                                           .setType(DataTypeFloat)
+                                           .setDefault(float(1000.0f))
+                                           .setMin(float(0.0f))
+                                           .setMax(float(10000.0f))
+                                           .setDescription("HDR tone-mapping source peak luminance in cd/m² (nits)."));
+
+                /// @brief float — target SDR peak luminance in cd/m² (nits)
+                /// for tone-mapping.  Defaults to 100 nits (BT.1886 / sRGB
+                /// reference display).  Common alternatives are 200-300
+                /// nits for HDR-capable but limited-peak displays.
+                PROMEKI_DECLARE_ID(CscSdrPeakNits,
+                                   VariantSpec()
+                                           .setType(DataTypeFloat)
+                                           .setDefault(float(100.0f))
+                                           .setMin(float(0.0f))
+                                           .setMax(float(10000.0f))
+                                           .setDescription("HDR tone-mapping target peak luminance in cd/m² (nits)."));
+
                 // ============================================================
                 // Image file sequence (ImageFileMediaIO)
                 // ============================================================
@@ -2963,6 +3013,42 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(true)
                                            .setDescription("Allow per-channel independent video formats."));
 
+                /// @brief bool — when true, the negotiator may accept
+                /// a framestore PixelFormat in a different colour
+                /// family from the wire and bridge the mismatch via
+                /// the card's on-board CSC widgets.  Default false
+                /// (CSC enabled).  Set true to keep the on-board CSCs
+                /// out of negotiation — useful when the host already
+                /// has GPU / SIMD CSC pipelines and the user wants the
+                /// CSC engines reserved for their own routing.
+                PROMEKI_DECLARE_ID(Ntv2DisableOnBoardCsc,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription(
+                                                   "Refuse on-board CSC insertion in routing / "
+                                                   "format negotiation; force a software CSC bridge "
+                                                   "on every RGB ↔ YCbCr boundary."));
+
+                /// @brief SdiOutputFanoutConfig — fan one outbound
+                /// signal across multiple SDI destination groups.
+                /// Each comma-separated group must carry the same
+                /// SMPTE link standard, with @c cablesFor(standard)
+                /// ports each.  When set, supersedes @c SdiOutputSignal
+                /// (the fanout's first group plays the role of the
+                /// primary; subsequent groups are mirrors).  String
+                /// form: <code>standard:p1+p2,p3+p4</code> — see the
+                /// type's doc.  Default empty = no fanout (fall back
+                /// to @c SdiOutputSignal alone).
+                PROMEKI_DECLARE_ID(Ntv2MirrorOutputs,
+                                   VariantSpec()
+                                           .setType(DataTypeSdiOutputFanoutConfig)
+                                           .setDefault(SdiOutputFanoutConfig())
+                                           .setDescription(
+                                                   "Multi-destination SDI fanout: one signal driven "
+                                                   "out N matching port groups via the crosspoint "
+                                                   "fabric.  Standard form: 'dl_3g:p1+p2,p3+p4'."));
+
                 /// @brief bool — page-lock host frame buffers via
                 /// @c DMABufferLock so AutoCirculate DMA bypasses the
                 /// pinning trip on every transfer.  Default true; set
@@ -2987,6 +3073,130 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(int32_t(50))
                                            .setRange(int32_t(5), int32_t(1000))
                                            .setDescription("WaitForInputVerticalInterrupt poll timeout in ms."));
+
+                /// @brief int — input-signal poll cadence (in VBIs)
+                /// used by the capture worker to detect signal loss
+                /// (and re-acquire when a signal returns).  The card's
+                /// @c GetInputVideoFormat is consulted every Nth VBI;
+                /// transitions emit
+                /// @c MediaIO::errorOccurredSignal(Error::SignalLoss)
+                /// on loss and a re-acquire log line on recovery.
+                /// Default 15 — matches a 1-Hz cadence at 60 fps and a
+                /// ~2-Hz cadence at 30 fps, balancing detection latency
+                /// against IOCTL overhead.  Set 0 to disable the poll.
+                PROMEKI_DECLARE_ID(Ntv2SignalPollIntervalVbi,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(15))
+                                           .setRange(int32_t(0), int32_t(600))
+                                           .setDescription(
+                                                   "Input-signal poll cadence in VBIs; 0 disables "
+                                                   "the periodic GetInputVideoFormat check."));
+
+                /// @brief int — `PacingGate` skip-verdict lag threshold
+                /// in ms for the NTV2 sink path.  Used only when an
+                /// external @ref Clock has been bound via
+                /// @c MediaIOPortGroup::setClock (Phase 6 external
+                /// pacing).  Lag past which the playout worker drops
+                /// the next frame instead of submitting late.  `0`
+                /// (default) resolves to one frame interval at gate-
+                /// arm time.
+                PROMEKI_DECLARE_ID(Ntv2PaceSkipThresholdMs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setRange(int32_t(0), int32_t(5000))
+                                           .setDescription(
+                                                   "External-pacing PacingGate skip threshold (ms); "
+                                                   "0 = one frame interval."));
+
+                /// @brief int — `PacingGate` reanchor-verdict lag
+                /// threshold in ms for the NTV2 sink path.  Used only
+                /// under external pacing (see @ref Ntv2PaceSkipThresholdMs).
+                /// Lag past which the gate re-anchors its timeline so
+                /// the next frame starts fresh.  `0` (default) resolves
+                /// to @c PacingGate::DefaultReanchorMultiple × frame
+                /// interval at gate-arm time.
+                PROMEKI_DECLARE_ID(Ntv2PaceReanchorThresholdMs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setRange(int32_t(0), int32_t(30000))
+                                           .setDescription(
+                                                   "External-pacing PacingGate reanchor threshold "
+                                                   "(ms); 0 = 8 × frame interval."));
+
+                /// @brief bool — master enable for NTV2 VPID stamping.
+                ///
+                /// When @c true (default), the sink open path writes
+                /// SMPTE ST 352 VPID byte-4 overrides for transfer /
+                /// colorimetry / luminance / RGB range based on the
+                /// frame's colour description, and the source open
+                /// path reads incoming VPID and stamps the detected
+                /// transfer / colorimetry / range on every captured
+                /// @ref Frame.  Setting @c false keeps the card's
+                /// auto-derived VPID (good for legacy SDR pipelines
+                /// where the receiver derives signalling from the
+                /// video format alone).
+                PROMEKI_DECLARE_ID(Ntv2VpidEnable,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription(
+                                                   "Enable NTV2 VPID overrides "
+                                                   "(transfer / colorimetry / luminance / RGB range)."));
+
+                /// @brief Enum @ref TransferCharacteristics — VPID
+                /// transfer-characteristic override applied to sinks.
+                ///
+                /// `Auto` (default) means "derive from the open-time
+                /// `ImageDesc` colour model via `ColorModel::toH273`."
+                /// Any explicit value (e.g. `SMPTE2084` for PQ,
+                /// `ARIB_STD_B67` for HLG, `BT709` for SDR) pins the
+                /// VPID transfer field regardless of the frame's
+                /// colorimetry.  Has no effect on source channels
+                /// (VPID is read-only there).
+                PROMEKI_DECLARE_ID(Ntv2VpidTransferOverride,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::TransferCharacteristics::Auto)
+                                           .setEnumType(promeki::TransferCharacteristics::Type)
+                                           .setDescription(
+                                                   "Sink VPID transfer override "
+                                                   "(Auto = derive from frame colour)."));
+
+                /// @brief Enum @ref ColorPrimaries — VPID colorimetry
+                /// override applied to sinks.
+                ///
+                /// `Auto` (default) means "derive from the open-time
+                /// `ImageDesc` colour model."  Any explicit value
+                /// (`BT709`, `BT2020`, …) pins the VPID colorimetry
+                /// field.  Has no effect on source channels.
+                PROMEKI_DECLARE_ID(Ntv2VpidColorimetryOverride,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::ColorPrimaries::Auto)
+                                           .setEnumType(promeki::ColorPrimaries::Type)
+                                           .setDescription(
+                                                   "Sink VPID colorimetry override "
+                                                   "(Auto = derive from frame colour)."));
+
+                /// @brief Enum @ref VideoRange — VPID RGB-range
+                /// override applied to sinks.
+                ///
+                /// `Unknown` (default) means "derive from the
+                /// `ImageDesc` pixel format range bit, or fall back
+                /// to narrow per the SMPTE ST 352 convention."
+                /// `Limited` / `Full` pin the VPID range bit.  Has
+                /// no effect on source channels.
+                PROMEKI_DECLARE_ID(Ntv2VpidRangeOverride,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::VideoRange::Unknown)
+                                           .setEnumType(promeki::VideoRange::Type)
+                                           .setDescription(
+                                                   "Sink VPID RGB-range override "
+                                                   "(Unknown = derive from frame range)."));
 };
 
 /**

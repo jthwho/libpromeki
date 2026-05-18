@@ -122,6 +122,22 @@ namespace {
                  NV_ENC_BIT_DEPTH_8, 1, 1, 3},
                 {PixelFormat::YUV10_444_Planar_LE_Rec709, NV_ENC_BUFFER_FORMAT_YUV444_10BIT, 3, NV_ENC_BIT_DEPTH_10,
                  NV_ENC_BIT_DEPTH_10, 2, 1, 3},
+                // HDR variants: same NVENC buffer format / byte layout
+                // as the SDR sibling above, only the bound ColorModel
+                // differs.  resolveColorDescription() reads the
+                // PixelFormat's ColorModel via ColorModel::toH273() so
+                // these rows naturally signal transfer=16 (PQ) /
+                // transfer=18 (HLG) and primaries=9 (BT.2020) on the
+                // VUI without further codec-side work.  P010 is the
+                // practical HEVC Main 10 / AV1 HDR carrier; the other
+                // HDR PixelFormat IDs in the catalog (V210, P216,
+                // RGB10A2, RGB16, half-float linear, DCI-P3) have no
+                // matching NV_ENC_BUFFER_FORMAT_* in NVENC, so they
+                // are intentionally not represented here.
+                {PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ, NV_ENC_BUFFER_FORMAT_YUV420_10BIT, 1,
+                 NV_ENC_BIT_DEPTH_10, NV_ENC_BIT_DEPTH_10, 2, 2, 2},
+                {PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG, NV_ENC_BUFFER_FORMAT_YUV420_10BIT, 1,
+                 NV_ENC_BIT_DEPTH_10, NV_ENC_BIT_DEPTH_10, 2, 2, 2},
         };
 
         const FormatEntry *lookupFormat(PixelFormat::ID id) {

@@ -105,6 +105,7 @@ class CSCPipeline {
                         StageChromaUpsample,   ///< Upsample chroma to full resolution.
                         StageRangeIn,          ///< Map input range to 0.0-1.0.
                         StageMonoExpand,       ///< Broadcast buffer[0] to buffers[1] and [2] (mono -> RGB).
+                        StageToneMap,          ///< HDR tone-mapping (BT.2390 default; see @ref Stage::toneMapOperator).
                         StageEOTF,             ///< Remove source transfer function.
                         StageMatrix,           ///< 3x3 color matrix multiply.
                         StageOETF,             ///< Apply target transfer function.
@@ -214,6 +215,87 @@ class CSCPipeline {
                                 /** @brief Per-component bit depth. */
                                 int compBits[8] = {};
 
+                                /**
+                                 * @brief HDR direct-compute transfer selector for @ref StageEOTF / @ref StageOETF.
+                                 *
+                                 * When non-zero, the transfer kernel bypasses
+                                 * the @ref lut and invokes one of the
+                                 * analytic Highway SIMD PQ / HLG kernels
+                                 * (see @c csc::applyPqOETF etc.).  The LUT
+                                 * path clamps its input to [0,1], which
+                                 * silently truncates scene-referred linear
+                                 * float HDR data above 1.0; the direct
+                                 * kernels honour the analytic curve across
+                                 * the entire non-negative real range so
+                                 * RGBAF16 LinearRec2020 → PQ encodes
+                                 * correctly without losing highlights.
+                                 *
+                                 * Values match @ref HdrTransfer below.
+                                 */
+                                int hdrTransfer = 0;
+
+                                /**
+                                 * @brief Selector values for @ref hdrTransfer.
+                                 *
+                                 * @c None falls back to the LUT path
+                                 * (existing behaviour); the others pick the
+                                 * matching analytic kernel.  Kept as an
+                                 * int-valued enum to avoid bloating Stage's
+                                 * memcpy-safe POD layout with a strong
+                                 * enum type.
+                                 */
+                                enum HdrTransfer {
+                                        HdrTransferNone   = 0,
+                                        HdrTransferPqOETF = 1,
+                                        HdrTransferPqEOTF = 2,
+                                        HdrTransferHlgOETF = 3,
+                                        HdrTransferHlgEOTF = 4,
+                                };
+
+                                /**
+                                 * @brief Tone-mapping operator for @ref StageToneMap.
+                                 *
+                                 * Mirrors @ref CscToneMapOperator's wire
+                                 * values so the @ref MediaConfig key
+                                 * value flows through unchanged.  Values
+                                 * other than 0 / 1 today resolve to
+                                 * BT.2390 (with a one-shot warn at
+                                 * compile time) — see the dev plan for
+                                 * the planned Reinhard / Hable / ACES
+                                 * / BT.2446a kernel work.
+                                 */
+                                enum ToneMapOperator {
+                                        ToneMapNone     = -1, ///< Sentinel for "no tone-map stage".
+                                        ToneMapBt2390   = 0,
+                                        ToneMapReinhard = 1,
+                                        ToneMapHable    = 2,
+                                        ToneMapAces     = 3,
+                                        ToneMapBt2446a  = 4,
+                                };
+
+                                /** @brief Selected tone-map operator for @ref StageToneMap (default @c ToneMapNone). */
+                                int toneMapOperator = ToneMapNone;
+
+                                /**
+                                 * @brief Source peak luminance in PQ-encoded space
+                                 *        (PQ OETF of the linear nits/10000 value).
+                                 *
+                                 * For BT.2390 EETF: input PQ values land in
+                                 * [0, toneMapSrcMaxPq]; the kernel scales them
+                                 * down toward @ref toneMapDstMaxPq.  Pre-encoded
+                                 * here so the kernel doesn't pay the PQ
+                                 * @c std::pow each pixel.
+                                 */
+                                float toneMapSrcMaxPq = 0.0f;
+
+                                /**
+                                 * @brief Target peak luminance in PQ-encoded space.
+                                 *
+                                 * Companion to @ref toneMapSrcMaxPq — defines
+                                 * where the tone-map shoulder asymptotes.
+                                 */
+                                float toneMapDstMaxPq = 0.0f;
+
                                 ~Stage() { delete[] lut; }
                                 Stage() = default;
                                 Stage(const Stage &other);
@@ -314,6 +396,17 @@ class CSCPipeline {
                  * @return The stage count.
                  */
                 int stageCount() const { return _stages.size(); }
+
+                /**
+                 * @brief Returns a read-only view of the @p i-th compiled stage.
+                 *
+                 * Primarily for tests and tooling that need to inspect
+                 * which kernel was chosen (e.g. confirm an HDR transfer
+                 * landed on the direct-compute path via
+                 * @ref Stage::hdrTransfer rather than the LUT path).
+                 * Caller must keep @p i in [0, stageCount()).
+                 */
+                const Stage &stage(int i) const { return _stages[i]; }
 
                 /**
                  * @brief Converts an entire payload.

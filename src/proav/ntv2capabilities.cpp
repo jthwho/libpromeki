@@ -33,6 +33,7 @@ bool Ntv2Capabilities::probe(CNTV2Card &card) {
         _hdmiOutputs         = static_cast<int>(feat.GetNumHDMIVideoOutputs());
         _audioSystems        = static_cast<int>(feat.GetNumAudioSystems());
         _channels            = static_cast<int>(feat.GetNumFrameStores());
+        _cscs                = static_cast<int>(feat.GetNumCSCs());
         _canDoMultiFormat    = feat.CanDoMultiFormat();
         _hasBiDirectionalSdi = feat.HasBiDirectionalSDI();
         _canDoCustomAnc      = feat.CanDoCustomAnc();
@@ -65,11 +66,34 @@ bool Ntv2Capabilities::supportsPixelFormat(PixelFormat::ID pixelFormat) const {
         return _fbfSupported[fbf];
 }
 
+Ntv2Capabilities Ntv2Capabilities::createForTest(int channelCount, int audioSystemCount, int sdiInputs,
+                                                 int sdiOutputs, bool canMultiFormat, bool hasBiSdi,
+                                                 bool canDoAnc, int cscCount) {
+        Ntv2Capabilities c;
+        c._sdiInputs           = sdiInputs;
+        c._sdiOutputs          = sdiOutputs;
+        c._hdmiInputs          = 0;
+        c._hdmiOutputs         = 0;
+        c._audioSystems        = audioSystemCount;
+        c._channels            = channelCount;
+        c._cscs                = cscCount;
+        c._canDoMultiFormat    = canMultiFormat;
+        c._hasBiDirectionalSdi = hasBiSdi;
+        c._canDoCustomAnc      = canDoAnc;
+        c._canCapture          = sdiInputs > 0;
+        c._canPlayout          = sdiOutputs > 0;
+        // Pretend every NTV2 frame-buffer format is supported — test
+        // cases never exercise the pixel-format negotiator.
+        for (int i = 0; i < kFbfMapSize; ++i) c._fbfSupported[i] = true;
+        c._valid = true;
+        return c;
+}
+
 String Ntv2Capabilities::toString() const {
         if (!_valid) return String("invalid");
-        String s = String::format("SDI in {} / out {}, HDMI in {} / out {}, audio sys {}, ch {}",
+        String s = String::format("SDI in {} / out {}, HDMI in {} / out {}, audio sys {}, ch {}, csc {}",
                                   _sdiInputs, _sdiOutputs, _hdmiInputs, _hdmiOutputs,
-                                  _audioSystems, _channels);
+                                  _audioSystems, _channels, _cscs);
         if (_canDoMultiFormat)    s += ", multifmt";
         if (_hasBiDirectionalSdi) s += ", biSDI";
         if (_canDoCustomAnc)      s += ", anc";

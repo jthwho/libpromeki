@@ -891,6 +891,17 @@ static PixelFormat::Data makeRGBDesc(PixelFormat::ID id, const char *name, const
         return d;
 }
 
+// Same layout helper as @ref makeRGBDesc but with an explicit
+// ColorModel parameter (the SDR variants all hardcode
+// @c ColorModel::sRGB).  Used by the HDR RGB entries below.
+static PixelFormat::Data makeRGBDescWithModel(PixelFormat::ID id, const char *name, const char *desc,
+                                              PixelMemLayout::ID pfId, bool alpha, float rangeMax,
+                                              ColorModel::ID colorModelId) {
+        PixelFormat::Data d = makeRGBDesc(id, name, desc, pfId, alpha, rangeMax);
+        d.colorModel = ColorModel(colorModelId);
+        return d;
+}
+
 static PixelFormat::Data makeRGBA10_LE() {
         return makeRGBDesc(PixelFormat::RGBA10_LE_sRGB, "RGBA10_LE_sRGB",
                            "10-bit RGBA in 16-bit LE words, sRGB, full range", PixelMemLayout::I_4x10_LE, true, 1023);
@@ -1409,6 +1420,162 @@ static PixelFormat::Data makeYUV12_420_Planar_BE_Rec2020() {
 }
 
 // ---------------------------------------------------------------------------
+// BT.2100 PQ / HLG HDR PixelFormat factory functions
+// ---------------------------------------------------------------------------
+//
+// Memory layouts identical to the SDR Rec.2020 variants above —
+// the only difference is the @ref ColorModel they anchor
+// (@c YCbCr_Rec2020_PQ / @c YCbCr_Rec2020_HLG /
+// @c Rec2020_PQ / @c Rec2020_HLG / @c DCI_P3_PQ), which carries
+// the correct @ref ColorModel::toH273 transfer codepoint.  A
+// producer that picks one of these IDs gets HDR signalling
+// through every downstream consumer (NTV2 VPID, NVENC VUI, ANC
+// HdrStatic2086) with no per-frame metadata stamping required.
+
+static PixelFormat::Data makeYUV10_422_UYVY_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_UYVY_LE_Rec2020_PQ,
+                                      "YUV10_422_UYVY_LE_Rec2020_PQ",
+                                      "10-bit YCbCr 4:2:2 UYVY LE, BT.2020 + PQ (HDR10), limited range",
+                                      PixelMemLayout::I_422_UYVY_3x10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV10_422_UYVY_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_UYVY_LE_Rec2020_HLG,
+                                      "YUV10_422_UYVY_LE_Rec2020_HLG",
+                                      "10-bit YCbCr 4:2:2 UYVY LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::I_422_UYVY_3x10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV12_422_UYVY_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_422_UYVY_LE_Rec2020_PQ,
+                                      "YUV12_422_UYVY_LE_Rec2020_PQ",
+                                      "12-bit YCbCr 4:2:2 UYVY LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::I_422_UYVY_3x12_LE, ycbcrSem12(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV12_422_UYVY_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_422_UYVY_LE_Rec2020_HLG,
+                                      "YUV12_422_UYVY_LE_Rec2020_HLG",
+                                      "12-bit YCbCr 4:2:2 UYVY LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::I_422_UYVY_3x12_LE, ycbcrSem12(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV10_420_Planar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_420_Planar_LE_Rec2020_PQ,
+                                      "YUV10_420_Planar_LE_Rec2020_PQ",
+                                      "10-bit YCbCr 4:2:0 planar LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::P_420_3x10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV10_420_Planar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_420_Planar_LE_Rec2020_HLG,
+                                      "YUV10_420_Planar_LE_Rec2020_HLG",
+                                      "10-bit YCbCr 4:2:0 planar LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::P_420_3x10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV12_420_Planar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_420_Planar_LE_Rec2020_PQ,
+                                      "YUV12_420_Planar_LE_Rec2020_PQ",
+                                      "12-bit YCbCr 4:2:0 planar LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::P_420_3x12_LE, ycbcrSem12(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV12_420_Planar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_420_Planar_LE_Rec2020_HLG,
+                                      "YUV12_420_Planar_LE_Rec2020_HLG",
+                                      "12-bit YCbCr 4:2:0 planar LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::P_420_3x12_LE, ycbcrSem12(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV10_420_SemiPlanar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ,
+                                      "YUV10_420_SemiPlanar_LE_Rec2020_PQ",
+                                      "10-bit YCbCr 4:2:0 NV12 LE (P010), BT.2020 + PQ, limited range",
+                                      PixelMemLayout::SP_420_10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV10_420_SemiPlanar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG,
+                                      "YUV10_420_SemiPlanar_LE_Rec2020_HLG",
+                                      "10-bit YCbCr 4:2:0 NV12 LE (P010), BT.2020 + HLG, limited range",
+                                      PixelMemLayout::SP_420_10_LE, ycbcrSem10(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV16_422_SemiPlanar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ,
+                                      "YUV16_422_SemiPlanar_LE_Rec2020_PQ",
+                                      "16-bit YCbCr 4:2:2 NV16 LE (P216), BT.2020 + PQ, limited range",
+                                      PixelMemLayout::SP_422_16_LE, ycbcrSem16(),
+                                      ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV16_422_SemiPlanar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG,
+                                      "YUV16_422_SemiPlanar_LE_Rec2020_HLG",
+                                      "16-bit YCbCr 4:2:2 NV16 LE (P216), BT.2020 + HLG, limited range",
+                                      PixelMemLayout::SP_422_16_LE, ycbcrSem16(),
+                                      ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeRGB10A2_LE_Rec2020_PQ() {
+        return makeRGBDescWithModel(PixelFormat::RGB10A2_LE_Rec2020_PQ, "RGB10A2_LE_Rec2020_PQ",
+                                    "10-bit RGB + 2-bit A in 32-bit LE, BT.2020 + PQ",
+                                    PixelMemLayout::I_10_10_10_2_LE, /*alpha*/ true, /*rangeMax*/ 1023,
+                                    ColorModel::Rec2020_PQ);
+}
+
+static PixelFormat::Data makeRGB10A2_LE_Rec2020_HLG() {
+        return makeRGBDescWithModel(PixelFormat::RGB10A2_LE_Rec2020_HLG, "RGB10A2_LE_Rec2020_HLG",
+                                    "10-bit RGB + 2-bit A in 32-bit LE, BT.2020 + HLG",
+                                    PixelMemLayout::I_10_10_10_2_LE, /*alpha*/ true, /*rangeMax*/ 1023,
+                                    ColorModel::Rec2020_HLG);
+}
+
+static PixelFormat::Data makeRGB16_LE_Rec2020_PQ() {
+        return makeRGBDescWithModel(PixelFormat::RGB16_LE_Rec2020_PQ, "RGB16_LE_Rec2020_PQ",
+                                    "16-bit RGB LE, BT.2020 + PQ",
+                                    PixelMemLayout::I_3x16_LE, /*alpha*/ false, /*rangeMax*/ 65535,
+                                    ColorModel::Rec2020_PQ);
+}
+
+static PixelFormat::Data makeRGB16_LE_Rec2020_HLG() {
+        return makeRGBDescWithModel(PixelFormat::RGB16_LE_Rec2020_HLG, "RGB16_LE_Rec2020_HLG",
+                                    "16-bit RGB LE, BT.2020 + HLG",
+                                    PixelMemLayout::I_3x16_LE, /*alpha*/ false, /*rangeMax*/ 65535,
+                                    ColorModel::Rec2020_HLG);
+}
+
+static PixelFormat::Data makeRGBAF16_LE_LinearRec2020() {
+        return makeFloatRGBDesc(PixelFormat::RGBAF16_LE_LinearRec2020, "RGBAF16_LE_LinearRec2020",
+                                "Half-float RGBA LE, linear BT.2020 — HDR scene-referred",
+                                PixelMemLayout::I_4xF16_LE, true, ColorModel::LinearRec2020);
+}
+
+static PixelFormat::Data makeRGBF16_LE_LinearRec2020() {
+        return makeFloatRGBDesc(PixelFormat::RGBF16_LE_LinearRec2020, "RGBF16_LE_LinearRec2020",
+                                "Half-float RGB LE, linear BT.2020", PixelMemLayout::I_3xF16_LE, false,
+                                ColorModel::LinearRec2020);
+}
+
+static PixelFormat::Data makeRGB16_LE_DCI_P3_PQ() {
+        return makeRGBDescWithModel(PixelFormat::RGB16_LE_DCI_P3_PQ, "RGB16_LE_DCI_P3_PQ",
+                                    "16-bit RGB LE, DCI-P3 (D65) + PQ — cinema HDR mastering",
+                                    PixelMemLayout::I_3x16_LE, /*alpha*/ false, /*rangeMax*/ 65535,
+                                    ColorModel::DCI_P3_PQ);
+}
+
+// ---------------------------------------------------------------------------
 // Rec.601 YCbCr PixelFormat factory functions
 // ---------------------------------------------------------------------------
 
@@ -1888,6 +2055,27 @@ struct PixelFormatRegistry {
                         add(makeYUV10_420_Planar_BE_Rec2020());
                         add(makeYUV12_420_Planar_LE_Rec2020());
                         add(makeYUV12_420_Planar_BE_Rec2020());
+
+                        // BT.2100 PQ / HLG HDR
+                        add(makeYUV10_422_UYVY_LE_Rec2020_PQ());
+                        add(makeYUV10_422_UYVY_LE_Rec2020_HLG());
+                        add(makeYUV12_422_UYVY_LE_Rec2020_PQ());
+                        add(makeYUV12_422_UYVY_LE_Rec2020_HLG());
+                        add(makeYUV10_420_Planar_LE_Rec2020_PQ());
+                        add(makeYUV10_420_Planar_LE_Rec2020_HLG());
+                        add(makeYUV12_420_Planar_LE_Rec2020_PQ());
+                        add(makeYUV12_420_Planar_LE_Rec2020_HLG());
+                        add(makeYUV10_420_SemiPlanar_LE_Rec2020_PQ());
+                        add(makeYUV10_420_SemiPlanar_LE_Rec2020_HLG());
+                        add(makeYUV16_422_SemiPlanar_LE_Rec2020_PQ());
+                        add(makeYUV16_422_SemiPlanar_LE_Rec2020_HLG());
+                        add(makeRGB10A2_LE_Rec2020_PQ());
+                        add(makeRGB10A2_LE_Rec2020_HLG());
+                        add(makeRGB16_LE_Rec2020_PQ());
+                        add(makeRGB16_LE_Rec2020_HLG());
+                        add(makeRGBAF16_LE_LinearRec2020());
+                        add(makeRGBF16_LE_LinearRec2020());
+                        add(makeRGB16_LE_DCI_P3_PQ());
 
                         // Rec.601 YCbCr
                         add(makeYUV8_422_Rec601());

@@ -89,6 +89,31 @@ namespace {
 
 } // namespace
 
+TEST_CASE("NvdecVideoDecoder: supportedOutputList covers SDR + HDR P010 PixelFormats") {
+        // The decoder now picks its output PixelFormat from the
+        // bitstream's bit depth + VUI transfer at sequence-callback
+        // time (chooseOutputPixelFormat).  All four PixelFormats it
+        // can emit — 8-bit NV12 SDR, 10-bit P010 SDR, 10-bit P010
+        // BT.2020 + PQ, 10-bit P010 BT.2020 + HLG — must surface on
+        // supportedOutputList so VideoDecoder::registerBackend
+        // advertises them and the planner can match HDR-aware sinks.
+        List<int> outputs = NvdecVideoDecoder::supportedOutputList();
+        bool      sdr8    = false;
+        bool      sdr10   = false;
+        bool      pq      = false;
+        bool      hlg     = false;
+        for (int id : outputs) {
+                if (id == static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709)) sdr8 = true;
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709)) sdr10 = true;
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ)) pq = true;
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG)) hlg = true;
+        }
+        CHECK(sdr8);
+        CHECK(sdr10);
+        CHECK(pq);
+        CHECK(hlg);
+}
+
 TEST_CASE("NvdecVideoDecoder: registered as Nvidia backend for H264/HEVC") {
         auto nvidia = VideoCodec::lookupBackend("Nvidia");
         REQUIRE(isOk(nvidia));

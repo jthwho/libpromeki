@@ -62,6 +62,28 @@ namespace promeki {
 
                 void applyTransferFunc(float *buffer, size_t width, double (*func)(double));
 
+                // HDR direct-compute transfer kernels.  Required for
+                // float source / destination buffers where the @ref
+                // applyLUT path's [0,1] indexing would clamp
+                // scene-referred linear inputs above 1.0 and destroy
+                // HDR highlight data.  Each operates in-place on a
+                // single SoA float buffer of length @p width.
+                void applyPqOETF(float *buffer, size_t width, bool useSimd = true);
+                void applyPqEOTF(float *buffer, size_t width, bool useSimd = true);
+                void applyHlgOETF(float *buffer, size_t width, bool useSimd = true);
+                void applyHlgEOTF(float *buffer, size_t width, bool useSimd = true);
+
+                // BT.2390-9 Annex B.2.5 EETF tone-mapping in PQ space.
+                // Compresses input PQ values in [0, @p srcMaxPq] into
+                // [0, @p dstMaxPq] via a Hermite-spline shoulder.
+                // Operates per-channel in place; @p srcMaxPq and
+                // @p dstMaxPq are both PQ-encoded peak values
+                // (typically derived from the source / target nominal
+                // peak luminance via the PQ OETF).  When @p dstMaxPq
+                // >= @p srcMaxPq the call is identity — no compression
+                // is performed.
+                void applyBt2390EETF(float *buffer, size_t width, float srcMaxPq, float dstMaxPq, bool useSimd = true);
+
                 // --- Matrix multiply kernel ---
 
                 void matrixMultiply3x3(float *buf0, float *buf1, float *buf2, size_t width, const float matrix[3][3],

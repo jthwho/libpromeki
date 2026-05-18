@@ -23,6 +23,18 @@
 
 #include <doctest/doctest.h>
 #include <promeki/cscpipeline.h>
+// Tests probe csc::applyPqOETF / applyHlgOETF directly at the
+// kernel boundary; forward-declare them rather than pulling the
+// internal csc_kernels.h header in (it's not on the public include
+// path).  Acceptable for in-tree tests where we own both ends.
+namespace promeki {
+        namespace csc {
+                void applyPqOETF(float *buffer, std::size_t width, bool useSimd = true);
+                void applyPqEOTF(float *buffer, std::size_t width, bool useSimd = true);
+                void applyHlgOETF(float *buffer, std::size_t width, bool useSimd = true);
+                void applyHlgEOTF(float *buffer, std::size_t width, bool useSimd = true);
+        }
+}
 #include <promeki/csccontext.h>
 #include <promeki/cscregistry.h>
 #include <promeki/uncompressedvideopayload.h>
@@ -1238,4 +1250,530 @@ TEST_CASE("CSC YUYV8 <-> UYVY8 round-trip is lossless") {
 
         const uint8_t *bp = static_cast<const uint8_t *>(back->plane(0).data());
         CHECK(memcmp(sp, bp, nbytes) == 0);
+}
+
+// =========================================================================
+// HDR (BT.2020 + PQ / HLG) — generic pipeline coverage
+// =========================================================================
+//
+// These tests exercise the auto-built HDR pipeline that the generic
+// compile() path produces from the ColorModel catalog (Rec2020_PQ,
+// Rec2020_HLG, YCbCr_Rec2020_PQ, YCbCr_Rec2020_HLG, DCI_P3_PQ).
+// No HDR fast paths are registered, so every conversion lands on the
+// generic scalar / SIMD chain: unpack → YCbCr→RGB → EOTF(PQ/HLG) →
+// gamut matrix → OETF → RGB→YCbCr → pack.  The goal here is to lock
+// in correctness end-to-end before HDR-specific fast paths land, and
+// to catch ColorModel-catalog wiring gaps (parentModel,
+// linearCounterpart, primaries, matrices) by black-box conversion
+// rather than per-field inspection.
+
+namespace {
+
+        // Allocate an HDR RGB16 LE BT.2020 + PQ payload filled with the
+        // given normalized (0..65535) RGB triple at every pixel.  Alpha
+        // is not present in this layout (RGB16, not RGBA).
+        UncompressedVideoPayload::Ptr makeUniformRGB16HdrPQ(uint16_t r, uint16_t g, uint16_t b, size_t w = 4) {
+                auto img = UncompressedVideoPayload::allocate(
+                        ImageDesc(w, 1, PixelFormat::RGB16_LE_Rec2020_PQ));
+                if (!img.isValid()) return img;
+                uint16_t *data = reinterpret_cast<uint16_t *>(img.modify()->data()[0].data());
+                for (size_t x = 0; x < w; ++x) {
+                        data[x * 3 + 0] = r;
+                        data[x * 3 + 1] = g;
+                        data[x * 3 + 2] = b;
+                }
+                return img;
+        }
+
+        // Allocate an HDR P010-layout (YUV10_420_SemiPlanar_LE) payload
+        // bound to BT.2020 + PQ ColorModel, with the Y plane filled with
+        // @p y10 (0..1023) and the interleaved Cb/Cr plane filled with
+        // a constant (cb10, cr10) chroma pair.  Convenience for round-
+        // trip tests that need an HDR YCbCr source.
+        UncompressedVideoPayload::Ptr makeUniformP010HdrPQ(uint16_t y10, uint16_t cb10, uint16_t cr10,
+                                                           size_t w = 4, size_t h = 2) {
+                auto img = UncompressedVideoPayload::allocate(
+                        ImageDesc(w, h, PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ));
+                if (!img.isValid()) return img;
+                REQUIRE(img->planeCount() == 2);
+                // P010 stores the 10-bit sample in the high 10 bits of a
+                // 16-bit word (the low 6 bits are zero-padding).
+                uint16_t *yPlane = reinterpret_cast<uint16_t *>(img.modify()->data()[0].data());
+                uint16_t *uvPlane = reinterpret_cast<uint16_t *>(img.modify()->data()[1].data());
+                const uint16_t yEnc = static_cast<uint16_t>(y10 << 6);
+                const uint16_t cbEnc = static_cast<uint16_t>(cb10 << 6);
+                const uint16_t crEnc = static_cast<uint16_t>(cr10 << 6);
+                for (size_t i = 0; i < w * h; ++i) yPlane[i] = yEnc;
+                // 4:2:0 → one chroma pair per 2x2 luma block.
+                for (size_t i = 0; i < (w / 2) * (h / 2); ++i) {
+                        uvPlane[i * 2 + 0] = cbEnc;
+                        uvPlane[i * 2 + 1] = crEnc;
+                }
+                return img;
+        }
+
+} // namespace
+
+TEST_CASE("CSC HDR: identity short-circuit on matching HDR PixelFormat") {
+        // Same-format conversion must hit the identity short-circuit
+        // (memcpy planes) — exercises the catalog binding for the HDR
+        // PixelFormat and proves the pipeline accepts HDR inputs at
+        // all.  No transfer / matrix work happens here.
+        auto src = makeUniformRGB16HdrPQ(0x4000, 0x8000, 0xC000);
+        REQUIRE(src.isValid());
+        CSCPipeline p(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::RGB16_LE_Rec2020_PQ);
+        CHECK(p.isValid());
+        CHECK(p.isIdentity());
+
+        auto dst = src->convert(PixelFormat::RGB16_LE_Rec2020_PQ, src->desc().metadata());
+        REQUIRE(dst.isValid());
+        CHECK(std::memcmp(src->plane(0).data(), dst->plane(0).data(), src->plane(0).size()) == 0);
+}
+
+TEST_CASE("CSC HDR: generic pipeline compiles for HDR YCbCr <-> HDR RGB") {
+        // Same colorimetry on both sides (BT.2020 + PQ), only
+        // ColorModel type differs (YCbCr <-> RGB).  Exercises the
+        // YCbCr→RGB matrix path on HDR variants — verifies our
+        // parentModel + Rec2020 NCL matrix wiring for the HDR YCbCr
+        // ColorModel.  Round-trip back must produce a valid payload
+        // (correctness within tolerance is harder to assert because
+        // the 4:2:0 chroma siting and the float-LUT path both
+        // accumulate small errors; "pipeline compiled and ran" is
+        // what we lock down here).
+        auto src = makeUniformP010HdrPQ(512, 512, 512);
+        REQUIRE(src.isValid());
+
+        auto rgb = src->convert(PixelFormat::RGB16_LE_Rec2020_PQ, src->desc().metadata());
+        REQUIRE(rgb.isValid());
+        CHECK(rgb->desc().pixelFormat().id() == PixelFormat::RGB16_LE_Rec2020_PQ);
+        CHECK(rgb->plane(0).size() > 0);
+
+        auto back = rgb->convert(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ, rgb->desc().metadata());
+        REQUIRE(back.isValid());
+        CHECK(back->desc().pixelFormat().id() == PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ);
+        CHECK(back->planeCount() == 2);
+}
+
+TEST_CASE("CSC HDR: cross-transfer PQ <-> HLG through generic pipeline") {
+        // Same gamut (BT.2020) and ColorModel type (RGB), only the
+        // transfer characteristic differs (PQ ↔ HLG).  The pipeline
+        // must insert EOTF(PQ) → OETF(HLG) on the forward leg and the
+        // mirror on the return.  No gamut matrix should be needed
+        // (primaries match) so the round trip is purely transfer.
+        // Mid-grey input is the safest probe — well inside both
+        // transfer curves' representable range and immune to LUT
+        // rounding at the endpoints.
+        auto src = makeUniformRGB16HdrPQ(0x4000, 0x4000, 0x4000);
+        REQUIRE(src.isValid());
+
+        auto hlg = src->convert(PixelFormat::RGB16_LE_Rec2020_HLG, src->desc().metadata());
+        REQUIRE(hlg.isValid());
+        CHECK(hlg->desc().pixelFormat().id() == PixelFormat::RGB16_LE_Rec2020_HLG);
+
+        auto back = hlg->convert(PixelFormat::RGB16_LE_Rec2020_PQ, hlg->desc().metadata());
+        REQUIRE(back.isValid());
+        CHECK(back->desc().pixelFormat().id() == PixelFormat::RGB16_LE_Rec2020_PQ);
+}
+
+TEST_CASE("CSC HDR: BT.2020 -> Rec.709 gamut conversion through generic pipeline") {
+        // Crossing primaries (BT.2020 → BT.709) forces the gamut
+        // matrix stage to run; the LUT-based PQ EOTF + sRGB OETF
+        // bracket it.  Without a tone-mapping stage HDR highlights
+        // will clip in the SDR output — that's expected here.  We
+        // assert the conversion completes and produces non-zero
+        // data, locking in the catalog wiring for cross-gamut HDR.
+        auto src = makeUniformRGB16HdrPQ(0x4000, 0x4000, 0x4000);
+        REQUIRE(src.isValid());
+
+        auto sdr = src->convert(PixelFormat::RGBA8_sRGB, src->desc().metadata());
+        REQUIRE(sdr.isValid());
+        CHECK(sdr->desc().pixelFormat().id() == PixelFormat::RGBA8_sRGB);
+        const uint8_t *dp = sdr->plane(0).data();
+        CHECK(dp != nullptr);
+        // At mid-grey HDR PQ (roughly 0.25 in normalized PQ space ≈
+        // 5 nits), the SDR display result should be a dark grey —
+        // somewhere between black and the SDR mid-grey.  Generous
+        // bounds here because we are not tone-mapping; this just
+        // proves the pipeline neither clips to zero nor produces
+        // garbage.
+        CHECK(dp[0] < 200);
+        CHECK(dp[3] == 255); // alpha fill should produce opaque alpha
+}
+
+TEST_CASE("CSC HDR: DCI_P3 + PQ -> BT.2020 + PQ gamut-only conversion") {
+        // Same transfer (PQ) on both sides, cross-gamut DCI-P3 (D65)
+        // → BT.2020.  Verifies the DCI-P3 ColorModel's primaries and
+        // its derived rgbToXyz / xyzToRgb matrices participate in the
+        // gamut matrix without needing a transfer round-trip.  PQ
+        // is non-linear so the pipeline will still build EOTF + OETF
+        // even with same-transfer, but the gamut matrix is the
+        // load-bearing part of this test.
+        auto img = UncompressedVideoPayload::allocate(
+                ImageDesc(4, 1, PixelFormat::RGB16_LE_DCI_P3_PQ));
+        REQUIRE(img.isValid());
+        uint16_t *data = reinterpret_cast<uint16_t *>(img.modify()->data()[0].data());
+        for (size_t x = 0; x < 4; ++x) {
+                data[x * 3 + 0] = 0x6000;
+                data[x * 3 + 1] = 0x3000;
+                data[x * 3 + 2] = 0x1000;
+        }
+
+        auto dst = img->convert(PixelFormat::RGB16_LE_Rec2020_PQ, img->desc().metadata());
+        REQUIRE(dst.isValid());
+        CHECK(dst->desc().pixelFormat().id() == PixelFormat::RGB16_LE_Rec2020_PQ);
+}
+
+TEST_CASE("CSC HDR: pipeline picks the direct-compute PQ/HLG kernel over the LUT path") {
+        // The CSC pipeline must route HDR transfer characteristics
+        // through the analytic Highway SIMD kernels (which honour the
+        // full SMPTE ST 2084 / BT.2100 HLG curve over the non-negative
+        // real range) rather than the LUT path (which clamps its
+        // input to [0,1]).  Inspect the compiled stage list and assert
+        // each PQ / HLG transfer stage carries the matching
+        // hdrTransfer selector — proves the buildTransferStage
+        // dispatch is wired correctly without depending on a
+        // float-input pipeline that the unpack stage doesn't yet
+        // support.  Half-float pixel-format unpack is a separate
+        // follow-up (see B2.2 notes in the dev plan).
+
+        // PQ destination → expect HdrTransferPqOETF on the OETF stage.
+        CSCPipeline pPq(PixelFormat::RGB16_LE_sRGB, PixelFormat::RGB16_LE_Rec2020_PQ, scalarConfig());
+        REQUIRE(pPq.isValid());
+        bool sawPqOETF = false;
+        for (size_t i = 0; i < pPq.stageCount(); ++i) {
+                const auto &s = pPq.stage(i);
+                if (s.type == CSCPipeline::StageOETF) {
+                        CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferPqOETF);
+                        sawPqOETF = true;
+                }
+        }
+        CHECK(sawPqOETF);
+
+        // PQ source → expect HdrTransferPqEOTF on the EOTF stage.
+        CSCPipeline pPqRev(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::RGB16_LE_sRGB, scalarConfig());
+        REQUIRE(pPqRev.isValid());
+        bool sawPqEOTF = false;
+        for (size_t i = 0; i < pPqRev.stageCount(); ++i) {
+                const auto &s = pPqRev.stage(i);
+                if (s.type == CSCPipeline::StageEOTF) {
+                        CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferPqEOTF);
+                        sawPqEOTF = true;
+                }
+        }
+        CHECK(sawPqEOTF);
+
+        // HLG destination → expect HdrTransferHlgOETF.
+        CSCPipeline pHlg(PixelFormat::RGB16_LE_sRGB, PixelFormat::RGB16_LE_Rec2020_HLG, scalarConfig());
+        REQUIRE(pHlg.isValid());
+        bool sawHlgOETF = false;
+        for (size_t i = 0; i < pHlg.stageCount(); ++i) {
+                const auto &s = pHlg.stage(i);
+                if (s.type == CSCPipeline::StageOETF) {
+                        CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferHlgOETF);
+                        sawHlgOETF = true;
+                }
+        }
+        CHECK(sawHlgOETF);
+
+        // Non-HDR transfer (sRGB target) → hdrTransfer must stay
+        // HdrTransferNone so the LUT path stays the default.
+        CSCPipeline pSdr(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, scalarConfig());
+        REQUIRE(pSdr.isValid());
+        for (size_t i = 0; i < pSdr.stageCount(); ++i) {
+                const auto &s = pSdr.stage(i);
+                if (s.type == CSCPipeline::StageOETF || s.type == CSCPipeline::StageEOTF) {
+                        CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferNone);
+                }
+        }
+}
+
+TEST_CASE("CSC HDR: direct-compute PQ kernel matches analytic curve at known sample points") {
+        // Verify the direct PQ kernels at the kernel boundary —
+        // bypass the surrounding pipeline by calling
+        // @c csc::applyPqOETF / @c applyPqEOTF on a float buffer.
+        // This isolates the kernel under test from unpack / range
+        // stages that currently lack half-float support; we feed
+        // the kernel the exact linear values an HDR-aware unpacker
+        // would produce.
+        //
+        // Reference values from the SMPTE ST 2084 formula:
+        //   PQ(0.00) = 0.000
+        //   PQ(0.01) ≈ 0.508  (100 nits, SDR reference white)
+        //   PQ(0.10) ≈ 0.751  (1000 nits, typical HDR diffuse white)
+        //   PQ(0.50) ≈ 0.926  (5000 nits, bright HDR highlight)
+        //   PQ(1.00) = 1.000  (10000 nits, PQ system maximum)
+        //
+        // Both SIMD and scalar paths must produce the same values.
+
+        const float        inputs[]    = {0.0f, 0.01f, 0.1f, 0.5f, 1.0f};
+        const float        expectedPQ[] = {0.0f, 0.5084f, 0.7514f, 0.9258f, 1.0f};
+        constexpr size_t   N           = sizeof(inputs) / sizeof(inputs[0]);
+
+        // SIMD path.
+        float bufSimd[N];
+        std::memcpy(bufSimd, inputs, sizeof(inputs));
+        csc::applyPqOETF(bufSimd, N, /*useSimd=*/true);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("SIMD PQ(" << inputs[i] << ") expected=" << expectedPQ[i] << " actual=" << bufSimd[i]);
+                CHECK(std::abs(bufSimd[i] - expectedPQ[i]) < 0.01f);
+        }
+        // Round-trip: PQ(invPQ(v)) ≈ v.
+        csc::applyPqEOTF(bufSimd, N, /*useSimd=*/true);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("SIMD PQ round-trip[" << i << "] expected=" << inputs[i] << " actual=" << bufSimd[i]);
+                CHECK(std::abs(bufSimd[i] - inputs[i]) < 0.01f);
+        }
+
+        // Scalar path agrees with SIMD path.
+        float bufScalar[N];
+        std::memcpy(bufScalar, inputs, sizeof(inputs));
+        csc::applyPqOETF(bufScalar, N, /*useSimd=*/false);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("scalar PQ(" << inputs[i] << ") expected=" << expectedPQ[i] << " actual=" << bufScalar[i]);
+                CHECK(std::abs(bufScalar[i] - expectedPQ[i]) < 0.01f);
+        }
+}
+
+TEST_CASE("CSC HDR: direct-compute HLG kernel matches analytic curve and round-trips") {
+        // HLG OETF reference values from BT.2100-2 Table 5
+        // (a, b, c) = (0.17883277, 0.28466892, 0.55991073):
+        //   HLG(0.0)     = 0.000
+        //   HLG(0.0625)  = sqrt(3 * 0.0625) ≈ 0.4330  (low branch)
+        //   HLG(1/12)    = sqrt(3/12) = 0.500          (curve threshold)
+        //   HLG(0.3)     = a*ln(12*0.3 - b) + c ≈ 0.7742  (high branch)
+        //   HLG(0.5)     = a*ln(6 - b) + c ≈ 0.8717
+        //   HLG(1.0)     = a*ln(12 - b) + c = 1.0      (system max)
+
+        const float      inputs[]      = {0.0f, 0.0625f, 1.0f / 12.0f, 0.3f, 0.5f, 1.0f};
+        const float      expectedHLG[] = {0.0f, 0.4330f, 0.5f, 0.7742f, 0.8717f, 1.0f};
+        constexpr size_t N             = sizeof(inputs) / sizeof(inputs[0]);
+
+        float bufSimd[N];
+        std::memcpy(bufSimd, inputs, sizeof(inputs));
+        csc::applyHlgOETF(bufSimd, N, /*useSimd=*/true);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("SIMD HLG(" << inputs[i] << ") expected=" << expectedHLG[i] << " actual=" << bufSimd[i]);
+                CHECK(std::abs(bufSimd[i] - expectedHLG[i]) < 0.01f);
+        }
+        // Round-trip: HLG inverse undoes the forward curve.
+        csc::applyHlgEOTF(bufSimd, N, /*useSimd=*/true);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("SIMD HLG round-trip[" << i << "] expected=" << inputs[i] << " actual=" << bufSimd[i]);
+                CHECK(std::abs(bufSimd[i] - inputs[i]) < 0.01f);
+        }
+
+        // Scalar matches SIMD.
+        float bufScalar[N];
+        std::memcpy(bufScalar, inputs, sizeof(inputs));
+        csc::applyHlgOETF(bufScalar, N, /*useSimd=*/false);
+        for (size_t i = 0; i < N; ++i) {
+                INFO("scalar HLG(" << inputs[i] << ") expected=" << expectedHLG[i] << " actual=" << bufScalar[i]);
+                CHECK(std::abs(bufScalar[i] - expectedHLG[i]) < 0.01f);
+        }
+}
+
+// Tests probe csc::applyBt2390EETF directly to confirm the
+// kernel's curve shape and identity short-circuit.
+namespace promeki {
+        namespace csc {
+                void applyBt2390EETF(float *buffer, std::size_t width, float srcMaxPq, float dstMaxPq,
+                                     bool useSimd = true);
+        }
+}
+
+TEST_CASE("CSC HDR: BT.2390 EETF kernel is identity when dstMaxPq >= srcMaxPq") {
+        // The compressor must short-circuit when the target peak
+        // equals or exceeds the source peak — no work to do, the
+        // existing PQ values pass through unchanged.  Covers
+        // HDR-to-HDR with matching peaks and the "Enabled but no
+        // actual compression needed" edge case.
+        float buf[4]   = {0.0f, 0.25f, 0.5f, 1.0f};
+        float orig[4]  = {0.0f, 0.25f, 0.5f, 1.0f};
+        csc::applyBt2390EETF(buf, 4, /*srcMaxPq=*/0.508f, /*dstMaxPq=*/0.508f);
+        for (int i = 0; i < 4; ++i) {
+                CHECK(buf[i] == orig[i]);
+        }
+        // dstMaxPq > srcMaxPq should also short-circuit.
+        std::memcpy(buf, orig, sizeof(orig));
+        csc::applyBt2390EETF(buf, 4, /*srcMaxPq=*/0.508f, /*dstMaxPq=*/0.9f);
+        for (int i = 0; i < 4; ++i) {
+                CHECK(buf[i] == orig[i]);
+        }
+}
+
+TEST_CASE("CSC HDR: BT.2390 EETF preserves black, maps source peak to target peak") {
+        // Key endpoints the curve must hit exactly:
+        //   - input 0          → output 0           (preserves black)
+        //   - input srcMaxPq   → output dstMaxPq   (compresses peak)
+        // Values in between live on the Hermite spline shoulder and
+        // must be strictly increasing.
+        const float srcMax = 0.7518f; // PQ(1000 nits)
+        const float dstMax = 0.5081f; // PQ(100 nits)
+
+        float buf[3] = {0.0f, srcMax * 0.5f, srcMax};
+        csc::applyBt2390EETF(buf, 3, srcMax, dstMax);
+        INFO("BT.2390(0)         = " << buf[0]);
+        INFO("BT.2390(srcMax/2)  = " << buf[1]);
+        INFO("BT.2390(srcMax)    = " << buf[2]);
+        // Black preserved (within float epsilon).
+        CHECK(buf[0] < 1e-5f);
+        // Peak compressed to target.
+        CHECK(std::abs(buf[2] - dstMax) < 1e-3f);
+        // Monotonic: midpoint between 0 and srcMax stays between 0
+        // and dstMax.
+        CHECK(buf[1] > buf[0]);
+        CHECK(buf[1] < buf[2]);
+}
+
+TEST_CASE("CSC HDR: pipeline inserts StageToneMap on HDR->SDR with Auto policy") {
+        // Default CscToneMapping policy is Auto, which triggers the
+        // BT.2390 stage when source is HDR PQ and destination is SDR.
+        // Verify the compiled pipeline picks up StageToneMap with the
+        // Bt2390 operator and a non-zero src/dst peak-PQ pair derived
+        // from the default 1000 / 100 nit config.
+        MediaConfig cfg;
+        cfg.set(MediaConfig::CscPath, CscPath::Scalar); // force generic path
+        CSCPipeline p(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::RGBA8_sRGB, cfg);
+        REQUIRE(p.isValid());
+
+        bool sawToneMap = false;
+        for (int i = 0; i < p.stageCount(); ++i) {
+                const auto &s = p.stage(i);
+                if (s.type == CSCPipeline::StageToneMap) {
+                        sawToneMap = true;
+                        CHECK(s.toneMapOperator == CSCPipeline::Stage::ToneMapBt2390);
+                        CHECK(s.toneMapSrcMaxPq > 0.7f);  // PQ(1000 nits / 10000) ≈ 0.7518
+                        CHECK(s.toneMapSrcMaxPq < 0.8f);
+                        CHECK(s.toneMapDstMaxPq > 0.45f); // PQ(100  nits / 10000) ≈ 0.5081
+                        CHECK(s.toneMapDstMaxPq < 0.55f);
+                }
+        }
+        CHECK(sawToneMap);
+}
+
+TEST_CASE("CSC HDR: pipeline omits StageToneMap when policy is Disabled") {
+        // Explicit Disabled bypasses the auto-insert path even when
+        // source is HDR and destination is SDR.  Useful when callers
+        // want the legacy clipping behaviour or want to tone-map
+        // upstream themselves.
+        MediaConfig cfg;
+        cfg.set(MediaConfig::CscPath, CscPath::Scalar);
+        cfg.set(MediaConfig::CscToneMapping, CscToneMapping::Disabled);
+        CSCPipeline p(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::RGBA8_sRGB, cfg);
+        REQUIRE(p.isValid());
+
+        for (int i = 0; i < p.stageCount(); ++i) {
+                CHECK(p.stage(i).type != CSCPipeline::StageToneMap);
+        }
+}
+
+TEST_CASE("CSC HDR: pipeline omits StageToneMap on SDR->SDR pipelines") {
+        // SDR sources never trigger Auto tone-mapping regardless of
+        // destination — no HDR data to compress.
+        MediaConfig cfg;
+        cfg.set(MediaConfig::CscPath, CscPath::Scalar);
+        CSCPipeline p(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, cfg);
+        REQUIRE(p.isValid());
+
+        for (int i = 0; i < p.stageCount(); ++i) {
+                CHECK(p.stage(i).type != CSCPipeline::StageToneMap);
+        }
+}
+
+TEST_CASE("CSC HDR: pipeline omits StageToneMap on HDR->HDR Auto") {
+        // HDR-to-HDR with Auto policy does not auto-trigger
+        // tone-mapping — callers who want HDR peak compression
+        // (e.g. 4000-nit master to 1000-nit display) should set
+        // CscToneMapping::Enabled explicitly.
+        MediaConfig cfg;
+        cfg.set(MediaConfig::CscPath, CscPath::Scalar);
+        CSCPipeline p(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ, cfg);
+        REQUIRE(p.isValid());
+
+        for (int i = 0; i < p.stageCount(); ++i) {
+                CHECK(p.stage(i).type != CSCPipeline::StageToneMap);
+        }
+}
+
+TEST_CASE("CSC HDR: HDR->SDR pipeline maps source peak HDR sample into SDR display range") {
+        // Quasi-integration test: convert a 16-bit HDR PQ image at
+        // the source's peak PQ value (default 1000 nits → encoded
+        // PQ ≈ 0.7518 → uint16 ≈ 0xC09F) through the full HDR→SDR
+        // pipeline.  After tone-mapping + linear rescale the
+        // sample must land near SDR peak white, not clip to zero
+        // and not blow past 255.  Exact value depends on the
+        // BT.2020→Rec.709 gamut conversion and sRGB OETF; assert
+        // a sensible bracket centred on SDR mid-to-high.
+        auto src = UncompressedVideoPayload::allocate(
+                ImageDesc(4, 1, PixelFormat::RGB16_LE_Rec2020_PQ));
+        REQUIRE(src.isValid());
+        // 0xC09F ≈ PQ(1000 nits / 10000) * 65535 — the source peak
+        // we configure the tone-mapper to compress.
+        uint16_t *data = reinterpret_cast<uint16_t *>(src.modify()->data()[0].data());
+        for (size_t x = 0; x < 4; ++x) {
+                data[x * 3 + 0] = 0xC09F;
+                data[x * 3 + 1] = 0xC09F;
+                data[x * 3 + 2] = 0xC09F;
+        }
+        auto dst = src->convert(PixelFormat::RGBA8_sRGB, src->desc().metadata());
+        REQUIRE(dst.isValid());
+
+        const uint8_t *dp = dst->plane(0).data();
+        INFO("source-peak HDR -> SDR (RGBA): " << static_cast<int>(dp[0]) << ", "
+                                               << static_cast<int>(dp[1]) << ", "
+                                               << static_cast<int>(dp[2]) << ", "
+                                               << static_cast<int>(dp[3]));
+        // The source peak after tone-mapping + rescale lands near
+        // SDR white.  Generous bounds: tone-map is per-channel so
+        // hue shifts can move neutrals slightly off the diagonal,
+        // and Rec.2020 → Rec.709 gamut can knock a couple LSBs
+        // off.  The load-bearing check is "doesn't clip to 0 and
+        // doesn't blow past 255".
+        CHECK(dp[0] >= 200);
+        CHECK(dp[0] <= 255);
+        CHECK(dp[3] == 255); // alpha
+}
+
+TEST_CASE("CSC HDR: direct-compute PQ kernel honors scene-referred linear input above 1.0") {
+        // The whole point of the direct-compute path: a scene-referred
+        // linear input of 1.1 (10500 nits, past the HDR10 ceiling but
+        // legal in float scratch buffers) must encode to a strictly
+        // greater PQ value than 1.0 — proving the kernel did not
+        // clamp the input through a [0,1]-indexed LUT.  PQ's analytic
+        // curve continues monotonically past linear 1.0; the LUT path
+        // would produce identical encoded outputs for both inputs.
+
+        float buf[2] = {1.0f, 1.1f};
+        csc::applyPqOETF(buf, 2, /*useSimd=*/true);
+        INFO("PQ(1.0) = " << buf[0] << "  PQ(1.1) = " << buf[1]);
+        CHECK(buf[1] > buf[0]);
+}
+
+TEST_CASE("CSC HDR: scalar vs SIMD agree to within LUT tolerance for PQ conversion") {
+        // Both paths run the same float-domain stage sequence; the
+        // only difference is the per-stage scalar vs Highway SIMD
+        // dispatch (transfer LUT, matrix mul, range scale).  They
+        // must agree to within LUT quantization (~1 ULP at the
+        // chosen bit depth).  Catches accidental divergence between
+        // the SoA SIMD path and its scalar reference.
+        auto src = makeUniformP010HdrPQ(700, 600, 400);
+        REQUIRE(src.isValid());
+
+        auto simd =
+                src->convert(PixelFormat::RGB16_LE_Rec2020_PQ, src->desc().metadata());
+        auto scalar = src->convert(PixelFormat::RGB16_LE_Rec2020_PQ, src->desc().metadata(), scalarConfig());
+        REQUIRE(simd.isValid());
+        REQUIRE(scalar.isValid());
+
+        const uint16_t *sp = reinterpret_cast<const uint16_t *>(simd->plane(0).data());
+        const uint16_t *cp = reinterpret_cast<const uint16_t *>(scalar->plane(0).data());
+        const size_t    n  = simd->plane(0).size() / sizeof(uint16_t);
+        REQUIRE(n == scalar->plane(0).size() / sizeof(uint16_t));
+        // 16-bit container, 4 LSBs tolerance covers float-precision
+        // drift between the two paths.
+        for (size_t i = 0; i < n; ++i) {
+                const int diff = static_cast<int>(sp[i]) - static_cast<int>(cp[i]);
+                INFO("idx=" << i << " simd=" << sp[i] << " scalar=" << cp[i]);
+                CHECK(std::abs(diff) <= 16);
+        }
 }

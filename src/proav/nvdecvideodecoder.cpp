@@ -538,7 +538,42 @@ class NvdecVideoDecoder::Impl {
                         return Error::Ok;
                 }
 
-                PixelFormat outputPixelFormat() const { return PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709); }
+                // Returns the @ref PixelFormat chosen for the
+                // decoded output, set by @ref handleSequence once the
+                // parser identifies the bitstream's bit depth, chroma
+                // format, and VUI colorimetry.  Stays @c Invalid until
+                // the first sequence callback fires.
+                PixelFormat outputPixelFormat() const { return _outputPixelFormat; }
+
+                // Decides the output @ref PixelFormat for a decoded
+                // stream from the parser's @c CUVIDEOFORMAT.  Selection
+                // rules:
+                //   - 8-bit 4:2:0 → @c YUV8_420_SemiPlanar_Rec709 (NV12).
+                //   - 10/12-bit 4:2:0, VUI transfer 16 (SMPTE ST 2084 PQ)
+                //     → @c YUV10_420_SemiPlanar_LE_Rec2020_PQ (P010 HDR).
+                //   - 10/12-bit 4:2:0, VUI transfer 18 (ITU-R BT.2100 HLG)
+                //     → @c YUV10_420_SemiPlanar_LE_Rec2020_HLG.
+                //   - 10/12-bit 4:2:0, anything else → SDR P010 sibling
+                //     @c YUV10_420_SemiPlanar_LE_Rec709.
+                //
+                // Other chroma formats (4:2:2, 4:4:4) and 12-bit 4:2:0
+                // map onto the 10-bit semi-planar surface today; native
+                // 4:2:2 / 4:4:4 output surfaces remain a follow-up.
+                PixelFormat chooseOutputPixelFormat(const CUVIDEOFORMAT *fmt) const {
+                        const unsigned int bd = fmt->bit_depth_luma_minus8;
+                        if (bd == 0) {
+                                return PixelFormat(PixelFormat::YUV8_420_SemiPlanar_Rec709);
+                        }
+                        const TransferCharacteristics t = TransferCharacteristics(
+                                static_cast<int>(fmt->video_signal_description.transfer_characteristics));
+                        if (t.value() == TransferCharacteristics::SMPTE2084.value()) {
+                                return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ);
+                        }
+                        if (t.value() == TransferCharacteristics::ARIB_STD_B67.value()) {
+                                return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG);
+                        }
+                        return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);
+                }
 
         private:
                 Codec              _codec;
@@ -593,6 +628,12 @@ class NvdecVideoDecoder::Impl {
                 TransferCharacteristics _overrideTransfer{TransferCharacteristics::Auto};
                 MatrixCoefficients      _overrideMatrix{MatrixCoefficients::Auto};
                 VideoRange              _overrideRange{VideoRange::Unknown};
+
+                // Output PixelFormat chosen by @ref chooseOutputPixelFormat
+                // at sequence-callback time.  Stays @c Invalid until the
+                // first sequence callback fires; subsequent format
+                // changes mid-stream reassign it.
+                PixelFormat _outputPixelFormat;
 
                 // Pending per-picture SEI — populated by handleSEI as the
                 // parser feeds us messages for the next picture, then
@@ -691,6 +732,7 @@ class NvdecVideoDecoder::Impl {
                                 _cudaCtx = nullptr;
                         }
                         _codedWidth = _codedHeight = _displayW = _displayH = 0;
+                        _outputPixelFormat = PixelFormat();
                 }
 
                 // ---- Callbacks ----------------------------------------
@@ -735,10 +777,23 @@ class NvdecVideoDecoder::Impl {
                                 _displayH = fmt->display_area.bottom - fmt->display_area.top;
                         }
 
+                        // Resolve the output PixelFormat and matching
+                        // CUVID surface format from the bitstream's
+                        // bit depth + VUI.  8-bit streams stay on
+                        // NV12; 10/12-bit streams land on P016 (the
+                        // P010-compatible 16-bit-shorts surface), and
+                        // the bound ColorModel on @c _outputPixelFormat
+                        // routes downstream HDR signalling via
+                        // @c ColorModel::toH273.
+                        _outputPixelFormat = chooseOutputPixelFormat(fmt);
+                        const cudaVideoSurfaceFormat surfaceFmt =
+                                (fmt->bit_depth_luma_minus8 == 0) ? cudaVideoSurfaceFormat_NV12
+                                                                  : cudaVideoSurfaceFormat_P016;
+
                         CUVIDDECODECREATEINFO ci{};
                         ci.CodecType = fmt->codec;
                         ci.ChromaFormat = fmt->chroma_format;
-                        ci.OutputFormat = cudaVideoSurfaceFormat_NV12;
+                        ci.OutputFormat = surfaceFmt;
                         ci.DeinterlaceMode = cudaVideoDeinterlaceMode_Weave;
                         ci.ulNumDecodeSurfaces = (fmt->min_num_decode_surfaces > 0) ? fmt->min_num_decode_surfaces : 8;
                         ci.ulNumOutputSurfaces = 2;
@@ -916,11 +971,20 @@ class NvdecVideoDecoder::Impl {
                                                    uvEntry.buffer().memSpace().name().cstr());
                                         copyOk = false;
                                 }
+                                // cudaMemcpy2D width is the per-row
+                                // transfer count in *bytes*, not pixels —
+                                // pixel-equals-byte holds for NV12 8-bit
+                                // but not for P016 10/12-bit, where each
+                                // sample occupies a 16-bit short.  Reuse
+                                // outMl.lineStride() (already the byte
+                                // size of one row of pixel data) so the
+                                // copy keeps in lockstep with the chosen
+                                // output PixelFormat.
                                 if (copyOk) {
                                         cudaError_t ce = cudaMemcpy2D(
                                                 yDst, yStride,
                                                 reinterpret_cast<const void *>(yDev), pitch,
-                                                _displayW, _displayH, memcpyKind(yEntry));
+                                                yStride, _displayH, memcpyKind(yEntry));
                                         if (ce != cudaSuccess) {
                                                 promekiErr("NVDEC: cudaMemcpy2D(Y) failed: %s",
                                                            cudaGetErrorString(ce));
@@ -931,7 +995,7 @@ class NvdecVideoDecoder::Impl {
                                         cudaError_t ce = cudaMemcpy2D(
                                                 uvDst, uvStride,
                                                 reinterpret_cast<const void *>(uvDev), pitch,
-                                                _displayW, _displayH / 2, memcpyKind(uvEntry));
+                                                uvStride, _displayH / 2, memcpyKind(uvEntry));
                                         if (ce != cudaSuccess) {
                                                 promekiErr("NVDEC: cudaMemcpy2D(UV) failed: %s",
                                                            cudaGetErrorString(ce));
@@ -972,52 +1036,43 @@ class NvdecVideoDecoder::Impl {
                                 img.modify()->desc().metadata().merge(sei);
                         }
 
-                        // Stamp the bitstream-parsed color description
-                        // unless the caller supplied an explicit override
-                        // via MediaConfig.  Both sides default to Auto /
-                        // Unknown, so the common case just propagates
-                        // whatever the sequence header said.
-                        //
-                        // The @c resolve helper picks override when it's
-                        // a concrete value, otherwise falls back to
-                        // bitstream.  @c -1 (InvalidValue) and @c 255
-                        // (Auto) and @c 0 (Unknown / Unspecified for
-                        // the color-description enums) all count as "no
-                        // opinion, defer to the bitstream".
+                        // VUI color description is now carried via the
+                        // output @ref PixelFormat's bound @ref ColorModel
+                        // (chosen by @ref chooseOutputPixelFormat from
+                        // the bitstream's VUI at sequence time), so
+                        // consumers read @c pd.colorModel() /
+                        // @c ColorModel::toH273() rather than per-frame
+                        // metadata keys.  The four @c Metadata::Video*
+                        // keys remain as a manual override channel:
+                        // stamp them only when the caller explicitly
+                        // pinned a value via @ref MediaConfig — that
+                        // value supersedes whatever the PixelFormat
+                        // claims, matching the same NTV2 sink override
+                        // semantics.  Auto / Unknown / Unspecified
+                        // sentinels mean "no opinion, defer to the
+                        // PixelFormat" and skip the stamp.
                         auto isSentinel = [](int v) {
                                 return v == -1 || v == 0 || v == 255;
                         };
-                        auto resolve = [&isSentinel](int override_, int bitstream) -> int {
-                                return isSentinel(override_) ? bitstream : override_;
-                        };
-                        int v;
-                        v = resolve(_overridePrimaries.value(), _bitstreamPrimaries.value());
-                        if (!isSentinel(v)) {
-                                // Construct the Enum via the (Type, int)
-                                // ctor so the Variant stores a concrete
-                                // Enum instance rather than slicing from
-                                // a TypedEnum<> temporary — std::variant
-                                // demands exact type match, and derived-
-                                // to-base slicing through template
-                                // arguments has produced default-valued
-                                // Enum entries in practice.
-                                img.modify()->desc().metadata().set(Metadata::VideoColorPrimaries,
-                                                                    Enum(ColorPrimaries::Type, v));
+                        if (!isSentinel(_overridePrimaries.value())) {
+                                img.modify()->desc().metadata().set(
+                                        Metadata::VideoColorPrimaries,
+                                        Enum(ColorPrimaries::Type, _overridePrimaries.value()));
                         }
-                        v = resolve(_overrideTransfer.value(), _bitstreamTransfer.value());
-                        if (!isSentinel(v)) {
-                                img.modify()->desc().metadata().set(Metadata::VideoTransferCharacteristics,
-                                                                    Enum(TransferCharacteristics::Type, v));
+                        if (!isSentinel(_overrideTransfer.value())) {
+                                img.modify()->desc().metadata().set(
+                                        Metadata::VideoTransferCharacteristics,
+                                        Enum(TransferCharacteristics::Type, _overrideTransfer.value()));
                         }
-                        v = resolve(_overrideMatrix.value(), _bitstreamMatrix.value());
-                        if (!isSentinel(v)) {
-                                img.modify()->desc().metadata().set(Metadata::VideoMatrixCoefficients,
-                                                                    Enum(MatrixCoefficients::Type, v));
+                        if (!isSentinel(_overrideMatrix.value())) {
+                                img.modify()->desc().metadata().set(
+                                        Metadata::VideoMatrixCoefficients,
+                                        Enum(MatrixCoefficients::Type, _overrideMatrix.value()));
                         }
-                        // VideoRange uses 0=Unknown (not 255), so pass-through.
-                        v = resolve(_overrideRange.value(), _bitstreamRange.value());
-                        if (!isSentinel(v)) {
-                                img.modify()->desc().metadata().set(Metadata::VideoRange, Enum(VideoRange::Type, v));
+                        if (!isSentinel(_overrideRange.value())) {
+                                img.modify()->desc().metadata().set(
+                                        Metadata::VideoRange,
+                                        Enum(VideoRange::Type, _overrideRange.value()));
                         }
 
                         // Map NVDEC's per-picture progressive_frame /
@@ -1057,7 +1112,19 @@ NvdecVideoDecoder::NvdecVideoDecoder(Codec codec) : _impl(ImplPtr::create(codec,
 NvdecVideoDecoder::~NvdecVideoDecoder() = default;
 
 List<int> NvdecVideoDecoder::supportedOutputList() {
-        return {static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709)};
+        // Every PixelFormat the decoder can emit, one row per
+        // (bit-depth × colorimetry) the dispatch in
+        // @ref chooseOutputPixelFormat is prepared to pick.  The
+        // generic SDR P010 row covers any 10/12-bit stream whose VUI
+        // doesn't claim PQ or HLG; the HDR rows are picked when the
+        // VUI transfer characteristics match.  Backend registration
+        // reads this list verbatim into @ref VideoDecoder::Registration::supportedOutputs.
+        return {
+                static_cast<int>(PixelFormat::YUV8_420_SemiPlanar_Rec709),
+                static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709),
+                static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ),
+                static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG),
+        };
 }
 
 MediaIOAllocator::Ptr NvdecVideoDecoder::makeDeviceResidentAllocator() {

@@ -124,7 +124,8 @@ class Error {
                         BuildIdentMismatch, ///< Library build identity does not match the caller's compile-time identity (stale binary).
                         NotReady, ///< Resource exists but is not yet in the state required for this operation (will become ready later).
                         AuthenticationRequired, ///< Peer demanded an auth challenge response we don't (yet) produce. Distinct from PermissionDenied.
-                        ProtocolError ///< Peer sent a protocol-level violation or status code we don't model. Distinct from CorruptData (byte-level) and LibraryFailure (downstream).
+                        ProtocolError, ///< Peer sent a protocol-level violation or status code we don't model. Distinct from CorruptData (byte-level) and LibraryFailure (downstream).
+                        SignalLoss ///< Hardware input lost its incoming signal (or a configured reference lock dropped) after being healthy. Distinct from NotReady (never came up).
                 };
 
                 /**

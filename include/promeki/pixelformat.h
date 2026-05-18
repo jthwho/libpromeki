@@ -303,6 +303,49 @@ class PixelFormat {
                         YUV12_420_Planar_LE_Rec2020 = 108, ///< 12-bit YCbCr 4:2:0 planar LE, Rec.2020.
                         YUV12_420_Planar_BE_Rec2020 = 109, ///< 12-bit YCbCr 4:2:0 planar BE, Rec.2020.
 
+                        // -- BT.2100 PQ / HLG HDR --
+                        // Memory layout identical to the SDR
+                        // BT.2020 entries above; the distinction is
+                        // entirely the EOTF / transfer claim, so
+                        // these IDs anchor a different ColorModel
+                        // (Rec2020_PQ / Rec2020_HLG /
+                        // YCbCr_Rec2020_PQ / YCbCr_Rec2020_HLG)
+                        // whose @ref ColorModel::toH273 reports the
+                        // matching H.273 transfer codepoint
+                        // (16 = PQ, 18 = HLG).  Includes only the
+                        // memory layouts that practically carry HDR
+                        // (V210, P010, P216, 10-bit RGB packed, 16-
+                        // bit RGB) — the combinatorial sweep across
+                        // every layout × {PQ, HLG} would inflate
+                        // the catalog without practical benefit.
+                        // SDI / NDI HDR (PQ + HLG):
+                        YUV10_422_UYVY_LE_Rec2020_PQ = 200,   ///< 10-bit YCbCr 4:2:2 UYVY LE, BT.2020 + PQ — SDI HDR.
+                        YUV10_422_UYVY_LE_Rec2020_HLG = 201,  ///< 10-bit YCbCr 4:2:2 UYVY LE, BT.2020 + HLG — SDI HDR.
+                        YUV12_422_UYVY_LE_Rec2020_PQ = 202,   ///< 12-bit YCbCr 4:2:2 UYVY LE, BT.2020 + PQ.
+                        YUV12_422_UYVY_LE_Rec2020_HLG = 203,  ///< 12-bit YCbCr 4:2:2 UYVY LE, BT.2020 + HLG.
+                        // Codec / NVDEC HDR output (4:2:0 PQ / HLG):
+                        YUV10_420_Planar_LE_Rec2020_PQ = 204,  ///< 10-bit YCbCr 4:2:0 planar LE, BT.2020 + PQ.
+                        YUV10_420_Planar_LE_Rec2020_HLG = 205, ///< 10-bit YCbCr 4:2:0 planar LE, BT.2020 + HLG.
+                        YUV12_420_Planar_LE_Rec2020_PQ = 206,  ///< 12-bit YCbCr 4:2:0 planar LE, BT.2020 + PQ.
+                        YUV12_420_Planar_LE_Rec2020_HLG = 207, ///< 12-bit YCbCr 4:2:0 planar LE, BT.2020 + HLG.
+                        // NV12 / P010 semi-planar HDR (NVDEC, Intel QSV, AMD UVD):
+                        YUV10_420_SemiPlanar_LE_Rec2020_PQ = 208,  ///< 10-bit YCbCr 4:2:0 NV12 LE (P010), BT.2020 + PQ.
+                        YUV10_420_SemiPlanar_LE_Rec2020_HLG = 209, ///< 10-bit YCbCr 4:2:0 NV12 LE (P010), BT.2020 + HLG.
+                        // P216 (NDI 16-bit HDR):
+                        YUV16_422_SemiPlanar_LE_Rec2020_PQ = 210,  ///< 16-bit YCbCr 4:2:2 NV16 LE (P216), BT.2020 + PQ.
+                        YUV16_422_SemiPlanar_LE_Rec2020_HLG = 211, ///< 16-bit YCbCr 4:2:2 NV16 LE (P216), BT.2020 + HLG.
+                        // 10-bit RGB packed (RGB10A2):
+                        RGB10A2_LE_Rec2020_PQ = 212,   ///< 10-bit RGB + 2-bit A in 32-bit LE, BT.2020 + PQ.
+                        RGB10A2_LE_Rec2020_HLG = 213,  ///< 10-bit RGB + 2-bit A in 32-bit LE, BT.2020 + HLG.
+                        // 16-bit RGB (host order):
+                        RGB16_LE_Rec2020_PQ = 214,     ///< 16-bit RGB LE, BT.2020 + PQ.
+                        RGB16_LE_Rec2020_HLG = 215,    ///< 16-bit RGB LE, BT.2020 + HLG.
+                        // Half-float scene-referred linear (cinema HDR working space):
+                        RGBAF16_LE_LinearRec2020 = 216, ///< Half-float RGBA LE, linear BT.2020 — HDR scene-referred.
+                        RGBF16_LE_LinearRec2020 = 217,  ///< Half-float RGB LE, linear BT.2020.
+                        // DCI-P3 PQ (cinema):
+                        RGB16_LE_DCI_P3_PQ = 218,       ///< 16-bit RGB LE, DCI-P3 (D65) + PQ — cinema HDR mastering.
+
                         // -- Rec.601 YCbCr --
                         YUV8_422_Rec601 = 110,            ///< 8-bit YCbCr 4:2:2, Rec.601, limited range.
                         YUV8_422_UYVY_Rec601 = 111,       ///< 8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range.

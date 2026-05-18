@@ -22,6 +22,7 @@ namespace Ntv2Format {
 
 int toNtv2PixelFormat(PixelFormat::ID id) {
         switch (id) {
+                // ---- 8-bit YCbCr / RGB ----
                 case PixelFormat::YUV8_422_UYVY_Rec709:           return NTV2_FBF_8BIT_YCBCR;
                 case PixelFormat::YUV8_422_Rec709:                return NTV2_FBF_8BIT_YCBCR_YUY2;
                 case PixelFormat::RGB8_sRGB:                      return NTV2_FBF_24BIT_RGB;
@@ -29,11 +30,35 @@ int toNtv2PixelFormat(PixelFormat::ID id) {
                 case PixelFormat::ARGB8_sRGB:                     return NTV2_FBF_ARGB;
                 case PixelFormat::ABGR8_sRGB:                     return NTV2_FBF_ABGR;
                 case PixelFormat::RGBA8_sRGB:                     return NTV2_FBF_RGBA;
-                // 10-bit RGB / 48-bit RGB / 10-bit YCbCr (V210) map to
-                // NTV2_FBF_10BIT_RGB, NTV2_FBF_48BIT_RGB,
-                // NTV2_FBF_10BIT_YCBCR respectively.  Phase 5 of the
-                // NTV2 devplan promotes them once the endianness +
-                // V210 first-class PixelFormat questions are resolved.
+                // ---- 10-bit packed YCbCr 4:2:2 (V210) ----
+                case PixelFormat::YUV10_422_v210_Rec709:          return NTV2_FBF_10BIT_YCBCR;
+                // ---- 10-bit DPX RGB ----
+                // RGB10_DPX_sRGB is DPX Method A (big-endian on the
+                // wire); RGB10_DPX_LE_sRGB is the little-endian
+                // variant.  AJA's NTV2_FBF_10BIT_DPX matches the
+                // big-endian-on-wire layout, _LE matches little-endian.
+                case PixelFormat::RGB10_DPX_sRGB:                 return NTV2_FBF_10BIT_DPX;
+                case PixelFormat::RGB10_DPX_LE_sRGB:              return NTV2_FBF_10BIT_DPX_LE;
+                // ---- 16-bit RGB ----
+                // NTV2_FBF_48BIT_RGB is "native byte order 16-bit RGB"
+                // per AJA's docs; on x86 that's little-endian.
+                case PixelFormat::RGB16_LE_sRGB:                  return NTV2_FBF_48BIT_RGB;
+                // ---- HDR variants ----
+                // NTV2 frame buffer formats only describe wire/byte
+                // layout, not colorimetry — the BT.2020 + PQ / HLG
+                // signalling rides VPID (handled by applySinkVpid →
+                // ColorModel::toH273).  Map each HDR PixelFormat to
+                // the same NTV2_FBF_* as its SDR sibling; the bound
+                // HDR ColorModel still travels with the buffer.
+                //
+                // 10/12-bit UYVY HDR → V210 wire layout.
+                case PixelFormat::YUV10_422_UYVY_LE_Rec2020_PQ:   return NTV2_FBF_10BIT_YCBCR;
+                case PixelFormat::YUV10_422_UYVY_LE_Rec2020_HLG:  return NTV2_FBF_10BIT_YCBCR;
+                // 16-bit RGB HDR (BT.2020 PQ/HLG and DCI-P3 PQ) →
+                // 48-bit RGB on the wire.
+                case PixelFormat::RGB16_LE_Rec2020_PQ:            return NTV2_FBF_48BIT_RGB;
+                case PixelFormat::RGB16_LE_Rec2020_HLG:           return NTV2_FBF_48BIT_RGB;
+                case PixelFormat::RGB16_LE_DCI_P3_PQ:             return NTV2_FBF_48BIT_RGB;
                 default:                                          return NTV2_FBF_INVALID;
         }
 }
@@ -47,6 +72,10 @@ PixelFormat::ID fromNtv2PixelFormat(int fbf) {
                 case NTV2_FBF_ARGB:                               return PixelFormat::ARGB8_sRGB;
                 case NTV2_FBF_ABGR:                               return PixelFormat::ABGR8_sRGB;
                 case NTV2_FBF_RGBA:                               return PixelFormat::RGBA8_sRGB;
+                case NTV2_FBF_10BIT_YCBCR:                        return PixelFormat::YUV10_422_v210_Rec709;
+                case NTV2_FBF_10BIT_DPX:                          return PixelFormat::RGB10_DPX_sRGB;
+                case NTV2_FBF_10BIT_DPX_LE:                       return PixelFormat::RGB10_DPX_LE_sRGB;
+                case NTV2_FBF_48BIT_RGB:                          return PixelFormat::RGB16_LE_sRGB;
                 default:                                          return PixelFormat::Invalid;
         }
 }

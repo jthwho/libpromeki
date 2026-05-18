@@ -97,6 +97,43 @@ class NdiFormat {
                  */
                 static String fourccToString(uint32_t fourcc);
 
+                /**
+                 * @brief Upgrade an SDR PixelFormat::ID to its HDR sibling using NDI per-frame metadata.
+                 *
+                 * NDI 5.5+ carries BT.2020 / PQ / HLG signalling
+                 * out-of-band in the per-frame @c p_metadata UTF-8 XML
+                 * string under the @c <ndi_color_info ...> tag,
+                 * mirroring the H.273 codepoints
+                 * (@c colour_primaries / @c transfer_function /
+                 * @c matrix_coefficients / @c video_range).  When the
+                 * sender claims a known HDR transfer characteristic
+                 * (SMPTE ST 2084 PQ = 16, ITU-R BT.2100 HLG = 18)
+                 * this helper returns the matching HDR PixelFormat ID
+                 * so the receive path can stamp the BT.2100 colour
+                 * description on the decoded ImageDesc and the rest
+                 * of the pipeline reads it back via
+                 * @c ColorModel::toH273.
+                 *
+                 * @param sdrId      The PixelFormat::ID picked by
+                 *                   @ref fourccToPixelFormat from the
+                 *                   wire FourCC.  HDR upgrade is only
+                 *                   performed for the P216 family
+                 *                   (10/12/16-bit semi-planar 4:2:2)
+                 *                   today since that is the only NDI
+                 *                   layout that carries enough bit
+                 *                   depth for HDR.  Other inputs are
+                 *                   returned unchanged.
+                 * @param xmlMetadata The raw XML string from
+                 *                    @c NDIlib_video_frame_v2_t::p_metadata.
+                 *                    May be empty or @c nullptr-source
+                 *                    — in either case the function
+                 *                    returns @p sdrId unchanged.
+                 * @return An HDR PixelFormat::ID when @p sdrId is a P216
+                 *         sibling and the metadata claims PQ or HLG;
+                 *         otherwise @p sdrId unchanged.
+                 */
+                static PixelFormat::ID upgradeForHdrMetadata(PixelFormat::ID sdrId, const String &xmlMetadata);
+
                 NdiFormat() = delete;
 };
 

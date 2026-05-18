@@ -23,6 +23,7 @@
 #include <promeki/stringlist.h>
 #include <promeki/timecode.h>
 #include <promeki/hdmisignalconfig.h>
+#include <promeki/sdioutputfanoutconfig.h>
 #include <promeki/sdisignalconfig.h>
 #include <promeki/url.h>
 #include <promeki/videoportref.h>
@@ -436,6 +437,11 @@ namespace {
                         }
                         case DataTypeSdiSignalConfig: {
                                 auto r = SdiSignalConfig::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypeSdiOutputFanoutConfig: {
+                                auto r = SdiOutputFanoutConfig::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }

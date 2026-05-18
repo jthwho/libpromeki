@@ -181,6 +181,17 @@ class ColorModel {
                         YCbCr_Rec709 = 21,     ///< YCbCr with BT.709 coefficients.
                         YCbCr_Rec601 = 22,     ///< YCbCr with BT.601 coefficients.
                         YCbCr_Rec2020 = 23,    ///< YCbCr with BT.2020 coefficients.
+                        // ---- HDR (BT.2100) ----
+                        // Same chromaticity primaries as Rec2020 / BT.2020
+                        // but different EOTF.  Carried as distinct
+                        // ColorModel IDs so a PixelFormat / ImageDesc that
+                        // says "PQ" wires the correct transfer through
+                        // every consumer that reads ColorModel::toH273.
+                        Rec2020_PQ = 24,       ///< BT.2020 primaries + SMPTE ST 2084 PQ (HDR10).
+                        Rec2020_HLG = 25,      ///< BT.2020 primaries + ITU-R BT.2100 HLG.
+                        YCbCr_Rec2020_PQ = 26, ///< YCbCr (BT.2020 NCL) + PQ.
+                        YCbCr_Rec2020_HLG = 27,///< YCbCr (BT.2020 NCL) + HLG.
+                        DCI_P3_PQ = 28,        ///< DCI-P3 (D65) primaries + PQ — cinema HDR.
                         UserDefined = 1024     ///< First ID available for user-registered types.
                 };
 
@@ -345,11 +356,13 @@ class ColorModel {
                  * — callers typically substitute @c 2 (Unspecified) in
                  * that case, or fall through to an explicit user override.
                  *
-                 * @note Transfer characteristics auto-derivation does
-                 *       @em not distinguish HDR curves (PQ / HLG) today
-                 *       because the library's @ref ColorModel doesn't
-                 *       model them explicitly yet.  HDR callers must
-                 *       stamp the correct transfer on the encoder config.
+                 * HDR curves (PQ / HLG) are modelled by the dedicated
+                 * @ref Rec2020_PQ / @ref Rec2020_HLG / @ref DCI_P3_PQ
+                 * and @ref YCbCr_Rec2020_PQ / @ref YCbCr_Rec2020_HLG
+                 * IDs, so a producer that picks the matching
+                 * @ref PixelFormat (and therefore the matching
+                 * @ref ColorModel) gets correct H.273 codes here
+                 * without any per-frame metadata stamping.
                  */
                 struct H273 {
                                 uint8_t primaries = 0; ///< H.273 @c colour_primaries.
@@ -366,7 +379,12 @@ class ColorModel {
                  * NTSC / Rec.2020 / DCI-P3 / Adobe RGB / ACES AP0 /
                  * ACES AP1, plus the YCbCr_* derivations.  Linear
                  * variants map the transfer field to @c 8 (Linear);
-                 * CIE XYZ / Lab / HSV / HSL return all-zeros.
+                 * CIE XYZ / Lab / HSV / HSL return all-zeros.  HDR
+                 * variants (@ref Rec2020_PQ, @ref Rec2020_HLG,
+                 * @ref DCI_P3_PQ, @ref YCbCr_Rec2020_PQ,
+                 * @ref YCbCr_Rec2020_HLG) map the transfer field to
+                 * @c 16 (SMPTE ST 2084 / PQ) or @c 18
+                 * (ITU-R BT.2100 HLG) as appropriate.
                  *
                  * User-defined ColorModel IDs are not recognised and
                  * fall through to the all-zero default; that's by

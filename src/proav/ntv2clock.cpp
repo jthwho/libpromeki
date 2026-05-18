@@ -50,27 +50,25 @@ const ClockDomain &Ntv2DeviceClock::domainFor(const Ntv2Device &device) {
 // Ntv2DeviceClock
 // ============================================================================
 
-Ntv2DeviceClock::Ntv2DeviceClock(Ntv2Device *device, int audioSystem, bool vbiFallback)
+Ntv2DeviceClock::Ntv2DeviceClock(Ntv2Device *device, bool vbiFallback)
         : Clock(domainFor(*device)),
           _device(device),
-          _audioSystem(audioSystem),
-          _vbiFallback(vbiFallback || audioSystem <= 0 || !device->caps().hasAudioCounter()) {
+          _vbiFallback(vbiFallback || !device->caps().hasAudioCounter()) {
         if (_vbiFallback) {
                 // Seed the VBI tick anchor at construction so the very
                 // first raw() reads a sane value instead of zero.
                 _lastVbiNs.setValue(TimeStamp::now().nanoseconds());
-                promekiInfo("Ntv2DeviceClock: VBI-fallback mode (device='%s', sys=%d)",
-                            device->displayName().cstr(), audioSystem);
+                promekiInfo("Ntv2DeviceClock: VBI-fallback mode (device='%s')",
+                            device->displayName().cstr());
         } else {
-                promekiInfo("Ntv2DeviceClock: sample-counter mode (device='%s', sys=%d)",
-                            device->displayName().cstr(), audioSystem);
+                promekiInfo("Ntv2DeviceClock: sample-counter mode (device='%s', kRegAud1Counter)",
+                            device->displayName().cstr());
         }
 }
 
 Ntv2DeviceClock::Ntv2DeviceClock(const ClockDomain &domain, bool vbiFallback)
         : Clock(domain),
           _device(nullptr),
-          _audioSystem(0),
           _vbiFallback(vbiFallback) {
         if (_vbiFallback) {
                 _lastVbiNs.setValue(TimeStamp::now().nanoseconds());
@@ -108,6 +106,15 @@ ClockJitter Ntv2DeviceClock::jitter() const {
         return ClockJitter{Duration::fromNanoseconds(-res / 2), Duration::fromNanoseconds(res / 2)};
 }
 
+double Ntv2DeviceClock::rateRatio() const {
+        // VBI fallback: the "device" clock is the host wall clock, so
+        // by definition the two run at the same rate.  Return 1.0
+        // without consulting the estimator (which is never updated in
+        // fallback mode).
+        if (_vbiFallback) return 1.0;
+        return static_cast<double>(_ratePpb.value()) / 1.0e9;
+}
+
 void Ntv2DeviceClock::noteVbi(const TimeStamp &now) {
         if (_vbiFallback) _lastVbiNs.setValue(now.nanoseconds());
 }
@@ -128,6 +135,19 @@ void Ntv2DeviceClock::setCounterSourceForTest(bool (*fn)(uint32_t *, void *), vo
         _testCounterCtx = ctx;
 }
 
+void Ntv2DeviceClock::setWallTimeSourceForTest(int64_t (*fn)(void *), void *ctx) {
+        Mutex::Locker lk(_mutex);
+        _testWallFn  = fn;
+        _testWallCtx = ctx;
+        // Reset the baseline so the next read latches a fresh anchor
+        // against the new wall source — otherwise a test that injects
+        // its wall source after a few reads would compare counter
+        // deltas against real wall-time baselines and produce
+        // nonsense ratios.
+        _rateBaselineValid = false;
+        _ratePpb.setValue(1'000'000'000);
+}
+
 int64_t Ntv2DeviceClock::sampleTicksToNs(uint64_t ticks) const {
         const double rate = static_cast<double>(_sampleRateHz);
         if (rate <= 0.0) return 0;
@@ -135,6 +155,19 @@ int64_t Ntv2DeviceClock::sampleTicksToNs(uint64_t ticks) const {
         // care about; the precision loss only matters past ~290 years
         // of continuous run-time, well beyond any plausible session.
         return static_cast<int64_t>(static_cast<double>(ticks) * (1.0e9 / rate));
+}
+
+MediaTimeStamp Ntv2DeviceClock::mediaTimeStampFromSamples(uint64_t samples) const {
+        // The sample-rate getter takes _mutex inside the conversion;
+        // wrap the call in a Locker here too so torn reads of
+        // _sampleRateHz can't slip in between conversions.
+        int64_t ns;
+        {
+                Mutex::Locker lk(_mutex);
+                ns = sampleTicksToNs(samples);
+        }
+        TimeStamp ts{TimeStamp::Clock::time_point(std::chrono::nanoseconds(ns))};
+        return MediaTimeStamp(ts, domain());
 }
 
 Result<int64_t> Ntv2DeviceClock::raw() const {
@@ -149,6 +182,12 @@ Result<int64_t> Ntv2DeviceClock::raw() const {
 
         // Read the 32-bit counter and extend it under the mutex so the
         // wrap detection is race-free across concurrent readers.
+        // GetRawAudioTimer reads kRegAud1Counter — the FPGA-resident
+        // free-running 48 kHz counter that's the same one AJA's driver
+        // pre-extends and reports as FRAME_STAMP::acAudioClockTimeStamp.
+        // The audio-system argument is ignored by current SDKs (kept
+        // for forward compat with hypothetical future cards that grow
+        // multiple audio clocks).
         Mutex::Locker lk(_mutex);
         uint32_t      low = 0;
         if (_testCounterFn != nullptr) {
@@ -157,8 +196,7 @@ Result<int64_t> Ntv2DeviceClock::raw() const {
                 }
         } else {
                 ULWord raw = 0;
-                if (!_device->card().ReadAudioLastIn(raw,
-                                                     static_cast<NTV2AudioSystem>(_audioSystem - 1))) {
+                if (!_device->card().GetRawAudioTimer(raw)) {
                         return Result<int64_t>(0, Error::DeviceError);
                 }
                 low = static_cast<uint32_t>(raw);
@@ -179,8 +217,59 @@ Result<int64_t> Ntv2DeviceClock::raw() const {
         } else {
                 _lastLow = low;
         }
-        const uint64_t fullTicks = _highBits | uint64_t(low);
-        return Result<int64_t>(sampleTicksToNs(fullTicks), Error::Ok);
+        const uint64_t fullTicks  = _highBits | uint64_t(low);
+        const int64_t  counterNs  = sampleTicksToNs(fullTicks);
+
+        // Drift estimator (Phase 6): compare device counter advance
+        // against host wall-clock advance over a long window and
+        // publish the ratio so downstream consumers can pull the
+        // true rate instead of measuring it themselves.  Cheap —
+        // most reads only update an int64_t; the LPF update path
+        // runs at most once a second.  Test seam: setWallTimeSourceForTest
+        // injects a synthetic wall clock so unit tests don't have to
+        // sleep for the baseline window.
+        const int64_t wallNs = (_testWallFn != nullptr)
+                                       ? _testWallFn(_testWallCtx)
+                                       : TimeStamp::now().nanoseconds();
+        if (!_rateBaselineValid) {
+                _rateBaselineWallNs    = wallNs;
+                _rateBaselineCounterNs = counterNs;
+                _lastRateUpdateWallNs  = wallNs;
+                _rateBaselineValid     = true;
+        } else if (wallNs - _lastRateUpdateWallNs >= kRateUpdateIntervalNs) {
+                const int64_t wallDelta    = wallNs - _rateBaselineWallNs;
+                const int64_t counterDelta = counterNs - _rateBaselineCounterNs;
+                if (wallDelta >= kRateBaselineMinWindowNs && wallDelta > 0) {
+                        // Express the ratio in parts-per-billion via
+                        // explicit double arithmetic so a misbehaving
+                        // counter (going backward) doesn't underflow
+                        // the int math; clamped to a sane range so a
+                        // first-read transient can't publish ratios
+                        // far outside reality.
+                        const double measured =
+                                static_cast<double>(counterDelta) / static_cast<double>(wallDelta);
+                        constexpr double kMinRatio = 0.95;
+                        constexpr double kMaxRatio = 1.05;
+                        const double clamped =
+                                measured < kMinRatio
+                                        ? kMinRatio
+                                        : (measured > kMaxRatio ? kMaxRatio : measured);
+                        const int64_t currentPpb = _ratePpb.value();
+                        const int64_t measuredPpb =
+                                static_cast<int64_t>(clamped * 1.0e9);
+                        // (1 - α) * current + α * measured, α expressed
+                        // as alpha/1000 to stay in integer math.
+                        const int64_t alphaNum = static_cast<int64_t>(_kRateLpfAlphaPer1000);
+                        const int64_t alphaDen = 1000;
+                        const int64_t blended =
+                                ((alphaDen - alphaNum) * currentPpb + alphaNum * measuredPpb)
+                                / alphaDen;
+                        _ratePpb.setValue(blended);
+                }
+                _lastRateUpdateWallNs = wallNs;
+        }
+
+        return Result<int64_t>(counterNs, Error::Ok);
 }
 
 Error Ntv2DeviceClock::sleepUntilNs(int64_t targetNs) const {

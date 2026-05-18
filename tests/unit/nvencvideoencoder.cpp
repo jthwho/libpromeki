@@ -17,6 +17,7 @@
 
 #if PROMEKI_ENABLE_NVENC
 
+#include <promeki/nvencvideoencoder.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videocodec.h>
 #include <promeki/mediaconfig.h>
@@ -127,6 +128,29 @@ namespace {
         }
 
 } // namespace
+
+TEST_CASE("NvencVideoEncoder: supportedInputList exposes HDR P010 PQ + HLG rows") {
+        // The HDR rows added to kFormatTable for HEVC Main 10 / AV1
+        // HDR carry the same NV_ENC_BUFFER_FORMAT_YUV420_10BIT byte
+        // layout as the SDR sibling; the bound ColorModel is what
+        // distinguishes them on the VUI side via ColorModel::toH273.
+        // The list must surface both so the planner can match an HDR
+        // source against the Nvidia backend without falling back to a
+        // CSC bridge that would silently drop the BT.2020 + PQ / HLG
+        // signalling.
+        List<int> inputs = NvencVideoEncoder::supportedInputList();
+        bool      pq     = false;
+        bool      hlg    = false;
+        bool      sdr    = false;
+        for (int id : inputs) {
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ)) pq = true;
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG)) hlg = true;
+                if (id == static_cast<int>(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709)) sdr = true;
+        }
+        CHECK(pq);
+        CHECK(hlg);
+        CHECK(sdr);
+}
 
 TEST_CASE("NvencVideoEncoder: registered as Nvidia backend for H264/HEVC/AV1") {
         auto nvidia = VideoCodec::lookupBackend("Nvidia");

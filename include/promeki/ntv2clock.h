@@ -15,6 +15,7 @@
 #include <promeki/clock.h>
 #include <promeki/clockdomain.h>
 #include <promeki/framerate.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
 #include <promeki/timestamp.h>
@@ -27,19 +28,29 @@ class Ntv2Device;
  * @brief Per-device sample-counter clock for an AJA card.
  * @ingroup proav
  *
- * AJA cards expose an onboard audio sample counter that is
- * physically clocked by the same reference driving the card's SDI
- * outputs and audio system.  When a card is genlocked to an
- * external reference, the counter is too.  That makes it the best
- * timing reference the host can read against the card:
+ * AJA cards expose an onboard, free-running 48 kHz audio sample
+ * counter (FPGA register @c kRegAud1Counter, accessed through
+ * @c CNTV2Card::GetRawAudioTimer) that is physically clocked by the
+ * same reference driving the card's SDI outputs and audio systems.
+ * When a card is genlocked to an external reference, the counter
+ * is too.  That makes it the best timing reference the host can
+ * read against the card:
  *
  *  - **Sub-microsecond resolution** — one tick per audio sample
  *    (~20.83 µs at 48 kHz).
  *  - **Continuous** — ticks monotonically between VBIs, so sub-frame
  *    stamps remain meaningful.
  *  - **Shared across channels on the same card** — every channel on
- *    the device reads the same counter, so cross-channel timestamps
- *    from one card share an epoch by construction.
+ *    the device reads the same single FPGA counter, so cross-channel
+ *    timestamps from one card share an epoch by construction.
+ *  - **Always available** — the counter starts at zero on FPGA load
+ *    at power-up and ticks regardless of whether any audio system is
+ *    enabled.  No audio-system reservation is required to use it.
+ *  - **Matches the AJA driver's per-frame stamp** — the same FPGA
+ *    register is what the driver pre-extends and reports in
+ *    @c FRAME_STAMP::acAudioClockTimeStamp on every captured frame,
+ *    so per-frame PTS built from the FRAME_STAMP value lands in the
+ *    same time base as this clock's @c now().
  *
  * One @ref Ntv2DeviceClock is constructed lazily by
  * @ref Ntv2Device::sampleClock and shared across every
@@ -57,18 +68,17 @@ class Ntv2Device;
  *
  * @par VBI fallback mode
  *
- * When no audio system is reserved on the device (or the card has
- * no audio capture counter at all — playback-only cards), the
- * clock constructs in @c vbiFallback mode: @ref raw returns the
- * host-side wall time at the last @c SubscribeInputVerticalEvent
- * wake (one tick per frame period); @ref resolutionNs reports one
- * frame period; @ref jitter widens to ± half a frame period.  The
- * mode auto-locks once at construction time — there is no runtime
- * promotion to sample-counter mode if a later channel turns on an
- * audio system, by design (consumers that have already latched
- * onto the lower-resolution clock get monotonic stamps for free,
- * and silently upgrading the resolution would break that
- * invariant).
+ * When the card has no FPGA audio counter at all (no NTV2 hardware
+ * shipped to date is in this category, but the cap check guards
+ * against future ones), or the caller explicitly forces it via the
+ * @c vbiFallback constructor flag, the clock falls back to host-
+ * side ticks: @ref raw returns the host-monotonic timestamp at the
+ * last @c SubscribeInputVerticalEvent wake (one tick per frame
+ * period); @ref resolutionNs reports one frame period; @ref jitter
+ * widens to ± half a frame period.  Mode is latched at construction
+ * — there is no runtime promotion path (silently upgrading the
+ * resolution mid-stream would break the monotonic-clamp contract
+ * for consumers already latched onto the lower-resolution clock).
  *
  * @par Domain
  *
@@ -106,17 +116,14 @@ class Ntv2DeviceClock : public Clock {
                  *                    — the registry guarantees that
                  *                    by tearing the clock down before
                  *                    the device shuts down.
-                 * @param audioSystem 1-based audio system index whose
-                 *                    counter the clock reads, or 0 for
-                 *                    VBI-fallback mode.
-                 * @param vbiFallback @c true to use VBI fallback mode
-                 *                    even when @p audioSystem is
-                 *                    non-zero.  The constructor sets
-                 *                    this to @c true unconditionally
-                 *                    when @p audioSystem is 0 or when
-                 *                    the device has no audio counter.
+                 * @param vbiFallback @c true to force VBI-fallback
+                 *                    mode even when the device exposes
+                 *                    a usable FPGA audio counter.  The
+                 *                    constructor also forces fallback
+                 *                    when the device has no audio
+                 *                    counter (cap negative).
                  */
-                Ntv2DeviceClock(Ntv2Device *device, int audioSystem, bool vbiFallback);
+                Ntv2DeviceClock(Ntv2Device *device, bool vbiFallback);
 
                 ~Ntv2DeviceClock() override;
 
@@ -147,6 +154,33 @@ class Ntv2DeviceClock : public Clock {
                 ClockJitter jitter() const override;
 
                 /**
+                 * @brief Long-window estimate of device-clock rate vs.
+                 *        host wall clock.
+                 *
+                 * Defaults to @c 1.0 until enough wall time has
+                 * elapsed for a meaningful estimate (see
+                 * @c kRateBaselineMinWindowNs).  Beyond that, returns
+                 * a slowly-tracking average of
+                 * @c (counterNs_now - counterNs_baseline)
+                 * @c / (wallNs_now - wallNs_baseline) — a value
+                 * greater than one means the device counter is
+                 * advancing faster than the host wall clock and a
+                 * value less than one means the inverse.  Downstream
+                 * drift-correcting consumers (audio resamplers,
+                 * frame-syncs) read this to pull the true rate
+                 * instead of measuring it themselves.
+                 *
+                 * VBI-fallback mode always returns @c 1.0 — the
+                 * "device" and host clocks are identical in that
+                 * configuration, so there is no drift to report.
+                 *
+                 * Thread-safe — the published ratio is stored in an
+                 * @ref Atomic so concurrent readers never race the
+                 * update.  Each call is O(1).
+                 */
+                double      rateRatio() const override;
+
+                /**
                  * @brief Updates the VBI-tick estimate in VBI-fallback mode.
                  *
                  * Called by the capture / playout worker from
@@ -164,12 +198,38 @@ class Ntv2DeviceClock : public Clock {
                 /**
                  * @brief Sets the assumed audio sample rate.
                  *
-                 * Used to convert sample counts to nanoseconds in
-                 * sample-counter mode.  Defaults to 48000.0; backends
-                 * call this from @c openSource / @c openSink when the
-                 * audio system is configured at a non-default rate.
+                 * Used to convert FPGA-counter ticks to nanoseconds in
+                 * sample-counter mode.  Defaults to 48000.0 — the
+                 * hardware-fixed rate of @c kRegAud1Counter.  Backends
+                 * normally leave this alone; the setter exists for
+                 * future cards that may run a different audio-clock
+                 * rate.
                  */
                 void setSampleRate(float sampleRateHz);
+
+                /**
+                 * @brief Wraps a raw FPGA-counter sample count in a
+                 *        @ref MediaTimeStamp tagged with this clock's
+                 *        domain.
+                 *
+                 * The capture loop pulls
+                 * @c FRAME_STAMP::acAudioClockTimeStamp — a 64-bit
+                 * driver-extended sample count captured at the VBI when
+                 * the frame started ingesting — and converts it via
+                 * this helper.  Result lands in the same time base as
+                 * @c now() because both sources are the same FPGA
+                 * register (@c kRegAud1Counter), so the per-frame PTS
+                 * is directly comparable with stamps taken at arbitrary
+                 * later points by @c now().
+                 *
+                 * In VBI-fallback mode this still does the arithmetic
+                 * conversion, but the returned stamp is not in the
+                 * clock's authoritative time base (which is host-wall
+                 * ticks in that mode); callers should prefer
+                 * @c now() under fallback.  The conversion uses the
+                 * sample rate set via @ref setSampleRate.
+                 */
+                MediaTimeStamp mediaTimeStampFromSamples(uint64_t samples) const;
 
                 /**
                  * @brief Sets the frame-rate hint used by @ref jitter
@@ -185,17 +245,71 @@ class Ntv2DeviceClock : public Clock {
                 /**
                  * @brief Injects a custom raw-counter reader.
                  *
-                 * Replaces the SDK-driven counter source with a
+                 * Replaces @c CNTV2Card::GetRawAudioTimer with a
                  * caller-supplied callback returning the current 32-bit
                  * counter value.  Returning @c false means "counter
                  * unavailable" — the next @ref raw call propagates
                  * @c Error::DeviceError.
                  *
                  * Intended exclusively for unit tests that need to
-                 * verify the 32 → 64-bit wrap extension without
-                 * hardware.  Production code should never call this.
+                 * verify the 32 → 64-bit wrap extension and the
+                 * sample-to-ns conversion without hardware.  Production
+                 * code should never call this.
                  */
                 void setCounterSourceForTest(bool (*fn)(uint32_t *out, void *ctx), void *ctx);
+
+                /**
+                 * @brief Injects a custom wall-time source for the
+                 *        drift estimator.
+                 *
+                 * Replaces @c TimeStamp::now() inside @ref raw's drift-
+                 * tracking branch with a caller-supplied callback
+                 * returning the current host monotonic nanoseconds.
+                 * Lets unit tests synthesise the wall + counter
+                 * advance pairs that drive @ref rateRatio without
+                 * waiting on real wall time.
+                 *
+                 * Intended exclusively for unit tests; production code
+                 * must not call this.
+                 */
+                void setWallTimeSourceForTest(int64_t (*fn)(void *ctx), void *ctx);
+
+                /**
+                 * @brief Minimum wall-time window before @ref rateRatio
+                 *        publishes a real estimate.
+                 *
+                 * Set to 5 seconds — long enough that crystal-vs-
+                 * crystal drift (typically tens of ppm) shows above
+                 * the measurement floor, short enough that downstream
+                 * consumers see the estimate stabilise within a
+                 * normal session.  Tests can wait less time by
+                 * driving the wall-time source forward via
+                 * @ref setWallTimeSourceForTest.
+                 */
+                static constexpr int64_t kRateBaselineMinWindowNs = 5'000'000'000LL;
+
+                /**
+                 * @brief Minimum gap between rate-estimate updates
+                 *        once the baseline has stabilised.
+                 *
+                 * Updating more often than once a second burns
+                 * mutexes without improving the estimate (the device
+                 * counter is a stable FPGA oscillator and the drift
+                 * is sub-Hz).
+                 */
+                static constexpr int64_t kRateUpdateIntervalNs = 1'000'000'000LL;
+
+                /**
+                 * @brief LPF blend coefficient (×1000 fixed point) for
+                 *        the published rate ratio.
+                 *
+                 * Each update mixes the measured ratio in at
+                 * @c kRateLpfAlphaPer1000 / 1000.  Default 100 (10%)
+                 * — gives a ~10-sample time constant against the
+                 * 1-Hz update cadence, so meaningful changes show up
+                 * within ~10 s.
+                 */
+                static constexpr int _kRateLpfAlphaPer1000 = 100;
 
         protected:
                 Result<int64_t> raw() const override;
@@ -209,7 +323,6 @@ class Ntv2DeviceClock : public Clock {
                 int64_t sampleTicksToNs(uint64_t ticks) const;
 
                 Ntv2Device *_device       = nullptr;
-                int         _audioSystem  = 0;
                 bool        _vbiFallback  = false;
 
                 // Sample rate in Hz; used to convert counter → ns.
@@ -231,9 +344,25 @@ class Ntv2DeviceClock : public Clock {
 
                 // Optional test counter source (set via
                 // setCounterSourceForTest).  Always nullptr in
-                // production — production reads CNTV2Card::ReadAudioLastIn.
+                // production — production reads CNTV2Card::GetRawAudioTimer.
                 bool (*_testCounterFn)(uint32_t *, void *) = nullptr;
                 void *_testCounterCtx                       = nullptr;
+
+                // Optional test wall-time source (set via
+                // setWallTimeSourceForTest).  Production reads
+                // TimeStamp::now().nanoseconds() inside the drift
+                // estimator.
+                int64_t (*_testWallFn)(void *) = nullptr;
+                void *_testWallCtx              = nullptr;
+
+                // Drift estimator state.  All mutated from raw()
+                // under _mutex; rateRatio() reads _ratePpb lock-free
+                // via Atomic.  PPB = parts per billion; 1e9 ≡ 1.0.
+                mutable Atomic<int64_t> _ratePpb{1'000'000'000};
+                mutable bool            _rateBaselineValid     = false;
+                mutable int64_t         _rateBaselineWallNs    = 0;
+                mutable int64_t         _rateBaselineCounterNs = 0;
+                mutable int64_t         _lastRateUpdateWallNs  = 0;
 };
 
 PROMEKI_NAMESPACE_END

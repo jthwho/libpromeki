@@ -242,6 +242,72 @@ static void kernelTransferLUT(const CSCPipeline::Stage *stage, const void *const
         }
 }
 
+// HDR tone-mapping kernel for StageToneMap.  Dispatches per-channel
+// to the matching analytic operator (BT.2390 today; placeholders for
+// Reinhard / Hable / ACES / BT.2446a all resolve to BT.2390 until
+// their kernels land).  Component count is always 3 (RGB / luma) —
+// alpha never tone-maps.  Runs in PQ-encoded space for BT.2390;
+// future linear-domain operators (Reinhard / Hable / ACES) will need
+// pipeline placement on the other side of the EOTF stage, which the
+// compile() logic handles via stage ordering.
+static void kernelToneMap(const CSCPipeline::Stage *stage, const void *const *srcPlanes, const size_t *srcStrides,
+                          void *const *dstPlanes, const size_t *dstStrides, size_t width, size_t y,
+                          CSCContext &ctx) {
+        for (int c = 0; c < stage->compCount; ++c) {
+                float *buf = ctx.buffer(c);
+                switch (stage->toneMapOperator) {
+                        case CSCPipeline::Stage::ToneMapBt2390:
+                                csc::applyBt2390EETF(buf, width, stage->toneMapSrcMaxPq, stage->toneMapDstMaxPq,
+                                                     stage->useSimd);
+                                break;
+                        default:
+                                // Not-yet-implemented operators (Reinhard /
+                                // Hable / ACES / BT.2446a) fall through to
+                                // BT.2390 — compile() emits a one-shot
+                                // warning when this substitution happens.
+                                csc::applyBt2390EETF(buf, width, stage->toneMapSrcMaxPq, stage->toneMapDstMaxPq,
+                                                     stage->useSimd);
+                                break;
+                }
+        }
+}
+
+// Direct-compute transfer kernel: dispatches to the analytic PQ / HLG
+// kernels for each color component buffer.  Required for float source
+// or destination buffers where the LUT path would clamp inputs above
+// 1.0 (destroying scene-referred HDR highlights).  Component count is
+// always 3 (RGB) since transfer functions operate on color channels
+// and we never apply OETF / EOTF to alpha.
+static void kernelTransferDirect(const CSCPipeline::Stage *stage, const void *const *srcPlanes,
+                                 const size_t *srcStrides, void *const *dstPlanes, const size_t *dstStrides,
+                                 size_t width, size_t y, CSCContext &ctx) {
+        for (int c = 0; c < stage->compCount; c++) {
+                float *buf = ctx.buffer(c);
+                switch (stage->hdrTransfer) {
+                        case CSCPipeline::Stage::HdrTransferPqOETF:
+                                csc::applyPqOETF(buf, width, stage->useSimd);
+                                break;
+                        case CSCPipeline::Stage::HdrTransferPqEOTF:
+                                csc::applyPqEOTF(buf, width, stage->useSimd);
+                                break;
+                        case CSCPipeline::Stage::HdrTransferHlgOETF:
+                                csc::applyHlgOETF(buf, width, stage->useSimd);
+                                break;
+                        case CSCPipeline::Stage::HdrTransferHlgEOTF:
+                                csc::applyHlgEOTF(buf, width, stage->useSimd);
+                                break;
+                        default:
+                                // Should never happen — buildTransferStage
+                                // routes here only when hdrTransfer is one
+                                // of the recognized selectors.  Leave the
+                                // buffer untouched if it does so the rest
+                                // of the pipeline runs to completion with
+                                // an identity transfer rather than crash.
+                                break;
+                }
+        }
+}
+
 static void kernelMatrix(const CSCPipeline::Stage *stage, const void *const *srcPlanes, const size_t *srcStrides,
                          void *const *dstPlanes, const size_t *dstStrides, size_t width, size_t y, CSCContext &ctx) {
         csc::matrixMultiply3x3(ctx.buffer(0), ctx.buffer(1), ctx.buffer(2), width, stage->matrix,
@@ -423,6 +489,28 @@ void CSCPipeline::buildTransferStage(const ColorModel &cm, Stage &stage, bool is
 
         const ColorModel::Data *cmd = cm.data();
 
+        // PQ / HLG direct-compute path.  Picked by ColorModel id so the
+        // file-local OETF/EOTF function pointers in colormodel.cpp do
+        // not need to be exposed.  These analytic kernels handle inputs
+        // above 1.0 (scene-referred linear) without the LUT's [0,1]
+        // clamp, which is correctness-critical for RGBAF16 LinearRec2020
+        // → PQ / HLG paths.  For integer destinations the result lands
+        // in [0,1] just like the LUT path.
+        const bool isPq  = (cmd->id == ColorModel::Rec2020_PQ ||
+                            cmd->id == ColorModel::DCI_P3_PQ);
+        const bool isHlg = (cmd->id == ColorModel::Rec2020_HLG);
+        if (isPq || isHlg) {
+                stage.func        = kernelTransferDirect;
+                if (isEOTF) {
+                        stage.hdrTransfer = isPq ? Stage::HdrTransferPqEOTF
+                                                 : Stage::HdrTransferHlgEOTF;
+                } else {
+                        stage.hdrTransfer = isPq ? Stage::HdrTransferPqOETF
+                                                 : Stage::HdrTransferHlgOETF;
+                }
+                return;
+        }
+
         // Build LUT for integer bit depths up to 12 bits
         if (bits > 0 && bits <= 12) {
                 size_t lutEntries = 1u << bits;
@@ -603,6 +691,56 @@ void CSCPipeline::compile() {
         bool needEOTF = !srcLinear && (needGamut || !sameTransfer);
         bool needOETF = !dstLinear && (needGamut || !sameTransfer);
 
+        // --- HDR tone-mapping decision ---
+        //
+        // Pull the three knobs (policy, operator, src/dst peak nits)
+        // from the MediaConfig and decide whether to splice a
+        // StageToneMap into the chain.  The BT.2390 kernel operates in
+        // PQ-encoded space, so for PQ sources we apply it before the
+        // EOTF.  Linear-domain operators (Reinhard / Hable / ACES)
+        // would run after EOTF — those branches aren't wired today
+        // since their kernels haven't landed.  HLG sources fall back
+        // to BT.2390 in PQ space too via a PQ-equivalent conversion
+        // path; for the first cut we only auto-trigger on PQ sources
+        // since that's the dominant HDR ingest format.
+        const bool srcIsPq  = (srcTransferCM->id == ColorModel::Rec2020_PQ ||
+                               srcTransferCM->id == ColorModel::DCI_P3_PQ);
+        const bool srcIsHlg = (srcTransferCM->id == ColorModel::Rec2020_HLG);
+        const bool dstIsHdr = (dstTransferCM->id == ColorModel::Rec2020_PQ ||
+                               dstTransferCM->id == ColorModel::DCI_P3_PQ ||
+                               dstTransferCM->id == ColorModel::Rec2020_HLG);
+
+        CscToneMapping toneMapPolicy(CscToneMapping::Auto.value());
+        if (_config.contains(MediaConfig::CscToneMapping)) {
+                toneMapPolicy = CscToneMapping(
+                        _config.getAs<Enum>(MediaConfig::CscToneMapping).value());
+        }
+        bool wantToneMap = false;
+        if (toneMapPolicy.value() == CscToneMapping::Enabled.value()) {
+                wantToneMap = (srcIsPq || srcIsHlg);
+        } else if (toneMapPolicy.value() == CscToneMapping::Auto.value()) {
+                // Auto: tone-map when source is HDR and destination
+                // is SDR.  HDR-to-HDR transitions don't auto-trigger
+                // even when the target's nominal peak is lower —
+                // callers who want that should set Enabled.
+                wantToneMap = (srcIsPq || srcIsHlg) && !dstIsHdr;
+        }
+        // HLG sources are flagged but not yet routed through the
+        // tone-map stage — the BT.2390 kernel expects PQ-encoded
+        // input.  Suppress for now so the pipeline still compiles
+        // correctly; HLG-aware tone-mapping is a follow-up.
+        if (srcIsHlg) {
+                wantToneMap = false;
+        }
+
+        CscToneMapOperator toneMapOp(CscToneMapOperator::Bt2390.value());
+        if (_config.contains(MediaConfig::CscToneMapOperator)) {
+                toneMapOp = CscToneMapOperator(
+                        _config.getAs<Enum>(MediaConfig::CscToneMapOperator).value());
+        }
+        const float srcPeakNits = _config.getAs<float>(MediaConfig::CscHdrPeakNits, 1000.0f);
+        const float dstPeakNits = _config.getAs<float>(MediaConfig::CscSdrPeakNits, 100.0f);
+
         // --- Stage 1: Unpack source ---
         {
                 Stage s;
@@ -657,10 +795,87 @@ void CSCPipeline::compile() {
                 _stages.pushToBack(std::move(s));
         }
 
+        // --- Stage 4.5: HDR tone-mapping in PQ-encoded space ---
+        //
+        // BT.2390 EETF runs BEFORE the EOTF so the linear domain that
+        // follows is already scaled to the target's peak luminance,
+        // letting the existing gamut / OETF chain stay free of HDR
+        // clipping.  Source-side PQ values land here after range-in
+        // (and the YCbCr→RGB matrix, when applicable) — both stages
+        // preserve PQ encoding.  Pre-encode the source / target peak
+        // luminances into PQ space here so the kernel doesn't pay
+        // the PQ @c std::pow per pixel.  HLG sources fall back to no
+        // tone-mapping today (the HLG-domain operator branch is
+        // future work; see CscToneMapping policy).
+        if (wantToneMap && srcIsPq) {
+                Stage s;
+                s.type = StageToneMap;
+                s.func = kernelToneMap;
+                s.compCount = 3;
+                // Map the user-facing operator enum onto the Stage's
+                // POD-friendly mirror; non-BT.2390 selections resolve
+                // to BT.2390 below with a one-shot warn.
+                s.toneMapOperator = toneMapOp.value();
+                if (s.toneMapOperator != Stage::ToneMapBt2390) {
+                        static bool warned = false;
+                        if (!warned) {
+                                warned = true;
+                                promekiWarn("CSCPipeline: tone-mapping operator %s is not yet "
+                                            "implemented; falling back to Bt2390.",
+                                            toneMapOp.toString().cstr());
+                        }
+                        s.toneMapOperator = Stage::ToneMapBt2390;
+                }
+                // PQ-encode the peak luminances inline via the SMPTE
+                // ST 2084 formula.  Both nits are normalized by 10000
+                // (the PQ system peak) before applying the curve so
+                // the returned value lands in [0, 1].
+                auto pqEncode = [](float linearNorm) -> float {
+                        if (linearNorm <= 0.0f) return 0.0f;
+                        const double m1 = 0.1593017578125;
+                        const double m2 = 78.84375;
+                        const double c1 = 0.8359375;
+                        const double c2 = 18.8515625;
+                        const double c3 = 18.6875;
+                        const double y  = static_cast<double>(linearNorm);
+                        const double ym1 = std::pow(y, m1);
+                        return static_cast<float>(std::pow((c1 + c2 * ym1) / (1.0 + c3 * ym1), m2));
+                };
+                s.toneMapSrcMaxPq = pqEncode(srcPeakNits / 10000.0f);
+                s.toneMapDstMaxPq = pqEncode(dstPeakNits / 10000.0f);
+                _stages.pushToBack(std::move(s));
+        }
+
         // --- Stage 5: EOTF (remove source transfer -> linear RGB) ---
         if (needEOTF && srcTransferCM->eotf) {
                 Stage s;
                 buildTransferStage(ColorModel(srcTransferCM->id), s, true, srcBits);
+                _stages.pushToBack(std::move(s));
+        }
+
+        // --- Stage 5.5: Linear rescale when crossing HDR → SDR ---
+        //
+        // PQ EOTF returns linear values normalized so 1.0 == 10000 nits
+        // (the PQ system peak), while the downstream SDR OETF (sRGB,
+        // Rec.709) interprets 1.0 as the display peak (~100 nits).  A
+        // tone-mapped HDR pixel arriving here at, say, encoded PQ
+        // dstMaxPq decodes to linear (dstPeakNits / 10000) — e.g. 0.01
+        // for a 100-nit target — and would then read as 1% of SDR
+        // white instead of 100%.  Multiply each channel by
+        // (10000 / dstPeakNits) so the tone-mapped peak lands at
+        // linear 1.0 ready for the SDR OETF.  Only inserted when
+        // tone-mapping is active and the destination is SDR; HDR→HDR
+        // chains keep PQ's 10000-nit reference unchanged.
+        if (wantToneMap && srcIsPq && !dstIsHdr) {
+                Stage s;
+                s.type      = StageRangeIn; // reuse range kernel's scale + bias dispatch
+                s.func      = kernelRangeMap;
+                s.compCount = 3;
+                const float scale = (dstPeakNits > 0.0f) ? (10000.0f / dstPeakNits) : 1.0f;
+                for (int c = 0; c < 3; ++c) {
+                        s.rangeScale[c] = scale;
+                        s.rangeBias[c]  = 0.0f;
+                }
                 _stages.pushToBack(std::move(s));
         }
 

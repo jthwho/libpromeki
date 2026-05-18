@@ -28,8 +28,9 @@ using namespace promeki;
 // Round-trip equivalence is a stronger property anyway: it catches
 // a typo in either direction.
 
-TEST_CASE("Ntv2Format::pixel-format round-trip covers Phase 1 table") {
+TEST_CASE("Ntv2Format::pixel-format round-trip covers the supported table") {
         const PixelFormat::ID supported[] = {
+                // 8-bit YCbCr + RGB
                 PixelFormat::YUV8_422_UYVY_Rec709,
                 PixelFormat::YUV8_422_Rec709,
                 PixelFormat::RGB8_sRGB,
@@ -37,6 +38,11 @@ TEST_CASE("Ntv2Format::pixel-format round-trip covers Phase 1 table") {
                 PixelFormat::ARGB8_sRGB,
                 PixelFormat::ABGR8_sRGB,
                 PixelFormat::RGBA8_sRGB,
+                // Phase-5+ high-bit-depth additions
+                PixelFormat::YUV10_422_v210_Rec709,
+                PixelFormat::RGB10_DPX_sRGB,
+                PixelFormat::RGB10_DPX_LE_sRGB,
+                PixelFormat::RGB16_LE_sRGB,
         };
         const int invalidSentinel = Ntv2Format::toNtv2PixelFormat(PixelFormat::Invalid);
         for (PixelFormat::ID id : supported) {
@@ -51,10 +57,30 @@ TEST_CASE("Ntv2Format::pixel-format round-trip covers Phase 1 table") {
         // NUMFRAMEBUFFERFORMATS count, which is SDK-version dependent).
         CHECK(Ntv2Format::fromNtv2PixelFormat(invalidSentinel) == PixelFormat::Invalid);
 
-        // A 10-bit YUV format we deliberately don't map in Phase 1
-        // also rounds back to Invalid via the SDK sentinel.
+        // A 10-bit YUV packing we deliberately don't map (semi-planar
+        // has no NTV2 frame-buffer equivalent — V210 is the AJA-native
+        // 10-bit YCbCr packing) rounds back to Invalid via the SDK
+        // sentinel.
         CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::YUV10_422_SemiPlanar_LE_Rec709) ==
               invalidSentinel);
+}
+
+TEST_CASE("Ntv2Format::toNtv2PixelFormat accepts HDR variants on the same FBF as the SDR sibling") {
+        // The NTV2 frame-buffer formats describe wire / byte layout
+        // only — colorimetry is signalled out-of-band on VPID, derived
+        // by applySinkVpid → ColorModel::toH273.  Each HDR PixelFormat
+        // must therefore map to the same NTV2_FBF_* as its SDR sibling.
+        const int v210Fbf = Ntv2Format::toNtv2PixelFormat(PixelFormat::YUV10_422_v210_Rec709);
+        const int rgb48Fbf = Ntv2Format::toNtv2PixelFormat(PixelFormat::RGB16_LE_sRGB);
+
+        // 10-bit UYVY HDR variants share the V210 FBF.
+        CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::YUV10_422_UYVY_LE_Rec2020_PQ) == v210Fbf);
+        CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::YUV10_422_UYVY_LE_Rec2020_HLG) == v210Fbf);
+
+        // 16-bit RGB HDR variants share NTV2_FBF_48BIT_RGB.
+        CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::RGB16_LE_Rec2020_PQ) == rgb48Fbf);
+        CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::RGB16_LE_Rec2020_HLG) == rgb48Fbf);
+        CHECK(Ntv2Format::toNtv2PixelFormat(PixelFormat::RGB16_LE_DCI_P3_PQ) == rgb48Fbf);
 }
 
 TEST_CASE("Ntv2Format::video-format round-trip covers common broadcast rasters") {

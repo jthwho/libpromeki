@@ -13,6 +13,7 @@
 #include <promeki/clock.h>
 #include <promeki/clockdomain.h>
 #include <promeki/framerate.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/ntv2clock.h>
 #include <promeki/result.h>
 #include <promeki/timestamp.h>
@@ -118,6 +119,136 @@ TEST_CASE("Ntv2DeviceClock: counter-source failure surfaces as Error::DeviceErro
         Result<int64_t> r = clk->nowNs();
         CHECK(r.second().isError());
         CHECK(r.second() == Error::DeviceError);
+}
+
+TEST_CASE("Ntv2DeviceClock: mediaTimeStampFromSamples maps FRAME_STAMP counts to clock domain") {
+        UniquePtr<Ntv2DeviceClock> clk = UniquePtr<Ntv2DeviceClock>::takeOwnership(
+                Ntv2DeviceClock::createForTest(String("ntv2-test:samples-to-stamp"), /*vbi*/ false));
+        REQUIRE(clk.isValid());
+        clk->setSampleRate(48000.0f);
+
+        // Zero ticks → zero ns; stamp carries the clock's domain.
+        const MediaTimeStamp zero = clk->mediaTimeStampFromSamples(0);
+        CHECK(zero.timeStamp().nanoseconds() == 0);
+        CHECK(zero.domain() == clk->domain());
+
+        // 48,000 ticks at 48 kHz = exactly 1 second.
+        const MediaTimeStamp oneSec = clk->mediaTimeStampFromSamples(48'000);
+        CHECK(oneSec.timeStamp().nanoseconds() == 1'000'000'000);
+        CHECK(oneSec.domain() == clk->domain());
+
+        // 96 kHz sample rate halves the per-tick duration → 48,000 ticks
+        // is half a second.
+        clk->setSampleRate(96'000.0f);
+        const MediaTimeStamp halfSec = clk->mediaTimeStampFromSamples(48'000);
+        CHECK(halfSec.timeStamp().nanoseconds() == 500'000'000);
+
+        // Counter value above 32 bits (driver pre-extended).  Pure
+        // arithmetic check — no wrap shadow is consulted.
+        clk->setSampleRate(48'000.0f);
+        const uint64_t big = (uint64_t(1) << 33) + 480; // 2 wraps + 10 ms
+        const MediaTimeStamp bigStamp = clk->mediaTimeStampFromSamples(big);
+        const int64_t expectedNs = static_cast<int64_t>(
+                static_cast<double>(big) * (1.0e9 / 48'000.0));
+        CHECK(bigStamp.timeStamp().nanoseconds() == expectedNs);
+}
+
+TEST_CASE("Ntv2DeviceClock: rateRatio defaults to 1.0 before the baseline window stabilises") {
+        UniquePtr<Ntv2DeviceClock> clk = UniquePtr<Ntv2DeviceClock>::takeOwnership(
+                Ntv2DeviceClock::createForTest(String("ntv2-test:rate-default"), /*vbi*/ false));
+        REQUIRE(clk.isValid());
+
+        CounterSource src;
+        clk->setCounterSourceForTest(fakeCounter, &src);
+        clk->setSampleRate(48000.0f);
+
+        // No reads yet — rateRatio reports the safe default.
+        CHECK(clk->rateRatio() == 1.0);
+
+        // A handful of reads under real wall time stay well inside
+        // the 5-second baseline window so the publisher hasn't
+        // produced an estimate yet.
+        for (int i = 0; i < 5; ++i) {
+                src.value = static_cast<uint32_t>(48000 * (i + 1));
+                Result<int64_t> r = clk->nowNs();
+                CHECK(r.second().isOk());
+        }
+        CHECK(clk->rateRatio() == 1.0);
+}
+
+TEST_CASE("Ntv2DeviceClock: rateRatio tracks counter vs wall drift over a long window") {
+        UniquePtr<Ntv2DeviceClock> clk = UniquePtr<Ntv2DeviceClock>::takeOwnership(
+                Ntv2DeviceClock::createForTest(String("ntv2-test:rate-drift"), /*vbi*/ false));
+        REQUIRE(clk.isValid());
+
+        // Inject synthetic counter + wall sources so the test can
+        // simulate seconds of advance without sleeping.  The fake
+        // wall starts at 0 and is advanced by the test between reads.
+        CounterSource counterSrc;
+        clk->setCounterSourceForTest(fakeCounter, &counterSrc);
+        clk->setSampleRate(48000.0f);
+
+        struct WallSource {
+                        int64_t value = 0;
+        } wall;
+        clk->setWallTimeSourceForTest(
+                [](void *ctx) -> int64_t {
+                        return static_cast<WallSource *>(ctx)->value;
+                },
+                &wall);
+
+        // Baseline read: wall and counter both at zero — rate stays 1.0.
+        wall.value      = 0;
+        counterSrc.value = 0;
+        REQUIRE(clk->nowNs().second().isOk());
+        CHECK(clk->rateRatio() == 1.0);
+
+        // Advance counter "perfectly" with wall (1 second of wall,
+        // 48000 ticks of counter = exactly 1 s of counter ns).
+        // Window is 5 s, so the first update past kRateBaselineMinWindowNs
+        // will publish a near-1.0 estimate; do a few iterations.
+        for (int i = 1; i <= 8; ++i) {
+                wall.value       = static_cast<int64_t>(i) * 1'000'000'000LL;
+                counterSrc.value = static_cast<uint32_t>(48000 * i);
+                REQUIRE(clk->nowNs().second().isOk());
+        }
+        // 1.0 ± tiny LPF blend artefacts.
+        CHECK(clk->rateRatio() >= 0.999);
+        CHECK(clk->rateRatio() <= 1.001);
+
+        // Now ramp the counter faster than wall: 1000 ppm fast
+        // (counter ticks +0.1% relative to wall).  Apply across a
+        // long-enough span that the LPF converges.
+        const double fastRatio = 1.001;
+        for (int i = 9; i <= 200; ++i) {
+                wall.value      = static_cast<int64_t>(i) * 1'000'000'000LL;
+                const double ticks = 48000.0 * static_cast<double>(i) * fastRatio;
+                counterSrc.value   = static_cast<uint32_t>(ticks);
+                REQUIRE(clk->nowNs().second().isOk());
+        }
+        // After many LPF blends the published ratio should sit close
+        // to the injected 1.001.  Allow generous slack — first few
+        // updates blend in from the 1.0 default and don't reach the
+        // signal floor until the wall-delta builds up.
+        CHECK(clk->rateRatio() > 1.0005);
+        CHECK(clk->rateRatio() < 1.002);
+}
+
+TEST_CASE("Ntv2DeviceClock: rateRatio stays at 1.0 in VBI-fallback mode") {
+        UniquePtr<Ntv2DeviceClock> clk = UniquePtr<Ntv2DeviceClock>::takeOwnership(
+                Ntv2DeviceClock::createForTest(String("ntv2-test:rate-vbi"), /*vbi*/ true));
+        REQUIRE(clk.isValid());
+
+        // VBI fallback never queries the counter, never updates the
+        // drift estimator — the published ratio is fixed at 1.0
+        // regardless of how often the clock is read.
+        clk->setFrameRate(FrameRate(FrameRate::FPS_60));
+        for (int i = 0; i < 20; ++i) {
+                clk->noteVbi(TimeStamp::now());
+                Result<int64_t> r = clk->nowNs();
+                CHECK(r.second().isOk());
+        }
+        CHECK(clk->rateRatio() == 1.0);
 }
 
 TEST_CASE("Ntv2DeviceClock: VBI-fallback mode reports frame-period resolution") {

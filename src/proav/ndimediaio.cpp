@@ -13,6 +13,9 @@
 
 #include <cstring>
 #include <promeki/audiodesc.h>
+#include <promeki/colormodel.h>
+#include <promeki/enums.h>
+#include <promeki/pixelformat.h>
 #include <promeki/audioformat.h>
 #include <promeki/audiopayload.h>
 #include <promeki/buffer.h>
@@ -535,9 +538,28 @@ Error NdiMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) c
         // else (RGB, sRGB, unknown) goes to BGRA.  Both are 8-bit
         // formats in NDI's accepted set and have paint engines, so
         // any downstream burn / inspector stages keep working.
+        //
+        // HDR sources land on the P216 HDR slot when the input
+        // ColorModel claims PQ or HLG — that keeps the BT.2020
+        // primaries / HDR transfer alive through the CSC bridge.
+        // Other ColorModel families (YCbCr SDR, RGB SDR/sRGB) fall
+        // back to the legacy 8-bit targets.
         const bool isYuv = pd.isValid() && pd.colorModel().type() == ColorModel::TypeYCbCr;
-        const PixelFormat target(isYuv ? PixelFormat::YUV8_422_UYVY_Rec709
-                                       : PixelFormat::BGRA8_sRGB);
+        const ColorModel::ID cmId = pd.isValid() ? pd.colorModel().id() : ColorModel::Invalid;
+        const bool isHdr = (cmId == ColorModel::Rec2020_PQ || cmId == ColorModel::Rec2020_HLG ||
+                            cmId == ColorModel::YCbCr_Rec2020_PQ || cmId == ColorModel::YCbCr_Rec2020_HLG ||
+                            cmId == ColorModel::DCI_P3_PQ);
+        PixelFormat::ID targetId;
+        if (isHdr) {
+                targetId = (cmId == ColorModel::Rec2020_HLG || cmId == ColorModel::YCbCr_Rec2020_HLG)
+                                 ? PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG
+                                 : PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ;
+        } else if (isYuv) {
+                targetId = PixelFormat::YUV8_422_UYVY_Rec709;
+        } else {
+                targetId = PixelFormat::BGRA8_sRGB;
+        }
+        const PixelFormat target(targetId);
 
         MediaDesc        want = offered;
         ImageDesc::List &imgs = want.imageList();
@@ -703,7 +725,31 @@ Error NdiMediaIO::sendVideo(const UncompressedVideoPayload &vp) {
         // from it on send; the const_cast bridges its un-const-correct
         // C API to our const-correct BufferView::data().
         f.p_data               = const_cast<uint8_t *>(bv.data());
-        f.p_metadata           = nullptr;
+        // HDR / wide-gamut signalling rides via NDI's per-frame
+        // metadata XML (NDI 5.5+ <ndi_color_info ...> schema).
+        // Derive the H.273 codepoints from the bound ColorModel — any
+        // PixelFormat in the HDR catalog (BT.2020 + PQ / HLG, DCI-P3
+        // + PQ) returns non-default codes here, so receivers see the
+        // colorimetry without us having to walk Metadata.  SDR Rec.709
+        // / sRGB resolves to all-default codes, which we skip to avoid
+        // bloating the wire with redundant XML.  The SDK reads the
+        // string synchronously inside @c send_send_video_v2, so a
+        // stack-local @ref String survives the call.
+        const ColorModel::H273 h = ColorModel::toH273(desc.pixelFormat().colorModel().id());
+        String colorInfoXml;
+        const bool needColorInfo =
+                (h.primaries != 0 && h.primaries != 2) ||
+                (h.transfer != 0 && h.transfer != 2) ||
+                (h.matrix != 0 && h.matrix != 2);
+        if (needColorInfo) {
+                const VideoRange vr = desc.pixelFormat().videoRange();
+                const int        rangeCode = (vr.value() == VideoRange::Full.value()) ? 1 : 0;
+                colorInfoXml = String::sprintf(
+                        "<ndi_color_info colour_primaries=\"%u\" transfer_function=\"%u\" "
+                        "matrix_coefficients=\"%u\" video_range=\"%d\"/>",
+                        h.primaries, h.transfer, h.matrix, rangeCode);
+        }
+        f.p_metadata           = colorInfoXml.isEmpty() ? nullptr : colorInfoXml.cstr();
         f.timestamp            = NDIlib_recv_timestamp_undefined;
 
         const NDIlib_v6 *api = NdiLib::instance().api();
@@ -1248,6 +1294,21 @@ void NdiMediaIO::captureLoop() {
                                         api->recv_free_video_v2(_recv, &vframe);
                                         _droppedReceives.fetch_add(1, std::memory_order_relaxed);
                                         break;
+                                }
+                                // Upgrade to the matching HDR
+                                // PixelFormat when the sender
+                                // declared a BT.2020 + PQ / HLG
+                                // colour description in the per-frame
+                                // metadata XML.  Mirrors NTV2's
+                                // pollSourceVpid pattern: the wire
+                                // bytes stay the same, only the bound
+                                // ColorModel changes so downstream
+                                // consumers read the right H.273 codes
+                                // via @c ColorModel::toH273.  Falls
+                                // through unchanged on SDR / missing
+                                // metadata.
+                                if (vframe.p_metadata != nullptr) {
+                                        pid = NdiFormat::upgradeForHdrMetadata(pid, String(vframe.p_metadata));
                                 }
                                 ImageDesc desc(Size2Du32(static_cast<uint32_t>(vframe.xres),
                                                          static_cast<uint32_t>(vframe.yres)),

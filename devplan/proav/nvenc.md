@@ -36,11 +36,6 @@ detailed list of files touched — lives in git history (commit
 
 ### Pro-video features still missing
 
-- **HDR transfer auto-derivation.** `ColorModel` doesn't yet distinguish
-  HDR transfer curves (PQ / HLG) from SDR gamma, so `ColorModel::toH273()`
-  always returns an SDR transfer. HDR callers must set
-  `VideoTransferCharacteristics::SMPTE2084` (HDR10) or `ARIB_STD_B67`
-  (HLG) explicitly. Resolve once `ColorModel` gains HDR-curve awareness.
 - **Sample / display aspect ratio.** `nvEncInitializeEncoder` hardcodes
   `darWidth = _width; darHeight = _height` (square pixel only).
   Anamorphic SD / DVCPRO HD / 4:3-storage-on-16:9-display bitstreams
@@ -83,5 +78,8 @@ that don't need hardware. Several would have caught past bugs.
   `parseContentLightLevelSei`. The SEI parsers in particular accept
   attacker-shaped input and deserve assertions against truncation /
   overflow.
-- `ColorModel::toH273` is already covered (in
-  `tests/unit/colormodel.cpp`); the rest follow the same pattern.
+- `ColorModel::toH273` is covered in `tests/unit/colormodel.cpp`
+  (including HDR variants — PQ = 16, HLG = 18, DCI-P3 primaries = 12
+  — landed 2026-05-17 as part of the ColorModel HDR catalog extension
+  that also resolved the HDR transfer auto-derivation item above).
+  The NVENC-specific helpers below follow the same pattern.

@@ -76,6 +76,14 @@ that history now lives in git. What remains here is the open work.
   `Metadata::FrameRate` on every emitted frame. Non-local sink host
   rejected at open. `NdiDiscovery::matchCanonical` extracted as a
   pure-function testable core.
+  HDR receive: `NdiFormat::upgradeForHdrMetadata` (landed 2026-05-17)
+  parses the `<ndi_color_info ...>` per-frame XML metadata and upgrades
+  the P216 PixelFormat to the matching BT.2020 + PQ / HLG HDR variant
+  so downstream consumers read the correct `ColorModel::toH273` codes
+  without per-frame metadata stamping.  HDR P216 FourCCs share the SDR
+  FourCC on the wire (colorimetry rides the metadata tag).
+  Sink-side HDR send path (stamping `<ndi_color_info ...>` based on the
+  source PixelFormat's ColorModel) is not yet wired.
 - **FrameBridgeMediaIO** — cross-process shared-memory frame transport.
   URL forms: `pmfb://<name>` and `pmfb:///<name>` both accepted.
   `autoGrow` enabled on all handshake serialization buffers to prevent
@@ -90,15 +98,27 @@ that history now lives in git. What remains here is the open work.
 - **MjpegStreamMediaIO** — rate-limited MJPEG HTTP preview sink.
 - **NullPacingMediaIO** — wall-clock-paced null sink.
 - **V4L2MediaIO** — Linux V4L2 capture (with ALSA pairing).
-- **NTV2MediaIO** — AJA NTV2 SDI capture/playback. Phase 1 + 2 shipped
-  2026-05-16: single-link SDI source mode (capture) and sink mode (playout)
-  on a single logical channel, `Ntv2Device` / `Ntv2DeviceRegistry` /
-  `Ntv2Capabilities` / `Ntv2DeviceClock` / `Ntv2Factory` / `Ntv2Format`
-  layers complete. 17 hardware-free doctest cases pass; functional hardware
-  tests deferred until an AJA card is on the rig. See
-  [proav/ntv2.md](ntv2.md) for the full implementation plan and phase
-  status, and [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest
-  contract (Phase 3).
+- **NTV2MediaIO** — AJA NTV2 SDI capture/playback. **Phases 1–6
+  shipped (2026-05-17).** Single-link + multi-link (QL Squares / QL
+  2SI / 12G) SDI capture and playout; ANC capture + insertion through
+  `AUTOCIRCULATE_WITH_ANC` (CEA-708 + ATC + HDR static metadata all
+  flow through the same `AncFormat` codec table); multi-channel
+  concurrent against a shared refcounted `Ntv2Device`; on-board CSC
+  bridging at the routing fabric; multi-destination SDI fanout via
+  `SdiOutputFanoutConfig`; capture-side signal-loss detection
+  emitting `errorOccurredSignal(Error::SignalLoss)`; sink-side
+  external pacing through `executeCmd(SetClock)` + `PacingGate`;
+  drift-aware `Ntv2DeviceClock::rateRatio()`; SMPTE ST 352 VPID
+  byte-4 stamped on sink outputs from framestore colour model + per-
+  frame metadata + `Ntv2Vpid*Override` keys, and decoded VPID
+  transfer / colorimetry / range stamped on captured Frame metadata.
+  74 hardware-free doctest cases pass; functional hardware tests
+  (capture smoke, ANC SDI-loopback, multi-channel concurrent,
+  signal-loss / re-acquire cable test, VPID loopback) deferred until
+  an AJA card is on the rig.  See [proav/ntv2.md](ntv2.md) for the
+  full implementation plan and phase status, and
+  [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest
+  contract.
 - **SDLPlayerTask** / **SDLPlayerWidget** — SDL display sink + widget.
 - **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,
   DebugMedia, Mjpeg, NullPacing** all carry full describe /

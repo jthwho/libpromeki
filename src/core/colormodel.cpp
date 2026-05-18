@@ -72,6 +72,57 @@ static double invTransferAdobeRGB(double val) {
         return std::pow(val, 563.0 / 256.0);
 }
 
+// SMPTE ST 2084 PQ (Perceptual Quantizer) — HDR10 / Dolby Vision base.
+// Encodes a linear-light value normalised to [0, 1] where 1.0
+// represents 10 000 cd/m².  Round-trip-tested against the
+// reference equations in ST 2084 §5.1.
+static double transferPQ(double linear) {
+        if (linear <= 0.0) return 0.0;
+        const double m1 = 0.1593017578125;        // 2610 / 16384
+        const double m2 = 78.84375;                // 2523 / 32 = 78.84375
+        const double c1 = 0.8359375;               // c3 - c2 + 1
+        const double c2 = 18.8515625;              // 2413 / 128
+        const double c3 = 18.6875;                 // 2392 / 128
+        const double Y_m1 = std::pow(linear, m1);
+        return std::pow((c1 + c2 * Y_m1) / (1.0 + c3 * Y_m1), m2);
+}
+
+static double invTransferPQ(double encoded) {
+        if (encoded <= 0.0) return 0.0;
+        const double m1 = 0.1593017578125;
+        const double m2 = 78.84375;
+        const double c1 = 0.8359375;
+        const double c2 = 18.8515625;
+        const double c3 = 18.6875;
+        const double E_m2 = std::pow(encoded, 1.0 / m2);
+        const double num  = std::max(E_m2 - c1, 0.0);
+        const double den  = c2 - c3 * E_m2;
+        if (den <= 0.0) return 0.0;
+        return std::pow(num / den, 1.0 / m1);
+}
+
+// ITU-R BT.2100 HLG (Hybrid Log-Gamma) — broadcast HDR.
+// Linear input normalised so 1.0 is the HLG peak (≈ 1000 cd/m²
+// at the reference 1000-nit display).  Reference equations in
+// BT.2100-2 Table 5.
+static double transferHLG(double linear) {
+        const double a = 0.17883277;
+        const double b = 0.28466892;               // 1 - 4a
+        const double c = 0.55991073;               // 0.5 - a*ln(4a)
+        if (linear <= 0.0) return 0.0;
+        if (linear <= 1.0 / 12.0) return std::sqrt(3.0 * linear);
+        return a * std::log(12.0 * linear - b) + c;
+}
+
+static double invTransferHLG(double encoded) {
+        const double a = 0.17883277;
+        const double b = 0.28466892;
+        const double c = 0.55991073;
+        if (encoded <= 0.0) return 0.0;
+        if (encoded <= 0.5) return (encoded * encoded) / 3.0;
+        return (std::exp((encoded - c) / a) + b) / 12.0;
+}
+
 // ---------------------------------------------------------------------------
 // Primaries for well-known color spaces
 // ---------------------------------------------------------------------------
@@ -901,6 +952,121 @@ static ColorModel::Data makeYCbCr_Rec2020() {
         return d;
 }
 
+// ---- HDR (BT.2100) ----------------------------------------------------------
+// Same chromaticity primaries as Rec.2020 / DCI-P3 but different
+// EOTF.  Registered as distinct ColorModel IDs so a producer that
+// picks a PQ-tagged PixelFormat carries the correct transfer
+// claim through every consumer that reads @ref ColorModel::toH273.
+
+static ColorModel::Data makeRec2020_PQ() {
+        ColorModel::Data d;
+        d.id = ColorModel::Rec2020_PQ;
+        d.type = ColorModel::TypeRGB;
+        d.name = "Rec2020_PQ";
+        d.desc = "ITU-R BT.2020 primaries + SMPTE ST 2084 PQ (HDR10)";
+        d.primaries = primariesRec2020();
+        setRGBComps(d);
+        d.oetf = transferPQ;
+        d.eotf = invTransferPQ;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec2020;
+        d.nonlinearCounterpart = ColorModel::Rec2020_PQ;
+        d.toXYZFunc = rgbGammaToXYZ;
+        d.fromXYZFunc = rgbGammaFromXYZ;
+        initRGBMatrices(d);
+        return d;
+}
+
+static ColorModel::Data makeRec2020_HLG() {
+        ColorModel::Data d;
+        d.id = ColorModel::Rec2020_HLG;
+        d.type = ColorModel::TypeRGB;
+        d.name = "Rec2020_HLG";
+        d.desc = "ITU-R BT.2020 primaries + ITU-R BT.2100 HLG";
+        d.primaries = primariesRec2020();
+        setRGBComps(d);
+        d.oetf = transferHLG;
+        d.eotf = invTransferHLG;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec2020;
+        d.nonlinearCounterpart = ColorModel::Rec2020_HLG;
+        d.toXYZFunc = rgbGammaToXYZ;
+        d.fromXYZFunc = rgbGammaFromXYZ;
+        initRGBMatrices(d);
+        return d;
+}
+
+static ColorModel::Data makeDCI_P3_PQ() {
+        ColorModel::Data d;
+        d.id = ColorModel::DCI_P3_PQ;
+        d.type = ColorModel::TypeRGB;
+        d.name = "DCI_P3_PQ";
+        d.desc = "DCI-P3 (D65) primaries + SMPTE ST 2084 PQ — cinema HDR";
+        d.primaries = primariesDCI_P3();
+        setRGBComps(d);
+        d.oetf = transferPQ;
+        d.eotf = invTransferPQ;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearDCI_P3;
+        d.nonlinearCounterpart = ColorModel::DCI_P3_PQ;
+        d.toXYZFunc = rgbGammaToXYZ;
+        d.fromXYZFunc = rgbGammaFromXYZ;
+        initRGBMatrices(d);
+        return d;
+}
+
+// YCbCr variants for the HDR models: same chroma derivation as
+// YCbCr_Rec2020 (BT.2020 NCL matrix), parent RGB model differs so
+// that @ref toH273 reports the correct transfer characteristic.
+static void setRec2020YCbCrMatrix(ColorModel::Data &d) {
+        float rgbToYcbcr[3][3] = {
+                {0.2627f, 0.6780f, 0.0593f}, {-0.13963f, -0.36037f, 0.5f}, {0.5f, -0.45979f, -0.04021f}};
+        d.fromParentMatrix.set(rgbToYcbcr);
+        d.fromParentOffset[0] = 0.0f;
+        d.fromParentOffset[1] = 0.5f;
+        d.fromParentOffset[2] = 0.5f;
+
+        float ycbcrToRgb[3][3] = {{1.0f, 0.0f, 1.4746f}, {1.0f, -0.16455f, -0.57135f}, {1.0f, 1.8814f, 0.0f}};
+        d.toParentMatrix.set(ycbcrToRgb);
+        d.toParentOffset[0] = 0.0f;
+        d.toParentOffset[1] = -0.5f;
+        d.toParentOffset[2] = -0.5f;
+}
+
+static ColorModel::Data makeYCbCr_Rec2020_PQ() {
+        ColorModel::Data d;
+        d.id = ColorModel::YCbCr_Rec2020_PQ;
+        d.type = ColorModel::TypeYCbCr;
+        d.name = "YCbCr_Rec2020_PQ";
+        d.desc = "YCbCr (BT.2020 NCL) + SMPTE ST 2084 PQ";
+        setYCbCrComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::Rec2020_PQ;
+        setRec2020YCbCrMatrix(d);
+        d.toXYZFunc = ycbcrToXYZ;
+        d.fromXYZFunc = ycbcrFromXYZ;
+        return d;
+}
+
+static ColorModel::Data makeYCbCr_Rec2020_HLG() {
+        ColorModel::Data d;
+        d.id = ColorModel::YCbCr_Rec2020_HLG;
+        d.type = ColorModel::TypeYCbCr;
+        d.name = "YCbCr_Rec2020_HLG";
+        d.desc = "YCbCr (BT.2020 NCL) + ITU-R BT.2100 HLG";
+        setYCbCrComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::Rec2020_HLG;
+        setRec2020YCbCrMatrix(d);
+        d.toXYZFunc = ycbcrToXYZ;
+        d.fromXYZFunc = ycbcrFromXYZ;
+        return d;
+}
+
 static ColorModel::Data makeCIEXYZ() {
         ColorModel::Data d;
         d.id = ColorModel::CIEXYZ;
@@ -964,6 +1130,11 @@ struct ColorModelRegistry {
                         add(makeYCbCr_Rec709());
                         add(makeYCbCr_Rec601());
                         add(makeYCbCr_Rec2020());
+                        add(makeRec2020_PQ());
+                        add(makeRec2020_HLG());
+                        add(makeDCI_P3_PQ());
+                        add(makeYCbCr_Rec2020_PQ());
+                        add(makeYCbCr_Rec2020_HLG());
                 }
 
                 void add(ColorModel::Data d) {
@@ -1057,6 +1228,17 @@ ColorModel::H273 ColorModel::toH273(ID id) {
                 case YCbCr_Rec601: return {6, 6, 6}; // SMPTE-170M primaries/transfer/matrix — NTSC convention.
                 case YCbCr_Rec2020:
                         return {9, 14, 9}; // BT.2020 primaries/transfer, BT.2020-NCL matrix.
+
+                // ---- HDR (BT.2100) ----
+                // H.273 transfer codes: 16 = SMPTE ST 2084 (PQ),
+                // 18 = ITU-R BT.2100 HLG.  RGB variants use matrix 0;
+                // YCbCr variants use BT.2020 NCL matrix (9).  DCI-P3
+                // primaries are SMPTE-432 (codepoint 12).
+                case Rec2020_PQ: return {9, 16, 0};
+                case Rec2020_HLG: return {9, 18, 0};
+                case DCI_P3_PQ: return {12, 16, 0};
+                case YCbCr_Rec2020_PQ: return {9, 16, 9};
+                case YCbCr_Rec2020_HLG: return {9, 18, 9};
 
                 // ---- Non-H.273-addressable ----
                 case Invalid:

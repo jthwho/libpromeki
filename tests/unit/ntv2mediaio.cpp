@@ -13,6 +13,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audioformat.h>
 #include <promeki/imagedesc.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/ntv2mediaio.h>
 #include <promeki/pixelformat.h>
@@ -87,6 +88,13 @@ TEST_CASE("Ntv2MediaIO::proposeInput passes through every supported NTV2 frame-b
                 PixelFormat::ARGB8_sRGB,
                 PixelFormat::ABGR8_sRGB,
                 PixelFormat::RGBA8_sRGB,
+                // Phase-5+ additions: V210, 10-bit DPX (BE + LE),
+                // and 16-bit RGB.  All map directly to NTV2 frame
+                // buffer formats.
+                PixelFormat::YUV10_422_v210_Rec709,
+                PixelFormat::RGB10_DPX_sRGB,
+                PixelFormat::RGB10_DPX_LE_sRGB,
+                PixelFormat::RGB16_LE_sRGB,
         };
         for (PixelFormat::ID id : supported) {
                 MediaDesc offered = makeMediaDesc(id);
@@ -117,15 +125,53 @@ TEST_CASE("Ntv2MediaIO::proposeInput asks for UYVY when an unmapped YCbCr is off
 TEST_CASE("Ntv2MediaIO::proposeInput asks for RGB8 when an unmapped non-YCbCr is offered") {
         Ntv2MediaIO io;
 
-        // RGB10_DPX_sRGB doesn't currently map to an NTV2 frame-buffer
-        // format (10-bit RGB lands in Phase 5).  proposeInput should
-        // suggest packed RGB8 since the offered format's color model is
-        // RGB, not YCbCr.
-        MediaDesc offered = makeMediaDesc(PixelFormat::RGB10_DPX_sRGB);
+        // RGB16_BE_sRGB has no NTV2 frame-buffer mapping today (the
+        // LE variant does).  Default config leaves on-board CSC
+        // enabled, so the target stays in the offered RGB family —
+        // the planner inserts a software packing CSC upstream, and
+        // the on-board CSC bridges the RGB ↔ YCbCr wire mismatch
+        // inside the routing fabric.
+        MediaDesc offered = makeMediaDesc(PixelFormat::RGB16_BE_sRGB);
         MediaDesc preferred;
         CHECK(io.proposeInput(offered, &preferred).isOk());
         REQUIRE(!preferred.imageList().isEmpty());
         CHECK(preferred.imageList()[0].pixelFormat() == PixelFormat(PixelFormat::RGB8_sRGB));
+}
+
+TEST_CASE("Ntv2MediaIO::proposeInput rewrites RGB to wire family when on-board CSC is disabled") {
+        Ntv2MediaIO io;
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Ntv2DisableOnBoardCsc, true);
+        io.setConfig(cfg);
+
+        // RGB8 maps directly to an NTV2 frame-buffer format, but
+        // the wire is YCbCr — using it would force an on-board CSC
+        // in routing.  With Ntv2DisableOnBoardCsc=true, the
+        // negotiator instead proposes the wire's family (UYVY) so
+        // the planner either gets a native-YCbCr producer or
+        // splices a software CSC upstream.
+        MediaDesc offered = makeMediaDesc(PixelFormat::RGB8_sRGB);
+        MediaDesc preferred;
+        CHECK(io.proposeInput(offered, &preferred).isOk());
+        REQUIRE(!preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelFormat() ==
+              PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
+}
+
+TEST_CASE("Ntv2MediaIO::proposeInput keeps a same-family format when on-board CSC is disabled") {
+        Ntv2MediaIO io;
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Ntv2DisableOnBoardCsc, true);
+        io.setConfig(cfg);
+
+        // Same-family (YUV in, YUV wire) needs no CSC of any kind,
+        // so it passes through even with on-board CSC disabled.
+        MediaDesc offered = makeMediaDesc(PixelFormat::YUV8_422_UYVY_Rec709);
+        MediaDesc preferred;
+        CHECK(io.proposeInput(offered, &preferred).isOk());
+        REQUIRE(!preferred.imageList().isEmpty());
+        CHECK(preferred.imageList()[0].pixelFormat() ==
+              PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709));
 }
 
 TEST_CASE("Ntv2MediaIO::proposeInput leaves audio-only descriptors untouched") {
@@ -146,6 +192,44 @@ TEST_CASE("Ntv2MediaIO::proposeInput rejects a null output pointer") {
         Ntv2MediaIO io;
         MediaDesc   offered = makeMediaDesc(PixelFormat::YUV8_422_UYVY_Rec709);
         CHECK(io.proposeInput(offered, nullptr).isError());
+}
+
+TEST_CASE("Ntv2Factory configSpecs exposes Phase 6 keys with documented defaults") {
+        Ntv2Factory                          factory;
+        const MediaIOFactory::Config::SpecMap specs = factory.configSpecs();
+
+        // Signal-loss polling defaults to 15 VBIs — visible at the
+        // factory layer because the open path reads it as a config
+        // override, but the spec ships its default for tooling /
+        // probe output.
+        auto pollIt = specs.find(MediaConfig::Ntv2SignalPollIntervalVbi);
+        REQUIRE(pollIt != specs.end());
+        CHECK(pollIt->second.defaultValue().get<int32_t>() == 15);
+
+        // External-pacing thresholds default to 0 → "use one frame
+        // interval" / "use 8 × frame interval" at gate-arm time
+        // (resolved inside executeCmd(SetClock)).
+        auto skipIt = specs.find(MediaConfig::Ntv2PaceSkipThresholdMs);
+        REQUIRE(skipIt != specs.end());
+        CHECK(skipIt->second.defaultValue().get<int32_t>() == 0);
+
+        auto reanchorIt = specs.find(MediaConfig::Ntv2PaceReanchorThresholdMs);
+        REQUIRE(reanchorIt != specs.end());
+        CHECK(reanchorIt->second.defaultValue().get<int32_t>() == 0);
+}
+
+TEST_CASE("Error::SignalLoss is registered and distinct from NotReady") {
+        // NotReady = "never came up"; SignalLoss = "was up, lost it."
+        // The capture worker emits SignalLoss via errorOccurredSignal
+        // on every present→absent transition, so the discrete code
+        // must exist and not alias to anything else in the table.
+        const Error loss(Error::SignalLoss);
+        CHECK(loss.isError());
+        CHECK(loss.code() == Error::SignalLoss);
+        CHECK(loss != Error::NotReady);
+        CHECK(loss != Error::DeviceError);
+        CHECK(!loss.name().isEmpty());
+        CHECK(!loss.desc().isEmpty());
 }
 
 #endif // PROMEKI_ENABLE_NTV2

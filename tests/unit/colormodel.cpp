@@ -72,6 +72,89 @@ TEST_CASE("ColorModel: toH273() maps well-known models") {
         CHECK(ColorModel::toH273(ColorModel::Invalid).primaries == 0);
 }
 
+TEST_CASE("ColorModel: toH273() maps BT.2100 HDR models") {
+        // H.273 transfer codepoints: 16 = SMPTE ST 2084 (PQ),
+        // 18 = ITU-R BT.2100 HLG.  BT.2020 primaries = 9.
+        // RGB matrix = 0; BT.2020 NCL matrix = 9.
+        {
+                auto h = ColorModel::toH273(ColorModel::Rec2020_PQ);
+                CHECK(h.primaries == 9);
+                CHECK(h.transfer == 16);
+                CHECK(h.matrix == 0);
+        }
+        {
+                auto h = ColorModel::toH273(ColorModel::Rec2020_HLG);
+                CHECK(h.primaries == 9);
+                CHECK(h.transfer == 18);
+                CHECK(h.matrix == 0);
+        }
+        {
+                auto h = ColorModel::toH273(ColorModel::DCI_P3_PQ);
+                CHECK(h.primaries == 12); // SMPTE-432 (P3-D65)
+                CHECK(h.transfer == 16);
+                CHECK(h.matrix == 0);
+        }
+        {
+                auto h = ColorModel::toH273(ColorModel::YCbCr_Rec2020_PQ);
+                CHECK(h.primaries == 9);
+                CHECK(h.transfer == 16);
+                CHECK(h.matrix == 9); // BT.2020 NCL
+        }
+        {
+                auto h = ColorModel::toH273(ColorModel::YCbCr_Rec2020_HLG);
+                CHECK(h.primaries == 9);
+                CHECK(h.transfer == 18);
+                CHECK(h.matrix == 9);
+        }
+}
+
+TEST_CASE("ColorModel: HDR transfer functions round-trip") {
+        // Spot-check the PQ EOTF/OETF and HLG EOTF/OETF round-trip
+        // a few mid-scale values to within float precision.  Catches
+        // a sign / constant typo in the inverse without depending on
+        // any particular reference curve.
+        const ColorModel pq(ColorModel::Rec2020_PQ);
+        REQUIRE(pq.isValid());
+        const auto *d = pq.data();
+        REQUIRE(d != nullptr);
+        REQUIRE(d->oetf != nullptr);
+        REQUIRE(d->eotf != nullptr);
+        for (double linear : {0.001, 0.01, 0.1, 0.5, 1.0}) {
+                const double encoded = d->oetf(linear);
+                const double back    = d->eotf(encoded);
+                CHECK(back == doctest::Approx(linear).epsilon(1e-5));
+        }
+
+        const ColorModel hlg(ColorModel::Rec2020_HLG);
+        REQUIRE(hlg.isValid());
+        const auto *dh = hlg.data();
+        REQUIRE(dh != nullptr);
+        REQUIRE(dh->oetf != nullptr);
+        REQUIRE(dh->eotf != nullptr);
+        for (double linear : {0.001, 0.01, 0.1, 0.5, 1.0}) {
+                const double encoded = dh->oetf(linear);
+                const double back    = dh->eotf(encoded);
+                CHECK(back == doctest::Approx(linear).epsilon(1e-5));
+        }
+}
+
+TEST_CASE("ColorModel: HDR YCbCr models inherit BT.2020 NCL matrix from SDR variant") {
+        // YCbCr_Rec2020_PQ and YCbCr_Rec2020_HLG use the same chroma
+        // derivation as YCbCr_Rec2020 (BT.2020 non-constant luminance)
+        // — only the parent RGB model (and therefore the H.273
+        // transfer codepoint) differs.  The fromParentMatrix /
+        // toParentMatrix entries must match SDR YCbCr_Rec2020.
+        const auto &sdrFwd = ColorModel(ColorModel::YCbCr_Rec2020).data()->fromParentMatrix;
+        const auto &pqFwd  = ColorModel(ColorModel::YCbCr_Rec2020_PQ).data()->fromParentMatrix;
+        const auto &hlgFwd = ColorModel(ColorModel::YCbCr_Rec2020_HLG).data()->fromParentMatrix;
+        for (int r = 0; r < 3; ++r) {
+                for (int c = 0; c < 3; ++c) {
+                        CHECK(pqFwd.get(r, c) == doctest::Approx(sdrFwd.get(r, c)));
+                        CHECK(hlgFwd.get(r, c) == doctest::Approx(sdrFwd.get(r, c)));
+                }
+        }
+}
+
 TEST_CASE("ColorModel: sRGB and Rec709 share primaries") {
         auto &sp = ColorModel(ColorModel::sRGB).primaries();
         auto &rp = ColorModel(ColorModel::Rec709).primaries();

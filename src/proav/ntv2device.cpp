@@ -277,19 +277,15 @@ Clock::Ptr Ntv2Device::sampleClock() {
         Mutex::Locker lk(_mutex);
         if (_sampleClock.isValid()) return _sampleClock;
 
-        // Pick the first reserved audio system; fall back to system 1
-        // when no channel has reserved one yet.  The clock's VBI-
-        // fallback mode kicks in when the chosen system isn't usable.
-        int sysIndex = 0;
-        if (!_audioSystemOwners.isEmpty()) {
-                sysIndex = _audioSystemOwners.begin()->first;
-        } else if (_caps.audioSystemCount() > 0) {
-                sysIndex = 1;
-        }
-        const bool useVbiFallback = !_caps.hasAudioCounter() || sysIndex == 0;
+        // kRegAud1Counter is a single FPGA-resident free-running 48 kHz
+        // counter — no per-audio-system selection needed.  VBI fallback
+        // engages only when the cap says the card has no audio
+        // subsystem at all (no shipping NTV2 hardware is in that bucket
+        // today, but the gate keeps us safe against future variants).
+        const bool useVbiFallback = !_caps.hasAudioCounter();
 
         _sampleClock = Clock::Ptr::takeOwnership(
-                new Ntv2DeviceClock(this, sysIndex, useVbiFallback));
+                new Ntv2DeviceClock(this, useVbiFallback));
         return _sampleClock;
 }
 
@@ -387,6 +383,66 @@ void Ntv2DeviceRegistry::release(Ntv2Device *device) {
                 }
                 ++it;
         }
+}
+
+// ============================================================================
+// Ntv2DeviceTestAccess — hardware-free test seam
+// ============================================================================
+
+UniquePtr<Ntv2Device> Ntv2DeviceTestAccess::create(int deviceIndex, const String &displayName,
+                                                   const Ntv2Capabilities &caps) {
+        // Direct construction via the friend declaration — bypasses
+        // Ntv2DeviceRegistry so no real CNTV2Card gets opened.  The
+        // device's _card pointer stays null; setReference, sampleClock
+        // etc. all gate on _card before touching hardware.
+        UniquePtr<Ntv2Device> dev = UniquePtr<Ntv2Device>::takeOwnership(new Ntv2Device());
+        dev->_caps         = caps;
+        dev->_deviceIndex  = deviceIndex;
+        dev->_displayName  = displayName;
+        dev->_key          = String("ntv2:test:") + String::number(deviceIndex);
+        return dev;
+}
+
+size_t Ntv2DeviceTestAccess::channelOwnerCount(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._channelOwners.size();
+}
+
+const Ntv2MediaIO *Ntv2DeviceTestAccess::channelOwner(const Ntv2Device &dev, int channel) {
+        Mutex::Locker lk(dev._mutex);
+        auto it = dev._channelOwners.find(channel);
+        return it == dev._channelOwners.end() ? nullptr : it->second;
+}
+
+size_t Ntv2DeviceTestAccess::portOwnerCount(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._portOwners.size();
+}
+
+size_t Ntv2DeviceTestAccess::audioSystemOwnerCount(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._audioSystemOwners.size();
+}
+
+const Ntv2MediaIO *Ntv2DeviceTestAccess::audioSystemOwner(const Ntv2Device &dev, int sysIndex) {
+        Mutex::Locker lk(dev._mutex);
+        auto it = dev._audioSystemOwners.find(sysIndex);
+        return it == dev._audioSystemOwners.end() ? nullptr : it->second;
+}
+
+bool Ntv2DeviceTestAccess::referenceSet(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._refSet;
+}
+
+int Ntv2DeviceTestAccess::currentReferenceRaw(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._currentReferenceRaw;
+}
+
+const Ntv2MediaIO *Ntv2DeviceTestAccess::referenceOwner(const Ntv2Device &dev) {
+        Mutex::Locker lk(dev._mutex);
+        return dev._refOwner;
 }
 
 List<Ntv2Device *> Ntv2DeviceRegistry::liveDevices() const {

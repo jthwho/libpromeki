@@ -11,6 +11,9 @@
 
 #include <promeki/ndiformat.h>
 
+#include <promeki/enums.h>
+#include <promeki/xml.h>
+
 #include <Processing.NDI.Lib.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -86,9 +89,74 @@ uint32_t NdiFormat::pixelFormatToFourcc(PixelFormat::ID id) {
                 case PixelFormat::YUV12_422_SemiPlanar_LE_Rec709:
                 case PixelFormat::YUV16_422_SemiPlanar_LE_Rec709:
                         return NDIlib_FourCC_video_type_P216;
+                // HDR variants share the SDR wire layout — the bound
+                // HDR @ref ColorModel travels with the buffer.  NDI
+                // signals BT.2020 / PQ / HLG out-of-band via the
+                // @c FrameSyncV2 colour gamut field; the actual byte
+                // layout on the wire is identical to the SDR sibling
+                // so reuse the same FourCC.
+                case PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ:
+                case PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG:
+                        return NDIlib_FourCC_video_type_P216;
                 default:
                         return 0;
         }
+}
+
+PixelFormat::ID NdiFormat::upgradeForHdrMetadata(PixelFormat::ID sdrId, const String &xmlMetadata) {
+        // Fast-out paths.  Empty / missing metadata means the sender
+        // did not signal a colour description — leave the SDR id
+        // alone, matching pollSourceVpid's "no opinion" semantics.
+        if (xmlMetadata.isEmpty()) return sdrId;
+        if (!xmlMetadata.contains("ndi_color_info")) return sdrId;
+
+        // Only the P216 family carries enough bit depth for HDR over
+        // NDI today.  Other receive IDs (UYVY 8-bit, NV12, I420,
+        // BGRA / RGBA) are SDR-only on the wire so skip the parse
+        // overhead.
+        if (sdrId != PixelFormat::YUV10_422_SemiPlanar_LE_Rec709 &&
+            sdrId != PixelFormat::YUV12_422_SemiPlanar_LE_Rec709 &&
+            sdrId != PixelFormat::YUV16_422_SemiPlanar_LE_Rec709) {
+                return sdrId;
+        }
+
+        // NDI per-frame metadata is allowed to contain multiple
+        // top-level tags (XML fragment, not a strict document); the
+        // colour-info tag may be a sibling of other tags such as
+        // <ndi_capture_info ...>.  Wrap in a synthetic root so
+        // XmlElement::parse accepts the fragment, then walk children
+        // looking for the colour-info tag.
+        const String wrapped = String("<ndi>") + xmlMetadata + String("</ndi>");
+        XmlElement   root    = XmlElement::parse(wrapped);
+        if (!root.isValid()) return sdrId;
+
+        // Walk top-level children for the colour-info tag.  Use the
+        // child() lookup directly since the tag name is fixed and
+        // we do not care about ordering or duplicates (last write
+        // wins on conflict, which mirrors the SDK convention).
+        XmlElement info = root.child("ndi_color_info");
+        if (!info.isValid()) return sdrId;
+
+        Error      err;
+        const String transferStr = info.attribute("transfer_function", &err);
+        if (err.isError() || transferStr.isEmpty()) return sdrId;
+        const int transferCode = transferStr.toInt(&err);
+        if (err.isError()) return sdrId;
+
+        const bool isPq  = (transferCode == TransferCharacteristics::SMPTE2084.value());
+        const bool isHlg = (transferCode == TransferCharacteristics::ARIB_STD_B67.value());
+        if (!isPq && !isHlg) return sdrId;
+
+        // Upgrade to the matching HDR P216 sibling.  Bit depth
+        // selection is preserved (10 / 12 / 16) — only the bound
+        // ColorModel changes.  We have HDR variants of the 16-bit
+        // entry today; the 10/12-bit HDR siblings would be added
+        // to the catalog when bandwidth budgets matter on the wire.
+        // For now any P216 bit-depth claim upgrades to YUV16 HDR —
+        // the bytes on the wire are identical (16-bit container),
+        // only the conceptual precision metadata differs.
+        return isPq ? PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_PQ
+                    : PixelFormat::YUV16_422_SemiPlanar_LE_Rec2020_HLG;
 }
 
 String NdiFormat::fourccToString(uint32_t fourcc) {

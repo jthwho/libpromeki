@@ -190,10 +190,12 @@ class Ntv2Device {
                  *
                  * Every channel on this card gets the same
                  * @ref Clock::Ptr — cross-channel timestamps on the same
-                 * card share an epoch by construction.  The first call
-                 * builds the clock against the first usable audio system
-                 * (or in VBI-fallback mode when no audio system is
-                 * reserved); subsequent calls return the same instance.
+                 * card share an epoch by construction.  The clock
+                 * reads the FPGA-resident @c kRegAud1Counter (via
+                 * @c CNTV2Card::GetRawAudioTimer), so no audio-system
+                 * reservation is required.  VBI fallback engages only
+                 * when @ref Ntv2Capabilities::hasAudioCounter is false
+                 * (no audio subsystem at all).
                  *
                  * The clock is released when the device's refcount
                  * reaches zero (last @ref Ntv2DeviceRegistry::release).
@@ -233,8 +235,10 @@ class Ntv2Device {
                 void  shutdown(bool retailServices);
 
                 // Returns the first audio system (1-based) currently
-                // reserved by any channel, or 0 when none.  Used by
-                // sampleClock() to pick its counter source.
+                // reserved by any channel, or 0 when none.  No longer
+                // load-bearing for the device clock (which reads the
+                // shared FPGA counter); retained for code paths that
+                // still want to know whether any audio is in flight.
                 int firstReservedAudioSystem() const;
 
                 UniquePtr<CNTV2Card> _card;
@@ -345,6 +349,58 @@ class Ntv2DeviceRegistry {
 
                 mutable Mutex     _mutex;
                 Map<String, Entry> _entries;
+};
+
+/**
+ * @brief Hardware-free test seam for @ref Ntv2Device.
+ * @ingroup proav
+ *
+ * Builds an @ref Ntv2Device with a hand-crafted
+ * @ref Ntv2Capabilities snapshot and leaves @c _card null, so the
+ * reservation tables, the reference-clock state, and the sample
+ * clock can all be exercised in unit tests without opening a real
+ * AJA card.  Production code never touches this struct.
+ *
+ * Inspectors return read-only views into the private member state
+ * so tests can assert on internal bookkeeping (channel owners, port
+ * owners, audio-system owners, reference state) directly.
+ */
+struct Ntv2DeviceTestAccess {
+                /**
+                 * @brief Constructs an @ref Ntv2Device with the given
+                 *        capability shape and a synthetic identity.
+                 *
+                 * No @c CNTV2Card is opened — methods that would poke
+                 * a real card (notably @ref Ntv2Device::setReference's
+                 * write-to-card branch) detect the null @c _card and
+                 * silently skip the hardware side.
+                 */
+                static UniquePtr<Ntv2Device> create(int deviceIndex, const String &displayName,
+                                                    const Ntv2Capabilities &caps);
+
+                /** @brief Number of channels currently reserved. */
+                static size_t channelOwnerCount(const Ntv2Device &dev);
+
+                /** @brief Channel-owner accessor; returns @c nullptr when unowned. */
+                static const Ntv2MediaIO *channelOwner(const Ntv2Device &dev, int channel);
+
+                /** @brief Number of ports currently reserved. */
+                static size_t portOwnerCount(const Ntv2Device &dev);
+
+                /** @brief Number of audio systems currently reserved. */
+                static size_t audioSystemOwnerCount(const Ntv2Device &dev);
+
+                /** @brief Audio-system owner accessor; @c nullptr when unowned. */
+                static const Ntv2MediaIO *audioSystemOwner(const Ntv2Device &dev, int sysIndex);
+
+                /** @brief @c true once @ref Ntv2Device::setReference has been called. */
+                static bool referenceSet(const Ntv2Device &dev);
+
+                /** @brief The raw NTV2ReferenceSource int stored on the last setReference call. */
+                static int currentReferenceRaw(const Ntv2Device &dev);
+
+                /** @brief Last requester recorded by @ref Ntv2Device::setReference. */
+                static const Ntv2MediaIO *referenceOwner(const Ntv2Device &dev);
 };
 
 PROMEKI_NAMESPACE_END
