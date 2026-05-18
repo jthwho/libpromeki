@@ -13,6 +13,7 @@
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/audiodesc.h>
+#include <promeki/duration.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
@@ -164,6 +165,51 @@ class AudioResampler {
                  * @return Error::Ok on success.
                  */
                 Error reset();
+
+                /**
+                 * @brief Returns the resampler's group delay in input
+                 *        frames at unity ratio for the active quality.
+                 *
+                 * The sinc-family converters are linear-phase FIR
+                 * filters whose group delay equals half the filter
+                 * length.  libsamplerate's coefficient tables fix the
+                 * half-length and per-frame coefficient increment at
+                 * build time, so the input-frame delay for each
+                 * @ref SrcQuality is a compile-time constant.
+                 *
+                 * The values returned here are derived from the
+                 * vendored coefficient headers
+                 * (@c fastest_coeffs.h, @c mid_qual_coeffs.h,
+                 * @c high_qual_coeffs.h):
+                 *
+                 * - @c SincFastest    → 19 input frames
+                 * - @c SincMedium     → 46 input frames
+                 * - @c SincBest       → 143 input frames
+                 * - @c Linear         → 0
+                 * - @c ZeroOrderHold  → 0
+                 *
+                 * Returns @c 0 when the resampler is not set up.
+                 *
+                 * The delay is reported in *input* frames; downstream
+                 * code that wants a wall-clock delay should pair this
+                 * with the input sample rate (see @ref filterDelay).
+                 */
+                int filterDelayInputFrames() const;
+
+                /**
+                 * @brief Returns the resampler's group delay as a
+                 *        wall-clock @ref Duration at @p inputRate.
+                 *
+                 * Equivalent to
+                 * @c Duration::fromSamples(filterDelayInputFrames(),
+                 * @c inputRate).
+                 *
+                 * Returns @ref Duration::zero when the resampler is
+                 * not set up or @p inputRate is non-positive.
+                 *
+                 * @param inputRate Input sample rate in Hz.
+                 */
+                Duration filterDelay(double inputRate) const;
 
         private:
                 struct Impl;

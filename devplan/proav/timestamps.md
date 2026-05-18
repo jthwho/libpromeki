@@ -41,6 +41,23 @@
   a convenience combining `timeStamp().nanoseconds() + offset().nanoseconds()`.
   `MediaIO`'s payload duration-fill trigger treats both invalid and
   `isZero()` as "not yet stamped".
+- **`AudioBuffer` MediaTimeStamp flow + `PcmAudioPayload` push/pop**
+  (2026-05-18): `AudioBuffer` now carries a `MediaTimeStamp` anchor
+  queue through the ring FIFO.  Producers attach a PTS to any
+  `push()` call; the buffer records one `(outputIndex, PTS)` anchor
+  per timestamped push and derives the PTS of any popped sample by
+  interpolating from the latest covering anchor.  When the resampler
+  is active the anchor is back-adjusted by the filter group delay
+  (via `AudioResampler::filterDelayInputFrames()` /
+  `filterDelay(double inputRate)`) so reported stamps represent
+  capture time rather than converter-output time.  `resamplerSampleDelta()`
+  exposes cumulative output-vs-nominal drift for monitoring.
+  `push(const PcmAudioPayload &)` / `popPayload(min, max)` /
+  `popWaitPayload(min, max, timeoutMs)` added for payload-native
+  producer/consumer patterns.  `nextSamplePts()` peeks the head PTS
+  without consuming.  `clear()`, `setFormat()`, and `setInputFormat()`
+  all reset the anchor queue.  RTP audio packetizer migrated to the
+  payload-aware `push(*pcm)`.  22 new unit tests.
 
 ## Remaining
 
@@ -49,11 +66,6 @@
   sender's clock (PTP-derived for ST 2110). Add a `MediaConfig` key
   that declares where TX timestamps come from so the sender stamps
   them appropriately.
-- [ ] **AudioBuffer resampling sample accounting.** `AudioBuffer`
-  should return the number of samples added/removed during
-  drift-correction resampling so callers can reconstruct accurate
-  timestamps for audio that passed through the resampler (timing
-  information currently lost in the FIFO).
 - [ ] **PTP domain number in SDP.** `ts-refclk` parsing extracts
   profile + grandmaster but does not parse / propagate the PTP
   domain number. Add when multi-domain PTP support is needed.

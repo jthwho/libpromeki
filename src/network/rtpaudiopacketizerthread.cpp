@@ -59,9 +59,9 @@ void RtpAudioPacketizerThread::packetize(const RtpFrameWork &work) {
         // Format conversion happens implicitly inside
         // AudioBuffer::push — the FIFO is in the storage format
         // (typically PCMI_S16BE) and accepts any compatible input.
-        auto planeView = pcm->plane(0);
-        if (planeView.size() == 0) return;
-        Error pushErr = _fifo.push(planeView.data(), pcm->sampleCount(), pcm->desc());
+        // The payload-aware overload also threads the PTS through
+        // the FIFO's anchor queue automatically.
+        Error pushErr = _fifo.push(*pcm);
         if (pushErr.isError()) {
                 promekiErr("RtpAudioPacketizerThread: FIFO push failed: %s",
                            pushErr.desc().cstr());

@@ -149,4 +149,32 @@ Error AudioResampler::reset() {
         return Error::Ok;
 }
 
+// ---------------------------------------------------------------------------
+// Filter delay
+// ---------------------------------------------------------------------------
+
+// Per-quality input-frame group delay.  Sinc converters are
+// linear-phase FIRs; group delay = filter half-length / coefficient
+// increment, both pulled from libsamplerate's coefficient headers:
+//   fastest_coeffs.h  : half-length 2463,   increment  128 -> 19.24
+//   mid_qual_coeffs.h : half-length 22437,  increment  491 -> 45.70
+//   high_qual_coeffs.h: half-length 340238, increment 2381 -> 142.90
+// Linear and ZeroOrderHold operate on adjacent samples only and add
+// no measurable delay; reported as 0 frames.
+int AudioResampler::filterDelayInputFrames() const {
+        if (!isValid()) return 0;
+        const SrcQuality &q = _impl->quality;
+        if (q == SrcQuality::SincBest)    return 143;
+        if (q == SrcQuality::SincMedium)  return 46;
+        if (q == SrcQuality::SincFastest) return 19;
+        return 0;
+}
+
+Duration AudioResampler::filterDelay(double inputRate) const {
+        if (!isValid() || !(inputRate > 0.0)) return Duration::zero();
+        const int frames = filterDelayInputFrames();
+        if (frames <= 0) return Duration::zero();
+        return Duration::fromSamples(static_cast<int64_t>(frames), inputRate);
+}
+
 PROMEKI_NAMESPACE_END

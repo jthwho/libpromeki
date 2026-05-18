@@ -103,6 +103,13 @@ devplan/
    convenience accessor added.  All consuming sites updated
    (`PacingGate`, `EventLoop`, `RtpSession`, all MediaIO backends).
    See [`proav/timestamps.md`](proav/timestamps.md).
+10. **`AudioBuffer` MediaTimeStamp flow + `PcmAudioPayload` push/pop**
+   — SHIPPED 2026-05-18. Anchor queue threads PTS through the ring
+   FIFO; filter-delay correction back-adjusts resampled anchors;
+   `resamplerSampleDelta()` exposes drift accounting;
+   `push(PcmAudioPayload)` / `popPayload` / `popWaitPayload` /
+   `nextSamplePts()` added; RTP audio packetizer migrated.
+   See [`proav/timestamps.md`](proav/timestamps.md).
 
 ## Phase status (overview)
 

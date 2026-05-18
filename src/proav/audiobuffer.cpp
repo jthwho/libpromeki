@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <promeki/config.h>
@@ -26,7 +27,9 @@ AudioBuffer::AudioBuffer(const AudioDesc &format, size_t capacity) : _format(for
 AudioBuffer::AudioBuffer(AudioBuffer &&other) noexcept
     : _format(other._format), _inputFormat(other._inputFormat), _storage(std::move(other._storage)),
       _capacity(other._capacity), _head(other._head), _tail(other._tail), _count(other._count),
-      _gains(std::move(other._gains)), _remap(std::move(other._remap)), _meter(std::move(other._meter))
+      _gains(std::move(other._gains)), _remap(std::move(other._remap)), _meter(std::move(other._meter)),
+      _anchors(std::move(other._anchors)), _outputProducedTotal(other._outputProducedTotal),
+      _outputConsumedTotal(other._outputConsumedTotal), _resamplerSampleDelta(other._resamplerSampleDelta)
 #if PROMEKI_ENABLE_SRC
       ,
       _resamplerQuality(other._resamplerQuality), _resampler(std::move(other._resampler)),
@@ -38,6 +41,9 @@ AudioBuffer::AudioBuffer(AudioBuffer &&other) noexcept
         other._head = 0;
         other._tail = 0;
         other._count = 0;
+        other._outputProducedTotal = 0;
+        other._outputConsumedTotal = 0;
+        other._resamplerSampleDelta = 0;
 #if PROMEKI_ENABLE_SRC
         other._driftEnabled = false;
         other._driftTarget = 0;
@@ -59,6 +65,10 @@ AudioBuffer &AudioBuffer::operator=(AudioBuffer &&other) noexcept {
         _gains = std::move(other._gains);
         _remap = std::move(other._remap);
         _meter = std::move(other._meter);
+        _anchors = std::move(other._anchors);
+        _outputProducedTotal = other._outputProducedTotal;
+        _outputConsumedTotal = other._outputConsumedTotal;
+        _resamplerSampleDelta = other._resamplerSampleDelta;
 #if PROMEKI_ENABLE_SRC
         _resamplerQuality = other._resamplerQuality;
         _resampler = std::move(other._resampler);
@@ -77,6 +87,9 @@ AudioBuffer &AudioBuffer::operator=(AudioBuffer &&other) noexcept {
         other._head = 0;
         other._tail = 0;
         other._count = 0;
+        other._outputProducedTotal = 0;
+        other._outputConsumedTotal = 0;
+        other._resamplerSampleDelta = 0;
         return *this;
 }
 
@@ -89,11 +102,23 @@ void AudioBuffer::setFormat(const AudioDesc &format) {
         _count = 0;
         _storage = Buffer();
         _capacity = 0;
+        _anchors = Deque<Anchor>();
+        _outputProducedTotal = 0;
+        _outputConsumedTotal = 0;
+        _resamplerSampleDelta = 0;
 }
 
 void AudioBuffer::setInputFormat(const AudioDesc &input) {
         Mutex::Locker lock(_mutex);
         _inputFormat = input;
+        // Drop outstanding anchors — they were laid in terms of the
+        // previous input/output relationship and the resampler is
+        // about to lose its filter history.  The monotonic counters
+        // stay where they are so any already-buffered samples retain
+        // their indices and any future anchor naturally lines up
+        // with the next sample to be produced.
+        _anchors = Deque<Anchor>();
+        _resamplerSampleDelta = 0;
 #if PROMEKI_ENABLE_SRC
         if (_resampler.isValid()) _resampler.reset();
 #endif
@@ -272,6 +297,70 @@ void AudioBuffer::clear() {
         _head = 0;
         _tail = 0;
         _count = 0;
+        _anchors = Deque<Anchor>();
+        _outputProducedTotal = 0;
+        _outputConsumedTotal = 0;
+        _resamplerSampleDelta = 0;
+}
+
+// ---------------------------------------------------------------------------
+// Anchor (timestamp) helpers — all assume _mutex is held
+// ---------------------------------------------------------------------------
+
+void AudioBuffer::layAnchorLocked(uint64_t outputIndex, const MediaTimeStamp &pts) {
+        if (!pts.isValid()) return;
+        Anchor a;
+        a.outputIndex = outputIndex;
+        a.pts = pts;
+#if PROMEKI_ENABLE_SRC
+        // Output samples generated through the resampler reflect
+        // input that arrived filterDelay() input frames in the past.
+        // Subtract that lag from the anchor so the PTS represents
+        // the wall-clock time at the source, not the time the
+        // converter emitted the sample.
+        if (_resampler.isValid()) {
+                const double inputRate = _inputFormat.sampleRate();
+                Duration     delay = _resampler.filterDelay(inputRate);
+                if (delay.isValid() && delay.nanoseconds() != 0) {
+                        a.pts.setTimeStamp(a.pts.timeStamp() - delay);
+                }
+        }
+#endif
+        _anchors.pushToBack(a);
+}
+
+MediaTimeStamp AudioBuffer::ptsAtOutputIndexLocked(uint64_t outputIndex) const {
+        if (_anchors.isEmpty() || !_format.isValid()) return MediaTimeStamp();
+        // Walk anchors latest-first to find the one whose
+        // outputIndex precedes (or equals) the target.  Anchor
+        // counts are bounded by the number of pushes resident in
+        // the buffer, so the linear scan stays cheap in practice.
+        const Anchor *active = nullptr;
+        for (size_t i = _anchors.size(); i > 0; --i) {
+                const Anchor &a = _anchors[i - 1];
+                if (a.outputIndex <= outputIndex) {
+                        active = &a;
+                        break;
+                }
+        }
+        if (active == nullptr) return MediaTimeStamp();
+        const uint64_t offset = outputIndex - active->outputIndex;
+        if (offset == 0) return active->pts;
+        Duration       step = Duration::fromSamples(static_cast<int64_t>(offset), _format.sampleRate());
+        MediaTimeStamp result = active->pts;
+        result.setTimeStamp(result.timeStamp() + step);
+        return result;
+}
+
+void AudioBuffer::pruneAnchorsLocked() {
+        // Keep the anchor that covers the current head sample.  An
+        // anchor at index N covers samples [N, nextAnchor.outputIndex);
+        // drop it once a later anchor's index is at or before head.
+        while (_anchors.size() >= 2) {
+                const Anchor &second = _anchors[1];
+                if (second.outputIndex > _outputConsumedTotal) break;
+                _anchors.popFromFront();
+        }
 }
 
 // ---------------------------------------------------------------------------
@@ -314,7 +403,11 @@ void AudioBuffer::readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) c
 // ---------------------------------------------------------------------------
 
 #if PROMEKI_ENABLE_SRC
-Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
+Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples,
+                                   size_t &outputSamples, long &inputUsed) {
+        outputSamples = 0;
+        inputUsed = 0;
+
         // Lazy-init the resampler.
         if (!_resampler.isValid()) {
                 Error err = _resampler.setup(_format.channels(), _resamplerQuality);
@@ -345,7 +438,6 @@ Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
                 scratch = static_cast<float *>(heapScratch.data());
         }
 
-        long inputUsed = 0;
         long outputGen = 0;
         err = _resampler.process(nativeData, static_cast<long>(samples), scratch, static_cast<long>(estOutput),
                                  inputUsed, outputGen, false);
@@ -378,11 +470,14 @@ Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
                 }
         }
 
+        outputSamples = outSamples;
         return Error::Ok;
 }
 #endif
 
-Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat) {
+Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat,
+                              const MediaTimeStamp &pts, size_t &outputSamples) {
+        outputSamples = 0;
         if (!_format.isValid() || !srcFormat.isValid()) return Error::InvalidArgument;
         if (data == nullptr && samples > 0) return Error::InvalidArgument;
         if (samples == 0) return Error::Ok;
@@ -450,7 +545,26 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
                         if (err.isError()) return err;
                         nativeData = heapFloat;
                 }
-                return resampleAndPush(nativeData, samples);
+                size_t produced = 0;
+                long   inputUsed = 0;
+                Error  err = resampleAndPush(nativeData, samples, produced, inputUsed);
+                if (err.isError()) return err;
+                // Lay the anchor at the first output index this push
+                // produced.  Done after resampleAndPush so the
+                // resampler has been lazy-initialised and its
+                // filterDelay() value is available for the anchor's
+                // PTS adjustment.
+                layAnchorLocked(_outputProducedTotal, pts);
+                _outputProducedTotal += produced;
+                // Track drift-correction work as the difference
+                // between actual output and the count the nominal
+                // ratio would predict.
+                const double nominal = static_cast<double>(_format.sampleRate()) /
+                                       static_cast<double>(srcFormat.sampleRate());
+                const int64_t predicted = llround(static_cast<double>(inputUsed) * nominal);
+                _resamplerSampleDelta += static_cast<int64_t>(produced) - predicted;
+                outputSamples = produced;
+                return Error::Ok;
         }
 #else
         if (srcFormat.sampleRate() != _format.sampleRate()) {
@@ -463,6 +577,12 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
 
         if (_capacity - _count < samples) return Error::NoSpace;
 
+        // Same-rate path: input frames map one-to-one onto output
+        // frames, so lay the anchor at the next-produced index now —
+        // every successful return below writes exactly @p samples
+        // output frames.
+        layAnchorLocked(_outputProducedTotal, pts);
+
         const bool processing = needsFloatProcessing();
 
         // Fast path: formats match and no float-domain processing is
@@ -471,6 +591,8 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
         // float samples.
         if (!processing && srcFormat.format().id() == _format.format().id()) {
                 writeBytesAtTail(static_cast<const uint8_t *>(data), samples);
+                _outputProducedTotal += samples;
+                outputSamples = samples;
                 return Error::Ok;
         }
 
@@ -520,6 +642,8 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
                                                                   samples, channels, floatScratch);
                         if (err.isError()) return err;
                         writeBytesAtTail(static_cast<const uint8_t *>(tempDst.data()), samples);
+                        _outputProducedTotal += samples;
+                        outputSamples = samples;
                         return Error::Ok;
                 }
 
@@ -546,6 +670,8 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
                 }
                 _tail = (_tail + samples) % _capacity;
                 _count += samples;
+                _outputProducedTotal += samples;
+                outputSamples = samples;
                 return Error::Ok;
         }
 
@@ -651,6 +777,8 @@ Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc 
 
         _tail = (_tail + samples) % _capacity;
         _count += samples;
+        _outputProducedTotal += samples;
+        outputSamples = samples;
 
         return Error::Ok;
 }
@@ -661,6 +789,8 @@ size_t AudioBuffer::popLocked(void *dst, size_t samples) {
         readBytesFromHead(static_cast<uint8_t *>(dst), toRead, 0);
         _head = (_head + toRead) % _capacity;
         _count -= toRead;
+        _outputConsumedTotal += toRead;
+        pruneAnchorsLocked();
         return toRead;
 }
 
@@ -668,17 +798,25 @@ size_t AudioBuffer::popLocked(void *dst, size_t samples) {
 // Push (public, locked)
 // ---------------------------------------------------------------------------
 
-Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFormat) {
+Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFormat,
+                        const MediaTimeStamp &pts) {
         Mutex::Locker lock(_mutex);
-        Error         err = pushLocked(data, samples, srcFormat);
-        if (err.isOk() && samples > 0) _cv.wakeOne();
+        size_t        produced = 0;
+        Error         err = pushLocked(data, samples, srcFormat, pts, produced);
+        if (err.isOk() && produced > 0) _cv.wakeOne();
         return err;
 }
 
-Error AudioBuffer::pushSilence(size_t samples) {
+Error AudioBuffer::pushSilence(size_t samples, const MediaTimeStamp &pts) {
         Mutex::Locker lock(_mutex);
-        Error         err = pushSilenceLocked(samples);
-        if (err.isOk() && samples > 0) _cv.wakeOne();
+        // Silence always produces exactly @p samples output samples,
+        // so we can lay the anchor (if any) before writing.
+        if (pts.isValid()) layAnchorLocked(_outputProducedTotal, pts);
+        Error err = pushSilenceLocked(samples);
+        if (err.isOk()) {
+                _outputProducedTotal += samples;
+                if (samples > 0) _cv.wakeOne();
+        }
         return err;
 }
 
@@ -726,9 +864,12 @@ Error AudioBuffer::pushSilenceLocked(size_t samples) {
 // Pop (public, locked, non-blocking)
 // ---------------------------------------------------------------------------
 
-AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
+AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples, MediaTimeStamp *firstSamplePts) {
         Mutex::Locker lock(_mutex);
-        size_t        got = popLocked(dst, samples);
+        if (firstSamplePts != nullptr) {
+                *firstSamplePts = ptsAtOutputIndexLocked(_outputConsumedTotal);
+        }
+        size_t got = popLocked(dst, samples);
         return makeResult(got);
 }
 
@@ -736,11 +877,15 @@ AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
 // popWait (public, locked, blocking)
 // ---------------------------------------------------------------------------
 
-AudioBuffer::PopResult AudioBuffer::popWait(void *dst, size_t samples, unsigned int timeoutMs) {
+AudioBuffer::PopResult AudioBuffer::popWait(void *dst, size_t samples, unsigned int timeoutMs,
+                                            MediaTimeStamp *firstSamplePts) {
         Mutex::Locker lock(_mutex);
         if (_count < samples) {
                 Error waitErr = _cv.wait(_mutex, [&]() { return _count >= samples; }, timeoutMs);
                 if (waitErr != Error::Ok) return PopResult(0, waitErr);
+        }
+        if (firstSamplePts != nullptr) {
+                *firstSamplePts = ptsAtOutputIndexLocked(_outputConsumedTotal);
         }
         size_t got = popLocked(dst, samples);
         return makeResult(got);
@@ -750,8 +895,13 @@ AudioBuffer::PopResult AudioBuffer::popWait(void *dst, size_t samples, unsigned 
 // Peek / drop (public, locked)
 // ---------------------------------------------------------------------------
 
-AudioBuffer::PopResult AudioBuffer::peek(void *dst, size_t samples) const {
+AudioBuffer::PopResult AudioBuffer::peek(void *dst, size_t samples,
+                                         MediaTimeStamp *firstSamplePts) const {
         Mutex::Locker lock(_mutex);
+        if (firstSamplePts != nullptr) {
+                *firstSamplePts = (_count > 0) ? ptsAtOutputIndexLocked(_outputConsumedTotal)
+                                               : MediaTimeStamp();
+        }
         if (_count == 0 || samples == 0 || dst == nullptr) return makeResult<size_t>(0);
         size_t toRead = samples > _count ? _count : samples;
         readBytesFromHead(static_cast<uint8_t *>(dst), toRead, 0);
@@ -764,7 +914,110 @@ AudioBuffer::PopResult AudioBuffer::drop(size_t samples) {
         size_t toDrop = samples > _count ? _count : samples;
         _head = (_head + toDrop) % _capacity;
         _count -= toDrop;
+        _outputConsumedTotal += toDrop;
+        pruneAnchorsLocked();
         return makeResult(toDrop);
+}
+
+// ---------------------------------------------------------------------------
+// PcmAudioPayload helpers
+// ---------------------------------------------------------------------------
+
+Error AudioBuffer::push(const PcmAudioPayload &payload) {
+        if (!payload.desc().isValid()) return Error::InvalidArgument;
+        if (payload.desc().format().isPlanar()) {
+                promekiWarn("AudioBuffer::push(payload): planar payloads are not "
+                            "supported by the ring; use the raw push instead");
+                return Error::NotSupported;
+        }
+        if (payload.planeCount() == 0) return Error::NotSupported;
+        const BufferView::Entry plane0 = payload.plane(0);
+        if (plane0.size() == 0 && payload.sampleCount() > 0) return Error::NotSupported;
+        return push(plane0.data(), payload.sampleCount(), payload.desc(), payload.pts());
+}
+
+// Allocates and stamps a payload after popLocked has done the
+// actual sample copy.  Called by both popPayload and popWaitPayload
+// with @c _mutex held.
+static PcmAudioPayload::Ptr buildPopPayload(const AudioDesc &format, Buffer &&buf, size_t got,
+                                            const MediaTimeStamp &pts) {
+        BufferView           view(std::move(buf), 0, got * format.bytesPerSampleStride());
+        PcmAudioPayload::Ptr out = PcmAudioPayload::Ptr::create(format, got, view);
+        if (pts.isValid()) out.modify()->setPts(pts);
+        return out;
+}
+
+Result<PcmAudioPayload::Ptr> AudioBuffer::popPayload(size_t minSamples, size_t maxSamples) {
+        if (maxSamples == 0 || minSamples > maxSamples) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::InvalidArgument);
+        }
+        Mutex::Locker lock(_mutex);
+        if (!_format.isValid()) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::InvalidArgument);
+        }
+        if (_count < minSamples) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::TryAgain);
+        }
+
+        const size_t want = (_count < maxSamples) ? _count : maxSamples;
+        const size_t stride = _format.bytesPerSampleStride();
+        Buffer       payloadBuf(want * stride);
+        if (want > 0 && !payloadBuf.isValid()) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::NoMem);
+        }
+        payloadBuf.setSize(want * stride);
+
+        const MediaTimeStamp firstPts = (want > 0) ? ptsAtOutputIndexLocked(_outputConsumedTotal)
+                                                   : MediaTimeStamp();
+        const size_t got = (want > 0) ? popLocked(payloadBuf.data(), want) : 0;
+
+        return makeResult(buildPopPayload(_format, std::move(payloadBuf), got, firstPts));
+}
+
+Result<PcmAudioPayload::Ptr> AudioBuffer::popWaitPayload(size_t minSamples, size_t maxSamples,
+                                                        unsigned int timeoutMs) {
+        if (maxSamples == 0 || minSamples > maxSamples) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::InvalidArgument);
+        }
+        Mutex::Locker lock(_mutex);
+        if (!_format.isValid()) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::InvalidArgument);
+        }
+        if (_count < minSamples) {
+                Error waitErr = _cv.wait(_mutex, [&]() { return _count >= minSamples; }, timeoutMs);
+                if (waitErr != Error::Ok) {
+                        return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), waitErr);
+                }
+        }
+
+        const size_t want = (_count < maxSamples) ? _count : maxSamples;
+        const size_t stride = _format.bytesPerSampleStride();
+        Buffer       payloadBuf(want * stride);
+        if (want > 0 && !payloadBuf.isValid()) {
+                return Result<PcmAudioPayload::Ptr>(PcmAudioPayload::Ptr(), Error::NoMem);
+        }
+        payloadBuf.setSize(want * stride);
+
+        const MediaTimeStamp firstPts = (want > 0) ? ptsAtOutputIndexLocked(_outputConsumedTotal)
+                                                   : MediaTimeStamp();
+        const size_t got = (want > 0) ? popLocked(payloadBuf.data(), want) : 0;
+
+        return makeResult(buildPopPayload(_format, std::move(payloadBuf), got, firstPts));
+}
+
+// ---------------------------------------------------------------------------
+// Inspectors
+// ---------------------------------------------------------------------------
+
+MediaTimeStamp AudioBuffer::nextSamplePts() const {
+        Mutex::Locker lock(_mutex);
+        if (_count == 0) return MediaTimeStamp();
+        return ptsAtOutputIndexLocked(_outputConsumedTotal);
+}
+
+int64_t AudioBuffer::resamplerSampleDelta() const {
+        Mutex::Locker lock(_mutex);
+        return _resamplerSampleDelta;
 }
 
 PROMEKI_NAMESPACE_END

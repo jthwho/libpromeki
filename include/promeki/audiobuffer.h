@@ -14,11 +14,14 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audiometer.h>
 #include <promeki/buffer.h>
+#include <promeki/deque.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
 #include <promeki/enums.h>
 #include <promeki/list.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/mutex.h>
+#include <promeki/pcmaudiopayload.h>
 #include <promeki/waitcondition.h>
 #if PROMEKI_ENABLE_SRC
 #include <promeki/audioresampler.h>
@@ -110,6 +113,36 @@ PROMEKI_NAMESPACE_BEGIN
  * differ, the nominal ratio handles the fixed conversion and the
  * drift adjustment rides on top.
  *
+ * @par Timestamp flow
+ *
+ * Producers may attach a @ref MediaTimeStamp to each @c push() call
+ * identifying the wall-clock time of the first input sample in that
+ * batch.  The buffer records one anchor per timestamped push — a
+ * pair of (output-sample index, MediaTimeStamp) — and recovers the
+ * PTS of any popped sample by adding @c (sampleIndex - anchor.index)
+ * @c / @c outputSampleRate to the anchor's wall-clock value.  The
+ * derivation is independent of the buffer's @em current sample rate
+ * versus the producer's, so the PTS surface is intrinsically
+ * resample-correct: when the rates differ or drift correction is
+ * active, the anchor is the wall-clock time at the input, and
+ * inter-anchor sample spacing reflects the output rate.
+ *
+ * When the resampler is active the buffer subtracts its filter
+ * delay (see @ref AudioResampler::filterDelay) from each anchor so
+ * the reported PTS represents the time the source captured those
+ * samples — not the time they emerged from the converter — keeping
+ * output stamps comparable to the inputs that produced them.
+ *
+ * Pushes that omit a timestamp do not lay an anchor; the samples
+ * extend whichever timeline the most recent anchor describes (or
+ * remain untimestamped if no anchor has ever been laid).
+ * @ref pushSilence behaves the same way: default-constructed PTS
+ * extends the current timeline, an explicit PTS lays a new anchor.
+ *
+ * @ref clear, @ref setFormat, and @ref setInputFormat all reset the
+ * anchor queue and the internal sample counters — a fresh timeline
+ * starts after each of those calls.
+ *
  * @par Thread Safety
  *
  * Fully thread-safe.  All push, pop, and query methods are
@@ -129,17 +162,29 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * AudioBuffer fifo(AudioDesc(AudioFormat::PCMI_S16LE, 48000, 2));
  * fifo.reserve(48000);                    // 1 second of headroom
- * fifo.setInputFormat(AudioFormat::NativeFloat, 48000, 2);
+ * fifo.setInputFormat(AudioDesc(AudioFormat::NativeFloat, 48000, 2));
  *
- * // Producer thread
- * Audio chunk(nativeDesc, 1602);
- * // ... fill chunk ...
- * fifo.push(chunk);
+ * // Producer thread — push a fully-stamped PcmAudioPayload.  The
+ * // FIFO carries the PTS through any rate conversion and drift
+ * // correction automatically.
+ * PcmAudioPayload::Ptr in = ... ;          // 1602 native-float frames,
+ *                                          // PTS set by the capture path.
+ * fifo.push(*in);
  *
- * // Consumer thread — blocks until 1600 samples are ready
- * Audio slice(outputDesc, 1600);
- * auto [got, err] = fifo.popWait(slice, 1600, 200);
+ * // Consumer thread — block until at least one packet (1600 frames),
+ * // then drain up to one packet.  The returned payload's pts() is the
+ * // wall-clock time of the first popped sample.
+ * auto [out, err] = fifo.popWaitPayload(1600, 1600, 200);
  * if(err == Error::Timeout) { ... }
+ * else {
+ *         MediaTimeStamp packetPts = out->pts();
+ *         // ... ship `out` downstream ...
+ * }
+ *
+ * // Or with raw buffers when you control the destination:
+ * int16_t slice[1600 * 2];
+ * MediaTimeStamp pts;
+ * fifo.popWait(slice, 1600, 200, &pts);
  * @endcode
  */
 class AudioBuffer {
@@ -409,12 +454,21 @@ class AudioBuffer {
                 /**
                  * @brief Pushes interleaved raw samples into the buffer.
                  *
+                 * When @p pts is valid the buffer lays an anchor at
+                 * the first output sample produced by this push,
+                 * adjusted by @ref AudioResampler::filterDelay when
+                 * the resampler is active.  When @p pts is invalid the
+                 * samples extend whatever timeline the previous anchor
+                 * established (or remain untimestamped).
+                 *
                  * @param data       Pointer to @p samples x bytes-per-sample bytes.
                  * @param samples    Number of samples (not bytes) in @p data.
                  * @param srcFormat  Format of @p data.
+                 * @param pts        Optional PTS of the first input sample.
                  * @return Error::Ok, NoSpace, NotSupported, or InvalidArgument.
                  */
-                Error push(const void *data, size_t samples, const AudioDesc &srcFormat);
+                Error push(const void *data, size_t samples, const AudioDesc &srcFormat,
+                           const MediaTimeStamp &pts = MediaTimeStamp());
 
                 /**
                  * @brief Pushes @p samples samples of silence into the buffer.
@@ -428,15 +482,22 @@ class AudioBuffer {
                  * are not applied (silence in produces silence out
                  * regardless of those settings).
                  *
+                 * When @p pts is valid a new anchor is laid at the
+                 * first silence sample.  When @p pts is invalid the
+                 * silence extends the existing timeline — useful for
+                 * gap-fill paths that splice silence into a running
+                 * stream without resetting timing information.
+                 *
                  * Wakes any thread blocked in @c popWait().
                  *
                  * @param samples Sample count to insert.
+                 * @param pts     Optional PTS of the first silence sample.
                  * @return @c Error::Ok, @c Error::NoSpace if the ring
                  *         can't hold @p samples, or
                  *         @c Error::InvalidArgument if no storage format
                  *         has been set.
                  */
-                Error pushSilence(size_t samples);
+                Error pushSilence(size_t samples, const MediaTimeStamp &pts = MediaTimeStamp());
 
                 /**
                  * @brief Pops up to @p samples samples into a raw buffer.
@@ -444,35 +505,139 @@ class AudioBuffer {
                  * Non-blocking: returns immediately with whatever is
                  * available (which may be 0).
                  *
-                 * @param dst     Destination buffer, must be at least
-                 *                @p samples x bytes-per-sample bytes.
-                 * @param samples Number of samples to pop.
+                 * @param dst             Destination buffer, must be at
+                 *                        least @p samples x bytes-per-sample bytes.
+                 * @param samples         Number of samples to pop.
+                 * @param firstSamplePts  Optional out-param.  When non-null,
+                 *                        receives the PTS of the first
+                 *                        popped sample, or an invalid
+                 *                        @ref MediaTimeStamp when the
+                 *                        sample has no anchor coverage.
                  * @return {count, Error::Ok}.
                  */
-                PopResult pop(void *dst, size_t samples);
+                PopResult pop(void *dst, size_t samples, MediaTimeStamp *firstSamplePts = nullptr);
 
                 /**
                  * @brief Blocks until @p samples samples are available, then pops into a raw buffer.
                  *
-                 * @param dst       Destination buffer.
-                 * @param samples   Number of samples to wait for and pop.
-                 * @param timeoutMs Maximum wait in milliseconds (0 = indefinite).
+                 * @param dst             Destination buffer.
+                 * @param samples         Number of samples to wait for and pop.
+                 * @param timeoutMs       Maximum wait in milliseconds (0 = indefinite).
+                 * @param firstSamplePts  Optional out-param; see @ref pop.
                  * @return {samples, Error::Ok} on success, or
                  *         {0, Error::Timeout} if the wait expired.
                  */
-                PopResult popWait(void *dst, size_t samples, unsigned int timeoutMs = 0);
+                PopResult popWait(void *dst, size_t samples, unsigned int timeoutMs = 0,
+                                  MediaTimeStamp *firstSamplePts = nullptr);
 
                 /**
                  * @brief Peeks at the next @p samples samples without consuming.
+                 *
+                 * @param dst             Destination buffer.
+                 * @param samples         Number of samples to inspect.
+                 * @param firstSamplePts  Optional out-param; see @ref pop.
                  * @return {count, Error::Ok}.
                  */
-                PopResult peek(void *dst, size_t samples) const;
+                PopResult peek(void *dst, size_t samples,
+                               MediaTimeStamp *firstSamplePts = nullptr) const;
 
                 /**
                  * @brief Drops the next @p samples samples without copying.
                  * @return {count, Error::Ok}.
                  */
                 PopResult drop(size_t samples);
+
+                /**
+                 * @brief Pushes a PCM audio payload into the buffer.
+                 *
+                 * Library-first convenience that pulls the payload's
+                 * descriptor, sample count, plane data, and PTS into
+                 * the underlying 4-arg @ref push.  Only interleaved
+                 * payloads are accepted in this revision — payloads
+                 * whose @ref AudioFormat is planar (separate
+                 * per-channel buffers) return @ref Error::NotSupported
+                 * because the ring requires a single contiguous
+                 * source.  Use the raw @ref push for those.
+                 *
+                 * @param payload The payload to push.
+                 * @return @ref Error::Ok on success, @ref Error::NotSupported
+                 *         for planar payloads or empty plane data,
+                 *         @ref Error::InvalidArgument if the descriptor
+                 *         is invalid, or any error from the underlying
+                 *         @ref push.
+                 */
+                Error push(const PcmAudioPayload &payload);
+
+                /**
+                 * @brief Pops samples into a freshly-allocated stamped
+                 *        @ref PcmAudioPayload, non-blocking.
+                 *
+                 * Reads @c min(available(), @p maxSamples) frames into
+                 * a new payload carrying the buffer's storage format,
+                 * the actual frame count, a single-slice
+                 * @ref BufferView over a freshly allocated
+                 * @ref Buffer, and the PTS of the first popped sample.
+                 *
+                 * - @c available() @c < @p minSamples
+                 *   -> @c {nullptr, @c Error::TryAgain}
+                 * - @c maxSamples @c == @c 0 or
+                 *   @p minSamples @c > @p maxSamples
+                 *   -> @c {nullptr, @c Error::InvalidArgument}
+                 * - storage format invalid
+                 *   -> @c {nullptr, @c Error::InvalidArgument}
+                 *
+                 * @param minSamples Minimum frames required to succeed
+                 *                   (use @c 1 for "succeed if any are
+                 *                   available", @c 0 for "always
+                 *                   succeed").
+                 * @param maxSamples Maximum frames to return — the
+                 *                   allocated payload is sized to fit
+                 *                   exactly @p maxSamples, even if the
+                 *                   buffer holds fewer.
+                 */
+                Result<PcmAudioPayload::Ptr> popPayload(size_t minSamples, size_t maxSamples);
+
+                /**
+                 * @brief Blocking variant of @ref popPayload.
+                 *
+                 * Waits until @c available() @c >= @p minSamples or
+                 * the timeout expires, then pops up to @p maxSamples
+                 * frames.
+                 *
+                 * - timeout    -> @c {nullptr, @c Error::Timeout}
+                 * - any other early wake error from @ref WaitCondition
+                 *                -> @c {nullptr, that error}
+                 *
+                 * Other failure cases match @ref popPayload.
+                 *
+                 * @param minSamples Minimum frames to wait for.
+                 * @param maxSamples Maximum frames to return.
+                 * @param timeoutMs  Wait timeout, in milliseconds
+                 *                   (0 = indefinite).
+                 */
+                Result<PcmAudioPayload::Ptr> popWaitPayload(size_t minSamples, size_t maxSamples,
+                                                            unsigned int timeoutMs = 0);
+
+                /**
+                 * @brief Returns the PTS of the next sample to pop, or
+                 *        an invalid @ref MediaTimeStamp when the
+                 *        buffer is empty or the sample has no anchor.
+                 */
+                MediaTimeStamp nextSamplePts() const;
+
+                /**
+                 * @brief Returns the cumulative difference between
+                 *        output samples produced by the resampler and
+                 *        the count that the nominal ratio would
+                 *        predict, accounting for drift-correction work.
+                 *
+                 * Always 0 when the resampler is not engaged or
+                 * @c PROMEKI_ENABLE_SRC is off.  Useful for monitoring
+                 * how much extra (or fewer) samples the converter has
+                 * synthesised compared with a pure rate-only
+                 * conversion.
+                 */
+                int64_t resamplerSampleDelta() const;
 
         private:
                 /** @brief Bytes per sample frame (all channels combined). */
@@ -485,9 +650,40 @@ class AudioBuffer {
                 void readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) const;
 
                 // Lock-free internals called with _mutex already held.
-                Error  pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat);
+                Error  pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat,
+                                  const MediaTimeStamp &pts, size_t &outputSamples);
                 Error  pushSilenceLocked(size_t samples);
                 size_t popLocked(void *dst, size_t samples);
+
+                /** @brief One PTS anchor: output-sample index plus its wall-clock PTS. */
+                struct Anchor {
+                                uint64_t       outputIndex = 0;
+                                MediaTimeStamp pts;
+                };
+
+                /**
+                 * @brief Lays a PTS anchor at the given output-sample
+                 *        absolute index, subtracting the resampler's
+                 *        filter delay when the resampler is engaged.
+                 *
+                 * Called with @c _mutex held.  No-op when @p pts is
+                 * invalid.
+                 */
+                void layAnchorLocked(uint64_t outputIndex, const MediaTimeStamp &pts);
+
+                /**
+                 * @brief Returns the PTS for an absolute output-sample
+                 *        index by interpolating from the latest anchor
+                 *        that covers it.  Called with @c _mutex held.
+                 */
+                MediaTimeStamp ptsAtOutputIndexLocked(uint64_t outputIndex) const;
+
+                /**
+                 * @brief Drops anchors that have been fully consumed,
+                 *        leaving only the anchor that covers the head.
+                 *        Called with @c _mutex held.
+                 */
+                void pruneAnchorsLocked();
 
                 mutable Mutex _mutex;
                 WaitCondition _cv;
@@ -503,6 +699,11 @@ class AudioBuffer {
                 List<int>       _remap;     ///< Per-output-channel source-channel index (empty = identity).
                 AudioMeter::Ptr _meter;     ///< Optional metering observer.
 
+                Deque<Anchor> _anchors;                  ///< Outstanding PTS anchors in output-index order.
+                uint64_t      _outputProducedTotal = 0;  ///< Monotonic count of output samples ever produced.
+                uint64_t      _outputConsumedTotal = 0;  ///< Monotonic count of output samples ever popped or dropped.
+                int64_t       _resamplerSampleDelta = 0; ///< Cumulative outputGen - round(inputUsed * nominalRatio).
+
                 /** @brief Returns true when remap, gain, or meter forces the via-float path. */
                 bool needsFloatProcessing() const { return !_remap.isEmpty() || !_gains.isEmpty() || _meter.isValid(); }
 
@@ -515,8 +716,18 @@ class AudioBuffer {
                 double         _driftRatio = 1.0;    ///< Last applied ratio.
                 double         _driftIntegral = 0.0; ///< Accumulated error for I term.
 
-                /** @brief Resamples native-float data and writes the result to the ring. */
-                Error resampleAndPush(const float *nativeData, size_t samples);
+                /**
+                 * @brief Resamples native-float data and writes the
+                 *        result to the ring.
+                 *
+                 * @param nativeData     Interleaved native-float input.
+                 * @param samples        Input frame count.
+                 * @param outputSamples  Out-param: output frames written.
+                 * @param inputUsed      Out-param: input frames consumed.
+                 * @return Error::Ok on success.
+                 */
+                Error resampleAndPush(const float *nativeData, size_t samples,
+                                      size_t &outputSamples, long &inputUsed);
 
                 /** @brief Returns true if the resampler should be used for this push. */
                 bool needsResampler(const AudioDesc &srcFormat) const;
