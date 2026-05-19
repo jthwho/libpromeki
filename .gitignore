@@ -5,4 +5,6 @@ build-*/
 .precommit.lock
 COMMIT_MSG
 BUILD
-
+__pycache__/
+# Auto-discovered repo-local mirrors config (see cmake/PromekiSubmodules.cmake).
+/mirrors.cmake

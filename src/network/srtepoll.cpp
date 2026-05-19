@@ -145,23 +145,23 @@ int SrtEpoll::dispatchOnce(int timeoutMs) {
 }
 
 int SrtEpoll::run() {
-        _stopRequested.store(false, std::memory_order_release);
+        _stopRequested.store(false, MemoryOrder::Release);
         int total = 0;
         // Bounded wait so a concurrent stop() lands within ~100ms; SRT
         // epoll has no equivalent of eventfd-based wakeup, so polling
         // is the simplest way to keep stop() responsive without
         // smuggling a sentinel through the multiplexer.
-        while (!_stopRequested.load(std::memory_order_acquire)) {
+        while (!_stopRequested.load(MemoryOrder::Acquire)) {
                 const int n = dispatchOnce(100);
                 if (n > 0) total += n;
                 if (n < 0) break; // hard error — bail out
         }
-        _stopRequested.store(false, std::memory_order_release);
+        _stopRequested.store(false, MemoryOrder::Release);
         return total;
 }
 
 void SrtEpoll::stop() {
-        _stopRequested.store(true, std::memory_order_release);
+        _stopRequested.store(true, MemoryOrder::Release);
 }
 
 int SrtEpoll::wait(ReadyList &ready, int timeoutMs) {

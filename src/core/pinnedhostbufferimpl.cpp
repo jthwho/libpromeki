@@ -5,9 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
+#include <promeki/atomic.h>
 #include <promeki/pinnedhostbufferimpl.h>
 #include <promeki/securemem.h>
 #include <promeki/logger.h>
@@ -33,9 +33,9 @@ size_t roundUpToAlign(size_t bytes, size_t align) {
 // RLIMIT_MEMLOCK so operators see *why* page-locking failed without
 // having every buffer spam its own warn line.
 void warnRlimitMemlockOnce(size_t requestedBytes) {
-        static std::atomic<bool> issued{false};
-        bool                     expected = false;
-        if (!issued.compare_exchange_strong(expected, true)) return;
+        static Atomic<bool> issued{false};
+        bool                expected = false;
+        if (!issued.compareExchangeStrong(expected, true)) return;
 #if defined(PROMEKI_PLATFORM_POSIX)
         struct rlimit rl {};
         if (getrlimit(RLIMIT_MEMLOCK, &rl) == 0) {

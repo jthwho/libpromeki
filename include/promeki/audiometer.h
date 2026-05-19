@@ -10,12 +10,12 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
-#include <atomic>
 #include <cmath>
 #include <cstddef>
-#include <memory>
+#include <promeki/atomic.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -86,7 +86,7 @@ class AudioMeter {
  *     ring buffer, and converges to the true sliding RMS within
  *     a few window lengths.
  *
- * Both values are stored in @c std::atomic<float> for lock-free
+ * Both values are stored in @c Atomic<float> for lock-free
  * readout from any thread.  The meter does not hold internal
  * state beyond the per-channel atomics, so it is safe to query
  * concurrently with @ref process.
@@ -111,12 +111,11 @@ class AudioPeakRmsMeter : public AudioMeter {
                 /** @brief Reconfigures the meter for a different channel count. */
                 void setChannels(size_t channels) {
                         _channels = channels;
-                        _peak = std::make_unique<std::atomic<float>[]>(channels);
-                        _rms = std::make_unique<std::atomic<float>[]>(channels);
-                        for (size_t i = 0; i < channels; ++i) {
-                                _peak[i].store(0.0f, std::memory_order_relaxed);
-                                _rms[i].store(0.0f, std::memory_order_relaxed);
-                        }
+                        // Value-init form invokes each Atomic<float>'s
+                        // explicit default constructor (T{} = 0.0f), so
+                        // no follow-up zero-fill loop is needed.
+                        _peak = MeterArray::createArrayValueInit(channels);
+                        _rms  = MeterArray::createArrayValueInit(channels);
                 }
 
                 /** @brief Returns the channel count. */
@@ -125,13 +124,13 @@ class AudioPeakRmsMeter : public AudioMeter {
                 /** @brief Returns the current peak linear amplitude on channel @p ch. */
                 float peak(size_t ch) const {
                         if (ch >= _channels) return 0.0f;
-                        return _peak[ch].load(std::memory_order_relaxed);
+                        return _peak[ch].load(MemoryOrder::Relaxed);
                 }
 
                 /** @brief Returns the current RMS linear amplitude on channel @p ch. */
                 float rms(size_t ch) const {
                         if (ch >= _channels) return 0.0f;
-                        return _rms[ch].load(std::memory_order_relaxed);
+                        return _rms[ch].load(MemoryOrder::Relaxed);
                 }
 
                 /**
@@ -168,9 +167,9 @@ class AudioPeakRmsMeter : public AudioMeter {
                         const float alpha = _rmsAlpha;
 
                         for (size_t c = 0; c < channels; ++c) {
-                                float peak = _peak[c].load(std::memory_order_relaxed) * decay;
+                                float peak = _peak[c].load(MemoryOrder::Relaxed) * decay;
                                 // Convert held RMS back to mean-square for accumulation.
-                                float held = _rms[c].load(std::memory_order_relaxed);
+                                float held = _rms[c].load(MemoryOrder::Relaxed);
                                 float msq = held * held;
                                 for (size_t f = 0; f < frames; ++f) {
                                         float s = samples[f * channels + c];
@@ -178,31 +177,31 @@ class AudioPeakRmsMeter : public AudioMeter {
                                         if (a > peak) peak = a;
                                         msq = msq + alpha * (s * s - msq);
                                 }
-                                _peak[c].store(peak, std::memory_order_relaxed);
-                                _rms[c].store(std::sqrt(msq < 0.0f ? 0.0f : msq), std::memory_order_relaxed);
+                                _peak[c].store(peak, MemoryOrder::Relaxed);
+                                _rms[c].store(std::sqrt(msq < 0.0f ? 0.0f : msq), MemoryOrder::Relaxed);
                         }
                 }
 
                 /** @copydoc AudioMeter::reset */
                 void reset() override {
                         for (size_t i = 0; i < _channels; ++i) {
-                                _peak[i].store(0.0f, std::memory_order_relaxed);
-                                _rms[i].store(0.0f, std::memory_order_relaxed);
+                                _peak[i].store(0.0f, MemoryOrder::Relaxed);
+                                _rms[i].store(0.0f, MemoryOrder::Relaxed);
                         }
                 }
 
         private:
-                // std::atomic<float> is non-movable, so the per-channel
-                // arrays are held by std::unique_ptr<T[]> — promeki::List
-                // and the promeki::Atomic<> wrapper require movable
-                // elements and would not compile here.  This is the one
-                // class in the project where a raw std::unique_ptr<T[]>
-                // is preferred over a library wrapper.
-                size_t                                _channels = 0;
-                std::unique_ptr<std::atomic<float>[]> _peak;
-                std::unique_ptr<std::atomic<float>[]> _rms;
-                float                                 _peakDecay = 1.0f;
-                float                                 _rmsAlpha = 1.0f / 4800.0f;
+                // Atomic<float> is non-movable, so the per-channel
+                // arrays are held by UniquePtr<T[]> — List<T> and
+                // most other container wrappers require movable
+                // elements and would not compile here.
+                using MeterArray = promeki::UniquePtr<promeki::Atomic<float>[]>;
+
+                size_t     _channels = 0;
+                MeterArray _peak;
+                MeterArray _rms;
+                float      _peakDecay = 1.0f;
+                float      _rmsAlpha = 1.0f / 4800.0f;
 };
 
 PROMEKI_NAMESPACE_END

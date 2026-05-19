@@ -11,8 +11,8 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_V4L2
 #include <promeki/namespace.h>
-#include <atomic>
 #include <thread>
+#include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/dedicatedthreadmediaio.h>
@@ -205,8 +205,8 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 bool       _audioEnabled = false;
 
                 // -- Capture threads --
-                std::atomic<bool> _stopFlag{false};
-                std::atomic<int>  _deviceError{0}; // errno from device failure (ENODEV etc.)
+                Atomic<bool>      _stopFlag{false};
+                Atomic<int>     _deviceError{0}; // errno from device failure (ENODEV etc.)
                 // Set by cancelBlockingWork() when MediaIO::close()
                 // wants to unwind an in-flight Read whose strand
                 // worker is parked in _videoQueue.pop().  The pop
@@ -215,7 +215,7 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 // raised.  Reset at the start of every Open so a
                 // closed-then-reopened MediaIO doesn't carry the
                 // previous instance's cancellation forward.
-                std::atomic<bool> _readCancelled{false};
+                Atomic<bool>      _readCancelled{false};
                 std::thread       _videoThread;
                 std::thread       _audioThread;
 
@@ -224,31 +224,17 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 Queue<VideoPayload::Ptr> _videoQueue;
 
                 // -- Audio ring buffer (audio thread → read command) --
+                //
+                // Each ALSA capture batch is pushed with a wall-clock
+                // MediaTimeStamp anchor; the ring's anchor queue
+                // recovers the PTS of the first popped sample on
+                // drain, so downstream drift correction sees real
+                // ALSA delivery rate via samples / ts_delta.
                 AudioBuffer _audioRing;
 
-                // -- Push-time tracking for audio MediaTimeStamps --
-                //
-                // ALSA delivers samples in small chunks; we need to
-                // stamp each outgoing audio chunk (one per video
-                // frame) with the wall-time the first sample was
-                // pushed, so downstream drift correction can derive
-                // the true source audio rate from timestamp deltas.
-                //
-                // The list holds one record per outstanding push;
-                // the front is the oldest unpopped sample.  When a
-                // record's samplesRemaining reaches zero it is
-                // removed; when a pop consumes only part of a record
-                // its wallNs is advanced by (consumed / sampleRate).
-                struct AudioPushRecord {
-                                int64_t wallNs;
-                                size_t  samplesRemaining;
-                };
-                mutable Mutex         _audioPushMutex;
-                List<AudioPushRecord> _audioPushRecords;
-
                 // -- Telemetry (updated atomically by capture threads) --
-                std::atomic<int64_t> _framesCaptured{0};
-                std::atomic<int64_t> _alsaOverruns{0};
+                Atomic<int64_t>     _framesCaptured{0};
+                Atomic<int64_t>     _alsaOverruns{0};
 
                 // -- Debug reporting --
                 PeriodicCallback _debugReport;
@@ -287,21 +273,21 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 // thread is the bottleneck.  DQBUF lag compares
                 // @c vbuf.timestamp to wall-clock @c now() so we can
                 // tell how stale the frame is by the time we see it.
-                std::atomic<uint32_t> _lastVbufSequence{0};
-                std::atomic<int64_t>  _kernelDroppedPeriod{0};
-                std::atomic<int64_t>  _loopIterationsPeriod{0};
-                std::atomic<int64_t>  _loopTimeSumUsPeriod{0};
-                std::atomic<int64_t>  _loopTimeMaxUsPeriod{0};
-                std::atomic<int64_t>  _dqbufLagSumUsPeriod{0};
-                std::atomic<int64_t>  _dqbufLagMaxUsPeriod{0};
-                std::atomic<int64_t>  _dqbufLagCountPeriod{0};
+                Atomic<uint32_t> _lastVbufSequence{0};
+                Atomic<int64_t>      _kernelDroppedPeriod{0};
+                Atomic<int64_t>      _loopIterationsPeriod{0};
+                Atomic<int64_t>      _loopTimeSumUsPeriod{0};
+                Atomic<int64_t>      _loopTimeMaxUsPeriod{0};
+                Atomic<int64_t>      _dqbufLagSumUsPeriod{0};
+                Atomic<int64_t>      _dqbufLagMaxUsPeriod{0};
+                Atomic<int64_t>      _dqbufLagCountPeriod{0};
                 // Count of frames whose hardware SOE timestamp was so
                 // far off the wall clock that we substituted the
                 // dequeue time instead.  Should be ~1 at stream
                 // startup; any steady-state non-zero value indicates
                 // the UVC PTS regression isn't locking (driver bug or
                 // camera glitch) and deserves investigation.
-                std::atomic<int64_t> _timestampSubstitutedPeriod{0};
+                Atomic<int64_t>     _timestampSubstitutedPeriod{0};
                 // Capture-thread-only state (no atomic needed):
                 bool    _seqInitialized = false;
                 int64_t _prevIterUs = 0;

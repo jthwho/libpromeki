@@ -79,7 +79,7 @@ using ObjectBaseList = ::promeki::List<ObjectBase *>;
  * An @c ObjectBasePtr<Derived> converts implicitly to @c ObjectBasePtr<Base>
  * where @c Derived inherits from @c Base, mirroring raw pointer conversions.
  *
- * @note Thread safety: The internal pointer is stored as a std::atomic,
+ * @note Thread safety: The internal pointer is stored as an Atomic,
  * and the ObjectBase pointer map is protected by a Mutex. This allows
  * an ObjectBasePtr to be safely invalidated from a different thread
  * than the one holding it, as happens during cross-thread object
@@ -120,16 +120,19 @@ template <typename T = ObjectBase> class ObjectBasePtr {
                 }
 
                 /** @brief Returns true if the tracked pointer is not null. */
-                bool isValid() const { return p.load(std::memory_order_acquire) != nullptr; }
+                bool isValid() const { return p.load(MemoryOrder::Acquire) != nullptr; }
 
                 /** @brief Returns a mutable pointer to the tracked object. */
-                T *data() { return static_cast<T *>(p.load(std::memory_order_acquire)); }
+                T *data() { return static_cast<T *>(p.load(MemoryOrder::Acquire)); }
 
                 /** @brief Returns a const pointer to the tracked object. */
-                const T *data() const { return static_cast<const T *>(p.load(std::memory_order_acquire)); }
+                const T *data() const { return static_cast<const T *>(p.load(MemoryOrder::Acquire)); }
 
         private:
-                std::atomic<ObjectBase *> p{nullptr};
+                /** @brief Alias for the type-erased atomic pointer to the tracked object. */
+                using TrackerPtr = promeki::Atomic<ObjectBase *>;
+
+                TrackerPtr p{nullptr};
 
                 // Atomically (under @ref ObjectBase::objectBasePtrMutex)
                 // sets @c p to @p obj and registers @c &p in
@@ -147,7 +150,7 @@ template <typename T = ObjectBase> class ObjectBasePtr {
                 // another ObjectBasePtr's atomic under the same lock,
                 // so a concurrent destruction of the tracked object
                 // cannot slip between the read and the registration.
-                void linkFromSource(const std::atomic<ObjectBase *> &source);
+                void linkFromSource(const TrackerPtr &source);
 
                 void unlink();
 };
@@ -510,9 +513,11 @@ class ObjectBase {
                 EventLoop     *_eventLoop = nullptr;
                 ObjectBaseList _childList;
                 List<SlotItem> _slotList;
-                Map<std::atomic<ObjectBase *> *,
-                    std::atomic<ObjectBase *> *>
-                        _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
+
+                /** @brief Type-erased pointer to an ObjectBasePtr's atomic tracker slot. */
+                using PointerMapKey = promeki::Atomic<ObjectBase *> *;
+                using PointerMap    = promeki::Map<PointerMapKey, PointerMapKey>;
+                PointerMap _pointerMap; ///< Keys are &ObjectBasePtr::p; stored as a type-erased handle so runCleanup() can null every tracker without knowing its @c T.
                 List<Cleanup> _cleanupList;
 
                 // A single process-wide mutex serializes every
@@ -563,7 +568,7 @@ class ObjectBase {
                         {
                                 Mutex::Locker lock(objectBasePtrMutex());
                                 for (auto item : _pointerMap) {
-                                        item.first->store(nullptr, std::memory_order_release);
+                                        item.first->store(nullptr, MemoryOrder::Release);
                                 }
                                 _pointerMap.clear();
                         }
@@ -599,7 +604,7 @@ template <typename T> inline void ObjectBasePtr<T>::linkTo(ObjectBase *obj) {
         // can be invalidated concurrently — that one re-checks the
         // atomic under the lock.
         Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
-        p.store(obj, std::memory_order_relaxed);
+        p.store(obj, MemoryOrder::Relaxed);
         if (obj != nullptr) {
                 obj->_pointerMap[&p] = &p;
         }
@@ -607,7 +612,7 @@ template <typename T> inline void ObjectBasePtr<T>::linkTo(ObjectBase *obj) {
 }
 
 template <typename T>
-inline void ObjectBasePtr<T>::linkFromSource(const std::atomic<ObjectBase *> &source) {
+inline void ObjectBasePtr<T>::linkFromSource(const TrackerPtr &source) {
         // Lock first, then load the source: if a concurrent
         // runCleanup is mid-flight on the tracked object it has
         // already nulled the source's atomic before releasing the
@@ -620,8 +625,8 @@ inline void ObjectBasePtr<T>::linkFromSource(const std::atomic<ObjectBase *> &so
         // misses us because we're not in @c _pointerMap yet, and the
         // subsequent registration writes through a freed @c obj.
         Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
-        ObjectBase   *obj = source.load(std::memory_order_relaxed);
-        p.store(obj, std::memory_order_relaxed);
+        ObjectBase   *obj = source.load(MemoryOrder::Relaxed);
+        p.store(obj, MemoryOrder::Relaxed);
         if (obj != nullptr) {
                 obj->_pointerMap[&p] = &p;
         }
@@ -634,7 +639,7 @@ template <typename T> inline void ObjectBasePtr<T>::unlink() {
         // the same lock while it walks _pointerMap and frees the
         // trackers.
         Mutex::Locker lock(ObjectBase::objectBasePtrMutex());
-        ObjectBase   *obj = p.exchange(nullptr, std::memory_order_acq_rel);
+        ObjectBase   *obj = p.exchange(nullptr, MemoryOrder::AcqRel);
         if (obj != nullptr) {
                 auto it = obj->_pointerMap.find(&p);
                 if (it != obj->_pointerMap.end()) {

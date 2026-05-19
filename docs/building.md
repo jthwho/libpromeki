@@ -11,8 +11,10 @@ user-facing CMake option is documented here.
 
 - A C++20 compiler (GCC 11+ or Clang 14+ recommended)
 - CMake 3.22 or newer
-- `git` (required — the build clones vendored dependencies via
-  submodules)
+- `git` (required — CMake auto-initializes the
+  vendored-dependency submodules under `thirdparty/` on first
+  configure; only the ones the active feature set actually needs are
+  fetched, see @ref building_submodules "Submodule auto-init" below)
 - Python 3 with the `jsonschema` and `jinja2` modules (only when
   `PROMEKI_ENABLE_TLS` is on, the default).  The vendored
   mbedTLS 3.6 LTS runs a build-time PSA Crypto driver-wrapper
@@ -52,7 +54,7 @@ Optional host tooling picked up automatically when present:
 ## Quick Start {#building_quickstart}
 
 ```sh
-git clone --recurse-submodules https://github.com/jthwho/libpromeki.git
+git clone https://github.com/jthwho/libpromeki.git
 cd libpromeki
 cmake -B build
 cmake --build build -j$(nproc)
@@ -61,6 +63,12 @@ cmake --build build -j$(nproc)
 This produces `libpromeki.so`, `libpromeki-tui.so`, the unit-test
 binaries, the demos, and the utility programs under `build/` using
 the default **DevRelease** build type.
+
+`--recurse-submodules` on the `git clone` is optional — CMake
+fetches the `thirdparty/*` submodules the active configuration
+needs on first configure (see @ref building_submodules
+"Submodule auto-init").  Cloning with `--recurse-submodules`
+just front-loads the work.
 
 For non-trivial configurations the recommended approach is a
 @ref building_config_files "config file" rather than a long string
@@ -161,6 +169,108 @@ system-installed copy:
 Vendored dependencies currently in the tree: zlib-ng, libspng,
 libjpeg-turbo, SVT-JPEG-XS, FreeType, libsndfile, libsamplerate,
 nlohmann/json, libvtc, Highway, cirf, doctest.
+
+---
+
+## Submodule auto-init {#building_submodules}
+
+The first `cmake -B build` walks `thirdparty/*` and initializes
+only the git submodules the active configuration actually needs.
+A submodule is fetched when **both**:
+
+- Its enabling feature flag is on
+  (e.g. `PROMEKI_ENABLE_PNG` for `thirdparty/libspng`,
+  `PROMEKI_ENABLE_NTV2` for `thirdparty/libajantv2`).
+- Its corresponding `PROMEKI_USE_SYSTEM_*` opt-out is off
+  (i.e. CMake will use the vendored copy rather than a system one).
+
+Unconditional dependencies (`thirdparty/nlohmann-json`,
+`thirdparty/pugixml`, `thirdparty/libvtc`) are pulled whenever
+their `PROMEKI_USE_SYSTEM_*` opt-out is off.  Submodules that
+aren't required are left untouched on disk — a `minimal` build
+never clones libspng, libjpeg-turbo, FreeType, or anything else
+it won't compile.
+
+A submodule already populated on disk (either by a previous
+configure, a manual `git submodule update`, or a source tarball
+drop) is **not** re-fetched.  If a submodule fetch fails the
+configure aborts with a `FATAL_ERROR` that includes the exact git
+invocation to re-run by hand.
+
+Source trees with no `.git` directory (release tarballs, archive
+drops) skip the auto-init step entirely — the user / packager is
+expected to have staged `thirdparty/` contents themselves.
+
+The logic lives in `cmake/PromekiSubmodules.cmake`.  To add a new
+vendored dependency, add a path to `_PROMEKI_SUBMODULE_PATHS` and a
+matching branch in `_promeki_submodule_required()` describing the
+flag combination that requires it.
+
+### Mirror configuration {#building_submodule_mirrors}
+
+To fetch the submodules from an internal git mirror instead of
+their upstream URLs — useful on air-gapped networks, behind a
+slow uplink, or when standing up a reproducible offline build —
+point CMake at a mirrors config file:
+
+```sh
+cmake -B build -DPROMEKI_MIRRORS_FILE=/path/to/mirrors.cmake
+```
+
+The file is a small subset of CMake that sets one variable,
+`PROMEKI_MIRRORS`, as a flat list of *(upstream-url, mirror-url)*
+pairs.  Each pair becomes a
+`git -c url.<mirror>.insteadOf=<upstream>` argument passed to
+`git submodule update --init`, so git's longest-match rule
+applies — a per-repo entry overrides a blanket prefix rewrite for
+the same URL.
+
+```cmake
+# mirrors.cmake — example
+set(BASE "ssh://git@gitlab.example.com:22")
+
+set(PROMEKI_MIRRORS
+    "https://github.com/nlohmann/json.git"
+        "${BASE}/thirdparty/nlohmann-json.git"
+    "https://github.com/libsndfile/libsndfile.git"
+        "${BASE}/thirdparty/libsndfile.git"
+
+    # Blanket prefix rewrite — catches everything else on github.com.
+    "https://github.com/"
+        "ssh://git@github.com/"
+)
+```
+
+A fully-commented template ships at `cmake/mirrors.example.cmake`.
+
+If `-DPROMEKI_MIRRORS_FILE=` is not given, CMake searches a list
+of well-known locations and uses the first one that exists.
+Search order (first hit wins):
+
+1. The `$PROMEKI_MIRRORS_FILE` environment variable.
+2. `<repo-root>/mirrors.cmake` — repo-local (gitignored).
+3. Per-user config:
+   - Linux: `$XDG_CONFIG_HOME/promeki/mirrors.cmake`
+     (default `~/.config/promeki/mirrors.cmake`).
+   - macOS: `~/Library/Application Support/promeki/mirrors.cmake`
+     (XDG fallback `~/.config/promeki/mirrors.cmake`).
+   - Windows: `%APPDATA%\promeki\mirrors.cmake`.
+4. System-wide config:
+   - Linux: `/etc/promeki/mirrors.cmake`.
+   - macOS: `/Library/Application Support/promeki/mirrors.cmake`
+     (or `/etc/promeki/mirrors.cmake`).
+   - Windows: `%PROGRAMDATA%\promeki\mirrors.cmake`.
+
+The same file feeds `scripts/mirror-thirdparty.py`, which
+populates / refreshes the mirror end of the relationship: walks
+`.gitmodules`, looks each submodule's upstream URL up in
+`PROMEKI_MIRRORS`, optionally creates the matching GitLab project
+via the API (when `PROMEKI_MIRROR_API` is set and a token is
+available), and `git push --mirror`s the latest upstream refs to
+it.  Run `scripts/mirror-thirdparty.py --help` for the full
+flag set — the script auto-discovers the same config file CMake
+does, so a single file drives both build-time fetch overrides and
+mirror maintenance.
 
 ---
 

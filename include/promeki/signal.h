@@ -12,7 +12,7 @@
 #if PROMEKI_ENABLE_CORE
 #include <tuple>
 #include <functional>
-#include <atomic>
+#include <promeki/atomic.h>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
@@ -300,7 +300,7 @@ template <typename... Args> class Signal {
                 // Signal is embedded in every ObjectBase-derived type via
                 // the @c PROMEKI_SIGNAL macro.
                 static size_t nextSlotId() {
-                        static std::atomic<size_t> counter{0};
+                        static Atomic<size_t> counter{0};
                         return ++counter;
                 }
 };

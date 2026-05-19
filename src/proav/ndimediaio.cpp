@@ -315,7 +315,7 @@ void NdiMediaIO::cancelBlockingWork() {
         // every poll-timeout boundary and bails to Error::Cancelled
         // so MediaIO::close() can drain in finite time.  Same pattern
         // as V4L2.
-        _readCancelled.store(true, std::memory_order_release);
+        _readCancelled.store(true, MemoryOrder::Release);
 }
 
 Error NdiMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
@@ -359,7 +359,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 return firstErr;
         }
 
-        cmd.currentFrame = FrameNumber{static_cast<int64_t>(_framesSent.load(std::memory_order_relaxed) + 1)};
+        cmd.currentFrame = FrameNumber{static_cast<int64_t>(_framesSent.load(MemoryOrder::Relaxed) + 1)};
         cmd.frameCount   = MediaIO::FrameCountInfinite;
         return Error::Ok;
 }
@@ -382,15 +382,15 @@ Error NdiMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
 }
 
 Error NdiMediaIO::executeCmd(MediaIOCommandStats &cmd) {
-        cmd.stats.set(StatsFramesSent, _framesSent.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsAudioFramesSent, _audioFramesSent.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsBytesSent, _bytesSent.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsFramesReceived, _framesReceived.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsAudioFramesReceived, _audioFramesReceived.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsMetadataReceived, _metadataReceived.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsDroppedReceives, _droppedReceives.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsAudioSilenceFilled, _audioSilenceSamples.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsAudioGapEvents, _audioGapEvents.load(std::memory_order_relaxed));
+        cmd.stats.set(StatsFramesSent, _framesSent.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsAudioFramesSent, _audioFramesSent.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsBytesSent, _bytesSent.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsFramesReceived, _framesReceived.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsAudioFramesReceived, _audioFramesReceived.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsMetadataReceived, _metadataReceived.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsDroppedReceives, _droppedReceives.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsAudioSilenceFilled, _audioSilenceSamples.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsAudioGapEvents, _audioGapEvents.load(MemoryOrder::Relaxed));
         cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_videoQueue.size()));
         cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(VideoQueueDepth));
         return Error::Ok;
@@ -410,7 +410,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         vp = std::move(popResult.first());
                         break;
                 }
-                if (_readCancelled.load(std::memory_order_acquire)) {
+                if (_readCancelled.load(MemoryOrder::Acquire)) {
                         return Error::Cancelled;
                 }
         }
@@ -443,21 +443,20 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                            "for %zu bytes",
                                            bufBytes);
                         } else {
-                        auto [got, err]        = _audioRing.pop(pcm.data(), avail);
+                        // PTS = sender-anchored time of the FIRST
+                        // sample in this drain.  AudioBuffer's anchor
+                        // queue lays one anchor per timestamped push
+                        // (and per gap-bridging silence) and reports
+                        // the head-sample PTS via the pop out-param,
+                        // so coalesced multi-frame drains correctly
+                        // reflect the oldest still-buffered timestamp.
+                        MediaTimeStamp audioPts;
+                        auto [got, err]        = _audioRing.pop(pcm.data(), avail, &audioPts);
                         if (err.isOk() && got > 0) {
                                 size_t     usedBytes = nativeDesc.bufferSize(got);
                                 pcm.setSize(usedBytes);
                                 BufferView view(pcm, 0, usedBytes);
                                 auto       audioPayload = PcmAudioPayload::Ptr::create(nativeDesc, got, view);
-                                // PTS = sender-anchored time of the
-                                // FIRST sample in this drain — the
-                                // canonical anchor for the payload.
-                                // _audioFirstSampleTicks is set by
-                                // ingestNdiAudio when the ring transitions
-                                // from empty to non-empty (after any
-                                // gap-bridging silence) so it correctly
-                                // reflects coalesced multi-frame drains.
-                                MediaTimeStamp audioPts = ndiTimestampToPts(_audioFirstSampleTicks);
                                 if (audioPts.isValid()) {
                                         audioPayload.modify()->setPts(audioPts);
                                         audioPayload.modify()->setDts(audioPts);
@@ -472,9 +471,6 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                                 Metadata::AudioMarkers, _audioMarkersSinceDrain);
                                 }
                                 _audioMarkersSinceDrain.clear();
-                                // Ring is now empty — the next ingest
-                                // sets _audioFirstSampleTicks afresh.
-                                _audioFirstSampleTicks = 0;
                                 frame.addPayload(std::move(audioPayload));
                         }
                         }
@@ -506,7 +502,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandRead &cmd) {
         }
 
         cmd.frame        = frame;
-        cmd.currentFrame = FrameNumber{static_cast<int64_t>(_framesReceived.load(std::memory_order_relaxed))};
+        cmd.currentFrame = FrameNumber{static_cast<int64_t>(_framesReceived.load(MemoryOrder::Relaxed))};
         return Error::Ok;
 }
 
@@ -660,9 +656,9 @@ Error NdiMediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
                     static_cast<unsigned>(_audioChannels),
                     static_cast<double>(_audioSampleRate));
 
-        _framesSent.store(0, std::memory_order_relaxed);
-        _audioFramesSent.store(0, std::memory_order_relaxed);
-        _bytesSent.store(0, std::memory_order_relaxed);
+        _framesSent.store(0, MemoryOrder::Relaxed);
+        _audioFramesSent.store(0, MemoryOrder::Relaxed);
+        _bytesSent.store(0, MemoryOrder::Relaxed);
         return Error::Ok;
 }
 
@@ -785,8 +781,8 @@ Error NdiMediaIO::sendVideo(const UncompressedVideoPayload &vp) {
         }
         api->send_send_video_v2(_send, &f);
 
-        _framesSent.fetch_add(1, std::memory_order_relaxed);
-        _bytesSent.fetch_add(static_cast<int64_t>(bv.size()), std::memory_order_relaxed);
+        _framesSent.fetchAndAdd(1, MemoryOrder::Relaxed);
+        _bytesSent.fetchAndAdd(static_cast<int64_t>(bv.size()), MemoryOrder::Relaxed);
         return Error::Ok;
 }
 
@@ -886,8 +882,8 @@ Error NdiMediaIO::sendAudio(const PcmAudioPayload &ap) {
         }
         api->send_send_audio_v3(_send, &f);
 
-        _audioFramesSent.fetch_add(1, std::memory_order_relaxed);
-        _bytesSent.fetch_add(static_cast<int64_t>(bv.size()), std::memory_order_relaxed);
+        _audioFramesSent.fetchAndAdd(1, MemoryOrder::Relaxed);
+        _bytesSent.fetchAndAdd(static_cast<int64_t>(bv.size()), MemoryOrder::Relaxed);
         return Error::Ok;
 }
 
@@ -1043,12 +1039,12 @@ Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
         _audioSampleRate = cfg.getAs<float>(MediaConfig::AudioRate, 48000.0f);
         _audioChannels   = static_cast<size_t>(cfg.getAs<int32_t>(MediaConfig::AudioChannels, 2));
 
-        _stopFlag.store(false, std::memory_order_release);
-        _readCancelled.store(false, std::memory_order_release);
-        _framesReceived.store(0, std::memory_order_relaxed);
-        _audioFramesReceived.store(0, std::memory_order_relaxed);
-        _metadataReceived.store(0, std::memory_order_relaxed);
-        _droppedReceives.store(0, std::memory_order_relaxed);
+        _stopFlag.store(false, MemoryOrder::Release);
+        _readCancelled.store(false, MemoryOrder::Release);
+        _framesReceived.store(0, MemoryOrder::Relaxed);
+        _audioFramesReceived.store(0, MemoryOrder::Relaxed);
+        _metadataReceived.store(0, MemoryOrder::Relaxed);
+        _droppedReceives.store(0, MemoryOrder::Relaxed);
 
         _captureThread = std::thread([this] { captureLoop(); });
         promekiInfo("NdiMediaIO: receiver opened for source '%s' (bandwidth=%s, color=%s)",
@@ -1059,7 +1055,7 @@ Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
 
 void NdiMediaIO::closeSource() {
         if (!_recv) return;
-        _stopFlag.store(true, std::memory_order_release);
+        _stopFlag.store(true, MemoryOrder::Release);
         if (_captureThread.joinable()) {
                 _captureThread.join();
         }
@@ -1078,11 +1074,10 @@ void NdiMediaIO::closeSource() {
         // Reset the per-stream audio timeline state so the next open
         // starts from a clean slate.  No mutex needed — the capture
         // thread is already joined.
-        _audioFirstSampleTicks = 0;
         _audioNextSampleTicks  = 0;
         _audioMarkersSinceDrain.clear();
-        _audioSilenceSamples.store(0, std::memory_order_relaxed);
-        _audioGapEvents.store(0, std::memory_order_relaxed);
+        _audioSilenceSamples.store(0, MemoryOrder::Relaxed);
+        _audioGapEvents.store(0, MemoryOrder::Relaxed);
         _audioRing.clear();
 }
 
@@ -1106,7 +1101,6 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                 // at 48 kHz stereo float.  Shape-change clears the
                 // timeline anchor so the next push relatches.
                 _audioRing             = AudioBuffer(ringDesc, static_cast<size_t>(rate));
-                _audioFirstSampleTicks = 0;
                 _audioNextSampleTicks  = 0;
                 _audioMarkersSinceDrain.clear();
         }
@@ -1165,7 +1159,6 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                                             static_cast<double>(gapTicks) / kTicksPerSecond,
                                             _audioRing.available());
                                 _audioRing.clear();
-                                _audioFirstSampleTicks = 0;
                                 _audioNextSampleTicks  = 0;
                                 _audioMarkersSinceDrain.clear();
                         } else {
@@ -1180,7 +1173,13 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                                 if (gapSamples > 0) {
                                         const int64_t markerOffset =
                                                 static_cast<int64_t>(_audioRing.available());
-                                        Error se = _audioRing.pushSilence(static_cast<size_t>(gapSamples));
+                                        // Anchor the silence at the predicted
+                                        // gap-start tick so downstream sees a
+                                        // continuous PTS timeline through the
+                                        // bridged silence.
+                                        Error se = _audioRing.pushSilence(
+                                                static_cast<size_t>(gapSamples),
+                                                ndiTimestampToPts(_audioNextSampleTicks));
                                         if (se.isError()) {
                                                 promekiWarn("NdiMediaIO: audio gap silence-fill (%lld samples) "
                                                             "failed (%s) — gap left unbridged",
@@ -1188,17 +1187,8 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                                         } else {
                                                 _audioMarkersSinceDrain.append(
                                                         markerOffset, gapSamples, AudioMarkerType::SilenceFill);
-                                                _audioSilenceSamples.fetch_add(gapSamples,
-                                                                               std::memory_order_relaxed);
-                                                _audioGapEvents.fetch_add(1, std::memory_order_relaxed);
-                                                if (_audioFirstSampleTicks == 0) {
-                                                        // Ring was empty — the
-                                                        // synthesized silence is
-                                                        // the first sample of the
-                                                        // next drain, so anchor
-                                                        // PTS at the gap start.
-                                                        _audioFirstSampleTicks = _audioNextSampleTicks;
-                                                }
+                                                _audioSilenceSamples.fetchAndAdd(gapSamples, MemoryOrder::Relaxed);
+                                                _audioGapEvents.fetchAndAdd(1, MemoryOrder::Relaxed);
                                                 _audioNextSampleTicks += gapSamples *
                                                                          static_cast<int64_t>(ticksPerSample);
                                         }
@@ -1221,10 +1211,21 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
         // Push the real audio samples.  Tightly-packed planar input
         // goes directly to the ring; padded planar is coalesced to a
         // scratch buffer first so the planar fast-path can take it.
+        //
+        // PTS anchoring:
+        //  - In the jitter-window case we deliberately drop the
+        //    sender's noisy timestamp and let AudioBuffer extend the
+        //    prior anchor's timeline.
+        //  - Otherwise we lay an anchor on the sender timestamp so
+        //    the pop side can recover real wall-clock PTS via
+        //    AudioBuffer's anchor queue.
+        const MediaTimeStamp pushPts =
+                (haveSenderTs && !insideJitterWindow) ? ndiTimestampToPts(timestampTicks)
+                                                      : MediaTimeStamp();
         const size_t tightStride = samples * sizeof(float);
         Error        pe;
         if (channelStrideBytes == tightStride) {
-                pe = _audioRing.push(planarFloatData, samples, pushDesc);
+                pe = _audioRing.push(planarFloatData, samples, pushDesc, pushPts);
         } else {
                 Buffer packed(channels * tightStride);
                 if (!packed.isValid()) {
@@ -1235,7 +1236,7 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                                 std::memcpy(dst + c * tightStride,
                                             planarFloatData + c * channelStrideBytes, tightStride);
                         }
-                        pe = _audioRing.push(packed.data(), samples, pushDesc);
+                        pe = _audioRing.push(packed.data(), samples, pushDesc, pushPts);
                 }
         }
         if (pe.isError()) {
@@ -1244,16 +1245,11 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
                 return;
         }
 
-        // Update the timeline anchors.  When the ring was empty
-        // before this push, the first real sample becomes the PTS
-        // anchor.  For the next-sample anchor, we either advance
-        // the running prediction (jitter case — keep the prior
-        // anchor as the source of truth, the new timestamp is
-        // assumed noisy) or re-anchor on the new timestamp (real
-        // gap / regression / first frame).
-        if (_audioFirstSampleTicks == 0 && haveSenderTs) {
-                _audioFirstSampleTicks = timestampTicks;
-        }
+        // Update the next-sample anchor for gap detection on the
+        // following frame.  We either advance the running prediction
+        // (jitter case — keep the prior anchor as the source of
+        // truth, the new timestamp is assumed noisy) or re-anchor on
+        // the new timestamp (real gap / regression / first frame).
         if (haveSenderTs) {
                 if (insideJitterWindow) {
                         _audioNextSampleTicks += frameDurTicks;
@@ -1269,7 +1265,7 @@ void NdiMediaIO::captureLoop() {
         const NDIlib_v6 *api = NdiLib::instance().api();
         if (!api) return;
 
-        while (!_stopFlag.load(std::memory_order_acquire)) {
+        while (!_stopFlag.load(MemoryOrder::Acquire)) {
                 NDIlib_video_frame_v2_t   vframe = {};
                 NDIlib_audio_frame_v3_t   aframe = {};
                 NDIlib_metadata_frame_t   mframe = {};
@@ -1292,7 +1288,7 @@ void NdiMediaIO::captureLoop() {
                                         promekiErr("NdiMediaIO: capture got unsupported FourCC %s",
                                                    NdiFormat::fourccToString(vframe.FourCC).cstr());
                                         api->recv_free_video_v2(_recv, &vframe);
-                                        _droppedReceives.fetch_add(1, std::memory_order_relaxed);
+                                        _droppedReceives.fetchAndAdd(1, MemoryOrder::Relaxed);
                                         break;
                                 }
                                 // Upgrade to the matching HDR
@@ -1344,7 +1340,7 @@ void NdiMediaIO::captureLoop() {
                                                    "%zu bytes",
                                                    totalBytes);
                                         api->recv_free_video_v2(_recv, &vframe);
-                                        _droppedReceives.fetch_add(1, std::memory_order_relaxed);
+                                        _droppedReceives.fetchAndAdd(1, MemoryOrder::Relaxed);
                                         break;
                                 }
                                 std::memcpy(buf.data(), vframe.p_data, totalBytes);
@@ -1400,13 +1396,13 @@ void NdiMediaIO::captureLoop() {
                                 while (_videoQueue.size() >= VideoQueueDepth) {
                                         auto dropped = _videoQueue.tryPop();
                                         if (dropped.second().isOk()) {
-                                                _droppedReceives.fetch_add(1, std::memory_order_relaxed);
+                                                _droppedReceives.fetchAndAdd(1, MemoryOrder::Relaxed);
                                         } else {
                                                 break;
                                         }
                                 }
                                 _videoQueue.push(std::move(vp));
-                                _framesReceived.fetch_add(1, std::memory_order_relaxed);
+                                _framesReceived.fetchAndAdd(1, MemoryOrder::Relaxed);
                                 api->recv_free_video_v2(_recv, &vframe);
                                 break;
                         }
@@ -1424,7 +1420,7 @@ void NdiMediaIO::captureLoop() {
                                 ingestNdiAudio(static_cast<int64_t>(aframe.timestamp), samples, channels, rate,
                                                aframe.p_data,
                                                static_cast<size_t>(aframe.channel_stride_in_bytes));
-                                _audioFramesReceived.fetch_add(1, std::memory_order_relaxed);
+                                _audioFramesReceived.fetchAndAdd(1, MemoryOrder::Relaxed);
                                 api->recv_free_audio_v3(_recv, &aframe);
                                 break;
                         }
@@ -1442,14 +1438,14 @@ void NdiMediaIO::captureLoop() {
                                                              String(mframe.p_data));
                                         _hasPendingMetadata = true;
                                 }
-                                _metadataReceived.fetch_add(1, std::memory_order_relaxed);
+                                _metadataReceived.fetchAndAdd(1, MemoryOrder::Relaxed);
                                 api->recv_free_metadata(_recv, &mframe);
                                 break;
                         }
                         case NDIlib_frame_type_error:
                                 promekiErr("NdiMediaIO: capture got frame_type_error — receiver "
                                            "lost connection?");
-                                _stopFlag.store(true, std::memory_order_release);
+                                _stopFlag.store(true, MemoryOrder::Release);
                                 break;
                         case NDIlib_frame_type_status_change:
                         case NDIlib_frame_type_source_change:

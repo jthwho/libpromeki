@@ -12,11 +12,11 @@
 #include <promeki/buildinfo.h>
 #include <promeki/dir.h>
 #include <promeki/logger.h>
+#include <promeki/atomic.h>
 #include <promeki/memspace.h>
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
-#include <atomic>
 #include <cerrno>
 #include <csignal>
 #include <cstdlib>
@@ -1397,8 +1397,8 @@ bool CrashHandler::isInstalled() {
 }
 
 void CrashHandler::writeTrace(const char *reason) {
-        static std::atomic<uint32_t> traceSeq{0};
-        uint32_t                     seq = traceSeq.fetch_add(1, std::memory_order_relaxed) + 1;
+        static Atomic<uint32_t> traceSeq{0};
+        uint32_t                seq = traceSeq.fetchAndAdd(1, MemoryOrder::Relaxed) + 1;
 
         String appName = Application::appName();
         if (appName.isEmpty()) appName = "promeki";

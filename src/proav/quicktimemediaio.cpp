@@ -755,8 +755,9 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         if (_writerAudioTrackId != 0 && !audsWrite.isEmpty() && audsWrite[0].isValid()) {
                 const auto *uap = audsWrite[0]->as<PcmAudioPayload>();
                 if (uap != nullptr && uap->planeCount() > 0) {
-                        auto  view = uap->plane(0);
-                        Error aerr = _writerAudioFifo.push(view.data(), uap->sampleCount(), uap->desc());
+                        // Payload-aware push threads the payload's PTS
+                        // through the FIFO's anchor queue automatically.
+                        Error aerr = _writerAudioFifo.push(*uap);
                         if (aerr.isError()) {
                                 promekiWarn("QuickTimeMediaIO: audio push failed: %s", aerr.name().cstr());
                         }

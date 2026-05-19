@@ -837,7 +837,7 @@ void InspectorMediaIO::ingestAudio(const Frame &frame, InspectorEvent &event) {
         BufferView::Entry plane = uap->plane(0);
         if (!plane.isValid()) return;
 
-        Error err = _audioStream.push(plane.data(), samples, srcDesc);
+        Error err = _audioStream.push(plane.data(), samples, srcDesc, mts);
         if (err.isError()) {
                 promekiWarn("InspectorMediaIO: audio stream push failed (%s) — "
                             "%zu samples dropped on frame %lld",

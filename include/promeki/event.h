@@ -10,7 +10,6 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <atomic>
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>

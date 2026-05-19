@@ -11,8 +11,8 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NDI
 #include <promeki/namespace.h>
-#include <atomic>
 #include <thread>
+#include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiomarker.h>
@@ -258,9 +258,10 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                  * the ring's sample count and the sender's timeline
                  * stay in sync, appends a @ref AudioMarkerType::SilenceFill
                  * entry to @ref _audioMarkersSinceDrain for each gap,
-                 * and updates @ref _audioFirstSampleTicks /
-                 * @ref _audioNextSampleTicks.  Then pushes the real
-                 * samples.
+                 * and updates @ref _audioNextSampleTicks.  Then pushes
+                 * the real samples with the sender's timestamp as a
+                 * @ref MediaTimeStamp anchor so AudioBuffer's anchor
+                 * queue can recover head-sample PTS on drain.
                  *
                  * @c captureLoop calls this with the parsed-out fields
                  * of an @c NDIlib_audio_frame_v3_t — the SDK type does
@@ -316,9 +317,9 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
 
                 // Telemetry — atomic so executeCmd(Stats) can read without
                 // racing the strand worker that mutates these.
-                std::atomic<int64_t> _framesSent{0};
-                std::atomic<int64_t> _audioFramesSent{0};
-                std::atomic<int64_t> _bytesSent{0};
+                Atomic<int64_t>     _framesSent{0};
+                Atomic<int64_t>     _audioFramesSent{0};
+                Atomic<int64_t>     _bytesSent{0};
 
                 // ---- Source-mode state ----
                 //
@@ -329,8 +330,8 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 // queues are mutex-protected internally; the strand
                 // drains them in @c executeCmd(MediaIOCommandRead).
                 std::thread          _captureThread;
-                std::atomic<bool>    _stopFlag{false};
-                std::atomic<bool>    _readCancelled{false};
+                Atomic<bool>         _stopFlag{false};
+                Atomic<bool>         _readCancelled{false};
                 // Reader-side video queue.  Capacity is small (matches
                 // V4L2's "drop oldest, count drop") because NDI pushes
                 // at the source's true frame rate and we want timing-
@@ -339,34 +340,25 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 Queue<UncompressedVideoPayload::Ptr> _videoQueue;
                 AudioBuffer              _audioRing;
                 Mutex                    _audioMutex;
-                // Sender-anchored timeline state for the audio ring.
-                // Both fields are NDI 100ns ticks, guarded by
-                // @ref _audioMutex (the same mutex that guards the
-                // ring).  The capture thread updates them on every
-                // received audio frame; the strand drains and resets
-                // them on every executeCmd(Read).
+                // Predicted timestamp for the next arriving sample,
+                // computed as @c lastFrame.timestamp + samples * 1e7
+                // / rate.  Stays in NDI 100ns ticks; guarded by
+                // @ref _audioMutex.  The capture thread compares each
+                // new frame's timestamp against this value to detect
+                // gaps; the gap (if positive and within sanity
+                // bounds) is bridged with
+                // @ref AudioBuffer::pushSilence so the ring's sample
+                // count and the sender's media timeline stay in
+                // sync.  Zero when no prior frame has been pushed
+                // since the last reset.
                 //
-                // @c _audioFirstSampleTicks is the timestamp of the
-                // first sample currently sitting in the ring.  It's
-                // the canonical PTS for whatever the next drain emits
-                // — anchored on the sender's first-sample time, not
-                // on the most-recent NDI frame's timestamp (which
-                // would be the *last* sample's anchor and therefore
-                // lie about a coalesced multi-frame drain).  Zero
-                // when no anchor is latched (ring empty + no prior
-                // frames since the last reset).
-                //
-                // @c _audioNextSampleTicks is the timestamp the next
-                // arriving sample is expected to land on, computed as
-                // @c lastFrame.timestamp + samples * 1e7 / rate.
-                // The capture thread compares each new frame's
-                // timestamp against this value to detect gaps; the
-                // gap (if positive and within sanity bounds) is
-                // bridged with @ref AudioBuffer::pushSilence so the
-                // ring's sample count and the sender's media
-                // timeline stay in sync.  Zero when no prior frame
-                // has been pushed since the last reset.
-                int64_t                  _audioFirstSampleTicks = 0;
+                // The PTS of the first sample currently in the ring
+                // is recovered directly from AudioBuffer's anchor
+                // queue on drain — push() lays a sender-anchored
+                // MediaTimeStamp per timestamped frame, so coalesced
+                // multi-frame drains correctly report the oldest
+                // still-buffered timestamp without any additional
+                // tracking here.
                 int64_t                  _audioNextSampleTicks  = 0;
                 // Markers accumulated for the next drained payload.
                 // Each entry's @c offset is the sample index within
@@ -382,10 +374,10 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 // executeCmd(Stats) can publish it without taking
                 // @ref _audioMutex.  Mirrored as
                 // @ref StatsAudioSilenceFilled.
-                std::atomic<int64_t>     _audioSilenceSamples{0};
+                Atomic<int64_t>          _audioSilenceSamples{0};
                 // Total contiguous silence-fill events since the
                 // last open.  Mirrored as @ref StatsAudioGapEvents.
-                std::atomic<int64_t>     _audioGapEvents{0};
+                Atomic<int64_t>          _audioGapEvents{0};
                 Mutex                    _metadataMutex;
                 Metadata                 _pendingMetadata;
                 bool                     _hasPendingMetadata = false;
@@ -397,10 +389,10 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 int                      _bitDepthHint     = 0; // 0 = Auto (16-bit).
 
                 // Reader-side telemetry.
-                std::atomic<int64_t> _framesReceived{0};
-                std::atomic<int64_t> _audioFramesReceived{0};
-                std::atomic<int64_t> _metadataReceived{0};
-                std::atomic<int64_t> _droppedReceives{0};
+                Atomic<int64_t>     _framesReceived{0};
+                Atomic<int64_t>     _audioFramesReceived{0};
+                Atomic<int64_t>     _metadataReceived{0};
+                Atomic<int64_t>     _droppedReceives{0};
 
                 // Source-mode clock — driven by NDI per-frame
                 // timestamps from the capture thread.  Owned via

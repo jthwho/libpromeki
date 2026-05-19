@@ -7,6 +7,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/atomic.h>
 #include <promeki/platform.h>
 #include <promeki/uniqueptr.h>
 #include <promeki/logger.h>
@@ -253,19 +254,26 @@ TEST_CASE("UniquePtr_Reset") {
         CHECK(objectsAlive == 0);
 }
 
-TEST_CASE("UniquePtr_ResetToSamePointer") {
+// UniquePtr<T>::reset matches std::unique_ptr::reset — calling
+// reset(get()) is a deliberate use-after-free, not a no-op.  The
+// documented contract is "delete current, then assign", so this test
+// only exercises the legitimate reset paths (replacement object and
+// nullptr); the same-pointer case is documented as caller error and
+// is therefore not tested here.
+TEST_CASE("UniquePtr_ResetReleasesPriorObject") {
         objectsAlive = 0;
-        Base *raw = new Base(9);
-        auto  ptr = UniquePtr<Base>::takeOwnership(raw);
+        auto ptr = UniquePtr<Base>::create(9);
         CHECK(objectsAlive == 1);
 
-        // Passing the same pointer should be a no-op, not double-delete
-        ptr.reset(raw);
+        // Replace with a new object — old one must be deleted before
+        // the new one becomes the owned pointer.
+        ptr.reset(new Base(10));
         CHECK(ptr.isValid());
-        CHECK(ptr->value == 9);
+        CHECK(ptr->value == 10);
         CHECK(objectsAlive == 1);
 
-        ptr.clear();
+        ptr.reset(nullptr);
+        CHECK(ptr.isNull());
         CHECK(objectsAlive == 0);
 }
 
@@ -488,4 +496,142 @@ TEST_CASE("UniquePtr_NotCopyable") {
         CHECK(std::is_copy_assignable_v<UniquePtr<Base>> == false);
         CHECK(std::is_move_constructible_v<UniquePtr<Base>> == true);
         CHECK(std::is_move_assignable_v<UniquePtr<Base>> == true);
+}
+
+// ============================================================================
+// Array specialization: UniquePtr<T[]>
+// ============================================================================
+
+TEST_CASE("UniquePtrArray_CreateArray_DefaultInitTrivial") {
+        // For trivially-default-constructible T, createArray leaves
+        // the storage uninitialised — we can only check that
+        // operator[] returns the underlying storage and writes are
+        // visible.  No content assertion on the uninitialised cells.
+        auto arr = UniquePtr<int[]>::createArray(4);
+        REQUIRE(arr.isValid());
+        for (size_t i = 0; i < 4; ++i) arr[i] = static_cast<int>(i) * 7;
+        CHECK(arr[0] == 0);
+        CHECK(arr[3] == 21);
+}
+
+TEST_CASE("UniquePtrArray_CreateArrayValueInit_ZerosTrivial") {
+        // Value-init form must zero trivially-default-constructible T.
+        auto arr = UniquePtr<int[]>::createArrayValueInit(8);
+        REQUIRE(arr.isValid());
+        for (size_t i = 0; i < 8; ++i) CHECK(arr[i] == 0);
+}
+
+TEST_CASE("UniquePtrArray_CreateArrayValueInit_RunsDefaultCtor") {
+        // For class types with a user-provided default constructor
+        // (e.g. Plain — bumps objectsAlive on each construction),
+        // value-init invokes the constructor for every element.
+        objectsAlive = 0;
+        {
+                auto arr = UniquePtr<Plain[]>::createArrayValueInit(5);
+                REQUIRE(arr.isValid());
+                CHECK(objectsAlive == 5);
+                // Verify the elements are reachable via operator[].
+                arr[2].value = 99;
+                CHECK(arr[2].value == 99);
+        }
+        CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("UniquePtrArray_TakeOwnership") {
+        int *raw = new int[3]{10, 20, 30};
+        auto arr = UniquePtr<int[]>::takeOwnership(raw);
+        REQUIRE(arr.isValid());
+        CHECK(arr[0] == 10);
+        CHECK(arr[1] == 20);
+        CHECK(arr[2] == 30);
+        // raw is now owned by `arr`; no manual delete[].
+}
+
+TEST_CASE("UniquePtrArray_MoveConstruct") {
+        objectsAlive = 0;
+        auto a = UniquePtr<Plain[]>::createArrayValueInit(3);
+        CHECK(objectsAlive == 3);
+        auto b = std::move(a);
+        CHECK(a.isNull());
+        CHECK(b.isValid());
+        CHECK(objectsAlive == 3); // Move doesn't reconstruct.
+}
+
+TEST_CASE("UniquePtrArray_MoveAssign") {
+        objectsAlive = 0;
+        auto a = UniquePtr<Plain[]>::createArrayValueInit(2);
+        auto b = UniquePtr<Plain[]>::createArrayValueInit(5);
+        CHECK(objectsAlive == 7);
+        a = std::move(b);
+        // b's prior allocation now owned by a; a's prior 2 elements
+        // were destroyed by move-assign.
+        CHECK(objectsAlive == 5);
+        CHECK(b.isNull());
+}
+
+TEST_CASE("UniquePtrArray_Reset_ReleasesPriorArray") {
+        objectsAlive = 0;
+        auto arr = UniquePtr<Plain[]>::createArrayValueInit(4);
+        CHECK(objectsAlive == 4);
+        arr.reset(new Plain[2]());
+        CHECK(objectsAlive == 2);
+        arr.reset(nullptr);
+        CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("UniquePtrArray_Release") {
+        objectsAlive = 0;
+        auto  arr = UniquePtr<Plain[]>::createArrayValueInit(3);
+        Plain *raw = arr.release();
+        CHECK(arr.isNull());
+        CHECK(objectsAlive == 3);
+        delete[] raw;
+        CHECK(objectsAlive == 0);
+}
+
+TEST_CASE("UniquePtrArray_Swap") {
+        auto a = UniquePtr<int[]>::createArrayValueInit(2);
+        auto b = UniquePtr<int[]>::createArrayValueInit(3);
+        a[0] = 11;
+        b[0] = 22;
+        a.swap(b);
+        CHECK(a[0] == 22);
+        CHECK(b[0] == 11);
+
+        swap(a, b); // non-member swap
+        CHECK(a[0] == 11);
+        CHECK(b[0] == 22);
+}
+
+TEST_CASE("UniquePtrArray_BooleanContext") {
+        UniquePtr<int[]> empty;
+        CHECK(!empty);
+        CHECK(empty.isNull());
+        CHECK(empty == nullptr);
+
+        auto arr = UniquePtr<int[]>::createArrayValueInit(1);
+        CHECK(static_cast<bool>(arr));
+        CHECK(arr.isValid());
+        CHECK(arr != nullptr);
+}
+
+TEST_CASE("UniquePtrArray_NotCopyable") {
+        CHECK(std::is_copy_constructible_v<UniquePtr<int[]>> == false);
+        CHECK(std::is_copy_assignable_v<UniquePtr<int[]>> == false);
+        CHECK(std::is_move_constructible_v<UniquePtr<int[]>> == true);
+        CHECK(std::is_move_assignable_v<UniquePtr<int[]>> == true);
+}
+
+TEST_CASE("UniquePtrArray_NonMovableElement") {
+        // The motivating use case: hold an array of non-movable
+        // atomics that can't sit inside a List<T> or Atomic<T> array.
+        auto arr = UniquePtr<Atomic<int>[]>::createArrayValueInit(4);
+        REQUIRE(arr.isValid());
+        for (size_t i = 0; i < 4; ++i) {
+                CHECK(arr[i].load(MemoryOrder::Relaxed) == 0);
+                arr[i].store(static_cast<int>(i + 1), MemoryOrder::Relaxed);
+        }
+        for (size_t i = 0; i < 4; ++i) {
+                CHECK(arr[i].load(MemoryOrder::Relaxed) == static_cast<int>(i + 1));
+        }
 }

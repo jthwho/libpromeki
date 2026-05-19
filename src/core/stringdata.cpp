@@ -523,7 +523,7 @@ size_t StringLiteralData::count(const StringData &substr) const {
 }
 
 const std::string &StringLiteralData::str() const {
-        std::call_once(_strOnce, [this]() { _strCache.assign(_s, _len); });
+        callOnce(_strOnce, [this]() { _strCache.assign(_s, _len); });
         return _strCache;
 }
 
@@ -633,7 +633,7 @@ size_t StringUnicodeLiteralData::count(const StringData &substr) const {
 }
 
 const std::string &StringUnicodeLiteralData::str() const {
-        std::call_once(_strOnce, [this]() { _strCache.assign(_bytes, _byteLen); });
+        callOnce(_strOnce, [this]() { _strCache.assign(_bytes, _byteLen); });
         return _strCache;
 }
 

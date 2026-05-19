@@ -30,7 +30,8 @@ PROMEKI_NAMESPACE_BEGIN
  * libpromeki does not try to be a general-purpose CUDA wrapper.
  *
  * The entire CUDA API surface is compiled in only when
- * @c PROMEKI_ENABLE_CUDA is defined.  When it is not, the public
+ * @c PROMEKI_ENABLE_CUDA is enabled (i.e. non-zero — see
+ * @ref feature_flag_convention in @c config.h).  When it is not, the public
  * declarations below still exist (so conditional callers do not need
  * to guard every call site), but they report no available devices
  * and the bootstrap returns @c Error::NotImplemented.  This keeps

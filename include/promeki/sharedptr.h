@@ -11,12 +11,12 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <atomic>
 #include <cassert>
 #include <cstdlib>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
+#include <promeki/atomic.h>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -198,7 +198,7 @@ class RefCount {
 
                 /** @brief Copy assignment resets the reference count to 1. */
                 RefCount &operator=(const RefCount &) {
-                        v.store(1, std::memory_order_relaxed);
+                        v.store(1, MemoryOrder::Relaxed);
                         return *this;
                 }
 
@@ -209,8 +209,8 @@ class RefCount {
                  * the atomic increment itself needs to be consistent.
                  */
                 void inc() {
-                        if (v.load(std::memory_order_relaxed) >= Immortal) return;
-                        v.fetch_add(1, std::memory_order_relaxed);
+                        if (v.load(MemoryOrder::Relaxed) >= Immortal) return;
+                        v.fetchAndAdd(1, MemoryOrder::Relaxed);
                         return;
                 }
 
@@ -221,21 +221,21 @@ class RefCount {
                  * Returns false for immortal objects (never deleted).
                  */
                 bool dec() {
-                        if (v.load(std::memory_order_relaxed) >= Immortal) return false;
-                        return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
+                        if (v.load(MemoryOrder::Relaxed) >= Immortal) return false;
+                        return v.fetchAndSub(1, MemoryOrder::AcqRel) == 1;
                 }
 
                 /** @brief Returns the current reference count value. */
-                int value() const { return v.load(std::memory_order_relaxed); }
+                int value() const { return v.load(MemoryOrder::Relaxed); }
 
                 /** @brief Returns true if this refcount is immortal (will never reach zero). */
-                bool isImmortal() const { return v.load(std::memory_order_relaxed) >= Immortal; }
+                bool isImmortal() const { return v.load(MemoryOrder::Relaxed) >= Immortal; }
 
                 /** @brief Marks this refcount as immortal. inc/dec become no-ops. */
-                void setImmortal() { v.store(Immortal, std::memory_order_relaxed); }
+                void setImmortal() { v.store(Immortal, MemoryOrder::Relaxed); }
 
         private:
-                std::atomic<int> v;
+                Atomic<int> v;
 };
 
 /**

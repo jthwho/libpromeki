@@ -1021,6 +1021,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Archive
 
 # Third Party Dependencies ####################################################
 
+# Pull in any thirdparty/* git submodules the enabled feature set needs.
+# Respects PROMEKI_USE_SYSTEM_* opt-outs and PROMEKI_ENABLE_* gates so we
+# only fetch what we'll actually build.  Set PROMEKI_MIRRORS_FILE to a
+# CMake-includable file to rewrite upstream URLs via internal mirrors —
+# see cmake/mirrors.example.cmake.
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiSubmodules.cmake)
+promeki_init_submodules()
+
 # Prefix for vendored thirdparty builds
 set(PROMEKI_THIRDPARTY_PREFIX ${CMAKE_BINARY_DIR}/thirdparty-install)
 file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
@@ -1984,6 +1992,7 @@ set(PROMEKI_HEADERS
     include/promeki/numnameseq.h
     include/promeki/objectbase.h
     include/promeki/obfuscatedstring.h
+    include/promeki/once.h
     include/promeki/optional.h
     include/promeki/pidcontroller.h
     include/promeki/pixelformat.h
@@ -2851,7 +2860,9 @@ if(PROMEKI_ENABLE_CIRF)
     target_sources(promeki PRIVATE src/core/builtinresources.cpp)
 endif()
 
-target_link_libraries(promeki PUBLIC stdc++fs)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(promeki PUBLIC stdc++fs)
+endif()
 target_link_libraries(promeki PRIVATE m)
 target_compile_definitions(promeki PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 
@@ -3429,6 +3440,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/objectbase.cpp
         tests/unit/objectbase2.cpp
         tests/unit/objectbasepointer_race.cpp
+        tests/unit/once.cpp
         tests/unit/optional.cpp
         tests/unit/periodiccallback.cpp
         tests/unit/pair.cpp

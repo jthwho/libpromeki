@@ -12,8 +12,8 @@
 #if PROMEKI_ENABLE_CORE
 #include <string>
 #include <cstdint>
-#include <mutex>
 #include <promeki/namespace.h>
+#include <promeki/once.h>
 #include <promeki/sharedptr.h>
 #include <promeki/char.h>
 #include <promeki/list.h>
@@ -427,7 +427,7 @@ class StringLiteralData : public StringData {
                 const char            *_s;
                 size_t                 _len;
                 uint64_t               _hash;
-                mutable std::once_flag _strOnce;
+                mutable OnceFlag       _strOnce;
                 mutable std::string    _strCache;
 };
 
@@ -500,7 +500,7 @@ class StringUnicodeLiteralData : public StringData {
                 const char            *_bytes;
                 size_t                 _byteLen;
                 uint64_t               _hash;
-                mutable std::once_flag _strOnce;
+                mutable OnceFlag       _strOnce;
                 mutable std::string    _strCache;
 };
 

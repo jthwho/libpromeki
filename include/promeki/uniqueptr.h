@@ -168,11 +168,15 @@ template <typename T> class UniquePtr {
                  * @brief Replaces the owned object with a new one.
                  * @param obj The new pointer to adopt.  Defaults to null.
                  *
-                 * The previously owned object, if any, is deleted.  Passing the
-                 * already-owned pointer is a no-op.
+                 * The previously owned object, if any, is deleted via
+                 * @c delete, then @p obj is taken as the new owned
+                 * pointer.  Matches the contract of
+                 * @c std::unique_ptr::reset — calling
+                 * @c reset(get()) is a deliberate use-after-free, not
+                 * a no-op, so callers must not pass back the
+                 * already-owned pointer.
                  */
                 void reset(T *obj = nullptr) {
-                        if (_ptr == obj) return;
                         delete _ptr;
                         _ptr = obj;
                         return;
@@ -225,6 +229,201 @@ template <typename T> class UniquePtr {
 
 /** @brief Non-member swap for UniquePtr. */
 template <typename T> void swap(UniquePtr<T> &a, UniquePtr<T> &b) noexcept {
+        a.swap(b);
+}
+
+/**
+ * @brief Array specialization of @ref UniquePtr.
+ * @ingroup util
+ *
+ * Exclusive-ownership manager for a heap-allocated array.  The
+ * destructor uses @c delete[], matching the contract of
+ * @c std::unique_ptr<T[]>.  Use this when the element type is
+ * non-movable (e.g. @ref Atomic<T> or @c std::atomic<T>) and
+ * therefore cannot be stored in @ref List<T>.
+ *
+ * The API mirrors the single-object specialization where possible,
+ * with the additions:
+ *
+ *   - @ref createArray creates a default-initialised array of @p n
+ *     elements via @c new T[n].
+ *   - @c operator[] returns a reference to the @p i'th element.
+ *
+ * @note No size is tracked; the caller is responsible for not
+ *       indexing past the original allocation.  Mirrors
+ *       @c std::unique_ptr<T[]>.
+ *
+ * @par Example
+ * @code
+ * auto buf = UniquePtr<Atomic<float>[]>::createArray(channels);
+ * for(size_t i = 0; i < channels; ++i) {
+ *         buf[i].store(0.0f, MemoryOrder::Relaxed);
+ * }
+ * @endcode
+ */
+template <typename T> class UniquePtr<T[]> {
+        public:
+                /** @brief Constructs a null UniquePtr. */
+                UniquePtr() = default;
+
+                /** @brief Constructs a null UniquePtr from nullptr. */
+                UniquePtr(std::nullptr_t) noexcept {}
+
+                /** @brief UniquePtr is not copyable. */
+                UniquePtr(const UniquePtr &) = delete;
+
+                /** @brief UniquePtr is not copyable. */
+                UniquePtr &operator=(const UniquePtr &) = delete;
+
+                /** @brief Move-constructs from another UniquePtr, leaving the source null. */
+                UniquePtr(UniquePtr &&o) noexcept : _ptr(o._ptr) { o._ptr = nullptr; }
+
+                ~UniquePtr() { clear(); }
+
+                /** @brief Move-assigns from another UniquePtr, releasing any prior array. */
+                UniquePtr &operator=(UniquePtr &&o) noexcept {
+                        if (&o == this) return *this;
+                        clear();
+                        _ptr = o._ptr;
+                        o._ptr = nullptr;
+                        return *this;
+                }
+
+                /**
+                 * @brief Allocates an array of @p n default-initialised elements.
+                 *
+                 * Equivalent to @c new T[n].  For trivially default-
+                 * constructible types this leaves the storage
+                 * @b uninitialised; callers that need zeroed memory
+                 * should use @ref createArrayValueInit (or perform
+                 * their own initialisation after construction).
+                 */
+                static UniquePtr createArray(size_t n) {
+                        UniquePtr up;
+                        up._ptr = new T[n];
+                        return up;
+                }
+
+                /**
+                 * @brief Allocates an array of @p n value-initialised elements.
+                 *
+                 * Equivalent to @c new T[n](), so trivially
+                 * default-constructible types come back zeroed and
+                 * non-trivial types get their default constructor
+                 * invoked on every element.  Use this when the
+                 * caller would otherwise immediately follow
+                 * @ref createArray with an explicit zero-fill loop —
+                 * the value-init form lets the compiler choose the
+                 * cheapest initialisation idiom (typically a single
+                 * @c memset for scalar types).
+                 */
+                static UniquePtr createArrayValueInit(size_t n) {
+                        UniquePtr up;
+                        up._ptr = new T[n]();
+                        return up;
+                }
+
+                /**
+                 * @brief Takes exclusive ownership of an existing raw array pointer.
+                 * @param obj The raw pointer to adopt.  May be null.
+                 *
+                 * The caller must have obtained @p obj from @c new[]
+                 * (matching delete[]); the UniquePtr's destructor
+                 * uses @c delete[].
+                 */
+                static UniquePtr takeOwnership(T *obj) {
+                        UniquePtr up;
+                        up._ptr = obj;
+                        return up;
+                }
+
+                /** @brief Deletes the owned array (if any) and becomes null. */
+                void clear() {
+                        if (_ptr == nullptr) return;
+                        delete[] _ptr;
+                        _ptr = nullptr;
+                        return;
+                }
+
+                /**
+                 * @brief Releases ownership and returns the raw pointer.
+                 * @return The previously owned pointer, or null if this was null.
+                 */
+                T *release() {
+                        T *p = _ptr;
+                        _ptr = nullptr;
+                        return p;
+                }
+
+                /**
+                 * @brief Replaces the owned array with a new one.
+                 *
+                 * The previously owned array, if any, is freed via
+                 * @c delete[], then @p obj is taken as the new owned
+                 * pointer.  Matches the contract of
+                 * @c std::unique_ptr<T[]>::reset — calling
+                 * @c reset(get()) is a deliberate use-after-free, not
+                 * a no-op, so callers must not pass back the
+                 * already-owned pointer.
+                 */
+                void reset(T *obj = nullptr) {
+                        delete[] _ptr;
+                        _ptr = obj;
+                        return;
+                }
+
+                /** @brief Swaps the managed array pointer with @p other. */
+                void swap(UniquePtr &other) noexcept { std::swap(_ptr, other._ptr); }
+
+                /** @brief Returns true if this UniquePtr owns no array. */
+                bool isNull() const { return _ptr == nullptr; }
+
+                /** @brief Returns true if this UniquePtr owns an array. */
+                bool isValid() const { return _ptr != nullptr; }
+
+                /** @brief Returns true if this UniquePtr owns an array. */
+                explicit operator bool() const { return _ptr != nullptr; }
+
+                bool operator==(const UniquePtr &other) const { return _ptr == other._ptr; }
+                bool operator!=(const UniquePtr &other) const { return _ptr != other._ptr; }
+                bool operator==(std::nullptr_t) const { return _ptr == nullptr; }
+                bool operator!=(std::nullptr_t) const { return _ptr != nullptr; }
+
+                /**
+                 * @brief Returns the raw pointer to the owned array.
+                 *
+                 * Asserts that the UniquePtr is non-null.  Use @ref isNull
+                 * first if the caller cannot guarantee ownership, or use
+                 * @ref get to obtain a possibly-null raw pointer.
+                 */
+                T *ptr() const {
+                        assert(_ptr != nullptr);
+                        return _ptr;
+                }
+
+                /**
+                 * @brief Returns the raw pointer without asserting non-null.
+                 */
+                T *get() const { return _ptr; }
+
+                /**
+                 * @brief Returns a reference to the @p i'th array element.
+                 *
+                 * Asserts that the UniquePtr is non-null.  Out-of-range
+                 * indices are not bounds-checked — matching
+                 * @c std::unique_ptr<T[]>.
+                 */
+                T &operator[](size_t i) const {
+                        assert(_ptr != nullptr);
+                        return _ptr[i];
+                }
+
+        private:
+                T *_ptr = nullptr;
+};
+
+/** @brief Non-member swap for the array specialization of UniquePtr. */
+template <typename T> void swap(UniquePtr<T[]> &a, UniquePtr<T[]> &b) noexcept {
         a.swap(b);
 }
 

@@ -20,7 +20,7 @@
 #include <promeki/tcpsocket.h>
 #include <promeki/thread.h>
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
 #include <promeki/sslsocket.h>
 #endif
 
@@ -295,7 +295,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                 return Error::InvalidArgument;
         }
 
-#if !defined(PROMEKI_ENABLE_TLS)
+#if !PROMEKI_ENABLE_TLS
         if (isTls) {
                 promekiWarn("RtmpClient::open: rtmps:// requested but TLS is not "
                             "enabled in this build (url='%s')", url.toString().cstr());
@@ -314,7 +314,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                      url.toString().cstr(), _app.cstr(), _streamKey.cstr());
 
         // Open the right socket.
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
         _isTls = isTls;
         if (isTls) {
                 SslSocket *ssl = new SslSocket();
@@ -356,7 +356,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
         _socket->setNoDelay(true);
         _socket->setKeepAlive(true);
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
         if (isTls) {
                 SslSocket *ssl = static_cast<SslSocket *>(_socket.get());
                 if (Error err = ssl->startEncryption(url.host()); err.isError() && err != Error::TryAgain) {

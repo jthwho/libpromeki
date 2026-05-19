@@ -7,6 +7,7 @@
 
 #include <promeki/signalhandler.h>
 #include <promeki/application.h>
+#include <promeki/atomic.h>
 #include <promeki/eventloop.h>
 #include <promeki/libraryoptions.h>
 #include <promeki/list.h>
@@ -14,7 +15,6 @@
 #include <promeki/mutex.h>
 #include <promeki/platform.h>
 
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <thread>
@@ -38,11 +38,11 @@ namespace {
         // Shared state (platform-independent)
         // ============================================================================
 
-        std::atomic<bool> g_installed{false};
+        Atomic<bool> g_installed{false};
 
         // Number of termination signals delivered since install().  Used to
         // drive the "second Ctrl-C force-exits" escape hatch.
-        std::atomic<int> g_deliveryCount{0};
+        Atomic<int> g_deliveryCount{0};
 
         // Translate a delivered signal number into the standard
         // shell-convention exit code.
@@ -56,7 +56,7 @@ namespace {
         // take locks and allocate freely.
         void deliverQuit(int signo) {
                 const int code = exitCodeForSignal(signo);
-                const int seen = g_deliveryCount.fetch_add(1) + 1;
+                const int seen = g_deliveryCount.fetchAndAdd(1) + 1;
 
                 if (seen >= 2 && LibraryOptions::instance().getAs<bool>(LibraryOptions::SignalDoubleTapExit)) {
                         // Second delivery and the user hasn't opted out — the
@@ -117,8 +117,8 @@ namespace {
         struct sigaction g_savedActions[kNumTerminationSignals];
         bool             g_savedValid[kNumTerminationSignals] = {false};
 
-        std::thread      *g_watcher = nullptr;
-        std::atomic<bool> g_stopRequested{false};
+        std::thread *g_watcher = nullptr;
+        Atomic<bool> g_stopRequested{false};
 
         // Async-signal-safe handler: just forwards the signal number as one
         // byte through the self-pipe.  Anything more ambitious would risk
@@ -171,7 +171,7 @@ namespace {
 
         Mutex            g_subscribersMutex;
         List<Subscriber> g_subscribers;
-        std::atomic<int> g_nextHandle{1};
+        Atomic<int>      g_nextHandle{1};
 
         // Per-custom-signal saved sigaction.  Entries live from the first
         // subscribe() for that signal until uninstall() tears them down;
@@ -249,7 +249,7 @@ namespace {
         void watcherMain() {
                 applyWatcherThreadName();
 
-                while (!g_stopRequested.load(std::memory_order_acquire)) {
+                while (!g_stopRequested.load(MemoryOrder::Acquire)) {
                         unsigned char byte = 0;
                         ssize_t       n = ::read(g_wakePipe[0], &byte, 1);
                         if (n < 0) {
@@ -322,9 +322,9 @@ namespace {
 // ============================================================================
 
 void SignalHandler::install() {
-        if (g_installed.load(std::memory_order_acquire)) return;
+        if (g_installed.load(MemoryOrder::Acquire)) return;
 
-        g_deliveryCount.store(0, std::memory_order_release);
+        g_deliveryCount.store(0, MemoryOrder::Release);
 
 #if defined(PROMEKI_PLATFORM_POSIX)
         // Create the self-pipe.  Prefer pipe2(O_CLOEXEC) where it is
@@ -371,7 +371,7 @@ void SignalHandler::install() {
                 }
         }
 
-        g_stopRequested.store(false, std::memory_order_release);
+        g_stopRequested.store(false, MemoryOrder::Release);
         g_watcher = new std::thread(watcherMain);
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         if (!SetConsoleCtrlHandler(consoleCtrlHandler, TRUE)) {
@@ -382,12 +382,12 @@ void SignalHandler::install() {
         }
 #endif
 
-        g_installed.store(true, std::memory_order_release);
+        g_installed.store(true, MemoryOrder::Release);
         promekiDebug("SignalHandler: installed");
 }
 
 void SignalHandler::uninstall() {
-        if (!g_installed.load(std::memory_order_acquire)) return;
+        if (!g_installed.load(MemoryOrder::Acquire)) return;
 
 #if defined(PROMEKI_PLATFORM_POSIX)
         // Refuse to deadlock if called from the watcher thread itself.
@@ -427,7 +427,7 @@ void SignalHandler::uninstall() {
 
         // Ask the watcher to exit, then poke it with a sentinel byte
         // so the blocked read() returns.
-        g_stopRequested.store(true, std::memory_order_release);
+        g_stopRequested.store(true, MemoryOrder::Release);
         if (g_wakePipe[1] >= 0) {
                 unsigned char byte = kWakeByte;
                 ssize_t       written;
@@ -464,13 +464,13 @@ void SignalHandler::uninstall() {
         SetConsoleCtrlHandler(consoleCtrlHandler, FALSE);
 #endif
 
-        g_installed.store(false, std::memory_order_release);
-        g_deliveryCount.store(0, std::memory_order_release);
+        g_installed.store(false, MemoryOrder::Release);
+        g_deliveryCount.store(0, MemoryOrder::Release);
         promekiDebug("SignalHandler: uninstalled");
 }
 
 bool SignalHandler::isInstalled() {
-        return g_installed.load(std::memory_order_acquire);
+        return g_installed.load(MemoryOrder::Acquire);
 }
 
 int SignalHandler::subscribe(int signo, Callback cb) {
@@ -485,12 +485,12 @@ int SignalHandler::subscribe(int signo, Callback cb) {
                             signo);
                 return -1;
         }
-        if (!g_installed.load(std::memory_order_acquire)) {
+        if (!g_installed.load(MemoryOrder::Acquire)) {
                 promekiWarn("SignalHandler::subscribe: handler not installed — "
                             "call install() first");
                 return -1;
         }
-        const int     handle = g_nextHandle.fetch_add(1, std::memory_order_relaxed);
+        const int     handle = g_nextHandle.fetchAndAdd(1, MemoryOrder::Relaxed);
         Mutex::Locker lock(g_subscribersMutex);
         if (!customSignalAlreadyInstalled(signo)) {
                 if (!installCustomSignalLocked(signo)) return -1;

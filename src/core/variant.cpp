@@ -32,7 +32,6 @@
  * @c Detail::registerAutoConverters (defined in @c variant.h).
  */
 
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <limits>

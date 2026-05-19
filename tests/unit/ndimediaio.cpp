@@ -65,16 +65,25 @@ struct NdiMediaIOTestAccess {
                                    float rate, const uint8_t *planar, size_t channelStrideBytes) {
                         io.ingestNdiAudio(timestampTicks, samples, channels, rate, planar, channelStrideBytes);
                 }
-                static int64_t firstSampleTicks(const NdiMediaIO &io) { return io._audioFirstSampleTicks; }
+                static int64_t firstSampleTicks(const NdiMediaIO &io) {
+                        // PTS of the next-to-pop sample is now owned
+                        // by the AudioBuffer's anchor queue.  Convert
+                        // back to NDI 100ns ticks for the legacy
+                        // assertions.  Returns 0 when no anchor is
+                        // latched, matching the prior sentinel.
+                        MediaTimeStamp pts = io._audioRing.nextSamplePts();
+                        if (!pts.isValid()) return 0;
+                        return pts.nanoseconds() / 100;
+                }
                 static int64_t nextSampleTicks(const NdiMediaIO &io) { return io._audioNextSampleTicks; }
                 static const AudioMarkerList &markers(const NdiMediaIO &io) {
                         return io._audioMarkersSinceDrain;
                 }
                 static int64_t silenceSamples(const NdiMediaIO &io) {
-                        return io._audioSilenceSamples.load(std::memory_order_relaxed);
+                        return io._audioSilenceSamples.load(MemoryOrder::Relaxed);
                 }
                 static int64_t gapEvents(const NdiMediaIO &io) {
-                        return io._audioGapEvents.load(std::memory_order_relaxed);
+                        return io._audioGapEvents.load(MemoryOrder::Relaxed);
                 }
                 static size_t  available(NdiMediaIO &io) { return io._audioRing.available(); }
 };

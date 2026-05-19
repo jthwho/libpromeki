@@ -55,7 +55,7 @@ class HttpServer;
  * @par Example
  * @code
  * struct CountingSub : public MjpegStreamSubscriber {
- *         std::atomic<int> count{0};
+ *         Atomic<int> count{0};
  *         void onFrame(const Buffer &, const TimeStamp &) override { count++; }
  *         void onClosed() override {}
  * };

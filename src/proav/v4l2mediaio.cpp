@@ -97,9 +97,9 @@ uint32_t V4l2MediaIO::pixelFormatToV4l2(PixelFormat::ID pd) {
 
 // Monotonic max update on an atomic — used by capture-thread
 // instrumentation counters which the debug report periodically drains.
-static inline void atomicMaxUpdate(std::atomic<int64_t> &a, int64_t v) {
-        int64_t prev = a.load(std::memory_order_relaxed);
-        while (v > prev && !a.compare_exchange_weak(prev, v, std::memory_order_relaxed, std::memory_order_relaxed)) {}
+static inline void atomicMaxUpdate(Atomic<int64_t> &a, int64_t v) {
+        int64_t prev = a.load(MemoryOrder::Relaxed);
+        while (v > prev && !a.compareExchangeWeak(prev, v, MemoryOrder::Relaxed, MemoryOrder::Relaxed)) {}
 }
 
 static int xioctl(int fd, unsigned long request, void *arg) {
@@ -811,7 +811,7 @@ void V4l2MediaIO::closeVideo() {
         if (_fd >= 0) {
                 promekiDebug("V4l2MediaIO: closing video device  "
                              "captured=%lld  delivered=%lld",
-                             static_cast<long long>(_framesCaptured.load(std::memory_order_relaxed)),
+                             static_cast<long long>(_framesCaptured.load(MemoryOrder::Relaxed)),
                              static_cast<long long>(_frameCount.value()));
         }
         stopStreaming();
@@ -956,7 +956,7 @@ void V4l2MediaIO::closeAudio() {
         if (_pcm != nullptr) {
                 promekiDebug("V4l2MediaIO: closing ALSA device  "
                              "overruns=%lld",
-                             static_cast<long long>(_alsaOverruns.load(std::memory_order_relaxed)));
+                             static_cast<long long>(_alsaOverruns.load(MemoryOrder::Relaxed)));
                 snd_pcm_drop(_pcm);
                 snd_pcm_close(_pcm);
                 _pcm = nullptr;
@@ -964,10 +964,6 @@ void V4l2MediaIO::closeAudio() {
         _audioEnabled = false;
         _audioDesc = AudioDesc();
         _audioRing = AudioBuffer();
-        {
-                Mutex::Locker lk(_audioPushMutex);
-                _audioPushRecords.clear();
-        }
 }
 
 // ============================================================================
@@ -975,10 +971,10 @@ void V4l2MediaIO::closeAudio() {
 // ============================================================================
 
 void V4l2MediaIO::stopThreads() {
-        _stopFlag.store(true, std::memory_order_release);
+        _stopFlag.store(true, MemoryOrder::Release);
         if (_videoThread.joinable()) _videoThread.join();
         if (_audioThread.joinable()) _audioThread.join();
-        _stopFlag.store(false, std::memory_order_release);
+        _stopFlag.store(false, MemoryOrder::Release);
         _videoQueue.clear();
 }
 
@@ -988,7 +984,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                      "image=%ux%u %s  queueDepth=%d",
                      _imageDesc.size().width(), _imageDesc.size().height(),
                      PixelFormat(_imageDesc.pixelFormat()).name().cstr(), VideoQueueDepth);
-        while (!_stopFlag.load(std::memory_order_acquire)) {
+        while (!_stopFlag.load(MemoryOrder::Acquire)) {
                 // Poll with a short timeout so we can check _stopFlag
                 struct pollfd pfd;
                 pfd.fd = _fd;
@@ -997,7 +993,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                 if (pr < 0) {
                         if (errno == EINTR) continue;
                         promekiErr("V4l2MediaIO: poll failed: %s", std::strerror(errno));
-                        _deviceError.store(errno, std::memory_order_release);
+                        _deviceError.store(errno, MemoryOrder::Release);
                         break;
                 }
                 if (pr == 0) continue;
@@ -1010,7 +1006,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                         if (errno == EAGAIN) continue;
                         int e = errno;
                         promekiErr("V4l2MediaIO: VIDIOC_DQBUF failed: %s", std::strerror(e));
-                        _deviceError.store(e, std::memory_order_release);
+                        _deviceError.store(e, MemoryOrder::Release);
                         break;
                 }
 
@@ -1022,8 +1018,8 @@ void V4l2MediaIO::videoCaptureLoop() {
                 int64_t nowUs = TimeStamp::now().microseconds();
                 if (_prevIterUs != 0) {
                         int64_t dtUs = nowUs - _prevIterUs;
-                        _loopTimeSumUsPeriod.fetch_add(dtUs, std::memory_order_relaxed);
-                        _loopIterationsPeriod.fetch_add(1, std::memory_order_relaxed);
+                        _loopTimeSumUsPeriod.fetchAndAdd(dtUs, MemoryOrder::Relaxed);
+                        _loopIterationsPeriod.fetchAndAdd(1, MemoryOrder::Relaxed);
                         atomicMaxUpdate(_loopTimeMaxUsPeriod, dtUs);
                 }
                 _prevIterUs = nowUs;
@@ -1043,12 +1039,12 @@ void V4l2MediaIO::videoCaptureLoop() {
                                      "flags=0x%08x",
                                      vbuf.sequence, srcName, monoName, vbuf.flags);
                 } else {
-                        uint32_t prev = _lastVbufSequence.load(std::memory_order_relaxed);
+                        uint32_t prev = _lastVbufSequence.load(MemoryOrder::Relaxed);
                         if (vbuf.sequence > prev + 1) {
-                                _kernelDroppedPeriod.fetch_add(vbuf.sequence - prev - 1, std::memory_order_relaxed);
+                                _kernelDroppedPeriod.fetchAndAdd(vbuf.sequence - prev - 1, MemoryOrder::Relaxed);
                         }
                 }
-                _lastVbufSequence.store(vbuf.sequence, std::memory_order_relaxed);
+                _lastVbufSequence.store(vbuf.sequence, MemoryOrder::Relaxed);
 
                 int         bufIdx = static_cast<int>(vbuf.index);
                 const void *src = _buffers[bufIdx].start;
@@ -1067,8 +1063,8 @@ void V4l2MediaIO::videoCaptureLoop() {
                 // zero and tracks our loop jitter.
                 int64_t rawLagUs = nowUs - (captureNs / 1000);
                 int64_t lagUs = rawLagUs < 0 ? 0 : rawLagUs;
-                _dqbufLagSumUsPeriod.fetch_add(lagUs, std::memory_order_relaxed);
-                _dqbufLagCountPeriod.fetch_add(1, std::memory_order_relaxed);
+                _dqbufLagSumUsPeriod.fetchAndAdd(lagUs, MemoryOrder::Relaxed);
+                _dqbufLagCountPeriod.fetchAndAdd(1, MemoryOrder::Relaxed);
                 atomicMaxUpdate(_dqbufLagMaxUsPeriod, lagUs);
 
                 // Detect and correct bogus SOE timestamps.  Linux UVC
@@ -1097,7 +1093,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                                      vbuf.sequence, static_cast<long long>(rawLagUs / 1000),
                                      static_cast<long long>(maxLagUs / 1000));
                         captureNs = nowUs * 1000;
-                        _timestampSubstitutedPeriod.fetch_add(1, std::memory_order_relaxed);
+                        _timestampSubstitutedPeriod.fetchAndAdd(1, MemoryOrder::Relaxed);
                 }
                 TimeStamp captureTime{TimeStamp::Clock::time_point{std::chrono::nanoseconds{captureNs}}};
 
@@ -1111,7 +1107,7 @@ void V4l2MediaIO::videoCaptureLoop() {
                         int e = errno;
                         promekiErr("V4l2MediaIO: VIDIOC_QBUF re-queue failed: %s", std::strerror(e));
                         if (e == ENODEV) {
-                                _deviceError.store(e, std::memory_order_release);
+                                _deviceError.store(e, MemoryOrder::Release);
                                 break;
                         }
                 }
@@ -1149,11 +1145,11 @@ void V4l2MediaIO::videoCaptureLoop() {
                         noteFrameDropped(portGroup(0));
                 }
                 _videoQueue.push(std::move(payload));
-                _framesCaptured.fetch_add(1, std::memory_order_relaxed);
+                _framesCaptured.fetchAndAdd(1, MemoryOrder::Relaxed);
         }
         promekiDebug("V4l2MediaIO: video capture thread exiting  "
                      "captured=%lld",
-                     static_cast<long long>(_framesCaptured.load(std::memory_order_relaxed)));
+                     static_cast<long long>(_framesCaptured.load(MemoryOrder::Relaxed)));
 }
 
 void V4l2MediaIO::audioCaptureLoop() {
@@ -1166,38 +1162,39 @@ void V4l2MediaIO::audioCaptureLoop() {
         const size_t  frameBytes = _audioDesc.bytesPerSample() * _audioDesc.channels();
         List<uint8_t> tmpBuf(static_cast<int>(chunkSamples * frameBytes));
 
-        while (!_stopFlag.load(std::memory_order_acquire)) {
+        while (!_stopFlag.load(MemoryOrder::Acquire)) {
                 snd_pcm_sframes_t rd = snd_pcm_readi(_pcm, tmpBuf.data(), static_cast<snd_pcm_uframes_t>(chunkSamples));
                 if (rd == -EPIPE) {
                         promekiWarn("V4l2MediaIO: ALSA overrun, recovering");
-                        _alsaOverruns.fetch_add(1, std::memory_order_relaxed);
+                        _alsaOverruns.fetchAndAdd(1, MemoryOrder::Relaxed);
                         snd_pcm_prepare(_pcm);
                         continue;
                 }
                 if (rd == -ENODEV) {
                         promekiErr("V4l2MediaIO: ALSA device removed");
-                        _deviceError.store(ENODEV, std::memory_order_release);
+                        _deviceError.store(ENODEV, MemoryOrder::Release);
                         break;
                 }
                 if (rd < 0) {
-                        if (_stopFlag.load(std::memory_order_acquire)) break;
+                        if (_stopFlag.load(MemoryOrder::Acquire)) break;
                         promekiWarn("V4l2MediaIO: snd_pcm_readi error: %s", snd_strerror(static_cast<int>(rd)));
                         snd_pcm_prepare(_pcm);
                         continue;
                 }
                 if (rd > 0) {
-                        int64_t pushWallNs = TimeStamp::now().nanoseconds();
-                        _audioRing.push(tmpBuf.data(), static_cast<size_t>(rd), _audioDesc);
-                        Mutex::Locker   lk(_audioPushMutex);
-                        AudioPushRecord rec;
-                        rec.wallNs = pushWallNs;
-                        rec.samplesRemaining = static_cast<size_t>(rd);
-                        _audioPushRecords.pushToBack(rec);
+                        // Stamp each push with the wall-clock the ALSA
+                        // batch was delivered.  AudioBuffer's anchor
+                        // queue threads this through any rate / format
+                        // conversion so the pop side can recover the
+                        // PTS of the first popped sample directly.
+                        MediaTimeStamp pushPts(TimeStamp::now(), AlsaClock);
+                        _audioRing.push(tmpBuf.data(), static_cast<size_t>(rd),
+                                        _audioDesc, pushPts);
                 }
         }
         promekiDebug("V4l2MediaIO: audio capture thread exiting  "
                      "overruns=%lld",
-                     static_cast<long long>(_alsaOverruns.load(std::memory_order_relaxed)));
+                     static_cast<long long>(_alsaOverruns.load(MemoryOrder::Relaxed)));
 }
 
 // ============================================================================
@@ -1220,10 +1217,10 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         if (err.isError()) return err;
 
         _frameCount = 0;
-        _framesCaptured.store(0, std::memory_order_relaxed);
-        _alsaOverruns.store(0, std::memory_order_relaxed);
-        _deviceError.store(0, std::memory_order_relaxed);
-        _readCancelled.store(false, std::memory_order_release);
+        _framesCaptured.store(0, MemoryOrder::Relaxed);
+        _alsaOverruns.store(0, MemoryOrder::Relaxed);
+        _deviceError.store(0, MemoryOrder::Relaxed);
+        _readCancelled.store(false, MemoryOrder::Release);
         _ringAccum = 0;
         _ringAccumFrames = 0;
         _ringAvgBaseline = 0.0;
@@ -1237,15 +1234,15 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _frameDeltaSqSum = 0.0;
         _frameDeltaCount = 0;
         _prevPeriodFps = 0.0;
-        _lastVbufSequence.store(0, std::memory_order_relaxed);
-        _kernelDroppedPeriod.store(0, std::memory_order_relaxed);
-        _loopIterationsPeriod.store(0, std::memory_order_relaxed);
-        _loopTimeSumUsPeriod.store(0, std::memory_order_relaxed);
-        _loopTimeMaxUsPeriod.store(0, std::memory_order_relaxed);
-        _dqbufLagSumUsPeriod.store(0, std::memory_order_relaxed);
-        _dqbufLagMaxUsPeriod.store(0, std::memory_order_relaxed);
-        _dqbufLagCountPeriod.store(0, std::memory_order_relaxed);
-        _timestampSubstitutedPeriod.store(0, std::memory_order_relaxed);
+        _lastVbufSequence.store(0, MemoryOrder::Relaxed);
+        _kernelDroppedPeriod.store(0, MemoryOrder::Relaxed);
+        _loopIterationsPeriod.store(0, MemoryOrder::Relaxed);
+        _loopTimeSumUsPeriod.store(0, MemoryOrder::Relaxed);
+        _loopTimeMaxUsPeriod.store(0, MemoryOrder::Relaxed);
+        _dqbufLagSumUsPeriod.store(0, MemoryOrder::Relaxed);
+        _dqbufLagMaxUsPeriod.store(0, MemoryOrder::Relaxed);
+        _dqbufLagCountPeriod.store(0, MemoryOrder::Relaxed);
+        _timestampSubstitutedPeriod.store(0, MemoryOrder::Relaxed);
         _seqInitialized = false;
         _prevIterUs = 0;
 
@@ -1253,7 +1250,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // computations run unconditionally so the data is always
         // fresh for runtime diagnostics; the log output is debug-only.
         _debugReport = PeriodicCallback(1.0, [this] {
-                int64_t captured = _framesCaptured.load(std::memory_order_relaxed);
+                int64_t captured = _framesCaptured.load(MemoryOrder::Relaxed);
                 size_t  qDepth = _videoQueue.size();
 
                 // -- Video timing from V4L2 capture timestamps --
@@ -1288,24 +1285,24 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 }
 
                 // -- Capture-thread instrumentation (drain & reset) --
-                int64_t  kDrop = _kernelDroppedPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  iters = _loopIterationsPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  ltSum = _loopTimeSumUsPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  ltMax = _loopTimeMaxUsPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  lagSum = _dqbufLagSumUsPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  lagMax = _dqbufLagMaxUsPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  lagCnt = _dqbufLagCountPeriod.exchange(0, std::memory_order_relaxed);
-                int64_t  tsSub = _timestampSubstitutedPeriod.exchange(0, std::memory_order_relaxed);
+                int64_t  kDrop = _kernelDroppedPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  iters = _loopIterationsPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  ltSum = _loopTimeSumUsPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  ltMax = _loopTimeMaxUsPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  lagSum = _dqbufLagSumUsPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  lagMax = _dqbufLagMaxUsPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  lagCnt = _dqbufLagCountPeriod.exchange(0, MemoryOrder::Relaxed);
+                int64_t  tsSub = _timestampSubstitutedPeriod.exchange(0, MemoryOrder::Relaxed);
                 double   loopAvgMs = iters > 0 ? (double)ltSum / iters / 1000.0 : 0.0;
                 double   loopMaxMs = (double)ltMax / 1000.0;
                 double   lagAvgMs = lagCnt > 0 ? (double)lagSum / lagCnt / 1000.0 : 0.0;
                 double   lagMaxMs = (double)lagMax / 1000.0;
-                uint32_t lastSeq = _lastVbufSequence.load(std::memory_order_relaxed);
+                uint32_t lastSeq = _lastVbufSequence.load(MemoryOrder::Relaxed);
 
                 if (_audioEnabled) {
                         size_t  ringAvail = _audioRing.available();
                         size_t  ringCap = _audioRing.capacity();
-                        int64_t overruns = _alsaOverruns.load(std::memory_order_relaxed);
+                        int64_t overruns = _alsaOverruns.load(MemoryOrder::Relaxed);
                         double  ringAvg = 0.0;
                         double  ringDrift = 0.0;
                         if (_ringAccumFrames > 0) {
@@ -1351,7 +1348,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // the first executeCmd(Read) so audio doesn't accumulate in
         // ALSA's kernel buffer during the startup gap before the
         // first video frame arrives.
-        _stopFlag.store(false, std::memory_order_release);
+        _stopFlag.store(false, MemoryOrder::Release);
         _videoThread = std::thread(&V4l2MediaIO::videoCaptureLoop, this);
 
         // Fill output fields
@@ -1390,12 +1387,12 @@ void V4l2MediaIO::cancelBlockingWork() {
         // parked inside executeCmd(Read)'s pop loop; raising this flag
         // makes the next poll wakeup return Cancelled so the strand
         // can drain the Read and reach the queued Close.
-        _readCancelled.store(true, std::memory_order_release);
+        _readCancelled.store(true, MemoryOrder::Release);
 }
 
 Error V4l2MediaIO::executeCmd(MediaIOCommandStats &cmd) {
-        cmd.stats.set(StatsCaptured, _framesCaptured.load(std::memory_order_relaxed));
-        cmd.stats.set(StatsAlsaOverruns, _alsaOverruns.load(std::memory_order_relaxed));
+        cmd.stats.set(StatsCaptured, _framesCaptured.load(MemoryOrder::Relaxed));
+        cmd.stats.set(StatsAlsaOverruns, _alsaOverruns.load(MemoryOrder::Relaxed));
         cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_videoQueue.size()));
         cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(VideoQueueDepth));
         return Error::Ok;
@@ -1403,7 +1400,7 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandStats &cmd) {
 
 Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
         // Check for device failure (hot-unplug, hardware error)
-        int devErr = _deviceError.load(std::memory_order_acquire);
+        int devErr = _deviceError.load(MemoryOrder::Acquire);
         if (devErr != 0) {
                 promekiErr("V4l2MediaIO: device error: %s", std::strerror(devErr));
                 return Error::DeviceError;
@@ -1428,12 +1425,12 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         imgPtr = std::move(popResult.first());
                         break;
                 }
-                devErr = _deviceError.load(std::memory_order_acquire);
+                devErr = _deviceError.load(MemoryOrder::Acquire);
                 if (devErr != 0) {
                         promekiErr("V4l2MediaIO: device error: %s", std::strerror(devErr));
                         return Error::DeviceError;
                 }
-                if (_readCancelled.load(std::memory_order_acquire)) {
+                if (_readCancelled.load(MemoryOrder::Acquire)) {
                         return Error::Cancelled;
                 }
         }
@@ -1493,49 +1490,22 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         AudioDesc   nativeDesc = _audioRing.format();
                         size_t      bufBytes = nativeDesc.bufferSize(avail);
                         Buffer pcm = Buffer(bufBytes);
-                        auto [got, err] = _audioRing.pop(pcm.data(), avail);
+                        // Recover the wall-clock PTS of the first
+                        // popped sample directly from the FIFO's
+                        // anchor queue.  The anchor was laid by the
+                        // ALSA capture loop using TimeStamp::now() at
+                        // delivery time, so downstream rate estimators
+                        // get accurate drift from samples/ts_delta.
+                        MediaTimeStamp firstSamplePts;
+                        auto [got, err] = _audioRing.pop(pcm.data(), avail, &firstSamplePts);
                         if (err.isError()) return err;
                         size_t usedBytes = nativeDesc.bufferSize(got);
                         pcm.setSize(usedBytes);
                         BufferView view(pcm, 0, usedBytes);
                         auto       audioPayload = PcmAudioPayload::Ptr::create(nativeDesc, got, view);
-
-                        // Look up the wall time of the first popped
-                        // sample from the push-record queue, and
-                        // advance the queue to reflect what we just
-                        // consumed.  Timestamps carried this way
-                        // reflect real ALSA delivery rate — downstream
-                        // rate estimators get accurate drift from
-                        // samples/ts_delta.
-                        int64_t firstSampleWallNs = 0;
-                        {
-                                Mutex::Locker lk(_audioPushMutex);
-                                if (!_audioPushRecords.isEmpty()) {
-                                        firstSampleWallNs = _audioPushRecords.front().wallNs;
-                                }
-                                size_t       remaining = got;
-                                const double rateHz = _audioDesc.sampleRate();
-                                while (remaining > 0 && !_audioPushRecords.isEmpty()) {
-                                        AudioPushRecord &r = _audioPushRecords.front();
-                                        if (r.samplesRemaining <= remaining) {
-                                                remaining -= r.samplesRemaining;
-                                                _audioPushRecords.remove(_audioPushRecords.begin());
-                                        } else {
-                                                // Advance this record's
-                                                // wallNs by the portion
-                                                // consumed, so the next
-                                                // pop sees the correct
-                                                // first-sample time.
-                                                double dt = (double)remaining / rateHz;
-                                                r.wallNs += (int64_t)(dt * 1e9);
-                                                r.samplesRemaining -= remaining;
-                                                remaining = 0;
-                                        }
-                                }
+                        if (firstSamplePts.isValid()) {
+                                audioPayload.modify()->setPts(firstSamplePts);
                         }
-                        TimeStamp audioTs;
-                        audioTs.setValue(TimeStamp::Value(std::chrono::nanoseconds(firstSampleWallNs)));
-                        audioPayload.modify()->setPts(MediaTimeStamp(audioTs, AlsaClock));
                         frame.addPayload(audioPayload);
                 }
 
@@ -1552,24 +1522,9 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 size_t after = _audioRing.available();
                 if (after > cap * 3 / 4) {
                         size_t excess = after - cap / 4;
+                        // AudioBuffer::drop() prunes the anchor queue
+                        // for us — no manual bookkeeping needed.
                         _audioRing.drop(excess);
-                        {
-                                Mutex::Locker lk(_audioPushMutex);
-                                size_t        remaining = excess;
-                                const double  rateHz = _audioDesc.sampleRate();
-                                while (remaining > 0 && !_audioPushRecords.isEmpty()) {
-                                        AudioPushRecord &r = _audioPushRecords.front();
-                                        if (r.samplesRemaining <= remaining) {
-                                                remaining -= r.samplesRemaining;
-                                                _audioPushRecords.remove(_audioPushRecords.begin());
-                                        } else {
-                                                double dt = (double)remaining / rateHz;
-                                                r.wallNs += (int64_t)(dt * 1e9);
-                                                r.samplesRemaining -= remaining;
-                                                remaining = 0;
-                                        }
-                                }
-                        }
                         if (!_ringOverflowWarned) {
                                 _ringOverflowWarned = true;
                                 promekiErr("V4l2MediaIO: audio ring "

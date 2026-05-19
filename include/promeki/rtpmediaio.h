@@ -10,7 +10,6 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NETWORK
-#include <atomic>
 #include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
@@ -1466,7 +1465,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // at every Open so a closed-then-reopened RtpMediaIO
                 // doesn't carry the previous instance's cancellation
                 // forward.
-                std::atomic<bool> _readCancelled{false};
+                Atomic<bool>      _readCancelled{false};
 
                 /**
                  * @brief Reader-side anchor for NTP-↔-steady mapping.

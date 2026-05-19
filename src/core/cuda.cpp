@@ -6,9 +6,9 @@
  */
 
 #include <promeki/cuda.h>
+#include <promeki/atomic.h>
 #include <promeki/memspace.h>
 #include <promeki/logger.h>
-#include <atomic>
 #include <cstring>
 
 #if PROMEKI_ENABLE_CUDA
@@ -235,28 +235,28 @@ namespace {
         // Tracks the result of the registration attempt so repeat callers get
         // the same answer without retrying the whole sequence.  Written once
         // under the once_flag, read afterward with relaxed semantics.
-        std::atomic<bool> _cudaRegistered{false};
+        Atomic<bool> _cudaRegistered{false};
 
 } // namespace
 
 bool CudaBootstrap::isRegistered() {
-        return _cudaRegistered.load(std::memory_order_acquire);
+        return _cudaRegistered.load(MemoryOrder::Acquire);
 }
 
 Error CudaBootstrap::ensureRegistered() {
 #if PROMEKI_ENABLE_CUDA
-        if (_cudaRegistered.load(std::memory_order_acquire)) return Error::Ok;
+        if (_cudaRegistered.load(MemoryOrder::Acquire)) return Error::Ok;
 
         // registerData() is thread-safe internally, but we still want
         // to avoid racing two concurrent registrations so the atomic
         // flag accurately reflects whether the Ops are in the registry.
-        static std::atomic_flag inFlight = ATOMIC_FLAG_INIT;
-        while (inFlight.test_and_set(std::memory_order_acquire)) {
-                if (_cudaRegistered.load(std::memory_order_acquire)) return Error::Ok;
+        static AtomicFlag inFlight;
+        while (inFlight.testAndSet(MemoryOrder::Acquire)) {
+                if (_cudaRegistered.load(MemoryOrder::Acquire)) return Error::Ok;
         }
 
-        if (_cudaRegistered.load(std::memory_order_acquire)) {
-                inFlight.clear(std::memory_order_release);
+        if (_cudaRegistered.load(MemoryOrder::Acquire)) {
+                inFlight.clear(MemoryOrder::Release);
                 return Error::Ok;
         }
 
@@ -367,8 +367,8 @@ Error CudaBootstrap::ensureRegistered() {
         registerBufferCopy(MemSpace::SystemSecure, MemSpace::CudaDevice, cudaCopy);
         registerBufferCopy(MemSpace::CudaHost, MemSpace::CudaDevice, cudaCopy);
 
-        _cudaRegistered.store(true, std::memory_order_release);
-        inFlight.clear(std::memory_order_release);
+        _cudaRegistered.store(true, MemoryOrder::Release);
+        inFlight.clear(MemoryOrder::Release);
         return Error::Ok;
 #else
         return Error::NotImplemented;

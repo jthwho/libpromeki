@@ -235,12 +235,18 @@ libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 ## Building
 
 ```sh
-git clone --recurse-submodules https://github.com/jthwho/libpromeki.git
+git clone https://github.com/jthwho/libpromeki.git
 cd libpromeki
 cmake -B build
 cmake --build build -j$(nproc)            # libraries + demos + utils
 cmake --build build --target check        # unit tests (build + run)
 ```
+
+CMake auto-initializes only the `thirdparty/*` submodules the
+active configuration needs on first configure, so a plain
+`git clone` (without `--recurse-submodules`) is enough.  See the
+build guide's *Submodule auto-init* section for the details,
+including how to redirect submodule fetches at an internal mirror.
 
 The default `all` build excludes the unit-test executables to keep
 incremental rebuilds fast — use the `check` target (build + run) or
@@ -248,14 +254,14 @@ incremental rebuilds fast — use the `check` target (build + run) or
 
 For the complete build, install, and downstream-integration guide —
 including every CMake feature flag, vendored-vs-system dependency
-switch, build-performance option, test and install targets, and
-consumer CMake usage — see the **Building and Installing libpromeki**
-guide:
+switch, build-performance option, test and install targets, mirror
+configuration, documentation build, and consumer CMake usage — see
+the **Building and Installing libpromeki** guide:
 
 - Markdown source: @ref building "docs/building.md"
 - Hosted Doxygen: <https://jthwho.github.io/libpromeki/main/building.html>
-- Local Doxygen: `build/doxygen/html/building.html` after
-  `cmake -B build -DPROMEKI_BUILD_DOCS=ON && cmake --build build --target docs`
+- Building locally: see the *Building the Documentation* section of
+  the guide.
 
 ## Contributing
 

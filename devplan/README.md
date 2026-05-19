@@ -110,6 +110,30 @@ devplan/
    `push(PcmAudioPayload)` / `popPayload` / `popWaitPayload` /
    `nextSamplePts()` added; RTP audio packetizer migrated.
    See [`proav/timestamps.md`](proav/timestamps.md).
+11. **`std::atomic` → `promeki::Atomic` migration + concurrency additions**
+   — SHIPPED 2026-05-18. All `std::atomic<T>` / `std::memory_order_*`
+   uses in our code migrated to `Atomic<T>` / `MemoryOrder`.  New
+   additions to `atomic.h`: `MemoryOrder` enum + `toStdMemoryOrder()`,
+   `atomicThreadFence()`, explicit-order overloads on all `Atomic<T>`
+   methods, `compareExchangeWeak`, `AtomicRef<T>` (wraps
+   `std::atomic_ref<T>`), `AtomicFlag` (wraps `std::atomic_flag`).
+   New header `once.h`: `OnceFlag` + `callOnce` wrapping
+   `std::once_flag` / `std::call_once`.  New in `uniqueptr.h`:
+   `UniquePtr<T[]>` array specialization + `uniquePointerCast`.
+   Tests: `once.cpp` (new), `atomic.cpp` extended, `uniqueptr.cpp`
+   extended.  Audit finding #19 partial: `compareExchangeWeak` added;
+   `requires` constraint on arithmetic ops remains open.
+12. **Submodule auto-init system**
+   — SHIPPED 2026-05-18. `cmake/PromekiSubmodules.cmake` maps each
+   `thirdparty/` submodule to the CMake feature flag(s) that require
+   it and runs `git submodule update --init --recursive` on first
+   configure.  Mirror URL rewriting via `PROMEKI_MIRRORS_FILE` or
+   well-known per-user / system config paths (shared search order with
+   the companion script).  `scripts/mirror-thirdparty.py` handles
+   GitLab project auto-create + `git push --mirror` for self-hosted
+   mirrors; reads the same CMake-syntax config file.
+   `cmake/mirrors.example.cmake` documents the config format.
+   Replaces deleted `scripts/mirrors.conf` + `scripts/setup-mirrors.sh`.
 
 ## Phase status (overview)
 

@@ -29,7 +29,7 @@
 #include <promeki/uniqueptr.h>
 #include <promeki/url.h>
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
 #endif
 
@@ -108,7 +108,7 @@ class RtmpClient : public ObjectBase {
                 /** @brief Destructor.  Calls @ref close. */
                 ~RtmpClient() override;
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
                 /**
                  * @brief Attaches a custom @ref SslContext used for
                  *        peer verification when the URL scheme is
@@ -323,7 +323,7 @@ class RtmpClient : public ObjectBase {
                 UniquePtr<WriterThread>      _writer;
                 UniquePtr<ReaderThread>      _reader;
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
                 SslContext              _sslContext;
                 bool                         _isTls = false;
 #endif

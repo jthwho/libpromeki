@@ -19,7 +19,7 @@
 #include <mbedtls/psa_util.h>
 #include <mbedtls/error.h>
 #endif
-#include <atomic>
+#include <promeki/atomic.h>
 #include <cstring>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -41,14 +41,14 @@ PROMEKI_DEBUG(SslContext);
 namespace {
 
         static Error ensurePsaCrypto() {
-                static std::atomic<bool> done{false};
-                if (done.load(std::memory_order_acquire)) return Error::Ok;
+                static Atomic<bool> done{false};
+                if (done.load(MemoryOrder::Acquire)) return Error::Ok;
                 const psa_status_t rc = psa_crypto_init();
                 if (rc != PSA_SUCCESS && rc != PSA_ERROR_ALREADY_EXISTS) {
                         promekiWarn("SslContext: psa_crypto_init failed (%d)", (int)rc);
                         return Error::LibraryFailure;
                 }
-                done.store(true, std::memory_order_release);
+                done.store(true, MemoryOrder::Release);
                 return Error::Ok;
         }
 

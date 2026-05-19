@@ -11,11 +11,11 @@
  */
 
 #include <promeki/numa.h>
+#include <promeki/atomic.h>
 #include <promeki/platform.h>
 #include <promeki/logger.h>
 #include <promeki/list.h>
 
-#include <atomic>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -69,10 +69,10 @@ namespace {
         // isAvailable() call.  -1 means "not yet initialised"; every
         // accessor below pulls them through ensureTopology().
         struct Topology {
-                        std::atomic<int> nodeCount{-1};
-                        std::atomic<int> maxNode{-1};
-                        std::atomic<bool> available{false};
-                        std::atomic<bool> initialised{false};
+                        Atomic<int>  nodeCount{-1};
+                        Atomic<int>  maxNode{-1};
+                        Atomic<bool> available{false};
+                        Atomic<bool> initialised{false};
         };
 
         Topology &topology() {
@@ -150,13 +150,13 @@ namespace {
 
         void ensureTopologyLinux() {
                 Topology &t = topology();
-                if (t.initialised.load(std::memory_order_acquire)) return;
-                static std::atomic_flag inFlight = ATOMIC_FLAG_INIT;
-                while (inFlight.test_and_set(std::memory_order_acquire)) {
-                        if (t.initialised.load(std::memory_order_acquire)) return;
+                if (t.initialised.load(MemoryOrder::Acquire)) return;
+                static AtomicFlag inFlight;
+                while (inFlight.testAndSet(MemoryOrder::Acquire)) {
+                        if (t.initialised.load(MemoryOrder::Acquire)) return;
                 }
-                if (t.initialised.load(std::memory_order_acquire)) {
-                        inFlight.clear(std::memory_order_release);
+                if (t.initialised.load(MemoryOrder::Acquire)) {
+                        inFlight.clear(MemoryOrder::Release);
                         return;
                 }
 
@@ -183,18 +183,18 @@ namespace {
                         gotPossible && parseNodeListBuf(possibleBuf, possibleCount, possibleMaxPlus);
 
                 if (okOnline && onlineCount > 0) {
-                        t.nodeCount.store(onlineCount, std::memory_order_release);
+                        t.nodeCount.store(onlineCount, MemoryOrder::Release);
                         t.maxNode.store(okPossible ? possibleMaxPlus - 1 : onlineMaxPlus - 1,
-                                        std::memory_order_release);
-                        t.available.store(onlineCount > 1, std::memory_order_release);
+                                        MemoryOrder::Release);
+                        t.available.store(onlineCount > 1, MemoryOrder::Release);
                 } else {
                         // No /sys topology — degrade gracefully.
-                        t.nodeCount.store(1, std::memory_order_release);
-                        t.maxNode.store(0, std::memory_order_release);
-                        t.available.store(false, std::memory_order_release);
+                        t.nodeCount.store(1, MemoryOrder::Release);
+                        t.maxNode.store(0, MemoryOrder::Release);
+                        t.available.store(false, MemoryOrder::Release);
                 }
-                t.initialised.store(true, std::memory_order_release);
-                inFlight.clear(std::memory_order_release);
+                t.initialised.store(true, MemoryOrder::Release);
+                inFlight.clear(MemoryOrder::Release);
         }
 #endif // PROMEKI_PLATFORM_LINUX
 
@@ -203,11 +203,11 @@ namespace {
                 ensureTopologyLinux();
 #else
                 Topology &t = topology();
-                if (t.initialised.load(std::memory_order_acquire)) return;
-                t.nodeCount.store(1, std::memory_order_release);
-                t.maxNode.store(0, std::memory_order_release);
-                t.available.store(false, std::memory_order_release);
-                t.initialised.store(true, std::memory_order_release);
+                if (t.initialised.load(MemoryOrder::Acquire)) return;
+                t.nodeCount.store(1, MemoryOrder::Release);
+                t.maxNode.store(0, MemoryOrder::Release);
+                t.available.store(false, MemoryOrder::Release);
+                t.initialised.store(true, MemoryOrder::Release);
 #endif
         }
 
@@ -215,17 +215,17 @@ namespace {
 
 bool Numa::isAvailable() {
         ensureTopology();
-        return topology().available.load(std::memory_order_acquire);
+        return topology().available.load(MemoryOrder::Acquire);
 }
 
 int Numa::nodeCount() {
         ensureTopology();
-        return topology().nodeCount.load(std::memory_order_acquire);
+        return topology().nodeCount.load(MemoryOrder::Acquire);
 }
 
 int Numa::maxNode() {
         ensureTopology();
-        return topology().maxNode.load(std::memory_order_acquire);
+        return topology().maxNode.load(MemoryOrder::Acquire);
 }
 
 // ---------------------------------------------------------------------------

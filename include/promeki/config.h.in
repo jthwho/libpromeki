@@ -13,6 +13,32 @@
 
 #pragma once
 
+/**
+ * @section feature_flag_convention How to test PROMEKI_ENABLE_* flags
+ *
+ * Every @c PROMEKI_ENABLE_* macro is emitted via CMake's
+ * @c \#cmakedefine01, which means each flag is @b always defined and
+ * expands to either @c 0 or @c 1.  It is @b never undefined.  As a
+ * result:
+ *
+ * @code
+ * #if PROMEKI_ENABLE_TLS              // CORRECT — tests the value (0 or 1)
+ * #if !PROMEKI_ENABLE_TLS             // CORRECT — negation of value
+ * #if defined(PROMEKI_ENABLE_TLS)     // WRONG — always true, even when TLS is off
+ * #ifdef PROMEKI_ENABLE_TLS           // WRONG — same trap as above
+ * @endcode
+ *
+ * @c \#if @c defined(PROMEKI_ENABLE_X) compiles cleanly and silently
+ * does the wrong thing — the guarded block stays in even with the
+ * feature disabled.  Reviewers should flag any @c defined() /
+ * @c \#ifdef on a @c PROMEKI_ENABLE_* macro as a bug.
+ *
+ * The single exception is @c PROMEKI_ENABLE_CORE, which is hard-wired
+ * to @c 1 via a plain @c \#define below — its value can still be
+ * tested with @c \#if and the bare-defined() check would happen to
+ * give the right answer there too, but the convention is uniform:
+ * always use @c \#if for any @c PROMEKI_ENABLE_* macro.
+ */
 #cmakedefine01 PROMEKI_ENABLE_NETWORK
 #cmakedefine01 PROMEKI_ENABLE_HTTP
 #cmakedefine01 PROMEKI_ENABLE_TLS
@@ -73,7 +99,8 @@
  *
  * Every public header in @c include/promeki/ wraps its body in a
  * @c \#if guard naming a single @c PROMEKI_ENABLE_* flag.  Mechanical,
- * uniform, no dual gates:
+ * uniform, no dual gates.  Use @c \#if (not @c \#if @c defined() —
+ * see @ref feature_flag_convention above):
  *
  * @code
  * #pragma once

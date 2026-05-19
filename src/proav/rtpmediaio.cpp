@@ -770,7 +770,7 @@ RtcpSchedulerContext RtpMediaIO::buildRtcpSchedulerContext() {
         // scheduler before the io destructor returns), so capturing
         // @c this is safe.
         ctx.onWireSilenceEos = [this](RtcpSchedulerReaderStream &view, int64_t /*gapNs*/) {
-                _readCancelled.store(true, std::memory_order_release);
+                _readCancelled.store(true, MemoryOrder::Release);
                 _readerQueue.cancelWaiters();
                 // Pulse the matching reader stream's depacketizer.
                 // Look up by session pointer — every reader stream
@@ -1239,7 +1239,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
         // transition is observed within a single poll interval after
         // the queue empties.
         s.session->byeReceivedSignal.connect([this](uint32_t /*ssrc*/) {
-                _readCancelled.store(true, std::memory_order_release);
+                _readCancelled.store(true, MemoryOrder::Release);
         });
 
         String                           threadName = String("rtp-rx-") + s.mediaType;
@@ -2457,7 +2457,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         Enum modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
         const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
         _readerMode = !isWrite;
-        _readCancelled.store(false, std::memory_order_release);
+        _readCancelled.store(false, MemoryOrder::Release);
         _openedAt = TimeStamp::now();
 
         // Transport-global parameters.
@@ -3132,7 +3132,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 if (result.second() != Error::Timeout) {
                         return result.second();
                 }
-                if (_readCancelled.load(std::memory_order_acquire)) {
+                if (_readCancelled.load(MemoryOrder::Acquire)) {
                         return Error::Cancelled;
                 }
         }
@@ -3144,7 +3144,7 @@ void RtpMediaIO::cancelBlockingWork() {
         // inside executeCmd(Read)'s pop loop; raising this flag makes
         // the next short-timeout wakeup return Cancelled so the strand
         // can drain the Read and reach the queued Close.
-        _readCancelled.store(true, std::memory_order_release);
+        _readCancelled.store(true, MemoryOrder::Release);
 
         // Wake every per-stream depacketizer parked on its
         // post-reorder pop so the resetReaderStream path that

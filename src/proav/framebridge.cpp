@@ -27,7 +27,6 @@
 #include <promeki/thread.h>
 #include <promeki/uniqueptr.h>
 
-#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstring>
@@ -359,12 +358,12 @@ struct FrameBridge::Impl {
 
                 // -------------- Seqlock helpers --------------
                 static uint64_t loadSeq(const uint8_t *slot) {
-                        return std::atomic_ref<const uint64_t>(*reinterpret_cast<const uint64_t *>(slot))
-                                .load(std::memory_order_acquire);
+                        return AtomicRef<const uint64_t>(*reinterpret_cast<const uint64_t *>(slot))
+                                .load(MemoryOrder::Acquire);
                 }
                 static void storeSeq(uint8_t *slot, uint64_t v) {
-                        std::atomic_ref<uint64_t>(*reinterpret_cast<uint64_t *>(slot))
-                                .store(v, std::memory_order_release);
+                        AtomicRef<uint64_t>(*reinterpret_cast<uint64_t *>(slot))
+                                .store(v, MemoryOrder::Release);
                 }
 
                 // -------------- Handshake (output side) --------------
@@ -608,8 +607,8 @@ struct FrameBridge::Impl {
                         uint8_t *base = slotBase(index);
                         if (base == nullptr) return Error::NotOpen;
                         // Seqlock: advance to odd (writing).
-                        uint64_t seq = std::atomic_ref<uint64_t>(*reinterpret_cast<uint64_t *>(base + slotOff.seqOff))
-                                               .load(std::memory_order_relaxed);
+                        uint64_t seq = AtomicRef<uint64_t>(*reinterpret_cast<uint64_t *>(base + slotOff.seqOff))
+                                               .load(MemoryOrder::Relaxed);
                         seq += 1; // odd
                         storeSeq(base + slotOff.seqOff, seq);
 
@@ -786,7 +785,7 @@ struct FrameBridge::Impl {
                                 }
 
                                 // Check seq2 after we've copied everything.
-                                std::atomic_thread_fence(std::memory_order_acquire);
+                                atomicThreadFence(MemoryOrder::Acquire);
                                 uint64_t seq2 = loadSeq(base + slotOff.seqOff);
                                 if (seq1 != seq2) continue; // torn — retry
 

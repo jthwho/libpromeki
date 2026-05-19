@@ -41,7 +41,7 @@
 #include <promeki/videocodec.h>
 #include <promeki/videopayload.h>
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
 #endif
 
@@ -840,7 +840,7 @@ RtmpFactory::Config::SpecMap RtmpFactory::configSpecs() const {
         s(MediaConfig::RtmpPeerBandwidth, int32_t(5'000'000));
         s(MediaConfig::RtmpStartTcpNoDelay, true);
         s(MediaConfig::RtmpFcSubscribe, false);
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
         s(MediaConfig::RtmpTlsVerify, true);
 #endif
         return specs;
@@ -1140,7 +1140,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _client->disconnectedSignal.connect(
                 [this](Error err) { onClientDisconnected(err); }, this);
 
-#if defined(PROMEKI_ENABLE_TLS)
+#if PROMEKI_ENABLE_TLS
         // If the caller wired an SslContext through the MediaConfig
         // database, hand it to the underlying client.  The Variant
         // type-tag guards against a populated-but-empty slot; the

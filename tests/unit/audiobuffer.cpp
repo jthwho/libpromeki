@@ -1029,6 +1029,53 @@ TEST_CASE("AudioBuffer: anchor queue prunes as samples are consumed") {
         CHECK_FALSE(leftover.isValid()); // empty buffer -> invalid
 }
 
+TEST_CASE("AudioBuffer: drop() prunes anchor queue") {
+        // V4l2MediaIO's audio-ring overflow path calls drop() to
+        // trim oldest samples without manual bookkeeping; the
+        // contract is that anchors covering dropped samples are
+        // removed so the next pop reports the new head-sample PTS.
+        AudioBuffer ab(s16LE48k2ch(), 1024);
+        // 2 channels => 10 frames = 20 int16_t.
+        int16_t       buf[20] = {};
+        const int64_t aNs = 1'000'000'000; // anchor A covers frames [0..10)
+        const int64_t bNs = 2'000'000'000; // anchor B covers frames [10..20)
+        const int64_t cNs = 3'000'000'000; // anchor C covers frames [20..30)
+        REQUIRE(ab.push(buf, 10, s16LE48k2ch(), mtsNs(aNs)).isOk());
+        REQUIRE(ab.push(buf, 10, s16LE48k2ch(), mtsNs(bNs)).isOk());
+        REQUIRE(ab.push(buf, 10, s16LE48k2ch(), mtsNs(cNs)).isOk());
+        REQUIRE(ab.available() == 30);
+
+        // Drop the first 15 frames — that consumes all of anchor A
+        // and half of anchor B.  Head sample is anchor B + 5 frames.
+        auto [dropped, derr] = ab.drop(15);
+        REQUIRE(derr.isOk());
+        CHECK(dropped == 15);
+        CHECK(ab.available() == 15);
+
+        MediaTimeStamp headAfterFirst = ab.nextSamplePts();
+        REQUIRE(headAfterFirst.isValid());
+        const int64_t expectedBPlus5 =
+                bNs + Duration::fromSamples(5, 48000.0f).nanoseconds();
+        CHECK(headAfterFirst.timeStamp().nanoseconds() == expectedBPlus5);
+
+        // Drop 5 more — that consumes the rest of anchor B, leaving
+        // anchor C as the head with no offset.
+        auto [dropped2, derr2] = ab.drop(5);
+        REQUIRE(derr2.isOk());
+        CHECK(dropped2 == 5);
+        CHECK(ab.available() == 10);
+
+        MediaTimeStamp headAtC = ab.nextSamplePts();
+        REQUIRE(headAtC.isValid());
+        CHECK(headAtC.timeStamp().nanoseconds() == cNs);
+
+        // Drain anchor C — anchor queue is empty after the last pop.
+        int16_t sink[20] = {};
+        REQUIRE(ab.pop(sink, 10).first() == 10);
+        CHECK(ab.available() == 0);
+        CHECK_FALSE(ab.nextSamplePts().isValid());
+}
+
 TEST_CASE("AudioBuffer: clear() resets the timeline") {
         AudioBuffer ab(s16LE48k2ch(), 64);
         // 2 channels => 4 frames = 8 int16_t.

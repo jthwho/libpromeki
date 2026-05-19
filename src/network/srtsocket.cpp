@@ -6,9 +6,9 @@
  */
 
 #include <promeki/srtsocket.h>
+#include <promeki/atomic.h>
 #include <promeki/logger.h>
 #include <promeki/thread.h>
-#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
@@ -41,7 +41,7 @@ PROMEKI_DEBUG(SrtSocket);
 // ============================================================
 namespace {
 
-        static std::atomic<bool> sSrtInitDone{false};
+        static Atomic<bool> sSrtInitDone{false};
 
         // Map syslog-style SRT severity (LOG_EMERG=0 ... LOG_DEBUG=7) onto
         // promeki LogLevel.  LOG_NOTICE is informational by syslog convention
@@ -72,19 +72,19 @@ namespace {
         }
 
         static Error ensureSrtRuntime() {
-                if (sSrtInitDone.load(std::memory_order_acquire)) return Error::Ok;
-                static std::atomic<bool> sStarting{false};
-                bool                     expected = false;
-                if (!sStarting.compare_exchange_strong(expected, true)) {
+                if (sSrtInitDone.load(MemoryOrder::Acquire)) return Error::Ok;
+                static Atomic<bool> sStarting{false};
+                bool                expected = false;
+                if (!sStarting.compareExchangeStrong(expected, true)) {
                         // Another thread is mid-init; spin briefly.
-                        while (!sSrtInitDone.load(std::memory_order_acquire)) {
+                        while (!sSrtInitDone.load(MemoryOrder::Acquire)) {
                                 Thread::yield();
                         }
                         return Error::Ok;
                 }
                 if (srt_startup() < 0) {
                         promekiWarn("SrtSocket: srt_startup failed: %s", srt_getlasterror_str());
-                        sStarting.store(false, std::memory_order_release);
+                        sStarting.store(false, MemoryOrder::Release);
                         return Error::LibraryFailure;
                 }
                 // Strip libsrt's own time/thread/severity decoration — Logger
@@ -93,7 +93,7 @@ namespace {
                                 | SRT_LOGF_DISABLE_SEVERITY | SRT_LOGF_DISABLE_EOL);
                 srt_setloghandler(nullptr, &srtPromekiLogHandler);
                 std::atexit([]() { srt_cleanup(); });
-                sSrtInitDone.store(true, std::memory_order_release);
+                sSrtInitDone.store(true, MemoryOrder::Release);
                 return Error::Ok;
         }
 

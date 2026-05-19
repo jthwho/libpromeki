@@ -31,7 +31,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @ref MediaConfig rate-control knobs onto the matching NVENC
  * parameters during @ref configure.
  *
- * Compiled only when @c PROMEKI_ENABLE_NVENC is defined.  When the
+ * Compiled only when @c PROMEKI_ENABLE_NVENC is enabled (non-zero
+ * — see @ref feature_flag_convention in @c config.h).  When the
  * build does not have NVENC, @c VideoCodec(VideoCodec::H264).createEncoder()
  * still works if any other H.264 backend is registered; the CPU
  * fallback path is a separate concern.

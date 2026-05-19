@@ -10,6 +10,7 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_SRT
+#include <promeki/atomic.h>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
@@ -17,7 +18,6 @@
 #include <promeki/map.h>
 #include <promeki/uniqueptr.h>
 
-#include <atomic>
 #include <functional>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -269,9 +269,9 @@ class SrtEpoll {
                 void stop();
 
         private:
-                int                              _eid = InvalidId;
-                Map<int, ReadyCallback>          _callbacks;
-                std::atomic<bool>                _stopRequested{false};
+                int                     _eid = InvalidId;
+                Map<int, ReadyCallback> _callbacks;
+                Atomic<bool>            _stopRequested{false};
 };
 
 PROMEKI_NAMESPACE_END
