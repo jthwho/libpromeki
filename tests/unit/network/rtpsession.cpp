@@ -492,7 +492,7 @@ TEST_CASE("RtpSession") {
 
                 // Give the receive thread time to install
                 // SO_RCVTIMEO and settle into the loop.
-                Thread::sleepMs(50);
+                BasicThread::sleepMs(50);
 
                 // Send a single RTP packet.
                 RtpSession txSession;
@@ -520,7 +520,7 @@ TEST_CASE("RtpSession") {
                 // queue.  Since seq numbers arrive contiguously the
                 // reorder buffer emits in-order on every insert.
                 for (int i = 0; i < 50 && tr.outQueue.isEmpty(); i++) {
-                        Thread::sleepMs(10);
+                        BasicThread::sleepMs(10);
                 }
                 Result<RtpPacket> popped = tr.outQueue.tryPop();
 

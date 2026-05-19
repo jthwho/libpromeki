@@ -30,7 +30,7 @@ TEST_CASE("Main EventLoop: worker-thread quit wakes exec() promptly") {
         EventLoop   loop;
 
         std::thread worker([&] {
-                Thread::sleepMs(30);
+                BasicThread::sleepMs(30);
                 loop.quit(42);
         });
 

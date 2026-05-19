@@ -49,7 +49,7 @@ namespace {
                                         ready.setValue(true);
                                 });
                                 for (int i = 0; i < 200 && !ready.value(); ++i) {
-                                        Thread::sleepMs(2);
+                                        BasicThread::sleepMs(2);
                                 }
                                 REQUIRE(ready.value());
                                 REQUIRE(server != nullptr);
@@ -62,7 +62,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        Thread::sleepMs(1);
+                                        BasicThread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                         }
@@ -76,7 +76,7 @@ namespace {
                                         done.setValue(true);
                                 });
                                 for (int i = 0; i < 500 && !done.value(); ++i) {
-                                        Thread::sleepMs(1);
+                                        BasicThread::sleepMs(1);
                                 }
                                 REQUIRE(done.value());
                                 REQUIRE(port != 0);
@@ -102,7 +102,7 @@ namespace {
                 size_t appended = 0;
                 while (t.elapsed() < timeoutMs) {
                         if (sock.bytesAvailable() <= 0) {
-                                Thread::sleepMs(5);
+                                BasicThread::sleepMs(5);
                                 continue;
                         }
                         int64_t got = sock.read(buf, sizeof(buf));
@@ -177,13 +177,13 @@ TEST_CASE("HttpConnection_AsyncBodyStreamParksAndResumes") {
                         // connection sees atEnd via the
                         // already-drained queue.
                         plan.pusher = std::thread([q, &plan]() {
-                                Thread::sleepMs(80);
+                                BasicThread::sleepMs(80);
                                 q->enqueue(makeSegment("first ", 6));
-                                Thread::sleepMs(80);
+                                BasicThread::sleepMs(80);
                                 q->enqueue(makeSegment("second ", 7));
-                                Thread::sleepMs(80);
+                                BasicThread::sleepMs(80);
                                 q->enqueue(makeSegment("third", 5));
-                                Thread::sleepMs(40);
+                                BasicThread::sleepMs(40);
                                 q->closeWriting();
                                 plan.finished.store(true);
                         });

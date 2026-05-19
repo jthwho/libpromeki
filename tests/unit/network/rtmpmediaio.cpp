@@ -571,12 +571,18 @@ TEST_CASE("RtmpMediaIO sink: peer-disconnect mid-stream surfaces as writeFrame e
                         if (client == nullptr) continue;
                         FakeRtmpServer fake(client);
                         std::thread fakeThread([&]() { fake.run(); });
-                        // Wait until publish has succeeded, then yank
-                        // the socket out from under the client to
-                        // simulate the peer going away mid-stream.
+                        // Wait until publish has succeeded AND the first
+                        // video frame has arrived, then yank the socket
+                        // to simulate the peer going away mid-stream.
+                        // Waiting for the frame (not just publishSeen)
+                        // closes the race where the server can drop the
+                        // socket before the client's first writeFrame
+                        // even runs.
                         auto deadline = std::chrono::steady_clock::now()
                                         + std::chrono::seconds(5);
-                        while (running.load() && !fake.publishSeen) {
+                        while (running.load()
+                               && (!fake.publishSeen
+                                   || fake.videoReceived.load() == 0)) {
                                 if (std::chrono::steady_clock::now() >= deadline) break;
                                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                         }

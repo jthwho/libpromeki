@@ -131,11 +131,6 @@ class FileIODevice : public IODevice {
                 /** @brief Destructor. Closes and fclose's if owned. */
                 ~FileIODevice() override;
 
-                /** @brief Deleted copy constructor (non-copyable). */
-                FileIODevice(const FileIODevice &) = delete;
-                /** @brief Deleted copy assignment (non-copyable). */
-                FileIODevice &operator=(const FileIODevice &) = delete;
-
                 /**
                  * @brief Sets the filename for fopen-based opening.
                  *

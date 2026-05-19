@@ -9,6 +9,7 @@
 
 #include <promeki/atomic.h>
 #include <promeki/audiodesc.h>
+#include <promeki/basicthread.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/framerate.h>
 #include <promeki/framesync.h>
@@ -16,8 +17,6 @@
 #include <promeki/mutex.h>
 #include <promeki/namespace.h>
 #include <promeki/sdl/sdlaudioclock.h>
-
-#include <thread>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -173,8 +172,9 @@ class SDLPlayerMediaIO : public DedicatedThreadMediaIO {
                 FrameSync     _sync;
 
                 // Pull-thread state.
-                std::thread  _pullThread;
+                BasicThread  _pullThread;
                 Atomic<bool> _pullRunning;
+                int          _instanceId = 0; ///< Per-object counter for thread naming.
 };
 
 PROMEKI_NAMESPACE_END

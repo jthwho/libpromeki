@@ -287,7 +287,7 @@ TEST_CASE("MediaIORequest::then marshalls async resolution through the calling E
         t.start();
         while (!fired.load() && t.elapsed() < 5000) {
                 loop.processEvents();
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         REQUIRE(fired.load());
         CHECK(observed == Error::Ok);

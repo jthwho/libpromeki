@@ -14,6 +14,7 @@
 #include <promeki/packettransport.h>
 #include <promeki/buffer.h>
 #include <promeki/list.h>
+#include <promeki/mutex.h>
 #include <promeki/pair.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -102,7 +103,10 @@ class LoopbackTransport : public PacketTransport {
                 Error setTxTime(bool enable) override;
 
                 /** @brief Returns the number of packets waiting to be received. */
-                size_t pendingPackets() const { return _recvQueue.size(); }
+                size_t pendingPackets() const {
+                        Mutex::Locker locker(_queueMutex);
+                        return _recvQueue.size();
+                }
 
         private:
                 /** @brief Entry in the internal receive queue. */
@@ -115,6 +119,7 @@ class LoopbackTransport : public PacketTransport {
                 void deliver(const void *data, size_t size, const SocketAddress &sender);
 
                 LoopbackTransport *_peer = nullptr;
+                mutable Mutex      _queueMutex;
                 List<QueueEntry>   _recvQueue;
                 bool               _open = false;
 };

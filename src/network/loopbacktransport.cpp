@@ -36,6 +36,7 @@ Error LoopbackTransport::open() {
 void LoopbackTransport::close() {
         if (!_open) return;
         _open = false;
+        Mutex::Locker locker(_queueMutex);
         _recvQueue.clear();
 }
 
@@ -65,14 +66,19 @@ void LoopbackTransport::deliver(const void *data, size_t size, const SocketAddre
         e.data.setSize(size);
         if (size > 0 && data != nullptr) std::memcpy(e.data.data(), data, size);
         e.sender = sender;
+        Mutex::Locker locker(_queueMutex);
         _recvQueue.pushToBack(std::move(e));
 }
 
 ssize_t LoopbackTransport::receivePacket(void *data, size_t maxSize, SocketAddress *sender) {
         if (!_open) return -1;
-        if (_recvQueue.isEmpty()) return -1;
-        QueueEntry e = std::move(_recvQueue.front());
-        _recvQueue.remove(static_cast<size_t>(0));
+        QueueEntry e;
+        {
+                Mutex::Locker locker(_queueMutex);
+                if (_recvQueue.isEmpty()) return -1;
+                e = std::move(_recvQueue.front());
+                _recvQueue.remove(static_cast<size_t>(0));
+        }
         size_t copy = e.data.size() < maxSize ? e.data.size() : maxSize;
         if (copy > 0) std::memcpy(data, e.data.data(), copy);
         if (sender != nullptr) *sender = e.sender;

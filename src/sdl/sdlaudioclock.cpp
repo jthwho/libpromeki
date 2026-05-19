@@ -386,7 +386,7 @@ Error SDLAudioClock::sleepUntilNs(int64_t targetNs) const {
         // overshoot the target; the polling loop covers the rest.
         constexpr int64_t kSleepSafetyMarginNs = 500000; // 500 us
         if (sleepWallNs > kSleepSafetyMarginNs) {
-                Thread::sleepNs(sleepWallNs - kSleepSafetyMarginNs);
+                BasicThread::sleepNs(sleepWallNs - kSleepSafetyMarginNs);
         }
 
         // Tight final approach.  100 us poll cadence — kernel sleep
@@ -399,7 +399,7 @@ Error SDLAudioClock::sleepUntilNs(int64_t targetNs) const {
                 auto r = raw();
                 if (isError(r)) return error(r);
                 if (value(r) >= targetNs) break;
-                Thread::sleepUs(100);
+                BasicThread::sleepUs(100);
         }
         return {};
 }

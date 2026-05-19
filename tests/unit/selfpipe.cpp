@@ -88,7 +88,7 @@ TEST_CASE("SelfPipe: cross-thread wake") {
         });
 
         // Small delay so the waiter is actually blocked in poll().
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         pipe.wake();
 
         waiter.join();

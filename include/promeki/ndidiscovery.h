@@ -12,8 +12,8 @@
 
 #if PROMEKI_ENABLE_NDI
 
-#include <thread>
 #include <promeki/atomic.h>
+#include <promeki/basicthread.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
@@ -240,7 +240,7 @@ class NdiDiscovery {
                 String                        _groups;       ///< Mirror of the SDK config (mutex-protected).
                 String                        _extraIps;     ///< Mirror of the SDK config (mutex-protected).
                 TimeStamp                     _startTime;    ///< Set when the worker thread first runs.
-                std::thread                   _worker;
+                BasicThread                   _worker;
 };
 
 PROMEKI_NAMESPACE_END

@@ -25,25 +25,25 @@ TEST_CASE("ElapsedTimer: elapsed returns non-negative") {
 
 TEST_CASE("ElapsedTimer: elapsed increases over time") {
         ElapsedTimer t;
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         CHECK(t.elapsed() >= 15);
 }
 
 TEST_CASE("ElapsedTimer: elapsedUs returns microseconds") {
         ElapsedTimer t;
-        Thread::sleepMs(10);
+        BasicThread::sleepMs(10);
         CHECK(t.elapsedUs() >= 5000);
 }
 
 TEST_CASE("ElapsedTimer: elapsedNs returns nanoseconds") {
         ElapsedTimer t;
-        Thread::sleepMs(10);
+        BasicThread::sleepMs(10);
         CHECK(t.elapsedNs() >= 5000000);
 }
 
 TEST_CASE("ElapsedTimer: restart returns elapsed and resets") {
         ElapsedTimer t;
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         int64_t prev = t.restart();
         CHECK(prev >= 15);
         CHECK(t.elapsed() < prev);
@@ -52,7 +52,7 @@ TEST_CASE("ElapsedTimer: restart returns elapsed and resets") {
 TEST_CASE("ElapsedTimer: hasExpired") {
         ElapsedTimer t;
         CHECK_FALSE(t.hasExpired(10000));
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         CHECK(t.hasExpired(15));
 }
 
@@ -73,7 +73,7 @@ TEST_CASE("ElapsedTimer: start revalidates after invalidate") {
 
 TEST_CASE("ElapsedTimer: start resets elapsed time") {
         ElapsedTimer t;
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         CHECK(t.elapsed() >= 15);
         t.start();
         CHECK(t.elapsed() < 10);
@@ -91,10 +91,10 @@ TEST_CASE("ElapsedTimer: restart revalidates after invalidate") {
 
 TEST_CASE("ElapsedTimer: multiple restarts accumulate correctly") {
         ElapsedTimer t;
-        Thread::sleepMs(15);
+        BasicThread::sleepMs(15);
         int64_t first = t.restart();
         CHECK(first >= 10);
-        Thread::sleepMs(15);
+        BasicThread::sleepMs(15);
         int64_t second = t.restart();
         CHECK(second >= 10);
 }

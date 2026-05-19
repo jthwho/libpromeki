@@ -67,9 +67,6 @@ class SDLWindow : public Widget {
                 /** @brief Destructor. Destroys the SDL window and renderer. */
                 ~SDLWindow();
 
-                SDLWindow(const SDLWindow &) = delete;
-                SDLWindow &operator=(const SDLWindow &) = delete;
-
                 /** @brief Returns the window title. */
                 String title() const { return _title; }
 

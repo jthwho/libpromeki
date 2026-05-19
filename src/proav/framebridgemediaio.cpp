@@ -193,7 +193,7 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         return Error::Ok;
                 }
                 if (_bridge->isAborted()) return Error::Cancelled;
-                Thread::sleepMs(2);
+                BasicThread::sleepMs(2);
         }
 }
 

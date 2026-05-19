@@ -25,7 +25,7 @@ TEST_CASE("WaitCondition_WakeOne") {
                 m.unlock();
         });
 
-        Thread::sleepMs(10);
+        BasicThread::sleepMs(10);
         {
                 Mutex::Locker locker(m);
                 ready = true;
@@ -47,7 +47,7 @@ TEST_CASE("WaitCondition_WakeOneNoPredicate") {
                 m.unlock();
         });
 
-        Thread::sleepMs(10);
+        BasicThread::sleepMs(10);
         cv.wakeOne();
         t.join();
         CHECK(woken.load());
@@ -69,7 +69,7 @@ TEST_CASE("WaitCondition_WakeAll") {
         std::thread t1(waiter);
         std::thread t2(waiter);
 
-        Thread::sleepMs(10);
+        BasicThread::sleepMs(10);
         {
                 Mutex::Locker locker(m);
                 ready = true;
@@ -115,7 +115,7 @@ TEST_CASE("WaitCondition_IndefinitePredicateWait") {
         bool          ready = false;
 
         std::thread t([&] {
-                Thread::sleepMs(10);
+                BasicThread::sleepMs(10);
                 {
                         Mutex::Locker locker(m);
                         ready = true;

@@ -216,7 +216,7 @@ List<CpuMonitor::ThreadCpuTimes> CpuMonitor::readThreadCpuTimes() const {
 void CpuMonitor::run() {
 #if !defined(PROMEKI_PLATFORM_LINUX)
         // Non-Linux: nothing to sample.  Sit idle until stop().
-        while (!_stopRequested.value()) Thread::sleepMs(100);
+        while (!_stopRequested.value()) BasicThread::sleepMs(100);
         return;
 #else
         // Establish a baseline so the first published report covers
@@ -232,7 +232,7 @@ void CpuMonitor::run() {
                 int64_t remainingNs = _intervalNs.value();
                 while (remainingNs > 0 && !_stopRequested.value()) {
                         const int64_t step = std::min<int64_t>(remainingNs, 100'000'000LL);
-                        Thread::sleepNs(step);
+                        BasicThread::sleepNs(step);
                         remainingNs -= step;
                 }
                 if (_stopRequested.value()) break;

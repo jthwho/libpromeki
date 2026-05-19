@@ -263,7 +263,7 @@ TEST_CASE("EventLoopStats: monitor survives loop destruction") {
 
         // Spin until the worker has completed; failure mode is a
         // crash in the worker, not a hang here.
-        for (int i = 0; i < 200 && !done.load(); i++) Thread::sleepMs(5);
+        for (int i = 0; i < 200 && !done.load(); i++) BasicThread::sleepMs(5);
         worker.join();
         CHECK(done.load());
 }
@@ -278,18 +278,18 @@ TEST_CASE("EventLoopStats: cross-thread installMonitor") {
         std::atomic<uint64_t>     reporterTid{0};
         EventLoop::ReportFunction fn = [&calls, &reporterTid](const EventLoop::Report &) {
                 calls++;
-                reporterTid.store(Thread::currentNativeId());
+                reporterTid.store(BasicThread::currentNativeId());
         };
 
         t->threadEventLoop()->installMonitor(Duration::fromMilliseconds(15), fn);
         // Drive enough idle wallclock for the sampler to fire.
-        Thread::sleepMs(120);
+        BasicThread::sleepMs(120);
         t->quit();
         t->wait();
 
         CHECK(calls.load() >= 1);
         CHECK(reporterTid.load() != 0);
-        CHECK(reporterTid.load() != Thread::currentNativeId());
+        CHECK(reporterTid.load() != BasicThread::currentNativeId());
         delete t;
 }
 
@@ -301,7 +301,7 @@ TEST_CASE("EventLoopStats: Application::startEventLoopMonitors auto-installs on 
         std::atomic<uint64_t>     reporterTid{0};
         EventLoop::ReportFunction fn = [&calls, &reporterTid](const EventLoop::Report &) {
                 calls++;
-                reporterTid.store(Thread::currentNativeId());
+                reporterTid.store(BasicThread::currentNativeId());
         };
         Application::startEventLoopMonitors(Duration::fromMilliseconds(15), fn);
         CHECK(Application::eventLoopMonitorsEnabled());
@@ -311,12 +311,12 @@ TEST_CASE("EventLoopStats: Application::startEventLoopMonitors auto-installs on 
         t->start();
         REQUIRE(t->threadEventLoop() != nullptr);
 
-        Thread::sleepMs(120);
+        BasicThread::sleepMs(120);
         t->quit();
         t->wait();
 
         CHECK(calls.load() >= 1);
-        CHECK(reporterTid.load() != Thread::currentNativeId());
+        CHECK(reporterTid.load() != BasicThread::currentNativeId());
         delete t;
 
         // Disable the hook so other tests are not affected.
@@ -452,7 +452,7 @@ TEST_CASE("EventLoopStats: cross-thread signal emits land in a labeled callable 
                 receiver = new SignalReceiver();
                 ready.store(true);
         });
-        for (int i = 0; i < 200 && !ready.load(); i++) Thread::sleepMs(2);
+        for (int i = 0; i < 200 && !ready.load(); i++) BasicThread::sleepMs(2);
         REQUIRE(ready.load());
 
         emitter.statsTestPingSignal.connect(
@@ -462,7 +462,7 @@ TEST_CASE("EventLoopStats: cross-thread signal emits land in a labeled callable 
         for (int i = 0; i < emits; i++) emitter.statsTestPingSignal.emit(i);
 
         // Give the worker time to dispatch all posted callables.
-        for (int i = 0; i < 200 && receiver->received.load() < emits; i++) Thread::sleepMs(2);
+        for (int i = 0; i < 200 && receiver->received.load() < emits; i++) BasicThread::sleepMs(2);
         CHECK(receiver->received.load() == emits);
 
         EventLoop::Report r = worker->threadEventLoop()->consumeStats();

@@ -94,11 +94,6 @@ class File : public BufferedIODevice {
                 static constexpr FileHandle FileHandleClosedValue = -1;
 #endif
 
-                /** @brief Deleted copy constructor (non-copyable). */
-                File(const File &) = delete;
-                /** @brief Deleted copy assignment operator (non-copyable). */
-                File &operator=(const File &) = delete;
-
                 /**
                  * @brief Default constructor. Creates a File with no filename.
                  * @param parent The parent object, or nullptr.

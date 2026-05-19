@@ -85,7 +85,7 @@ namespace {
                                         done = true;
                                 });
                                 for (int i = 0; i < 1000 && !done; ++i) {
-                                        Thread::sleepMs(1);
+                                        BasicThread::sleepMs(1);
                                 }
                                 REQUIRE(done);
                                 REQUIRE(port != 0);
@@ -105,7 +105,7 @@ namespace {
                                         done = true;
                                 });
                                 for (int i = 0; i < 1000 && !done; ++i) {
-                                        Thread::sleepMs(1);
+                                        BasicThread::sleepMs(1);
                                 }
                                 thread.quit();
                                 thread.wait(2000);
@@ -445,7 +445,7 @@ TEST_CASE("ApiRoutes - CRUD lifecycle for a TPG to NullPacing pipeline") {
         CHECK(started.status == 200);
 
         // Let the source pump for a few ticks.
-        Thread::sleepMs(200);
+        BasicThread::sleepMs(200);
 
         auto stopped = doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/stop");
         CHECK(stopped.status == 200);
@@ -549,7 +549,7 @@ namespace {
                                         if (last == want) return last;
                                 }
                         }
-                        Thread::sleepMs(10);
+                        BasicThread::sleepMs(10);
                 }
                 return last;
         }
@@ -575,7 +575,7 @@ namespace {
                         REQUIRE(post("build").status == 200);
                         REQUIRE(post("open").status == 200);
                         REQUIRE(post("start").status == 200);
-                        Thread::sleepMs(80);
+                        BasicThread::sleepMs(80);
                         REQUIRE(post("stop").status == 200);
                         return waitForState(port, id, "Stopped", 1000);
                 }
@@ -583,7 +583,7 @@ namespace {
                         REQUIRE(post("build").status == 200);
                         REQUIRE(post("open").status == 200);
                         REQUIRE(post("start").status == 200);
-                        Thread::sleepMs(80);
+                        BasicThread::sleepMs(80);
                         REQUIRE(post("stop").status == 200);
                         REQUIRE(post("close").status == 200);
                         return waitForState(port, id, "Closed", 1000);
@@ -763,7 +763,7 @@ namespace {
                                                         return head.contains("101");
                                                 }
                                         }
-                                        Thread::sleepMs(2);
+                                        BasicThread::sleepMs(2);
                                 }
                                 return false;
                         }
@@ -788,7 +788,7 @@ namespace {
                                                                     buf, got);
                                                         pendingLen += static_cast<size_t>(got);
                                                 } else {
-                                                        Thread::sleepMs(2);
+                                                        BasicThread::sleepMs(2);
                                                         continue;
                                                 }
                                         }
@@ -860,7 +860,7 @@ TEST_CASE("ApiRoutes - WS /api/events delivers state-changed events") {
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/build");
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/open");
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/start");
-        Thread::sleepMs(200);
+        BasicThread::sleepMs(200);
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/stop");
         doRequest(fix.port, "POST", String("/api/pipelines/") + id + "/close");
 
@@ -1031,7 +1031,7 @@ TEST_CASE("ApiRoutes - preview route streams multipart MJPEG when running") {
                                 }
                         }
                 } else {
-                        Thread::sleepMs(5);
+                        BasicThread::sleepMs(5);
                 }
         }
         REQUIRE(headerEnd != SIZE_MAX);
@@ -1059,7 +1059,7 @@ TEST_CASE("ApiRoutes - preview route streams multipart MJPEG when running") {
                         std::memcpy(static_cast<uint8_t *>(raw.data()) + rawLen, buf, got);
                         rawLen += static_cast<size_t>(got);
                 } else {
-                        Thread::sleepMs(5);
+                        BasicThread::sleepMs(5);
                 }
                 const uint8_t *bb = static_cast<const uint8_t *>(raw.data()) + bodyStart + bodyConsumed;
                 const size_t   bbLen = rawLen - bodyStart - bodyConsumed;

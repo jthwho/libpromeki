@@ -1100,7 +1100,7 @@ Error MediaPipeline::close(bool block) {
                 if (currentEL != nullptr && currentEL == ownerEL) {
                         currentEL->processEvents(EventLoop::WaitForMore, 10);
                 } else {
-                        Thread::sleepMs(1);
+                        BasicThread::sleepMs(1);
                 }
         }
         return _closeError;

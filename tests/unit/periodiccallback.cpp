@@ -44,7 +44,7 @@ TEST_CASE("PeriodicCallback: fires after interval elapses") {
         int              count = 0;
         PeriodicCallback pc(0.05, [&] { count++; });
         pc.service(); // starts clock
-        Thread::sleepMs(60);
+        BasicThread::sleepMs(60);
         CHECK(pc.service());
         CHECK(count == 1);
 }
@@ -62,7 +62,7 @@ TEST_CASE("PeriodicCallback: fires repeatedly") {
         PeriodicCallback pc(0.05, [&] { count++; });
         pc.service(); // starts clock
         for (int i = 0; i < 3; i++) {
-                Thread::sleepMs(60);
+                BasicThread::sleepMs(60);
                 pc.service();
         }
         CHECK(count == 3);
@@ -76,7 +76,7 @@ TEST_CASE("PeriodicCallback: reset restarts the clock") {
         int              count = 0;
         PeriodicCallback pc(0.05, [&] { count++; });
         pc.service();
-        Thread::sleepMs(60);
+        BasicThread::sleepMs(60);
         pc.reset();
         // After reset, first service re-starts, should not fire
         CHECK_FALSE(pc.service());
@@ -92,7 +92,7 @@ TEST_CASE("PeriodicCallback: setInterval changes the interval") {
         PeriodicCallback pc(10.0, [&] { count++; });
         pc.service();
         pc.setInterval(0.05);
-        Thread::sleepMs(60);
+        BasicThread::sleepMs(60);
         CHECK(pc.service());
         CHECK(count == 1);
 }
@@ -103,7 +103,7 @@ TEST_CASE("PeriodicCallback: setCallback changes the function") {
         PeriodicCallback pc(0.05, [&] { countA++; });
         pc.service();
         pc.setCallback([&] { countB++; });
-        Thread::sleepMs(60);
+        BasicThread::sleepMs(60);
         pc.service();
         CHECK(countA == 0);
         CHECK(countB == 1);

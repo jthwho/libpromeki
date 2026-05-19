@@ -34,7 +34,7 @@ TEST_CASE("SdlSubsystem: worker-thread quit wakes Application::exec()") {
         REQUIRE(Application::mainEventLoop() != nullptr);
 
         std::thread worker([] {
-                Thread::sleepMs(30);
+                BasicThread::sleepMs(30);
                 Application::quit(7);
         });
 

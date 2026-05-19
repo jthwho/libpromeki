@@ -11,9 +11,9 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_V4L2
 #include <promeki/namespace.h>
-#include <thread>
 #include <promeki/atomic.h>
 #include <promeki/audiobuffer.h>
+#include <promeki/basicthread.h>
 #include <promeki/audiodesc.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/framerate.h>
@@ -142,6 +142,19 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 /** @brief Destructor. */
                 ~V4l2MediaIO() override;
 
+                /**
+                 * @brief Returns the per-object instance ID.
+                 *
+                 * For paths of the form @c /dev/videoN this is @c N (so
+                 * the same device opened twice yields the same ID).
+                 * For other paths (symlinks, names without a trailing
+                 * integer), an atomic counter is assigned at @c open.
+                 * Used to derive unique worker-thread names.
+                 *
+                 * @return The instance ID.
+                 */
+                int instanceID() const { return _instanceId; }
+
                 /** @brief Maps a V4L2 pixel format fourcc to a PixelFormat::ID. */
                 static PixelFormat::ID v4l2ToPixelFormat(uint32_t v4l2fmt);
 
@@ -216,8 +229,9 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 // closed-then-reopened MediaIO doesn't carry the
                 // previous instance's cancellation forward.
                 Atomic<bool>      _readCancelled{false};
-                std::thread       _videoThread;
-                std::thread       _audioThread;
+                BasicThread       _videoThread;
+                BasicThread       _audioThread;
+                int               _instanceId = 0; ///< Derived from /dev/videoN or atomic counter.
 
                 // -- Video frame queue (video thread → read command) --
                 static constexpr int     VideoQueueDepth = 2;

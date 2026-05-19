@@ -241,7 +241,7 @@ TEST_CASE("MediaIOSink: writesAccepted reflects in-flight count") {
         ElapsedTimer t;
         t.start();
         while (t.elapsed() < 1000 && sink->sink(0)->writesAccepted() < 1) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         CHECK(sink->sink(0)->writesAccepted() == 1);
 

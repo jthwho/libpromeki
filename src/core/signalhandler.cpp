@@ -8,6 +8,7 @@
 #include <promeki/signalhandler.h>
 #include <promeki/application.h>
 #include <promeki/atomic.h>
+#include <promeki/basicthread.h>
 #include <promeki/eventloop.h>
 #include <promeki/libraryoptions.h>
 #include <promeki/list.h>
@@ -17,7 +18,6 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <thread>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <csignal>
@@ -117,7 +117,7 @@ namespace {
         struct sigaction g_savedActions[kNumTerminationSignals];
         bool             g_savedValid[kNumTerminationSignals] = {false};
 
-        std::thread *g_watcher = nullptr;
+        BasicThread *g_watcher = nullptr;
         Atomic<bool> g_stopRequested{false};
 
         // Async-signal-safe handler: just forwards the signal number as one
@@ -141,16 +141,9 @@ namespace {
                 errno = savedErrno;
         }
 
-        void applyWatcherThreadName() {
-#if defined(PROMEKI_PLATFORM_LINUX)
-                pthread_setname_np(pthread_self(), "promeki-signals");
-#elif defined(PROMEKI_PLATFORM_APPLE)
-                pthread_setname_np("promeki-signals");
-#endif
-                // Also update the logger's per-thread tag so log lines emitted
-                // from this thread are labelled clearly.
-                Logger::setThreadName("promeki-signals");
-        }
+        // Watcher thread naming is handled by BasicThread::start
+        // (sets the OS name and Logger thread-name cache via
+        // BasicThread::setCurrentThreadName).
 
         // ============================================================================
         // Custom (non-termination) signal subscribers
@@ -247,8 +240,6 @@ namespace {
         // Worker body: block on read() until a byte arrives from the signal
         // handler or uninstall() pokes us.
         void watcherMain() {
-                applyWatcherThreadName();
-
                 while (!g_stopRequested.load(MemoryOrder::Acquire)) {
                         unsigned char byte = 0;
                         ssize_t       n = ::read(g_wakePipe[0], &byte, 1);
@@ -372,7 +363,8 @@ void SignalHandler::install() {
         }
 
         g_stopRequested.store(false, MemoryOrder::Release);
-        g_watcher = new std::thread(watcherMain);
+        g_watcher = new BasicThread("promeki-signals");
+        g_watcher->start(watcherMain);
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         if (!SetConsoleCtrlHandler(consoleCtrlHandler, TRUE)) {
                 promekiWarn("SignalHandler: SetConsoleCtrlHandler(add) failed "
@@ -391,7 +383,7 @@ void SignalHandler::uninstall() {
 
 #if defined(PROMEKI_PLATFORM_POSIX)
         // Refuse to deadlock if called from the watcher thread itself.
-        if (g_watcher != nullptr && pthread_equal(pthread_self(), g_watcher->native_handle())) {
+        if (g_watcher != nullptr && pthread_equal(pthread_self(), g_watcher->nativeHandle())) {
                 promekiWarn("SignalHandler: uninstall() called from the "
                             "signal-waiting thread — skipping join");
                 return;

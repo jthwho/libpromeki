@@ -10,44 +10,31 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <chrono>
 #include <thread>
+#include <promeki/atomic.h>
+#include <promeki/basicthread.h>
+#include <promeki/mutex.h>
 #include <promeki/objectbase.h>
 #include <promeki/set.h>
-#include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
-#include <promeki/atomic.h>
-#include <promeki/duration.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Scheduling policy for thread priority control.
- * @ingroup events
+ * @brief ObjectBase-integrated thread with a built-in EventLoop.
  *
- * Wraps the OS-level scheduling policies.  Not all policies are
- * available on every platform — unsupported values map to Default.
- */
-enum class SchedulePolicy {
-        Default,    ///< Normal time-sharing (SCHED_OTHER on POSIX).
-        RoundRobin, ///< Real-time round-robin (SCHED_RR).
-        Fifo,       ///< Real-time first-in-first-out (SCHED_FIFO).
-        Batch,      ///< Batch scheduling, Linux only (SCHED_BATCH).
-        Idle        ///< Idle scheduling, Linux only (SCHED_IDLE).
-};
-
-/**
- * @brief Wrapper around std::thread with a built-in EventLoop.
+ * Layers parent/child tree, signal/slot, and an @ref EventLoop on top
+ * of @ref BasicThread.  Static helpers like @c sleepMs / @c yield /
+ * @c idealThreadCount live on @ref BasicThread; use those directly.
  *
- * Derives from ObjectBase so it participates in parent/child tree and
- * signal/slot.  Operates in two modes:
+ * Operates in two modes:
  *
- * 1. **Spawned thread** — start() creates a std::thread, builds an
+ * 1. **Spawned thread** — start() creates a BasicThread, builds an
  *    EventLoop on it, and calls run().  The Thread object itself lives
  *    on the creating thread.
  *
  * 2. **Adopted thread** — wraps an already-running thread (e.g. main).
- *    No std::thread is owned.  start() is a no-op.  Created by
+ *    No BasicThread is owned.  start() is a no-op.  Created by
  *    adoptCurrentThread().
  *
  * @par Thread Safety
@@ -56,8 +43,7 @@ enum class SchedulePolicy {
  * @c setPriority etc. should be invoked from the owner.  The
  * @c threadEventLoop() pointer is safe to use cross-thread because
  * @ref EventLoop's @c postCallable / @c postEvent are themselves
- * thread-safe.  Static helpers (@c current, @c osThreadId,
- * @c hardwareConcurrency) may be called from any thread.
+ * thread-safe.
  *
  * @par Subclassing teardown discipline
  * Subclasses that override @c run with a loop that does not
@@ -77,7 +63,7 @@ class Thread : public ObjectBase {
                 PROMEKI_OBJECT(Thread, ObjectBase)
         public:
                 /** @brief Platform-specific native thread handle type. */
-                using NativeHandle = std::thread::native_handle_type;
+                using NativeHandle = BasicThread::NativeHandle;
                 /**
                  * @brief Adopts the calling thread as a Thread object.
                  *
@@ -94,110 +80,6 @@ class Thread : public ObjectBase {
                  * @return The current thread's Thread, or nullptr if none.
                  */
                 static Thread *currentThread();
-
-                /**
-                 * @brief Returns the OS-native thread ID of the calling thread.
-                 *
-                 * On Linux this is the kernel TID (gettid()), on macOS the
-                 * pthread thread ID (pthread_threadid_np()), and on Windows
-                 * the Win32 thread ID (GetCurrentThreadId()).
-                 *
-                 * @return The native thread ID as a 64-bit unsigned integer.
-                 */
-                static uint64_t currentNativeId();
-
-                /**
-                 * @brief Sets the OS-level name and logger name for the calling thread.
-                 *
-                 * Convenience for threads not managed by a Thread object
-                 * (e.g. ThreadPool workers).  Sets the OS-level thread
-                 * name (visible in debuggers, @c htop, @c ps&nbsp;-L) and
-                 * updates the Logger's cached thread name.
-                 *
-                 * On Linux/macOS the name is silently truncated to 15
-                 * characters by the OS.
-                 *
-                 * @param name The name to assign to the calling thread.
-                 */
-                static void setCurrentThreadName(const String &name);
-
-                /**
-                 * @brief Returns the minimum priority for a scheduling policy.
-                 * @param policy The scheduling policy to query.
-                 * @return The minimum valid priority value.
-                 */
-                static int priorityMin(SchedulePolicy policy = SchedulePolicy::Default);
-
-                /**
-                 * @brief Returns the maximum priority for a scheduling policy.
-                 * @param policy The scheduling policy to query.
-                 * @return The maximum valid priority value.
-                 */
-                static int priorityMax(SchedulePolicy policy = SchedulePolicy::Default);
-
-                /**
-                 * @brief Returns the number of hardware threads available.
-                 *
-                 * Wraps std::thread::hardware_concurrency().  Returns 0 if
-                 * the value cannot be determined.
-                 *
-                 * @return The number of concurrent threads supported.
-                 */
-                static unsigned int idealThreadCount();
-
-                /**
-                 * @brief Sleeps the calling thread for @p ns nanoseconds.
-                 *
-                 * Thin wrapper around @c std::this_thread::sleep_for with
-                 * nanosecond granularity.  Sub-millisecond precision is
-                 * subject to OS scheduling resolution.  Negative or zero
-                 * values return immediately.
-                 *
-                 * @param ns Number of nanoseconds to sleep.
-                 */
-                static void sleepNs(int64_t ns) {
-                        if (ns <= 0) return;
-                        std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
-                }
-
-                /**
-                 * @brief Sleeps the calling thread for @p us microseconds.
-                 * @param us Number of microseconds to sleep.
-                 */
-                static void sleepUs(int64_t us) {
-                        if (us <= 0) return;
-                        std::this_thread::sleep_for(std::chrono::microseconds(us));
-                }
-
-                /**
-                 * @brief Sleeps the calling thread for @p ms milliseconds.
-                 * @param ms Number of milliseconds to sleep.
-                 */
-                static void sleepMs(int64_t ms) {
-                        if (ms <= 0) return;
-                        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-                }
-
-                /**
-                 * @brief Sleeps the calling thread for the given @ref Duration.
-                 *
-                 * Negative, zero, or invalid durations return
-                 * immediately (an invalid Duration's @c nanoseconds
-                 * is @c INT64_MIN, which the @ref sleepNs early-out
-                 * treats the same as a negative value).
-                 *
-                 * @param d Duration to sleep.
-                 */
-                static void sleep(const Duration &d) { sleepNs(d.nanoseconds()); }
-
-                /**
-                 * @brief Yields the calling thread to the OS scheduler.
-                 *
-                 * Thin wrapper around @c std::this_thread::yield.  Use
-                 * sparingly — busy-yielding burns CPU.  Prefer
-                 * @ref sleepNs / @ref sleepUs for back-off waits.
-                 */
-                static void yield() { std::this_thread::yield(); }
 
                 /**
                  * @brief Constructs a Thread (spawned mode).
@@ -217,8 +99,11 @@ class Thread : public ObjectBase {
                  * @param stackSize The stack size in bytes for the new thread.
                  *        Zero (the default) uses the system default stack size.
                  *        Ignored for adopted threads.
+                 * @return Error::Ok on success, Error::Invalid if adopted,
+                 *         Error::Busy if already running, Error::LibraryFailure
+                 *         if the OS rejected thread creation.
                  */
-                void start(size_t stackSize = 0);
+                Error start(size_t stackSize = 0);
 
                 /**
                  * @brief Waits for the thread to finish.
@@ -282,6 +167,26 @@ class Thread : public ObjectBase {
                 bool isCurrentThread() const { return _currentThread == this; }
 
                 /**
+                 * @brief Returns the underlying BasicThread (inspection only).
+                 *
+                 * Exposed @c const so callers can read OS-level state
+                 * (native handle, schedule policy, affinity, etc.)
+                 * directly off the BasicThread without going through
+                 * Thread's wrappers.  Mutations must go through
+                 * Thread's own setName / setPriority / setAffinity
+                 * so that Thread's local @c _name and EventLoop name
+                 * stay in sync, and so adopted-thread special-cases
+                 * are honoured.
+                 *
+                 * For adopted threads the BasicThread is default-
+                 * constructed (no OS handle, never joinable) — use
+                 * Thread's own accessors instead.
+                 *
+                 * @return Const reference to the underlying BasicThread.
+                 */
+                const BasicThread &basicThread() const { return _basic; }
+
+                /**
                  * @brief Returns the OS-native thread ID.
                  *
                  * For spawned threads this is captured at thread start.
@@ -332,9 +237,9 @@ class Thread : public ObjectBase {
                  * The thread must be running.  Real-time policies (Fifo,
                  * RoundRobin) typically require elevated privileges.
                  *
-                 * @param priority The priority value.  Use priorityMin() and
-                 *        priorityMax() to determine the valid range for the
-                 *        given policy.
+                 * @param priority The priority value.  Use BasicThread::priorityMin
+                 *        and BasicThread::priorityMax to determine the valid
+                 *        range for the given policy.
                  * @param policy The scheduling policy to apply.
                  * @return Error::Ok on success, Error::Invalid if the thread
                  *         is not running, Error::LibraryFailure on OS-level
@@ -420,7 +325,7 @@ class Thread : public ObjectBase {
         private:
                 static thread_local Thread *_currentThread;
 
-                std::thread             _thread;
+                BasicThread             _basic;
                 Atomic<bool>            _running;
                 Atomic<int>             _exitCode;
                 Atomic<uint64_t>        _nativeId;
@@ -433,22 +338,18 @@ class Thread : public ObjectBase {
                 bool                    _started = false;
                 bool                    _finished = false;
                 bool                    _adopted = false;
-                bool                    _usesPthread = false;
-                NativeHandle            _pthreadHandle{};
 
                 /**
                  * @brief Returns the native thread handle for priority operations.
                  *
-                 * For spawned threads returns the std::thread native handle.
-                 * For adopted threads returns the calling thread's handle
-                 * (pthread_self() on POSIX).
+                 * For spawned threads returns the BasicThread's native
+                 * handle.  For adopted threads returns the calling
+                 * thread's handle (pthread_self() on POSIX).
                  *
                  * @return The platform-specific thread handle.
                  */
                 NativeHandle nativeHandle() const;
-                bool         isJoinable() const;
-                void         joinThread();
-                void         applyOsName();
+                bool         isJoinable() const { return _basic.isJoinable(); }
                 void         threadEntry();
 };
 

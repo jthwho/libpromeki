@@ -310,6 +310,17 @@ TEST_CASE("RtmpClient: end-to-end publish round-trip via a local TCP fixture") {
                         running = false;
                 }
         });
+        // RAII: clear @c running and join @c serverThread on every exit
+        // path so a failed @c REQUIRE doesn't unwind past a joinable
+        // @c std::thread (which calls @c std::terminate).
+        struct ServerThreadGuard {
+                        std::atomic<bool> &running;
+                        std::thread       &t;
+                        ~ServerThreadGuard() {
+                                running.store(false);
+                                if (t.joinable()) t.join();
+                        }
+        } serverThreadGuard{running, serverThread};
 
         RtmpClient client;
         Url        url = localhostUrl(port, "live/myStream");
@@ -591,6 +602,17 @@ TEST_CASE("RtmpClient: publish succeeds when server sends onStatus with txnId=0 
                         running = false;
                 }
         });
+        // RAII: clear @c running and join @c serverThread on every exit
+        // path so a failed @c REQUIRE doesn't unwind past a joinable
+        // @c std::thread (which calls @c std::terminate).
+        struct ServerThreadGuard {
+                        std::atomic<bool> &running;
+                        std::thread       &t;
+                        ~ServerThreadGuard() {
+                                running.store(false);
+                                if (t.joinable()) t.join();
+                        }
+        } serverThreadGuard{running, serverThread};
 
         RtmpClient client;
         Url        url = localhostUrl(port, "live2/myKey");

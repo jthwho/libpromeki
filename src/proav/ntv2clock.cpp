@@ -284,9 +284,9 @@ Error Ntv2DeviceClock::sleepUntilNs(int64_t targetNs) const {
                 if (now >= targetNs) return Error::Ok;
                 const int64_t remaining = targetNs - now;
                 if (remaining > kCoarseHeadroomNs) {
-                        Thread::sleepNs(remaining - kCoarseHeadroomNs);
+                        BasicThread::sleepNs(remaining - kCoarseHeadroomNs);
                 } else {
-                        Thread::sleepUs(50);
+                        BasicThread::sleepUs(50);
                 }
         }
 }

@@ -109,7 +109,7 @@ TEST_SUITE("SDLAudioClock") {
                 std::thread       sim([&] {
                         int64_t cbCount = 0;
                         while (running.load(std::memory_order_relaxed)) {
-                                Thread::sleepMs(kCallbackPeriodMs);
+                                BasicThread::sleepMs(kCallbackPeriodMs);
                                 ++cbCount;
                                 int64_t consumed =
                                         (int64_t)(bytesPerSec * (double)cbCount * ((double)kCallbackPeriodMs / 1000.0));
@@ -121,7 +121,7 @@ TEST_SUITE("SDLAudioClock") {
 
                 // Give the simulator a head start so consumed is non-zero
                 // when the first nowNs() read establishes the checkpoint.
-                Thread::sleepMs(kCallbackPeriodMs * 2);
+                BasicThread::sleepMs(kCallbackPeriodMs * 2);
 
                 auto clockNow = [&clock]() {
                         auto r = clock.nowNs();
@@ -142,7 +142,7 @@ TEST_SUITE("SDLAudioClock") {
                 int64_t       maxRegressionNs = 0;
 
                 while (true) {
-                        Thread::sleepUs(kPollPeriodMicros);
+                        BasicThread::sleepUs(kPollPeriodMicros);
                         int64_t wallNs = TimeStamp::now().nanoseconds();
                         if ((wallNs - startWallNs) / 1000000LL >= kTestDurationMs) {
                                 break;

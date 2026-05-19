@@ -44,6 +44,7 @@ static constexpr int kAudioPrerollFrames = 3;
 
 SDLPlayerMediaIO::SDLPlayerMediaIO(SDLPlayerWidget *widget, SDLAudioOutput *audio, bool useAudioClock)
     : DedicatedThreadMediaIO(nullptr), _widget(widget), _audioOutput(audio), _useAudioClock(useAudioClock) {
+        _instanceId = nextInstanceId<SDLPlayerMediaIO>();
         _sync.setName(String("SDLPlayer"));
         _sync.setInputOverflowPolicy(FrameSync::InputOverflowPolicy::Block);
         _pullRunning.setValue(false);
@@ -52,7 +53,7 @@ SDLPlayerMediaIO::SDLPlayerMediaIO(SDLPlayerWidget *widget, SDLAudioOutput *audi
 SDLPlayerMediaIO::~SDLPlayerMediaIO() {
         if (isOpen()) (void)close().wait();
         // Belt and suspenders in case of misuse.
-        if (_pullThread.joinable()) {
+        if (_pullThread.isJoinable()) {
                 _sync.interrupt();
                 _pullThread.join();
         }
@@ -118,7 +119,7 @@ void SDLPlayerMediaIO::startPullThread() {
         // handle first — a paused pull loop exits on its own but
         // leaves the handle joinable; reassigning onto a joinable
         // std::thread would std::terminate().
-        if (_pullThread.joinable()) _pullThread.join();
+        if (_pullThread.isJoinable()) _pullThread.join();
         // A prior @ref stopPullThread on this task may have left
         // @c FrameSync::_interrupted set — the pull thread can exit
         // through the ClockPaused / _pullRunning check without
@@ -126,7 +127,8 @@ void SDLPlayerMediaIO::startPullThread() {
         // isn't killed by a stale interrupt on its first pullFrame.
         _sync.clearInterrupt();
         _pullRunning.setValue(true);
-        _pullThread = std::thread([this] { pullLoop(); });
+        _pullThread = BasicThread(String::sprintf("sdl-pull%d", _instanceId));
+        _pullThread.start([this] { pullLoop(); });
 }
 
 void SDLPlayerMediaIO::cancelBlockingWork() {
@@ -168,7 +170,7 @@ void SDLPlayerMediaIO::stopPullThread() {
         // during close) — close calls @c _sync.interrupt explicitly
         // before invoking this helper.
         _pullRunning.setValue(false);
-        if (_pullThread.joinable()) _pullThread.join();
+        if (_pullThread.isJoinable()) _pullThread.join();
 }
 
 Error SDLPlayerMediaIO::executeCmd(MediaIOCommandOpen &cmd) {

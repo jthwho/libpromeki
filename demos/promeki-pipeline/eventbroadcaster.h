@@ -60,11 +60,6 @@ namespace promekipipeline {
                         /** @brief Destructor.  Unsubscribes from the manager and tears down sockets. */
                         ~EventBroadcaster() override;
 
-                        EventBroadcaster(const EventBroadcaster &) = delete;
-                        EventBroadcaster(EventBroadcaster &&) = delete;
-                        EventBroadcaster &operator=(const EventBroadcaster &) = delete;
-                        EventBroadcaster &operator=(EventBroadcaster &&) = delete;
-
                         /** @brief Returns the number of currently connected WS subscribers. */
                         int subscriberCount() const;
 

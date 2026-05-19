@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <ctime>
 
+#include <promeki/basicthread.h>
 #include <promeki/logger.h>
-#include <promeki/thread.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -54,7 +54,7 @@ List<ThreadPool *> ThreadPool::allPools() {
 ThreadPool::ThreadPool(int maxThreadCount, bool lazy) {
         int count = maxThreadCount;
         if (count < 0) {
-                count = static_cast<int>(std::thread::hardware_concurrency());
+                count = static_cast<int>(BasicThread::idealThreadCount());
                 if (count <= 0) count = 1;
         }
         _maxThreadCount = count;
@@ -76,7 +76,7 @@ ThreadPool::~ThreadPool() {
                 _cv.wakeAll();
         }
         for (auto &t : _threads) {
-                if (t.joinable()) t.join();
+                if (t.isJoinable()) t.join();
         }
         {
                 Mutex::Locker locker(registryMutex());
@@ -125,7 +125,7 @@ void ThreadPool::setThreadCount(int count, bool lazy) {
                 _cv.wakeAll();
         }
         for (auto &t : _threads) {
-                if (t.joinable()) t.join();
+                if (t.isJoinable()) t.join();
         }
         {
                 Mutex::Locker locker(_mutex);
@@ -258,14 +258,6 @@ void ThreadPool::resetWorkStats() {
 }
 
 void ThreadPool::workerFunc(int index) {
-        {
-                Mutex::Locker locker(_mutex);
-                if (!_namePrefix.isEmpty()) {
-                        String name = _namePrefix + String::number(index);
-                        Thread::setCurrentThreadName(name);
-                        promekiDebug("ThreadPool(%p): thread %d named '%s'", (void *)this, index, name.cstr());
-                }
-        }
         promekiDebug("ThreadPool(%p): thread %d started", (void *)this, index);
         for (;;) {
                 TaggedTask task;
@@ -299,9 +291,16 @@ void ThreadPool::workerFunc(int index) {
 }
 
 void ThreadPool::spawnThreads(int count) {
+        // _namePrefix is read here under the caller's _mutex
+        // ownership (spawnThreads is only called with _mutex held or
+        // from the constructor where no other thread exists yet).
+        const String prefix = _namePrefix;
         for (int i = 0; i < count; i++) {
-                int index = _threadCount;
-                _threads.pushToBack(std::thread(&ThreadPool::workerFunc, this, index));
+                int    index = _threadCount;
+                String workerName = prefix.isEmpty() ? String() : (prefix + String::number(index));
+                BasicThread bt(workerName);
+                bt.start([this, index]() { workerFunc(index); });
+                _threads.pushToBack(std::move(bt));
                 _threadCount++;
         }
         return;

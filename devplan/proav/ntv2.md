@@ -746,7 +746,7 @@ drift-aware clock + HDR / colorimetry VPID) complete (2026-05-17).
   named `ntv2cap:<deviceIdx>:<channel>` so several capture workers
   across one or more cards stay distinguishable in `top -H` / logs.
 - All atomics / threads / sleeps use the library's `Atomic<T>` /
-  `Thread` / `Thread::sleep*` rather than `std::*` (per the
+  `BasicThread` / `BasicThread::sleep*` rather than `std::*` (per the
   prefer-own-classes feedback).
 
 **Tests landed:**
