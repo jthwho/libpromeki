@@ -78,7 +78,7 @@ namespace {
                 if (!sStarting.compare_exchange_strong(expected, true)) {
                         // Another thread is mid-init; spin briefly.
                         while (!sSrtInitDone.load(std::memory_order_acquire)) {
-                                Thread::yield();
+                                BasicThread::yield();
                         }
                         return Error::Ok;
                 }
@@ -254,7 +254,7 @@ Error SrtSocket::waitForConnected(unsigned int timeoutMs) {
                         return Error::ConnectionReset;
                 }
                 if (std::chrono::steady_clock::now() >= deadline) return Error::Timeout;
-                Thread::sleepMs(10);
+                BasicThread::sleepMs(10);
         }
 }
 

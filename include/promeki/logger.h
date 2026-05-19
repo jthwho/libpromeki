@@ -10,9 +10,9 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <thread>
 #include <variant>
 #include <functional>
+#include <promeki/basicthread.h>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
@@ -505,7 +505,7 @@ class Logger {
                                 String   threadName;
                 };
 
-                std::thread           _thread;
+                BasicThread           _thread;
                 Atomic<int>           _level;
                 Atomic<bool>          _consoleLogging;
                 Atomic<bool>          _terminating{false};

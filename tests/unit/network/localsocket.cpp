@@ -181,7 +181,7 @@ TEST_CASE("LocalServer: hasPendingConnections reflects state") {
         REQUIRE(client.connectTo(path).isOk());
         // Give the kernel a moment to materialize the pending connection.
         for (int i = 0; i < 100 && !server.hasPendingConnections(); ++i) {
-                Thread::sleepMs(5);
+                BasicThread::sleepMs(5);
         }
         CHECK(server.hasPendingConnections());
 

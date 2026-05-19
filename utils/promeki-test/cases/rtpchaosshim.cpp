@@ -95,7 +95,11 @@ namespace promekitest {
                 _started = true;
                 for (size_t i = 0; i < _endpoints.size(); ++i) {
                         Endpoint *ep = _endpoints[i];
-                        ep->thread = std::thread([this, ep]() { runEndpoint(*ep); });
+                        // Endpoints already have a well-known identity
+                        // (their listen address); use the address slot
+                        // index as the natural unique suffix.
+                        ep->thread = BasicThread(String::sprintf("rtp-chaos%zu", i));
+                        ep->thread.start([this, ep]() { runEndpoint(*ep); });
                 }
                 return Error::Ok;
         }
@@ -105,7 +109,7 @@ namespace promekitest {
                 _stop.setValue(true);
                 for (size_t i = 0; i < _endpoints.size(); ++i) {
                         Endpoint *ep = _endpoints[i];
-                        if (ep->thread.joinable()) ep->thread.join();
+                        if (ep->thread.isJoinable()) ep->thread.join();
                 }
                 _started = false;
         }

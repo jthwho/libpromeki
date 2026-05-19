@@ -46,7 +46,7 @@ template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t time
         while (t.elapsed() < timeoutMs) {
                 loop.processEvents();
                 if (pred()) return true;
-                Thread::sleepMs(5);
+                BasicThread::sleepMs(5);
         }
         return false;
 }
@@ -550,7 +550,7 @@ TEST_CASE("MediaIOPortConnection unblocks upstream when downstream drains the tr
                         stableCount = 0;
                         lastFrames = now;
                 }
-                Thread::sleepMs(2);
+                BasicThread::sleepMs(2);
         }
         REQUIRE(stableCount >= plateauPolls);
         const int64_t backpressureFrames = upstream.framesTransferred();
@@ -807,7 +807,7 @@ class SlowFirstReadMediaIO : public DedicatedThreadMediaIO {
                         // up here as no second Read ever arriving.
                         if (_firstRead) {
                                 _firstRead = false;
-                                Thread::sleepMs(_firstReadDelayMs);
+                                BasicThread::sleepMs(_firstReadDelayMs);
                         }
                         cmd.frame = Frame();
                         cmd.frame.setCaptureTime(MediaTimeStamp(TimeStamp::now(), ClockDomain(ClockDomain::Synthetic)));

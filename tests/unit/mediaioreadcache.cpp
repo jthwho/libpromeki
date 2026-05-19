@@ -60,7 +60,7 @@ template <typename Pred> bool waitFor(Pred pred, int64_t timeoutMs = 2000) {
         t.start();
         while (t.elapsed() < timeoutMs) {
                 if (pred()) return true;
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         return pred();
 }
@@ -71,7 +71,7 @@ template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t time
         while (t.elapsed() < timeoutMs) {
                 loop.processEvents();
                 if (pred()) return true;
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         return pred();
 }

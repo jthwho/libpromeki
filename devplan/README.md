@@ -110,6 +110,20 @@ devplan/
    `push(PcmAudioPayload)` / `popPayload` / `popWaitPayload` /
    `nextSamplePts()` added; RTP audio packetizer migrated.
    See [`proav/timestamps.md`](proav/timestamps.md).
+11. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
+   `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
+   scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,
+   `sleep(Duration)`, `yield`, `idealThreadCount`, `currentNativeId`,
+   `setCurrentThreadName`, `priorityMin/Max`). `Thread` refactored to
+   wrap a `BasicThread` member; `Thread::start()` now returns `Error`
+   and bails cleanly on OS failure (no deadlock). All `std::thread`
+   consumers converted: `ThreadPool` workers, `Logger` worker,
+   `SignalHandler` watcher, `NdiDiscovery`, `NdiMediaIO` capture,
+   `V4l2MediaIO` video/audio, `SdlPlayer` pull, `RtpChaosShim`
+   endpoints — each with a unique OS-level name and a `nextInstanceId<Tag>()`-backed
+   `instanceID()` accessor. `ObjectBase` now explicitly deletes
+   copy/move; 9 derived classes shed redundant explicit deletes.
+   `BasicThread::detach()` removed as unsafe under Pimpl.
 
 ## Phase status (overview)
 

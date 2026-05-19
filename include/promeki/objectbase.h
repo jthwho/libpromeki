@@ -290,6 +290,10 @@ class ObjectBase {
                  */
                 ObjectBase(ObjectBase *p = nullptr);
 
+                ObjectBase(const ObjectBase &) = delete;
+                ObjectBase(ObjectBase &&) = delete;
+                ObjectBase &operator=(const ObjectBase &) = delete;
+                ObjectBase &operator=(ObjectBase &&) = delete;
 
                 /** @brief Destructor. Emits aboutToDestroy, detaches from parent, and destroys children. */
                 virtual ~ObjectBase() {

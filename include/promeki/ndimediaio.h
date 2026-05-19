@@ -12,8 +12,8 @@
 #if PROMEKI_ENABLE_NDI
 #include <promeki/namespace.h>
 #include <atomic>
-#include <thread>
 #include <promeki/audiobuffer.h>
+#include <promeki/basicthread.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiomarker.h>
 #include <promeki/clock.h>
@@ -188,6 +188,17 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 ~NdiMediaIO() override;
 
                 /**
+                 * @brief Returns the per-object instance ID.
+                 *
+                 * Assigned monotonically at construction from a shared
+                 * atomic counter.  Used to derive unique thread names
+                 * for this object's worker(s).
+                 *
+                 * @return The instance ID.
+                 */
+                int instanceID() const { return _instanceId; }
+
+                /**
                  * @brief Tells the planner which sink-side video shapes NDI accepts.
                  *
                  * NDI's wire formats are a small fixed set (UYVY, NV12,
@@ -328,7 +339,8 @@ class NdiMediaIO : public DedicatedThreadMediaIO {
                 // SDK buffers via the matching recv_free_* call.  All
                 // queues are mutex-protected internally; the strand
                 // drains them in @c executeCmd(MediaIOCommandRead).
-                std::thread          _captureThread;
+                BasicThread          _captureThread;
+                int                  _instanceId = 0; ///< Per-object counter for thread naming.
                 std::atomic<bool>    _stopFlag{false};
                 std::atomic<bool>    _readCancelled{false};
                 // Reader-side video queue.  Capacity is small (matches

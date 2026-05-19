@@ -179,7 +179,9 @@ namespace {
 // NdiMediaIO
 // ---------------------------------------------------------------------------
 
-NdiMediaIO::NdiMediaIO(ObjectBase *parent) : DedicatedThreadMediaIO(parent) {}
+NdiMediaIO::NdiMediaIO(ObjectBase *parent) : DedicatedThreadMediaIO(parent) {
+        _instanceId = nextInstanceId<NdiMediaIO>();
+}
 
 NdiMediaIO::~NdiMediaIO() {
         // Mirror V4L2's pattern: drain through the strand so we don't
@@ -1050,7 +1052,8 @@ Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
         _metadataReceived.store(0, std::memory_order_relaxed);
         _droppedReceives.store(0, std::memory_order_relaxed);
 
-        _captureThread = std::thread([this] { captureLoop(); });
+        _captureThread = BasicThread(String::sprintf("ndi-cap%d", _instanceId));
+        _captureThread.start([this] { captureLoop(); });
         promekiInfo("NdiMediaIO: receiver opened for source '%s' (bandwidth=%s, color=%s)",
                     sourceName.cstr(), bandwidthEnum.toString().cstr(),
                     colorFormatEnum.toString().cstr());
@@ -1060,7 +1063,7 @@ Error NdiMediaIO::openSource(const MediaIO::Config &cfg) {
 void NdiMediaIO::closeSource() {
         if (!_recv) return;
         _stopFlag.store(true, std::memory_order_release);
-        if (_captureThread.joinable()) {
+        if (_captureThread.isJoinable()) {
                 _captureThread.join();
         }
         const NDIlib_v6 *api = NdiLib::instance().api();
@@ -1264,7 +1267,7 @@ void NdiMediaIO::ingestNdiAudio(int64_t timestampTicks, size_t samples, size_t c
 }
 
 void NdiMediaIO::captureLoop() {
-        Thread::setCurrentThreadName("ndi-capture");
+        BasicThread::setCurrentThreadName("ndi-capture");
 
         const NDIlib_v6 *api = NdiLib::instance().api();
         if (!api) return;

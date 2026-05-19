@@ -220,7 +220,7 @@ SrtSocket::UPtr SrtServer::accept(unsigned int timeoutMs) {
                 }
                 // -1 with non-blocking: spin until deadline.
                 if (std::chrono::steady_clock::now() >= deadline) break;
-                Thread::sleepMs(10);
+                BasicThread::sleepMs(10);
         }
         captureLastError();
         srt_setsockflag(_sock, SRTO_RCVSYN, &saveSync, sizeof(saveSync));

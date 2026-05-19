@@ -32,7 +32,7 @@
 #pragma once
 
 #include <promeki/atomic.h>
-#include <thread>
+#include <promeki/basicthread.h>
 
 #include <promeki/buffer.h>
 #include <promeki/error.h>
@@ -200,7 +200,7 @@ namespace promekitest {
                                 SocketAddress    forward;       ///< @brief Forwarding destination.
                                 bool             isRtcp = false;///< @brief True for RTCP, false for RTP.
                                 UdpSocket       *socket = nullptr; ///< @brief Bound socket (heap-owned).
-                                std::thread      thread;        ///< @brief Worker thread.
+                                BasicThread      thread;        ///< @brief Worker thread.
                                 Random           rng;           ///< @brief Per-endpoint chaos RNG.
                                 size_t           rtpPacketCount = 0; ///< @brief RTP-only running count for SsrcChange.
                                 List<Pending>    reorderHold;   ///< @brief Held window for @ref Mode::Reorder.

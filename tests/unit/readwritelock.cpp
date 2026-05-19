@@ -41,7 +41,7 @@ TEST_CASE("ReadWriteLock_ConcurrentReads") {
                 int                       val = readersInside.fetchAndAdd(1) + 1;
                 int                       prev = maxConcurrentReaders.value();
                 while (val > prev && !maxConcurrentReaders.compareAndSwap(prev, val));
-                Thread::sleepMs(50);
+                BasicThread::sleepMs(50);
                 readersInside.fetchAndSub(1);
         };
 

@@ -65,11 +65,6 @@ class Process : public ObjectBase {
                         Running         ///< @brief Process is running.
                 };
 
-                /** @brief Deleted copy constructor (non-copyable). */
-                Process(const Process &) = delete;
-                /** @brief Deleted copy assignment operator (non-copyable). */
-                Process &operator=(const Process &) = delete;
-
                 /**
                  * @brief Default constructor.
                  * @param parent The parent object, or nullptr.

@@ -1299,7 +1299,7 @@ Error FrameBridge::writeFrame(const Frame &frame) {
                         // thread.
                         while (_d->role == Impl::RoleOutput && !_d->abortFlag.value() &&
                                _d->clients.isEmpty()) {
-                                Thread::sleepMs(10);
+                                BasicThread::sleepMs(10);
                                 _d->drainPending();
                                 _d->pruneDeadClients();
                         }

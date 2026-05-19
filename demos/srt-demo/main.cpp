@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
                                                     "msg %d / %d", i + 1, cfg.messages);
                         sock.write(buf, n);
                         std::printf("[caller] sent: \"%.*s\"\n", n, buf);
-                        promeki::Thread::sleepMs(150);
+                        promeki::BasicThread::sleepMs(150);
                 }
                 // Print stats before tearing down.
                 const auto s = sock.stats();
@@ -165,14 +165,14 @@ int main(int argc, char **argv) {
                             static_cast<long long>(s.pktSent),
                             static_cast<unsigned long long>(s.byteSent),
                             s.rttMs, s.linkBandwidthMbps);
-                promeki::Thread::sleepMs(200);
+                promeki::BasicThread::sleepMs(200);
                 sock.close();
         });
 
         // Wait for the listener-side accept (driven by mux.run on its
         // own thread) before draining the data path.
         while (!stop.load(std::memory_order_acquire)) {
-                promeki::Thread::sleepMs(20);
+                promeki::BasicThread::sleepMs(20);
         }
         mux.stop();
         mxThread.join();

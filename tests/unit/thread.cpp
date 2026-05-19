@@ -123,7 +123,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
 
         // Wait for receiver to be created
         while (!ready.load()) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // Create sender on main thread
@@ -136,7 +136,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
         sender.makeSomethingHappen();
 
         // Give time for the posted callable to execute on the worker
-        Thread::sleepMs(50);
+        BasicThread::sleepMs(50);
 
         // Clean up
         t.threadEventLoop()->postCallable([recv] { delete recv; });
@@ -169,7 +169,7 @@ TEST_CASE("Thread: moveToThread changes affinity") {
         });
         // Wait for the move to complete
         while (!moved.load()) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         CHECK(obj.eventLoop() == &mainLoop);
         CHECK(obj.thread() == mainThread);
@@ -204,7 +204,7 @@ TEST_CASE("Thread: moveToThread moves children recursively") {
                 parent.moveToThread(mainThread);
                 moved = true;
         });
-        while (!moved.load()) Thread::sleepMs(1);
+        while (!moved.load()) BasicThread::sleepMs(1);
 
         t.quit();
         t.wait();
@@ -252,7 +252,7 @@ TEST_CASE("Thread: timed wait returns Ok when thread finishes in time") {
         t.start();
         t.quit();
         // Give it time to finish, then wait with a generous timeout
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         Error err = t.wait(1000);
         CHECK(err.isOk());
 }
@@ -271,7 +271,7 @@ TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
                 ready = true;
         });
         while (!ready.load()) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // Create sender on main thread
@@ -283,7 +283,7 @@ TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
 
         // Wait for the marshalled slot to execute on the worker
         while (recv->callCount.load(std::memory_order_relaxed) == 0) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // The slot should have received the sender pointer
@@ -336,7 +336,7 @@ TEST_CASE("Thread: double start on running thread is no-op") {
 }
 
 TEST_CASE("Thread: currentNativeId returns nonzero") {
-        uint64_t id = Thread::currentNativeId();
+        uint64_t id = BasicThread::currentNativeId();
         CHECK(id != 0);
 }
 
@@ -354,7 +354,7 @@ TEST_CASE("Thread: nativeId is set after start") {
 }
 
 TEST_CASE("Thread: nativeId differs from main thread") {
-        uint64_t mainId = Thread::currentNativeId();
+        uint64_t mainId = BasicThread::currentNativeId();
         Thread   t;
         t.start();
         CHECK(t.nativeId() != mainId);
@@ -363,7 +363,7 @@ TEST_CASE("Thread: nativeId differs from main thread") {
 }
 
 TEST_CASE("Thread: adopted thread captures nativeId") {
-        uint64_t mainId = Thread::currentNativeId();
+        uint64_t mainId = BasicThread::currentNativeId();
         Thread  *t = Thread::adoptCurrentThread();
         CHECK(t->nativeId() == mainId);
         delete t;
@@ -374,7 +374,7 @@ TEST_CASE("Thread: nativeId matches currentNativeId on spawned thread") {
         t.start();
         std::atomic<uint64_t> seen{0};
         t.threadEventLoop()->postCallable(
-                [&seen] { seen.store(Thread::currentNativeId(), std::memory_order_relaxed); });
+                [&seen] { seen.store(BasicThread::currentNativeId(), std::memory_order_relaxed); });
         t.quit();
         t.wait();
         CHECK(seen.load(std::memory_order_relaxed) == t.nativeId());
@@ -403,8 +403,8 @@ TEST_CASE("Thread: priority returns value for running thread") {
         t.start();
         // Default policy priority should be within valid range
         int prio = t.priority();
-        int lo = Thread::priorityMin(SchedulePolicy::Default);
-        int hi = Thread::priorityMax(SchedulePolicy::Default);
+        int lo = BasicThread::priorityMin(SchedulePolicy::Default);
+        int hi = BasicThread::priorityMax(SchedulePolicy::Default);
         CHECK(prio >= lo);
         CHECK(prio <= hi);
         t.quit();
@@ -420,7 +420,7 @@ TEST_CASE("Thread: setPriority returns Invalid when not running") {
 TEST_CASE("Thread: setPriority with Default policy on running thread") {
         Thread t;
         t.start();
-        int lo = Thread::priorityMin(SchedulePolicy::Default);
+        int lo = BasicThread::priorityMin(SchedulePolicy::Default);
         // Setting priority within the valid range should succeed
         Error err = t.setPriority(lo, SchedulePolicy::Default);
         CHECK(err.isOk());
@@ -429,16 +429,16 @@ TEST_CASE("Thread: setPriority with Default policy on running thread") {
 }
 
 TEST_CASE("Thread: priorityMin and priorityMax are valid") {
-        int lo = Thread::priorityMin(SchedulePolicy::Default);
-        int hi = Thread::priorityMax(SchedulePolicy::Default);
+        int lo = BasicThread::priorityMin(SchedulePolicy::Default);
+        int hi = BasicThread::priorityMax(SchedulePolicy::Default);
         CHECK(lo <= hi);
 
-        lo = Thread::priorityMin(SchedulePolicy::Fifo);
-        hi = Thread::priorityMax(SchedulePolicy::Fifo);
+        lo = BasicThread::priorityMin(SchedulePolicy::Fifo);
+        hi = BasicThread::priorityMax(SchedulePolicy::Fifo);
         CHECK(lo <= hi);
 
-        lo = Thread::priorityMin(SchedulePolicy::RoundRobin);
-        hi = Thread::priorityMax(SchedulePolicy::RoundRobin);
+        lo = BasicThread::priorityMin(SchedulePolicy::RoundRobin);
+        hi = BasicThread::priorityMax(SchedulePolicy::RoundRobin);
         CHECK(lo <= hi);
 }
 
@@ -551,7 +551,7 @@ TEST_CASE("Thread: setName on adopted thread") {
 }
 
 TEST_CASE("Thread: idealThreadCount returns nonzero") {
-        unsigned int count = Thread::idealThreadCount();
+        unsigned int count = BasicThread::idealThreadCount();
         CHECK(count > 0);
 }
 
@@ -669,11 +669,11 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
                 // the emit callable queued after this one cannot run
                 // until the sender has been destroyed.
                 while (!gate.load(std::memory_order_acquire)) {
-                        Thread::sleepMs(1);
+                        BasicThread::sleepMs(1);
                 }
         });
         while (!ready.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         {
@@ -692,7 +692,7 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
 
         // Wait for the marshalled slot to execute
         while (recv->callCount.load(std::memory_order_relaxed) == 0) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // signalSender() should be nullptr because the sender was
@@ -721,13 +721,13 @@ TEST_CASE("Thread: ObjectBasePtr cross-thread invalidation") {
                 ready.store(true, std::memory_order_release);
                 // Block until the main thread destroys the object
                 while (!gate.load(std::memory_order_acquire)) {
-                        Thread::sleepMs(1);
+                        BasicThread::sleepMs(1);
                 }
                 ptrInvalidAfterDestroy.store(!ptr.isValid(), std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // Destroy the object while the worker thread holds an ObjectBasePtr
@@ -756,7 +756,7 @@ TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
                         ObjectBasePtr ptr(obj);
                         readyCount.fetch_add(1, std::memory_order_release);
                         while (!gate.load(std::memory_order_acquire)) {
-                                Thread::sleepMs(1);
+                                BasicThread::sleepMs(1);
                         }
                         if (!ptr.isValid()) {
                                 invalidCount.fetch_add(1, std::memory_order_relaxed);
@@ -766,7 +766,7 @@ TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
 
         // Wait for all threads to hold an ObjectBasePtr
         while (readyCount.load(std::memory_order_acquire) < numThreads) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // Destroy the object — all ObjectBasePtr's should be invalidated
@@ -794,13 +794,13 @@ TEST_CASE("Thread: ObjectBasePtr data() returns nullptr after cross-thread inval
                 ObjectBasePtr ptr(obj);
                 ready.store(true, std::memory_order_release);
                 while (!gate.load(std::memory_order_acquire)) {
-                        Thread::sleepMs(1);
+                        BasicThread::sleepMs(1);
                 }
                 dataIsNull.store(ptr.data() == nullptr, std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         delete obj;
@@ -856,13 +856,13 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
                 workerPtr = mainPtr;
                 ready.store(true, std::memory_order_release);
                 while (!gate.load(std::memory_order_acquire)) {
-                        Thread::sleepMs(1);
+                        BasicThread::sleepMs(1);
                 }
                 copyValid.store(workerPtr.isValid(), std::memory_order_relaxed);
         });
 
         while (!ready.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         // Worker copy should still be valid since object is alive
@@ -929,7 +929,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
                 created.store(true, std::memory_order_release);
         });
         while (!created.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         const std::thread::id        mainId = std::this_thread::get_id();
@@ -958,7 +958,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
 
         // Wait for the marshalled slot to execute on the worker.
         while (!argReady.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         CHECK(callCount.load() == 1);
@@ -974,7 +974,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
                 cleaned.store(true, std::memory_order_release);
         });
         while (!cleaned.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         worker.quit();
         worker.wait();
@@ -997,7 +997,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
                 ready.store(true, std::memory_order_release);
         });
         while (!ready.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
 
         const std::thread::id coordId = coordinator.id();
@@ -1038,7 +1038,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // Give the coordinator time to drain all posted callables.
         const int expected = kEmittersPerThread * kThreads;
         while (calls.load(std::memory_order_relaxed) < expected) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         CHECK(calls.load() == expected);
         CHECK(nonCoordDispatches.load() == 0);
@@ -1049,7 +1049,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
                 cleaned.store(true, std::memory_order_release);
         });
         while (!cleaned.load(std::memory_order_acquire)) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         coordinator.quit();
         coordinator.wait();
@@ -1106,7 +1106,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         ElapsedTimer warmup;
         warmup.start();
         while (t.threadEventLoop() == nullptr && warmup.elapsed() < 1000) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         REQUIRE(t.threadEventLoop() != nullptr);
 
@@ -1118,7 +1118,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
                 receiver = new TestOne();
                 ready = true;
         });
-        while (!ready.load()) Thread::sleepMs(1);
+        while (!ready.load()) BasicThread::sleepMs(1);
 
         std::atomic<int> calls{0};
         TestOne          sender;
@@ -1195,7 +1195,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         ElapsedTimer waitDeleted;
         waitDeleted.start();
         while (!deleted.load() && waitDeleted.elapsed() < 1000) {
-                Thread::sleepMs(1);
+                BasicThread::sleepMs(1);
         }
         REQUIRE(deleted.load());
         CHECK_FALSE(tracker.isValid()); // ObjectBasePtr nulled on destruction.
@@ -1209,7 +1209,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable d
         sender.makeSomethingHappen();
         sender.makeSomethingHappen();
         // Give any cross-thread post a chance to dispatch.
-        Thread::sleepMs(50);
+        BasicThread::sleepMs(50);
         CHECK(calls.load() == callsAfterDelete);
 
         t.quit();
@@ -1239,45 +1239,45 @@ TEST_CASE("Signal::connect(Function, ObjectBase): same-thread emit drops after r
         CHECK(calls.load() == 1);
 }
 
-TEST_CASE("Thread::sleepMs sleeps at least the requested duration") {
+TEST_CASE("BasicThread::sleepMs sleeps at least the requested duration") {
         ElapsedTimer t;
-        Thread::sleepMs(20);
+        BasicThread::sleepMs(20);
         const int64_t elapsedUs = t.elapsedUs();
         CHECK(elapsedUs >= 20'000);
         CHECK(elapsedUs < 200'000);
 }
 
-TEST_CASE("Thread::sleepUs sleeps at least the requested duration") {
+TEST_CASE("BasicThread::sleepUs sleeps at least the requested duration") {
         ElapsedTimer t;
-        Thread::sleepUs(5'000);
+        BasicThread::sleepUs(5'000);
         const int64_t elapsedUs = t.elapsedUs();
         CHECK(elapsedUs >= 5'000);
         CHECK(elapsedUs < 200'000);
 }
 
-TEST_CASE("Thread::sleepNs sleeps at least the requested duration") {
+TEST_CASE("BasicThread::sleepNs sleeps at least the requested duration") {
         ElapsedTimer t;
-        Thread::sleepNs(2'000'000); // 2 ms
+        BasicThread::sleepNs(2'000'000); // 2 ms
         const int64_t elapsedNs = t.elapsedNs();
         CHECK(elapsedNs >= 2'000'000);
         CHECK(elapsedNs < 200'000'000);
 }
 
-TEST_CASE("Thread::sleep(Duration) sleeps at least the requested duration") {
+TEST_CASE("BasicThread::sleep(Duration) sleeps at least the requested duration") {
         ElapsedTimer t;
-        Thread::sleep(Duration::fromMilliseconds(15));
+        BasicThread::sleep(Duration::fromMilliseconds(15));
         const int64_t elapsedUs = t.elapsedUs();
         CHECK(elapsedUs >= 15'000);
         CHECK(elapsedUs < 200'000);
 }
 
-TEST_CASE("Thread::sleep* with zero or negative arguments returns immediately") {
+TEST_CASE("BasicThread::sleep* with zero or negative arguments returns immediately") {
         ElapsedTimer t;
-        Thread::sleepMs(0);
-        Thread::sleepUs(-100);
-        Thread::sleepNs(-1);
-        Thread::sleep(Duration::fromMilliseconds(-5));
-        Thread::sleep(Duration());
+        BasicThread::sleepMs(0);
+        BasicThread::sleepUs(-100);
+        BasicThread::sleepNs(-1);
+        BasicThread::sleep(Duration::fromMilliseconds(-5));
+        BasicThread::sleep(Duration());
         // Should be effectively instant; bound generously to avoid flake on a busy CI.
         CHECK(t.elapsedUs() < 50'000);
 }

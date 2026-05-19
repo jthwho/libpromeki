@@ -53,7 +53,7 @@ namespace {
                 while (t.elapsed() < timeoutMs) {
                         loop.processEvents();
                         if (pred()) return true;
-                        Thread::sleepMs(5);
+                        BasicThread::sleepMs(5);
                 }
                 return false;
         }

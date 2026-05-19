@@ -72,7 +72,7 @@ namespace {
                 for (auto _ : state) {
                         (void)_;
                         state.pauseTiming();
-                        Thread::sleepUs(50);
+                        BasicThread::sleepUs(50);
                         state.resumeTiming();
                         for (int i = 0; i < 100; i++) sink += i;
                 }

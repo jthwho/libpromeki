@@ -48,7 +48,7 @@ TEST_CASE("ThreadPool_WaitForDone") {
 
 TEST_CASE("ThreadPool_WaitForDoneTimeout") {
         ThreadPool pool(1);
-        pool.submit([] { Thread::sleepMs(200); });
+        pool.submit([] { BasicThread::sleepMs(200); });
         Error err = pool.waitForDone(10);
         CHECK(err == Error::Timeout);
         pool.waitForDone();
@@ -112,7 +112,7 @@ TEST_CASE("ThreadPool_SetThreadCountToZero") {
 TEST_CASE("ThreadPool_Clear") {
         ThreadPool pool(1);
         // Submit a blocking task to occupy the thread
-        pool.submit([] { Thread::sleepMs(50); });
+        pool.submit([] { BasicThread::sleepMs(50); });
         // Submit more tasks that should be clearable
         std::atomic<int> counter{0};
         for (int i = 0; i < 100; i++) {

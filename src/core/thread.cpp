@@ -55,67 +55,11 @@ namespace {
 
 thread_local Thread *Thread::_currentThread = nullptr;
 
-uint64_t Thread::currentNativeId() {
-#if defined(PROMEKI_PLATFORM_LINUX)
-        return static_cast<uint64_t>(syscall(SYS_gettid));
-#elif defined(PROMEKI_PLATFORM_APPLE)
-        uint64_t tid = 0;
-        pthread_threadid_np(nullptr, &tid);
-        return tid;
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        return static_cast<uint64_t>(GetCurrentThreadId());
-#else
-        return 0;
-#endif
-}
-
-void Thread::setCurrentThreadName(const String &name) {
-        if (name.isEmpty()) return;
-#if defined(PROMEKI_PLATFORM_LINUX)
-        pthread_setname_np(pthread_self(), name.cstr());
-#elif defined(PROMEKI_PLATFORM_APPLE)
-        pthread_setname_np(name.cstr());
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        int len = MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, nullptr, 0);
-        if (len > 0) {
-                std::wstring wide(len, L'\0');
-                MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, wide.data(), len);
-                SetThreadDescription(GetCurrentThread(), wide.c_str());
-        }
-#endif
-        Logger::setThreadName(name);
-        return;
-}
-
-int Thread::priorityMin(SchedulePolicy policy) {
-#if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        return sched_get_priority_min(schedulePolicyToNative(policy));
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        (void)policy;
-        return THREAD_PRIORITY_IDLE;
-#else
-        (void)policy;
-        return 0;
-#endif
-}
-
-int Thread::priorityMax(SchedulePolicy policy) {
-#if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        return sched_get_priority_max(schedulePolicyToNative(policy));
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        (void)policy;
-        return THREAD_PRIORITY_TIME_CRITICAL;
-#else
-        (void)policy;
-        return 0;
-#endif
-}
-
 Thread *Thread::adoptCurrentThread() {
         Thread *t = new Thread();
         t->_adopted = true;
         t->_running.setValue(true);
-        t->_nativeId.setValue(currentNativeId());
+        t->_nativeId.setValue(BasicThread::currentNativeId());
         t->_stdId.setValue(std::this_thread::get_id());
         // Cache the calling thread's current EventLoop now so that
         // cross-thread callers of threadEventLoop() (e.g. the signal
@@ -161,62 +105,48 @@ Thread::~Thread() {
                         while (!_finished) _finishedCv.wait(_mutex);
                         _mutex.unlock();
                 }
-                if (isJoinable()) joinThread();
+                if (isJoinable()) _basic.join();
         }
         if (_currentThread == this) _currentThread = nullptr;
         return;
 }
 
-void Thread::start(size_t stackSize) {
-        if (_adopted) return;
-        if (_running.value()) return;
-#if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        if (stackSize > 0) {
-                pthread_attr_t attr;
-                pthread_attr_init(&attr);
-                pthread_attr_setstacksize(&attr, stackSize);
-                pthread_t handle;
-                int       ret = pthread_create(
-                        &handle, &attr,
-                        [](void *arg) -> void       *{
-                                static_cast<Thread *>(arg)->threadEntry();
-                                return nullptr;
-                        },
-                        this);
-                pthread_attr_destroy(&attr);
-                if (ret != 0) return;
-                _pthreadHandle = handle;
-                _usesPthread = true;
-        } else {
-                _thread = std::thread(&Thread::threadEntry, this);
+Error Thread::start(size_t stackSize) {
+        if (_adopted) return Error::Invalid;
+        if (_running.value()) return Error::Busy;
+        // Propagate any name set before start() down into the
+        // BasicThread, so its start-side OS-name application picks
+        // it up.
+        if (!_name.isEmpty()) _basic.setName(_name);
+        Error err = _basic.start([this]() { threadEntry(); }, stackSize);
+        if (err != Error::Ok) {
+                // Crucial: do NOT enter _startedCv.wait — the worker
+                // never spawned, so nothing will ever set _started and
+                // we would deadlock the caller.
+                return err;
         }
-#else
-        (void)stackSize;
-        _thread = std::thread(&Thread::threadEntry, this);
-#endif
-        // Wait until the thread has set up its EventLoop
+        // Wait until the thread has set up its EventLoop.
         _mutex.lock();
         _startedCv.wait(_mutex, [this] { return _started; });
         _mutex.unlock();
-        return;
+        return Error::Ok;
 }
 
 Error Thread::wait(unsigned int timeoutMs) {
         if (_adopted) return Error::Invalid;
         if (!isJoinable()) return Error::Ok;
         if (timeoutMs == 0) {
-                joinThread();
+                _basic.join();
         } else {
                 _mutex.lock();
                 Error err = _finishedCv.wait(_mutex, [this] { return _finished; }, timeoutMs);
                 _mutex.unlock();
                 if (err != Error::Ok) return Error::Timeout;
-                joinThread();
+                _basic.join();
         }
         // Reset state so the Thread object could be started again
         _started = false;
         _finished = false;
-        _usesPthread = false;
         return Error::Ok;
 }
 
@@ -259,33 +189,13 @@ void Thread::run() {
         return;
 }
 
-unsigned int Thread::idealThreadCount() {
-        return std::thread::hardware_concurrency();
-}
-
-bool Thread::isJoinable() const {
-        if (_usesPthread) return _running.value() || _finished;
-        return _thread.joinable();
-}
-
-void Thread::joinThread() {
-#if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
-        if (_usesPthread) {
-                pthread_join(_pthreadHandle, nullptr);
-                return;
-        }
-#endif
-        _thread.join();
-}
-
 Thread::NativeHandle Thread::nativeHandle() const {
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         if (_adopted) return pthread_self();
-        if (_usesPthread) return _pthreadHandle;
-        return const_cast<std::thread &>(_thread).native_handle();
+        return _basic.nativeHandle();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         if (_adopted) return GetCurrentThread();
-        return const_cast<std::thread &>(_thread).native_handle();
+        return _basic.nativeHandle();
 #else
         return {};
 #endif
@@ -338,40 +248,18 @@ void Thread::setName(const String &n) {
                 // thread-safe.
                 loopForName = _threadLoop;
         }
-        if (_running.value()) {
-                applyOsName();
+        if (_adopted) {
+                // Adopted threads have no stored handle; only the
+                // calling thread can update its own OS name.
+                if (_currentThread == this) {
+                        BasicThread::setCurrentThreadName(n);
+                }
+        } else {
+                // BasicThread::setName handles same-thread and
+                // cross-thread OS naming via its stored handle.
+                _basic.setName(n);
         }
         if (loopForName != nullptr) loopForName->setName(n);
-        return;
-}
-
-void Thread::applyOsName() {
-        Mutex::Locker locker(_mutex);
-        if (_name.isEmpty()) return;
-        // When called from the thread itself (always the case during
-        // threadEntry() startup), delegate to setCurrentThreadName()
-        // which uses pthread_self() — safe even before the parent has
-        // finished storing _thread / _pthreadHandle.
-        const bool fromSelf = (_currentThread == this);
-        if (fromSelf) {
-                setCurrentThreadName(_name);
-                return;
-        }
-        // Cross-thread naming — use the stored native handle.
-#if defined(PROMEKI_PLATFORM_LINUX)
-        pthread_setname_np(nativeHandle(), _name.cstr());
-#elif defined(PROMEKI_PLATFORM_APPLE)
-        // macOS only allows setting the name of the current thread.
-        // Cross-thread naming is not supported.
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        HANDLE target = nativeHandle();
-        int    len = MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, nullptr, 0);
-        if (len > 0) {
-                std::wstring wide(len, L'\0');
-                MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, wide.data(), len);
-                SetThreadDescription(target, wide.c_str());
-        }
-#endif
         return;
 }
 
@@ -401,7 +289,7 @@ Error Thread::setAffinity(const Set<int> &cpus) {
         CPU_ZERO(&cpuset);
         if (cpus.isEmpty()) {
                 // Empty set: allow all CPUs
-                int ncpus = static_cast<int>(std::thread::hardware_concurrency());
+                int ncpus = static_cast<int>(BasicThread::idealThreadCount());
                 for (int i = 0; i < ncpus; i++) CPU_SET(i, &cpuset);
         } else {
                 for (int cpu : cpus) CPU_SET(cpu, &cpuset);
@@ -442,7 +330,7 @@ Error Thread::setPriority(int prio, SchedulePolicy policy) {
 
 void Thread::threadEntry() {
         _currentThread = this;
-        _nativeId.setValue(currentNativeId());
+        _nativeId.setValue(BasicThread::currentNativeId());
         _stdId.setValue(std::this_thread::get_id());
 
         // Heap-allocate the worker's EventLoop so its destruction can
@@ -460,13 +348,10 @@ void Thread::threadEntry() {
         // EventLoop so per-loop diagnostics (EventLoop's monitor
         // formatter, debug-server snapshots) can identify the
         // loop without having to traverse the Thread object.
-        // Bare-string copy is intentional — Thread::setName already
-        // stores the name locally even before the OS-name call
-        // succeeds, so reading it here is safe whether or not
-        // setName was issued before start().
+        // BasicThread::start has already applied the OS-level name
+        // before invoking this entry.
         if (!_name.isEmpty()) loop->setName(_name);
         _running.setValue(true);
-        applyOsName();
 
         // Signal the creating thread that we're ready
         {

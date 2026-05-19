@@ -618,7 +618,7 @@ class RtmpMediaIO::DepacketizerThread : public Thread {
                                 if (!any) {
                                         // Brief yield so we don't spin
                                         // when the wire is idle.
-                                        Thread::sleepMs(5);
+                                        BasicThread::sleepMs(5);
                                 }
                         }
                 }

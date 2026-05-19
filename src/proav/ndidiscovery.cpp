@@ -12,9 +12,9 @@
 #include <promeki/ndidiscovery.h>
 
 #include <algorithm>
+#include <promeki/basicthread.h>
 #include <promeki/logger.h>
 #include <promeki/ndilib.h>
-#include <promeki/thread.h>
 
 #include <Processing.NDI.Lib.h>
 
@@ -50,7 +50,8 @@ NdiDiscovery::NdiDiscovery() {
                 promekiWarn("NdiDiscovery: NDI runtime not loaded — discovery disabled");
                 return;
         }
-        _worker = std::thread([this] { workerMain(); });
+        _worker.setName("ndi-disc");
+        _worker.start([this] { workerMain(); });
 }
 
 NdiDiscovery::~NdiDiscovery() {
@@ -59,7 +60,7 @@ NdiDiscovery::~NdiDiscovery() {
                 Mutex::Locker lk(_mutex);
                 _condConfig.wakeAll();
         }
-        if (_worker.joinable()) {
+        if (_worker.isJoinable()) {
                 _worker.join();
         }
 }
@@ -214,7 +215,7 @@ int64_t NdiDiscovery::uptimeMs() const {
 }
 
 void NdiDiscovery::workerMain() {
-        Thread::setCurrentThreadName("ndi-discovery");
+        BasicThread::setCurrentThreadName("ndi-discovery");
 
         const NDIlib_v6 *api = NdiLib::instance().api();
         if (!api || !api->find_create_v2 || !api->find_destroy ||

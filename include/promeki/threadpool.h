@@ -10,10 +10,10 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
-#include <thread>
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <promeki/basicthread.h>
 #include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
@@ -111,7 +111,7 @@ class ThreadPool {
                  * @brief Constructs a ThreadPool with the given maximum thread count.
                  *
                  * @param maxThreadCount Maximum number of worker threads.
-                 *        Defaults to std::thread::hardware_concurrency().
+                 *        Defaults to BasicThread::idealThreadCount().
                  *        A value of 0 means tasks run inline on the calling
                  *        thread.
                  * @param lazy When @c true (default), threads are spawned on
@@ -367,7 +367,7 @@ class ThreadPool {
                 WaitCondition                                  _cv;
                 WaitCondition                                  _doneCv;
                 List<TaggedTask>                               _tasks;
-                List<std::thread>                              _threads;
+                List<BasicThread>                              _threads;
                 String                                         _namePrefix;
                 String                                         _name;
                 int                                            _maxThreadCount = 0;

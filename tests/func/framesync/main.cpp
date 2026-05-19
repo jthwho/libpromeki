@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
         });
 
         const auto startWall = std::chrono::steady_clock::now();
-        Thread::sleepMs((long long)(opts.seconds * 1000.0));
+        BasicThread::sleepMs((long long)(opts.seconds * 1000.0));
         const auto endWall = std::chrono::steady_clock::now();
 
         // Shut down: stop the source first so producer unblocks,

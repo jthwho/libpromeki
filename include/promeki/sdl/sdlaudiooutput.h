@@ -69,9 +69,6 @@ class SDLAudioOutput : public ObjectBase {
 
                 ~SDLAudioOutput() override;
 
-                SDLAudioOutput(const SDLAudioOutput &) = delete;
-                SDLAudioOutput &operator=(const SDLAudioOutput &) = delete;
-
                 /**
                  * @brief Configures the audio output format.
                  *

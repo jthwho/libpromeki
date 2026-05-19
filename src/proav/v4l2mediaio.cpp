@@ -595,6 +595,29 @@ Error V4l2MediaIO::openVideo(const MediaIO::Config &cfg) {
                 return Error::InvalidArgument;
         }
 
+        // Derive a per-object instance ID: /dev/videoN -> N for direct
+        // device nodes, otherwise an atomic counter shared across all
+        // V4l2MediaIO instances that don't match the videoN pattern.
+        // The ID is only used to keep worker-thread names unique in
+        // top-H / htop / debugger views.
+        _instanceId = -1;
+        {
+                const char *p = devPath.cstr();
+                const char *prefix = "/dev/video";
+                size_t      plen = std::strlen(prefix);
+                if (std::strncmp(p, prefix, plen) == 0) {
+                        const char *rest = p + plen;
+                        if (*rest != '\0') {
+                                char *end = nullptr;
+                                long  n = std::strtol(rest, &end, 10);
+                                if (end != rest && *end == '\0' && n >= 0) {
+                                        _instanceId = static_cast<int>(n);
+                                }
+                        }
+                }
+                if (_instanceId < 0) _instanceId = nextInstanceId<V4l2MediaIO>();
+        }
+
         promekiDebug("V4l2MediaIO: opening device %s", devPath.cstr());
 
         _fd = ::open(devPath.cstr(), O_RDWR);
@@ -976,14 +999,14 @@ void V4l2MediaIO::closeAudio() {
 
 void V4l2MediaIO::stopThreads() {
         _stopFlag.store(true, std::memory_order_release);
-        if (_videoThread.joinable()) _videoThread.join();
-        if (_audioThread.joinable()) _audioThread.join();
+        if (_videoThread.isJoinable()) _videoThread.join();
+        if (_audioThread.isJoinable()) _audioThread.join();
         _stopFlag.store(false, std::memory_order_release);
         _videoQueue.clear();
 }
 
 void V4l2MediaIO::videoCaptureLoop() {
-        Thread::setCurrentThreadName("v4l2-video");
+        BasicThread::setCurrentThreadName("v4l2-video");
         promekiDebug("V4l2MediaIO: video capture thread started  "
                      "image=%ux%u %s  queueDepth=%d",
                      _imageDesc.size().width(), _imageDesc.size().height(),
@@ -1157,7 +1180,7 @@ void V4l2MediaIO::videoCaptureLoop() {
 }
 
 void V4l2MediaIO::audioCaptureLoop() {
-        Thread::setCurrentThreadName("v4l2-audio");
+        BasicThread::setCurrentThreadName("v4l2-audio");
         promekiDebug("V4l2MediaIO: audio capture thread started  "
                      "format=%s  rate=%.0f  channels=%u  chunkSamples=512",
                      _audioDesc.format().name().cstr(), _audioDesc.sampleRate(), _audioDesc.channels());
@@ -1352,7 +1375,8 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // ALSA's kernel buffer during the startup gap before the
         // first video frame arrives.
         _stopFlag.store(false, std::memory_order_release);
-        _videoThread = std::thread(&V4l2MediaIO::videoCaptureLoop, this);
+        _videoThread = BasicThread(String::sprintf("v4l2-video%d", _instanceId));
+        _videoThread.start([this]() { videoCaptureLoop(); });
 
         // Fill output fields
         MediaDesc mediaDesc;
@@ -1478,7 +1502,8 @@ Error V4l2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
                                 promekiErr("V4l2MediaIO: snd_pcm_start failed: %s", snd_strerror(serr));
                                 return Error::DeviceError;
                         }
-                        _audioThread = std::thread(&V4l2MediaIO::audioCaptureLoop, this);
+                        _audioThread = BasicThread(String::sprintf("v4l2-audio%d", _instanceId));
+                        _audioThread.start([this]() { audioCaptureLoop(); });
                         promekiDebug("V4l2MediaIO: ALSA capture started on "
                                      "first video frame");
                 }

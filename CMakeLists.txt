@@ -2054,6 +2054,7 @@ set(PROMEKI_SOURCES
     src/core/application.cpp
     src/core/array.cpp
     src/core/asyncbufferqueue.cpp
+    src/core/basicthread.cpp
     src/core/benchmark.cpp
     src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
@@ -3342,6 +3343,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/atomic.cpp
         tests/unit/backendweight.cpp
         tests/unit/base64.cpp
+        tests/unit/basicthread.cpp
         tests/unit/benchmarkrunner.cpp
         tests/unit/buffer.cpp
         tests/unit/bufferallocator.cpp

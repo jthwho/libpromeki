@@ -6,7 +6,6 @@
  */
 
 #include <promeki/logger.h>
-#include <promeki/thread.h>
 #include <promeki/ansistream.h>
 #include <promeki/list.h>
 #include <promeki/fileiodevice.h>
@@ -120,7 +119,7 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
 
 static uint64_t cachedThreadId() {
         static thread_local uint64_t id = 0;
-        if (id == 0) id = Thread::currentNativeId();
+        if (id == 0) id = BasicThread::currentNativeId();
         return id;
 }
 
@@ -130,7 +129,8 @@ Logger::Logger()
         // Force stdio singletons to initialize before this Logger,
         // ensuring they outlive the Logger at static destruction time.
         FileIODevice::stdoutDevice();
-        _thread = std::thread(&Logger::worker, this);
+        _thread.setName("logger");
+        _thread.start([this]() { worker(); });
 }
 
 void Logger::setThreadName(const String &name) {
@@ -292,9 +292,12 @@ Logger::LogFormatter Logger::defaultConsoleFormatter() {
 }
 
 void Logger::worker() {
-        Thread *self = Thread::adoptCurrentThread();
-        self->setName("logger");
-
+        // OS-level thread name + Logger's per-thread cache entry are
+        // already applied by BasicThread::start before this entry runs
+        // (see Logger() ctor: _thread.setName("logger") followed by
+        // _thread.start(...)).  No Thread::adoptCurrentThread() is
+        // needed — nothing in the worker path requires a Thread* and
+        // adopting would leak the heap-allocated Thread at shutdown.
         FileIODevice *logFile = nullptr;
 
 #ifdef PROMEKI_DEBUG_ENABLE
@@ -394,7 +397,6 @@ void Logger::worker() {
                         cmd);
         }
         delete logFile;
-        delete self;
 }
 
 void Logger::writeLog(const LogEntry &entry, FileIODevice *logFile) {

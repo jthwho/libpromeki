@@ -91,9 +91,6 @@ class SDLPlayerWidget : public SDLVideoWidget {
 
                 ~SDLPlayerWidget() override;
 
-                SDLPlayerWidget(const SDLPlayerWidget &) = delete;
-                SDLPlayerWidget &operator=(const SDLPlayerWidget &) = delete;
-
                 /** @brief Returns the MediaIO the widget consumes frames through. */
                 MediaIO *mediaIO() const { return _mediaIO.get(); }
 

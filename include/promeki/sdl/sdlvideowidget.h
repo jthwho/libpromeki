@@ -80,9 +80,6 @@ class SDLVideoWidget : public Widget {
                 /** @brief Destructor. Frees the SDL texture. */
                 ~SDLVideoWidget();
 
-                SDLVideoWidget(const SDLVideoWidget &) = delete;
-                SDLVideoWidget &operator=(const SDLVideoWidget &) = delete;
-
                 /**
                  * @brief Sets the payload to display.
                  *

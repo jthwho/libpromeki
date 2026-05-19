@@ -134,9 +134,6 @@ class DebugMediaFile : public ObjectBase {
                 /** @brief Closes the file and releases resources. */
                 ~DebugMediaFile() override;
 
-                DebugMediaFile(const DebugMediaFile &) = delete;
-                DebugMediaFile &operator=(const DebugMediaFile &) = delete;
-
                 /**
                  * @brief Opens @p filename in the given mode.
                  *

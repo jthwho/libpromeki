@@ -50,7 +50,7 @@ TEST_CASE("Future_WaitForFinished") {
         Future<int>  f = p.future();
 
         std::thread t([&] {
-                Thread::sleepMs(10);
+                BasicThread::sleepMs(10);
                 p.setValue(99);
         });
 
@@ -115,7 +115,7 @@ TEST_CASE("Future_VoidWaitForFinished") {
         Future<void>  f = p.future();
 
         std::thread t([&] {
-                Thread::sleepMs(10);
+                BasicThread::sleepMs(10);
                 p.setValue();
         });
 
@@ -148,7 +148,7 @@ TEST_CASE("Future_ThreadedSetGet") {
         Future<int>  f = p.future();
 
         std::thread t([&] {
-                Thread::sleepMs(20);
+                BasicThread::sleepMs(20);
                 p.setValue(123);
         });
 
