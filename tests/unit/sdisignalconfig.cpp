@@ -22,60 +22,9 @@ using namespace promeki;
 // SdiLinkStandard free helpers
 // ============================================================================
 
-TEST_CASE("cablesFor: maps every SdiLinkStandard to its physical cable count") {
-        CHECK(cablesFor(SdiLinkStandard::Auto)      == 0);
-        CHECK(cablesFor(SdiLinkStandard::SL_SD)     == 1);
-        CHECK(cablesFor(SdiLinkStandard::SL_HD)     == 1);
-        CHECK(cablesFor(SdiLinkStandard::DL_HD)     == 2);
-        CHECK(cablesFor(SdiLinkStandard::SL_3GA)    == 1);
-        CHECK(cablesFor(SdiLinkStandard::SL_3GB)    == 1);
-        CHECK(cablesFor(SdiLinkStandard::DL_3GB)    == 2);
-        CHECK(cablesFor(SdiLinkStandard::DL_3G)     == 2);
-        CHECK(cablesFor(SdiLinkStandard::QL_3G_SQD) == 4);
-        CHECK(cablesFor(SdiLinkStandard::QL_3G_2SI) == 4);
-        CHECK(cablesFor(SdiLinkStandard::SL_6G)     == 1);
-        CHECK(cablesFor(SdiLinkStandard::SL_12G)    == 1);
-        CHECK(cablesFor(SdiLinkStandard::SL_24G)    == 1);
-}
-
-TEST_CASE("isDualLink: identifies all dual-link variants") {
-        CHECK_FALSE(isDualLink(SdiLinkStandard::Auto));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::SL_SD));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::SL_HD));
-        CHECK(isDualLink(SdiLinkStandard::DL_HD));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::SL_3GA));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::SL_3GB));
-        CHECK(isDualLink(SdiLinkStandard::DL_3GB));
-        CHECK(isDualLink(SdiLinkStandard::DL_3G));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::QL_3G_SQD));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::QL_3G_2SI));
-        CHECK_FALSE(isDualLink(SdiLinkStandard::SL_12G));
-}
-
-TEST_CASE("isQuadLink: identifies both quad-link mappings") {
-        CHECK_FALSE(isQuadLink(SdiLinkStandard::Auto));
-        CHECK_FALSE(isQuadLink(SdiLinkStandard::SL_3GA));
-        CHECK_FALSE(isQuadLink(SdiLinkStandard::DL_3G));
-        CHECK(isQuadLink(SdiLinkStandard::QL_3G_SQD));
-        CHECK(isQuadLink(SdiLinkStandard::QL_3G_2SI));
-        CHECK_FALSE(isQuadLink(SdiLinkStandard::SL_12G));
-}
-
-TEST_CASE("nominalDataRateGbps: matches the published spec rates") {
-        CHECK(nominalDataRateGbps(SdiLinkStandard::Auto)      == doctest::Approx(0.0));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_SD)     == doctest::Approx(0.270));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_HD)     == doctest::Approx(1.485));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::DL_HD)     == doctest::Approx(2.970));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_3GA)    == doctest::Approx(2.970));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_3GB)    == doctest::Approx(2.970));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::DL_3GB)    == doctest::Approx(2.970));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::DL_3G)     == doctest::Approx(5.940));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::QL_3G_SQD) == doctest::Approx(11.880));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::QL_3G_2SI) == doctest::Approx(11.880));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_6G)     == doctest::Approx(5.940));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_12G)    == doctest::Approx(11.880));
-        CHECK(nominalDataRateGbps(SdiLinkStandard::SL_24G)    == doctest::Approx(23.760));
-}
+// Note: enum-only helpers (sdiCableCount, sdiIsDualLink, sdiIsQuadLink,
+// sdiNominalDataRateGbps, sdiBitsPerPixel) are tested in
+// tests/unit/sdistandards.cpp.
 
 // ============================================================================
 // Construction / accessors

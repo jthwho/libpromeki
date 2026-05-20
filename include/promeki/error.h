@@ -125,7 +125,10 @@ class Error {
                         NotReady, ///< Resource exists but is not yet in the state required for this operation (will become ready later).
                         AuthenticationRequired, ///< Peer demanded an auth challenge response we don't (yet) produce. Distinct from PermissionDenied.
                         ProtocolError, ///< Peer sent a protocol-level violation or status code we don't model. Distinct from CorruptData (byte-level) and LibraryFailure (downstream).
-                        SignalLoss ///< Hardware input lost its incoming signal (or a configured reference lock dropped) after being healthy. Distinct from NotReady (never came up).
+                        SignalLoss, ///< Hardware input lost its incoming signal (or a configured reference lock dropped) after being healthy. Distinct from NotReady (never came up).
+                        ProtectedAncCode, ///< Caller-supplied 10-bit ST 291 word lies in the protected ranges (000h-003h, 3FCh-3FFh) per ST 291-1 §9.1.
+                        InsufficientContext, ///< Required context (e.g. ATC parse rate hint) was neither stamped on the packet's meta nor supplied via translate config.
+                        InvalidChecksum ///< Stored ST 291 §6.4 checksum word does not match the value recomputed over (DID, SDID, DataCount, UDW) — surfaced when @c AncChecksumPolicy::StrictValidate is in force.
                 };
 
                 /**

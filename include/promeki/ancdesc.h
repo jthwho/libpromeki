@@ -199,6 +199,37 @@ class AncDesc {
                 void setPairedAudioStreamIndex(int index);
 
                 /**
+                 * @brief Returns the RTP timestamp offset from epoch
+                 *        (TROFF, ST 2110-40 §7) in 90 kHz ticks.
+                 *
+                 * Required by ST 2110-40 §7 when the sender uses a
+                 * non-default TR offset relative to the paired video
+                 * stream's TR.  @c 0 (default) means "no offset" and
+                 * suppresses the @c TROFF SDP fmtp emission — a
+                 * conforming receiver assumes 0 in that case.
+                 */
+                uint32_t troff() const;
+
+                /** @brief Sets the TROFF offset in 90 kHz ticks; 0 suppresses SDP emission. */
+                void setTroff(uint32_t ticks);
+
+                /**
+                 * @brief Returns the SMPTE ST 352 VPID byte 1 code
+                 *        for the paired video stream.
+                 *
+                 * RFC 8331 §3.1 / ST 2110-40 §7 allow the sender to
+                 * publish the paired video's VPID byte 1 (data
+                 * stream class) so receivers can disambiguate ANC
+                 * targets without inspecting wire bytes.  @c 0
+                 * (default) means "not declared" and suppresses
+                 * @c VPID_Code SDP emission.
+                 */
+                uint8_t vpidCode() const;
+
+                /** @brief Sets the VPID byte-1 code; 0 suppresses SDP emission. */
+                void setVpidCode(uint8_t code);
+
+                /**
                  * @brief Returns @c true when the descriptor carries
                  *        enough information to be meaningfully consumed.
                  *
@@ -240,18 +271,17 @@ class AncDesc {
 
                 /**
                  * @brief Builds an @c AncDesc from an SDP
-                 *        @c m=application section (RFC 8331).
+                 *        @c m=video section carrying smpte291 (RFC 8331).
                  *
-                 * Recognises the @c smpte291 rtpmap encoding and
-                 * parses the @c DID_SDID fmtp parameter list — RFC
-                 * 8331 §6.2 permits multiple @c DID_SDID entries
-                 * inside one @c a=fmtp line, separated by @c ; .
-                 * Each pair is resolved through
-                 * @ref AncFormat::fromSt291DidSdid and pushed onto
-                 * @ref allowedFormats; pairs with no registered
-                 * format are kept on @ref allowedFormats anyway (as
-                 * @c AncFormat::Invalid IDs) so the application
-                 * still knows the wire-side intent.
+                 * RFC 8331 §3.1 (and ST 2110-40 §7) require an
+                 * @c smpte291 ANC stream to use @c m=video with the
+                 * @c smpte291 rtpmap encoding.  Wildcard-SDID formats
+                 * (e.g. @c Smpte2020Audio, DID 0x45 SDIDs 0x01-0x09)
+                 * map back to the same family ID for any concrete
+                 * SDID in their range.  Pairs with no registered
+                 * format are kept on @ref allowedFormats as
+                 * @c AncFormat::Invalid IDs so the application still
+                 * knows the wire-side intent.
                  *
                  * The other AncDesc fields
                  * (@ref sourceRaster, @ref scanMode,
@@ -266,14 +296,23 @@ class AncDesc {
                 static AncDesc fromSdp(const SdpMediaDescription &md);
 
                 /**
-                 * @brief Builds an SDP @c m=application section for
-                 *        this descriptor (RFC 8331).
+                 * @brief Builds an SDP @c m=video section for this
+                 *        descriptor (RFC 8331 / ST 2110-40).
                  *
-                 * Emits @c m=application @c 0 @c RTP/AVP @c <pt> ,
+                 * Emits @c m=video @c 0 @c RTP/AVP @c <pt> ,
                  * @c a=rtpmap:<pt> @c smpte291/90000 , and an
                  * @c a=fmtp:<pt> line carrying one
                  * @c DID_SDID={DID,SDID} entry per St291-carriage
                  * @ref AncFormat covered by this descriptor.
+                 *
+                 * Wildcard-SDID formats (those that register with
+                 * @c st291Sdid == 0 to absorb an SDID range under one
+                 * DID — e.g. @c Smpte2020Audio under DID 0x45 SDIDs
+                 * 0x01-0x09) are expanded into one explicit
+                 * @c DID_SDID entry per concrete SDID per RFC 8331
+                 * §3.1 (the wire @c SDID=0x00 collides with the
+                 * Type-1 ANC packet sentinel and cannot itself be
+                 * emitted).
                  *
                  * The fmtp set is
                  * <tt>registeredIDsForTransport(St291)</tt>
@@ -319,6 +358,8 @@ class AncDesc {
                                 Metadata                     metadata;
                                 int                          pairedVideoStreamIndex = -1;
                                 int                          pairedAudioStreamIndex = -1;
+                                uint32_t                     troff = 0;
+                                uint8_t                      vpidCode = 0;
                 };
 
         private:

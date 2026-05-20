@@ -153,16 +153,24 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// @brief uint16_t — VANC line number to place a built
                 /// ST 291 packet on when the source did not specify one
                 /// (e.g. when translating from a non-ST 291 transport).
-                /// Codec writes the value into @c AncMeta::St291::Line on
-                /// the produced packet.
+                /// Codec writes the value into @c AncPacket::st291Line()
+                /// on the produced packet.
+                ///
+                /// Default is @c 0x7FE — the RFC 8331 §2.2 / RP 168
+                /// "anywhere from two lines after the switching point
+                /// to the last line before active video" sentinel,
+                /// which ST 2110-40 §5.2.2 recommends when no exact
+                /// VANC line is known.  See
+                /// @ref St291Packet::UnspecifiedLine.
                 PROMEKI_DECLARE_ID(St291BuildLine,
                                    VariantSpec()
                                            .setType(DataTypeUInt16)
-                                           .setDefault(uint16_t(0))
-                                           .setDescription("VANC line number for built ST 291 packets (0 = leave unspecified)."));
+                                           .setDefault(uint16_t(0x7FE))
+                                           .setDescription("VANC line number for built ST 291 packets (0x7FE = "
+                                                           "RP 168 sentinel: anywhere after the switching point)."));
 
                 /// @brief bool — F-bit value for built ST 291 packets;
-                /// stamped into @c AncMeta::St291::FieldB.
+                /// stamped onto @c AncPacket::st291FieldB().
                 PROMEKI_DECLARE_ID(St291FieldB,
                                    VariantSpec()
                                            .setType(DataTypeBool)
@@ -198,6 +206,22 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                                            .setType(DataTypeString)
                                            .setDefault(String())
                                            .setDescription("AMF0 script-tag name override for built RTMP outputs (empty = codec default)."));
+
+                /// @brief uint32_t — ATC parse-time frame-rate hint
+                /// (24 / 25 / 30; 0 = no hint).  The 8 time-code bytes
+                /// in an ST 12-2 packet don't disambiguate 24 / 25 /
+                /// 30-NDF — only the wire's DF bit narrows 30 → 29.97-DF.
+                /// When a caller knows the paired video's rate, supplying
+                /// it here lets the parser stamp the right
+                /// @c Timecode::Mode (NDF24 / NDF25 / NDF30 / DF30) on
+                /// the returned value.  Unknown / unsupported values are
+                /// silently ignored and the parser falls back to the
+                /// NDF30 / DF30 default.
+                PROMEKI_DECLARE_ID(AtcParseRateHint,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt32)
+                                           .setDefault(uint32_t(0))
+                                           .setDescription("ATC parse-time frame-rate hint (24/25/30; 0 = no hint)."));
 
                 // ============================================================
                 // String round-trip (JSON)

@@ -79,7 +79,7 @@ Error SdiSignalConfig::validate() const {
         // Auto is treated as "unspecified" — any cable count, including
         // zero, is accepted so sources can describe "whatever arrives".
         if (_d->standard == SdiLinkStandard::Auto) return Error::Ok;
-        const int expected = cablesFor(_d->standard);
+        const int expected = sdiCableCount(_d->standard);
         const int actual   = cableCount();
         if (expected != actual) return Error::InvalidArgument;
         return Error::Ok;

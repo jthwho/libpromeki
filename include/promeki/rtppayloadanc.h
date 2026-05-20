@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <promeki/ancpacket.h>
 #include <promeki/buffer.h>
+#include <promeki/enums.h>
 #include <promeki/error.h>
 #include <promeki/namespace.h>
 #include <promeki/rtppacket.h>
@@ -125,6 +126,9 @@ class RtpPayloadAnc : public RtpPayload {
                  *
                  *  - @c Progressive — video is progressive, or the
                  *    ANC stream is not associated with a field.
+                 *  - @c Invalid — value @c 0b01, explicitly reserved
+                 *    by RFC 8331 §2.1.  Receivers SHOULD ignore an
+                 *    ANC data packet whose F field is @c 0b01.
                  *  - @c InterlacedField1 — interlaced source, first
                  *    field (top field for top-field-first).
                  *  - @c InterlacedField2 — interlaced source,
@@ -132,6 +136,7 @@ class RtpPayloadAnc : public RtpPayload {
                  */
                 enum class FieldIndication : uint8_t {
                         Progressive       = 0x0,
+                        Invalid           = 0x1,
                         InterlacedField1  = 0x2,
                         InterlacedField2  = 0x3,
                 };
@@ -176,17 +181,44 @@ class RtpPayloadAnc : public RtpPayload {
                  *
                  * Returns @ref ValidateResult::DropSilently when the
                  * payload is too short to contain the RFC 8331 §2.1
-                 * payload header or when it advertises an
-                 * impossible record length; otherwise returns
-                 * @ref ValidateResult::Accept.  Zero-ANC_Count
-                 * payloads also drop silently — they convey no
-                 * ancillary data and are dropped by RFC 8331-aware
-                 * receivers (§2.1).
+                 * payload header or when it advertises an impossible
+                 * record length.  ANC_Count=0 keep-alive payloads
+                 * (RFC 8331 §2.1 / ST 2110-40 §5.5) are
+                 * @ref ValidateResult::Accept — receivers SHALL
+                 * process them as end-of-frame markers for frames
+                 * that carry no ancillary data.  A non-zero
+                 * ANC_Count with Length=0 (or vice versa) is
+                 * malformed and drops silently.
                  */
                 ValidateResult validate(const Buffer &unpacked) override;
 
                 /// @brief Overrides the RTP payload type number.
                 void setPayloadType(uint8_t pt) { _payloadType = pt; }
+
+                /**
+                 * @brief Sets the F-bit value emitted on ANC_Count=0
+                 *        keep-alive RTP packets.
+                 *
+                 * ST 2110-40 §5.5 requires the sender to emit one RTP
+                 * packet per video field/frame/segment even when no
+                 * ANC data is present.  That keep-alive carries the
+                 * F-bit appropriate to the session's video shape
+                 * (@ref FieldIndication::Progressive for progressive
+                 * frames, @ref FieldIndication::InterlacedField1 /
+                 * @c InterlacedField2 for interlaced fields).
+                 *
+                 * Default: @ref FieldIndication::Progressive.  Sessions
+                 * that emit interlaced video should set this from the
+                 * paired video desc.
+                 *
+                 * @param f The session's F-bit value.  Passing
+                 *          @ref FieldIndication::Invalid is rejected
+                 *          (debug-build assert; release ignores).
+                 */
+                void setKeepAliveField(FieldIndication f);
+
+                /** @brief Returns the F-bit used for keep-alive RTP packets. */
+                FieldIndication keepAliveField() const { return _keepAliveField; }
 
                 /**
                  * @brief Packs an entire frame's ANC packets into one
@@ -213,13 +245,22 @@ class RtpPayloadAnc : public RtpPayload {
                  *  - stamps @p rtpTimestamp on every RTP header in
                  *    the returned list.
                  *
+                 * When @p packets is empty (or none of the supplied
+                 * packets are @ref AncTransport::St291), emits a
+                 * single ST 2110-40 §5.5 keep-alive RTP packet with
+                 * ANC_Count=0, Length=0, Marker=1, and the F-bit set
+                 * to @ref keepAliveField.  Word_align padding is not
+                 * used on the keep-alive (RFC 8331 §2.2).
+                 *
                  * @param packets     The frame's @ref AncPacket "ANC
                  *                    packets" (all must be on
                  *                    @ref AncTransport::St291).
                  * @param rtpTimestamp Shared RTP timestamp for the
                  *                    frame.
                  * @return The wire RTP packets, sharing a single
-                 *         underlying @ref Buffer.
+                 *         underlying @ref Buffer.  Always contains
+                 *         at least one packet when the call succeeds
+                 *         (the keep-alive case).
                  */
                 RtpPacket::List packAncFrame(const AncPacket::List &packets,
                                              uint32_t                rtpTimestamp);
@@ -236,34 +277,70 @@ class RtpPayloadAnc : public RtpPayload {
                  * @ref AncPacket::data set to the 10-bit packed
                  * (DID, SDID, DataCount, UDW…, Checksum) bytes from
                  * the record (the same canonical form
-                 * @ref St291Packet operates on).  Per-record meta
-                 * keys populated: @ref AncMeta::St291::Line,
-                 * @ref AncMeta::St291::HOffset,
-                 * @ref AncMeta::St291::FieldB (from the surrounding
+                 * @ref St291Packet operates on).  Per-record ST 291
+                 * framing populated directly on the @ref AncPacket
+                 * handle: @ref AncPacket::st291Line,
+                 * @ref AncPacket::st291HOffset,
+                 * @ref AncPacket::st291FieldB (from the surrounding
                  * payload header's F-bit),
-                 * @ref AncMeta::St291::CBit,
-                 * @ref AncMeta::St291::StreamNum.
+                 * @ref AncPacket::st291CBit,
+                 * @ref AncPacket::st291StreamNum.
                  *
                  * Truncated or self-inconsistent payloads return
                  * @c Error::OutOfRange; @p out holds whatever
                  * records were successfully decoded before the
                  * error.
                  *
-                 * @param in   RTP packets to unpack (caller has
-                 *             reassembled them across the marker
-                 *             bit / timestamp boundary).
-                 * @param out  Output list, appended to.
+                 * Per-payload handling:
+                 *  - @c ANC_Count == 0 (RFC 8331 §2.1 / ST 2110-40
+                 *    §5.5 keep-alive): no records appended; the
+                 *    payload signals end-of-frame for a frame with no
+                 *    ancillary data.
+                 *  - F-bit == @c 0b01 (RFC 8331 §2.1 invalid value):
+                 *    the payload's records are skipped per the §2.1
+                 *    SHOULD-ignore directive; the function continues
+                 *    processing subsequent RTP packets.
+                 *
+                 * @par Checksum policy
+                 *
+                 * The @p policy parameter is forwarded to
+                 * @c St291Packet::from on every successfully
+                 * extracted §2.2 record.  Under
+                 * @ref AncChecksumPolicy::StrictValidate any record
+                 * whose stored ST 291 §6.4 Checksum_Word does not
+                 * match the recomputed value causes
+                 * @c unpackAncPackets to return
+                 * @c Error::InvalidChecksum; records emitted before
+                 * the failure remain in @p out.  The default
+                 * @ref AncChecksumPolicy::PreserveOrRecompute accepts
+                 * every well-framed record regardless of its
+                 * checksum (the byte-exact replay default — see
+                 * ancaudit.md Q6).
+                 *
+                 * @param in     RTP packets to unpack (caller has
+                 *               reassembled them across the marker
+                 *               bit / timestamp boundary).
+                 * @param out    Output list, appended to.
+                 * @param policy Checksum policy applied to each emitted
+                 *               record (default
+                 *               @c PreserveOrRecompute).
+                 *
                  * @return @c Error::Ok on success;
                  *         @c Error::OutOfRange on truncation;
+                 *         @c Error::InvalidChecksum when StrictValidate
+                 *         is in force and a record's checksum does not
+                 *         match;
                  *         @c Error::Ok with no appended packets if
                  *         every input payload had
-                 *         @c ANC_Count == 0.
+                 *         @c ANC_Count == 0 or F == @c 0b01.
                  */
                 Error unpackAncPackets(const RtpPacket::List &in,
-                                       AncPacket::List       &out);
+                                       AncPacket::List       &out,
+                                       AncChecksumPolicy      policy = AncChecksumPolicy::PreserveOrRecompute);
 
         private:
-                uint8_t _payloadType;
+                uint8_t         _payloadType;
+                FieldIndication _keepAliveField = FieldIndication::Progressive;
 };
 
 PROMEKI_NAMESPACE_END

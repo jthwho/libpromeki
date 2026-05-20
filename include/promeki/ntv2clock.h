@@ -66,6 +66,27 @@ class Ntv2Device;
  * the clock's internal mutex so the wrap detection is race-free
  * across concurrent readers.
  *
+ * @par Per-acquire epoch — stamps do not round-trip across close/reopen
+ *
+ * The FPGA register is free-running across process restarts, but
+ * the 64-bit shadow is local to this clock instance and resets to
+ * zero on every @ref Ntv2DeviceRegistry::acquire.  That means the
+ * @c MediaTimeStamp values this clock produces have a @em per-acquire
+ * @em epoch — they are coherent across every channel on the same
+ * card for the lifetime of the acquisition, but a process that
+ * closes the device and reopens it will see the next session start
+ * from a fresh zero shadow rather than continuing from the previous
+ * session's last value.
+ *
+ * The trade-off is monotonicity.  Anchoring the shadow to host wall
+ * time on first read would let stamps round-trip across close /
+ * reopen — at the cost of breaking the monotonic-clamp contract on
+ * long-running processes (any wall-time jump would back-step the
+ * stamp).  The choice here favours the in-pipeline timing guarantee.
+ * Callers that need to persist stamps across an acquire boundary
+ * should snapshot the (host-wall, device-stamp) pair before close
+ * and re-anchor on reopen.
+ *
  * @par VBI fallback mode
  *
  * When the card has no FPGA audio counter at all (no NTV2 hardware

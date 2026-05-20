@@ -14,6 +14,7 @@
 #include <promeki/datastream.h>
 #include <promeki/enums.h>
 #include <promeki/sdioutputfanoutconfig.h>
+#include <promeki/sdisignalconfig.h>
 #include <promeki/videoportref.h>
 
 using namespace promeki;
@@ -168,6 +169,45 @@ TEST_CASE("SdiOutputFanoutConfig: DataStream round-trip preserves the full group
         REQUIRE(decoded.first().groupCount() == 2);
         REQUIRE(decoded.first().groups().at(0).size() == 2);
         REQUIRE(decoded.first().groups().at(1).size() == 2);
+}
+
+TEST_CASE("SdiOutputFanoutConfig::fromSignal: wraps a populated signal as a 1-group fanout") {
+        SdiSignalConfig sig = SdiSignalConfig::dualLink(SdiLinkStandard::DL_3G, sdi(1), sdi(2));
+        SdiOutputFanoutConfig fan = SdiOutputFanoutConfig::fromSignal(sig);
+
+        CHECK(fan.standard() == SdiLinkStandard::DL_3G);
+        REQUIRE(fan.groupCount() == 1);
+        REQUIRE(fan.groups().at(0).size() == 2);
+        CHECK(fan.groups().at(0).at(0) == sdi(1));
+        CHECK(fan.groups().at(0).at(1) == sdi(2));
+        CHECK(fan.isValid());
+
+        // primary() round-trips back to the original signal.
+        SdiSignalConfig roundtrip = fan.primary();
+        CHECK(roundtrip == sig);
+}
+
+TEST_CASE("SdiOutputFanoutConfig::fromSignal: empty/default signal yields default fanout") {
+        SdiSignalConfig empty;
+        SdiOutputFanoutConfig fan = SdiOutputFanoutConfig::fromSignal(empty);
+
+        CHECK(fan.standard() == SdiLinkStandard::Auto);
+        CHECK(fan.groupCount() == 0);
+        CHECK_FALSE(fan.isValid()); // No groups → not a valid fanout.
+
+        // Round-trip: primary() of the empty fanout reproduces the
+        // original default signal.
+        CHECK(fan.primary() == empty);
+}
+
+TEST_CASE("SdiOutputFanoutConfig::fromSignal: single-link signal lands in 1-cable group") {
+        SdiSignalConfig sig = SdiSignalConfig::singleLink(SdiLinkStandard::SL_12G, sdi(3));
+        SdiOutputFanoutConfig fan = SdiOutputFanoutConfig::fromSignal(sig);
+
+        REQUIRE(fan.groupCount() == 1);
+        REQUIRE(fan.groups().at(0).size() == 1);
+        CHECK(fan.groups().at(0).at(0) == sdi(3));
+        CHECK(fan.isValid());
 }
 
 TEST_CASE("SdiOutputFanoutConfig: mutators copy-on-write the underlying impl") {

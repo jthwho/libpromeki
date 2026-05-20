@@ -295,7 +295,8 @@ namespace {
                         return makeError<List<AncPacket>>(Error::InvalidArgument);
                 }
 
-                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
+                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
+                                                    St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::HdrStatic2086), udw, line,

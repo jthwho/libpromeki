@@ -130,11 +130,78 @@ class AncPacket {
                 /** @brief Returns the wire transport. */
                 const AncTransport &transport() const;
 
-                /** @brief Returns the wire-form bytes. */
+                /**
+                 * @brief Returns the wire-form bytes.
+                 *
+                 * For @c AncTransport::St291 packets the buffer holds
+                 * the canonical post-ADF payload — DID, SDID
+                 * (or DBN for Type-1), DataCount, UDW…, Checksum — as
+                 * 10-bit words packed MSB-first.  The Ancillary Data
+                 * Flag (ADF, ST 291-1 §5.2: @c 000h @c 3FFh @c 3FFh for
+                 * component or @c 3FCh for composite) is **not** stored
+                 * here.  RFC 8331 §1 makes the same choice for the RTP
+                 * carriage.
+                 *
+                 * Backends that ingest raw SDI VANC (e.g. NTV2) must
+                 * strip the ADF before constructing the @c AncPacket;
+                 * backends that emit to SDI must prepend the ADF
+                 * themselves.  Transports that have no ADF concept
+                 * (RTP, NDI, RTMP, HDMI InfoFrame, MPEG-TS) see the
+                 * same canonical post-ADF bytes via this accessor.
+                 */
                 const Buffer &data() const;
 
-                /** @brief Returns the per-transport metadata sidecar. */
+                /** @brief Returns the per-transport metadata sidecar.
+                 *
+                 *  Holds application-defined keys and any
+                 *  transport-specific framing the library does **not**
+                 *  promote to a direct field on this handle.  The hot
+                 *  ST 291 framing fields (line, hOffset, fieldB, cBit,
+                 *  streamNum) live as direct accessors on this class
+                 *  (see @ref st291Line) so the RTP pack/unpack hot path
+                 *  does not pay Metadata-lookup cost; only transports
+                 *  whose framing is rarer or longer (ATC rate, HDMI
+                 *  InfoFrame type, RTMP script name, NDI XML element,
+                 *  MPEG-TS PID, SEI payload type) still use this
+                 *  container. */
                 const Metadata &meta() const;
+
+                /** @brief ST 291 VANC line number the packet was captured on.
+                 *
+                 *  Default @c 0x7FE — the RFC 8331 §2.2 / RP 168
+                 *  sentinel meaning "any line from two lines after the
+                 *  switching point to the last line before active
+                 *  video", which ST 2110-40 §5.2.2 recommends as the
+                 *  default when an exact line is unknown.  Other
+                 *  reserved sentinels are @c 0x7FF (no specific line)
+                 *  and @c 0x7FD (line number larger than 11 bits).  See
+                 *  @ref St291Packet for the named constants. */
+                uint16_t st291Line() const;
+
+                /** @brief ST 291 horizontal offset within the line.
+                 *
+                 *  Default @c 0xFFF — RFC 8331 §2.2 "no specific
+                 *  horizontal location".  Other reserved sentinels are
+                 *  @c 0xFFE (within HANC space), @c 0xFFD (within
+                 *  active-video region), and @c 0xFFC (value larger
+                 *  than 12 bits). */
+                uint16_t st291HOffset() const;
+
+                /** @brief ST 291 F-bit: @c true when the packet was
+                 *         found on field 2 of an interlaced source;
+                 *         @c false on progressive sources or field 1. */
+                bool st291FieldB() const;
+
+                /** @brief ST 291 C-bit: @c true for chrominance-data-
+                 *         stream packets, @c false for luminance data
+                 *         stream (the common case). */
+                bool st291CBit() const;
+
+                /** @brief ST 291 stream number (RFC 8331 StreamNum
+                 *         field).  Zero for single-link SDI; non-zero
+                 *         distinguishes packets on multi-link / 12G
+                 *         sub-streams. */
+                uint8_t st291StreamNum() const;
 
                 /**
                  * @brief Replaces the logical format.
@@ -168,6 +235,21 @@ class AncPacket {
                  * to set well-known framing fields.
                  */
                 void setMeta(Metadata meta);
+
+                /** @brief Sets the ST 291 line number (see @ref st291Line). */
+                void setSt291Line(uint16_t line);
+
+                /** @brief Sets the ST 291 horizontal offset (see @ref st291HOffset). */
+                void setSt291HOffset(uint16_t hOffset);
+
+                /** @brief Sets the ST 291 F-bit (see @ref st291FieldB). */
+                void setSt291FieldB(bool fieldB);
+
+                /** @brief Sets the ST 291 C-bit (see @ref st291CBit). */
+                void setSt291CBit(bool cBit);
+
+                /** @brief Sets the ST 291 stream number (see @ref st291StreamNum). */
+                void setSt291StreamNum(uint8_t streamNum);
 
                 /**
                  * @brief Returns a mutable reference to the wire-form
@@ -218,11 +300,20 @@ class AncPacket {
                 String toString(bool verbose = false) const;
 
                 /**
-                 * @brief Private @c Impl struct holding the four fields
-                 *        the wrapper exposes.
+                 * @brief Private @c Impl struct holding the wrapper's
+                 *        state.
                  *
                  * Marked @c PROMEKI_SHARED_FINAL so @c SharedPtr<Impl>
                  * can refcount it natively with CoW semantics.
+                 *
+                 * The five @c st291* fields hold the ST 291 framing
+                 * sidecar directly instead of going through @c meta —
+                 * the RTP pack/unpack hot path reads these once per
+                 * packet (~9000/sec on HD-60), so the Metadata hash
+                 * lookup was paying real cost.  Defaults match the
+                 * RFC 8331 §2.2 sentinels for "unspecified" so a
+                 * default-constructed packet round-trips cleanly
+                 * through the carriage layer.
                  */
                 struct Impl {
                                 PROMEKI_SHARED_FINAL(Impl)
@@ -231,6 +322,11 @@ class AncPacket {
                                 AncTransport transport;
                                 Buffer       data;
                                 Metadata     meta;
+                                uint16_t     st291Line = 0x7FE;
+                                uint16_t     st291HOffset = 0xFFF;
+                                bool         st291FieldB = false;
+                                bool         st291CBit = false;
+                                uint8_t      st291StreamNum = 0;
                 };
 
         private:

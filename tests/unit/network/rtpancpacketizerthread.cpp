@@ -76,7 +76,7 @@ TEST_CASE("RtpAncPacketizerThread: packs one AncPayload into one RtpPacketBatch"
         CHECK(batch.packets[batch.packets.size() - 1].marker());
 }
 
-TEST_CASE("RtpAncPacketizerThread: empty AncPayload produces no batch") {
+TEST_CASE("RtpAncPacketizerThread: empty AncPayload produces a §5.5 keep-alive batch") {
         Queue<RtpPacketBatch> txQ;
         RtpPayloadAnc         payload;
         RtpAncPacketizerContext ctx{
@@ -87,10 +87,18 @@ TEST_CASE("RtpAncPacketizerThread: empty AncPayload produces no batch") {
         work.frame = buildFrameWithAnc(AncPacket::List());
         work.frameIndex = FrameNumber(0);
         pkt.packetizeForTest(work);
-        CHECK(txQ.size() == 0u);
+        // ST 2110-40 §5.5: an empty ANC frame still produces one
+        // keep-alive RTP packet (ANC_Count=0, Length=0, Marker=1).
+        REQUIRE(txQ.size() == 1u);
+        Result<RtpPacketBatch> popped = txQ.tryPop();
+        REQUIRE(popped.second().isOk());
+        const RtpPacketBatch &batch = popped.first();
+        REQUIRE(batch.packets.size() == 1u);
+        CHECK(batch.packets[0].marker());
+        CHECK(batch.packets[0].payloadSize() == RtpPayloadAnc::PayloadHeaderSize);
 }
 
-TEST_CASE("RtpAncPacketizerThread: missing AncPayload at streamIdx is a no-op") {
+TEST_CASE("RtpAncPacketizerThread: missing AncPayload at streamIdx emits a keep-alive") {
         Queue<RtpPacketBatch> txQ;
         RtpPayloadAnc         payload;
         RtpAncPacketizerContext ctx{
@@ -103,5 +111,13 @@ TEST_CASE("RtpAncPacketizerThread: missing AncPayload at streamIdx is a no-op") 
         work.frame = buildFrameWithAnc(anc);
         work.frameIndex = FrameNumber(0);
         pkt.packetizeForTest(work);
-        CHECK(txQ.size() == 0u);
+        // streamIdx 5 has no AncPayload — emit a keep-alive instead
+        // of dropping silently, per ST 2110-40 §5.5.
+        REQUIRE(txQ.size() == 1u);
+        Result<RtpPacketBatch> popped = txQ.tryPop();
+        REQUIRE(popped.second().isOk());
+        const RtpPacketBatch &batch = popped.first();
+        REQUIRE(batch.packets.size() == 1u);
+        CHECK(batch.packets[0].marker());
+        CHECK(batch.packets[0].payloadSize() == RtpPayloadAnc::PayloadHeaderSize);
 }

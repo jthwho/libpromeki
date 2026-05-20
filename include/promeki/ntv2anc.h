@@ -39,7 +39,7 @@ class VideoScanMode;
  * Capture (@ref ntv2AncToPackets):
  *  - Parses the F1 / F2 GUMP buffers via
  *    @c AJAAncillaryList::AddFromDeviceAncBuffer (so the F1 vs F2
- *    origin survives as the @c AncMeta::St291::FieldB sidecar).
+ *    origin survives as the @c AncPacket::st291FieldB() flag).
  *  - Translates each AJA packet's DID/SDID/UDW/location into an
  *    @ref St291Packet using @ref St291Packet::buildRaw (which packs the
  *    10-bit wire bytes and computes parity for us).

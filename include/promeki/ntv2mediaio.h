@@ -124,6 +124,20 @@ class Ntv2MediaIO : public DedicatedThreadMediaIO {
                 static inline const MediaIOStats::ID StatsPacingTicksSkipped{"Ntv2PacingTicksSkipped"};
                 /** @brief int64_t — sink @ref PacingGate timeline reanchors. */
                 static inline const MediaIOStats::ID StatsPacingReanchors{"Ntv2PacingReanchors"};
+                /**
+                 * @brief int64_t — driver-restart / device-handle-lost
+                 *        events observed on the capture or playout path.
+                 *
+                 * Incremented exactly once each time the periodic poll
+                 * detects @c CNTV2Card::IsOpen has flipped to @c false —
+                 * the AJA driver has been unloaded, the kernel module
+                 * has reloaded, or the card has been hot-unplugged.
+                 * The worker exits cleanly after the increment;
+                 * @c errorOccurredSignal fires with @c Error::DeviceError
+                 * on the same transition.  Recovery requires a close +
+                 * reopen of the MediaIO.
+                 */
+                static inline const MediaIOStats::ID StatsDeviceLost{"Ntv2DeviceLost"};
 
                 /** @brief Constructs an Ntv2MediaIO. */
                 Ntv2MediaIO(ObjectBase *parent = nullptr);
@@ -395,6 +409,18 @@ class Ntv2MediaIO : public DedicatedThreadMediaIO {
                 Atomic<int64_t> _ancPacketsSent{0};
                 Atomic<int64_t> _signalLossCount{0};
                 Atomic<int64_t> _signalReacquiredCount{0};
+                Atomic<int64_t> _deviceLostCount{0};
+
+                // Set by either worker on the periodic signal-poll
+                // branch when @c CNTV2Card::IsOpen reports the
+                // device handle has gone away (driver unloaded /
+                // module reload / device hot-unplug).  Read by both
+                // worker loops on every iteration so they exit cleanly
+                // instead of looping forever on a dead device handle.
+                // The MediaIO surfaces the event via
+                // @c errorOccurredSignal(Error::DeviceError) exactly
+                // once per loss.
+                Atomic<bool> _deviceLost{false};
 };
 
 /**

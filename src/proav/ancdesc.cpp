@@ -69,6 +69,14 @@ int AncDesc::pairedAudioStreamIndex() const { return _d->pairedAudioStreamIndex;
 
 void AncDesc::setPairedAudioStreamIndex(int index) { _d.modify()->pairedAudioStreamIndex = index; }
 
+uint32_t AncDesc::troff() const { return _d->troff; }
+
+void AncDesc::setTroff(uint32_t ticks) { _d.modify()->troff = ticks; }
+
+uint8_t AncDesc::vpidCode() const { return _d->vpidCode; }
+
+void AncDesc::setVpidCode(uint8_t code) { _d.modify()->vpidCode = code; }
+
 // ---------------------------------------------------------------------------
 // Predicates
 // ---------------------------------------------------------------------------
@@ -119,6 +127,8 @@ bool AncDesc::formatEquals(const AncDesc &other) const {
         }
         if (_d->pairedVideoStreamIndex != other._d->pairedVideoStreamIndex) return false;
         if (_d->pairedAudioStreamIndex != other._d->pairedAudioStreamIndex) return false;
+        if (_d->troff != other._d->troff) return false;
+        if (_d->vpidCode != other._d->vpidCode) return false;
         return true;
 }
 
@@ -132,7 +142,11 @@ bool AncDesc::operator==(const AncDesc &other) const {
 // ---------------------------------------------------------------------------
 
 DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
-        stream.beginFrame(DataTypeAncDesc, 1);
+        // v2 (2026-05-19): appended troff + vpidCode for ST 2110-40
+        // §7 SDP fmtp emission.  v1 readers see no trailing fields;
+        // v2 readers fall back to the defaults (0, 0) when reading
+        // a v1 stream.
+        stream.beginFrame(DataTypeAncDesc, 2);
         stream << desc.sourceRaster();
         stream << desc.scanMode();
         stream << desc.frameRate();
@@ -145,12 +159,16 @@ DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
         stream << static_cast<int32_t>(desc.pairedVideoStreamIndex());
         stream << static_cast<int32_t>(desc.pairedAudioStreamIndex());
         stream << desc.metadata();
+        // v2 trailer.
+        stream << static_cast<uint32_t>(desc.troff());
+        stream << static_cast<uint8_t>(desc.vpidCode());
         stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, AncDesc &desc) {
-        if (!stream.readFrame(DataTypeAncDesc)) {
+        uint16_t version = 0;
+        if (!stream.readFrame(DataTypeAncDesc, /*maxVersion=*/2, &version)) {
                 desc = AncDesc();
                 return stream;
         }
@@ -181,6 +199,11 @@ DataStream &operator>>(DataStream &stream, AncDesc &desc) {
         stream >> pairedVideo;
         stream >> pairedAudio;
         stream >> meta;
+        uint32_t troff = 0;
+        uint8_t  vpidCode = 0;
+        if (version >= 2) {
+                stream >> troff >> vpidCode;
+        }
         if (stream.status() != DataStream::Ok) {
                 desc = AncDesc();
                 return stream;
@@ -194,6 +217,8 @@ DataStream &operator>>(DataStream &stream, AncDesc &desc) {
         desc.setPairedVideoStreamIndex(pairedVideo);
         desc.setPairedAudioStreamIndex(pairedAudio);
         desc.setMetadata(std::move(meta));
+        desc.setTroff(troff);
+        desc.setVpidCode(vpidCode);
         return stream;
 }
 
@@ -321,7 +346,7 @@ namespace {
 // ---------------------------------------------------------------------------
 
 AncDesc AncDesc::fromSdp(const SdpMediaDescription &md) {
-        if (md.mediaType() != "application") return AncDesc();
+        if (md.mediaType() != "video") return AncDesc();
         const SdpMediaDescription::RtpMap rm = md.rtpMap();
         if (!rm.valid) return AncDesc();
         if (rm.encoding != "smpte291") return AncDesc();
@@ -333,40 +358,135 @@ AncDesc AncDesc::fromSdp(const SdpMediaDescription &md) {
         const StringList entries = splitFmtpEntries(params);
 
         AncFormat::IDList allowed;
+        uint32_t          troffVal = 0;
+        uint8_t           vpidCodeVal = 0;
         for (const String &entry : entries) {
-                if (!entry.startsWith(String("DID_SDID"))) continue;
-                uint8_t did = 0, sdid = 0;
-                if (!parseOneDidSdid(entry, did, sdid)) continue;
-                const AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid);
-                // Push the resolved ID — invalid pairs come through as
-                // AncFormat::Invalid so the application can still see
-                // there was a wire-side request for an unknown DID/SDID.
-                allowed.pushToBack(fmt.id());
+                if (entry.startsWith(String("DID_SDID"))) {
+                        uint8_t did = 0, sdid = 0;
+                        if (!parseOneDidSdid(entry, did, sdid)) continue;
+                        const AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid);
+                        // Push the resolved ID — invalid pairs come through as
+                        // AncFormat::Invalid so the application can still see
+                        // there was a wire-side request for an unknown DID/SDID.
+                        // Dedupe so multiple SDIDs that collapse onto a single
+                        // wildcard format (e.g. SMPTE 2020's 0x01–0x09 → one
+                        // Smpte2020Audio ID) appear once.
+                        const AncFormat::ID id = fmt.id();
+                        bool already = false;
+                        for (auto x : allowed) {
+                                if (x == id) {
+                                        already = true;
+                                        break;
+                                }
+                        }
+                        if (!already) allowed.pushToBack(id);
+                        continue;
+                }
+                if (entry.startsWith(String("TROFF"))) {
+                        const size_t eq = entry.find('=');
+                        if (eq == String::npos) continue;
+                        // TROFF is signed 32-bit per ST 2110-40; the
+                        // library normalises into unsigned 32-bit 90 kHz
+                        // ticks (callers convert from signed at the API
+                        // boundary if they need direction).  We parse via
+                        // String::toInt and reject negatives.
+                        Error err;
+                        const int n = entry.substr(eq + 1).trim().toInt(&err);
+                        if (err.isOk() && n >= 0) {
+                                troffVal = static_cast<uint32_t>(n);
+                        }
+                        continue;
+                }
+                if (entry.startsWith(String("VPID_Code"))) {
+                        const size_t eq = entry.find('=');
+                        if (eq == String::npos) continue;
+                        Error     err;
+                        const int n = entry.substr(eq + 1).trim().toInt(&err);
+                        if (err.isOk() && n >= 0 && n <= 0xFF) {
+                                vpidCodeVal = static_cast<uint8_t>(n);
+                        }
+                        continue;
+                }
         }
         out.setAllowedFormats(std::move(allowed));
+        out.setTroff(troffVal);
+        out.setVpidCode(vpidCodeVal);
         return out;
 }
 
 SdpMediaDescription AncDesc::toSdp(uint8_t payloadType) const {
         SdpMediaDescription md;
-        md.setMediaType("application");
+        // RFC 8331 §3.1 / ST 2110-40 §7: smpte291 ANC streams use
+        // m=video (not m=application).
+        md.setMediaType("video");
         md.setProtocol("RTP/AVP");
         md.addPayloadType(payloadType);
 
         const String ptStr = String::number(payloadType);
         md.setAttribute("rtpmap", ptStr + String(" smpte291/90000"));
 
-        const AncFormat::IDList ids = selectSt291Formats(*this);
-        if (ids.isEmpty()) return md;
-
         String fmtp;
+        const auto append = [&](const String &entry) {
+                if (!fmtp.isEmpty()) fmtp += String(";");
+                fmtp += entry;
+        };
+
+        // ST 2110-40 §7 mandatory parameters.  We always emit a
+        // conservative default for the two SHALL-be-present keys
+        // (SSN, TM) so receivers do not have to fall back to the
+        // implicit "CTM, 2018" default — explicit is friendlier on
+        // the wire and the audit's recommended posture.
+        append(String("SSN=ST2110-40:2018"));
+        append(String("TM=CTM"));
+
+        // exactframerate (ST 2110-40 §7) — required so ANC RTP
+        // timestamps can be aligned to the paired video frame timing.
+        // Emitted as <num>/<den> for non-integer rates and <num> for
+        // integer rates (the SDP-conventional shape).
+        if (frameRate().isValid()) {
+                String fr;
+                if (frameRate().denominator() == 1u) {
+                        fr = String::number(frameRate().numerator());
+                } else {
+                        fr = String::number(frameRate().numerator()) + String("/") +
+                             String::number(frameRate().denominator());
+                }
+                append(String("exactframerate=") + fr);
+        }
+
+        // TROFF (ST 2110-40 §7) — RTP timestamp offset in 90 kHz
+        // ticks.  Emit only when non-zero: a receiver reading no
+        // TROFF parameter assumes the default 0 offset, matching the
+        // ST 2110-40 §7 contract.
+        if (troff() != 0u) {
+                append(String("TROFF=") + String::number(static_cast<int64_t>(troff())));
+        }
+
+        // VPID_Code (RFC 8331 §3.1) — the ST 352 VPID byte-1 (data
+        // stream class) of the paired video stream.  Emit only when
+        // declared (non-zero) so receivers that don't know the
+        // VPID don't see a spurious "= 0" parameter.
+        if (vpidCode() != 0u) {
+                append(String("VPID_Code=") + String::number(static_cast<int>(vpidCode())));
+        }
+
+        // DID_SDID parameter list — one entry per concrete (DID, SDID)
+        // pair this descriptor advertises.
+        const AncFormat::IDList ids = selectSt291Formats(*this);
         for (size_t i = 0; i < ids.size(); ++i) {
                 const AncFormat fmt(ids.at(i));
                 if (!fmt.isValid() || fmt.st291Did() == 0) continue;
-                if (!fmtp.isEmpty()) fmtp += String(";");
-                fmtp += String("DID_SDID={") + byteHex(fmt.st291Did()) + String(",") +
-                        byteHex(fmt.st291Sdid()) + String("}");
+                // Wildcard-SDID formats (e.g. Smpte2020Audio) expand
+                // into one DID_SDID entry per concrete SDID — emitting
+                // SDID=0x00 directly would collide with the Type-1
+                // sentinel per RFC 8331 §3.1.
+                const ::promeki::List<uint8_t> sdids = fmt.st291ConcreteSdids();
+                for (uint8_t sdid : sdids) {
+                        append(String("DID_SDID={") + byteHex(fmt.st291Did()) +
+                               String(",") + byteHex(sdid) + String("}"));
+                }
         }
+
         if (!fmtp.isEmpty()) {
                 md.setAttribute("fmtp", ptStr + String(" ") + fmtp);
         }

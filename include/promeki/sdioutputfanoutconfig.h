@@ -33,7 +33,7 @@ class DataStream;
  *
  * Generalises @ref SdiSignalConfig from "one signal on one set of
  * ports" to "one signal fanned out across N sets of ports."  Each
- * group of @ref cablesFor(standard) consecutive
+ * group of @ref sdiCableCount consecutive
  * @ref VideoPortRef entries describes one full output destination
  * for the underlying SMPTE link standard — single-link standards
  * place one port per group, dual-link two, quad-link four.
@@ -67,7 +67,7 @@ class DataStream;
  * @par Validity
  *
  * @ref isValid returns @c true when every group has exactly
- * @ref cablesFor(standard) ports.  An empty group list is invalid
+ * @ref sdiCableCount ports.  An empty group list is invalid
  * (use @c SdiSignalConfig + the standalone @c SdiOutputSignal
  * config key when no fanout is needed).  @c Auto standard accepts
  * any group size — useful for "let the open path infer" cases.
@@ -108,7 +108,7 @@ class SdiOutputFanoutConfig {
                  * @brief Returns the destination groups.
                  *
                  * Each entry is a port list whose size matches
-                 * @ref cablesFor on the configured standard (verified
+                 * @ref sdiCableCount on the configured standard (verified
                  * by @ref isValid).
                  */
                 const GroupList &groups() const;
@@ -143,6 +143,27 @@ class SdiOutputFanoutConfig {
                 SdiSignalConfig primary() const;
 
                 /**
+                 * @brief Builds a single-group fanout that mirrors the
+                 *        given @ref SdiSignalConfig.
+                 *
+                 * Inverse of @ref primary — produces a fanout with one
+                 * group whose ports are @c sig.ports() and whose
+                 * standard is @c sig.standard().  Useful for backends
+                 * that uniformly consume the fanout shape but also
+                 * accept the simpler @c SdiSignalConfig key
+                 * (@ref MediaConfig::SdiOutputSignal): wrap the signal
+                 * once and process every output the same way.
+                 *
+                 * Passing a default-constructed (empty) signal returns
+                 * a default-constructed fanout — i.e. the round-trip
+                 * @c fromSignal(SdiSignalConfig()).primary() yields
+                 * the original default signal.
+                 *
+                 * @param sig  Source signal to wrap.
+                 */
+                static SdiOutputFanoutConfig fromSignal(const SdiSignalConfig &sig);
+
+                /**
                  * @brief Returns the destination groups as a
                  *        @c List of @ref SdiSignalConfig instances.
                  *
@@ -154,7 +175,7 @@ class SdiOutputFanoutConfig {
 
                 /**
                  * @brief Returns @c true when every group has
-                 *        @ref cablesFor(standard) ports.
+                 *        @ref sdiCableCount ports.
                  *
                  * @c Auto standard accepts any group size.  An empty
                  * group list returns @c false — there's nothing to

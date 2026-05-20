@@ -83,7 +83,7 @@ TEST_CASE("AncFormat: categories of well-known formats") {
         CHECK(AncFormat(AncFormat::Scte104).category() == AncCategory::Splice);
         CHECK(AncFormat(AncFormat::Scte35).category() == AncCategory::Splice);
         CHECK(AncFormat(AncFormat::Afd).category() == AncCategory::Aspect);
-        CHECK(AncFormat(AncFormat::BarData).category() == AncCategory::Aspect);
+        CHECK(AncFormat(AncFormat::PanScan).category() == AncCategory::Aspect);
         CHECK(AncFormat(AncFormat::HdrStatic2086).category() == AncCategory::Hdr);
         CHECK(AncFormat(AncFormat::HdrDynamic2094_40).category() == AncCategory::Hdr);
         CHECK(AncFormat(AncFormat::DvRpu).category() == AncCategory::Hdr);
@@ -109,7 +109,7 @@ TEST_CASE("AncFormat: fromSt291DidSdid for every St291-canonical format") {
         CHECK(AncFormat::fromSt291DidSdid(0x61, 0x01).id() == AncFormat::Cea708);
         CHECK(AncFormat::fromSt291DidSdid(0x61, 0x02).id() == AncFormat::Cea608);
         CHECK(AncFormat::fromSt291DidSdid(0x41, 0x05).id() == AncFormat::Afd);
-        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x06).id() == AncFormat::BarData);
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x06).id() == AncFormat::PanScan);
         CHECK(AncFormat::fromSt291DidSdid(0x41, 0x07).id() == AncFormat::Scte104);
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61).id() == AncFormat::AtcVitc1);
@@ -264,6 +264,114 @@ TEST_CASE("AncFormat: registeredIDsForTransport(MpegTsPrivate)") {
         };
         CHECK(contains(AncFormat::Scte35));
         CHECK_FALSE(contains(AncFormat::Cea708));
+}
+
+// ============================================================================
+// F8 additions — new categories + new well-known formats
+// ============================================================================
+
+TEST_CASE("AncCategory: F8 additions are reachable by name and value") {
+        // Round-trip through TypedEnum string mapping; these are the
+        // four new categories landed in F8.A9.
+        CHECK(AncCategory("Subtitles") == AncCategory::Subtitles);
+        CHECK(AncCategory("Klv") == AncCategory::Klv);
+        CHECK(AncCategory("Sei") == AncCategory::Sei);
+        CHECK(AncCategory("Vbi") == AncCategory::Vbi);
+        // Each must be distinct from the pre-existing buckets it
+        // narrows on (Subtitles / Captions, Klv / Geolocation,
+        // Sei / Captions, Vbi / Unknown).
+        CHECK(AncCategory::Subtitles != AncCategory::Captions);
+        CHECK(AncCategory::Klv != AncCategory::Geolocation);
+        CHECK(AncCategory::Sei != AncCategory::Captions);
+        CHECK(AncCategory::Vbi != AncCategory::Unknown);
+}
+
+TEST_CASE("AncFormat: F8 OP-47 SDP registration (DID 0x43 / SDID 0x02)") {
+        AncFormat f(AncFormat::Op47Sdp);
+        CHECK(f.isValid());
+        CHECK(f.name() == "Op47Sdp");
+        CHECK(f.category() == AncCategory::Subtitles);
+        CHECK(f.canonicalTransport() == AncTransport::St291);
+        CHECK(f.st291Did() == 0x43);
+        CHECK(f.st291Sdid() == 0x02);
+        CHECK(AncFormat::fromSt291DidSdid(0x43, 0x02).id() == AncFormat::Op47Sdp);
+        CHECK(AncFormat::idFromName("Op47Sdp") == AncFormat::Op47Sdp);
+}
+
+TEST_CASE("AncFormat: F8 OP-47 Multipack registration (DID 0x43 / SDID 0x01)") {
+        AncFormat f(AncFormat::Op47Multipack);
+        CHECK(f.isValid());
+        CHECK(f.name() == "Op47Multipack");
+        CHECK(f.category() == AncCategory::Subtitles);
+        CHECK(f.canonicalTransport() == AncTransport::St291);
+        CHECK(f.st291Did() == 0x43);
+        CHECK(f.st291Sdid() == 0x01);
+        CHECK(AncFormat::fromSt291DidSdid(0x43, 0x01).id() == AncFormat::Op47Multipack);
+}
+
+TEST_CASE("AncFormat: F8 ST 2106 CCF registration (DID 0x41 / SDID 0x14)") {
+        AncFormat f(AncFormat::CcfSt2106);
+        CHECK(f.isValid());
+        CHECK(f.name() == "CcfSt2106");
+        // ST 2106 CCF is a caption-companion signal; bucket it with
+        // captions (it isn't its own content family).
+        CHECK(f.category() == AncCategory::Captions);
+        CHECK(f.canonicalTransport() == AncTransport::St291);
+        CHECK(f.st291Did() == 0x41);
+        CHECK(f.st291Sdid() == 0x14);
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x14).id() == AncFormat::CcfSt2106);
+}
+
+TEST_CASE("AncFormat: F8 ST 2031 VBI registration (DID 0x60 / SDID 0x01)") {
+        AncFormat f(AncFormat::VbiSt2031);
+        CHECK(f.isValid());
+        CHECK(f.name() == "VbiSt2031");
+        CHECK(f.category() == AncCategory::Vbi);
+        CHECK(f.canonicalTransport() == AncTransport::St291);
+        CHECK(f.st291Did() == 0x60);
+        CHECK(f.st291Sdid() == 0x01);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x01).id() == AncFormat::VbiSt2031);
+        // DID 0x60 already hosts the ATC SDIDs (0x60..0x62); the
+        // 0x60/0x01 entry must not collide with them.
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
+}
+
+TEST_CASE("AncFormat: F8 HdrDynamic2094_10 is name-addressable but shares no DID lookup with HdrStatic") {
+        AncFormat f(AncFormat::HdrDynamic2094_10);
+        CHECK(f.isValid());
+        CHECK(f.name() == "HdrDynamic2094_10");
+        CHECK(f.category() == AncCategory::Hdr);
+        CHECK(f.canonicalTransport() == AncTransport::St291);
+        // ST 2108-1 multiplexes Frame Type 1 (HdrStatic2086) and
+        // Frame Type 2 (HdrDynamic2094_10) under the same DID/SDID.
+        // The codec dispatches on the Frame Type byte; the
+        // (DID,SDID) lookup remains anchored to HdrStatic2086.
+        CHECK(f.st291Did() == 0);
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x0C).id() == AncFormat::HdrStatic2086);
+        CHECK(AncFormat::idFromName("HdrDynamic2094_10") == AncFormat::HdrDynamic2094_10);
+}
+
+TEST_CASE("AncFormat: F8 Subtitles category enumerates OP-47 SDP + multipack") {
+        AncFormat::IDList ids = AncFormat::registeredIDsForCategory(AncCategory::Subtitles);
+        auto              contains = [&](AncFormat::ID id) {
+                for (auto x : ids)
+                        if (x == id) return true;
+                return false;
+        };
+        CHECK(contains(AncFormat::Op47Sdp));
+        CHECK(contains(AncFormat::Op47Multipack));
+        CHECK_FALSE(contains(AncFormat::Cea708));
+}
+
+TEST_CASE("AncFormat: F8 Vbi category enumerates ST 2031 only") {
+        AncFormat::IDList ids = AncFormat::registeredIDsForCategory(AncCategory::Vbi);
+        auto              contains = [&](AncFormat::ID id) {
+                for (auto x : ids)
+                        if (x == id) return true;
+                return false;
+        };
+        CHECK(contains(AncFormat::VbiSt2031));
+        CHECK_FALSE(contains(AncFormat::Cea608));
 }
 
 // ============================================================================

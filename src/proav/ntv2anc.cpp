@@ -85,7 +85,13 @@ namespace {
                 const St291Packet &sp = rs.first();
 
                 AJAAncillaryData dst;
-                if (AJA_FAILURE(dst.SetDID(sp.did())) || AJA_FAILURE(dst.SetSID(sp.sdid()))) {
+                // The AJA SID byte is the raw second-word data byte —
+                // SDID for Type-2 packets, DBN for Type-1 packets
+                // (ST 291-1 §5.1).  Pick the correct accessor based on
+                // DID's high bit so a Type-1 packet round-trips its
+                // DBN instead of dropping to zero.
+                const uint8_t secondByte = sp.isType1() ? sp.dbn() : sp.sdid();
+                if (AJA_FAILURE(dst.SetDID(sp.did())) || AJA_FAILURE(dst.SetSID(secondByte))) {
                         return false;
                 }
 

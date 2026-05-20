@@ -2010,6 +2010,8 @@ inline const RtmpVideoPacing RtmpVideoPacing::None{2};
  *
  * - @c Unknown        — Default / uninitialised.
  * - @c Captions       — CEA-708, CEA-608 closed captions.
+ * - @c Subtitles      — RDD 8 / OP-47 subtitling distribution
+ *                       (distinct from line-21 / CEA-x captions).
  * - @c Timecode       — ATC LTC / VITC, future HDMI / NDI timecode.
  * - @c Splice         — SCTE-104, SCTE-35 ad / program markers.
  * - @c Aspect         — AFD, Bar Data, AVI InfoFrame aspect bits.
@@ -2019,14 +2021,24 @@ inline const RtmpVideoPacing RtmpVideoPacing::None{2};
  *                       InfoFrame.
  * - @c Display        — Non-HDR display hints (HDMI AVI / SPD).
  * - @c Geolocation    — MISB ST 0601 KLV and friends.
+ * - @c PayloadId      — SMPTE ST 352 Video Payload Identifier.
+ * - @c Klv            — Generic SMPTE ST 336 KLV / MISB sensor or
+ *                       analytics data that is not specifically
+ *                       geolocation (which keeps its own bucket).
+ * - @c Sei            — H.264 / HEVC SEI user-data registered or
+ *                       unregistered messages carried in-band as
+ *                       ANC (distinct from a CEA-708 NAL fragment,
+ *                       which lives under @c Captions).
+ * - @c Vbi            — ST 2031 line-21 / VBI carriage.
  * - @c UserDefined    — Application-supplied category.
  */
 class AncCategory : public TypedEnum<AncCategory> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("AncCategory", 0, {"Unknown", 0}, {"Captions", 1}, {"Timecode", 2},
                                            {"Splice", 3}, {"Aspect", 4}, {"Hdr", 5}, {"AudioMetadata", 6},
-                                           {"Display", 7}, {"Geolocation", 8},
-                                           {"UserDefined", 9}); // default: Unknown
+                                           {"Display", 7}, {"Geolocation", 8}, {"PayloadId", 9},
+                                           {"UserDefined", 10}, {"Subtitles", 11}, {"Klv", 12}, {"Sei", 13},
+                                           {"Vbi", 14}); // default: Unknown
 
                 using TypedEnum<AncCategory>::TypedEnum;
 
@@ -2039,7 +2051,12 @@ class AncCategory : public TypedEnum<AncCategory> {
                 static const AncCategory AudioMetadata;
                 static const AncCategory Display;
                 static const AncCategory Geolocation;
+                static const AncCategory PayloadId;
                 static const AncCategory UserDefined;
+                static const AncCategory Subtitles;
+                static const AncCategory Klv;
+                static const AncCategory Sei;
+                static const AncCategory Vbi;
 };
 
 inline const AncCategory AncCategory::Unknown{0};
@@ -2051,7 +2068,12 @@ inline const AncCategory AncCategory::Hdr{5};
 inline const AncCategory AncCategory::AudioMetadata{6};
 inline const AncCategory AncCategory::Display{7};
 inline const AncCategory AncCategory::Geolocation{8};
-inline const AncCategory AncCategory::UserDefined{9};
+inline const AncCategory AncCategory::PayloadId{9};
+inline const AncCategory AncCategory::UserDefined{10};
+inline const AncCategory AncCategory::Subtitles{11};
+inline const AncCategory AncCategory::Klv{12};
+inline const AncCategory AncCategory::Sei{13};
+inline const AncCategory AncCategory::Vbi{14};
 
 /**
  * @brief Well-known Enum naming the wire transport an @ref AncPacket
@@ -2587,6 +2609,81 @@ inline const SdiLinkStandard SdiLinkStandard::QL_3G_2SI{9};
 inline const SdiLinkStandard SdiLinkStandard::SL_6G{10};
 inline const SdiLinkStandard SdiLinkStandard::SL_12G{11};
 inline const SdiLinkStandard SdiLinkStandard::SL_24G{12};
+
+/**
+ * @brief Canonical SMPTE SDI wire-payload formats.
+ *
+ * Names the discrete bit-depth + sampling combinations the SDI spec
+ * family standardises as on-the-wire payloads — orthogonal to the
+ * @ref SdiLinkStandard (which says how many cables and at what rate)
+ * and to the @ref PixelFormat (which describes framebuffer
+ * memory layout, including padding and packing that does not survive
+ * the framestore↔wire boundary).
+ *
+ * Use @ref sdiBitsPerPixel (in @c sdistandards.h) to get the
+ * intrinsic per-pixel bit count for wire-bandwidth math, and
+ * @ref sdiWireFormatFor (in @c sdiwireinference.h) to map a
+ * framebuffer @ref PixelFormat to the wire format that naturally
+ * carries it after the on-board pack/unpack step.
+ *
+ * - @c Auto         — unspecified.  Wire format is whatever the
+ *                     standard / backend defaults to.  Backends
+ *                     typically substitute @c YCbCr_422_10 for
+ *                     single-link SDI when this is set.
+ * - @c YCbCr_422_10 — 10-bit Y'CbCr 4:2:2.  The canonical SDI
+ *                     payload — single-link SD / HD / 3G / 6G /
+ *                     12G / 24G all carry this natively.
+ * - @c YCbCr_422_12 — 12-bit Y'CbCr 4:2:2.  Higher-bit-depth
+ *                     payload — single-link variants on 6G+ or
+ *                     dual-link @c DL_3G.
+ * - @c YCbCr_444_10 — 10-bit Y'CbCr 4:4:4.  Dual-link / 12G+
+ *                     payload — full chroma, no subsampling.
+ * - @c YCbCr_444_12 — 12-bit Y'CbCr 4:4:4.
+ * - @c RGB_444_10   — 10-bit R'G'B' 4:4:4.  Dual-link / 12G+
+ *                     payload for RGB-native production paths.
+ * - @c RGB_444_12   — 12-bit R'G'B' 4:4:4.
+ * - @c RGBA_444_10  — 10-bit R'G'B'A' 4:4:4:4.  RGB with key
+ *                     alpha; used by some fill/key SDI pipelines.
+ *
+ * @note No @c RGBA_444_12 entry exists.  The SDI spec family does
+ *       not standardise 12-bit RGBA as a single-link wire payload —
+ *       12-bit production paths that need a key channel typically
+ *       carry @c RGB_444_12 on one link and the alpha on a parallel
+ *       link (fill/key pair) or as a sidecar.  Use @c RGB_444_12
+ *       for the RGB component and route the alpha separately.
+ */
+class SdiWireFormat : public TypedEnum<SdiWireFormat> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SdiWireFormat", 0,
+                                           {"Auto",         0},
+                                           {"YCbCr_422_10", 1},
+                                           {"YCbCr_422_12", 2},
+                                           {"YCbCr_444_10", 3},
+                                           {"YCbCr_444_12", 4},
+                                           {"RGB_444_10",   5},
+                                           {"RGB_444_12",   6},
+                                           {"RGBA_444_10",  7}); // default: Auto
+
+                using TypedEnum<SdiWireFormat>::TypedEnum;
+
+                static const SdiWireFormat Auto;
+                static const SdiWireFormat YCbCr_422_10;
+                static const SdiWireFormat YCbCr_422_12;
+                static const SdiWireFormat YCbCr_444_10;
+                static const SdiWireFormat YCbCr_444_12;
+                static const SdiWireFormat RGB_444_10;
+                static const SdiWireFormat RGB_444_12;
+                static const SdiWireFormat RGBA_444_10;
+};
+
+inline const SdiWireFormat SdiWireFormat::Auto{0};
+inline const SdiWireFormat SdiWireFormat::YCbCr_422_10{1};
+inline const SdiWireFormat SdiWireFormat::YCbCr_422_12{2};
+inline const SdiWireFormat SdiWireFormat::YCbCr_444_10{3};
+inline const SdiWireFormat SdiWireFormat::YCbCr_444_12{4};
+inline const SdiWireFormat SdiWireFormat::RGB_444_10{5};
+inline const SdiWireFormat SdiWireFormat::RGB_444_12{6};
+inline const SdiWireFormat SdiWireFormat::RGBA_444_10{7};
 
 /**
  * @brief HDMI specification version hint for an HDMI signal carrier.

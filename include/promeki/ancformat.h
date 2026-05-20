@@ -118,8 +118,8 @@ class AncFormat {
                         Invalid = 0,             ///< Default / uninitialised.
                         Cea708 = 1,              ///< SMPTE 334-2 CDP carrying CEA-708 closed captions.
                         Cea608 = 2,              ///< SMPTE 334-1 CEA-608 line-21 captions.
-                        Afd = 3,                 ///< SMPTE 2016-3 Active Format Description.
-                        BarData = 4,             ///< SMPTE 2016-3 Bar Data.
+                        Afd = 3,                 ///< SMPTE 2016-3 Active Format Description (with Bar Data per Table 1).
+                        PanScan = 4,             ///< SMPTE 2016-4 Pan-Scan Information.
                         Scte104 = 5,             ///< SCTE-104 splice-information signal.
                         Scte35 = 6,              ///< SCTE-35 splice_info_section (MPEG-TS).
                         AtcLtc = 7,              ///< SMPTE 12M-2 ATC LTC.
@@ -134,6 +134,13 @@ class AncFormat {
                         SpdInfoFrame = 16,       ///< HDMI SPD (Source Product Description) InfoFrame.
                         VendorInfoFrame = 17,    ///< HDMI Vendor-Specific InfoFrame (OUI-agnostic catch-all).
                         Klv0601 = 18,            ///< MISB ST 0601 KLV (geolocation, sensor data).
+                        Vpid = 19,               ///< SMPTE ST 352 Video Payload Identifier (DID 0x41, SDID 0x01).
+                        PacketForDeletion = 20,  ///< ST 291-1 §6.3 Packet-Marked-for-Deletion (DID 0x80, Type-1).
+                        Op47Sdp = 21,            ///< RDD 8 / OP-47 Subtitling Distribution Packet (DID 0x43, SDID 0x02).
+                        Op47Multipack = 22,      ///< RDD 8 / OP-47 multipacket header (DID 0x43, SDID 0x01).
+                        CcfSt2106 = 23,          ///< SMPTE ST 2106 Caption Compatible Flag (DID 0x41, SDID 0x14).
+                        VbiSt2031 = 24,          ///< SMPTE ST 2031 line-21 / VBI carriage in HD-SDI (DID 0x60, SDID 0x01).
+                        HdrDynamic2094_10 = 25,  ///< SMPTE ST 2094-10 dynamic HDR (Dolby DM) in ST 2108-1 Frame Type 2.
                         UserDefined = 1024       ///< First ID available for user-registered formats.
                 };
 
@@ -158,6 +165,18 @@ class AncFormat {
                                 uint8_t      st291Did = 0;       ///< ST 291 DID (0 = no ST 291 carriage).
                                 uint8_t st291Sdid = 0;           ///< ST 291 SDID (0 with non-zero @c st291Did =
                                                                  ///< wildcard SDID match — see class doc).
+                                ///< @brief Concrete ST 291 SDID byte list for wildcard-SDID
+                                ///<        formats.
+                                ///<
+                                ///< When the format registers with @c st291Sdid == 0 to
+                                ///< absorb an SDID range under a single DID (e.g.
+                                ///< @c Smpte2020Audio under DID 0x45 SDIDs 0x01-0x09),
+                                ///< this list enumerates the concrete SDIDs the format
+                                ///< covers so SDP fmtp emission and similar consumers can
+                                ///< expand the wildcard into explicit pairs.  Empty for
+                                ///< non-wildcard formats — use @ref st291Sdid in that
+                                ///< case.
+                                ::promeki::List<uint8_t> st291SdidRange;
                                 uint8_t hdmiInfoFrameType = 0;   ///< HDMI InfoFrame type byte (0 = no HDMI carriage).
                                 uint8_t mpegTsTableId = 0; ///< MPEG-TS private-section table_id (0 = no MPEG-TS carriage).
                 };
@@ -326,6 +345,39 @@ class AncFormat {
 
                 /** @brief Returns the ST 291 SDID byte (0 = wildcard when @ref st291Did is non-zero, else no carriage). */
                 uint8_t st291Sdid() const { return d->st291Sdid; }
+
+                /**
+                 * @brief Returns the list of concrete ST 291 SDID bytes
+                 *        this format covers on its canonical ST 291
+                 *        carriage.
+                 *
+                 * For a format that registers with a non-zero
+                 * @ref st291Sdid this returns @c {st291Sdid()}.  For a
+                 * wildcard-SDID format (registers with
+                 * @c st291Sdid == 0 to absorb an SDID range under one
+                 * DID — e.g. @c Smpte2020Audio across SDIDs 0x01-0x09
+                 * under DID 0x45) this returns the registered concrete
+                 * range, never the @c 0 sentinel.  Used by SDP fmtp
+                 * emission so the wildcard expands into explicit
+                 * @c DID_SDID entries — emitting @c SDID=0x00 verbatim
+                 * collides with RFC 8331's Type-1 ANC packet sentinel
+                 * and so cannot be used as a real per-packet SDID.
+                 *
+                 * @return Concrete SDID list (one entry for ordinary
+                 *         formats, the full range for wildcards).
+                 *         Empty when the format has no ST 291 carriage
+                 *         (@ref st291Did == 0).
+                 */
+                ::promeki::List<uint8_t> st291ConcreteSdids() const {
+                        ::promeki::List<uint8_t> out;
+                        if (d == nullptr || d->st291Did == 0) return out;
+                        if (!d->st291SdidRange.isEmpty()) {
+                                out = d->st291SdidRange;
+                                return out;
+                        }
+                        if (d->st291Sdid != 0) out.pushToBack(d->st291Sdid);
+                        return out;
+                }
 
                 /** @brief Returns the HDMI InfoFrame type byte (0 = no HDMI carriage). */
                 uint8_t hdmiInfoFrameType() const { return d->hdmiInfoFrameType; }

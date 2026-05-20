@@ -34,24 +34,26 @@ void RtpAncPacketizerThread::packetize(const RtpFrameWork &work) {
         // strand pushes the same Frame to every ANC packetizer; each
         // packetizer pulls only the payload at its own stream index.
         auto ancList = work.frame.ancPayloads();
-        if (_ctx.streamIdx >= ancList.size()) return;
-        AncPayload::Ptr ap = ancList[_ctx.streamIdx];
-        if (!ap.isValid()) return;
-        const AncPacket::List &packets = ap->packets();
-        if (packets.isEmpty()) return;
+        AncPacket::List packets;
+        if (_ctx.streamIdx < ancList.size()) {
+                AncPayload::Ptr ap = ancList[_ctx.streamIdx];
+                if (ap.isValid()) {
+                        packets = ap->packets();
+                }
+        }
 
         // RTP TS is provisional — the TX thread re-stamps via
         // FrameRate::cumulativeTicks(clockRate, frameIndex) before
         // emit, matching the video pattern.  We pass 0 here so the
         // wire bytes carry a deterministic placeholder.
+        //
+        // Note: packAncFrame emits an ST 2110-40 §5.5 keep-alive
+        // (ANC_Count=0, Marker=1) when @c packets is empty or carries
+        // no St291 entries — we no longer early-exit here.
         RtpPacket::List rtpPackets = _ctx.payload->packAncFrame(packets, 0);
         if (rtpPackets.isEmpty()) {
-                // RFC 8331 §2.1 expects a non-empty ANC payload, but a
-                // frame with no ST 291 packets (all non-St291 or all
-                // skipped) legitimately produces no RTP packets.
-                // Silently drop — the receiver's @c validate gate will
-                // notice if zero-count payloads ever do appear on the
-                // wire.
+                // Only reaches here on a hard pack failure (allocation
+                // failed, payload size impossibly small).
                 return;
         }
 

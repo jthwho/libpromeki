@@ -51,7 +51,13 @@ PROMEKI_NAMESPACE_BEGIN
  * vehicle to work against, ready for a future DeckLink HDMI or
  * similar MediaIO backend.
  *
- * @see AncPacket, AncFormat, AncMeta::HdmiInfoFrame
+ * @note Not related to @ref HdmiSignalConfig despite the shared @c Hdmi
+ *       prefix — this class is a @em typed @em packet @em helper for
+ *       the CEA-861 InfoFrame wire format that rides through ANC,
+ *       while @ref HdmiSignalConfig is a @em carrier-level @em descriptor
+ *       (port + spec-version hint) that backends consume at open time.
+ *
+ * @see AncPacket, AncFormat, AncMeta::HdmiInfoFrame, HdmiSignalConfig
  */
 class HdmiInfoFrame {
         public:

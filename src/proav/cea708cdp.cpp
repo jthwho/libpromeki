@@ -11,6 +11,7 @@
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/string.h>
+#include <vtc/format.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -39,14 +40,41 @@ namespace {
                 return f;
         }
 
-        // Encode an MM/SS/HH/Frame BCD nibble pair into the SMPTE 12M form
-        // used by the CDP time-code section: high nibble = tens (masked
-        // to the small range each field legally allows — 0..2 for hours,
-        // 0..5 for min/sec, 0..3 for frame), low nibble = units.
+        // Encode a digit value into the 8-bit BCD field used by the CDP
+        // time-code section: high nibble = tens (masked to the legal range
+        // each field allows — 0..2 for hours, 0..5 for min/sec, 0..3 for
+        // frame), low nibble = units.  The mask only constrains the tens
+        // nibble; the upper reserved / flag bits are stamped by the caller.
         uint8_t bcdHigh(uint8_t value, uint8_t tensMask) {
                 uint8_t tens = static_cast<uint8_t>((value / 10) & tensMask);
                 uint8_t units = static_cast<uint8_t>(value % 10);
                 return static_cast<uint8_t>((tens << 4) | units);
+        }
+
+        // Resolve a ST 334-2 §5.3 Table 3 cdp_frame_rate code (plus the
+        // wire drop_frame_flag bit) into a Timecode::Mode.  Returns an
+        // invalid Mode for unrecognised codes; drop_frame is silently
+        // ignored on rates that have no drop-frame sister format (24, 25,
+        // 50, 60), matching the libvtc model where those families do not
+        // carry a DF bit.
+        Timecode::Mode modeForFrameRateCode(uint8_t code, bool dropFrame) {
+                switch (code) {
+                        case 1: return Timecode::Mode(&VTC_FORMAT_23_98);
+                        case 2: return Timecode::Mode(&VTC_FORMAT_24);
+                        case 3: return Timecode::Mode(&VTC_FORMAT_25);
+                        case 4:
+                                return Timecode::Mode(dropFrame ? &VTC_FORMAT_29_97_DF
+                                                                : &VTC_FORMAT_29_97_NDF);
+                        case 5:
+                                return Timecode::Mode(dropFrame ? &VTC_FORMAT_30_DF
+                                                                : &VTC_FORMAT_30_NDF);
+                        case 6: return Timecode::Mode(&VTC_FORMAT_50);
+                        case 7:
+                                return Timecode::Mode(dropFrame ? &VTC_FORMAT_59_94_DF
+                                                                : &VTC_FORMAT_59_94_NDF);
+                        case 8: return Timecode::Mode(&VTC_FORMAT_60);
+                        default: return Timecode::Mode();
+                }
         }
 
 } // namespace
@@ -85,20 +113,23 @@ Buffer Cea708Cdp::toBuffer() const {
         // Optional time-code section.
         if (timeCodePresent) {
                 out[pos + 0] = TimeCodeSectionId;
-                // SMPTE 334-2 §5.1.6.1 (mirrors SMPTE 12M):
-                //   byte 1: high nibble = frame tens (0..3) | (BGF flags),
-                //           low nibble  = frame units
-                //   byte 2: high nibble = seconds tens (0..5),
-                //           low nibble  = seconds units
-                //   byte 3: high nibble = minutes tens (0..5),
-                //           low nibble  = minutes units
-                //   byte 4: high nibble = hours tens (0..2) | (FF flag),
-                //           low nibble  = hours units
-                // The BGF / FF flags are emitted as zero by this codec.
-                out[pos + 1] = bcdHigh(static_cast<uint8_t>(timeCode.frame()), 0x03);
-                out[pos + 2] = bcdHigh(static_cast<uint8_t>(timeCode.sec()), 0x07);
-                out[pos + 3] = bcdHigh(static_cast<uint8_t>(timeCode.min()), 0x07);
-                out[pos + 4] = bcdHigh(static_cast<uint8_t>(timeCode.hour()), 0x03);
+                // SMPTE 334-2:2015 §5.3 Table 4 — H/M/S/F order, with
+                // the spec's reserved '1' bits stamped in the upper bits
+                // of the hours and minutes bytes:
+                //   byte 1: '11' (2 bits) | tc_10hrs (2 bits) | tc_1hrs (4 bits)
+                //   byte 2: '1'  (1 bit)  | tc_10min (3 bits) | tc_1min (4 bits)
+                //   byte 3: tc_field_flag (1 bit) | tc_10sec (3 bits) | tc_1sec (4 bits)
+                //   byte 4: drop_frame_flag (1 bit) | '0' (1 bit) | tc_10fr (2 bits) | tc_1fr (4 bits)
+                out[pos + 1] = static_cast<uint8_t>(
+                        0xC0 | bcdHigh(static_cast<uint8_t>(timeCode.hour()), 0x03));
+                out[pos + 2] = static_cast<uint8_t>(
+                        0x80 | bcdHigh(static_cast<uint8_t>(timeCode.min()), 0x07));
+                out[pos + 3] = static_cast<uint8_t>(
+                        (tcFieldFlag ? 0x80 : 0x00) |
+                        bcdHigh(static_cast<uint8_t>(timeCode.sec()), 0x07));
+                out[pos + 4] = static_cast<uint8_t>(
+                        (timeCode.isDropFrame() ? 0x80 : 0x00) |
+                        bcdHigh(static_cast<uint8_t>(timeCode.frame()), 0x03));
                 pos += timecodeSize;
         }
 
@@ -194,15 +225,23 @@ Result<Cea708Cdp> Cea708Cdp::fromBuffer(const void *data, size_t size) {
                 if (pos + 5 > footerStart || in[pos] != TimeCodeSectionId) {
                         return makeError<Cea708Cdp>(Error::CorruptData);
                 }
-                uint8_t b1 = in[pos + 1];
-                uint8_t b2 = in[pos + 2];
-                uint8_t b3 = in[pos + 3];
-                uint8_t b4 = in[pos + 4];
-                uint8_t frm = static_cast<uint8_t>(((b1 >> 4) & 0x03) * 10 + (b1 & 0x0F));
-                uint8_t sec = static_cast<uint8_t>(((b2 >> 4) & 0x07) * 10 + (b2 & 0x0F));
-                uint8_t min = static_cast<uint8_t>(((b3 >> 4) & 0x07) * 10 + (b3 & 0x0F));
-                uint8_t hrs = static_cast<uint8_t>(((b4 >> 4) & 0x03) * 10 + (b4 & 0x0F));
-                cdp.timeCode = Timecode(Timecode::Mode(Timecode::NDF30), hrs, min, sec, frm);
+                // Per ST 334-2:2015 §5.3 Table 4 the time-code section
+                // byte order is H/M/S/F.  The flag bits live in the
+                // upper bits of the seconds (tc_field_flag) and frames
+                // (drop_frame_flag) bytes; the hours / minutes upper
+                // bits are reserved and not consumed here.
+                uint8_t b1 = in[pos + 1]; // hours + reserved '11'
+                uint8_t b2 = in[pos + 2]; // minutes + reserved '1'
+                uint8_t b3 = in[pos + 3]; // seconds + tc_field_flag
+                uint8_t b4 = in[pos + 4]; // frames + drop_frame_flag
+                uint8_t hrs = static_cast<uint8_t>(((b1 >> 4) & 0x03) * 10 + (b1 & 0x0F));
+                uint8_t min = static_cast<uint8_t>(((b2 >> 4) & 0x07) * 10 + (b2 & 0x0F));
+                uint8_t sec = static_cast<uint8_t>(((b3 >> 4) & 0x07) * 10 + (b3 & 0x0F));
+                uint8_t frm = static_cast<uint8_t>(((b4 >> 4) & 0x03) * 10 + (b4 & 0x0F));
+                cdp.tcFieldFlag = (b3 & 0x80) != 0;
+                const bool dropFrame = (b4 & 0x80) != 0;
+                Timecode::Mode mode = modeForFrameRateCode(cdp.frameRateCode, dropFrame);
+                cdp.timeCode = Timecode(mode, hrs, min, sec, frm);
                 pos += 5;
         }
 
@@ -276,6 +315,8 @@ JsonObject Cea708Cdp::toJson() const {
 
         if (timeCodePresent) {
                 obj.set("timeCode", timeCode.toString());
+                obj.set("tcFieldFlag", tcFieldFlag);
+                obj.set("dropFrame", timeCode.isDropFrame());
         }
 
         if (ccDataPresent) {
@@ -312,7 +353,10 @@ bool Cea708Cdp::operator==(const Cea708Cdp &o) const {
         if (svcInfoComplete != o.svcInfoComplete) return false;
         if (captionServiceActive != o.captionServiceActive) return false;
         if (sequenceCounter != o.sequenceCounter) return false;
-        if (timeCodePresent && timeCode != o.timeCode) return false;
+        if (timeCodePresent) {
+                if (timeCode != o.timeCode) return false;
+                if (tcFieldFlag != o.tcFieldFlag) return false;
+        }
         if (ccData != o.ccData) return false;
         if (!(extraBytes == o.extraBytes)) return false;
         return true;

@@ -2011,6 +2011,7 @@ set(PROMEKI_HEADERS
     include/promeki/resource.h
     include/promeki/sdioutputfanoutconfig.h
     include/promeki/sdisignalconfig.h
+    include/promeki/sdistandards.h
     include/promeki/securemem.h
     include/promeki/selfpipe.h
     include/promeki/set.h
@@ -2397,6 +2398,8 @@ endif()
 # ProAV sources
 if(PROMEKI_ENABLE_PROAV)
     list(APPEND PROMEKI_HEADERS
+        include/promeki/ancafd.h
+        include/promeki/ancatc.h
         include/promeki/ancdesc.h
         include/promeki/ancformat.h
         include/promeki/ancmeta.h
@@ -2477,6 +2480,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
         include/promeki/mediaiodescription.h
+        include/promeki/sdivpid.h
+        include/promeki/sdiwireinference.h
         include/promeki/videotestpattern.h
         include/promeki/motionband.h
     )
@@ -2493,6 +2498,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/pixelmemlayout.cpp
         src/proav/videocodec.cpp
         src/proav/videoformat.cpp
+        src/proav/ancafd.cpp
+        src/proav/ancatc.cpp
         src/proav/anccodec_afd.cpp
         src/proav/anccodec_atc.cpp
         src/proav/anccodec_cea708.cpp
@@ -2593,7 +2600,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/uncompressedvideopayload.cpp
         src/proav/pcmaudiopayload.cpp
         src/proav/pcmsilencefiller.cpp
-        src/proav/cscmediaio.cpp
         src/proav/srcmediaio.cpp
         src/proav/burnmediaio.cpp
         src/proav/framesyncmediaio.cpp
@@ -2617,6 +2623,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/quicktime_reader.cpp
         src/proav/quicktime_writer.cpp
         src/proav/mediadesc.cpp
+        src/proav/sdivpid.cpp
+        src/proav/sdiwireinference.cpp
         src/proav/videotestpattern.cpp
         src/proav/motionband.cpp
     )
@@ -2743,6 +2751,7 @@ if(PROMEKI_ENABLE_PROAV)
             include/promeki/cscpipeline.h
             include/promeki/csccontext.h
             include/promeki/cscregistry.h
+            include/promeki/cscmediaio.h
         )
         list(APPEND PROMEKI_SOURCES
             src/proav/csc/cscpipeline.cpp
@@ -2757,6 +2766,7 @@ if(PROMEKI_ENABLE_PROAV)
             src/proav/csc/chroma.cpp
             src/proav/csc/alpha.cpp
             src/proav/csc/fastpath.cpp
+            src/proav/cscmediaio.cpp
         )
     endif()
 endif()
@@ -3496,6 +3506,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/hdmisignalconfig.cpp
         tests/unit/sdioutputfanoutconfig.cpp
         tests/unit/sdisignalconfig.cpp
+        tests/unit/sdistandards.cpp
         tests/unit/variantlookup.cpp
         tests/unit/variantquery.cpp
         tests/unit/videoportref.cpp
@@ -3715,7 +3726,6 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediapipelinestats.cpp
             tests/unit/mediapipeline.cpp
             tests/unit/pipelineevent.cpp
-            tests/unit/cscmediaio.cpp
             tests/unit/mediaiotask_csc.cpp
             tests/unit/mediaiotask_src.cpp
             tests/unit/mediaiotask_burn.cpp
@@ -3734,6 +3744,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_rtp.cpp
             tests/unit/paintengine.cpp
             tests/unit/pixelformat.cpp
+            tests/unit/sdivpid.cpp
+            tests/unit/sdiwireinference.cpp
             tests/unit/videocodec.cpp
             tests/unit/videocodec_registry.cpp
             tests/unit/quicktime.cpp
@@ -3743,6 +3755,7 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_CSC)
             list(APPEND UNITTEST_SOURCES
                 tests/unit/cscpipeline.cpp
+                tests/unit/cscmediaio.cpp
             )
         endif()
         if(PROMEKI_ENABLE_PNG)

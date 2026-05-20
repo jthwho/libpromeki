@@ -49,12 +49,15 @@
 #include <promeki/xml.h>
 #include <promeki/xyzcolor.h>
 #if PROMEKI_ENABLE_PROAV
+#include <promeki/sdivpid.h>
 #include <promeki/videoformat.h>
 #include <promeki/pixelmemlayout.h>
 #include <promeki/pixelformat.h>
 #include <promeki/videocodec.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
+#include <promeki/ancafd.h>
+#include <promeki/ancatc.h>
 #include <promeki/ancformat.h>
 #include <promeki/audiostreamdesc.h>
 #include <promeki/audiochannelmap.h>
@@ -306,6 +309,7 @@ void registerBuiltinDataTypes() {
 
 #if PROMEKI_ENABLE_PROAV
                 registerDataType<VideoFormat>();
+                registerDataType<SdiVpid>();
                 registerDataType<PixelMemLayout>();
                 registerDataType<PixelFormat>();
                 registerDataType<VideoCodec>();
@@ -315,6 +319,8 @@ void registerBuiltinDataTypes() {
                 registerDataType<AudioStreamDesc>();
                 registerDataType<AudioChannelMap>();
                 registerDataType<AudioMarkerList>();
+                registerDataType<AncAtc>();
+                registerDataType<AncAfd>();
                 registerDataType<Cea708Cdp>();
                 registerDataType<Cea708Service>();
                 registerDataType<Cea708DtvccPacket>();

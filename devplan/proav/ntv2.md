@@ -2,7 +2,10 @@
 
 **Library:** `promeki` (gated by `PROMEKI_ENABLE_NTV2`)
 **Status:** **Phases 1–6 complete (2026-05-17), including the
-Phase 6.4 HDR/colorimetry VPID work that was originally deferred.**
+Phase 6.4 HDR/colorimetry VPID work that was originally deferred.
+Open-questions cleanup pass landed 2026-05-19: sink-side
+`SdiLinkStandard::Auto` inference, driver-restart detection, and
+several Doxygen / documentation fixes.**
 Source-mode capture and sink-mode playout both ship for single-link
 SDI and multi-link (QL_3G_SQD, QL_3G_2SI, SL_12G) topologies; the
 capture and emit paths carry ancillary data through
@@ -17,7 +20,7 @@ pixel-format mapping covers UYVY / YUY2 / 8-bit RGB family / V210 /
 framebuffer-vs-wire colour-family mismatches inside the routing
 fabric and the negotiator honours an `Ntv2DisableOnBoardCsc`
 opt-out; sinks fan one outbound signal across N port groups via the
-`SdiOutputFanoutConfig` carrier and `Ntv2MirrorOutputs` config key;
+`SdiOutputFanoutConfig` carrier and `SdiOutputFanout` config key;
 the capture worker now polls `GetInputVideoFormat` every
 `Ntv2SignalPollIntervalVbi` VBIs and emits
 `errorOccurredSignal(Error::SignalLoss)` on present→absent
@@ -33,7 +36,21 @@ model + per-frame metadata + configurable `Ntv2Vpid*Override` keys,
 and the capture worker reads the incoming VPID at open + each
 signal-poll cycle and stamps the decoded transfer / colorimetry /
 range on every captured Frame's metadata.
-74 doctest cases cover the hardware-free units (format mappings,
+The 2026-05-19 pass adds the `SdiWireFormat` enum + the
+`sdiWireFormatFor(PixelFormat)` and
+`inferSdiLinkStandard(VideoFormat, SdiWireFormat, cableCount)`
+helpers in `sdiwireinference.h` for sink-side
+`SdiLinkStandard::Auto` resolution (with on-board CSC overriding
+the RGB framebuffer's natural wire payload to
+`YCbCr_422_10` when CSC is enabled), and both worker loops now
+poll `CNTV2Card::IsOpen()` every `Ntv2SignalPollIntervalVbi`
+iterations to detect driver restart / hot-unplug, surfacing the
+event via the new `StatsDeviceLost` counter +
+`errorOccurredSignal(Error::DeviceError)`.  14 new doctest cases
+in `tests/unit/sdiwireinference.cpp` cover `sdiBitsPerPixel(SdiWireFormat)`,
+`sdiWireFormatFor(PixelFormat)`, and `inferSdiLinkStandard` boundary
+cases; 1 new NTV2-specific case covers the `StatsDeviceLost` ID.
+75 doctest cases cover the hardware-free units (format mappings,
 32→64 bit clock-counter wrap extension, `mediaTimeStampFromSamples`
 for FRAME_STAMP → device-clock-domain conversion, drift-aware
 rateRatio convergence + VBI-mode 1.0 invariant, ANC encode/decode
@@ -524,7 +541,7 @@ Ntv2VbiTimeoutMs         int        50       SubscribeInputVerticalEvent poll ti
 Ntv2DisableOnBoardCsc    bool       false    Force a software CSC bridge on every RGB↔YCbCr
                                               boundary instead of using the card's on-board CSC
                                               widgets.
-Ntv2MirrorOutputs        SdiOutputFanoutConfig {} Multi-destination SDI fanout — one outbound
+SdiOutputFanout          SdiOutputFanoutConfig {} Multi-destination SDI fanout — one outbound
                                               signal driven out N matching port groups.  Supersedes
                                               SdiOutputSignal when set.  String form
                                               "standard:p1+p2,p3+p4".
@@ -615,7 +632,7 @@ The AJA crosspoint fabric lets one framestore-output crosspoint
 drive multiple SDIOut-input crosspoints simultaneously, which is
 the right primitive for monitor-out / redundancy / loop-thru use
 cases.  Exposed as a new carrier type @ref SdiOutputFanoutConfig
-and the @ref MediaConfig::Ntv2MirrorOutputs key:
+and the @ref MediaConfig::SdiOutputFanout key:
 
 - @ref SdiOutputFanoutConfig pairs a single @ref SdiLinkStandard
   with @em multiple port groups.  Each group must have exactly
@@ -623,7 +640,7 @@ and the @ref MediaConfig::Ntv2MirrorOutputs key:
   1 port per group, dual-link 2, quad-link 4.  String form:
   `standard:g1ports,g2ports,...` with `+` between ports inside a
   group and `,` between groups.
-- When @c Ntv2MirrorOutputs is set on the sink config, it
+- When @c SdiOutputFanout is set on the sink config, it
   supersedes @c SdiOutputSignal.  The first group is the primary
   destination; subsequent groups are mirrors.  The open path
   reserves @em every port across all groups, switches each one to
@@ -635,7 +652,7 @@ and the @ref MediaConfig::Ntv2MirrorOutputs key:
   mode ignores @c mirrorPortStarts (mirroring an SDI input has no
   meaning).
 
-Examples (string form passed in as @c Ntv2MirrorOutputs):
+Examples (string form passed in as @c SdiOutputFanout):
 
 | String                                 | Effect                                                  |
 |----------------------------------------|---------------------------------------------------------|
@@ -1270,10 +1287,16 @@ drift-aware clock + HDR / colorimetry VPID) complete (2026-05-17).
   buffers become a thing (see `devplan/core/systemcow-mediaio-allocator.md`),
   revisit and re-enable RDMA so frames go straight from the AJA DMA
   engine into device memory.
-- **Detection of card reboot / driver restart mid-open.** AJA's
-  driver can be unloaded out from under us. Need to decide whether
-  to surface that as `errorOccurred(DeviceError)` and fail-close, or
-  attempt automatic recovery on the next VBI.
+- **Detection of card reboot / driver restart mid-open.**
+  *(Resolved 2026-05-19.)*  Both worker loops (capture + playout)
+  consult `CNTV2Card::IsOpen()` every `Ntv2SignalPollIntervalVbi`
+  iterations.  On a present→absent transition the worker increments
+  the new `StatsDeviceLost` counter, emits
+  `errorOccurredSignal(Error::DeviceError)` exactly once, and
+  exits the loop.  The MediaIO does **not** attempt automatic
+  re-acquire — driver restarts re-enumerate device indices, so a
+  reopen needs the caller to re-resolve the URL and rebuild the
+  pipeline.  Fail-close is the simpler contract.
 - **Which audio-system counter drives the device clock when both
   source and sink channels are open on the same card?**
   *(Resolved 2026-05-17.)* The clock reads `kRegAud1Counter` via
@@ -1294,26 +1317,39 @@ drift-aware clock + HDR / colorimetry VPID) complete (2026-05-17).
   on every shipping NTV2 card; the gate stays as a safety net for
   hypothetical future hardware without the subsystem.
 - **`Ntv2DeviceClock` epoch on first open vs. after device close +
-  reopen.** The sample counter is free-running on the card across
-  process restarts; our 64-bit shadow starts at zero on every
-  device acquire. The reported clock therefore has a per-acquire
-  epoch, which is correct for in-pipeline timing but means saved
-  timestamps don't round-trip across a close. Document; the
-  alternative (anchoring to wall time on first read) loses the
-  monotonicity guarantee on long-running processes.
-- **`HdmiInfoFrame` collision check.** There's already a class
-  named `HdmiInfoFrame` (`include/promeki/hdmiinfoframe.h`) in the
-  ANC stack — that's a *typed packet helper*, unrelated to the new
-  carrier-config `HdmiSignalConfig`. Names don't collide, but a
-  reader skimming the file list might assume kinship. Worth a
-  short Doxygen "see also" both ways once the new types land.
-- **`SdiLinkStandard::Auto` semantics on sinks.** On a source,
-  `Auto` means "detect what's arriving." On a sink, there is
-  nothing to detect — the standard is forced by the chosen
-  `VideoFormat` + cable count. Either reject `Auto` on sinks at
-  Open, or infer the standard from the offered `MediaDesc` and
-  log what we picked. Probably the latter (matches the planner's
-  proposeOutput flow).
+  reopen.** *(Resolved 2026-05-19.)*  Documented in
+  `include/promeki/ntv2clock.h` under "Per-acquire epoch — stamps
+  do not round-trip across close/reopen": the 64-bit shadow resets
+  to zero on every `Ntv2DeviceRegistry::acquire`, so stamps are
+  coherent across every channel on the same card for the lifetime
+  of the acquisition but a process that closes + reopens the
+  device starts fresh.  Callers that need to persist stamps across
+  an acquire boundary snapshot the (host-wall, device-stamp) pair
+  before close and re-anchor on reopen.  Picked monotonicity over
+  cross-acquire round-trip — the alternative (anchor shadow to
+  host wall time on first read) breaks the monotonic-clamp
+  contract on any wall-time jump.
+- **`HdmiInfoFrame` collision check.** *(Resolved 2026-05-19.)*
+  Bidirectional Doxygen cross-references added to both
+  `hdmiinfoframe.h` (typed ANC packet helper) and
+  `hdmisignalconfig.h` (carrier-level descriptor), each with a
+  `@note` explaining the names share a prefix but the types are
+  unrelated, plus a `@see` linking to the sibling.
+- **`SdiLinkStandard::Auto` semantics on sinks.**
+  *(Resolved 2026-05-19.)*  Inferred at open time via the new
+  library helper `inferSdiLinkStandard(VideoFormat, SdiWireFormat,
+  cableCount)` (in `include/promeki/sdiwireinference.h`).  The
+  sink open path classifies the framebuffer `PixelFormat` to an
+  `SdiWireFormat` via `sdiWireFormatFor(pf)` — except when on-board
+  CSC is enabled and the framebuffer is RGB, where the wire
+  payload is overridden to `SdiWireFormat::YCbCr_422_10` (the
+  family the CSC outputs).  The inference itself is generic
+  SDI math (pixels-per-sec × bits-per-pixel × 18% overhead vs
+  per-standard `sdiNominalDataRateGbps`); future DeckLink /
+  ST 2110 / ST 2022-6 backends reuse it unchanged.  Quad-link
+  disambiguation prefers `QL_3G_2SI` over `QL_3G_SQD`.  An
+  inference miss surfaces `Error::InvalidArgument` and logs the
+  raster / rate / wire-format / cable count for the operator.
 - **Embedding ST 2110 / ST 2022-6 in the same generic types
   later.** Network SDI carriers don't have a physical
   `VideoPortRef`, but they do still pick an SMPTE link standard

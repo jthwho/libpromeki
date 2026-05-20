@@ -52,62 +52,47 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * AncPacket pkt = ...;
- * uint16_t line = pkt.meta().get(AncMeta::St291::Line).get<uint16_t>();
- * pkt.metaMut().set(AncMeta::St291::FieldB, true);
+ * uint8_t  type = pkt.meta().get(AncMeta::HdmiInfoFrame::Type).get<uint8_t>();
+ * pkt.metaMut().set(AncMeta::Atc::Rate, uint32_t(60));
  * @endcode
+ *
+ * @par ST 291 framing — direct accessors instead of meta keys
+ *
+ * The five hot-path ST 291 framing fields (Line, HOffset, FieldB,
+ * CBit, StreamNum) live as direct accessors on @ref AncPacket itself
+ * (@ref AncPacket::st291Line, @ref AncPacket::st291HOffset, etc.) so
+ * the RTP pack / unpack hot path does not pay a Metadata-hash lookup
+ * per packet.  This file used to declare them under an
+ * @c AncMeta::St291 namespace; that namespace is gone as of F9.1.
+ * Other transports whose framing is rarer or longer (ATC rate, HDMI
+ * InfoFrame type / version / length, RTMP script name, NDI XML
+ * element, MPEG-TS PID / table-id, SEI payload type / UUID) keep
+ * using @ref Metadata keys here.
  */
 namespace AncMeta {
 
-/** @brief ST 291 ancillary-packet framing sidecar. */
-namespace St291 {
+/** @brief Ancillary-timecode (ATC) framing sidecar. */
+namespace Atc {
 
-/** @brief VANC line number the packet was captured on. */
-inline const Metadata::ID Line = Metadata::declareID(
-        "AncMeta.St291.Line",
+/** @brief Source frame rate the ATC bytes were captured at.
+ *
+ * The eight time-address bytes alone cannot disambiguate
+ * 24 / 25 / 30-NDF (only the DF bit narrows 30 → 29.97-DF).
+ * Capture paths that know the paired video desc stamp this key so the
+ * codec parser can resolve a correct @ref Timecode::Mode without
+ * relying on @c AncTranslateConfig::AtcParseRateHint.  The value is in
+ * whole frames per second; 0 (default) means "unknown" and the
+ * parser falls back to @c AtcParseRateHint or fails with
+ * @c Error::InsufficientContext when neither is present. */
+inline const Metadata::ID Rate = Metadata::declareID(
+        "AncMeta.Atc.Rate",
         VariantSpec()
-                .setType(DataTypeUInt16)
-                .setDefault(uint16_t(0))
-                .setDescription("ST 291 VANC line number the packet was captured on."));
+                .setType(DataTypeUInt32)
+                .setDefault(uint32_t(0))
+                .setDescription("ATC source frame rate in whole fps (24/25/30/50/60; "
+                                "0 = unknown — codec falls back to AtcParseRateHint)."));
 
-/** @brief Horizontal offset within the line; 0xFFF means
- *         "no specific position" per RFC 8331 §2.2. */
-inline const Metadata::ID HOffset = Metadata::declareID(
-        "AncMeta.St291.HOffset",
-        VariantSpec()
-                .setType(DataTypeUInt16)
-                .setDefault(uint16_t(0xFFF))
-                .setDescription("ST 291 horizontal offset within the line (0xFFF = unspecified)."));
-
-/** @brief F-bit: @c true when the packet was found on field 2 of an
- *         interlaced source; @c false on progressive sources or
- *         field 1. */
-inline const Metadata::ID FieldB = Metadata::declareID(
-        "AncMeta.St291.FieldB",
-        VariantSpec()
-                .setType(DataTypeBool)
-                .setDefault(false)
-                .setDescription("ST 291 F-bit: true on field 2 of an interlaced source."));
-
-/** @brief C-bit: @c true for chrominance-data-stream packets,
- *         @c false for luminance data stream (the common case). */
-inline const Metadata::ID CBit = Metadata::declareID(
-        "AncMeta.St291.CBit",
-        VariantSpec()
-                .setType(DataTypeBool)
-                .setDefault(false)
-                .setDescription("ST 291 C-bit: true on the chrominance data stream."));
-
-/** @brief Stream number (RFC 8331 StreamNum field).  Zero for
- *         single-link SDI; non-zero distinguishes packets on
- *         multi-link / 12G sub-streams. */
-inline const Metadata::ID StreamNum = Metadata::declareID(
-        "AncMeta.St291.StreamNum",
-        VariantSpec()
-                .setType(DataTypeUInt8)
-                .setDefault(uint8_t(0))
-                .setDescription("ST 291 stream number (RFC 8331 StreamNum field)."));
-
-} // namespace St291
+} // namespace Atc
 
 /** @brief HDMI InfoFrame framing sidecar. */
 namespace HdmiInfoFrame {

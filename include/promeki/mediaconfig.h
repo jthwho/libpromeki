@@ -251,6 +251,29 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                    "Device-wide reference clock configuration "
                                                    "for hardware MediaIO backends."));
 
+                /// @brief SdiOutputFanoutConfig — fan one outbound
+                /// signal across multiple SDI destination groups via
+                /// the device's crosspoint fabric (when the backend
+                /// supports it).  Each comma-separated group must
+                /// carry the same SMPTE link standard, with
+                /// @c sdiCableCount(standard) ports each.  When set,
+                /// supersedes @c SdiOutputSignal (the fanout's first
+                /// group plays the role of the primary; subsequent
+                /// groups are mirrors).  String form:
+                /// <code>standard:p1+p2,p3+p4</code> — see the type's
+                /// doc.  Default empty = no fanout (fall back to
+                /// @c SdiOutputSignal alone).  Backends that lack a
+                /// crosspoint fabric ignore it.
+                PROMEKI_DECLARE_ID(SdiOutputFanout,
+                                   VariantSpec()
+                                           .setType(DataTypeSdiOutputFanoutConfig)
+                                           .setDefault(SdiOutputFanoutConfig())
+                                           .setDescription(
+                                                   "Multi-destination SDI fanout: one signal driven "
+                                                   "out N matching port groups via the device's "
+                                                   "crosspoint fabric.  Standard form: "
+                                                   "'dl_3g:p1+p2,p3+p4'."));
+
                 // ============================================================
                 // Video test pattern generator
                 // ============================================================
@@ -739,7 +762,7 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDescription("Offset applied to SubRip cue times before scheduling."));
 
                 /// @brief int — VANC line number the TPG stamps on emitted
-                /// CEA-708 ANC packets (via @c AncMeta::St291::Line).
+                /// CEA-708 ANC packets (via @c AncPacket::st291Line()).
                 /// Default 11, which is the canonical VANC line for HD
                 /// CEA-708 carriage.
                 PROMEKI_DECLARE_ID(TpgAncCaptionsLine,
@@ -3029,25 +3052,6 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                    "Refuse on-board CSC insertion in routing / "
                                                    "format negotiation; force a software CSC bridge "
                                                    "on every RGB ↔ YCbCr boundary."));
-
-                /// @brief SdiOutputFanoutConfig — fan one outbound
-                /// signal across multiple SDI destination groups.
-                /// Each comma-separated group must carry the same
-                /// SMPTE link standard, with @c cablesFor(standard)
-                /// ports each.  When set, supersedes @c SdiOutputSignal
-                /// (the fanout's first group plays the role of the
-                /// primary; subsequent groups are mirrors).  String
-                /// form: <code>standard:p1+p2,p3+p4</code> — see the
-                /// type's doc.  Default empty = no fanout (fall back
-                /// to @c SdiOutputSignal alone).
-                PROMEKI_DECLARE_ID(Ntv2MirrorOutputs,
-                                   VariantSpec()
-                                           .setType(DataTypeSdiOutputFanoutConfig)
-                                           .setDefault(SdiOutputFanoutConfig())
-                                           .setDescription(
-                                                   "Multi-destination SDI fanout: one signal driven "
-                                                   "out N matching port groups via the crosspoint "
-                                                   "fabric.  Standard form: 'dl_3g:p1+p2,p3+p4'."));
 
                 /// @brief bool — page-lock host frame buffers via
                 /// @c DMABufferLock so AutoCirculate DMA bypasses the

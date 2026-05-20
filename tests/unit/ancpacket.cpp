@@ -8,9 +8,9 @@
 
 #include <doctest/doctest.h>
 #include <promeki/ancpacket.h>
-#include <promeki/ancmeta.h>
 #include <promeki/datastream.h>
 #include <promeki/bufferiodevice.h>
+#include <promeki/metadata.h>
 
 using namespace promeki;
 
@@ -41,17 +41,16 @@ TEST_CASE("AncPacket: default constructor is invalid") {
 
 TEST_CASE("AncPacket: full-state constructor") {
         Buffer    bytes = makeWireBytes({0x61, 0x01, 0x05, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE});
-        Metadata  meta;
-        meta.set(AncMeta::St291::Line, uint16_t(11));
-        meta.set(AncMeta::St291::HOffset, uint16_t(0));
-        AncPacket pkt(AncFormat(AncFormat::Cea708), AncTransport::St291, bytes, meta);
+        AncPacket pkt(AncFormat(AncFormat::Cea708), AncTransport::St291, bytes);
+        pkt.setSt291Line(11);
+        pkt.setSt291HOffset(0);
 
         CHECK(pkt.isValid());
         CHECK(pkt.format().id() == AncFormat::Cea708);
         CHECK(pkt.transport() == AncTransport::St291);
         CHECK(pkt.data().size() == 8);
-        CHECK(pkt.meta().get(AncMeta::St291::Line).get<uint16_t>() == 11);
-        CHECK(pkt.meta().get(AncMeta::St291::HOffset).get<uint16_t>() == 0);
+        CHECK(pkt.st291Line() == 11);
+        CHECK(pkt.st291HOffset() == 0);
 }
 
 TEST_CASE("AncPacket: full-state constructor with default meta") {
@@ -59,6 +58,35 @@ TEST_CASE("AncPacket: full-state constructor with default meta") {
         AncPacket pkt(AncFormat(AncFormat::AtcLtc), AncTransport::St291, bytes);
         CHECK(pkt.isValid());
         CHECK(pkt.meta().isEmpty());
+        // Default ST 291 framing sentinels per RFC 8331 §2.2.
+        CHECK(pkt.st291Line() == 0x7FE);
+        CHECK(pkt.st291HOffset() == 0xFFF);
+        CHECK(pkt.st291FieldB() == false);
+        CHECK(pkt.st291CBit() == false);
+        CHECK(pkt.st291StreamNum() == 0);
+}
+
+TEST_CASE("AncPacket: ST 291 framing accessors round-trip") {
+        AncPacket pkt(AncFormat(AncFormat::Cea708), AncTransport::St291, makeWireBytes({0x61, 0x01, 0x00}));
+        pkt.setSt291Line(11);
+        pkt.setSt291HOffset(0x42);
+        pkt.setSt291FieldB(true);
+        pkt.setSt291CBit(true);
+        pkt.setSt291StreamNum(3);
+        CHECK(pkt.st291Line() == 11);
+        CHECK(pkt.st291HOffset() == 0x42);
+        CHECK(pkt.st291FieldB() == true);
+        CHECK(pkt.st291CBit() == true);
+        CHECK(pkt.st291StreamNum() == 3);
+}
+
+TEST_CASE("AncPacket: ST 291 setters CoW-detach") {
+        AncPacket a(AncFormat(AncFormat::Cea708), AncTransport::St291, makeWireBytes({0x61, 0x01, 0x00}));
+        a.setSt291Line(11);
+        AncPacket b = a;
+        b.setSt291Line(99);
+        CHECK(a.st291Line() == 11);
+        CHECK(b.st291Line() == 99);
 }
 
 // ============================================================================
@@ -81,9 +109,9 @@ TEST_CASE("AncPacket: copy is cheap and independent under mutation") {
 TEST_CASE("AncPacket: setFormat detaches CoW") {
         AncPacket a(AncFormat(AncFormat::Afd), AncTransport::St291, makeWireBytes({0x41, 0x05, 0x01, 0x00}));
         AncPacket b = a;
-        b.setFormat(AncFormat(AncFormat::BarData));
+        b.setFormat(AncFormat(AncFormat::PanScan));
         CHECK(a.format().id() == AncFormat::Afd);
-        CHECK(b.format().id() == AncFormat::BarData);
+        CHECK(b.format().id() == AncFormat::PanScan);
 }
 
 TEST_CASE("AncPacket: setData detaches CoW") {
@@ -96,26 +124,26 @@ TEST_CASE("AncPacket: setData detaches CoW") {
 
 TEST_CASE("AncPacket: setMeta detaches CoW") {
         Metadata m1;
-        m1.set(AncMeta::St291::Line, uint16_t(11));
+        m1.set(Metadata::Title, String("alpha"));
         AncPacket a(AncFormat(AncFormat::Cea708), AncTransport::St291, makeWireBytes({0x01}), m1);
         AncPacket b = a;
 
         Metadata m2;
-        m2.set(AncMeta::St291::Line, uint16_t(22));
+        m2.set(Metadata::Title, String("beta"));
         b.setMeta(m2);
 
-        CHECK(a.meta().get(AncMeta::St291::Line).get<uint16_t>() == 11);
-        CHECK(b.meta().get(AncMeta::St291::Line).get<uint16_t>() == 22);
+        CHECK(a.meta().get(Metadata::Title).get<String>() == String("alpha"));
+        CHECK(b.meta().get(Metadata::Title).get<String>() == String("beta"));
 }
 
 TEST_CASE("AncPacket: metaMut detaches CoW") {
         Metadata m;
-        m.set(AncMeta::St291::Line, uint16_t(11));
+        m.set(Metadata::Title, String("alpha"));
         AncPacket a(AncFormat(AncFormat::Cea708), AncTransport::St291, makeWireBytes({0x01}), m);
         AncPacket b = a;
-        b.metaMut().set(AncMeta::St291::Line, uint16_t(99));
-        CHECK(a.meta().get(AncMeta::St291::Line).get<uint16_t>() == 11);
-        CHECK(b.meta().get(AncMeta::St291::Line).get<uint16_t>() == 99);
+        b.metaMut().set(Metadata::Title, String("beta"));
+        CHECK(a.meta().get(Metadata::Title).get<String>() == String("alpha"));
+        CHECK(b.meta().get(Metadata::Title).get<String>() == String("beta"));
 }
 
 // ============================================================================
@@ -147,10 +175,18 @@ TEST_CASE("AncPacket: equality compares all four fields") {
                         makeWireBytes({0x01, 0x02, 0x04}));
         CHECK(a != eDiff);
 
-        Metadata withMeta;
-        withMeta.set(AncMeta::St291::Line, uint16_t(11));
-        AncPacket f(AncFormat(AncFormat::Cea708), AncTransport::St291, b1, withMeta);
+        // Two packets that differ only on a direct ST 291 framing
+        // field compare unequal (line is part of the equality contract
+        // now that it lives on the Impl).
+        AncPacket f(AncFormat(AncFormat::Cea708), AncTransport::St291, b1);
+        f.setSt291Line(11);
         CHECK(a != f);
+
+        // Differing application metadata also breaks equality.
+        Metadata withMeta;
+        withMeta.set(Metadata::Title, String("annotated"));
+        AncPacket g(AncFormat(AncFormat::Cea708), AncTransport::St291, b1, withMeta);
+        CHECK(a != g);
 }
 
 // ============================================================================
@@ -178,9 +214,11 @@ TEST_CASE("AncPacket: toString invalid handle") {
 TEST_CASE("AncPacket: DataStream round-trip preserves all four fields") {
         Buffer   bytes = makeWireBytes({0x61, 0x01, 0x05, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE});
         Metadata meta;
-        meta.set(AncMeta::St291::Line, uint16_t(11));
-        meta.set(AncMeta::St291::FieldB, true);
+        meta.set(Metadata::Title, String("captured-anc"));
         AncPacket original(AncFormat(AncFormat::Cea708), AncTransport::St291, bytes, meta);
+        original.setSt291Line(11);
+        original.setSt291FieldB(true);
+        original.setSt291StreamNum(2);
 
         Buffer         storage(8192);
         BufferIODevice dev(&storage);
@@ -213,5 +251,11 @@ TEST_CASE("AncPacket: DataStream round-trip preserves all four fields") {
                 CHECK(roundBytes[i] == origBytes[i]);
         }
         CHECK(round.meta() == original.meta());
+        CHECK(round.st291Line() == original.st291Line());
+        CHECK(round.st291HOffset() == original.st291HOffset());
+        CHECK(round.st291FieldB() == original.st291FieldB());
+        CHECK(round.st291CBit() == original.st291CBit());
+        CHECK(round.st291StreamNum() == original.st291StreamNum());
+        CHECK(round == original);
 }
 

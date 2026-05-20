@@ -279,7 +279,8 @@ TEST_CASE("AncDesc: toSdp emits smpte291 rtpmap + DID_SDID fmtp list") {
         desc.setAllowedFormats(std::move(allowed));
 
         SdpMediaDescription md = desc.toSdp(100);
-        CHECK(md.mediaType() == "application");
+        // RFC 8331 §3.1 / ST 2110-40 §7: m=video, not m=application.
+        CHECK(md.mediaType() == "video");
         CHECK(md.protocol() == "RTP/AVP");
         REQUIRE(md.payloadTypes().size() == 1);
         CHECK(md.payloadTypes().at(0) == 100);
@@ -328,17 +329,27 @@ TEST_CASE("AncDesc: fromSdp / toSdp round-trip preserves DID/SDID list") {
 
 TEST_CASE("AncDesc: fromSdp rejects wrong media type / rtpmap") {
         SdpMediaDescription md;
-        md.setMediaType("video");
+        // m=audio is not RFC 8331 ANC.
+        md.setMediaType("audio");
         md.setProtocol("RTP/AVP");
         md.addPayloadType(96);
         md.setAttribute("rtpmap", "96 raw/90000");
         AncDesc bad = AncDesc::fromSdp(md);
         CHECK(bad.allowedFormats().isEmpty());
+
+        // m=video with the wrong rtpmap encoding (raw/90000 is video
+        // raw, not smpte291) is also rejected.
+        SdpMediaDescription md2;
+        md2.setMediaType("video");
+        md2.setProtocol("RTP/AVP");
+        md2.addPayloadType(96);
+        md2.setAttribute("rtpmap", "96 raw/90000");
+        CHECK(AncDesc::fromSdp(md2).allowedFormats().isEmpty());
 }
 
 TEST_CASE("AncDesc: fromSdp tolerates decimal DID/SDID literals") {
         SdpMediaDescription md;
-        md.setMediaType("application");
+        md.setMediaType("video");
         md.setProtocol("RTP/AVP");
         md.addPayloadType(100);
         md.setAttribute("rtpmap", "100 smpte291/90000");
@@ -352,7 +363,7 @@ TEST_CASE("AncDesc: fromSdp tolerates decimal DID/SDID literals") {
 
 TEST_CASE("AncDesc: fromSdp keeps unknown DID/SDID pairs as Invalid") {
         SdpMediaDescription md;
-        md.setMediaType("application");
+        md.setMediaType("video");
         md.setProtocol("RTP/AVP");
         md.addPayloadType(100);
         md.setAttribute("rtpmap", "100 smpte291/90000");
@@ -364,7 +375,7 @@ TEST_CASE("AncDesc: fromSdp keeps unknown DID/SDID pairs as Invalid") {
 
 TEST_CASE("AncDesc: fromSdp ignores malformed DID_SDID entries") {
         SdpMediaDescription md;
-        md.setMediaType("application");
+        md.setMediaType("video");
         md.setProtocol("RTP/AVP");
         md.addPayloadType(100);
         md.setAttribute("rtpmap", "100 smpte291/90000");
@@ -374,4 +385,168 @@ TEST_CASE("AncDesc: fromSdp ignores malformed DID_SDID entries") {
         AncDesc parsed = AncDesc::fromSdp(md);
         REQUIRE(parsed.allowedFormats().size() == 1u);
         CHECK(parsed.allowedFormats().at(0) == AncFormat::Cea708);
+}
+
+// ============================================================================
+// F3 — SDP C8 / A7 / C9 (ST 2110-40 §7 emission)
+// ============================================================================
+
+TEST_CASE("AncDesc F3 — toSdp emits ST 2110-40 §7 mandatory fmtp parameters") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_59_94);
+        AncFormat::IDList allowed;
+        allowed.pushToBack(AncFormat::Cea708);
+        desc.setAllowedFormats(std::move(allowed));
+
+        SdpMediaDescription md = desc.toSdp(100);
+        // C8: m=video, not m=application.
+        CHECK(md.mediaType() == "video");
+
+        const String fmtp = md.attribute(String("fmtp"));
+        REQUIRE_FALSE(fmtp.isEmpty());
+        // C9: SSN and TM defaults must always be emitted.
+        CHECK(fmtp.contains(String("SSN=ST2110-40:2018")));
+        CHECK(fmtp.contains(String("TM=CTM")));
+        // C9: exactframerate emitted from FrameRate.
+        // FPS_59_94 = 60000/1001 → "60000/1001"
+        CHECK(fmtp.contains(String("exactframerate=60000/1001")));
+        // DID_SDID still present after the new params.
+        CHECK(fmtp.contains(String("DID_SDID={0x61,0x01}")));
+}
+
+TEST_CASE("AncDesc F3 — integer frame rates emit bare integers") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        SdpMediaDescription md = desc.toSdp(100);
+        const String fmtp = md.attribute(String("fmtp"));
+        CHECK(fmtp.contains(String("exactframerate=60")));
+        CHECK_FALSE(fmtp.contains(String("exactframerate=60/1")));
+}
+
+TEST_CASE("AncDesc F3 — A7 wildcard-SDID expands across the registered range") {
+        // Smpte2020Audio registers under DID 0x45 with wildcard SDID,
+        // backed by the concrete SDID range 0x01..0x09.
+        AncDesc desc;
+        AncFormat::IDList allowed;
+        allowed.pushToBack(AncFormat::Smpte2020Audio);
+        desc.setAllowedFormats(std::move(allowed));
+
+        SdpMediaDescription md = desc.toSdp(100);
+        const String fmtp = md.attribute(String("fmtp"));
+        REQUIRE_FALSE(fmtp.isEmpty());
+        // Wildcard SDID=0x00 must NOT appear (collides with Type-1
+        // sentinel per RFC 8331 §3.1).
+        CHECK_FALSE(fmtp.contains(String("DID_SDID={0x45,0x00}")));
+        // Every concrete SDID under DID 0x45 must appear.
+        for (uint8_t sdid = 0x01; sdid <= 0x09; ++sdid) {
+                char  hex[3] = {'0', static_cast<char>('1' + (sdid - 1)), '\0'};
+                const String expected = String("DID_SDID={0x45,0x0") +
+                                        String::number(static_cast<int>(sdid)) +
+                                        String("}");
+                CHECK(fmtp.contains(expected));
+                (void)hex;
+        }
+}
+
+TEST_CASE("AncDesc F3 — fromSdp dedupes wildcard SDIDs into one family ID") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        // Three concrete SMPTE 2020 SDIDs all collapse onto the same
+        // Smpte2020Audio family ID via wildcard lookup.
+        md.setAttribute("fmtp",
+                        "100 DID_SDID={0x45,0x01};DID_SDID={0x45,0x03};DID_SDID={0x45,0x05}");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        REQUIRE(parsed.allowedFormats().size() == 1u);
+        CHECK(parsed.allowedFormats().at(0) == AncFormat::Smpte2020Audio);
+}
+
+TEST_CASE("AncDesc F3 — TROFF emitted only when non-zero") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        SdpMediaDescription md1 = desc.toSdp(100);
+        // Default 0 → no TROFF parameter at all.
+        CHECK_FALSE(md1.attribute(String("fmtp")).contains(String("TROFF=")));
+
+        desc.setTroff(750);
+        SdpMediaDescription md2 = desc.toSdp(100);
+        CHECK(md2.attribute(String("fmtp")).contains(String("TROFF=750")));
+}
+
+TEST_CASE("AncDesc F3 — VPID_Code emitted only when non-zero") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        SdpMediaDescription md1 = desc.toSdp(100);
+        CHECK_FALSE(md1.attribute(String("fmtp")).contains(String("VPID_Code=")));
+
+        desc.setVpidCode(0x89);
+        SdpMediaDescription md2 = desc.toSdp(100);
+        CHECK(md2.attribute(String("fmtp")).contains(String("VPID_Code=137")));
+}
+
+TEST_CASE("AncDesc F3 — fromSdp parses TROFF and VPID_Code") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        md.setAttribute(
+                "fmtp",
+                "100 SSN=ST2110-40:2018;TM=CTM;exactframerate=60;"
+                "TROFF=1234;VPID_Code=137;DID_SDID={0x61,0x01}");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.troff() == 1234u);
+        CHECK(parsed.vpidCode() == 0x89);
+        REQUIRE(parsed.allowedFormats().size() == 1u);
+        CHECK(parsed.allowedFormats().at(0) == AncFormat::Cea708);
+}
+
+TEST_CASE("AncDesc F3 — TROFF / VPID_Code survive fromSdp/toSdp round-trip") {
+        AncDesc original(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        original.setTroff(0xCAFEu);
+        original.setVpidCode(0x84);
+        AncFormat::IDList allowed;
+        allowed.pushToBack(AncFormat::Cea708);
+        original.setAllowedFormats(std::move(allowed));
+
+        SdpMediaDescription md = original.toSdp(100);
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.troff() == 0xCAFEu);
+        CHECK(parsed.vpidCode() == 0x84);
+}
+
+TEST_CASE("AncDesc F3 — DataStream v2 preserves TROFF + VPID_Code") {
+        AncDesc original(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        original.setTroff(42u);
+        original.setVpidCode(0x77);
+
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << original;
+        }
+        dev.seek(0);
+        AncDesc restored;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> restored;
+        }
+        CHECK(restored.troff() == 42u);
+        CHECK(restored.vpidCode() == 0x77);
+}
+
+TEST_CASE("AncFormat F3 — st291ConcreteSdids resolves wildcard families") {
+        // Smpte2020Audio: wildcard, concrete range 0x01..0x09.
+        const auto sdids = AncFormat(AncFormat::Smpte2020Audio).st291ConcreteSdids();
+        REQUIRE(sdids.size() == 9u);
+        for (size_t i = 0; i < 9; ++i) {
+                CHECK(sdids.at(i) == static_cast<uint8_t>(0x01 + i));
+        }
+        // Non-wildcard format returns a one-element list.
+        const auto cea = AncFormat(AncFormat::Cea708).st291ConcreteSdids();
+        REQUIRE(cea.size() == 1u);
+        CHECK(cea.at(0) == 0x01);
+        // Format with no St291 carriage returns empty.
+        const auto scte35 = AncFormat(AncFormat::Scte35).st291ConcreteSdids();
+        CHECK(scte35.isEmpty());
 }

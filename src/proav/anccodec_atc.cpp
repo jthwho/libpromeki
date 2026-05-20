@@ -4,34 +4,68 @@
  *
  * See LICENSE file in the project root folder for license information.
  *
- * SMPTE ST 12M-2 ATC (Ancillary Timecode) parsers and builders for the
- * three flavours (LTC, VITC1, VITC2) carried on @c AncTransport::St291.
- * Decodes / encodes the 8-UDW SMPTE 12M-2 payload to and from a
- * @ref Timecode (the libvtc-backed timecode value type).
+ * SMPTE ST 12-2:2014 ATC (Ancillary Timecode) parsers and builders for
+ * the three flavours (LTC, VITC1, VITC2) carried on
+ * @c AncTransport::St291.  Decodes / encodes the 16-UDW SMPTE ST 12-2
+ * payload to and from an @ref AncAtc — the libvtc-backed @ref Timecode
+ * plus the binary-group user-bit nibbles, the colour-frame / polarity
+ * flags, the three BGF bits, and the DBB2 status byte that
+ * @ref Timecode itself does not model.
  *
- * Wire layout (per ST 12M-2-2014 §5.3, 8 UDW bytes, low nibble lives
- * in bits 0–3 of each word):
+ * Wire layout per ST 12-2:2014 §5–6.  Every ATC packet is a Type-2
+ * ST 291 packet (ST 12-2 §5 explicit) with DID=0x60, SDID one of
+ * 0x60/0x61/0x62 for LTC/VITC1/VITC2, DC=0x10, then 16 UDWs.
  *
- *  | UDW | Bits 0–3                | Bits 4–7 (Binary Group N) |
- *  |-----|-------------------------|---------------------------|
- *  | 1   | Frame units             | BG1                       |
- *  | 2   | Frame tens (b0–1), DF (b2), CF (b3) | BG2           |
- *  | 3   | Seconds units           | BG3                       |
- *  | 4   | Seconds tens (b0–2), Field/Polarity (b3) | BG4      |
- *  | 5   | Minutes units           | BG5                       |
- *  | 6   | Minutes tens (b0–2), BGF0 (b3) | BG6                |
- *  | 7   | Hours units             | BG7                       |
- *  | 8   | Hours tens (b0–1), BGF1 (b2), BGF2 (b3) | BG8       |
+ * Each 10-bit UDW returned by @c St291Packet::udw carries:
  *
- * Binary group bits 4–7 of every UDW are left at zero on emit.  On
- * parse the binary-group bits and the BGF/CF flags are ignored — they
- * carry user data the library does not interpret at this layer.
+ *   bits 0-2 — zero (ST 12-2 §6.1.4)
+ *   bit  3   — DBB (UDW 1-8 b3 = DBB1 = payload type byte, LSB-first;
+ *              UDW 9-16 b3 = DBB2 = VITC line-select / flags)
+ *   bits 4-7 — time-code nibble (b4 = LSB) per Table 6
+ *   bits 8-9 — parity (computed by the ST 291 layer)
+ *
+ * Time-code / flag nibble UDW assignments (Table 6, 1-indexed UDW):
+ *
+ *   UDW  1: Units of frames        (LTC bits 0-3)
+ *   UDW  3: Tens of frames (b4-5), DF (b6), Color Frame (b7)
+ *   UDW  5: Units of seconds                              (LTC 16-19)
+ *   UDW  7: Tens of seconds (b4-6), Polarity (b7)
+ *   UDW  9: Units of minutes                              (LTC 32-35)
+ *   UDW 11: Tens of minutes (b4-6), BGF0 (b7)
+ *   UDW 13: Units of hours                                (LTC 48-51)
+ *   UDW 15: Tens of hours (b4-5), BGF1 (b6), BGF2 (b7)
+ *
+ * The remaining even-numbered UDWs (2, 4, 6, 8, 10, 12, 14, 16) carry
+ * the eight 4-bit binary-group nibbles (= @ref AncAtc::UserBits
+ * indices 0..7), preserved verbatim across a parse / build round trip.
+ *
+ * DBB1 (UDW 1-8 b3, LSB-first; ST 12-2 Table 2):
+ *   0x00 = ATC_LTC, 0x01 = ATC_VITC1, 0x02 = ATC_VITC2.
+ *
+ * DBB2 (UDW 9-16 b3, LSB-first; ST 12-2 Table 3): VITC line-select
+ * (b0-b4), VITC line-duplication flag (b5), time-code validity (b6),
+ * user-bits process bit (b7).  Round-trips through
+ * @ref AncAtc::dbb2.
+ *
+ * Parse-time rate-hint precedence (per ATC audit decision Q4):
+ *   1. @c AncMeta::Atc::Rate on the packet's meta sidecar.  Stamped
+ *      by the capture path when the paired video desc is known.
+ *   2. @c AncTranslateConfig::AtcParseRateHint — application-level
+ *      override for sources where the capture didn't stamp the rate
+ *      (raw RTP receive, SDP-only context, file replay).
+ *   3. Fail with @c Error::InsufficientContext.  We deliberately do
+ *      not silently default to 30 fps — the eight time-code bytes
+ *      alone cannot disambiguate 24 / 25 / 30 NDF, so a wrong
+ *      default produces quiet wrong answers.
  */
 
+#include <promeki/ancatc.h>
 #include <promeki/ancformat.h>
+#include <promeki/ancmeta.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslator.h>
 #include <promeki/enums.h>
+#include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/st291packet.h>
@@ -42,108 +76,261 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
+        // -- Wire-layout constants per ST 12-2:2014 ---------------------------
+
+        // DC = 0x10: every ATC packet shall carry exactly 16 UDWs (§5).
+        constexpr size_t AtcUdwCount = 16;
+
+        // 0-indexed UDW positions of the eight time-address nibble slots,
+        // in spec order.  The interleaved UDWs (1, 3, 5, 7, 9, 11, 13, 15
+        // in 1-indexed form) skip over the binary-group UDWs that sit
+        // between them.
+        constexpr size_t IdxFrameUnits = 0;   // UDW 1
+        constexpr size_t IdxFrameTens  = 2;   // UDW 3
+        constexpr size_t IdxSecUnits   = 4;   // UDW 5
+        constexpr size_t IdxSecTens    = 6;   // UDW 7
+        constexpr size_t IdxMinUnits   = 8;   // UDW 9
+        constexpr size_t IdxMinTens    = 10;  // UDW 11
+        constexpr size_t IdxHourUnits  = 12;  // UDW 13
+        constexpr size_t IdxHourTens   = 14;  // UDW 15
+
+        // 0-indexed UDW positions of the eight binary-group nibble
+        // slots (UDWs 2, 4, 6, 8, 10, 12, 14, 16 in 1-indexed form).
+        constexpr size_t UserBitIdx[AncAtc::UserBitCount] = {
+                1, 3, 5, 7, 9, 11, 13, 15};
+
         // -- Mode helpers -----------------------------------------------------
 
-        // Map SMPTE 12M-2 (fps × 10 + df flag) to a libvtc TimecodeType the
-        // build-side codec uses when the source Timecode lacks a mode.  Drives
-        // both round-trip integrity (the parser stamps the same mode the wire
-        // implies) and the build path when no other rate hint is available.
+        // Map (fps, df-flag) to a libvtc Timecode::Mode the parser
+        // stamps on the returned AncAtc.  The eight time-code bytes
+        // themselves don't disambiguate 24 / 25 / 30-NDF — only the DF
+        // bit narrows 30 → 29.97-DF and 60 → 59.94-DF, so the rate hint
+        // (Q4) must come from somewhere external.
         Timecode::Mode modeForRate(uint32_t fps, bool df) {
+                if (fps == 0) return Timecode::Mode();
                 if (df && fps == 30) return Timecode::Mode(Timecode::DF30);
                 if (fps == 24) return Timecode::Mode(Timecode::NDF24);
                 if (fps == 25) return Timecode::Mode(Timecode::NDF25);
                 if (fps == 30) return Timecode::Mode(Timecode::NDF30);
-                return Timecode::Mode();
+                // HFR rates that ST 12-3 covers: 50, 59.94, 60 — libvtc
+                // exposes them; the parser falls back to plain NDF when
+                // the caller hands us anything else.
+                uint32_t vtcFlags = df ? uint32_t(Timecode::DropFrame) : 0u;
+                return Timecode::Mode(fps, vtcFlags);
+        }
+
+        // -- Bit helpers ------------------------------------------------------
+
+        // Extracts the 4-bit time-code group from the bits 4-7 of a 10-bit
+        // UDW's data byte (the parity bits 8-9 are implicitly masked off
+        // by the >> 4 / & 0x0F chain).
+        inline uint8_t udwNibble(uint16_t udw) {
+                return static_cast<uint8_t>((udw >> 4) & 0x0F);
+        }
+
+        // Builds the 10-bit UDW value for a time-code-bearing or binary-
+        // group-bearing slot: time-code nibble in bits 4-7, DBB in bit 3,
+        // bits 0-2 zero per §6.1.4, parity (bits 8-9) left at zero so
+        // St291Packet::build computes it.
+        inline uint16_t makeUdw(uint8_t nibble, bool dbb) {
+                uint16_t v = static_cast<uint16_t>((nibble & 0x0F) << 4);
+                if (dbb) v = static_cast<uint16_t>(v | 0x08);
+                return v;
+        }
+
+        // DBB1 payload-type byte per ST 12-2 Table 2.
+        inline uint8_t dbb1ForFormat(AncFormat::ID id) {
+                switch (id) {
+                        case AncFormat::AtcLtc: return 0x00;
+                        case AncFormat::AtcVitc1: return 0x01;
+                        case AncFormat::AtcVitc2: return 0x02;
+                        default: return 0x00;
+                }
         }
 
         // -- Parsing ----------------------------------------------------------
 
-        Result<Variant> parseAtcSt291Impl(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        Result<Variant> parseAtcSt291Impl(const AncPacket &pkt, const AncTranslateConfig &cfg) {
                 Result<St291Packet> rp = St291Packet::from(pkt);
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
-                const St291Packet &p = rp.first();
+                const St291Packet &p   = rp.first();
                 List<uint16_t>     udw = p.udw();
-                if (udw.size() < 8) {
+                // ST 12-2 §5: DC shall be 0x10 → exactly 16 UDWs.
+                if (udw.size() < AtcUdwCount) {
                         return makeError<Variant>(Error::CorruptData);
                 }
 
-                // Mask off parity bits — every accessor that follows only cares
-                // about the payload nibble.
-                uint8_t u0 = static_cast<uint8_t>(udw[0] & 0xFF);
-                uint8_t u1 = static_cast<uint8_t>(udw[1] & 0xFF);
-                uint8_t u2 = static_cast<uint8_t>(udw[2] & 0xFF);
-                uint8_t u3 = static_cast<uint8_t>(udw[3] & 0xFF);
-                uint8_t u4 = static_cast<uint8_t>(udw[4] & 0xFF);
-                uint8_t u5 = static_cast<uint8_t>(udw[5] & 0xFF);
-                uint8_t u6 = static_cast<uint8_t>(udw[6] & 0xFF);
+                // Frame digits + DF + CF flags.
+                uint8_t frameUnits      = udwNibble(udw[IdxFrameUnits]);
+                uint8_t frameTensNibble = udwNibble(udw[IdxFrameTens]);
+                uint8_t frameTens       = static_cast<uint8_t>(frameTensNibble & 0x03);
+                bool    df              = (frameTensNibble & 0x04) != 0;
+                bool    colorFrame      = (frameTensNibble & 0x08) != 0;
 
-                uint8_t frameUnits = u0 & 0x0F;
-                uint8_t frameTens = u1 & 0x03;
-                bool    df = (u1 & 0x04) != 0;
+                // Second digits + polarity flag.
+                uint8_t secUnits      = udwNibble(udw[IdxSecUnits]);
+                uint8_t secTensNibble = udwNibble(udw[IdxSecTens]);
+                uint8_t secTens       = static_cast<uint8_t>(secTensNibble & 0x07);
+                bool    polarity      = (secTensNibble & 0x08) != 0;
 
-                uint8_t secUnits = u2 & 0x0F;
-                uint8_t secTens = u3 & 0x07;
+                // Minute digits + BGF0 flag.
+                uint8_t minUnits      = udwNibble(udw[IdxMinUnits]);
+                uint8_t minTensNibble = udwNibble(udw[IdxMinTens]);
+                uint8_t minTens       = static_cast<uint8_t>(minTensNibble & 0x07);
+                bool    bgf0          = (minTensNibble & 0x08) != 0;
 
-                uint8_t minUnits = u4 & 0x0F;
-                uint8_t minTens = u5 & 0x07;
+                // Hour digits + BGF1 + BGF2 flags.
+                uint8_t hourUnits      = udwNibble(udw[IdxHourUnits]);
+                uint8_t hourTensNibble = udwNibble(udw[IdxHourTens]);
+                uint8_t hourTens       = static_cast<uint8_t>(hourTensNibble & 0x03);
+                bool    bgf1           = (hourTensNibble & 0x04) != 0;
+                bool    bgf2           = (hourTensNibble & 0x08) != 0;
 
-                uint8_t hourUnits = u6 & 0x0F;
-                uint8_t hourTens = static_cast<uint8_t>(udw[7] & 0x03);
+                Timecode::DigitType hour = static_cast<Timecode::DigitType>(hourTens * 10 + hourUnits);
+                Timecode::DigitType min  = static_cast<Timecode::DigitType>(minTens * 10 + minUnits);
+                Timecode::DigitType sec  = static_cast<Timecode::DigitType>(secTens * 10 + secUnits);
+                Timecode::DigitType frm  = static_cast<Timecode::DigitType>(frameTens * 10 + frameUnits);
 
-                Timecode::DigitType hour =
-                        static_cast<Timecode::DigitType>(hourTens * 10 + hourUnits);
-                Timecode::DigitType min = static_cast<Timecode::DigitType>(minTens * 10 + minUnits);
-                Timecode::DigitType sec = static_cast<Timecode::DigitType>(secTens * 10 + secUnits);
-                Timecode::DigitType frm = static_cast<Timecode::DigitType>(frameTens * 10 + frameUnits);
+                // Rate hint precedence (audit Q4): per-packet meta wins,
+                // then cfg, then hard fail.  Silent 30-fps default is the
+                // worst option — produces wrong-rate Timecode silently.
+                uint32_t metaRate = pkt.meta().get(AncMeta::Atc::Rate).get<uint32_t>();
+                uint32_t cfgHint  = cfg.getAs<uint32_t>(AncTranslateConfig::AtcParseRateHint, uint32_t(0));
+                uint32_t fps      = metaRate != 0 ? metaRate : cfgHint;
+                if (fps == 0) {
+                        return makeError<Variant>(Error::InsufficientContext);
+                }
 
-                // Library design: we don't know the exact wall-clock rate from
-                // just the 8 timecode bytes (the DF bit narrows 30→29.97-DF,
-                // but 24 vs 25 vs 30-NDF is invisible).  Default to NDF30
-                // unless DF is asserted (in which case 29.97-DF is the only
-                // legal interpretation).  Callers that know the rate from the
-                // paired video should call Timecode::setMode after parse.
-                Timecode tc(modeForRate(30, df), hour, min, sec, frm);
-                return makeResult<Variant>(Variant(tc));
+                Timecode tc(modeForRate(fps, df), hour, min, sec, frm);
+
+                AncAtc atc(tc);
+                uint8_t flags = 0;
+                if (colorFrame) flags = static_cast<uint8_t>(flags | AncAtc::ColorFrame);
+                if (polarity) flags = static_cast<uint8_t>(flags | AncAtc::Polarity);
+                if (bgf0) flags = static_cast<uint8_t>(flags | AncAtc::Bgf0);
+                if (bgf1) flags = static_cast<uint8_t>(flags | AncAtc::Bgf1);
+                if (bgf2) flags = static_cast<uint8_t>(flags | AncAtc::Bgf2);
+                atc.setFlags(flags);
+
+                // Binary-group nibbles → user bits.
+                AncAtc::UserBits ub{};
+                for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
+                        ub[i] = udwNibble(udw[UserBitIdx[i]]);
+                }
+                atc.setUserBits(ub);
+
+                // DBB2: UDW 9..16 b3, LSB-first across the eight UDWs.
+                uint8_t dbb2 = 0;
+                for (size_t i = 0; i < 8; ++i) {
+                        if ((udw[8 + i] & 0x08u) != 0) {
+                                dbb2 = static_cast<uint8_t>(dbb2 | (1u << i));
+                        }
+                }
+                atc.setDbb2(dbb2);
+
+                return makeResult<Variant>(Variant(atc));
         }
 
         // -- Building ---------------------------------------------------------
 
-        // Packs a Timecode's BCD digits into the SMPTE 12M-2 8-UDW layout.
-        // Factored so both the Variant-driven build entry point and the
-        // SyncPolicy re-encode path (Repeat[idx>0]) share one source of
-        // truth for the wire bit-twiddling.
-        List<uint16_t> packAtcUdw(const Timecode &tc) {
-                uint8_t hour = static_cast<uint8_t>(tc.hour());
-                uint8_t min  = static_cast<uint8_t>(tc.min());
-                uint8_t sec  = static_cast<uint8_t>(tc.sec());
-                uint8_t frm  = static_cast<uint8_t>(tc.frame());
-                bool    df   = tc.isDropFrame();
+        // Packs an AncAtc's BCD digits, flag bits, binary-group nibbles,
+        // and DBB2 byte plus the format's DBB1 payload-type byte into
+        // the 16-UDW SMPTE ST 12-2 layout.  Factored so the
+        // Variant-driven build entry point and the SyncPolicy re-encode
+        // path (Repeat[idx>0]) share one source of truth for the wire
+        // bit-twiddling.
+        List<uint16_t> packAtcUdw(const AncAtc &atc, AncFormat::ID fmtId) {
+                const Timecode &tc       = atc.timecode();
+                uint8_t         hour     = static_cast<uint8_t>(tc.hour());
+                uint8_t         min      = static_cast<uint8_t>(tc.min());
+                uint8_t         sec      = static_cast<uint8_t>(tc.sec());
+                uint8_t         frm      = static_cast<uint8_t>(tc.frame());
+                bool            df       = tc.isDropFrame();
+                uint8_t         dbb1     = dbb1ForFormat(fmtId);
+                uint8_t         dbb2     = atc.dbb2();
+                uint8_t         flags    = atc.flags();
 
+                // UDW 1-8 (indices 0-7) carry DBB1 bit i LSB-first per §6.2.1;
+                // UDW 9-16 (indices 8-15) carry DBB2 bit (i-8) LSB-first
+                // per §6.2.2.
+                auto dbbBit = [&](size_t i) -> bool {
+                        if (i < 8) return ((dbb1 >> i) & 1u) != 0;
+                        return ((dbb2 >> (i - 8)) & 1u) != 0;
+                };
+
+                // Initialise all 16 slots with their DBB bit and an empty
+                // nibble.  Binary-group slots get their user-bit nibble
+                // below; time-address slots get overwritten with the
+                // proper nibble.
                 List<uint16_t> udw;
-                udw.resize(8);
-                udw[0] = static_cast<uint16_t>(frm % 10);
-                udw[1] = static_cast<uint16_t>((frm / 10) & 0x03);
-                if (df) udw[1] = static_cast<uint16_t>(udw[1] | 0x04);
-                udw[2] = static_cast<uint16_t>(sec % 10);
-                udw[3] = static_cast<uint16_t>((sec / 10) & 0x07);
-                udw[4] = static_cast<uint16_t>(min % 10);
-                udw[5] = static_cast<uint16_t>((min / 10) & 0x07);
-                udw[6] = static_cast<uint16_t>(hour % 10);
-                udw[7] = static_cast<uint16_t>((hour / 10) & 0x03);
+                udw.resize(AtcUdwCount);
+                for (size_t i = 0; i < AtcUdwCount; ++i) udw[i] = makeUdw(0, dbbBit(i));
+
+                // Time-address tens nibbles carry the flag bits in their
+                // upper 2 bits per ST 12-2 Table 6.
+                uint8_t frameTensNibble = static_cast<uint8_t>((frm / 10) & 0x03);
+                if (df) frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x04);
+                if (flags & AncAtc::ColorFrame) {
+                        frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x08);
+                }
+                uint8_t secTensNibble = static_cast<uint8_t>((sec / 10) & 0x07);
+                if (flags & AncAtc::Polarity) {
+                        secTensNibble = static_cast<uint8_t>(secTensNibble | 0x08);
+                }
+                uint8_t minTensNibble = static_cast<uint8_t>((min / 10) & 0x07);
+                if (flags & AncAtc::Bgf0) {
+                        minTensNibble = static_cast<uint8_t>(minTensNibble | 0x08);
+                }
+                uint8_t hourTensNibble = static_cast<uint8_t>((hour / 10) & 0x03);
+                if (flags & AncAtc::Bgf1) {
+                        hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x04);
+                }
+                if (flags & AncAtc::Bgf2) {
+                        hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x08);
+                }
+
+                udw[IdxFrameUnits] = makeUdw(static_cast<uint8_t>(frm % 10), dbbBit(IdxFrameUnits));
+                udw[IdxFrameTens]  = makeUdw(frameTensNibble, dbbBit(IdxFrameTens));
+                udw[IdxSecUnits]   = makeUdw(static_cast<uint8_t>(sec % 10), dbbBit(IdxSecUnits));
+                udw[IdxSecTens]    = makeUdw(secTensNibble, dbbBit(IdxSecTens));
+                udw[IdxMinUnits]   = makeUdw(static_cast<uint8_t>(min % 10), dbbBit(IdxMinUnits));
+                udw[IdxMinTens]    = makeUdw(minTensNibble, dbbBit(IdxMinTens));
+                udw[IdxHourUnits]  = makeUdw(static_cast<uint8_t>(hour % 10), dbbBit(IdxHourUnits));
+                udw[IdxHourTens]   = makeUdw(hourTensNibble, dbbBit(IdxHourTens));
+
+                // Binary-group nibbles into the even-1-indexed UDW slots.
+                const AncAtc::UserBits &ub = atc.userBits();
+                for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
+                        udw[UserBitIdx[i]] = makeUdw(static_cast<uint8_t>(ub[i] & 0x0F),
+                                                     dbbBit(UserBitIdx[i]));
+                }
                 return udw;
+        }
+
+        // Promotes a Variant carrying either AncAtc or Timecode into an
+        // AncAtc.  Bare Timecode payloads (the pre-F5 API shape) yield
+        // an AncAtc with zero flags / user bits / DBB2 — capture paths
+        // that flow through the new AncAtc parse step preserve every
+        // field, but synthesised Timecode → ATC build paths land on
+        // ST 12-1 §9.2.2 "set to 0" defaults.
+        AncAtc variantToAncAtc(const Variant &v) {
+                if (v.type() == DataTypeAncAtc) return v.get<AncAtc>();
+                return AncAtc(v.get<Timecode>());
         }
 
         // Resolves a builder-time AncFormat from a Variant produced by the
         // caller.  The Variant's typed payload doesn't carry the
-        // LTC-vs-VITC1-vs-VITC2 discriminator (a Timecode is a Timecode), so
-        // the format identity comes from whichever build entry point fires
-        // (one per registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2).
+        // LTC-vs-VITC1-vs-VITC2 discriminator, so the format identity
+        // comes from whichever build entry point fires (one per
+        // registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2), and
+        // drives both the SDID stamp and the DBB1 byte in packAtcUdw.
         Result<List<AncPacket>> buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
                                                const AncTranslateConfig &cfg) {
-                Timecode       tc = v.get<Timecode>();
-                List<uint16_t> udw = packAtcUdw(tc);
+                AncAtc         atc = variantToAncAtc(v);
+                List<uint16_t> udw = packAtcUdw(atc, fmtId);
 
-                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
+                uint16_t line   = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
+                                                      St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(fmtId), udw, line, St291Packet::UnspecifiedHOffset,
@@ -192,8 +379,10 @@ namespace {
                 // Repeat[idx>0]: parse, advance by repeatIndex frames, re-encode.
                 Result<Variant> parsed = parseAtcSt291Impl(pkt, cfg);
                 if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
-                Timecode tc = parsed.first().get<Timecode>();
+                AncAtc   atc = parsed.first().get<AncAtc>();
+                Timecode tc  = atc.timecode();
                 for (uint8_t i = 0; i < repeatIndex; ++i) ++tc;
+                atc.setTimecode(tc);
 
                 // Preserve the original packet's line / fieldB so the wire
                 // framing matches the source rather than whatever defaults
@@ -205,7 +394,7 @@ namespace {
                 overrideCfg.set(AncTranslateConfig::St291BuildLine, rp.first().line());
                 overrideCfg.set(AncTranslateConfig::St291FieldB, rp.first().fieldB());
 
-                return buildAtcSt291(pkt.format().id(), Variant(tc), overrideCfg);
+                return buildAtcSt291(pkt.format().id(), Variant(atc), overrideCfg);
         }
 
 } // namespace
@@ -216,7 +405,7 @@ PROMEKI_NAMESPACE_END
 // builder body; the registry just dispatches on the AncFormat::ID, so we
 // register the same `parseAtcSt291Impl` under each ID and the format-specific
 // thin wrappers above for the build direction (so the builder knows which
-// DID / SDID to stamp on its way out).
+// DID / SDID + DBB1 byte to stamp on its way out).
 PROMEKI_REGISTER_ANC_PARSER(AtcLtc_St291, AtcLtc, ::promeki::AncTransport::St291,
                              ::promeki::parseAtcSt291Impl)
 PROMEKI_REGISTER_ANC_PARSER(AtcVitc1_St291, AtcVitc1, ::promeki::AncTransport::St291,

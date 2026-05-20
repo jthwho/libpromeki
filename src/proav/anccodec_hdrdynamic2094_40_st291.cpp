@@ -409,7 +409,8 @@ namespace {
                 HdrDynamic2094_40 md = v.get<HdrDynamic2094_40>();
                 Buffer            message = buildFullMessage(md);
 
-                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
+                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
+                                                    St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
                 // ST 291 DC field is one byte → UDW max is 255 bytes per

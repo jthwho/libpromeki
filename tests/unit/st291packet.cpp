@@ -54,7 +54,7 @@ TEST_CASE("St291Packet: build for every well-known St291 format") {
         };
         Case cases[] = {
                 {AncFormat::Cea708, 0x61, 0x01}, {AncFormat::Cea608, 0x61, 0x02}, {AncFormat::Afd, 0x41, 0x05},
-                {AncFormat::BarData, 0x41, 0x06}, {AncFormat::Scte104, 0x41, 0x07}, {AncFormat::AtcLtc, 0x60, 0x60},
+                {AncFormat::PanScan, 0x41, 0x06}, {AncFormat::Scte104, 0x41, 0x07}, {AncFormat::AtcLtc, 0x60, 0x60},
                 {AncFormat::AtcVitc1, 0x60, 0x61}, {AncFormat::AtcVitc2, 0x60, 0x62}, {AncFormat::Klv0601, 0x44, 0x04},
         };
 
@@ -94,9 +94,12 @@ TEST_CASE("St291Packet: build records fieldB/cBit/streamNum/hOffset in meta") {
 TEST_CASE("St291Packet: buildRaw with unregistered DID/SDID still rides through") {
         List<uint16_t> udw;
         udw.pushToBack(uint16_t(0x77));
-        // (0xAA, 0xBB) — not registered.
-        St291Packet p = St291Packet::buildRaw(0xAA, 0xBB, udw, /*line*/ 9);
-        CHECK(p.did() == 0xAA);
+        // (0x4A, 0xBB) — Type-2 DID, not registered.  Use a Type-2
+        // DID here so sdid() reads back as the second-word byte; the
+        // Type-1 behaviour (sdid() reports 0, dbn() reports the
+        // byte) is exercised by the F6 Type-1 tests below.
+        St291Packet p = St291Packet::buildRaw(0x4A, 0xBB, udw, /*line*/ 9);
+        CHECK(p.did() == 0x4A);
         CHECK(p.sdid() == 0xBB);
         CHECK(p.dataCount() == 1);
         CHECK(p.checksumValid());
@@ -247,6 +250,67 @@ TEST_CASE("St291Packet: isType1 reflects high bit of DID") {
 }
 
 // ============================================================================
+// F1 negative-case validation (ancaudit.md A2 / A6 / B3)
+// ============================================================================
+
+TEST_CASE("St291Packet: buildRaw rejects reserved DID 0x00 (ST 291-1 §6.1)") {
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x42));
+        St291Packet p = St291Packet::buildRaw(/*did*/ 0x00, /*sdid*/ 0x05, udw, /*line*/ 9);
+        CHECK_FALSE(p.isValid());
+}
+
+TEST_CASE("St291Packet: build rejects oversize UDW list (ST 291-1 §6.5)") {
+        // ST 291-1 §6.5 caps DataCount at 255 UDWs.  An oversize list
+        // would silently truncate DC; refuse the build instead.
+        List<uint16_t> udw;
+        udw.resize(256, uint16_t(0x55));
+        St291Packet p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, /*line*/ 9);
+        CHECK_FALSE(p.isValid());
+
+        // The 255-word case is the maximum permitted and must still
+        // succeed.
+        List<uint16_t> udwMax;
+        udwMax.resize(255, uint16_t(0x55));
+        St291Packet pMax = St291Packet::build(AncFormat(AncFormat::Cea708), udwMax, /*line*/ 9);
+        CHECK(pMax.isValid());
+        CHECK(pMax.dataCount() == 255);
+        CHECK(pMax.checksumValid());
+}
+
+TEST_CASE("St291Packet: build rejects protected-code UDW values (ST 291-1 §9.1)") {
+        // Inputs with bits 8-9 both set (0x300-0x3FF) are protected
+        // codes or parity-violation values; the build refuses to
+        // emit them.  Try one value from each protected range that's
+        // reachable via the pass-through path (the §9.1 protected
+        // codes 0x3FC-0x3FF) plus a parity-violation in 0x300-0x3FB.
+        for (uint16_t protectedValue : {uint16_t(0x3FC), uint16_t(0x3FD), uint16_t(0x3FE), uint16_t(0x3FF),
+                                         uint16_t(0x300), uint16_t(0x3AB)}) {
+                List<uint16_t> udw;
+                udw.pushToBack(uint16_t(0x42));       // valid pass-through (parity = 0x100 | 0x42 = 0x142)
+                udw.pushToBack(protectedValue);       // forbidden
+                St291Packet p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, /*line*/ 9);
+                CHECK_MESSAGE(!p.isValid(), "protected code value not rejected: ",
+                              (unsigned)protectedValue);
+        }
+}
+
+TEST_CASE("St291Packet: build accepts valid pass-through encodings") {
+        // Pass-through encodings have upper-2-bit pattern 01 or 10
+        // (bit 9 = NOT bit 8) per ST 291-1 §6.1.  Spec-correct parity
+        // for data byte 0x43 (odd-parity) is 0x143; for 0x55
+        // (even-parity) it is 0x255.  Both must sail through the
+        // validator.
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x143));  // 0x43 with odd-parity encoding (01)
+        udw.pushToBack(uint16_t(0x255));  // 0x55 with even-parity encoding (10)
+        St291Packet p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, /*line*/ 9);
+        CHECK(p.isValid());
+        CHECK(p.dataCount() == 2);
+        CHECK(p.checksumValid());
+}
+
+// ============================================================================
 // Implicit decay to const AncPacket&
 // ============================================================================
 
@@ -267,4 +331,240 @@ TEST_CASE("St291Packet: implicit decay accepted by AncPacket-taking functions") 
         list.pushToBack(p);
         CHECK(list.size() == 1);
         CHECK(list.at(0).transport() == AncTransport::St291);
+}
+
+// ============================================================================
+// F6 — Type-1 packet support + reserved validation (ancaudit.md A1 / A5 / B1 / B4)
+// ============================================================================
+
+TEST_CASE("St291Packet: buildRawType1 builds a Type-1 packet (DID 0x80, DBN word 1)") {
+        // Packet-Marked-for-Deletion (ST 291-1 §6.3): DID 0x80, Type-1,
+        // word 1 carries a Data Block Number rather than an SDID.
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0xAA));
+        udw.pushToBack(uint16_t(0xBB));
+        const uint8_t dbn = 0x42;
+
+        St291Packet p = St291Packet::buildRawType1(/*did*/ 0x80, dbn, udw, /*line*/ 9);
+        REQUIRE(p.isValid());
+        CHECK(p.isType1());
+        CHECK(p.did() == 0x80);
+        // Word 1 holds DBN, not SDID — sdid() must report the
+        // RFC 8331 §3.1 sentinel value 0x00 so callers never
+        // mis-label DBN as SDID.
+        CHECK(p.sdid() == 0x00);
+        CHECK(p.dbn() == dbn);
+        CHECK(p.dataCount() == 2);
+        CHECK(p.checksumValid());
+        CHECK(p.packet().format().id() == AncFormat::PacketForDeletion);
+}
+
+TEST_CASE("St291Packet: buildRawType1 rejects Type-2 DIDs") {
+        // DID 0x41 (Type-2 by §5.1) must not be accepted by the
+        // Type-1 build helper — callers should use buildRaw().
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0));
+        St291Packet p = St291Packet::buildRawType1(/*did*/ 0x41, /*dbn*/ 1, udw, 9);
+        CHECK_FALSE(p.isValid());
+}
+
+TEST_CASE("St291Packet: dbn() reports 0 on Type-2 packets") {
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x12));
+        St291Packet p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, 11);
+        REQUIRE(p.isValid());
+        CHECK_FALSE(p.isType1());
+        CHECK(p.sdid() == 0x01);
+        // Type-2 packets have no DBN — dbn() returns 0 by contract.
+        CHECK(p.dbn() == 0);
+}
+
+TEST_CASE("St291Packet: PacketForDeletion is the canonical Type-1 round-trip") {
+        // Build a Packet-Marked-for-Deletion via the registered
+        // AncFormat enum and confirm it round-trips through from():
+        // wire bytes preserved, DBN preserved, format identified.
+        AncFormat fmt(AncFormat::PacketForDeletion);
+        REQUIRE(fmt.isValid());
+        CHECK(fmt.st291Did() == 0x80);
+        // Wildcard SDID — the (DID, anyDBN) lookup falls back here.
+        CHECK(fmt.st291Sdid() == 0x00);
+        // SDP fmtp emission expands the wildcard into {0x00} per
+        // RFC 8331 §3.1.
+        REQUIRE(fmt.st291ConcreteSdids().size() == 1);
+        CHECK(fmt.st291ConcreteSdids().at(0) == 0x00);
+
+        List<uint16_t> udw;
+        for (uint8_t v = 0x10; v < 0x18; ++v) udw.pushToBack(v);
+        const uint8_t dbn = 0x55;
+        St291Packet   p = St291Packet::buildRawType1(0x80, dbn, udw, /*line*/ 9);
+        REQUIRE(p.isValid());
+        CHECK(p.packet().format().id() == AncFormat::PacketForDeletion);
+
+        // Re-promote from the underlying AncPacket — exercises
+        // from()'s tightened DC-aware length check on a real Type-1
+        // payload.
+        Result<St291Packet> r = St291Packet::from(p.packet());
+        REQUIRE(isOk(r));
+        const St291Packet &rp = value(r);
+        CHECK(rp.isType1());
+        CHECK(rp.did() == 0x80);
+        CHECK(rp.dbn() == dbn);
+        CHECK(rp.sdid() == 0);
+        CHECK(rp.dataCount() == 8);
+        CHECK(rp.checksumValid());
+
+        // Verify the lookup direction: a freshly-received (DID, DBN)
+        // pair from the wire matches PacketForDeletion via the
+        // wildcard fallback regardless of DBN value.
+        AncFormat lookedUp = AncFormat::fromSt291DidSdid(0x80, dbn);
+        CHECK(lookedUp.id() == AncFormat::PacketForDeletion);
+        AncFormat lookedUp2 = AncFormat::fromSt291DidSdid(0x80, 0);
+        CHECK(lookedUp2.id() == AncFormat::PacketForDeletion);
+}
+
+TEST_CASE("St291Packet: setUdw on a Type-1 packet preserves DBN") {
+        // Mutating the UDW list must not silently zero the DBN — the
+        // re-pack reads the existing second-word byte and writes it
+        // back as DBN for Type-1 packets (or SDID for Type-2).
+        List<uint16_t> udw1, udw2;
+        udw1.pushToBack(uint16_t(0xAA));
+        udw2.pushToBack(uint16_t(0x11));
+        udw2.pushToBack(uint16_t(0x22));
+        udw2.pushToBack(uint16_t(0x33));
+
+        const uint8_t dbn = 0x7E;
+        St291Packet   p = St291Packet::buildRawType1(0x80, dbn, udw1, 9);
+        REQUIRE(p.isValid());
+        CHECK(p.dbn() == dbn);
+
+        p.setUdw(udw2);
+        CHECK(p.dataCount() == 3);
+        CHECK(p.dbn() == dbn);   // DBN preserved across re-pack
+        CHECK(p.sdid() == 0);    // still Type-1 → sdid() reports 0
+        CHECK(p.checksumValid());
+}
+
+TEST_CASE("St291Packet: udwRaw() preserves parity bits, udw() strips them") {
+        // Build via the pass-through path with explicit parity-bit
+        // encodings.  udw() drops the parity bits (the codec-path
+        // dominant case); udwRaw() preserves them for byte-exact
+        // replay verification.
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x143));  // 0x43 + odd-parity encoding (upper 01)
+        udw.pushToBack(uint16_t(0x255));  // 0x55 + even-parity encoding (upper 10)
+        St291Packet p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, /*line*/ 9);
+        REQUIRE(p.isValid());
+
+        List<uint16_t> stripped = p.udw();
+        REQUIRE(stripped.size() == 2);
+        CHECK(stripped.at(0) == 0x43);
+        CHECK(stripped.at(1) == 0x55);
+        // Upper-two-bit pattern is gone in udw() output.
+        CHECK((stripped.at(0) & 0x300u) == 0u);
+        CHECK((stripped.at(1) & 0x300u) == 0u);
+
+        List<uint16_t> raw = p.udwRaw();
+        REQUIRE(raw.size() == 2);
+        CHECK(raw.at(0) == 0x143);
+        CHECK(raw.at(1) == 0x255);
+}
+
+TEST_CASE("St291Packet: from() rejects buffers shorter than DC implies") {
+        // Build a real CEA-708 packet, then truncate its underlying
+        // wire buffer by one byte.  from() should refuse to promote
+        // it because the declared DataCount no longer fits.
+        List<uint16_t> udw;
+        for (uint8_t v = 0x10; v < 0x20; ++v) udw.pushToBack(v);  // DC = 16
+        St291Packet good = St291Packet::build(AncFormat(AncFormat::Cea708), udw, /*line*/ 11);
+        REQUIRE(good.isValid());
+        const Buffer &fullWire = good.packet().data();
+        REQUIRE(fullWire.size() > 5);
+
+        // Trim one byte off the wire — DataCount still says 16 but
+        // the buffer now under-runs the (4+16)*10/8 = 25-byte
+        // requirement.
+        const size_t shortSize = fullWire.size() - 1;
+        Buffer       shortBuf(shortSize);
+        Error        cpyErr = shortBuf.copyFrom(fullWire.data(), shortSize, 0);
+        REQUIRE(cpyErr.isOk());
+        shortBuf.setSize(shortSize);
+        AncPacket truncated(AncFormat(AncFormat::Cea708), AncTransport::St291, std::move(shortBuf));
+
+        Result<St291Packet> r = St291Packet::from(truncated);
+        CHECK(isError(r));
+        CHECK(error(r) == Error::InvalidArgument);
+
+        // Sanity: the full-size buffer still promotes.
+        Result<St291Packet> rGood = St291Packet::from(good.packet());
+        CHECK(isOk(rGood));
+}
+
+// ============================================================================
+// Checksum policy (F7 / ancaudit.md Q6)
+// ============================================================================
+
+namespace {
+
+        // Builds a valid CEA-708 packet, then returns a copy whose stored
+        // §6.4 Checksum_Word has been corrupted by flipping the low bit of
+        // the wire buffer's last byte.  The 4-header-word + N-UDW + 1-CS
+        // packing places the checksum's low bits at the very end of the
+        // byte stream, so flipping bit 0 of the last byte is guaranteed to
+        // mutate the stored checksum without disturbing any UDW.
+        AncPacket buildPacketWithCorruptedChecksum() {
+                List<uint16_t> udw;
+                for (uint8_t v = 0x10; v < 0x18; ++v) udw.pushToBack(v);
+                St291Packet good = St291Packet::build(AncFormat(AncFormat::Cea708), udw, 11);
+                REQUIRE(good.isValid());
+                REQUIRE(good.checksumValid());
+
+                const Buffer &wire = good.packet().data();
+                REQUIRE(wire.size() >= 5);
+                Buffer flipped(wire.size());
+                Error  cpyErr = flipped.copyFrom(wire.data(), wire.size(), 0);
+                REQUIRE(cpyErr.isOk());
+                flipped.setSize(wire.size());
+                uint8_t *bytes = static_cast<uint8_t *>(flipped.data());
+                bytes[wire.size() - 1] ^= 0x01u;  // mutate the stored CS LSB
+
+                return AncPacket(good.packet().format(), AncTransport::St291, std::move(flipped),
+                                 Metadata(good.packet().meta()));
+        }
+
+} // namespace
+
+TEST_CASE("St291Packet: from() defaults to PreserveOrRecompute (tolerant of bad checksum)") {
+        // Default policy mirrors ancaudit.md Q6: a captured packet whose
+        // checksum drifted on the wire still promotes — downstream codecs
+        // are responsible for graceful tolerance under the byte-exact
+        // replay contract.
+        AncPacket           bad = buildPacketWithCorruptedChecksum();
+        Result<St291Packet> r = St291Packet::from(bad);
+        REQUIRE(isOk(r));
+        CHECK_FALSE(value(r).checksumValid());  // proves the wire was actually corrupted
+}
+
+TEST_CASE("St291Packet: from() with AlwaysRecompute is tolerant on parse") {
+        // AlwaysRecompute governs emission, not ingest; on the parse
+        // path it behaves identically to PreserveOrRecompute.
+        AncPacket           bad = buildPacketWithCorruptedChecksum();
+        Result<St291Packet> r = St291Packet::from(bad, AncChecksumPolicy::AlwaysRecompute);
+        REQUIRE(isOk(r));
+        CHECK_FALSE(value(r).checksumValid());
+}
+
+TEST_CASE("St291Packet: from() with StrictValidate rejects a mismatched checksum") {
+        AncPacket           bad = buildPacketWithCorruptedChecksum();
+        Result<St291Packet> r = St291Packet::from(bad, AncChecksumPolicy::StrictValidate);
+        CHECK(isError(r));
+        CHECK(error(r) == Error::InvalidChecksum);
+}
+
+TEST_CASE("St291Packet: from() with StrictValidate accepts a clean packet") {
+        List<uint16_t> udw;
+        for (uint8_t v = 0x10; v < 0x18; ++v) udw.pushToBack(v);
+        St291Packet         good = St291Packet::build(AncFormat(AncFormat::Cea708), udw, 11);
+        Result<St291Packet> r = St291Packet::from(good.packet(), AncChecksumPolicy::StrictValidate);
+        REQUIRE(isOk(r));
+        CHECK(value(r).checksumValid());
 }

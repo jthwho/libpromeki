@@ -112,7 +112,13 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(NotReady, NONE, "Resource exists but is not yet in the state required for this operation"),
         DEFINE_ERROR(AuthenticationRequired, NONE, "Peer demanded an authentication challenge response we don't produce"),
         DEFINE_ERROR(ProtocolError, NONE, "Peer sent a protocol-level violation or unmodelled status code"),
-        DEFINE_ERROR(SignalLoss, NONE, "Hardware input lost its incoming signal or reference lock after being healthy")};
+        DEFINE_ERROR(SignalLoss, NONE, "Hardware input lost its incoming signal or reference lock after being healthy"),
+        DEFINE_ERROR(ProtectedAncCode, NONE,
+                     "ST 291 10-bit word is a protected code (000h-003h, 3FCh-3FFh) per ST 291-1 §9.1"),
+        DEFINE_ERROR(InsufficientContext, NONE,
+                     "Required context (e.g. ATC parse rate hint) not stamped on the packet's meta or in the translate config"),
+        DEFINE_ERROR(InvalidChecksum, NONE,
+                     "Stored ST 291 checksum word does not match the value recomputed over the packet (StrictValidate)")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

@@ -7,15 +7,16 @@
 
 #include <promeki/rtppayloadanc.h>
 
+#include <algorithm>
 #include <cstring>
 
-#include <promeki/ancmeta.h>
+#include <promeki/ancformat.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
-#include <promeki/metadata.h>
 #include <promeki/rtppacket.h>
+#include <promeki/st291packet.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -35,42 +36,78 @@ namespace {
                 return (total + 3u) & ~size_t{3u};
         }
 
-        // Picks the payload-header F-bit from the consensus across the
-        // St291 packets in [startIdx, startIdx + n) (n is the *St291
-        // count*, so non-St291 entries in that range are simply
-        // skipped, not counted).  Conservative: only emits
-        // @c InterlacedField2 when *every* St291 packet declares
-        // @c FieldB = true; otherwise emits @c Progressive (which
-        // RFC 8331 §2.1 also uses for unknown/mixed cases).
+        // Picks the payload-header F-bit from the consensus across
+        // the St291 records indexed by orderedIdx[start..start+n).
+        // Conservative: only emits @c InterlacedField2 when *every*
+        // St291 packet declares @c FieldB = true; otherwise emits
+        // @c Progressive (which RFC 8331 §2.1 also uses for
+        // unknown/mixed cases).
         RtpPayloadAnc::FieldIndication inferFieldIndication(
-                const AncPacket *packets, size_t total, size_t startIdx, size_t n) {
+                const AncPacket *packets, const List<size_t> &orderedIdx,
+                size_t start, size_t n) {
                 if (n == 0) return RtpPayloadAnc::FieldIndication::Progressive;
-                bool   allFieldB = true;
-                size_t seen = 0;
-                for (size_t i = startIdx; i < total && seen < n; ++i) {
-                        if (packets[i].transport() != AncTransport::St291) continue;
-                        const bool fb = packets[i].meta()
-                                                .get(AncMeta::St291::FieldB)
-                                                .get<bool>();
-                        if (!fb) {
-                                allFieldB = false;
-                                break;
+                for (size_t k = start; k < start + n && k < orderedIdx.size(); ++k) {
+                        if (!packets[orderedIdx[k]].st291FieldB()) {
+                                return RtpPayloadAnc::FieldIndication::Progressive;
                         }
-                        ++seen;
                 }
-                return allFieldB ? RtpPayloadAnc::FieldIndication::InterlacedField2
-                                 : RtpPayloadAnc::FieldIndication::Progressive;
+                return RtpPayloadAnc::FieldIndication::InterlacedField2;
+        }
+
+        // Returns true when @p line is a real (non-sentinel) line
+        // number per RFC 8331 §2.2 — anything below 0x7FD is a
+        // proposed SDI location for ST 2110-40 §5.2.2 ordering.
+        bool isExactLine(uint16_t line) {
+                return line < St291Packet::LineLargerThan11Bits;
+        }
+
+        // Builds a stably-sorted list of indices into @p packets that
+        // points at every eligible St291 entry, ordered by ascending
+        // (Line, HOffset) per ST 2110-40 §5.2.2.  Non-St291 entries
+        // are skipped (they cannot ride on RFC 8331).  ST 2110-40
+        // §5.2.1 explicitly forbids audio-metadata and EDH packets on
+        // this transport, so AncCategory::AudioMetadata-classified
+        // packets are filtered with a warning.  EDH packets (DID 0xF4
+        // / 0xF8 in ST 291-1 §11.3) are not yet modelled as a first-
+        // class AncFormat; the filter is documented here so the
+        // future EDH registry entry plugs in cleanly.  Sentinel
+        // location values sort to the end because their numeric
+        // value is larger than any real coordinate; stable sort
+        // preserves input order within the sentinel group.
+        List<size_t> orderedSt291Indices(const AncPacket *packets, size_t total) {
+                List<size_t> idx;
+                idx.reserve(total);
+                for (size_t i = 0; i < total; ++i) {
+                        if (packets[i].transport() != AncTransport::St291) continue;
+                        const AncFormat fmt = packets[i].format();
+                        if (fmt.isValid() && fmt.category() == AncCategory::AudioMetadata) {
+                                promekiWarn("RtpPayloadAnc: dropping %s packet on "
+                                            "ST 2110-40 egress (§5.2.1 forbids audio "
+                                            "metadata on this transport)",
+                                            fmt.name().cstr());
+                                continue;
+                        }
+                        idx.pushToBack(i);
+                }
+                std::stable_sort(idx.begin(), idx.end(),
+                                 [packets](size_t a, size_t b) {
+                                         const uint16_t la = packets[a].st291Line();
+                                         const uint16_t lb = packets[b].st291Line();
+                                         if (la != lb) return la < lb;
+                                         return packets[a].st291HOffset() < packets[b].st291HOffset();
+                                 });
+                (void)isExactLine; // tagged here for future StrictValidate use
+                return idx;
         }
 
         // Writes one RFC 8331 §2.2 per-packet record at @p dst.  @p dst
         // must have at least @ref recordSize(pkt) bytes of available
         // space; the function zero-pads the trailing word-align bytes.
         void writeRecord(uint8_t *dst, const AncPacket &pkt) {
-                const Metadata &meta = pkt.meta();
-                const uint16_t  line = meta.get(AncMeta::St291::Line).get<uint16_t>();
-                const uint16_t  hOffset = meta.get(AncMeta::St291::HOffset).get<uint16_t>();
-                const bool      cBit = meta.get(AncMeta::St291::CBit).get<bool>();
-                const uint8_t   streamNum = meta.get(AncMeta::St291::StreamNum).get<uint8_t>();
+                const uint16_t line = pkt.st291Line();
+                const uint16_t hOffset = pkt.st291HOffset();
+                const bool     cBit = pkt.st291CBit();
+                const uint8_t  streamNum = pkt.st291StreamNum();
                 // S-bit on iff the meta explicitly carries a non-zero
                 // StreamNum.  Receivers that ignore S simply key off
                 // StreamNum, which is preserved either way.
@@ -118,27 +155,36 @@ namespace {
                 return v;
         }
 
-        // Greedy-plans RTP packet shapes for one frame: walks @p packets,
-        // accumulates records into a current RTP packet, closes off when
-        // the next record would push past @p maxPayload or when
-        // @c ANC_Count would overflow 255.  Returns the per-RTP-packet
-        // record-byte totals; the count of returned entries is the
-        // number of RTP packets required.
+        // Greedy-plans RTP packet shapes for one frame: walks the
+        // ordered St291 index list, accumulates records into a
+        // current RTP packet, closes off when the next record would
+        // push past @p maxPayload or when @c ANC_Count would overflow
+        // 255.  Returns the per-RTP-packet record-byte totals; the
+        // count of returned entries is the number of RTP packets
+        // required.
+        //
+        // @c firstIdx / @c count refer to positions inside the
+        // caller-supplied @p orderedIdx list, NOT raw AncPacket
+        // indices.  The emit path then walks @c orderedIdx[firstIdx
+        // .. firstIdx + count) to materialise records in
+        // ST 2110-40 §5.2.2 ascending (Line, HOffset) order.
         struct RtpPlan {
                 size_t recordBytes = 0;  // sum of recordSize across this RTP packet
-                size_t firstIdx = 0;     // first AncPacket index
+                size_t firstIdx = 0;     // first position in orderedIdx
                 size_t count = 0;        // ANC_Count in this RTP packet
         };
 
-        List<RtpPlan> planRtpPackets(const AncPacket *packets, size_t total, size_t maxPayload) {
+        List<RtpPlan> planRtpPackets(const AncPacket *packets,
+                                     const List<size_t> &orderedIdx,
+                                     size_t              maxPayload) {
                 List<RtpPlan> plans;
-                if (total == 0) return plans;
+                if (orderedIdx.isEmpty()) return plans;
                 if (maxPayload <= RtpPayloadAnc::PayloadHeaderSize) return plans;
                 const size_t roomPerRtp = maxPayload - RtpPayloadAnc::PayloadHeaderSize;
 
                 RtpPlan cur{0, 0, 0};
-                for (size_t i = 0; i < total; ++i) {
-                        if (packets[i].transport() != AncTransport::St291) continue;
+                for (size_t k = 0; k < orderedIdx.size(); ++k) {
+                        const size_t i = orderedIdx[k];
                         const size_t rs = recordSize(packets[i]);
                         if (rs > roomPerRtp) {
                                 // Record exceeds a whole RTP payload — skip
@@ -153,9 +199,9 @@ namespace {
                                                  (cur.count >= 0xFFu));
                         if (needsFlush) {
                                 plans.pushToBack(cur);
-                                cur = RtpPlan{0, i, 0};
+                                cur = RtpPlan{0, k, 0};
                         }
-                        if (cur.count == 0) cur.firstIdx = i;
+                        if (cur.count == 0) cur.firstIdx = k;
                         cur.recordBytes += rs;
                         cur.count += 1;
                 }
@@ -190,17 +236,31 @@ RtpPayload::ValidateResult RtpPayloadAnc::validate(const Buffer &unpacked) {
         if (p == nullptr) return ValidateResult::DropSilently;
         const uint16_t length = static_cast<uint16_t>((p[2] << 8) | p[3]);
         const uint8_t  ancCount = p[4];
-        if (ancCount == 0) return ValidateResult::DropSilently;
+        // ANC_Count=0 / Length=0 is the ST 2110-40 §5.5 keep-alive
+        // shape — accept and let unpackAncPackets surface it as an
+        // empty-records payload (Marker bit set, end-of-frame).
+        // ANC_Count=0 with non-zero Length is malformed.
+        if (ancCount == 0) {
+                return length == 0 ? ValidateResult::Accept : ValidateResult::DropSilently;
+        }
         if (PayloadHeaderSize + length > unpacked.size()) {
                 return ValidateResult::DropSilently;
         }
         return ValidateResult::Accept;
 }
 
+void RtpPayloadAnc::setKeepAliveField(FieldIndication f) {
+        if (f == FieldIndication::Invalid) {
+                promekiWarn("RtpPayloadAnc::setKeepAliveField: rejecting "
+                            "FieldIndication::Invalid (RFC 8331 §2.1 reserved value)");
+                return;
+        }
+        _keepAliveField = f;
+}
+
 RtpPacket::List RtpPayloadAnc::packAncFrame(
         const AncPacket::List &packets, uint32_t rtpTimestamp) {
         RtpPacket::List out;
-        if (packets.isEmpty()) return out;
 
         const size_t maxPayload = maxPayloadSize();
         if (maxPayload <= PayloadHeaderSize) return out;
@@ -208,9 +268,45 @@ RtpPacket::List RtpPayloadAnc::packAncFrame(
         // Plan how many RTP packets we need and which AncPackets land in
         // each.  Records that don't fit in any RTP packet (over-MTU)
         // are silently skipped by planRtpPackets.
-        const size_t total = packets.size();
-        List<RtpPlan> plans = planRtpPackets(packets.data(), total, maxPayload);
-        if (plans.isEmpty()) return out;
+        //
+        // ST 2110-40 §5.2.2: senders that signal proposed SDI
+        // location SHALL emit ANC packets in ascending
+        // (Line_Number, Horizontal_Offset) order across the frame.
+        // We stable-sort once up front; sentinel-location packets
+        // (default 0x7FE / 0xFFF) end up at the tail because their
+        // numeric value exceeds any real coordinate, with their
+        // relative input order preserved.
+        const size_t       total = packets.size();
+        const List<size_t> orderedIdx = orderedSt291Indices(packets.data(), total);
+        List<RtpPlan>      plans = planRtpPackets(packets.data(), orderedIdx, maxPayload);
+
+        // ST 2110-40 §5.5 keep-alive: when the planner produced no
+        // records (empty input or no St291 packets), emit a single
+        // RTP packet with ANC_Count=0, Length=0, Marker=1, F set to
+        // the session's keep-alive value, and no per-packet records
+        // (RFC 8331 §2.2 forbids word_align padding on this shape).
+        if (plans.isEmpty()) {
+                RtpPacket::SizeList sizes;
+                sizes.pushToBack(RtpPacket::HeaderSize + PayloadHeaderSize);
+                RtpPacket::List ka = RtpPacket::createList(sizes);
+                if (ka.size() != 1) return out;
+                RtpPacket &rtp = ka[0];
+                rtp.setPayloadType(_payloadType);
+                rtp.setTimestamp(rtpTimestamp);
+                rtp.setMarker(true);
+                uint8_t *pl = rtp.payload();
+                if (pl == nullptr) return out;
+                pl[0] = 0;  // ESN high
+                pl[1] = 0;  // ESN low
+                pl[2] = 0;  // Length hi
+                pl[3] = 0;  // Length lo
+                pl[4] = 0;  // ANC_Count
+                pl[5] = static_cast<uint8_t>(
+                        (static_cast<uint8_t>(_keepAliveField) & 0x03u) << 6);
+                pl[6] = 0;
+                pl[7] = 0;
+                return ka;
+        }
 
         // One shared Buffer for the whole frame's RTP packets.
         RtpPacket::SizeList sizes;
@@ -233,7 +329,7 @@ RtpPacket::List RtpPayloadAnc::packAncFrame(
 
                 // RFC 8331 §2.1 payload header.
                 const FieldIndication f = inferFieldIndication(
-                        packets.data(), total, plan.firstIdx, plan.count);
+                        packets.data(), orderedIdx, plan.firstIdx, plan.count);
                 pl[0] = 0;  // ESN high (deferred — see header notes)
                 pl[1] = 0;  // ESN low
                 pl[2] = static_cast<uint8_t>((plan.recordBytes >> 8) & 0xFFu);
@@ -243,24 +339,26 @@ RtpPacket::List RtpPayloadAnc::packAncFrame(
                 pl[6] = 0;
                 pl[7] = 0;
 
-                // Records.
+                // Records walked through the sorted index list so the
+                // proposed SDI locations land on the wire in ascending
+                // (Line, HOffset) order (ST 2110-40 §5.2.2).
                 uint8_t *cur = pl + PayloadHeaderSize;
-                size_t   recsWritten = 0;
-                for (size_t i = plan.firstIdx; i < total && recsWritten < plan.count; ++i) {
-                        if (packets[i].transport() != AncTransport::St291) continue;
-                        const size_t rs = recordSize(packets[i]);
+                for (size_t k = plan.firstIdx;
+                     k < plan.firstIdx + plan.count && k < orderedIdx.size(); ++k) {
+                        const size_t   srcIdx = orderedIdx[k];
+                        const AncPacket &pkt = packets[srcIdx];
+                        const size_t   rs = recordSize(pkt);
                         // Defensive: planner already enforced fit; skip
                         // anything that would overflow.
                         if (cur + rs > pl + PayloadHeaderSize + plan.recordBytes) break;
-                        writeRecord(cur, packets[i]);
+                        writeRecord(cur, pkt);
                         cur += rs;
-                        recsWritten += 1;
                 }
         }
         return out;
 }
 
-Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List &out) {
+Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List &out, AncChecksumPolicy policy) {
         for (const RtpPacket &rtp : in) {
                 if (rtp.isNull() || rtp.payloadSize() < PayloadHeaderSize) {
                         promekiWarn("RtpPayloadAnc::unpackAncPackets: payload shorter than header");
@@ -275,7 +373,34 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                 const uint16_t length = static_cast<uint16_t>((p[2] << 8) | p[3]);
                 const uint8_t  ancCount = p[4];
                 const uint8_t  fBits = static_cast<uint8_t>((p[5] >> 6) & 0x03u);
-                const bool     fieldB = (fBits == static_cast<uint8_t>(FieldIndication::InterlacedField2));
+
+                // RFC 8331 §2.1: F-bit value 0b01 is explicitly reserved.
+                // Receivers SHOULD ignore an ANC data packet with this
+                // F value and continue processing the rest of the
+                // datagram list.  We skip the entire RTP packet's
+                // records — there is no per-record F-bit in §2.2, so
+                // the §2.1 invalid value taints the whole payload.
+                if (fBits == static_cast<uint8_t>(FieldIndication::Invalid)) {
+                        promekiWarn("RtpPayloadAnc::unpackAncPackets: F-bit = 0b01 "
+                                    "(RFC 8331 §2.1 reserved); skipping payload");
+                        continue;
+                }
+
+                // RFC 8331 §2.1 / ST 2110-40 §5.5: ANC_Count=0 with
+                // Length=0 is the keep-alive shape — no records to
+                // decode, just acknowledge end-of-frame.  Non-zero
+                // Length with ANC_Count=0 is malformed.
+                if (ancCount == 0) {
+                        if (length != 0) {
+                                promekiWarn("RtpPayloadAnc::unpackAncPackets: ANC_Count=0 "
+                                            "with non-zero Length=%u (malformed)",
+                                            static_cast<unsigned>(length));
+                                return Error::OutOfRange;
+                        }
+                        continue;
+                }
+
+                const bool fieldB = (fBits == static_cast<uint8_t>(FieldIndication::InterlacedField2));
 
                 if (PayloadHeaderSize + length > payloadBytes) {
                         promekiWarn("RtpPayloadAnc::unpackAncPackets: declared Length %u "
@@ -330,11 +455,18 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                         const size_t recordTotal = PerPacketHeaderSize + bodyBytes;
                         const size_t recordPadded = (recordTotal + 3u) & ~size_t{3u};
                         if (recStart + recordPadded > recEnd) {
-                                // The record fits but its trailing pad
-                                // overruns the declared length — accept
-                                // anyway and treat the remainder as
-                                // padding consumed by the payload's
-                                // Length field.
+                                // RFC 8331 §2.1 / §2.2: the payload's
+                                // Length field already covers all
+                                // word_align padding.  A record whose
+                                // padded extent runs past the declared
+                                // Length is malformed wire bytes — warn
+                                // and keep parsing the record body (the
+                                // un-padded bytes are still valid).
+                                promekiWarn("RtpPayloadAnc::unpackAncPackets: record "
+                                            "trailing pad overruns declared Length "
+                                            "(record needs %zu bytes, %td remaining)",
+                                            recordPadded,
+                                            static_cast<ptrdiff_t>(recEnd - recStart));
                         }
 
                         Buffer data(bodyBytes);
@@ -342,16 +474,31 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                         if (cpyErr.isError()) return cpyErr;
                         data.setSize(bodyBytes);
 
-                        Metadata meta;
-                        meta.set(AncMeta::St291::Line, line);
-                        meta.set(AncMeta::St291::HOffset, hOffset);
-                        meta.set(AncMeta::St291::FieldB, fieldB);
-                        meta.set(AncMeta::St291::CBit, cBit);
-                        meta.set(AncMeta::St291::StreamNum, streamNum);
-
                         const AncFormat fmt = AncFormat::fromSt291DidSdid(didByte, sdidByte);
 
-                        AncPacket pkt(fmt, AncTransport::St291, std::move(data), std::move(meta));
+                        AncPacket pkt(fmt, AncTransport::St291, std::move(data));
+                        pkt.setSt291Line(line);
+                        pkt.setSt291HOffset(hOffset);
+                        pkt.setSt291FieldB(fieldB);
+                        pkt.setSt291CBit(cBit);
+                        pkt.setSt291StreamNum(streamNum);
+                        // Apply the §6.4 Checksum_Word policy at the
+                        // promotion boundary so a StrictValidate session
+                        // refuses records whose stored checksum does not
+                        // match the recomputed one (RFC 8331 §7 SHOULD
+                        // check).  PreserveOrRecompute and AlwaysRecompute
+                        // tolerate the wire bytes as-is on the parse
+                        // path; the distinction matters only when the
+                        // packet is later re-emitted.
+                        Result<St291Packet> rp = St291Packet::from(pkt, policy);
+                        if (isError(rp)) {
+                                promekiWarn("RtpPayloadAnc::unpackAncPackets: record rejected "
+                                            "by checksum policy %s (DID=0x%02X SDID=0x%02X)",
+                                            policy.toString().cstr(),
+                                            static_cast<unsigned>(didByte),
+                                            static_cast<unsigned>(sdidByte));
+                                return error(rp);
+                        }
                         out.pushToBack(std::move(pkt));
 
                         recStart += recordPadded;

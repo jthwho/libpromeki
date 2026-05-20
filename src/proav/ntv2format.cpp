@@ -225,7 +225,7 @@ int referenceFor(const VideoReferenceConfig &ref) {
 
 bool standardFitsCableCount(const SdiLinkStandard &standard, int availableCables) {
         if (standard == SdiLinkStandard::Auto) return true;
-        return cablesFor(standard) <= availableCables;
+        return sdiCableCount(standard) <= availableCables;
 }
 
 } // namespace Ntv2Format

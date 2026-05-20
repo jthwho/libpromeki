@@ -37,7 +37,6 @@
 #include <promeki/timestamp.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
-#include <promeki/ancmeta.h>
 #include <promeki/ancpacket.h>
 #include <promeki/ancpayload.h>
 #include <promeki/anctranslator.h>
@@ -2017,17 +2016,14 @@ namespace {
                 obj.set("formatId", static_cast<int64_t>(pkt.format().id()));
                 obj.set("transport", pkt.transport().valueName());
                 obj.set("dataSize", static_cast<int64_t>(pkt.data().size()));
-                // Surface the relevant AncMeta sidecar keys when present
-                // — the user inspecting captured ANC almost always wants
-                // the VANC line / field flag for ST 291 packets, etc.
+                // Surface ST 291 framing fields the user inspecting
+                // captured ANC almost always wants (line / field flag).
+                // These live directly on AncPacket as of F9.1; the
+                // values reflect whatever the capture / synth path
+                // stamped on the packet.
                 if (pkt.transport() == AncTransport::St291) {
-                        const Metadata &m = pkt.meta();
-                        if (m.contains(AncMeta::St291::Line)) {
-                                obj.set("line", static_cast<int64_t>(m.getAs<uint16_t>(AncMeta::St291::Line)));
-                        }
-                        if (m.contains(AncMeta::St291::FieldB)) {
-                                obj.set("fieldB", m.getAs<bool>(AncMeta::St291::FieldB));
-                        }
+                        obj.set("line", static_cast<int64_t>(pkt.st291Line()));
+                        obj.set("fieldB", pkt.st291FieldB());
                 }
 
                 // Try to parse via the registered handler.

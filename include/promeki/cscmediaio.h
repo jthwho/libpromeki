@@ -9,7 +9,7 @@
 
 
 #include <promeki/config.h>
-#if PROMEKI_ENABLE_PROAV
+#if PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_CSC
 #include <promeki/namespace.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/mediaiofactory.h>
@@ -140,4 +140,4 @@ class CscFactory : public MediaIOFactory {
 
 PROMEKI_NAMESPACE_END
 
-#endif // PROMEKI_ENABLE_PROAV
+#endif // PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_CSC

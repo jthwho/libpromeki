@@ -51,6 +51,14 @@ class DataStream;
  * followed by a colon and the port.  @ref fromString accepts the
  * same shape (case-insensitive on the version segment) and rejects
  * malformed input with @c Error::InvalidArgument.
+ *
+ * @note Not related to @ref HdmiInfoFrame despite the shared @c Hdmi
+ *       prefix — this class is a @em carrier-level @em descriptor
+ *       (port + spec-version hint) consumed by backends at open time,
+ *       while @ref HdmiInfoFrame is a @em typed @em packet @em helper
+ *       for the CEA-861 InfoFrame wire format that rides through ANC.
+ *
+ * @see SdiSignalConfig, VideoPortRef, HdmiSpecVersion, HdmiInfoFrame
  */
 class HdmiSignalConfig {
         public:

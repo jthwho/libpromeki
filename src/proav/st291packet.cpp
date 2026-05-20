@@ -6,7 +6,7 @@
  */
 
 #include <promeki/st291packet.h>
-#include <promeki/ancmeta.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -19,7 +19,8 @@ PROMEKI_NAMESPACE_BEGIN
 // the most-significant bit of byte 0.  RFC 8331 §2.1 uses the same packing
 // inside its per-packet record (the surrounding line / h-offset / stream
 // header is *not* stored in the byte buffer — those framing fields live
-// in @ref AncPacket::meta via @ref AncMeta::St291).
+// as direct accessors on AncPacket (st291Line, st291HOffset, st291FieldB,
+// st291CBit, st291StreamNum)).
 //
 // Each 10-bit word splits into:
 //   - bits 0..7: 8-bit data byte
@@ -105,11 +106,60 @@ namespace {
                 return static_cast<uint16_t>(s | ((b8 ^ 1u) << 9));
         }
 
+        // Returns @c true when @p word's upper 2 bits encode a valid
+        // ST 291 parity (bit 9 = NOT bit 8 — i.e. upper-2-bit pattern
+        // 01 or 10).  Upper bits @c 11 indicate either a §9.1
+        // protected code (0x3FC-0x3FF) or a parity-violation value
+        // (0x300-0x3FB); both are wire-illegal and the build path
+        // refuses to emit them.  Upper bits @c 00 means the parity
+        // bits weren't set — the caller is supplying an 8-bit data
+        // byte and @ref parityBits will compute the encoding.
+        constexpr bool isValidPassThroughEncoding(uint16_t word) {
+                const uint16_t upper = (word >> 8) & 0x3u;
+                return upper == 0x1u || upper == 0x2u;
+        }
+
         // Packs (DID, SDID, DataCount, UDW0..UDWn-1, Checksum) into a
         // freshly allocated Buffer in the canonical 10-bit storage form.
+        // Returns an empty Buffer on validation failure (DC > 255 or any
+        // caller-supplied 10-bit word that lies in the §9.1 protected
+        // range / has invalid parity encoding).
         Buffer buildWireBytes(uint8_t did, uint8_t sdid, const List<uint16_t> &udw) {
-                const size_t           dc = udw.size();
-                List<uint16_t>         words;
+                const size_t dc = udw.size();
+
+                // ST 291-1 §6.5: DataCount range is 0..255.  Silently
+                // truncating dc to a uint8 would leave the wire bytes
+                // internally inconsistent (DC says N but the buffer holds
+                // M > N UDWs); refuse the build.
+                if (dc > 255) {
+                        promekiErr("St291Packet::build: UDW count %zu exceeds ST 291 §6.5 max of 255", dc);
+                        return Buffer();
+                }
+
+                // ST 291-1 §9.1: 10-bit values 000h-003h and 3FCh-3FFh
+                // shall not appear in any ANC packet payload.  The
+                // parity-compute path can never produce such a value
+                // (its output always has bit 9 = NOT bit 8, giving
+                // upper-2-bit pattern 01 or 10).  The pass-through path
+                // (caller supplied a complete 10-bit word) can — refuse
+                // such inputs rather than emit spec-illegal wire bytes.
+                // See devplan/proav/ancaudit.md, Q1.
+                for (size_t i = 0; i < dc; ++i) {
+                        const uint16_t in = udw.at(i);
+                        // Upper-2-bit pattern 00 = parity-compute path; the parityBits()
+                        // helper will produce a valid (01 or 10) encoding from the
+                        // 8-bit data byte.  Skip the check in that case.
+                        if ((in & 0x300u) == 0) continue;
+                        if (!isValidPassThroughEncoding(in)) {
+                                promekiErr("St291Packet::build: UDW[%zu] = 0x%03X is a §9.1 protected "
+                                           "code or has invalid parity encoding (upper-2-bit "
+                                           "pattern must be 01 or 10)",
+                                           i, static_cast<unsigned>(in & 0x3FFu));
+                                return Buffer();
+                        }
+                }
+
+                List<uint16_t> words;
                 words.pushToBack(makeWord(did));
                 words.pushToBack(makeWord(sdid));
                 words.pushToBack(makeWord(static_cast<uint16_t>(dc & 0xFFu)));
@@ -147,15 +197,48 @@ namespace {
 // Static factories
 // ---------------------------------------------------------------------------
 
-Result<St291Packet> St291Packet::from(const AncPacket &pkt) {
+Result<St291Packet> St291Packet::from(const AncPacket &pkt, AncChecksumPolicy policy) {
         if (pkt.transport() != AncTransport::St291) {
                 return makeError<St291Packet>(Error::InvalidArgument);
         }
-        // Need at least DID + SDID + DC + Checksum = 4 ten-bit words = 5 bytes.
-        if (pkt.data().size() < 5) {
+        // Need at least DID + (SDID or DBN) + DC + Checksum = 4 ten-bit words = 5 bytes.
+        const size_t bufSize = pkt.data().size();
+        if (bufSize < 5) {
                 return makeError<St291Packet>(Error::InvalidArgument);
         }
-        return makeResult(St291Packet(pkt));
+        // The header through DC fits in the first 5 bytes; once we have DC we
+        // can require the buffer cover (4 + DC) ten-bit words = ceil((4+DC)*10/8)
+        // bytes for the full packet (header + UDW + CS).  A short buffer is a
+        // truncated capture and we reject rather than let downstream readers
+        // walk off the end of the buffer (ST 291-1 §6.5 / RFC 8331 §2.2 — the
+        // declared DC is authoritative for the on-wire payload length).
+        const uint8_t *bytes = static_cast<const uint8_t *>(pkt.data().data());
+        if (bytes == nullptr) return makeError<St291Packet>(Error::InvalidArgument);
+        uint16_t header[3] = {0, 0, 0};
+        if (!unpack10bit(bytes, bufSize, 3, header)) {
+                return makeError<St291Packet>(Error::InvalidArgument);
+        }
+        const uint8_t dc = static_cast<uint8_t>(header[2] & 0xFFu);
+        const size_t  totalWords = 4u + static_cast<size_t>(dc);
+        const size_t  requiredBytes = (totalWords * 10u + 7u) / 8u;
+        if (bufSize < requiredBytes) {
+                return makeError<St291Packet>(Error::InvalidArgument);
+        }
+        St291Packet wrapped(pkt);
+        // RFC 8331 §7 SHOULD-check: under StrictValidate we verify the
+        // stored Checksum_Word matches the value computed over
+        // (DID, SDID, DataCount, UDW) per ST 291-1 §6.4.  The buffer
+        // length check above already covers the §7 Data_Count guard
+        // (declared DC vs available bytes); under StrictValidate the
+        // checksum is the remaining wire-integrity check.
+        //
+        // PreserveOrRecompute and AlwaysRecompute accept the packet
+        // as-is on the parse path — they govern emission, not ingest.
+        // See ancaudit.md Q6 for the rationale (byte-exact replay).
+        if (policy == AncChecksumPolicy::StrictValidate && !wrapped.checksumValid()) {
+                return makeError<St291Packet>(Error::InvalidChecksum);
+        }
+        return makeResult(wrapped);
 }
 
 St291Packet St291Packet::build(const AncFormat &fmt, const List<uint16_t> &udw, uint16_t line, uint16_t hOffset,
@@ -168,18 +251,48 @@ St291Packet St291Packet::build(const AncFormat &fmt, const List<uint16_t> &udw, 
 
 St291Packet St291Packet::buildRaw(uint8_t did, uint8_t sdid, const List<uint16_t> &udw, uint16_t line, uint16_t hOffset,
                                   bool fieldB, bool cBit, uint8_t streamNum) {
+        // ST 291-1 §6.1 Figure 4a/4b: DID 00h is Reserved.  Refuse to
+        // emit a packet with a reserved DID rather than produce wire
+        // bytes a conforming receiver will discard.  Other reserved
+        // DID ranges (01h-03h, 20h-3Fh, 81h-83h, etc.) are deferred to
+        // a later phase that widens the buildRaw API to surface the
+        // specific error code; today's signal is "isValid() == false".
+        if (did == 0) {
+                promekiErr("St291Packet::buildRaw: DID 0x00 is reserved (ST 291-1 §6.1)");
+                return St291Packet();
+        }
         Buffer    wire = buildWireBytes(did, sdid, udw);
         AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid);
 
-        Metadata meta;
-        meta.set(AncMeta::St291::Line, line);
-        meta.set(AncMeta::St291::HOffset, hOffset);
-        meta.set(AncMeta::St291::FieldB, fieldB);
-        meta.set(AncMeta::St291::CBit, cBit);
-        meta.set(AncMeta::St291::StreamNum, streamNum);
-
-        AncPacket pkt(fmt, AncTransport::St291, std::move(wire), std::move(meta));
+        AncPacket pkt(fmt, AncTransport::St291, std::move(wire));
+        pkt.setSt291Line(line);
+        pkt.setSt291HOffset(hOffset);
+        pkt.setSt291FieldB(fieldB);
+        pkt.setSt291CBit(cBit);
+        pkt.setSt291StreamNum(streamNum);
         return St291Packet(pkt);
+}
+
+St291Packet St291Packet::buildRawType1(uint8_t did, uint8_t dbn, const List<uint16_t> &udw, uint16_t line,
+                                       uint16_t hOffset, bool fieldB, bool cBit, uint8_t streamNum) {
+        // Type-1 packets are defined by DID's high bit being set
+        // (ST 291-1 §5.1).  Refuse a Type-2 DID — callers that mean
+        // SDID should use @ref buildRaw, where the second-byte
+        // parameter is the SDID byte rather than the DBN.
+        if ((did & 0x80u) == 0u) {
+                promekiErr("St291Packet::buildRawType1: DID 0x%02X is Type-2 (high bit clear); "
+                           "use buildRaw() for SDID-based packets",
+                           did);
+                return St291Packet();
+        }
+        // Word layout is identical between Type-1 and Type-2 — the
+        // only difference is whether the second byte is SDID or DBN.
+        // Reuse buildRaw and feed it the DBN as the second-byte
+        // parameter; the registry's wildcard-SDID lookup catches the
+        // (DID, *) match for registered Type-1 formats
+        // (e.g. PacketForDeletion under DID 0x80) so format() resolves
+        // correctly regardless of DBN value.
+        return buildRaw(did, dbn, udw, line, hOffset, fieldB, cBit, streamNum);
 }
 
 // ---------------------------------------------------------------------------
@@ -199,6 +312,26 @@ uint8_t St291Packet::sdid() const {
         if (_pkt.data().size() < 3 || bytes == nullptr) return 0;
         uint16_t words[2];
         unpack10bit(bytes, _pkt.data().size(), 2, words);
+        const uint8_t didByte = static_cast<uint8_t>(words[0] & 0xFFu);
+        // Type-1 packets (DID high bit set) carry a DBN in word 1, not
+        // an SDID.  Per RFC 8331 §3.1 the SDID slot for Type-1 packets
+        // is reported as 0x00; expose that here so callers reasoning
+        // about SDID semantics never see a DBN value mis-labelled as
+        // SDID.  Use @ref dbn to read the actual second-word byte for
+        // Type-1 packets.
+        if ((didByte & 0x80u) != 0u) return 0;
+        return static_cast<uint8_t>(words[1] & 0xFFu);
+}
+
+uint8_t St291Packet::dbn() const {
+        const uint8_t *bytes = hostBytes(_pkt.data());
+        if (_pkt.data().size() < 3 || bytes == nullptr) return 0;
+        uint16_t words[2];
+        unpack10bit(bytes, _pkt.data().size(), 2, words);
+        const uint8_t didByte = static_cast<uint8_t>(words[0] & 0xFFu);
+        // Mirror of sdid(): only meaningful for Type-1 packets, zero
+        // for Type-2.
+        if ((didByte & 0x80u) == 0u) return 0;
         return static_cast<uint8_t>(words[1] & 0xFFu);
 }
 
@@ -211,6 +344,27 @@ uint8_t St291Packet::dataCount() const {
 }
 
 List<uint16_t> St291Packet::udw() const {
+        // udw() strips parity bits — see the @ref udwRaw companion for
+        // the parity-preserving variant used by byte-exact replay.
+        List<uint16_t> ret;
+        const uint8_t *bytes = hostBytes(_pkt.data());
+        if (_pkt.data().size() < 4 || bytes == nullptr) return ret;
+        uint8_t dc = dataCount();
+        if (dc == 0) return ret;
+        const size_t   totalWords = 3 + dc;
+        List<uint16_t> words(totalWords, uint16_t(0));
+        if (!unpack10bit(bytes, _pkt.data().size(), totalWords, words.data())) return ret;
+        ret.reserve(dc);
+        for (size_t i = 0; i < dc; ++i) ret.pushToBack(static_cast<uint16_t>(words.at(3 + i) & 0xFFu));
+        return ret;
+}
+
+List<uint16_t> St291Packet::udwRaw() const {
+        // Same walk as @ref udw, but preserve the upper-2 parity bits
+        // verbatim.  Callers verifying byte-exact replay against a
+        // captured stream need the original parity encoding (which
+        // can differ from the canonical one parityBits() would
+        // compute when the sender hand-built parity).
         List<uint16_t> ret;
         const uint8_t *bytes = hostBytes(_pkt.data());
         if (_pkt.data().size() < 4 || bytes == nullptr) return ret;
@@ -253,15 +407,15 @@ bool St291Packet::checksumValid() const { return checksum() == computedChecksum(
 // Meta-sidecar accessors
 // ---------------------------------------------------------------------------
 
-uint16_t St291Packet::line() const { return _pkt.meta().get(AncMeta::St291::Line).get<uint16_t>(); }
+uint16_t St291Packet::line() const { return _pkt.st291Line(); }
 
-uint16_t St291Packet::hOffset() const { return _pkt.meta().get(AncMeta::St291::HOffset).get<uint16_t>(); }
+uint16_t St291Packet::hOffset() const { return _pkt.st291HOffset(); }
 
-bool St291Packet::fieldB() const { return _pkt.meta().get(AncMeta::St291::FieldB).get<bool>(); }
+bool St291Packet::fieldB() const { return _pkt.st291FieldB(); }
 
-bool St291Packet::cBit() const { return _pkt.meta().get(AncMeta::St291::CBit).get<bool>(); }
+bool St291Packet::cBit() const { return _pkt.st291CBit(); }
 
-uint8_t St291Packet::streamNum() const { return _pkt.meta().get(AncMeta::St291::StreamNum).get<uint8_t>(); }
+uint8_t St291Packet::streamNum() const { return _pkt.st291StreamNum(); }
 
 bool St291Packet::isValid() const { return _pkt.transport() == AncTransport::St291 && _pkt.data().size() >= 5; }
 
@@ -271,19 +425,22 @@ bool St291Packet::isValid() const { return _pkt.transport() == AncTransport::St2
 
 void St291Packet::setUdw(const List<uint16_t> &udw) {
         const uint8_t curDid = did();
-        const uint8_t curSdid = sdid();
-        Buffer        wire = buildWireBytes(curDid, curSdid, udw);
+        // For Type-2 packets the second-word byte is SDID; for Type-1
+        // packets it is DBN.  Preserve whichever applies so the
+        // re-pack does not silently zero a DBN on a Type-1 mutator.
+        const uint8_t curSecond = (curDid & 0x80u) != 0u ? dbn() : sdid();
+        Buffer        wire = buildWireBytes(curDid, curSecond, udw);
         _pkt.setData(std::move(wire));
 }
 
-void St291Packet::setLine(uint16_t line) { _pkt.metaMut().set(AncMeta::St291::Line, line); }
+void St291Packet::setLine(uint16_t line) { _pkt.setSt291Line(line); }
 
-void St291Packet::setHOffset(uint16_t hOffset) { _pkt.metaMut().set(AncMeta::St291::HOffset, hOffset); }
+void St291Packet::setHOffset(uint16_t hOffset) { _pkt.setSt291HOffset(hOffset); }
 
-void St291Packet::setFieldB(bool fieldB) { _pkt.metaMut().set(AncMeta::St291::FieldB, fieldB); }
+void St291Packet::setFieldB(bool fieldB) { _pkt.setSt291FieldB(fieldB); }
 
-void St291Packet::setCBit(bool cBit) { _pkt.metaMut().set(AncMeta::St291::CBit, cBit); }
+void St291Packet::setCBit(bool cBit) { _pkt.setSt291CBit(cBit); }
 
-void St291Packet::setStreamNum(uint8_t streamNum) { _pkt.metaMut().set(AncMeta::St291::StreamNum, streamNum); }
+void St291Packet::setStreamNum(uint8_t streamNum) { _pkt.setSt291StreamNum(streamNum); }
 
 PROMEKI_NAMESPACE_END

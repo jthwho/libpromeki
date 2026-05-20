@@ -50,6 +50,19 @@ SdiSignalConfig SdiOutputFanoutConfig::primary() const {
         return SdiSignalConfig(_d->standard, _d->groups.at(0));
 }
 
+SdiOutputFanoutConfig SdiOutputFanoutConfig::fromSignal(const SdiSignalConfig &sig) {
+        // A default-constructed signal (Auto standard, empty ports)
+        // produces a default-constructed fanout — no group is added
+        // so isValid() stays false and primary() returns the original
+        // empty signal on round-trip.
+        if (sig.standard() == SdiLinkStandard::Auto && sig.ports().isEmpty()) {
+                return SdiOutputFanoutConfig();
+        }
+        GroupList groups;
+        groups.pushToBack(sig.ports());
+        return SdiOutputFanoutConfig(sig.standard(), std::move(groups));
+}
+
 List<SdiSignalConfig> SdiOutputFanoutConfig::asSignalConfigs() const {
         List<SdiSignalConfig> out;
         out.reserve(_d->groups.size());
@@ -62,7 +75,7 @@ List<SdiSignalConfig> SdiOutputFanoutConfig::asSignalConfigs() const {
 bool SdiOutputFanoutConfig::isValid() const {
         if (_d->groups.isEmpty()) return false;
         if (_d->standard == SdiLinkStandard::Auto) return true;
-        const int expected = cablesFor(_d->standard);
+        const int expected = sdiCableCount(_d->standard);
         for (size_t i = 0; i < _d->groups.size(); ++i) {
                 if (static_cast<int>(_d->groups.at(i).size()) != expected) return false;
         }

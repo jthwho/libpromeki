@@ -7,7 +7,9 @@
 
 #include <promeki/optional.h>
 #include <promeki/uncompressedvideopayload.h>
+#if PROMEKI_ENABLE_CSC
 #include <promeki/cscpipeline.h>
+#endif
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaioallocator.h>
 #include <promeki/paintengine.h>
@@ -32,6 +34,7 @@ UncompressedVideoPayload::Ptr UncompressedVideoPayload::convert(const PixelForma
                            dstPd.name().cstr());
                 return Ptr();
         }
+#if PROMEKI_ENABLE_CSC
         CSCPipeline::Ptr pipeline = CSCPipeline::cached(desc().pixelFormat(), dstPd, config);
         if (!pipeline || !pipeline->isValid()) return Ptr();
 
@@ -42,6 +45,15 @@ UncompressedVideoPayload::Ptr UncompressedVideoPayload::convert(const PixelForma
         Error err = pipeline->execute(*this, *dst.modify());
         if (err.isError()) return Ptr();
         return dst;
+#else
+        (void)metadata;
+        (void)config;
+        promekiErr("UncompressedVideoPayload::convert: library built "
+                   "without PROMEKI_ENABLE_CSC — cannot convert '%s' "
+                   "to '%s'",
+                   desc().pixelFormat().name().cstr(), dstPd.name().cstr());
+        return Ptr();
+#endif
 }
 
 PaintEngine UncompressedVideoPayload::createPaintEngine() const {

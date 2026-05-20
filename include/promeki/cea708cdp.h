@@ -186,8 +186,22 @@ class Cea708Cdp {
                 /// @brief Time-code section payload (when
                 /// @ref timeCodePresent is true).  The hour/min/sec/frm
                 /// digits and drop-frame flag round-trip through
-                /// @ref Timecode.
+                /// @ref Timecode.  On parse, the @ref Timecode::Mode is
+                /// resolved from @ref frameRateCode (ST 334-2 §5.3
+                /// Table 3) plus the wire @c drop_frame_flag bit.
                 Timecode timeCode;
+
+                /// @brief Time-code section @c tc_field_flag bit
+                /// (byte 3 bit 7 of the time-code section, ST 334-2
+                /// §5.3 Table 4).
+                ///
+                /// Used for interlaced pictures (0 = first field,
+                /// 1 = second field) and HFR frame-pair labelling
+                /// (>=50 Hz progressive sources).  Default @c false is
+                /// correct for progressive HD where the bit has no
+                /// meaning; callers with HFR / interlaced context
+                /// should set this explicitly.
+                bool tcFieldFlag = false;
 
                 /// @brief cc_data triples carried in the cc_data section
                 /// (when @ref ccDataPresent is true).  Caller-supplied

@@ -16,6 +16,7 @@
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/result.h>
+#include <promeki/sdistandards.h>
 #include <promeki/sharedptr.h>
 #include <promeki/string.h>
 #include <promeki/videoportref.h>
@@ -23,80 +24,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class DataStream;
-
-// ============================================================================
-// Free helpers for SdiLinkStandard
-// ============================================================================
-
-/**
- * @brief Returns the number of physical cables a given SDI link
- *        standard requires.
- *
- * Returns @c 0 for @ref SdiLinkStandard::Auto, which is treated as
- * "unspecified" (the cable count is supplied by the offered
- * @ref MediaDesc on a source, or by the backend's defaults on a sink).
- * Returns @c 1 for any single-link standard, @c 2 for the dual-link
- * variants, and @c 4 for the quad-link variants.
- */
-inline int cablesFor(const SdiLinkStandard &standard) {
-        if (standard == SdiLinkStandard::Auto)      return 0;
-        if (standard == SdiLinkStandard::DL_HD)     return 2;
-        if (standard == SdiLinkStandard::DL_3GB)    return 2;
-        if (standard == SdiLinkStandard::DL_3G)     return 2;
-        if (standard == SdiLinkStandard::QL_3G_SQD) return 4;
-        if (standard == SdiLinkStandard::QL_3G_2SI) return 4;
-        return 1;
-}
-
-/**
- * @brief Returns @c true for the dual-link variants
- *        (HD-SDI dual-link, 3G Level B dual-link, dual-link 3G 425-2).
- */
-inline bool isDualLink(const SdiLinkStandard &standard) {
-        return standard == SdiLinkStandard::DL_HD ||
-               standard == SdiLinkStandard::DL_3GB ||
-               standard == SdiLinkStandard::DL_3G;
-}
-
-/**
- * @brief Returns @c true for the quad-link variants
- *        (3G Square-Division and 3G 2-Sample Interleave).
- */
-inline bool isQuadLink(const SdiLinkStandard &standard) {
-        return standard == SdiLinkStandard::QL_3G_SQD ||
-               standard == SdiLinkStandard::QL_3G_2SI;
-}
-
-/**
- * @brief Returns the nominal aggregate wire bandwidth, in Gbps,
- *        across every cable a given standard occupies.
- *
- * Multi-link variants return the sum of the per-cable rates so the
- * value reflects total physical bandwidth, not per-link bandwidth.
- * For example dual-link 3G (425-2) returns @c 5.94 (2 × 2.97), and
- * quad-link 3G returns @c 11.88 (4 × 2.97).  Returns @c 0.0 for
- * @ref SdiLinkStandard::Auto.
- *
- * Values reflect the canonical "fractional" payload rates used in
- * production specs; the underlying NRZ symbol rates (e.g. 2.9700 vs.
- * 2.9700/1.001) are not material at this descriptor level.
- */
-inline double nominalDataRateGbps(const SdiLinkStandard &standard) {
-        if (standard == SdiLinkStandard::Auto)      return 0.0;
-        if (standard == SdiLinkStandard::SL_SD)     return 0.270;
-        if (standard == SdiLinkStandard::SL_HD)     return 1.485;
-        if (standard == SdiLinkStandard::DL_HD)     return 2.970;  // 2 × 1.485
-        if (standard == SdiLinkStandard::SL_3GA)    return 2.970;
-        if (standard == SdiLinkStandard::SL_3GB)    return 2.970;
-        if (standard == SdiLinkStandard::DL_3GB)    return 2.970;  // 2 × 1.485
-        if (standard == SdiLinkStandard::DL_3G)     return 5.940;  // 2 × 2.97
-        if (standard == SdiLinkStandard::QL_3G_SQD) return 11.880; // 4 × 2.97
-        if (standard == SdiLinkStandard::QL_3G_2SI) return 11.880; // 4 × 2.97
-        if (standard == SdiLinkStandard::SL_6G)     return 5.940;
-        if (standard == SdiLinkStandard::SL_12G)    return 11.880;
-        if (standard == SdiLinkStandard::SL_24G)    return 23.760;
-        return 0.0;
-}
 
 // ============================================================================
 // SdiSignalConfig
@@ -116,7 +43,7 @@ inline double nominalDataRateGbps(const SdiLinkStandard &standard) {
  *
  * Single-link standards carry one @ref VideoPortRef; dual-link two;
  * quad-link four (Square Division or 2-Sample Interleave).
- * @ref validate cross-checks the @c standard's @ref cablesFor against
+ * @ref validate cross-checks the @c standard's @ref sdiCableCount against
  * @ref ports — a 3G-SDI standard paired with three ports rejects.
  * @ref SdiLinkStandard::Auto is treated as "unspecified" — any cable
  * count is accepted, including the empty list.
@@ -188,7 +115,7 @@ class SdiSignalConfig {
                  *
                  * @param standard  Single-link SMPTE standard.  Caller
                  *                  is responsible for choosing one
-                 *                  whose @ref cablesFor returns @c 1
+                 *                  whose @ref sdiCableCount returns @c 1
                  *                  (or @c Auto); @ref validate will
                  *                  reject mismatches.
                  * @param port      The carrier port.
@@ -212,7 +139,7 @@ class SdiSignalConfig {
                  *
                  * Returns @c Error::Ok when:
                  *  - the standard is @c Auto (any cable count, including zero, accepted), or
-                 *  - the number of ports equals @ref cablesFor for the standard.
+                 *  - the number of ports equals @ref sdiCableCount for the standard.
                  *
                  * Returns @c Error::InvalidArgument otherwise.  The
                  * error name is descriptive enough for log output.

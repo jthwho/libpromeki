@@ -104,6 +104,200 @@ TEST_CASE("Cea708Cdp: round-trip CDP with timecode section") {
         CHECK(out.timeCode.frame() == 7);
 }
 
+// ----------------------------------------------------------------------------
+// F2 — ST 334-2:2015 §5.3 Table 4 wire-format correctness.
+// ----------------------------------------------------------------------------
+
+// Helper: locate the time-code section payload (5 bytes including section
+// ID) inside a built CDP wire buffer.  Returns nullptr if absent.
+static const uint8_t *findTimecodeSection(const Buffer &wire) {
+        const uint8_t *p = static_cast<const uint8_t *>(wire.data());
+        // The CDP header is 7 bytes; if time_code_present is set, the
+        // time-code section starts at offset 7 (the time-code section
+        // precedes cc_data / extras / footer).
+        if (wire.size() < 7 + 5) return nullptr;
+        if (p[7] != Cea708Cdp::TimeCodeSectionId) return nullptr;
+        return p + 7;
+}
+
+TEST_CASE("Cea708Cdp: timecode section is emitted in H/M/S/F byte order (ST 334-2 §5.3)") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 5; // 30
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::NDF30), 12, 34, 56, 7);
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+
+        // byte 1 = hours: reserved '11' in bits 7-6, tc_10hrs in bits 5-4
+        // (= 1), tc_1hrs in bits 3-0 (= 2).  Expected: 0xC0 | 0x12 = 0xD2.
+        CHECK(tc[1] == 0xD2);
+        // byte 2 = minutes: reserved '1' in bit 7, tc_10min in bits 6-4
+        // (= 3), tc_1min in bits 3-0 (= 4).  Expected: 0x80 | 0x34 = 0xB4.
+        CHECK(tc[2] == 0xB4);
+        // byte 3 = seconds: tc_field_flag in bit 7 (= 0), tc_10sec in
+        // bits 6-4 (= 5), tc_1sec in bits 3-0 (= 6).  Expected: 0x56.
+        CHECK(tc[3] == 0x56);
+        // byte 4 = frames: drop_frame_flag in bit 7 (= 0), reserved '0'
+        // in bit 6, tc_10fr in bits 5-4 (= 0), tc_1fr in bits 3-0 (= 7).
+        // Expected: 0x07.
+        CHECK(tc[4] == 0x07);
+}
+
+TEST_CASE("Cea708Cdp: timecode section reserved bits are '11' / '1' (ST 334-2 §5.3 Table 4)") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 5;
+        cdp.timeCodePresent = true;
+        // Pick digits whose BCD encoding has zero in the high bits of the
+        // hours / minutes bytes, so the reserved-bit check isolates the
+        // stamped '1' bits from the digit data.
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+
+        // Hours byte bits 7-6 must be '11'.
+        CHECK((tc[1] & 0xC0) == 0xC0);
+        // Minutes byte bit 7 must be '1'.
+        CHECK((tc[2] & 0x80) == 0x80);
+        // Frames byte bit 6 must be '0' (reserved zero, not a flag).
+        CHECK((tc[4] & 0x40) == 0x00);
+}
+
+TEST_CASE("Cea708Cdp: drop_frame_flag propagates from Timecode mode (ST 334-2 §5.3)") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 4; // 29.97
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::DF30), 1, 0, 0, 0);
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+        // byte 4 bit 7 = drop_frame_flag; must be set for DF30 mode.
+        CHECK((tc[4] & 0x80) == 0x80);
+
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        CHECK(r.first().timeCode.isDropFrame());
+}
+
+TEST_CASE("Cea708Cdp: drop_frame_flag clear for NDF Timecode") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 5; // 30
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+        CHECK((tc[4] & 0x80) == 0x00);
+
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        CHECK_FALSE(r.first().timeCode.isDropFrame());
+}
+
+TEST_CASE("Cea708Cdp: tc_field_flag round-trips through wire") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 4;
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::DF30), 1, 0, 0, 0);
+        cdp.tcFieldFlag = true;
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+        // byte 3 bit 7 = tc_field_flag.
+        CHECK((tc[3] & 0x80) == 0x80);
+
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        CHECK(r.first().tcFieldFlag);
+}
+
+TEST_CASE("Cea708Cdp: tc_field_flag defaults to false and emits zero bit") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 5;
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
+        CHECK_FALSE(cdp.tcFieldFlag);
+
+        Buffer wire = cdp.toBuffer();
+        const uint8_t *tc = findTimecodeSection(wire);
+        REQUIRE(tc != nullptr);
+        CHECK((tc[3] & 0x80) == 0x00);
+}
+
+TEST_CASE("Cea708Cdp: parse resolves Timecode::Mode from frameRateCode (ST 334-2 Table 3)") {
+        struct Case {
+                uint8_t  code;
+                bool     dropFrame;
+                uint32_t expectedFps;
+                bool     expectedDf;
+        };
+        const Case cases[] = {
+                {1, false, 24, false}, // 23.976
+                {2, false, 24, false},
+                {3, false, 25, false},
+                {4, true, 30, true}, // 29.97 DF
+                {4, false, 30, false}, // 29.97 NDF
+                {5, false, 30, false}, // 30 NDF
+                {5, true, 30, true}, // 30 DF
+                {6, false, 50, false},
+                {7, true, 60, true}, // 59.94 DF
+                {7, false, 60, false}, // 59.94 NDF
+                {8, false, 60, false},
+        };
+
+        for (const Case &c : cases) {
+                Cea708Cdp cdp;
+                cdp.frameRateCode = c.code;
+                cdp.timeCodePresent = true;
+                // Drop the DF flag straight into the wire by hand —
+                // building from a Timecode requires a libvtc format that
+                // matches, but here we just want to feed parse the bit.
+                Buffer wire = cdp.toBuffer();
+                uint8_t *p = static_cast<uint8_t *>(wire.data());
+                if (c.dropFrame) {
+                        p[7 + 4] |= 0x80; // set drop_frame_flag bit
+                        // Recompute the packet checksum.
+                        size_t   sz = wire.size();
+                        uint32_t sum = 0;
+                        for (size_t i = 0; i < sz - 1; ++i) sum += p[i];
+                        p[sz - 1] = static_cast<uint8_t>((0x100 - (sum & 0xFF)) & 0xFF);
+                }
+                Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+                REQUIRE(r.second().isOk());
+                CHECK(r.first().timeCode.fps() == c.expectedFps);
+                CHECK(r.first().timeCode.isDropFrame() == c.expectedDf);
+        }
+}
+
+TEST_CASE("Cea708Cdp: parse marks Mode invalid for unknown frame rate code") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 0; // reserved / unknown
+        cdp.timeCodePresent = true;
+        Buffer            wire = cdp.toBuffer();
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        CHECK_FALSE(r.first().timeCode.isValid());
+}
+
+TEST_CASE("Cea708Cdp: full timecode round-trip preserves digits + mode + flags") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 4;
+        cdp.timeCodePresent = true;
+        cdp.timeCode = Timecode(Timecode::Mode(Timecode::DF30), 1, 2, 3, 4);
+        cdp.tcFieldFlag = true;
+
+        Buffer            wire = cdp.toBuffer();
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        CHECK(r.first() == cdp);
+}
+
 // ============================================================================
 // Checksum / structural validation
 // ============================================================================

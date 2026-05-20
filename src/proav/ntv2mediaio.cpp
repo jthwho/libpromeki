@@ -30,10 +30,12 @@
 #include <promeki/ntv2format.h>
 #include <promeki/ntv2routing.h>
 #include <promeki/ntv2vpid.h>
+#include <promeki/sdiwireinference.h>
 #include <promeki/system.h>
 #include <promeki/thread.h>
 #include <promeki/timestamp.h>
 #include <promeki/url.h>
+#include <promeki/videoformat.h>
 
 #include <ntv2card.h>
 #include <ntv2devicescanner.h>
@@ -254,6 +256,7 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(StatsPacingTicksLate, _paceGate.ticksLate());
         cmd.stats.set(StatsPacingTicksSkipped, _paceGate.ticksSkipped());
         cmd.stats.set(StatsPacingReanchors, _paceGate.reanchors());
+        cmd.stats.set(StatsDeviceLost, _deviceLostCount.value());
         const int64_t qDepth    = _sinkMode ? static_cast<int64_t>(_writeQueue.size())
                                             : static_cast<int64_t>(_videoQueue.size());
         const int64_t qCapacity = _sinkMode ? static_cast<int64_t>(WriteQueueDepth)
@@ -517,6 +520,8 @@ Error Ntv2MediaIO::openSource(const MediaIO::Config &cfg, const MediaDesc &md) {
         _ancPacketsReceived.setValue(0);
         _signalLossCount.setValue(0);
         _signalReacquiredCount.setValue(0);
+        _deviceLostCount.setValue(0);
+        _deviceLost.setValue(false);
         // We just verified a valid input video format above, so the
         // signal-present latch starts true.  The capture worker's
         // periodic poll toggles it on detected loss / recovery.
@@ -660,7 +665,7 @@ void Ntv2MediaIO::captureLoop() {
                                 Ntv2Format::portToInputSource(_reservedPorts[0]));
         int vbiTickCount = 0;
 
-        while (!_stopFlag.value()) {
+        while (!_stopFlag.value() && !_deviceLost.value()) {
                 AUTOCIRCULATE_STATUS acStatus;
                 card.AutoCirculateGetStatus(ntv2Ch, acStatus);
                 if (acStatus.IsRunning() && acStatus.HasAvailableInputFrame()) {
@@ -836,6 +841,25 @@ void Ntv2MediaIO::captureLoop() {
                             && ntv2Src != NTV2_INPUTSOURCE_INVALID
                             && vbiTickCount >= _signalPollIntervalVbi) {
                                 vbiTickCount = 0;
+
+                                // Driver-restart detection — if the
+                                // AJA driver has been unloaded or the
+                                // card has been hot-unplugged the
+                                // CNTV2Card handle goes invalid.
+                                // Surface that as a single
+                                // errorOccurredSignal(DeviceError) +
+                                // exit the loop cleanly rather than
+                                // looping forever on dead IOCTLs.
+                                if (!card.IsOpen()) {
+                                        _deviceLostCount.fetchAndAdd(1);
+                                        _deviceLost.setValue(true);
+                                        promekiErr(
+                                                "Ntv2MediaIO: device handle invalid mid-capture "
+                                                "(driver restart / hot-unplug?) on channel %d",
+                                                _channel);
+                                        errorOccurredSignal.emit(Error(Error::DeviceError));
+                                        break;
+                                }
                                 const NTV2VideoFormat fmt =
                                         card.GetInputVideoFormat(ntv2Src);
                                 const bool nowPresent = fmt != NTV2_FORMAT_UNKNOWN;
@@ -963,20 +987,20 @@ Error Ntv2MediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
         }
 
         // SDI output ports.  Three intake shapes:
-        //   1. Ntv2MirrorOutputs set → fanout: first group is the
+        //   1. SdiOutputFanout set → fanout: first group is the
         //      primary destination, subsequent groups are mirrors.
         //      All groups share the SdiLinkStandard.
         //   2. SdiOutputSignal set → single destination, no fanout.
         //   3. Neither → default to the SDI port matching _channel.
         SdiOutputFanoutConfig fanout =
-                cfg.getAs<SdiOutputFanoutConfig>(MediaConfig::Ntv2MirrorOutputs,
+                cfg.getAs<SdiOutputFanoutConfig>(MediaConfig::SdiOutputFanout,
                                                  SdiOutputFanoutConfig());
         SdiSignalConfig sdiSignal;
         List<int>       mirrorPortStarts;
         SdiSignalConfig::PortList allPorts;
         if (fanout.groupCount() > 0) {
                 if (!fanout.isValid()) {
-                        promekiErr("Ntv2MediaIO: Ntv2MirrorOutputs has mismatched group sizes "
+                        promekiErr("Ntv2MediaIO: SdiOutputFanout has mismatched group sizes "
                                    "for standard '%s'",
                                    fanout.standard().toString().cstr());
                         Ntv2DeviceRegistry::instance().release(_device);
@@ -1071,6 +1095,50 @@ Error Ntv2MediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
                 return Error::NotSupported;
         }
 
+        // On a sink there is nothing to detect — the wire standard
+        // is forced by the chosen raster + rate + cable count + the
+        // wire payload format.  When the caller leaves the
+        // SdiLinkStandard as Auto (either because they didn't supply
+        // an SdiOutputSignal at all or because they explicitly want
+        // the library to pick), infer it now so the routing helper
+        // and downstream programming pick up a concrete standard.
+        //
+        // The wire payload is the framebuffer's natural wire format
+        // (@ref sdiWireFormatFor), unless on-board CSC is in play —
+        // in which case the wire colour family flips to YCbCr 4:2:2
+        // 10-bit (the only family single-link SDI carries natively).
+        if (sdiSignal.standard() == SdiLinkStandard::Auto) {
+                const VideoFormat fmt(_imageDesc.size(), _frameRate, _imageDesc.videoScanMode());
+                const bool framebufferRgb = pf.colorModel().type() != ColorModel::TypeYCbCr;
+                const bool onBoardCscEnabled =
+                        !cfg.getAs<bool>(MediaConfig::Ntv2DisableOnBoardCsc, false)
+                        && _device->caps().cscCount() > 0;
+                SdiWireFormat wireFormat = sdiWireFormatFor(pf);
+                if (framebufferRgb && onBoardCscEnabled) {
+                        // On-board CSC will reduce RGB → YCbCr 4:2:2
+                        // 10-bit on the wire before it ever hits the
+                        // SDI cable, so the wire bandwidth is the
+                        // YCbCr payload's rate, not the RGB framestore's.
+                        wireFormat = SdiWireFormat::YCbCr_422_10;
+                }
+                const SdiLinkStandard inferred = inferSdiLinkStandard(
+                        fmt, wireFormat, static_cast<int>(_reservedPorts.size()));
+                if (inferred == SdiLinkStandard::Auto) {
+                        promekiErr("Ntv2MediaIO: cannot infer SdiLinkStandard for '%s' (pf=%s, wire=%s) "
+                                   "over %zu cable(s); set MediaConfig::SdiOutputSignal explicitly",
+                                   fmt.toString().cstr(), pf.name().cstr(),
+                                   wireFormat.toString().cstr(), _reservedPorts.size());
+                        closeSink();
+                        return Error::InvalidArgument;
+                }
+                promekiInfo("Ntv2MediaIO: sink open inferred SdiLinkStandard '%s' from '%s' "
+                            "(pf=%s, wire=%s) over %zu cable(s)",
+                            inferred.toString().cstr(), fmt.toString().cstr(),
+                            pf.name().cstr(), wireFormat.toString().cstr(),
+                            _reservedPorts.size());
+                sdiSignal.setStandard(inferred);
+        }
+
         // ---- Program the card for output ----
         //
         // Same non-recursive-mutex pattern as openSource: scope the
@@ -1114,7 +1182,7 @@ Error Ntv2MediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
                 // configured SdiLinkStandard, plus on-board CSC
                 // insertion when the framestore colour family
                 // differs from the wire's, plus mirror groups when
-                // Ntv2MirrorOutputs was set.
+                // SdiOutputFanout was set.
                 Ntv2Routing::Config rcfg;
                 rcfg.standard         = sdiSignal.standard();
                 rcfg.channelStart     = _channel;
@@ -1208,6 +1276,8 @@ Error Ntv2MediaIO::openSink(const MediaIO::Config &cfg, const MediaDesc &md) {
         _framesPlayed.setValue(0);
         _framesDroppedSink.setValue(0);
         _ancPacketsSent.setValue(0);
+        _deviceLostCount.setValue(0);
+        _deviceLost.setValue(false);
 
         // External pacing (Phase 6) starts unbound — the card paces
         // itself off its own reference and a later
@@ -1516,7 +1586,30 @@ void Ntv2MediaIO::playoutLoop() {
         int                    queuedFrames = 0;
         constexpr int          kPrebuffer   = 3;
 
-        while (!_stopFlag.value()) {
+        // Match the capture worker's driver-restart poll cadence —
+        // every Nth loop iteration we consult @c CNTV2Card::IsOpen
+        // to catch the driver going away mid-stream.  Reuses
+        // @ref _signalPollIntervalVbi which is "VBIs between polls"
+        // on the source side; here it's "loop iterations between
+        // polls" but the practical cadence is similar (one iteration
+        // per VBI in steady state).
+        int devicePollTickCount = 0;
+
+        while (!_stopFlag.value() && !_deviceLost.value()) {
+                if (_signalPollIntervalVbi > 0
+                    && ++devicePollTickCount >= _signalPollIntervalVbi) {
+                        devicePollTickCount = 0;
+                        if (!card.IsOpen()) {
+                                _deviceLostCount.fetchAndAdd(1);
+                                _deviceLost.setValue(true);
+                                promekiErr(
+                                        "Ntv2MediaIO: device handle invalid mid-playout "
+                                        "(driver restart / hot-unplug?) on channel %d",
+                                        _channel);
+                                errorOccurredSignal.emit(Error(Error::DeviceError));
+                                break;
+                        }
+                }
                 AUTOCIRCULATE_STATUS acStatus;
                 card.AutoCirculateGetStatus(ntv2Ch, acStatus);
                 if (acStatus.CanAcceptMoreOutputFrames()) {

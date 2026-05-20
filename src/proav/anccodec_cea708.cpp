@@ -63,7 +63,8 @@ namespace {
                 const uint8_t *src = static_cast<const uint8_t *>(wire.data());
                 for (size_t i = 0; i < sz; ++i) udw[i] = src[i];
 
-                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine, uint16_t(0));
+                uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
+                                                    St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, line,

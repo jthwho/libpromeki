@@ -232,4 +232,17 @@ TEST_CASE("Error::SignalLoss is registered and distinct from NotReady") {
         CHECK(!loss.desc().isEmpty());
 }
 
+TEST_CASE("Ntv2MediaIO: StatsDeviceLost is a registered MediaIOStats ID") {
+        // Driver-restart / hot-unplug detection ticks this counter
+        // and emits errorOccurredSignal(DeviceError).  The ID itself
+        // must be exposed so dashboards can wire it up without
+        // hardcoding the name.
+        const MediaIOStats::ID id = Ntv2MediaIO::StatsDeviceLost;
+        CHECK(!id.name().isEmpty());
+        CHECK(id.name() == String("Ntv2DeviceLost"));
+        // And distinct from the signal-loss IDs.
+        CHECK(id != Ntv2MediaIO::StatsSignalLoss);
+        CHECK(id != Ntv2MediaIO::StatsSignalReacquired);
+}
+
 #endif // PROMEKI_ENABLE_NTV2
