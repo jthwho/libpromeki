@@ -40,7 +40,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip every AFD code with AR=1") {
         AncTranslator t;
         for (uint8_t code = 0; code < 16; ++code) {
                 AncAfd input(code, true);
-                Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+                AncTranslator::PacketsResult built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
                 REQUIRE(built.second().isOk());
                 CHECK(built.first().front().format().id() == AncFormat::Afd);
                 CHECK(built.first().front().transport() == AncTransport::St291);
@@ -52,7 +52,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip every AFD code with AR=1") {
                 CHECK(rp.first().dataCount() == 8);
                 CHECK(rp.first().checksumValid());
 
-                Result<Variant> parsed = t.parse(built.first().front());
+                AncTranslator::ParseResult parsed = t.parse(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 AncAfd back = parsed.first().get<AncAfd>();
                 CHECK(back == input);
@@ -62,9 +62,9 @@ TEST_CASE("AFD<->St291: AncAfd round-trip every AFD code with AR=1") {
 TEST_CASE("AFD<->St291: AncAfd round-trip AR=0 path") {
         AncTranslator t;
         AncAfd input(0x09, false);
-        Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+        AncTranslator::PacketsResult built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         CHECK(parsed.first().get<AncAfd>() == input);
 }
@@ -77,7 +77,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip preserves letterbox bar data") {
         input.setBarValue1(0x003C);   // top-bar end line  (60)
         input.setBarValue2(0x01A4);   // bottom-bar start line  (420)
 
-        Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+        AncTranslator::PacketsResult built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
         Result<St291Packet> rp = St291Packet::from(built.first().front());
@@ -94,7 +94,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip preserves letterbox bar data") {
         CHECK((udw[6] & 0xFF) == 0x01);
         CHECK((udw[7] & 0xFF) == 0xA4);
 
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAfd back = parsed.first().get<AncAfd>();
         CHECK(back == input);
@@ -114,7 +114,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip preserves pillarbox bar data") {
         input.setBarValue1(0x0078);    // left-bar last pixel (120)
         input.setBarValue2(0x0A00);    // right-bar first pixel (2560)
 
-        Result<List<AncPacket>> built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
+        AncTranslator::PacketsResult built = t.build(Variant(input), AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
         Result<St291Packet> rp = St291Packet::from(built.first().front());
@@ -123,7 +123,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip preserves pillarbox bar data") {
         REQUIRE(udw.size() == 8);
         CHECK((udw[3] & 0xFF) == 0x30);    // Left + Right in bits 5-4
 
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAfd back = parsed.first().get<AncAfd>();
         CHECK(back == input);
@@ -135,7 +135,7 @@ TEST_CASE("AFD<->St291: AncAfd round-trip preserves pillarbox bar data") {
 
 TEST_CASE("AFD<->St291: built packet has 8 UDWs, reserved slots zeroed") {
         AncTranslator t;
-        Result<List<AncPacket>> built = t.build(Variant(AncAfd(0x0A, true)),
+        AncTranslator::PacketsResult built = t.build(Variant(AncAfd(0x0A, true)),
                                                 AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
@@ -155,13 +155,13 @@ TEST_CASE("AFD<->St291: built packet has 8 UDWs, reserved slots zeroed") {
 TEST_CASE("AFD<->St291: legacy uint8_t Variant input still builds a valid packet") {
         AncTranslator t;
         // The pre-F4 API used a packed uint8_t (bit 7 = AR, bits 6..3 = code).
-        Result<List<AncPacket>> built = t.build(Variant(packLegacy(0x0A, true)),
+        AncTranslator::PacketsResult built = t.build(Variant(packLegacy(0x0A, true)),
                                                 AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
         // Parsed result is the new AncAfd shape with zero bar data
         // (the legacy form had no slot to carry it).
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAfd back = parsed.first().get<AncAfd>();
         CHECK(back.afdCode() == 0x0A);
@@ -185,7 +185,7 @@ TEST_CASE("AFD<->St291: line / fieldB threaded from AncTranslateConfig") {
         cfg.set(AncTranslateConfig::St291BuildLine, uint16_t(13));
         cfg.set(AncTranslateConfig::St291FieldB, true);
         AncTranslator     t(cfg);
-        Result<List<AncPacket>> built = t.build(Variant(AncAfd(0x0A, true)),
+        AncTranslator::PacketsResult built = t.build(Variant(AncAfd(0x0A, true)),
                                                 AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
@@ -201,12 +201,12 @@ TEST_CASE("AFD<->St291: line / fieldB threaded from AncTranslateConfig") {
 
 TEST_CASE("AFD sync policy: Play returns the packet unchanged") {
         AncTranslator           t;
-        Result<List<AncPacket>> built = t.build(Variant(AncAfd(0x0A, true)),
+        AncTranslator::PacketsResult built = t.build(Variant(AncAfd(0x0A, true)),
                                                   AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
         const AncPacket &pkt = built.first().front();
 
-        Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::play(), 0);
+        AncTranslator::PacketsResult res = t.applySyncPolicy(pkt, FrameSyncDisposition::play(), 0);
         REQUIRE(res.second().isOk());
         REQUIRE(res.first().size() == 1);
         // Bytes preserved exactly.
@@ -215,12 +215,12 @@ TEST_CASE("AFD sync policy: Play returns the packet unchanged") {
 
 TEST_CASE("AFD sync policy: Drop returns an empty list") {
         AncTranslator           t;
-        Result<List<AncPacket>> built = t.build(Variant(AncAfd(0x0A, true)),
+        AncTranslator::PacketsResult built = t.build(Variant(AncAfd(0x0A, true)),
                                                   AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
         const AncPacket &pkt = built.first().front();
 
-        Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::drop(), 0);
+        AncTranslator::PacketsResult res = t.applySyncPolicy(pkt, FrameSyncDisposition::drop(), 0);
         REQUIRE(res.second().isOk());
         CHECK(res.first().size() == 0);
 }
@@ -228,16 +228,16 @@ TEST_CASE("AFD sync policy: Drop returns an empty list") {
 TEST_CASE("AFD sync policy: Repeat copies the packet through at every index") {
         AncTranslator           t;
         AncAfd                  src(0x0A, true);
-        Result<List<AncPacket>> built = t.build(Variant(src),
+        AncTranslator::PacketsResult built = t.build(Variant(src),
                                                   AncFormat(AncFormat::Afd), AncTransport::St291);
         REQUIRE(built.second().isOk());
         const AncPacket &pkt = built.first().front();
 
         for (uint8_t i = 0; i < 4; ++i) {
-                Result<List<AncPacket>> res = t.applySyncPolicy(pkt, FrameSyncDisposition::repeat(4), i);
+                AncTranslator::PacketsResult res = t.applySyncPolicy(pkt, FrameSyncDisposition::repeat(4), i);
                 REQUIRE(res.second().isOk());
                 REQUIRE(res.first().size() == 1);
-                Result<Variant> parsed = t.parse(res.first().front());
+                AncTranslator::ParseResult parsed = t.parse(res.first().front());
                 REQUIRE(parsed.second().isOk());
                 CHECK(parsed.first().get<AncAfd>() == src);
         }

@@ -82,7 +82,7 @@ Error AncFrameSync::applyDropAndStash(const Frame &frame) {
                         if (!AncTranslator::hasSyncPolicy(pkt.format())) {
                                 warnFallbackOnce(pkt.format().id(), pkt.format().name());
                         }
-                        Result<List<AncPacket>> res =
+                        AncTranslator::PacketsResult res =
                                 _translator.applySyncPolicy(pkt, FrameSyncDisposition::drop(), 0);
                         if (res.second().isError()) return res.second();
                         if (!res.first().isEmpty()) {
@@ -93,7 +93,7 @@ Error AncFrameSync::applyDropAndStash(const Frame &frame) {
         return Error::Ok;
 }
 
-void AncFrameSync::stashPackets(AncFormat::ID id, const List<AncPacket> &pkts) {
+void AncFrameSync::stashPackets(AncFormat::ID id, const AncPacket::List &pkts) {
         if (pkts.isEmpty()) return;
         if (_stash.contains(id)) {
                 promekiWarn("AncFrameSync: stash collision for format=%d; "
@@ -172,7 +172,7 @@ Error AncFrameSync::applyToFrame(Frame &frame, FrameSyncDisposition disposition,
                         if (!AncTranslator::hasSyncPolicy(pkt.format())) {
                                 warnFallbackOnce(pkt.format().id(), pkt.format().name());
                         }
-                        Result<List<AncPacket>> res =
+                        AncTranslator::PacketsResult res =
                                 _translator.applySyncPolicy(pkt, disposition, repeatIndex);
                         if (res.second().isError()) return res.second();
                         for (const AncPacket &outPkt : res.first()) {

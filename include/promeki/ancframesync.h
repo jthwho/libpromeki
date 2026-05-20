@@ -175,7 +175,7 @@ class AncFrameSync {
                 // (next Play emits all of them).  A second Drop hitting the
                 // same format replaces the previously-stashed list and
                 // warns once.
-                void stashPackets(AncFormat::ID id, const ::promeki::List<AncPacket> &pkts);
+                void stashPackets(AncFormat::ID id, const AncPacket::List &pkts);
 
                 // Appends every stashed packet to @p frame's first AncPayload
                 // (creating an empty AncPayload on the frame if none exists).
@@ -185,7 +185,7 @@ class AncFrameSync {
 
                 AncTranslator                                       _translator;
                 Set<AncFormat::ID>                                  _fallbackWarned;
-                Map<AncFormat::ID, ::promeki::List<AncPacket>>      _stash;
+                Map<AncFormat::ID, AncPacket::List>      _stash;
 };
 
 PROMEKI_NAMESPACE_END

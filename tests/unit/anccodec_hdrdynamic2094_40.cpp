@@ -54,7 +54,7 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: parser + builder registered") {
 TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: build emits Vendor-Specific InfoFrame on type 0x81 / version 1") {
         AncTranslator     t;
         HdrDynamic2094_40 md = sampleHdr10Plus();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(md), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::HdmiInfoFrame);
         REQUIRE(built.second().isOk());
         CHECK(built.first().front().format().id() == AncFormat::HdrDynamic2094_40);
@@ -79,11 +79,11 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: build emits Vendor-Specific InfoFr
 TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: round-trip via AncTranslator parse + build") {
         AncTranslator     t;
         HdrDynamic2094_40 src = sampleHdr10Plus();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(src), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::HdmiInfoFrame);
         REQUIRE(built.second().isOk());
 
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         REQUIRE(parsed.first().type() == DataTypeHdrDynamic2094_40);
 
@@ -96,7 +96,7 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: AncTranslateConfig::HdmiInfoFrameO
         cfg.set(AncTranslateConfig::HdmiInfoFrameOui, uint32_t(0xAABBCCu));
         AncTranslator     t(cfg);
         HdrDynamic2094_40 md = sampleHdr10Plus();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(md), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::HdmiInfoFrame);
         REQUIRE(built.second().isOk());
 
@@ -111,7 +111,7 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: AncTranslateConfig::HdmiInfoFrameO
 
         // Parser still round-trips even when the OUI is not the HDR10+ default —
         // it parses the bitstream after the three OUI bytes regardless.
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         HdrDynamic2094_40 out = parsed.first().get<HdrDynamic2094_40>();
         CHECK(out == md);
@@ -123,6 +123,6 @@ TEST_CASE("HdrDynamic2094_40<->HdmiInfoFrame: parser rejects body shorter than 3
                                                       HdrDynamic2094_40::InfoFrameVersion, Buffer());
 
         AncTranslator   t;
-        Result<Variant> parsed = t.parse(frame.packet());
+        AncTranslator::ParseResult parsed = t.parse(frame.packet());
         CHECK(parsed.second().isError());
 }

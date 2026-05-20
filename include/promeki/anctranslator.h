@@ -88,11 +88,11 @@ PROMEKI_NAMESPACE_BEGIN
  * AncTranslator t(cfg);
  *
  * // Decode an inbound packet to its typed Variant form.
- * Result<Variant> r = t.parse(myPacket);
+ * AncTranslator::ParseResult r = t.parse(myPacket);
  *
  * // Translate to a different transport.  Falls back to parse+build
  * // when no direct translator is registered.
- * Result<List<AncPacket>> r2 = t.translate(myPacket, AncTransport::NdiXml);
+ * AncTranslator::PacketsResult r2 = t.translate(myPacket, AncTransport::NdiXml);
  * @endcode
  *
  * @par Thread Safety
@@ -104,10 +104,32 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class AncTranslator {
         public:
+                // -- Return-type aliases --------------------------------------
+
+                /**
+                 * @brief Result of a parse / multi-parse dispatch — a typed
+                 *        @ref Variant carrying the format's
+                 *        application-level payload.
+                 */
+                using ParseResult = Result<Variant>;
+
+                /**
+                 * @brief Result of a build / translate / sync-policy dispatch
+                 *        — a list of zero-or-more @ref AncPacket on the
+                 *        target transport.
+                 *
+                 * The common case is a one-element list.  Codecs that split
+                 * a single logical message across multiple ANC packets
+                 * (e.g. SMPTE ST 2108-2 HDR10+) return the full split
+                 * sequence; sync policies return an empty list on
+                 * @c Drop.
+                 */
+                using PacketsResult = Result<AncPacket::List>;
+
                 // -- Handler signatures ---------------------------------------
 
                 /** @brief Parser: decode one packet's wire bytes into a typed Variant. */
-                using ParserFn = Result<Variant> (*)(const AncPacket &, const AncTranslateConfig &);
+                using ParserFn = ParseResult (*)(const AncPacket &, const AncTranslateConfig &);
 
                 /**
                  * @brief Multi-packet parser: decode a sequence of packets
@@ -127,8 +149,8 @@ class AncTranslator {
                  * Codecs that only ever see one packet per message
                  * register a regular @ref ParserFn instead.
                  */
-                using MultiParserFn = Result<Variant> (*)(const ::promeki::List<AncPacket> &,
-                                                           const AncTranslateConfig &);
+                using MultiParserFn = ParseResult (*)(const AncPacket::List &,
+                                                       const AncTranslateConfig &);
 
                 /**
                  * @brief Builder: encode a typed Variant onto a target
@@ -142,8 +164,7 @@ class AncTranslator {
                  * @c Packet Count) can do so cleanly.  The common case
                  * is a one-element list.
                  */
-                using BuilderFn = Result<::promeki::List<AncPacket>> (*)(const Variant &,
-                                                                          const AncTranslateConfig &);
+                using BuilderFn = PacketsResult (*)(const Variant &, const AncTranslateConfig &);
 
                 /**
                  * @brief Direct translator: wire-to-wire conversion that
@@ -157,8 +178,8 @@ class AncTranslator {
                  * one inbound packet may legitimately fan out to many
                  * outbound packets on transports that fragment messages.
                  */
-                using TranslatorFn = Result<::promeki::List<AncPacket>> (*)(const AncPacket &, AncTransport,
-                                                                              const AncTranslateConfig &);
+                using TranslatorFn = PacketsResult (*)(const AncPacket &, AncTransport,
+                                                        const AncTranslateConfig &);
 
                 /**
                  * @brief Frame-sync policy: transform one ANC packet according
@@ -190,10 +211,10 @@ class AncTranslator {
                  * is no transport dimension, since frame-rate-conversion
                  * semantics are transport-independent.
                  */
-                using SyncPolicyFn = Result<::promeki::List<AncPacket>> (*)(const AncPacket &,
-                                                                             FrameSyncDisposition,
-                                                                             uint8_t repeatIndex,
-                                                                             const AncTranslateConfig &);
+                using SyncPolicyFn = PacketsResult (*)(const AncPacket &,
+                                                        FrameSyncDisposition,
+                                                        uint8_t repeatIndex,
+                                                        const AncTranslateConfig &);
 
                 // -- Construction --------------------------------------------
 
@@ -223,7 +244,7 @@ class AncTranslator {
                  *         @c Error::NotSupported when no parser is
                  *         registered.
                  */
-                Result<Variant> parse(const AncPacket &pkt) const;
+                ParseResult parse(const AncPacket &pkt) const;
 
                 /**
                  * @brief Decodes a sequence of related packets carrying
@@ -245,7 +266,7 @@ class AncTranslator {
                  * @param pkts Non-empty packet list belonging to one
                  *             logical message.
                  */
-                Result<Variant> parseGroup(const ::promeki::List<AncPacket> &pkts) const;
+                ParseResult parseGroup(const AncPacket::List &pkts) const;
 
                 /**
                  * @brief Encodes a typed Variant onto the requested transport.
@@ -265,8 +286,8 @@ class AncTranslator {
                  *               @c Error::NotSupported when no builder
                  *               is registered.
                  */
-                Result<::promeki::List<AncPacket>> build(const Variant &v, const AncFormat &fmt,
-                                                          const AncTransport &target) const;
+                PacketsResult build(const Variant &v, const AncFormat &fmt,
+                                     const AncTransport &target) const;
 
                 /**
                  * @brief Translates a packet onto the requested transport.
@@ -285,8 +306,7 @@ class AncTranslator {
                  *               or @c Error::NotSupported when no path
                  *               exists.
                  */
-                Result<::promeki::List<AncPacket>> translate(const AncPacket &pkt,
-                                                              const AncTransport &target) const;
+                PacketsResult translate(const AncPacket &pkt, const AncTransport &target) const;
 
                 /**
                  * @brief Applies a frame-sync disposition to one ANC packet.
@@ -307,9 +327,9 @@ class AncTranslator {
                  *                     @c Drop.
                  * @return The transformed packet list (empty list = drop).
                  */
-                Result<::promeki::List<AncPacket>> applySyncPolicy(const AncPacket   &pkt,
-                                                                    FrameSyncDisposition disposition,
-                                                                    uint8_t              repeatIndex) const;
+                PacketsResult applySyncPolicy(const AncPacket     &pkt,
+                                               FrameSyncDisposition disposition,
+                                               uint8_t              repeatIndex) const;
 
                 // -- Static registration -------------------------------------
 

@@ -150,7 +150,7 @@ namespace {
 
         // -- Parsing ----------------------------------------------------------
 
-        Result<Variant> parseAtcSt291Impl(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+        AncTranslator::ParseResult parseAtcSt291Impl(const AncPacket &pkt, const AncTranslateConfig &cfg) {
                 Result<St291Packet> rp = St291Packet::from(pkt);
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 const St291Packet &p   = rp.first();
@@ -324,7 +324,7 @@ namespace {
         // comes from whichever build entry point fires (one per
         // registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2), and
         // drives both the SDID stamp and the DBB1 byte in packAtcUdw.
-        Result<List<AncPacket>> buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
+        AncTranslator::PacketsResult buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
                                                const AncTranslateConfig &cfg) {
                 AncAtc         atc = variantToAncAtc(v);
                 List<uint16_t> udw = packAtcUdw(atc, fmtId);
@@ -335,20 +335,20 @@ namespace {
 
                 St291Packet     p = St291Packet::build(AncFormat(fmtId), udw, line, St291Packet::UnspecifiedHOffset,
                                                         fieldB);
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(p.packet());
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
-        Result<List<AncPacket>> buildAtcLtcSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildAtcLtcSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcLtc, v, cfg);
         }
 
-        Result<List<AncPacket>> buildAtcVitc1St291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildAtcVitc1St291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcVitc1, v, cfg);
         }
 
-        Result<List<AncPacket>> buildAtcVitc2St291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildAtcVitc2St291(const Variant &v, const AncTranslateConfig &cfg) {
                 return buildAtcSt291(AncFormat::AtcVitc2, v, cfg);
         }
 
@@ -365,20 +365,20 @@ namespace {
         // input packet is copied through verbatim — no re-encode, no
         // chance of subtle byte differences from the parse/build round
         // trip.  Only Repeat[idx>0] re-encodes.
-        Result<List<AncPacket>> syncPolicyAtc(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult syncPolicyAtc(const AncPacket &pkt, FrameSyncDisposition d,
                                                uint8_t repeatIndex, const AncTranslateConfig &cfg) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() == FrameSyncDisposition::Drop) {
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
                 if (d.kind() == FrameSyncDisposition::Play || repeatIndex == 0) {
                         out.pushToBack(pkt);
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
 
                 // Repeat[idx>0]: parse, advance by repeatIndex frames, re-encode.
-                Result<Variant> parsed = parseAtcSt291Impl(pkt, cfg);
-                if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
+                AncTranslator::ParseResult parsed = parseAtcSt291Impl(pkt, cfg);
+                if (parsed.second().isError()) return makeError<AncPacket::List>(parsed.second());
                 AncAtc   atc = parsed.first().get<AncAtc>();
                 Timecode tc  = atc.timecode();
                 for (uint8_t i = 0; i < repeatIndex; ++i) ++tc;
@@ -389,7 +389,7 @@ namespace {
                 // are baked into the held cfg.  Other cfg keys (checksum
                 // policy etc.) flow through unchanged.
                 Result<St291Packet> rp = St291Packet::from(pkt);
-                if (rp.second().isError()) return makeError<List<AncPacket>>(rp.second());
+                if (rp.second().isError()) return makeError<AncPacket::List>(rp.second());
                 AncTranslateConfig overrideCfg = cfg;
                 overrideCfg.set(AncTranslateConfig::St291BuildLine, rp.first().line());
                 overrideCfg.set(AncTranslateConfig::St291FieldB, rp.first().fieldB());

@@ -77,7 +77,7 @@ namespace {
                 return v;
         }
 
-        Result<Variant> parseAfdSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseAfdSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 Result<St291Packet> rp = St291Packet::from(pkt);
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
 
@@ -113,7 +113,7 @@ namespace {
                 return makeResult<Variant>(Variant(out));
         }
 
-        Result<List<AncPacket>> buildAfdSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildAfdSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 AncAfd afd = variantToAncAfd(v);
 
                 List<uint16_t> udw;
@@ -133,9 +133,9 @@ namespace {
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::Afd), udw, line,
                                                         St291Packet::UnspecifiedHOffset, fieldB);
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(p.packet());
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         // AFD is sticky / idempotent — the AR + AFD code describe the
@@ -144,13 +144,13 @@ namespace {
         // frame is correct (downstream consumer keeps the same framing
         // decision); dropping it is also fine (the next surviving AFD
         // packet re-establishes intent).
-        Result<List<AncPacket>> syncPolicyAfd(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult syncPolicyAfd(const AncPacket &pkt, FrameSyncDisposition d,
                                                uint8_t /*repeatIndex*/, const AncTranslateConfig & /*cfg*/) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() != FrameSyncDisposition::Drop) {
                         out.pushToBack(pkt);
                 }
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace

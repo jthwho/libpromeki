@@ -277,7 +277,7 @@ namespace {
         AncPayload::Ptr makeCea708AncPayload(const Cea708Cdp::CcDataList &triples) {
                 Cea708Cdp cdp(0 /*frameRateCode*/, triples, 0 /*sequenceCounter*/);
                 AncTranslator t;
-                Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+                AncTranslator::PacketsResult r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                                     AncTransport::St291);
                 REQUIRE(r.second().isOk());
                 AncDesc desc;

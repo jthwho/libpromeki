@@ -75,18 +75,18 @@ namespace {
         // straight off the output packet's data buffer — no side channels.
         // ---------------------------------------------------------------------
 
-        Result<List<AncPacket>> stubSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult stubSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
                                                 uint8_t repeatIndex, const AncTranslateConfig & /*cfg*/) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() == FrameSyncDisposition::Drop) {
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
                 Buffer  outBuf(static_cast<size_t>(1));
                 uint8_t byte = repeatIndex;
                 outBuf.copyFrom(&byte, 1);
                 outBuf.setSize(1);
                 out.pushToBack(AncPacket(pkt.format(), pkt.transport(), outBuf));
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         struct StubRegistrar {
@@ -139,17 +139,17 @@ namespace {
                 return AncPacket(AncFormat(id), AncTransport::St291, marker);
         }
 
-        Result<List<AncPacket>> stashingSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult stashingSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
                                                     uint8_t /*repeatIndex*/,
                                                     const AncTranslateConfig & /*cfg*/) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() == FrameSyncDisposition::Drop) {
                         out.pushToBack(makeStashMarkerPacket(pkt.format().id()));
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
                 // Play / Repeat: copy the input packet through verbatim.
                 out.pushToBack(pkt);
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         struct StashingStubRegistrar {

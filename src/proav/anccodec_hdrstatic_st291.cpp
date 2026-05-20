@@ -52,13 +52,51 @@
  * @c TransferCharacteristics::Unspecified on parse.
  *
  * @par Primary ordering
- * The H.265 spec's "suggested" convention of (c=0 green, c=1 blue,
- * c=2 red) is non-normative — implementations differ.  This codec
- * mirrors the existing CTA-861.3 DRM-InfoFrame codec in
- * @c anccodec_hdrstatic.cpp by treating (c=0 red, c=1 green, c=2
- * blue), keeping every wire form's interpretation of
- * @ref MasteringDisplay::red / @c green / @c blue consistent across
- * the library.
+ * ST 2108-1 forwards H.265's @c mastering_display_colour_volume()
+ * SEI message verbatim.  H.265's "c=0 green, c=1 blue, c=2 red"
+ * convention is **non-normative** ("It is suggested that ...") and
+ * the underlying SMPTE ST 2086:2014 spec defines no canonical
+ * ordering at all.  CTA-861.3-A §3.2.1 (Table 5 prose) makes the
+ * same point explicit: "All possible mappings of the chromaticity
+ * of Red, Green and Blue color primaries to indices 0, 1 and 2 are
+ * allowed and shall be supported by the sink", and tells the sink
+ * to recover (R,G,B) from the x/y values themselves (red = largest
+ * x, green = largest y, blue = the remaining index).
+ *
+ * This codec therefore uses (c=0 red, c=1 green, c=2 blue) on the
+ * wire — the same ordering as the CTA-861.3 DRM-InfoFrame codec in
+ * @c anccodec_hdrstatic.cpp — so every library wire form's
+ * interpretation of @ref MasteringDisplay::red / @c green / @c blue
+ * stays consistent.  Strictly-ATSC-A/341 consumers (which *do*
+ * mandate GBR for Dynamic Metadata Type 1) would need a separate
+ * code path; that codec (Dynamic Metadata Frame Type 2) is not
+ * implemented here.
+ *
+ * @par Forward-tolerance on parse
+ * The §5.3.2 / §5.3.3 Frame Length values (0x1A for Type 0, 0x06
+ * for Type 1) are exact in the current spec but the parser accepts
+ * @em greater values and decodes only the first 24 / 4 bytes of SEI
+ * body.  This is intentional: a future spec revision may extend the
+ * SEI body without renaming the frame type, and Postel's-law
+ * tolerance keeps old captures parseable.  Frame Lengths @em less
+ * than the spec minimum are still rejected with @c Error::CorruptData.
+ *
+ * @par Multi-frame contract on parse
+ * ST 2108-1 §5.3.2 / §5.3.3 say "No more than one HDR/WCG Metadata
+ * Frame Type value equal to 0 (resp. 1) shall be associated with
+ * any video frame".  A non-conformant sender that emits duplicates
+ * is handled tolerantly here: last frame of each type wins.  No
+ * error is surfaced — the sender bug is real but recoverable and
+ * surfacing it would gratuitously break captures from broken gear.
+ *
+ * @par Dynamic Metadata Types not handled by this codec
+ * ST 2108-1 §5.3.4 (Frame Type 2 = ATSC A/341 ST 2094-10) and §5.3.5
+ * (Frame Type 6 = ETSI TS 103 433-1 SL-HDR1) are separate codecs.
+ * Frame Type 2 is reserved for the future @c HdrDynamic2094_10
+ * format (name-only registration as of F8); Frame Type 6 is not yet
+ * registered.  The parser walks unknown frame types and skips them,
+ * so a mixed-type UDW that contains both Type 0/1 and Type 2/6 will
+ * still decode the static portion correctly.
  */
 
 #include <cmath>
@@ -175,10 +213,14 @@ namespace {
         }
 
         uint32_t readU32Be(const List<uint16_t> &udw, size_t offset) {
-                return static_cast<uint32_t>((udw[offset] & 0xFF) << 24) |
-                       static_cast<uint32_t>((udw[offset + 1] & 0xFF) << 16) |
-                       static_cast<uint32_t>((udw[offset + 2] & 0xFF) << 8) |
-                       static_cast<uint32_t>(udw[offset + 3] & 0xFF);
+                // Cast each byte to uint32_t before shifting; bytes shifted as
+                // `int` are well-defined under C++20 here (result fits in
+                // unsigned int) but the explicit cast keeps the intent obvious
+                // and is robust against integer-promotion gotchas.
+                return (static_cast<uint32_t>(udw[offset]     & 0xFF) << 24) |
+                       (static_cast<uint32_t>(udw[offset + 1] & 0xFF) << 16) |
+                       (static_cast<uint32_t>(udw[offset + 2] & 0xFF) <<  8) |
+                        static_cast<uint32_t>(udw[offset + 3] & 0xFF);
         }
 
         // Decodes one Mastering-Display SEI body (24 bytes starting at
@@ -201,7 +243,7 @@ namespace {
                 out = ContentLightLevel(readU16Be(udw, off + 0), readU16Be(udw, off + 2));
         }
 
-        Result<Variant> parseHdrStaticSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseHdrStaticSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 Result<St291Packet> rp = St291Packet::from(pkt);
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 List<uint16_t> udw = rp.first().udw();
@@ -270,7 +312,7 @@ namespace {
                 return makeResult<Variant>(Variant(md));
         }
 
-        Result<List<AncPacket>> buildHdrStaticSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildHdrStaticSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 HdrStaticMetadata md = v.get<HdrStaticMetadata>();
 
                 List<uint16_t> udw;
@@ -292,7 +334,7 @@ namespace {
                 }
                 if (udw.isEmpty()) {
                         // No round-trippable content (e.g. EOTF-only).
-                        return makeError<List<AncPacket>>(Error::InvalidArgument);
+                        return makeError<AncPacket::List>(Error::InvalidArgument);
                 }
 
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
@@ -301,9 +343,9 @@ namespace {
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::HdrStatic2086), udw, line,
                                                         St291Packet::UnspecifiedHOffset, fieldB);
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(p.packet());
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         // HDR static metadata is sticky — Mastering Display + Content Light
@@ -312,14 +354,14 @@ namespace {
         // output frame is correct (downstream consumer keeps the same
         // grading metadata); dropping it is also fine (the next surviving
         // packet re-establishes it).
-        Result<List<AncPacket>> syncPolicyHdrStatic2086(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult syncPolicyHdrStatic2086(const AncPacket &pkt, FrameSyncDisposition d,
                                                          uint8_t /*repeatIndex*/,
                                                          const AncTranslateConfig & /*cfg*/) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() != FrameSyncDisposition::Drop) {
                         out.pushToBack(pkt);
                 }
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace

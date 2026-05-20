@@ -96,7 +96,7 @@ namespace {
 
                 Cea708Cdp cdp(0, triples, 0);
                 AncTranslator           t;
-                Result<List<AncPacket>> r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+                AncTranslator::PacketsResult r = t.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                                     AncTransport(AncTransport::St291));
                 REQUIRE(r.second().isOk());
                 for (const AncPacket &pkt : r.first()) ap.modify()->addPacket(pkt);

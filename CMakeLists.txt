@@ -2403,8 +2403,10 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ancdesc.h
         include/promeki/ancformat.h
         include/promeki/ancmeta.h
+        include/promeki/ancop47sdp.h
         include/promeki/ancpacket.h
         include/promeki/ancpayload.h
+        include/promeki/ancst2020audio.h
         include/promeki/anctranslateconfig.h
         include/promeki/anctranslator.h
         include/promeki/ancframesync.h
@@ -2508,10 +2510,15 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/anccodec_hdrdynamic2094_40_st291.cpp
         src/proav/anccodec_hdrstatic.cpp
         src/proav/anccodec_hdrstatic_st291.cpp
+        src/proav/anccodec_op47sdp.cpp
+        src/proav/anccodec_st2020audio.cpp
+        src/proav/anccodec_vpid.cpp
         src/proav/ancdesc.cpp
         src/proav/ancformat.cpp
+        src/proav/ancop47sdp.cpp
         src/proav/ancpacket.cpp
         src/proav/ancpayload.cpp
+        src/proav/ancst2020audio.cpp
         src/proav/anctranslator.cpp
         src/proav/ancframesync.cpp
         src/proav/captiondecoder.cpp
@@ -3634,6 +3641,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/anccodec_hdrdynamic2094_40_st291.cpp
             tests/unit/anccodec_hdrstatic.cpp
             tests/unit/anccodec_hdrstatic_st291.cpp
+            tests/unit/anccodec_op47sdp.cpp
+            tests/unit/anccodec_st2020audio.cpp
+            tests/unit/anccodec_vpid.cpp
             tests/unit/ancdesc.cpp
             tests/unit/ancformat.cpp
             tests/unit/ancframesync.cpp

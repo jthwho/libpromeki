@@ -85,18 +85,18 @@ namespace {
                 return r;
         }
 
-        Result<List<AncPacket>> stubSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult stubSyncPolicy(const AncPacket &pkt, FrameSyncDisposition d,
                                                 uint8_t repeatIndex, const AncTranslateConfig &cfg) {
                 RecordedCall c;
                 c.disposition     = d;
                 c.repeatIndex     = repeatIndex;
                 c.lossyConfigSeen = cfg.getAs<bool>(AncTranslateConfig::AllowLossy);
                 recordedCalls().pushToBack(c);
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() != FrameSyncDisposition::Drop) {
                         out.pushToBack(pkt);
                 }
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         struct StubRegistrar {

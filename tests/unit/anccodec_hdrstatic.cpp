@@ -40,7 +40,7 @@ TEST_CASE("HdrStatic<->HdmiInfoFrame: parser + builder are registered") {
 TEST_CASE("HdrStatic<->HdmiInfoFrame: build emits an InfoFrame on type 0x87 / version 1") {
         AncTranslator     t;
         HdrStaticMetadata md = hdr10Sample();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(md), AncFormat(AncFormat::HdrStatic2086), AncTransport::HdmiInfoFrame);
         REQUIRE(built.second().isOk());
         CHECK(built.first().front().format().id() == AncFormat::HdrStatic2086);
@@ -58,11 +58,11 @@ TEST_CASE("HdrStatic<->HdmiInfoFrame: build emits an InfoFrame on type 0x87 / ve
 TEST_CASE("HdrStatic<->HdmiInfoFrame: round-trip via AncTranslator parse + build") {
         AncTranslator     t;
         HdrStaticMetadata src = hdr10Sample();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(src), AncFormat(AncFormat::HdrStatic2086), AncTransport::HdmiInfoFrame);
         REQUIRE(built.second().isOk());
 
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         REQUIRE(parsed.first().type() == DataTypeHdrStaticMetadata);
 

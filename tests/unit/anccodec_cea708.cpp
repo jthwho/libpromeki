@@ -39,7 +39,7 @@ TEST_CASE("CEA-708<->St291: capability queries report parser+builder registered"
 TEST_CASE("CEA-708<->St291: build emits a CEA-708 ST 291 packet on DID 0x61 / SDID 0x01") {
         AncTranslator     t;
         Cea708Cdp         cdp = makeSampleCdp();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(cdp), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         CHECK(built.first().front().format().id() == AncFormat::Cea708);
@@ -55,11 +55,11 @@ TEST_CASE("CEA-708<->St291: build emits a CEA-708 ST 291 packet on DID 0x61 / SD
 TEST_CASE("CEA-708<->St291: round-trip via AncTranslator parse + build") {
         AncTranslator     t;
         Cea708Cdp         src = makeSampleCdp(0x1234);
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(src), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isOk());
         Cea708Cdp restored = parsed.first().get<Cea708Cdp>();
         CHECK(restored == src);
@@ -71,7 +71,7 @@ TEST_CASE("CEA-708<->St291: cfg-driven line + field-B threaded to meta") {
         cfg.set(AncTranslateConfig::St291FieldB, true);
         AncTranslator     t(cfg);
         Cea708Cdp         src = makeSampleCdp();
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(src), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
@@ -90,7 +90,7 @@ TEST_CASE("CEA-708<->St291: parse rejects too-short ST 291 payload") {
         udw.pushToBack(0x04);
         udw.pushToBack(0x4F);
         St291Packet     p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, 0);
-        Result<Variant> r = t.parse(p.packet());
+        AncTranslator::ParseResult r = t.parse(p.packet());
         CHECK(r.second().code() == Error::CorruptData);
 }
 
@@ -103,7 +103,7 @@ TEST_CASE("CEA-708<->St291: oversize CDP returns OutOfRange") {
                 triples.pushToBack({true, 0, static_cast<uint8_t>(i), static_cast<uint8_t>(i + 1)});
         }
         Cea708Cdp         big(4, triples, 1);
-        Result<List<AncPacket>> r = t.build(Variant(big), AncFormat(AncFormat::Cea708), AncTransport::St291);
+        AncTranslator::PacketsResult r = t.build(Variant(big), AncFormat(AncFormat::Cea708), AncTransport::St291);
         CHECK(r.second().code() == Error::OutOfRange);
 }
 
@@ -111,10 +111,10 @@ TEST_CASE("CEA-708<->St291: round-trip preserves sequence counter mirror") {
         AncTranslator t;
         for (uint16_t seq : {uint16_t(0), uint16_t(1), uint16_t(0xFFFF), uint16_t(0xABCD)}) {
                 Cea708Cdp         src = makeSampleCdp(seq);
-                Result<List<AncPacket>> built =
+                AncTranslator::PacketsResult built =
                         t.build(Variant(src), AncFormat(AncFormat::Cea708), AncTransport::St291);
                 REQUIRE(built.second().isOk());
-                Result<Variant> parsed = t.parse(built.first().front());
+                AncTranslator::ParseResult parsed = t.parse(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp out = parsed.first().get<Cea708Cdp>();
                 CHECK(out.sequenceCounter == seq);
@@ -134,7 +134,7 @@ TEST_CASE("CEA-708 sync policy: hasSyncPolicy reflects registration") {
 
 TEST_CASE("CEA-708 sync policy: Play returns the packet unchanged") {
         AncTranslator           t;
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(makeSampleCdp(100)), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::play(), 0);
@@ -145,7 +145,7 @@ TEST_CASE("CEA-708 sync policy: Play returns the packet unchanged") {
 
 TEST_CASE("CEA-708 sync policy: Drop returns an empty list") {
         AncTranslator           t;
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(makeSampleCdp(100)), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::drop(), 0);
@@ -155,7 +155,7 @@ TEST_CASE("CEA-708 sync policy: Drop returns an empty list") {
 
 TEST_CASE("CEA-708 sync policy: Repeat[1] idx=0 copies the packet unchanged") {
         AncTranslator           t;
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(makeSampleCdp(100)), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(1), 0);
@@ -166,7 +166,7 @@ TEST_CASE("CEA-708 sync policy: Repeat[1] idx=0 copies the packet unchanged") {
 
 TEST_CASE("CEA-708 sync policy: Repeat[3] advances sequence_counter by repeatIndex") {
         AncTranslator           t;
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(makeSampleCdp(100)), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
@@ -176,7 +176,7 @@ TEST_CASE("CEA-708 sync policy: Repeat[3] advances sequence_counter by repeatInd
                 auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(3), i);
                 REQUIRE(res.second().isOk());
                 REQUIRE(res.first().size() == 1);
-                Result<Variant> parsed = t.parse(res.first().front());
+                AncTranslator::ParseResult parsed = t.parse(res.first().front());
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp out = parsed.first().get<Cea708Cdp>();
                 CHECK(out.sequenceCounter == expectedSeq[i]);
@@ -188,14 +188,14 @@ TEST_CASE("CEA-708 sync policy: Repeat[idx>0] invalidates every cc_data triple b
         Cea708Cdp               src = makeSampleCdp(100);
         const size_t            srcCount = src.ccData.size();
         REQUIRE(srcCount > 0);
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(src), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
 
         auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(2), 1);
         REQUIRE(res.second().isOk());
         REQUIRE(res.first().size() == 1);
-        Result<Variant> parsed = t.parse(res.first().front());
+        AncTranslator::ParseResult parsed = t.parse(res.first().front());
         REQUIRE(parsed.second().isOk());
         Cea708Cdp out = parsed.first().get<Cea708Cdp>();
         // CDP envelope intact: same number of triples, same frameRateCode,
@@ -216,7 +216,7 @@ TEST_CASE("CEA-708 sync policy: Repeat[idx>0] preserves the source packet's line
         srcCfg.set(AncTranslateConfig::St291BuildLine, uint16_t(13));
         srcCfg.set(AncTranslateConfig::St291FieldB, true);
         AncTranslator           tSrc(srcCfg);
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 tSrc.build(Variant(makeSampleCdp(100)), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
 

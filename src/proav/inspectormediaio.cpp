@@ -2027,7 +2027,7 @@ namespace {
                 }
 
                 // Try to parse via the registered handler.
-                Result<Variant> parsed = t.parse(pkt);
+                AncTranslator::ParseResult parsed = t.parse(pkt);
                 if (parsed.second().isOk()) {
                         const Variant &v = parsed.first();
                         // Cea708Cdp has a structured toJson(); other

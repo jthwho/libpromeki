@@ -948,7 +948,7 @@ Error TpgMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 cdp.timeCodePresent = _timecodeEnabled;
                 if (_timecodeEnabled) cdp.timeCode = tc;
 
-                Result<List<AncPacket>> r = _ancTranslator.build(Variant(cdp), AncFormat(AncFormat::Cea708),
+                AncTranslator::PacketsResult r = _ancTranslator.build(Variant(cdp), AncFormat(AncFormat::Cea708),
                                                                   AncTransport::St291);
                 if (r.second().isOk()) {
                         AncPayload::Ptr ancPayload = AncPayload::Ptr::create(_ancDesc);

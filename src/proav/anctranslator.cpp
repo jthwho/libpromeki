@@ -214,14 +214,14 @@ void AncTranslator::registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn) {
 // Dispatch
 // ============================================================================
 
-Result<Variant> AncTranslator::parse(const AncPacket &pkt) const {
+AncTranslator::ParseResult AncTranslator::parse(const AncPacket &pkt) const {
         const AncFormat::ID fmtId = pkt.format().id();
         // Multi-parsers take precedence on a single-packet entry point — the
         // wire packet may be one segment of an N-packet message, but the
         // codec is the only thing that knows whether N == 1 or N > 1.
         // Wrap the single packet in a one-element list and dispatch.
         if (MultiParserFn mfn = findMultiParser(fmtId, pkt.transport()); mfn != nullptr) {
-                List<AncPacket> pkts;
+                AncPacket::List pkts;
                 pkts.pushToBack(pkt);
                 return mfn(pkts, _cfg);
         }
@@ -230,7 +230,7 @@ Result<Variant> AncTranslator::parse(const AncPacket &pkt) const {
         return fn(pkt, _cfg);
 }
 
-Result<Variant> AncTranslator::parseGroup(const List<AncPacket> &pkts) const {
+AncTranslator::ParseResult AncTranslator::parseGroup(const AncPacket::List &pkts) const {
         if (pkts.isEmpty()) return makeError<Variant>(Error::InvalidArgument);
         const AncFormat::ID fmtId = pkts.front().format().id();
         const AncTransport &xport = pkts.front().transport();
@@ -244,22 +244,23 @@ Result<Variant> AncTranslator::parseGroup(const List<AncPacket> &pkts) const {
         return fn(pkts.front(), _cfg);
 }
 
-Result<List<AncPacket>> AncTranslator::build(const Variant &v, const AncFormat &fmt,
-                                              const AncTransport &target) const {
+AncTranslator::PacketsResult AncTranslator::build(const Variant &v, const AncFormat &fmt,
+                                                   const AncTransport &target) const {
         BuilderFn fn = findBuilder(fmt.id(), target);
         if (fn == nullptr) {
-                return makeError<List<AncPacket>>(Error::NotSupported);
+                return makeError<AncPacket::List>(Error::NotSupported);
         }
         return fn(v, _cfg);
 }
 
-Result<List<AncPacket>> AncTranslator::translate(const AncPacket &pkt, const AncTransport &target) const {
+AncTranslator::PacketsResult AncTranslator::translate(const AncPacket &pkt,
+                                                       const AncTransport &target) const {
         // Identity short-circuit: same transport in and out, return in a
         // one-element list.
         if (pkt.transport() == target) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(pkt);
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         const AncFormat::ID fmtId = pkt.format().id();
@@ -273,16 +274,16 @@ Result<List<AncPacket>> AncTranslator::translate(const AncPacket &pkt, const Anc
         // works for single-packet messages — multi-packet codecs must
         // either register a direct translator, or callers must use
         // parseGroup + build directly.
-        Result<Variant> parsed = parse(pkt);
-        if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
+        ParseResult parsed = parse(pkt);
+        if (parsed.second().isError()) return makeError<AncPacket::List>(parsed.second());
         BuilderFn b = findBuilder(fmtId, target);
-        if (b == nullptr) return makeError<List<AncPacket>>(Error::NotSupported);
+        if (b == nullptr) return makeError<AncPacket::List>(Error::NotSupported);
         return b(parsed.first(), _cfg);
 }
 
-Result<List<AncPacket>> AncTranslator::applySyncPolicy(const AncPacket   &pkt,
-                                                        FrameSyncDisposition disposition,
-                                                        uint8_t              repeatIndex) const {
+AncTranslator::PacketsResult AncTranslator::applySyncPolicy(const AncPacket     &pkt,
+                                                             FrameSyncDisposition disposition,
+                                                             uint8_t              repeatIndex) const {
         const AncFormat::ID fmtId = pkt.format().id();
         if (SyncPolicyFn fn = findSyncPolicy(fmtId); fn != nullptr) {
                 return fn(pkt, disposition, repeatIndex, _cfg);
@@ -291,11 +292,11 @@ Result<List<AncPacket>> AncTranslator::applySyncPolicy(const AncPacket   &pkt,
         // No log here — AncFrameSync handles once-per-format warning when
         // it dispatches.  Keeping this layer silent lets callers use the
         // method as a pure transform without log noise.
-        List<AncPacket> out;
+        AncPacket::List out;
         if (disposition.kind() != FrameSyncDisposition::Drop) {
                 out.pushToBack(pkt);
         }
-        return makeResult<List<AncPacket>>(std::move(out));
+        return makeResult<AncPacket::List>(std::move(out));
 }
 
 // ============================================================================

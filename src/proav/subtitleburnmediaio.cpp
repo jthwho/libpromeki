@@ -219,7 +219,7 @@ Subtitle SubtitleBurnMediaIO::tryAncSource(const Frame &input, CaptionCodec code
                 for (size_t j = 0; j < pkts.size(); ++j) {
                         const AncPacket &pkt = pkts[j];
                         if (pkt.format().id() != AncFormat::Cea708) continue;
-                        Result<Variant> parsed = _ancTranslator.parse(pkt);
+                        AncTranslator::ParseResult parsed = _ancTranslator.parse(pkt);
                         if (!parsed.second().isOk()) continue;
                         if (parsed.first().type() != DataTypeCea708Cdp) continue;
                         const Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();

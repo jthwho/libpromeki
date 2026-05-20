@@ -40,12 +40,12 @@ namespace {
                 return cfg;
         }
 
-        Result<Variant> parseVia(const AncPacket &pkt, const AncTranslateConfig &cfg = {}) {
+        AncTranslator::ParseResult parseVia(const AncPacket &pkt, const AncTranslateConfig &cfg = {}) {
                 AncTranslator t(withDefaultHint(cfg));
                 return t.parse(pkt);
         }
 
-        Result<List<AncPacket>> buildVia(const Timecode &tc, AncFormat::ID id, const AncTranslateConfig &cfg = {}) {
+        AncTranslator::PacketsResult buildVia(const Timecode &tc, AncFormat::ID id, const AncTranslateConfig &cfg = {}) {
                 AncTranslator t(cfg);
                 return t.build(Variant(tc), AncFormat(id), AncTransport::St291);
         }
@@ -64,7 +64,7 @@ TEST_CASE("ATC<->St291: round-trip 01:23:45:14 NDF30 on AtcLtc") {
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::St291BuildLine, uint16_t(9));
 
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc, cfg);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
         REQUIRE(built.second().isOk());
         CHECK(built.first().front().format().id() == AncFormat::AtcLtc);
         CHECK(built.first().front().transport() == AncTransport::St291);
@@ -76,7 +76,7 @@ TEST_CASE("ATC<->St291: round-trip 01:23:45:14 NDF30 on AtcLtc") {
         CHECK(rp.first().line() == 9);
         CHECK(rp.first().checksumValid());
 
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 1);
@@ -88,13 +88,13 @@ TEST_CASE("ATC<->St291: round-trip 01:23:45:14 NDF30 on AtcLtc") {
 
 TEST_CASE("ATC<->St291: round-trip 00:00:00:00 NDF30 (boundary)") {
         Timecode           src(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
-        Result<List<AncPacket>>  built = buildVia(src, AncFormat::AtcVitc1);
+        AncTranslator::PacketsResult  built = buildVia(src, AncFormat::AtcVitc1);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().sdid() == 0x61);
 
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 0);
@@ -105,13 +105,13 @@ TEST_CASE("ATC<->St291: round-trip 00:00:00:00 NDF30 (boundary)") {
 
 TEST_CASE("ATC<->St291: round-trip 23:59:59:29 NDF30 (max digits)") {
         Timecode          src(Timecode::Mode(Timecode::NDF30), 23, 59, 59, 29);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcVitc2);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc2);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().sdid() == 0x62);
 
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 23);
@@ -122,10 +122,10 @@ TEST_CASE("ATC<->St291: round-trip 23:59:59:29 NDF30 (max digits)") {
 
 TEST_CASE("ATC<->St291: drop-frame bit round-trips") {
         Timecode          src(Timecode::Mode(Timecode::DF30), 1, 0, 0, 2);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 1);
@@ -138,7 +138,7 @@ TEST_CASE("ATC<->St291: cfg-driven line + field-B propagate to meta") {
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::St291BuildLine, uint16_t(11));
         cfg.set(AncTranslateConfig::St291FieldB, true);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcVitc1, cfg);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc1, cfg);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
@@ -153,7 +153,7 @@ TEST_CASE("ATC<->St291: parse rejects too-short UDW count (ST 12-2 §5 requires 
         udw.pushToBack(0x00);
         udw.pushToBack(0x00);
         St291Packet     p = St291Packet::build(AncFormat(AncFormat::AtcLtc), udw, 0);
-        Result<Variant> parsed = parseVia(p.packet());
+        AncTranslator::ParseResult parsed = parseVia(p.packet());
         CHECK(parsed.second().code() == Error::CorruptData);
 }
 
@@ -163,7 +163,7 @@ TEST_CASE("ATC<->St291: parse rejects DC=15 (one short of the spec-required 16)"
         udw.resize(15);
         for (size_t i = 0; i < udw.size(); ++i) udw[i] = 0x00;
         St291Packet     p = St291Packet::build(AncFormat(AncFormat::AtcLtc), udw, 0);
-        Result<Variant> parsed = parseVia(p.packet());
+        AncTranslator::ParseResult parsed = parseVia(p.packet());
         CHECK(parsed.second().code() == Error::CorruptData);
 }
 
@@ -178,11 +178,11 @@ TEST_CASE("ATC<->St291: capability queries report parser+builder registered") {
 
 TEST_CASE("ATC<->St291: translate(pkt, St291) identity-short-circuits") {
         Timecode          src(Timecode::Mode(Timecode::NDF30), 12, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslator     t;
-        Result<List<AncPacket>> r = t.translate(built.first().front(), AncTransport::St291);
+        AncTranslator::PacketsResult r = t.translate(built.first().front(), AncTransport::St291);
         CHECK(r.second().isOk());
         REQUIRE_FALSE(r.first().isEmpty());
         // Identity returns the same impl handle (cheap refcount bump).
@@ -202,7 +202,7 @@ TEST_CASE("ATC sync policy: hasSyncPolicy reflects registration on all three IDs
 
 TEST_CASE("ATC sync policy: Play returns the packet unchanged") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslator t;
@@ -215,7 +215,7 @@ TEST_CASE("ATC sync policy: Play returns the packet unchanged") {
 
 TEST_CASE("ATC sync policy: Drop returns an empty list") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslator t;
         auto          res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::drop(), 0);
@@ -225,7 +225,7 @@ TEST_CASE("ATC sync policy: Drop returns an empty list") {
 
 TEST_CASE("ATC sync policy: Repeat[1] idx=0 copies the packet through unchanged") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslator t;
         auto          res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(1), 0);
@@ -236,7 +236,7 @@ TEST_CASE("ATC sync policy: Repeat[1] idx=0 copies the packet through unchanged"
 
 TEST_CASE("ATC sync policy: Repeat[3] increments timecode by repeatIndex (NDF30)") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         // The sync policy parses internally on Repeat[idx>0], so the
         // translator's held cfg must supply the rate hint per F5 D1b.
@@ -250,7 +250,7 @@ TEST_CASE("ATC sync policy: Repeat[3] increments timecode by repeatIndex (NDF30)
                 auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(3), i);
                 REQUIRE(res.second().isOk());
                 REQUIRE(res.first().size() == 1);
-                Result<Variant> parsed = parseVia(res.first().front());
+                AncTranslator::ParseResult parsed = parseVia(res.first().front());
                 REQUIRE(parsed.second().isOk());
                 Timecode out = atcTimecode(parsed.first());
                 CHECK(out.hour() == 1);
@@ -267,7 +267,7 @@ TEST_CASE("ATC sync policy: Repeat across the DF30 minute-rollover boundary") {
         // are dropped).  Verify the libvtc-backed Timecode::operator++
         // handles that correctly under our sync-policy increment.
         Timecode src(Timecode::Mode(Timecode::DF30), 0, 0, 59, 29);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslateConfig tcfg;
         tcfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(30));
@@ -286,7 +286,7 @@ TEST_CASE("ATC sync policy: Repeat across the DF30 minute-rollover boundary") {
                 auto res = t.applySyncPolicy(built.first().front(), FrameSyncDisposition::repeat(4), i);
                 REQUIRE(res.second().isOk());
                 REQUIRE(res.first().size() == 1);
-                Result<Variant> parsed = parseVia(res.first().front());
+                AncTranslator::ParseResult parsed = parseVia(res.first().front());
                 REQUIRE(parsed.second().isOk());
                 Timecode out = atcTimecode(parsed.first());
                 CHECK(out.hour() == 0);
@@ -353,7 +353,7 @@ namespace {
 
 TEST_CASE("ATC reference: AtcLtc 01:23:45:14 NDF30 matches ST 12-2 Table 6 byte-for-byte") {
         Timecode src(Timecode::Mode(Timecode::NDF30), 1, 23, 45, 14);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         // Hand-computed per Table 6.  DBB1=0x00 (LTC) → all UDW 1-8 b3=0;
@@ -374,7 +374,7 @@ TEST_CASE("ATC reference: AtcLtc 01:23:45:14 NDF30 matches ST 12-2 Table 6 byte-
 
 TEST_CASE("ATC reference: AtcLtc 01:00:00:02 DF30 sets DF bit at UDW 3 bit 6") {
         Timecode src(Timecode::Mode(Timecode::DF30), 1, 0, 0, 2);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         // Frame tens 0 + DF=1 → bits 4-7 of UDW 3 = 0b0100 → byte 0x40.
@@ -393,7 +393,7 @@ TEST_CASE("ATC reference: AtcLtc 01:00:00:02 DF30 sets DF bit at UDW 3 bit 6") {
 
 TEST_CASE("ATC reference: AtcVitc1 00:00:00:00 sets DBB1 bit 0 (UDW 1 b3 = 1)") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcVitc1);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc1);
         REQUIRE(built.second().isOk());
 
         // DBB1=0x01 (VITC1) → UDW 1 b3 = 1, all other DBB bits zero.
@@ -413,7 +413,7 @@ TEST_CASE("ATC reference: AtcVitc1 00:00:00:00 sets DBB1 bit 0 (UDW 1 b3 = 1)") 
 
 TEST_CASE("ATC reference: AtcVitc2 23:59:59:29 NDF30 sets DBB1 bit 1 (UDW 2 b3 = 1)") {
         Timecode                src(Timecode::Mode(Timecode::NDF30), 23, 59, 59, 29);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcVitc2);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc2);
         REQUIRE(built.second().isOk());
 
         // DBB1=0x02 (VITC2) → UDW 2 b3 = 1, others zero.  SDID=0x62.
@@ -460,7 +460,7 @@ TEST_CASE("ATC reference: parser decodes a hand-built ST 12-2 packet (12:34:56:2
         udw[15] = 0x00;  // UDW 16  BG8
 
         St291Packet     p      = St291Packet::build(AncFormat(AncFormat::AtcLtc), udw, 10);
-        Result<Variant> parsed = parseVia(p.packet());
+        AncTranslator::ParseResult parsed = parseVia(p.packet());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 12);
@@ -494,7 +494,7 @@ TEST_CASE("ATC reference: parser tolerates non-zero binary-group nibbles (BGs ar
         udw[15] = 0xE0;  // UDW 16  BG8
 
         St291Packet     p      = St291Packet::build(AncFormat(AncFormat::AtcLtc), udw, 9);
-        Result<Variant> parsed = parseVia(p.packet());
+        AncTranslator::ParseResult parsed = parseVia(p.packet());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 1);
@@ -533,7 +533,7 @@ TEST_CASE("ATC reference: parser ignores BGF / polarity / CF flag bits in the ti
         udw[15] = 0x00;
 
         St291Packet     p      = St291Packet::build(AncFormat(AncFormat::AtcLtc), udw, 9);
-        Result<Variant> parsed = parseVia(p.packet());
+        AncTranslator::ParseResult parsed = parseVia(p.packet());
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 0);
@@ -549,18 +549,18 @@ TEST_CASE("ATC parse hint: default (no hint) yields NDF30 / DF30 by the DF wire 
         // DF wire → DF30.
         {
                 Timecode src(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
-                Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
                 REQUIRE(built.second().isOk());
-                Result<Variant> parsed = parseVia(built.first().front());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 Timecode out = atcTimecode(parsed.first());
                 CHECK_FALSE(out.isDropFrame());
         }
         {
                 Timecode src(Timecode::Mode(Timecode::DF30), 1, 2, 3, 4);
-                Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
                 REQUIRE(built.second().isOk());
-                Result<Variant> parsed = parseVia(built.first().front());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 Timecode out = atcTimecode(parsed.first());
                 CHECK(out.isDropFrame());
@@ -569,12 +569,12 @@ TEST_CASE("ATC parse hint: default (no hint) yields NDF30 / DF30 by the DF wire 
 
 TEST_CASE("ATC parse hint: AtcParseRateHint=25 stamps NDF25 on the result") {
         Timecode src(Timecode::Mode(Timecode::NDF25), 5, 10, 15, 20);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(25));
-        Result<Variant> parsed = parseVia(built.first().front(), cfg);
+        AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 5);
@@ -590,12 +590,12 @@ TEST_CASE("ATC parse hint: AtcParseRateHint=25 stamps NDF25 on the result") {
 
 TEST_CASE("ATC parse hint: AtcParseRateHint=24 stamps NDF24 on the result") {
         Timecode src(Timecode::Mode(Timecode::NDF24), 2, 0, 0, 23);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(24));
-        Result<Variant> parsed = parseVia(built.first().front(), cfg);
+        AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 2);
@@ -606,12 +606,12 @@ TEST_CASE("ATC parse hint: AtcParseRateHint=24 stamps NDF24 on the result") {
 
 TEST_CASE("ATC parse hint: AtcParseRateHint=30 + wire DF bit yields DF30") {
         Timecode src(Timecode::Mode(Timecode::DF30), 1, 0, 0, 2);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(30));
-        Result<Variant> parsed = parseVia(built.first().front(), cfg);
+        AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.isDropFrame());
@@ -623,12 +623,12 @@ TEST_CASE("ATC parse hint: non-standard rate (e.g. 99 fps) yields a custom-forma
         // demoted to NDF30; the digits round-trip correctly with the
         // caller's unusual rate stamped onto the result.
         Timecode src(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(99));
-        Result<Variant> parsed = parseVia(built.first().front(), cfg);
+        AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
         REQUIRE(parsed.second().isOk());
         Timecode out = atcTimecode(parsed.first());
         CHECK(out.hour() == 1);
@@ -642,7 +642,7 @@ TEST_CASE("ATC reference: every built packet has DC=0x10 and 16 UDWs") {
         const AncFormat::ID ids[] = {AncFormat::AtcLtc, AncFormat::AtcVitc1, AncFormat::AtcVitc2};
         for (auto id : ids) {
                 Timecode                src(Timecode::Mode(Timecode::NDF30), 4, 5, 6, 7);
-                Result<List<AncPacket>> built = buildVia(src, id);
+                AncTranslator::PacketsResult built = buildVia(src, id);
                 REQUIRE(built.second().isOk());
                 Result<St291Packet> rp = St291Packet::from(built.first().front());
                 REQUIRE(rp.second().isOk());
@@ -660,7 +660,7 @@ TEST_CASE("ATC sync policy: Repeat preserves the original packet's line / fieldB
         AncTranslateConfig srcCfg;
         srcCfg.set(AncTranslateConfig::St291BuildLine, uint16_t(11));
         srcCfg.set(AncTranslateConfig::St291FieldB, true);
-        Result<List<AncPacket>> built = buildVia(src, AncFormat::AtcLtc, srcCfg);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, srcCfg);
         REQUIRE(built.second().isOk());
 
         // Sync policy parses + re-encodes on Repeat[idx>0], so it
@@ -684,7 +684,7 @@ TEST_CASE("ATC sync policy: Repeat preserves the original packet's line / fieldB
 
 namespace {
 
-        Result<List<AncPacket>> buildAtcVia(const AncAtc &atc, AncFormat::ID id,
+        AncTranslator::PacketsResult buildAtcVia(const AncAtc &atc, AncFormat::ID id,
                                             const AncTranslateConfig &cfg = {}) {
                 AncTranslator t(cfg);
                 return t.build(Variant(atc), AncFormat(id), AncTransport::St291);
@@ -698,9 +698,9 @@ TEST_CASE("AncAtc F5 — round-trip preserves user bits across all eight nibbles
         AncAtc::UserBits ub = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7};
         AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4), ub);
 
-        Result<List<AncPacket>> built = buildAtcVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
         for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
@@ -717,9 +717,9 @@ TEST_CASE("AncAtc F5 — round-trip preserves user bits with high nibble values"
         AncAtc::UserBits ub = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
         AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0), ub);
 
-        Result<List<AncPacket>> built = buildAtcVia(src, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
         for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
@@ -734,9 +734,9 @@ TEST_CASE("AncAtc F5 — flag bits round-trip independently") {
         for (uint8_t flags = 0; flags < 32; ++flags) {
                 AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4));
                 src.setFlags(flags);
-                Result<List<AncPacket>> built = buildAtcVia(src, AncFormat::AtcLtc);
+                AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
                 REQUIRE(built.second().isOk());
-                Result<Variant> parsed = parseVia(built.first().front());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 AncAtc out = parsed.first().get<AncAtc>();
                 CHECK(out.flags() == flags);
@@ -748,9 +748,9 @@ TEST_CASE("AncAtc F5 — DBB2 byte round-trips through UDW 9..16 b3 LSB-first") 
         for (unsigned bit = 0; bit < 8; ++bit) {
                 AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0));
                 src.setDbb2(static_cast<uint8_t>(1u << bit));
-                Result<List<AncPacket>> built = buildAtcVia(src, AncFormat::AtcLtc);
+                AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
                 REQUIRE(built.second().isOk());
-                Result<Variant> parsed = parseVia(built.first().front());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front());
                 REQUIRE(parsed.second().isOk());
                 AncAtc out = parsed.first().get<AncAtc>();
                 CHECK(out.dbb2() == static_cast<uint8_t>(1u << bit));
@@ -764,10 +764,10 @@ TEST_CASE("AncAtc F5 — Timecode-only Variant build promotes to default AncAtc"
         // user-bits / flags / DBB2.
         Timecode tc(Timecode::Mode(Timecode::NDF30), 7, 7, 7, 7);
         AncTranslator t;
-        Result<List<AncPacket>> built =
+        AncTranslator::PacketsResult built =
                 t.build(Variant(tc), AncFormat(AncFormat::AtcLtc), AncTransport::St291);
         REQUIRE(built.second().isOk());
-        Result<Variant> parsed = parseVia(built.first().front());
+        AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
         CHECK(out.timecode().hour() == 7);
@@ -784,17 +784,17 @@ TEST_CASE("AncAtc F5 D1b — parse without rate context returns InsufficientCont
         // the meta and no AtcParseRateHint on the cfg.  Per audit Q4
         // the parser must fail rather than silently default to 30 fps.
         Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 0, 0, 0);
-        Result<List<AncPacket>> built = buildVia(tc, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(tc, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslator t;  // default cfg: no AtcParseRateHint set.
-        Result<Variant> parsed = t.parse(built.first().front());
+        AncTranslator::ParseResult parsed = t.parse(built.first().front());
         REQUIRE(parsed.second().isError());
         CHECK(parsed.second().code() == Error::InsufficientContext);
 }
 
 TEST_CASE("AncAtc F5 D1b — AncMeta::Atc::Rate on the packet outweighs cfg") {
         Timecode tc(Timecode::Mode(Timecode::NDF25), 5, 10, 15, 20);
-        Result<List<AncPacket>> built = buildVia(tc, AncFormat::AtcLtc);
+        AncTranslator::PacketsResult built = buildVia(tc, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
 
         // Stamp the meta key with 25 fps; cfg says 24 fps.  Meta wins.
@@ -806,7 +806,7 @@ TEST_CASE("AncAtc F5 D1b — AncMeta::Atc::Rate on the packet outweighs cfg") {
         AncTranslateConfig cfg;
         cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(24));
         AncTranslator t(cfg);
-        Result<Variant> parsed = t.parse(stamped);
+        AncTranslator::ParseResult parsed = t.parse(stamped);
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
         CHECK(out.timecode().fps() == 25u);

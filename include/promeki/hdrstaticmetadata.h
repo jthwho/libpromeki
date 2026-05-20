@@ -105,7 +105,7 @@ class DataStream;
  *
  * Registered as @c DataTypeHdrStaticMetadata so @ref
  * AncTranslator parse / build functions return / consume it
- * through their @c Result<Variant> interfaces.
+ * through their @c ParseResult interface.
  *
  * @par Thread Safety
  * Plain value type — copies are independent.  Distinct instances

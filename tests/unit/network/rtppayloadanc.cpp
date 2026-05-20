@@ -539,7 +539,7 @@ TEST_CASE("CEA-708 codec defaults Line to UnspecifiedLine when no cfg supplied")
         Cea708Cdp::CcDataList triples;
         triples.pushToBack({true, 0, 0x94, 0x20});
         Cea708Cdp                cdp(4, triples, 1);
-        Result<List<AncPacket>>  built =
+        AncTranslator::PacketsResult  built =
                 t.build(Variant(cdp), AncFormat(AncFormat::Cea708), AncTransport::St291);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());

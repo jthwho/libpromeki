@@ -74,9 +74,9 @@ PROMEKI_NAMESPACE_BEGIN
  *         AncChecksumPolicy::AlwaysRecompute);
  * cfg.set(AncTranslateConfig::St291BuildLine, uint16_t(11));
  * AncTranslator t(cfg);
- * Result<List<AncPacket>> r = t.build(Variant(myTimecode),
- *                                     AncFormat(AncFormat::AtcLtc),
- *                                     AncTransport::St291);
+ * AncTranslator::PacketsResult r = t.build(Variant(myTimecode),
+ *                                          AncFormat(AncFormat::AtcLtc),
+ *                                          AncTransport::St291);
  * @endcode
  *
  * @par Thread Safety

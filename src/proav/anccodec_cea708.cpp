@@ -25,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-        Result<Variant> parseCea708St291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseCea708St291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 Result<St291Packet> rp = St291Packet::from(pkt);
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 const St291Packet &p = rp.first();
@@ -45,18 +45,18 @@ namespace {
                 return makeResult<Variant>(Variant(rc.first()));
         }
 
-        Result<List<AncPacket>> buildCea708St291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildCea708St291(const Variant &v, const AncTranslateConfig &cfg) {
                 Cea708Cdp cdp = v.get<Cea708Cdp>();
                 Buffer    wire = cdp.toBuffer();
                 const size_t sz = wire.size();
-                if (sz == 0) return makeError<List<AncPacket>>(Error::CorruptData);
+                if (sz == 0) return makeError<AncPacket::List>(Error::CorruptData);
 
                 // ST 291 DataCount is one byte — cap CDP size at 255.  The
                 // standard allows much larger CDPs split across multiple
                 // ANC packets; that lands as a follow-up when a real
                 // source produces over-255-byte CDPs.  Until then, signal
                 // the error explicitly rather than silently truncating.
-                if (sz > 255) return makeError<List<AncPacket>>(Error::OutOfRange);
+                if (sz > 255) return makeError<AncPacket::List>(Error::OutOfRange);
 
                 List<uint16_t> udw;
                 udw.resize(sz);
@@ -69,9 +69,9 @@ namespace {
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, line,
                                                         St291Packet::UnspecifiedHOffset, fieldB);
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(p.packet());
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         // Sync policy: CEA-708 caption data is per-frame and stateful — a
@@ -91,21 +91,21 @@ namespace {
         // CDP is lost — the caption decoder may glitch one frame; the
         // next surviving CDP re-establishes state.  On Play and
         // Repeat[idx=0] the original packet copies through verbatim.
-        Result<List<AncPacket>> syncPolicyCea708(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult syncPolicyCea708(const AncPacket &pkt, FrameSyncDisposition d,
                                                   uint8_t repeatIndex, const AncTranslateConfig &cfg) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() == FrameSyncDisposition::Drop) {
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
                 if (d.kind() == FrameSyncDisposition::Play || repeatIndex == 0) {
                         out.pushToBack(pkt);
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
 
                 // Repeat[idx>0]: decode, advance sequence_counter, blank
                 // cc_data triples, re-encode.
-                Result<Variant> parsed = parseCea708St291(pkt, cfg);
-                if (parsed.second().isError()) return makeError<List<AncPacket>>(parsed.second());
+                AncTranslator::ParseResult parsed = parseCea708St291(pkt, cfg);
+                if (parsed.second().isError()) return makeError<AncPacket::List>(parsed.second());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
 
                 // Wrap is fine — sequence_counter is u16 in the wire and
@@ -122,7 +122,7 @@ namespace {
                 // as the ATC sync policy — wire framing should match the
                 // source, not whatever defaults are in the held cfg).
                 Result<St291Packet> rp = St291Packet::from(pkt);
-                if (rp.second().isError()) return makeError<List<AncPacket>>(rp.second());
+                if (rp.second().isError()) return makeError<AncPacket::List>(rp.second());
                 AncTranslateConfig overrideCfg = cfg;
                 overrideCfg.set(AncTranslateConfig::St291BuildLine, rp.first().line());
                 overrideCfg.set(AncTranslateConfig::St291FieldB, rp.first().fieldB());

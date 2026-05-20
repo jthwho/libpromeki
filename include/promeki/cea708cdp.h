@@ -99,7 +99,7 @@ class DataStream;
  *
  * @c Cea708Cdp is registered as @c DataTypeCea708Cdp so that
  * parsers / builders can return it through the @ref AncTranslator
- * @c Result<Variant> interfaces.
+ * @c ParseResult interface.
  *
  * @par Thread Safety
  * Plain value type — copies are independent.  Distinct instances may

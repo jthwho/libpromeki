@@ -59,6 +59,8 @@
 #include <promeki/ancafd.h>
 #include <promeki/ancatc.h>
 #include <promeki/ancformat.h>
+#include <promeki/ancop47sdp.h>
+#include <promeki/ancst2020audio.h>
 #include <promeki/audiostreamdesc.h>
 #include <promeki/audiochannelmap.h>
 #include <promeki/audiomarker.h>
@@ -321,6 +323,8 @@ void registerBuiltinDataTypes() {
                 registerDataType<AudioMarkerList>();
                 registerDataType<AncAtc>();
                 registerDataType<AncAfd>();
+                registerDataType<AncOp47Sdp>();
+                registerDataType<AncSt2020Audio>();
                 registerDataType<Cea708Cdp>();
                 registerDataType<Cea708Service>();
                 registerDataType<Cea708DtvccPacket>();

@@ -326,7 +326,7 @@ TEST_CASE("St291Packet: implicit decay accepted by AncPacket-taking functions") 
         };
         CHECK(inspect(p));
 
-        // Add to a List<AncPacket>.
+        // Add to a AncPacket::List.
         AncPacket::List list;
         list.pushToBack(p);
         CHECK(list.size() == 1);

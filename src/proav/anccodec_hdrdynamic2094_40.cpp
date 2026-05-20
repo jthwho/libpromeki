@@ -39,7 +39,7 @@ namespace {
 
         constexpr size_t kOuiSize = 3;
 
-        Result<Variant> parseHdrDynamicHdmiInfoFrame(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseHdrDynamicHdmiInfoFrame(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 Result<HdmiInfoFrame> rf = HdmiInfoFrame::from(pkt);
                 if (rf.second().isError()) return makeError<Variant>(rf.second());
                 const HdmiInfoFrame &frame = rf.first();
@@ -57,7 +57,7 @@ namespace {
                 return makeResult<Variant>(Variant(rm.first()));
         }
 
-        Result<List<AncPacket>> buildHdrDynamicHdmiInfoFrame(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildHdrDynamicHdmiInfoFrame(const Variant &v, const AncTranslateConfig &cfg) {
                 HdrDynamic2094_40 md = v.get<HdrDynamic2094_40>();
                 Buffer            stream = md.toBuffer();
 
@@ -74,7 +74,7 @@ namespace {
                 bp[2] = static_cast<uint8_t>((oui >> 16) & 0xFFu);
                 if (stream.size() > 0) {
                         Error err = body.copyFrom(stream.data(), stream.size(), kOuiSize);
-                        if (err.isError()) return makeError<List<AncPacket>>(err);
+                        if (err.isError()) return makeError<AncPacket::List>(err);
                 }
 
                 // HdmiInfoFrame::build() resolves the format via
@@ -86,9 +86,9 @@ namespace {
                                                             HdrDynamic2094_40::InfoFrameVersion, std::move(body));
                 AncPacket     pkt = frame.packet();
                 pkt.setFormat(AncFormat(AncFormat::HdrDynamic2094_40));
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(std::move(pkt));
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace

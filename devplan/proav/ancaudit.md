@@ -4,7 +4,14 @@
 **Companion docs:** `devplan/proav/ancdata.md` (the originating stack),
 `docs/anc.md` (authored 2026-05-19, references this audit).
 **Started:** 2026-05-19
-**Status:** **F1–F8 landed; F9 partially landed; F10 pending.**
+**Status:** **F1–F10 landed.** All audit findings have a final
+disposition; the fundamental-layer (Phase A + B + C) wire bugs are
+fixed, every codec deep-audit (D4c HDR-static, D5c HDR-dynamic
+2094-40, D9 OP-47 SDP, D8 ST 2020-2 Method A, D6 VPID) has been
+byte-for-byte verified, and the registry / docs work has landed.
+F10 Method B (ST 2020-3) and the OP-47 Multipacket variant
+(RDD 8 §6) remain out of scope at this layer pending real
+production demand.
 All fundamental-layer standards are in hand; the [NEEDS-STD] markers
 from the first pass have been resolved.  F1 (comment / doc /
 reserved-input tightening), F2 (CEA-708 CDP wire-format correctness),
@@ -12,12 +19,13 @@ F3 (RFC 8331 / ST 2110-40 correctness), F4 (ST 2016-3 AFD/Bar Data
 + ST 2016-4 Pan-Scan correction), F5 (ATC value type + HFR
 alternation), F6 (Type-1 packet support + reserved validation), F7
 (checksum policy wiring), and F8 (registry / category housekeeping)
-are all committed (2026-05-19).  F9 item 3 (E7 — `docs/anc.md`)
-landed in the same pass; F9 item 1 (A8/E3) partially landed: the
-five ST 291 framing fields migrated off `Metadata` to direct
-`AncPacket` accessors, eliminating the per-packet hash lookups on
-the RTP hot path.  F9 item 2 (E4 — indexed registry views) and
-F10 (codec deep audits) remain.
+are all committed (2026-05-19).  F9 item 1 (A8/E3) landed the five
+ST 291 framing fields as direct `AncPacket` accessors; F9 item 2
+(E4 — indexed registry views) and item 3 (E7 — `docs/anc.md`) also
+landed in the same F6–F9 commit.  F10 codec deep audits: D4c
+(HDR-static SEI) and D5c (HDR-dynamic 2094-40 KLV) verified
+byte-for-byte on 2026-05-20; D8 (ST 2020 Dolby audio metadata),
+D9 (RDD 8 OP-47 SDP), and D6 (VPID) codecs landed 2026-05-20.
 
 This is a *standards audit* of the existing ancillary-data stack — the
 generic `AncFormat` / `AncTransport` / `AncPacket` carrier and the
@@ -81,8 +89,8 @@ All present in `~/docs/smpte` as of 2026-05-19:
 | C | Audit `RtpPayloadAnc` against RFC 8331 + ST 2110-40 | **Catalogued** |
 | D | Audit per-codec wire formats: ATC, AFD, CEA-708 CDP, HDR static, HDR dynamic, VPID, SCTE-104, ST 2020 audio metadata | **Catalogued** (HDR dynamic KLV verified at the SDID + Packet-Count level; full KLV byte audit deferred) |
 | E | Cross-cutting concerns (checksum policy wiring, protected-codes guarding, hot-path metadata access) | **Catalogued** |
-| F | Fix plan: order, dependencies, test additions | **F1 + F2 + F3 + F4 + F5 + F6 + F7 + F8 landed** (2026-05-19); F9–F10 pending |
-| G | Codec-level deep audits (per-spec byte position checklist for ST 2108-2 KLV multi-packet path, RDD 8, ST 2020 sub-flavours) | **Pending** |
+| F | Fix plan: order, dependencies, test additions | **F1 + F2 + F3 + F4 + F5 + F6 + F7 + F8 + F9 + F10 landed** (F1–F8: 2026-05-19; F9 closed in same pass; F10/D4c + F10/D5c verified 2026-05-20; F10/D9 OP-47 SDP + F10/D8 ST 2020 codecs + F10/D6 VPID codec landed 2026-05-20) |
+| G | Codec-level deep audits (per-spec byte position checklist for ST 2108-2 KLV multi-packet path, RDD 8, ST 2020 sub-flavours) | **D4c + D5c + D9 (OP-47 SDP) + D8 (ST 2020-2 Method A) + D6 (VPID) verified (2026-05-20)**; ST 2020-3 Method B + OP-47 Multipacket remain pending pending production demand |
 
 # Phase A — Fundamental layer findings
 
@@ -614,13 +622,91 @@ service descriptor.
 carries one or more HDR/WCG Metadata Frames per ST 2108-1 §5.3.
 Library matches.
 
-**D4c. [audit-not-yet-done]** Per-frame-type byte audit (Static
-Metadata Type 0 = SEI payloadType 137 / payloadSize 0x18 / 26
-data bytes; Static Metadata Type 1 = payloadType 144 /
-payloadSize 0x04 / 6 data bytes; Dynamic Type 2 = ATSC A/341 ST
-2094-10; Dynamic Type 6 = ETSI TS 103 433-1 SL-HDR1) — needs the
-full 332-line cpp walked against ST 2108-1 §5.3.2–§5.3.5. Filed
-as a Phase G follow-up.
+**D4c. [verified — F10, 2026-05-20]** Full byte-position audit of
+`anccodec_hdrstatic_st291.cpp` against ST 2108-1 §5.3.2 / §5.3.3.
+§5.3.4 / §5.3.5 (Dynamic Metadata Types 1 and 5) deferred — they
+belong to separate codecs.
+
+Findings:
+
+- **Frame Type 0 (Static Metadata Type 1 — Mastering Display)** ✓
+  Frame Type=`0x00`, Length=`0x1A` (26), Data Byte 1=`0x89` (SEI
+  payloadType=137), Data Byte 2=`0x18` (SEI payloadSize=24).
+  24-byte body matches H.265 `mastering_display_colour_volume()`:
+  three (x, y) primary pairs as u(16) big-endian × 50000, white
+  point (x, y) as u(16) big-endian × 50000, then
+  `max_display_mastering_luminance` and
+  `min_display_mastering_luminance` each as u(32) big-endian in
+  units of `0.0001 cd/m²`.
+
+- **Frame Type 1 (Static Metadata Type 2 — Content Light Level)** ✓
+  Frame Type=`0x01`, Length=`0x06`, Data Byte 1=`0x90` (SEI
+  payloadType=144), Data Byte 2=`0x04` (SEI payloadSize=4). 4-byte
+  body matches H.265 `content_light_level_info()` (MaxCLL,
+  MaxFALL as u(16) big-endian in cd/m²).
+
+- **Primary ordering (c=0 R, c=1 G, c=2 B) — conformant.**
+  H.265's GBR convention is non-normative ("It is suggested
+  that c=0 corresponds to the green primary…"); the underlying
+  SMPTE ST 2086 defines no canonical ordering. CTA-861.3-A §3.2.1
+  Table 5 ("All possible mappings of the chromaticity of Red,
+  Green and Blue color primaries to indices 0, 1 and 2 are
+  allowed and shall be supported by the sink") explicitly hands
+  ordering-discovery to the sink (red = largest x, green = largest
+  y, blue = the remaining index). The library's RGB-on-wire choice
+  is consistent across codecs and conformant to ST 2108-1, ST 2086,
+  H.265, and CTA-861.3. ATSC A/341's normative GBR mandate applies
+  only to Dynamic Metadata Type 1 (Frame Type 2), which this codec
+  does not emit; that ordering will be enforced inside the future
+  `HdrDynamic2094_10` codec.
+
+- **Forward-tolerance on Frame Length** (intentional Postel's-law
+  choice, now documented in the codec header). Parser rejects
+  `Length < spec_min` (26 / 6) with `Error::CorruptData` but
+  accepts `> spec_min`, decoding only the first 24 / 4 SEI bytes
+  and skipping the rest. Locks in future spec extensions without
+  breaking captures.
+
+- **Duplicate Frame Type tolerance** (intentional, now documented).
+  §5.3.2 / §5.3.3 say "no more than one Frame Type 0 (resp. 1)
+  per video frame"; a non-conformant sender emitting two is
+  decoded last-wins, no error surfaced.
+
+- **`readU32Be` style** — each byte is now `static_cast<uint32_t>`
+  *before* the shift. Under C++20 the previous form (`int`-promoted
+  shift cast afterwards) was well-defined (result fits in
+  `unsigned int`) but the explicit cast makes the intent obvious.
+
+- **§5.3.4 (Frame Type 2 = ATSC A/341 ST 2094-10) and §5.3.5
+  (Frame Type 6 = ETSI TS 103 433-1 SL-HDR1) [deferred]** — out of
+  scope for the `HdrStatic2086` codec. Frame Type 2 belongs to
+  the future `HdrDynamic2094_10` codec (name-only registry entry
+  as of F8); Frame Type 6 has no library well-known yet. The
+  byte-position audits for those frame types will land with the
+  respective codecs. The current parser correctly walks past
+  unknown Frame Types, so a mixed-type UDW that contains both
+  static and dynamic frames still decodes the static portion.
+
+Test additions (`tests/unit/anccodec_hdrstatic_st291.cpp`,
++7 cases / +43 assertions on top of the prior 8 cases / 65
+assertions):
+
+- ST 2108-1 §5.3.2 MD frame byte exactness — locks down the full
+  28-UDW MD frame for the BT.2020 + 1000 cd/m² + MaxCLL 1000 /
+  MaxFALL 400 sample.
+- ST 2108-1 §5.3.3 CLL frame byte exactness — same for the CLL
+  frame.
+- Parse from spec-exact wire bytes — hand-built BT.709 + 4000
+  cd/m² UDW; confirms decoded values match.
+- Forward-tolerant parse on oversized MD Frame Length (28) —
+  decodes the first 24 SEI body bytes; skips the extras.
+- Rejects sub-minimum MD Frame Length (16) with CorruptData.
+- Rejects wrong SEI payloadType / payloadSize on MD with
+  CorruptData.
+- Duplicate Type-0 frame — last-wins tolerance verified.
+
+Verification: `unittest-promeki` passes (HdrStatic_St291 subset:
+15 cases / 108 assertions). No new warnings.
 
 ### D5. HDR Dynamic 2094-40 KLV (anccodec_hdrdynamic2094_40_st291.cpp).
 
@@ -635,21 +721,124 @@ with the audit's recommendation.)
 per packet of a multi-packet message) — comment-level
 verification only; full byte audit deferred to Phase G.
 
-**D5c. [audit-not-yet-done]** The 867-line ST 2108-2 implementation
-deserves a per-byte audit against §5.3 / §5.4: Packet Count, 16-bit
-Message Length in UDW 2–3 of first packet, KLV frames per ST 336
-with 16-byte UL keys + ASN.1 BER length + value, multi-packet
-concatenation rules (§5.3 final paragraph), and the four defined
-Metadata Frame keys per §5.4.2.
+**D5c. [verified — F10, 2026-05-20]** Full byte-position audit of
+`anccodec_hdrdynamic2094_40_st291.cpp` against ST 2108-2:2019 §5
+and ST 2094-2:2017 §6.1, Tables 10 and 11.
 
-Filed as Phase G.
+Findings:
 
-### D6. VPID (registered but no codec yet).
+- **§5.1 Packet header** ✓ — DID=`0x41`, SDID=`0x0D`, Type-2.
+- **§5.3 UDW format** ✓:
+  - UDW[0] = Packet Count, 1-based; first packet = `0x01`.
+  - UDW[1..n] = Metadata Message (all or portion).
+  - Multi-packet concatenation: Packet Count increments
+    `0x01, 0x02, ...` across packets that share one Message.
+  - Parser sorts segments by Packet Count, validates the
+    `[1, 2, ..., N]` sequence with no gaps, then concatenates
+    Message-bytes.
+- **§5.4.1 Message Length** ✓ — 16-bit big-endian (upper 8 in
+  first data word, lower 8 in second), excludes the Length field
+  itself.
+- **§5.4.2 Frame structure** ✓ — Key (16-byte UL) + Length (BER)
+  + Value, repeated. Parser walks all Frame Keys; only App 4
+  Set frames are surfaced into `HdrDynamic2094_40`. Other
+  Frame Keys (Mastering Display §5.4.2.2, Maximum Light Level
+  §5.4.2.3, DMCVT App 1 §5.4.2.4) are skipped — this codec
+  is scoped to HDR10+ (App 4 / §5.4.2.5).
+- **ST 2094-2 Table 10 (App 4 Set Key)** ✓ — verified
+  byte-for-byte: `06.0E.2B.34.02.53.01.01.05.31.02.04.00.00.00.00`.
+- **ST 2094-2 §6.1 BER Length** ✓ — codec always emits the
+  4-byte long form (`0x83` + 3 length bytes) per §6.1
+  "the set length field shall be 4 bytes long".
+- **ST 2094-2 Table 3 + Table 11 Local Tags** ✓ — every tag
+  emitted/parsed (24 in total) matches its spec value:
+  `0x3601` ApplicationIdentifier, `0x3602` ApplicationVersion,
+  `0x3604` TimeIntervalStart, `0x3605` TimeIntervalDuration,
+  `0x3606` UpperLeftCorner, `0x3607` LowerRightCorner,
+  `0x3608` WindowNumber, `0x360B` TargetedSystemDisplayMaxLum,
+  `0x3630`–`0x3635` window-only ellipse items, `0x3636`/`0x3637`
+  TargetedSystemDisplayActualPeakLuminance + Rows,
+  `0x3638`/`0x3639` MasteringDisplayActualPeakLuminance + Rows,
+  `0x363A` MaximumSceneColorComponentLevels (MaxSCL), `0x363B`
+  AverageMaxRGB, `0x363C`/`0x363D` DistributionMaxRGB
+  Percentages/Percentiles, `0x363E` FractionBrightPixels,
+  `0x363F` KneePoint, `0x3640` BezierCurveAnchors, `0x3641`
+  ColorSaturationWeight.
+- **Rational denominators** ✓ — verified against Table 11:
+  TargetedSystemDisplayMaxLum = 100, MaxSCL = 100000,
+  AverageMaxRGB = 100000, DistributionMaxRGBPercentiles = 100000,
+  FractionBrightPixels = 1000, KneePoint = 4095,
+  BezierCurveAnchors = 1023, ColorSaturationWeight = 8.
+- **Required item presence** ✓ — ApplicationIdentifier (Req),
+  ApplicationVersionNumber (Req), and the Table 11 Req items
+  (MaxSCL, AverageMaxRGB, Distribution*, FractionBrightPixels)
+  are unconditionally emitted on every App 4 Set.
 
-**[gap]** Codec hasn't landed yet. ST 352:2013 + the parallel SDI
-VPID work in `src/proav/sdivpid.cpp` give us everything we need;
-a thin AncCodec wrapper that parses 4-byte VPID payload into the
-existing `Vpid` value type is straightforward.
+Minor findings (documented in the codec header; not bugs):
+
+- **Window 0 ProcessingWindow sentinel** — Window 0 needs
+  the full-image rectangle, but the value type carries no
+  image dimensions. Codec emits `(0,0)` /
+  `(0xFFFF, 0xFFFF)` until a config-driven dimension hint
+  lands. Already documented in the codec header.
+- **TimeInterval defaults** — Start=0, Duration=1 emitted
+  for per-frame metadata. Already documented.
+- **Non-App-4 set partial-write window** — if a malformed
+  non-App-4 Set in the same Message places writable global
+  tags (e.g. `ApplicationVersionNumber`,
+  `TargetedSystemDisplayMaxLum`, peak-luminance grids) before
+  the `ApplicationIdentifier` tag, the parser writes those
+  global fields then bails when it discovers the wrong
+  Identifier, leaving a transient mutation. In practice the
+  library's builder and well-formed ST 2094-2 senders emit
+  `ApplicationIdentifier` first, so this is a theoretical
+  ordering concern rather than a wire bug. Documented in the
+  codec header.
+- **`readU32Be` style** — each byte is now
+  `static_cast<uint32_t>` *before* the shift (parallel cleanup
+  to the D4c codec).
+
+Test additions (`tests/unit/anccodec_hdrdynamic2094_40_st291.cpp`,
++10 cases / +23 assertions on top of the prior 12 cases / 158
+assertions):
+
+- Packet Count byte = `0x01` on the first/only packet.
+- Message Length = u16 BE, excludes itself.
+- Frame Key is the ST 2094-2 Table 10 App 4 UL, byte-for-byte.
+- Set Length is the 4-byte BER long form (`0x83` + 3 length
+  bytes); decoded length matches remaining bytes.
+- ApplicationIdentifier tag (`0x3601`) carries value 4.
+- WindowNumber tag (`0x3608`) carries 0 on the only window.
+- TargetedSystemDisplayMaxLum tag (`0x360B`) Rational with
+  Den=100 and the expected numerator.
+- AverageMaxRGB tag (`0x363B`) Rational with Den=100000.
+- Multi-packet — Packet Count is sequential `1..N` across the
+  emitted packets.
+- Parser skips an unrecognized non-App-4 Frame Key inserted
+  before the App 4 Set in the Message (Postel-tolerance).
+
+Verification: `unittest-promeki` passes (HdrDynamic2094_40_St291
+subset: 22 cases / 181 assertions). No new warnings.
+
+### D6. VPID (codec landed).
+
+**[verified — F10/D6, 2026-05-20]** Thin AncCodec wrapper landed
+at `src/proav/anccodec_vpid.cpp`.  The parser / builder delegate
+to `SdiVpid::fromSt291Packet` / `SdiVpid::toSt291Packet` so the
+byte-level wire enforcement (DID 0x41 / SDID 0x01 / DC=4) is
+shared with direct callers of those helpers.  The codec
+registers all three dispatch hooks
+(`PROMEKI_REGISTER_ANC_PARSER` + `_BUILDER` + `_SYNC_POLICY`)
+under `AncTransport::St291`, honours
+`AncTranslateConfig::St291BuildLine` (default
+`UnspecifiedLine` = 0x7FE) and `St291FieldB`, and rejects
+non-`SdiVpid` Variants on the build path with
+`Error::InvalidArgument`.  Frame-sync policy: VPID is a
+steady-state link descriptor with no per-frame sequence state,
+so Play and Repeat pass through and Drop discards (mirrors the
+AFD policy shape).  11 codec cases / 33 assertions added.
+Callers wanting the ST 352:2013 §6.2 recommended VANC line can
+pre-fill the cfg via `SdiVpid::recommendedAncLine(fmt, field)`.
 
 ### D7. SCTE-104 (registered but no codec yet).
 
@@ -658,16 +847,44 @@ extension. No audit beyond "registry entry correct".
 
 ### D8. ST 2020 Dolby audio metadata.
 
-**[gap]** Wildcard SDID format (A7) + missing codec. The wildcard
-0x00 SDP sentinel issue must land before SDP emission is correct.
-Codec is a separate piece of work.
+**[verified — F10/D8, 2026-05-20]** ST 2020-2 Method A codec
+landed.  New `AncSt2020Audio` value type +
+`anccodec_st2020audio.cpp` round-trip ST 2020-1 §7 / ST 2020-2 §5
+byte layout: DID 0x45 fixed, SDID 0x01..0x09 channel-pair
+association (ST 2020-1 §7.1 Table 1), Payload Descriptor §5.4
+Table 1 (COMPATIBILITY=0, Reserved=0, VERSION=01b, DOUBLE_PKT,
+SECOND_PKT, DUPLICATE_PKT), DC1 = MDF + 1 single packet, 2-packet
+split for 254 < MDF ≤ 508, Y-stream emission per §8.  Multi-parser
+reassembles the §5.3 split pair, validates the §5.4.3 DOUBLE /
+SECOND bit sequence, rejects mismatched-SDID pairs and three-plus
+packet groups.  Wildcard-SDID SDP emission (A7) had already landed
+in F3 (concrete-SDID expansion 0x01-0x09 instead of the (DID, 0x00)
+collision).  Deferred: ST 2020-3 Method B (Dolby E specific) +
+deeper §5 metadata-frame parsing (sync segments / data segments /
+end-of-frame sync) — those will land with the codecs that actually
+need them.  19 codec + 5 value-type test cases, 116 assertions.
 
-### D9. RDD 8 OP-47 (not registered, no codec).
+### D9. RDD 8 OP-47 (codec landed; multipacket pending).
 
-**[gap]** RDD 8:2008 defines DID=0x43, SDID=0x02 for the
-Subtitling Distribution Packet (SDP) and SDID=0x01 for the
-companion. Not in the registry; would be a new well-known
-`AncFormat::Op47Sdp` + codec.
+**[verified — F10/D9, 2026-05-20]** OP-47 SDP codec landed.  New
+`AncOp47Sdp` value type + `anccodec_op47sdp.cpp` round-trip the
+full RDD 8 §5 SDP layout: DID 0x43 / SDID 0x02, IDENTIFIER 0x51
+0x15, LENGTH = full UDW byte count, FORMAT CODE 0x02 (WST
+teletext), 5 Structure A descriptors (line + reserved + field
+one), up to 5 Structure B 45-byte payloads (run-in / framing /
+MRAG / subtitling), FOOTER ID 0x74, 16-bit BE Footer Sequence
+Counter (§5.2), SDP CHECKSUM (§5.3 — sum mod 256 = 0).  Parser
+rejects: wrong identifiers, wrong format code, LENGTH/DC
+mismatch, wrong footer ID, corrupted checksum, non-zero
+descriptor following zero (§5.4.2 prefix-rule violation).
+Builder rejects >5 packets.  Y-stream emission per §3 (cites
+SMPTE 344M).  Frame-sync policy: only Play passes through —
+Drop and Repeat both drop, because repeating would re-issue an
+identical FSC and confuse downstream loss detection.  RDD 8 §6
+Multipacket carriage (DID 0x43 / SDID 0x01) remains a registry-
+only entry (`AncFormat::Op47Multipack`); the codec is a sibling
+that will land alongside an actual multipacket-emitting backend.
+20 codec + 5 value-type test cases, 121 assertions.
 
 ### D10. ST 2106 CCF — Closed Caption Flag.
 
@@ -1212,8 +1429,25 @@ passes; no new warnings.
    the RTP pack / unpack path.  The `AncMeta::St291` namespace
    (which previously declared these as Metadata keys) is removed.
    Remaining item: profile the net hot-path gain on a 4K60 ANC
-   stream and verify the indexed registry views (E4) if warranted.
-2. **E4** — indexed registry views (category + transport).  Pending.
+   stream.
+2. **E4** — ✅ **Landed (2026-05-19, in the same F6–F9 commit
+   `8f35a9a`).** `AncFormatRegistry` now maintains two
+   `Map<int, AncFormat::IDList>` indexes (`byCategory`,
+   `byTransport`) populated incrementally inside `add()` so the
+   `registeredIDsForCategory` / `registeredIDsForTransport`
+   lookups are O(1) map probes instead of full registry scans.
+   `registerData` routes through `add()` so runtime registrations
+   stay consistent with the index.  The transport index honours
+   `canonicalTransport` plus any non-zero per-transport key byte,
+   so multi-transport formats (e.g. `HdrStatic2086` on canonical
+   `HdmiInfoFrame` with secondary `St291` carriage) appear under
+   every applicable transport — preserving the pre-F9.2 semantics
+   of the scan-based path.  Existing
+   `tests/unit/ancformat.cpp` cases for `registeredIDsForCategory`
+   (Captions, Hdr, Subtitles, Vbi) and `registeredIDsForTransport`
+   (St291, HdmiInfoFrame, MpegTsPrivate) all continue to pass
+   under the indexed implementation; per-test wire-byte inclusion
+   / exclusion semantics are unchanged.
 3. **E7** — ✅ **Landed (2026-05-19).** `docs/anc.md` authored with
    architecture overview, wire-layer contracts (ADF stripping, Type-1
    vs Type-2, protected codes, checksum policy), transport mapping,
@@ -1223,14 +1457,95 @@ passes; no new warnings.
 
 After F2–F5 ship, do byte-position audits against:
 
-- **ST 2108-1 §5.3.2–§5.3.5** for the HDR-static SEI-style codec
-  (D4c) — verify the four Frame Type payloads.
-- **ST 2108-2 §5.3 / §5.4** for the HDR-dynamic KLV codec (D5c)
-  — verify multi-packet KLV concatenation and the four KLV Frame
-  keys.
-- **RDD 8** for OP-47 SDP.
-- **ST 2020 family** (parts 1–3) for Dolby audio metadata
-  sub-flavours.
+1. **ST 2108-1 §5.3.2 / §5.3.3** for the HDR-static SEI-style
+   codec (D4c) — ✅ **LANDED 2026-05-20.** Frame Type 0 and Frame
+   Type 1 (Mastering Display + Content Light Level) verified
+   byte-for-byte; +7 reference-vector tests added. Findings
+   logged under D4 above. §5.3.4 / §5.3.5 (Dynamic Metadata Types
+   1 and 5) deferred to the codecs that will own those frame
+   types (`HdrDynamic2094_10` and a future SL-HDR1 codec).
+2. **ST 2108-2 §5.3 / §5.4** for the HDR-dynamic KLV codec (D5c)
+   — ✅ **LANDED 2026-05-20.** App 4 Set Key (ST 2094-2 Table 10),
+   4-byte BER long-form Set Length (ST 2094-2 §6.1), 16-bit BE
+   Message Length (excludes self), 1-based Packet Count, all 24
+   Local Tags (ST 2094-2 Tables 3 + 11), all 8 Rational
+   denominators verified byte-for-byte. +10 byte-level tests
+   added. Findings logged under D5 above. The other three Frame
+   Keys (MD Color Volume §5.4.2.2, Max Light Level §5.4.2.3,
+   DMCVT App 1 §5.4.2.4) remain out of scope for this codec —
+   future codecs would land their own audits.
+3. **RDD 8** for OP-47 SDP — ✅ **LANDED 2026-05-20.** New
+   `AncOp47Sdp` value type (`DataTypeAncOp47Sdp = 0x6C`) + codec
+   (`src/proav/anccodec_op47sdp.cpp`) round-trips up to 5 VBI
+   packets per SDP. Byte-position audit against RDD 8 §5.1
+   verified for: IDENTIFIER 1/2 (`0x51 0x15`), LENGTH (full UDW
+   byte count), FORMAT CODE (`0x02` WST teletext), Structure A
+   descriptor bit layout (b0-b4 line, b5-b6 reserved, b7 field
+   one per §5.4.1), Structure B 45-byte payload (run-in /
+   framing / MRAG / subtitling — §5.5.2), FOOTER ID (`0x74`),
+   16-bit big-endian FSC (§5.2), SDP CHECKSUM (§5.3 — sum mod
+   256 = 0). Codec rejects: wrong identifiers, wrong format
+   code, LENGTH/DC mismatch, wrong footer ID, corrupted SDP
+   checksum, non-zero descriptor following zero (violation of
+   §5.4.2 prefix rule), and build requests with >5 packets.
+   Per §3 (cites SMPTE 344M) emits in the Y stream
+   (`cBit=false`). Frame-sync policy: only `Play` passes
+   through — `Drop` and `Repeat` both drop, because repeating
+   would re-issue an identical FSC and confuse downstream loss
+   detection. 20 codec cases + 5 value-type cases / 121
+   assertions added. Multipacket (RDD 8 §6, `AncFormat::Op47Multipack`)
+   is registered but not implemented at this layer — that's a
+   future sibling codec.
+4. **ST 2020 family** (parts 1–3) for Dolby audio metadata —
+   ✅ **LANDED 2026-05-20** (ST 2020-2 Method A). New
+   `AncSt2020Audio` value type (`DataTypeSt2020Audio = 0x6D`) +
+   codec (`src/proav/anccodec_st2020audio.cpp`) round-trips the
+   ST 2020-2 §5 wire format at DID 0x45 with SDIDs 0x01..0x09
+   (channel-pair association per ST 2020-1 §7.1 Table 1).
+   Byte-position audit against ST 2020-1 / ST 2020-2 verified for:
+   DID 0x45 fixed (ST 2020-1 §7), SDID-to-channel-pair Table 1
+   mapping (`NoAssociation`=0x01, `ChannelPair1_2`=0x02, …,
+   `ChannelPair15_16`=0x09), Payload Descriptor bit layout
+   (ST 2020-2 §5.4 Table 1: bit 7 COMPATIBILITY=0, bits 6/5
+   Reserved=0, bits 4..3 VERSION=01b, bit 2 DOUBLE_PKT, bit 1
+   SECOND_PKT, bit 0 DUPLICATE_PKT), DC1 = MDF + 1 (§5.3 single
+   packet), 2-packet split for 254 < MDF ≤ 508 (§5.3
+   `DC1 = n+1, DC2 = MDF - DC1 + 2`), Y-stream emission (§8 +
+   ST 2020-1 §8: "ANC packets shall be carried in the Y stream"
+   → `cBit=false`).  Multi-parser (`PROMEKI_REGISTER_ANC_MULTI_PARSER`)
+   reassembles split frames, validates DOUBLE/SECOND bit sequence
+   per §5.4.3, rejects: mismatched SDIDs across the pair, three+
+   packet groups (§5.3 only defines two), or (Double=0) shape on
+   what was claimed as a split. Single-packet parse returns
+   `Error::InsufficientContext` on a (Double=1) packet so the
+   dispatcher routes through `parseGroup`. Builder rejects:
+   MDF > 508 bytes, SDID=0x00 (ST 2020-1 §7.1 reserved + RFC 8331
+   §3.1 Type-1 collision). Frame-sync policy: Play/Repeat pass
+   through (§5.4.4 expects same metadata on the second physical
+   frame of a 50/60 Hz pair); Drop discards. 19 codec cases + 5
+   value-type cases / 116 assertions added. **ST 2020-3 Method B**
+   (Dolby E specific) and **deeper metadata-frame parsing** per
+   ST 2020-1 §5 (sync segments / data segments / end-of-frame
+   sync) remain out of scope at this codec layer — the library
+   treats the metadata-frame bytes as opaque.
+5. **ST 352:2013** VPID — ✅ **LANDED 2026-05-20.** Thin AncCodec
+   wrapper (`src/proav/anccodec_vpid.cpp`) bridges the existing
+   `SdiVpid` value type (`DataTypeSdiVpid = 0x69`) into the
+   `AncTranslator` dispatch framework. Parser / builder delegate
+   to `SdiVpid::fromSt291Packet` / `SdiVpid::toSt291Packet` so
+   the wire-level enforcement (DID 0x41 / SDID 0x01 / DC=4, byte
+   order, checksum) is shared with direct callers of those
+   helpers — no duplicate wire logic. Builder honours
+   `AncTranslateConfig::St291BuildLine` (default
+   `UnspecifiedLine` = 0x7FE) and `St291FieldB`, rejects
+   non-`SdiVpid` Variants with `Error::InvalidArgument`.
+   Frame-sync policy: VPID is a steady-state link descriptor with
+   no per-frame sequence state, so Play and Repeat pass the
+   packet through and Drop discards (same shape as the AFD
+   policy). 11 codec cases / 33 assertions added. ST 352:2013
+   §6.2 recommended VANC line lookup is exposed via
+   `SdiVpid::recommendedAncLine(fmt, field)`; callers wanting
+   that placement pre-fill `St291BuildLine` from it.
 
 # Decisions
 

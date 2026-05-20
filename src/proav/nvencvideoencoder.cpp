@@ -651,7 +651,7 @@ class NvencVideoEncoder::Impl {
                                         VideoEncoder::selectAncForSei(source, /*pairedVideoStreamIndex=*/0,
                                                                        kCaptionFormats);
                                 for (const AncPacket &pkt : ancPackets) {
-                                        Result<List<AncPacket>> r =
+                                        AncTranslator::PacketsResult r =
                                                 _ancTranslator.translate(pkt, AncTransport::HlsSei);
                                         if (error(r).isError()) {
                                                 promekiWarn("NvencVideoEncoder: AncTranslator::translate("

@@ -71,16 +71,48 @@
  *  - ST 2094-40 §9.1 also requires @c TimeInterval (Start +
  *    Duration); the codec emits the canonical per-frame defaults
  *    @c Start = 0 and @c Duration = 1.
- *  - Multi-packet message splitting (Packet Count incrementing
- *    across packets when one Message exceeds one ANC packet's UDW
- *    capacity) is not implemented — typical single-window HDR10+
- *    fits in one packet.
+ *  - The other three HDR/WCG Metadata Frame types defined by
+ *    ST 2108-2 §5.4.2 (Mastering Display Color Volume Metadata
+ *    §5.4.2.2, Maximum Light Level Metadata §5.4.2.3, DMCVT App 1
+ *    Metadata §5.4.2.4) are out of scope for this codec.  HDR
+ *    static is carried via ST 2108-1 SEI through @c HdrStatic2086.
+ *    App 1 (ST 2094-10) would need its own codec.  The parser
+ *    walks past unknown Frame Keys, so a mixed-type UDW that
+ *    contains both App 4 and any of the other three frame types
+ *    still decodes the App 4 portion correctly.
+ *  - Parser tolerates per-set tag reordering only in the common
+ *    case: if a non-App-4 Set leads with non-Identifier tags that
+ *    happen to write to global @c HdrDynamic2094_40 state (e.g.
+ *    @c ApplicationVersionNumber, @c TargetedSystemDisplayMaxLum)
+ *    before the ApplicationIdentifier tag clarifies that the Set
+ *    is not App 4, the global writes are not rolled back.  In
+ *    practice both the library's builder and well-formed ST 2094-2
+ *    senders emit ApplicationIdentifier first.
  *  - The optional @c TargetedSystemDisplayActualPeakLuminance and
  *    @c MasteringDisplayActualPeakLuminance grids round-trip when
  *    present.  Their wire bitstream stores u(4) values in 1/15
  *    units; ST 2094-2 stores them as UInt8 in the same 1/15 unit
  *    space (per ST 2094-2 Table 11 note "code values ... shall be
  *    15 × actual values"), so the bytes are written directly.
+ *
+ * @par Spec verification trail (D5c audit, 2026-05-20)
+ *
+ * Verified byte-for-byte against:
+ *
+ *  - ST 2108-2:2019 §5.1 (DID 0x41 / SDID 0x0D, Type-2, DC 02h–FFh).
+ *  - ST 2108-2:2019 §5.3 (UDW[0] Packet Count, 1-based; UDW[1..]
+ *    Metadata Message; multi-packet concatenation rule).
+ *  - ST 2108-2:2019 §5.4 (16-bit BE Message Length excluding self,
+ *    followed by KLV Frames).
+ *  - ST 2094-2:2017 Table 10 (DMCVT App 4 Set key, 16 bytes).
+ *  - ST 2094-2:2017 §6.1 (Set Length always 4-byte BER long form
+ *    @c 0x83 + 3 length bytes; Local Tag + Local Length 2 bytes
+ *    each).
+ *  - ST 2094-2:2017 Table 11 (every emitted/parsed Local Tag
+ *    matches: 36.01, 36.02, 36.04, 36.05, 36.06, 36.07, 36.08,
+ *    36.0B, 36.30–36.41).
+ *  - ST 2094-2:2017 Table 11 (Rational denominators: 100, 100000,
+ *    100000, 100000, 1000, 4095, 1023, 8 — all match).
  */
 
 #include <promeki/ancformat.h>
@@ -405,7 +437,7 @@ namespace {
                 return buf;
         }
 
-        Result<List<AncPacket>> buildHdrDynamicSt291(const Variant &v, const AncTranslateConfig &cfg) {
+        AncTranslator::PacketsResult buildHdrDynamicSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 HdrDynamic2094_40 md = v.get<HdrDynamic2094_40>();
                 Buffer            message = buildFullMessage(md);
 
@@ -424,7 +456,7 @@ namespace {
                 const size_t     totalMessageBytes = message.size();
                 const uint8_t   *mp = static_cast<const uint8_t *>(message.data());
 
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (totalMessageBytes == 0) {
                         // Empty Message — emit one packet with just the
                         // Packet Count byte.  Useful for edge-case testing;
@@ -435,7 +467,7 @@ namespace {
                         St291Packet p = St291Packet::build(AncFormat(AncFormat::HdrDynamic2094_40), udw, line,
                                                             St291Packet::UnspecifiedHOffset, fieldB);
                         out.pushToBack(p.packet());
-                        return makeResult<List<AncPacket>>(std::move(out));
+                        return makeResult<AncPacket::List>(std::move(out));
                 }
 
                 const size_t totalPackets =
@@ -445,7 +477,7 @@ namespace {
                         // wire model.  At 254 bytes per packet that's 64 KB
                         // of Message — well beyond any realistic HDR10+
                         // payload.
-                        return makeError<List<AncPacket>>(Error::OutOfRange);
+                        return makeError<AncPacket::List>(Error::OutOfRange);
                 }
 
                 for (size_t pktIdx = 0; pktIdx < totalPackets; ++pktIdx) {
@@ -462,7 +494,7 @@ namespace {
                                                             St291Packet::UnspecifiedHOffset, fieldB);
                         out.pushToBack(p.packet());
                 }
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
         // ---------------------------------------------------------------
@@ -496,8 +528,13 @@ namespace {
         uint16_t readU16Be(const uint8_t *p) { return static_cast<uint16_t>((p[0] << 8) | p[1]); }
 
         uint32_t readU32Be(const uint8_t *p) {
-                return static_cast<uint32_t>((p[0] << 24)) | static_cast<uint32_t>((p[1] << 16)) |
-                       static_cast<uint32_t>((p[2] << 8)) | static_cast<uint32_t>(p[3]);
+                // Each byte is cast to uint32_t before shifting; under C++20 the
+                // `int`-promoted shift was well-defined (result fits in
+                // unsigned int) but the explicit cast keeps the intent obvious
+                // and avoids integer-promotion gotchas on platforms with
+                // narrower `int`.
+                return (static_cast<uint32_t>(p[0]) << 24) | (static_cast<uint32_t>(p[1]) << 16) |
+                       (static_cast<uint32_t>(p[2]) <<  8) |  static_cast<uint32_t>(p[3]);
         }
 
         bool isApp4SetKey(const uint8_t *key) {
@@ -740,7 +777,7 @@ namespace {
         // AncPayload.  Validates the Packet Count sequence, concatenates
         // the per-packet Message-bytes into the full HDR/WCG Metadata
         // Message, then walks the KLV frames inside.
-        Result<Variant> parseHdrDynamicSt291(const List<AncPacket> &pkts,
+        AncTranslator::ParseResult parseHdrDynamicSt291(const AncPacket::List &pkts,
                                               const AncTranslateConfig & /*cfg*/) {
                 if (pkts.isEmpty()) return makeError<Variant>(Error::InvalidArgument);
 
@@ -845,14 +882,14 @@ namespace {
         // through individually, so the multi-packet structure is
         // preserved bit-for-bit on Repeat — the receiver re-aggregates
         // from the Packet Count bytes already in the wire payload.
-        Result<List<AncPacket>> syncPolicyHdrDynamic2094_40(const AncPacket &pkt, FrameSyncDisposition d,
+        AncTranslator::PacketsResult syncPolicyHdrDynamic2094_40(const AncPacket &pkt, FrameSyncDisposition d,
                                                              uint8_t /*repeatIndex*/,
                                                              const AncTranslateConfig & /*cfg*/) {
-                List<AncPacket> out;
+                AncPacket::List out;
                 if (d.kind() != FrameSyncDisposition::Drop) {
                         out.pushToBack(pkt);
                 }
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace

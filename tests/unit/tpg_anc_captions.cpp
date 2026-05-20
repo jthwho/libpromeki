@@ -113,7 +113,7 @@ TEST_CASE("TPG: ANC captions enabled with no file emits null-pair CDPs") {
 
         AncTranslator    t;
         const AncPacket &pkt = ancs[0]->packets()[0];
-        Result<Variant>  parsed = t.parse(pkt);
+        AncTranslator::ParseResult  parsed = t.parse(pkt);
         REQUIRE(parsed.second().isOk());
         Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
         REQUIRE(cdp.ccData.size() == 1);
@@ -155,7 +155,7 @@ TEST_CASE("TPG: SubRip-driven captions schedule per-frame CcData from the encode
                 Frame              frame = readOneFrame(io);
                 AncPayload::PtrList ancs = frame.ancPayloads();
                 REQUIRE(ancs.size() == 1);
-                Result<Variant> parsed = t.parse(ancs[0]->packets()[0]);
+                AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                 if (f == 25 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt25 = true;
@@ -193,7 +193,7 @@ TEST_CASE("TPG: offset shifts SubRip cues forward in time") {
                 Frame              frame = readOneFrame(io);
                 AncPayload::PtrList ancs = frame.ancPayloads();
                 REQUIRE(ancs.size() == 1);
-                Result<Variant> parsed = t.parse(ancs[0]->packets()[0]);
+                AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                 if (f == 40 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt40 = true;
@@ -375,7 +375,7 @@ TEST_CASE("TPG: ANC sequence counter advances each frame") {
                 Frame                frame = readOneFrame(io);
                 AncPayload::PtrList  ancs = frame.ancPayloads();
                 REQUIRE(ancs.size() == 1);
-                Result<Variant> parsed = t.parse(ancs[0]->packets()[0]);
+                AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                 CHECK(cdp.sequenceCounter == expected);
@@ -465,7 +465,7 @@ TEST_CASE("TPG[708]: codec=Cea708 emits DTVCC triples; Cea708Decoder round-trips
                 Frame               frame = readOneFrame(io);
                 AncPayload::PtrList ancs = frame.ancPayloads();
                 REQUIRE(ancs.size() == 1);
-                Result<Variant> parsed = t.parse(ancs[0]->packets()[0]);
+                AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
                 for (size_t i = 0; i < cdp.ccData.size(); ++i) {
@@ -643,7 +643,7 @@ TEST_CASE("TPG[SCC]: byte pairs from SCC file ride into cc_data at the matching 
         Frame                   f0 = readOneFrame(io);
         AncPayload::PtrList     ancs0 = f0.ancPayloads();
         REQUIRE(ancs0.size() == 1);
-        Result<Variant> parsed0 = t.parse(ancs0[0]->packets()[0]);
+        AncTranslator::ParseResult parsed0 = t.parse(ancs0[0]->packets()[0]);
         REQUIRE(parsed0.second().isOk());
         Cea708Cdp cdp0 = parsed0.first().get<Cea708Cdp>();
         REQUIRE(cdp0.ccData.size() == 1);

@@ -53,7 +53,7 @@ namespace {
         constexpr uint32_t UserIdentifierGa94 = 0x47413934; // "GA94"
         constexpr uint8_t  UserDataTypeCodeCcData = 0x03;
 
-        Result<Variant> parseCea708HlsSei(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseCea708HlsSei(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 const Buffer &data = pkt.data();
                 if (data.size() < 10) {
                         // Minimum: country(1) + provider(2) + user_id(4) +
@@ -109,7 +109,7 @@ namespace {
                 return makeResult<Variant>(Variant(cdp));
         }
 
-        Result<List<AncPacket>> buildCea708HlsSei(const Variant &v, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::PacketsResult buildCea708HlsSei(const Variant &v, const AncTranslateConfig & /*cfg*/) {
                 Cea708Cdp                    cdp = v.get<Cea708Cdp>();
                 const Cea708Cdp::CcDataList &ccData = cdp.ccData;
                 // SEI carries the cc_count in 5 bits, so up to 31 triples
@@ -121,7 +121,7 @@ namespace {
                         promekiWarn("Cea708HlsSei builder: %zu cc_data triples exceeds the SEI "
                                     "5-bit cc_count cap (31)",
                                     ccData.size());
-                        return makeError<List<AncPacket>>(Error::OutOfRange);
+                        return makeError<AncPacket::List>(Error::OutOfRange);
                 }
                 List<uint8_t> bytes;
                 bytes.reserve(11 + ccData.size() * 3);
@@ -156,9 +156,9 @@ namespace {
 
                 AncPacket pkt(AncFormat(AncFormat::Cea708), AncTransport::HlsSei, std::move(wire),
                                Metadata());
-                List<AncPacket> out;
+                AncPacket::List out;
                 out.pushToBack(std::move(pkt));
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace

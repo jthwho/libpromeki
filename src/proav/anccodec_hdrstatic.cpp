@@ -27,7 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-        Result<Variant> parseHdrStaticHdmiInfoFrame(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
+        AncTranslator::ParseResult parseHdrStaticHdmiInfoFrame(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
                 Result<HdmiInfoFrame> rf = HdmiInfoFrame::from(pkt);
                 if (rf.second().isError()) return makeError<Variant>(rf.second());
                 const HdmiInfoFrame &frame = rf.first();
@@ -40,15 +40,15 @@ namespace {
                 return makeResult<Variant>(Variant(rm.first()));
         }
 
-        Result<List<AncPacket>> buildHdrStaticHdmiInfoFrame(const Variant &v,
+        AncTranslator::PacketsResult buildHdrStaticHdmiInfoFrame(const Variant &v,
                                                              const AncTranslateConfig & /*cfg*/) {
                 HdrStaticMetadata md = v.get<HdrStaticMetadata>();
                 Buffer            body = md.toBuffer();
                 HdmiInfoFrame     frame = HdmiInfoFrame::build(AncFormat(AncFormat::HdrStatic2086),
                                                                 HdrStaticMetadata::InfoFrameVersion, body);
-                List<AncPacket>   out;
+                AncPacket::List   out;
                 out.pushToBack(frame.packet());
-                return makeResult<List<AncPacket>>(std::move(out));
+                return makeResult<AncPacket::List>(std::move(out));
         }
 
 } // namespace
