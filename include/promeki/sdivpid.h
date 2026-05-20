@@ -918,9 +918,13 @@ class SdiVpid {
                  * @param fieldB  @c true for field 2 of an interlaced
                  *                signal (sets @c AncPacket::st291FieldB()),
                  *                @c false for field 1 or progressive.
+                 * @param cBit    @c true to place the packet in the C
+                 *                stream, @c false (default) for the Y
+                 *                stream.  ST 352 §6 does not mandate
+                 *                either; Y is the conventional choice.
                  * @return The built packet.
                  */
-                St291Packet toSt291Packet(uint16_t line = 0, bool fieldB = false) const;
+                St291Packet toSt291Packet(uint16_t line = 0, bool fieldB = false, bool cBit = false) const;
 
                 /**
                  * @brief Promotes an ANC packet carrying a VPID back

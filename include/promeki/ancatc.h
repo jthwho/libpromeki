@@ -136,6 +136,34 @@ class AncAtc {
                         Bgf2       = 0x10, ///< UDW 15 bit 7 — binary-group flag 2.
                 };
 
+                /**
+                 * @brief ATC payload-type byte (DBB1) per ST 12-2:2014
+                 *        §6.2.1 Table 2.
+                 *
+                 * Stamped on UDWs 1..8 bit 3 LSB-first by the codec.
+                 * ST 12-2:2014 §5 normatively assigns DID=0x60 /
+                 * SDID=0x60 to **every** ATC packet — LTC, VITC1, and
+                 * VITC2 share one (DID,SDID).  The discriminating
+                 * byte is DBB1, surfaced here so a captured packet
+                 * round-trips its original flavour through parse →
+                 * build without depending on the @c AncFormat::ID the
+                 * registry happened to resolve.
+                 *
+                 * Default is @ref Ltc to match the build path's "no
+                 * caller hint = LTC" behaviour.  The library codec
+                 * stamps this from the wire DBB1 on parse; the
+                 * format-keyed build wrappers
+                 * (@c AncFormat::AtcLtc / @c AtcVitc1 / @c AtcVitc2)
+                 * override @ref payloadType to their flavour before
+                 * encoding so a caller's explicit format choice wins
+                 * over whatever stale value rides in the value type.
+                 */
+                enum PayloadType : uint8_t {
+                        Ltc   = 0x00, ///< Linear time code (ATC_LTC).
+                        Vitc1 = 0x01, ///< Vertical interval time code #1 (ATC_VITC1).
+                        Vitc2 = 0x02, ///< Vertical interval time code #2 (ATC_VITC2).
+                };
+
                 /** @brief Default-constructs an empty ATC value (all fields zero). */
                 AncAtc() = default;
 
@@ -214,6 +242,22 @@ class AncAtc {
                 void setBgf2(bool on) { setFlag(Bgf2, on); }
                 /// @}
 
+                // -- Payload type (DBB1) ---------------------------------
+
+                /**
+                 * @brief Returns the ATC payload-type byte (DBB1).
+                 *
+                 * Stamped from the wire DBB1 on parse; honoured on
+                 * build when a build wrapper does not override it.
+                 * Values beyond @ref Vitc2 (0x02) round-trip as raw
+                 * uint8_t so reserved future assignments survive a
+                 * parse → build cycle.
+                 */
+                uint8_t payloadType() const { return _payloadType; }
+
+                /** @brief Replaces the DBB1 payload-type byte. */
+                void setPayloadType(uint8_t v) { _payloadType = v; }
+
                 // -- DBB2 ------------------------------------------------
 
                 /**
@@ -239,7 +283,8 @@ class AncAtc {
                 /** @brief Field-wise equality. */
                 bool operator==(const AncAtc &o) const {
                         return _tc == o._tc && _userBits == o._userBits &&
-                               _flags == o._flags && _dbb2 == o._dbb2;
+                               _flags == o._flags && _payloadType == o._payloadType &&
+                               _dbb2 == o._dbb2;
                 }
 
                 /** @brief Inequality. */
@@ -294,6 +339,7 @@ class AncAtc {
                 Timecode _tc;
                 UserBits _userBits{};
                 uint8_t  _flags = 0;
+                uint8_t  _payloadType = Ltc;
                 uint8_t  _dbb2 = 0;
 };
 

@@ -258,13 +258,10 @@ static AncFormat::Data makePacketForDeletion() {
         d.id = AncFormat::PacketForDeletion;
         d.name = "PacketForDeletion";
         d.desc = "SMPTE ST 291-1 §6.3 Packet-Marked-for-Deletion (Type-1, DID 0x80)";
-        // No good fit in the current AncCategory taxonomy — this is an
-        // in-band control packet, not content metadata.  None of the
-        // categories added in F8 (Subtitles / Klv / Sei / Vbi) cover
-        // control-plane packets either; we keep "Unknown" so this
-        // entry stays out of category filters that select on
-        // Captions / Timecode / etc.
-        d.category = AncCategory::Unknown;
+        // In-band control packet — categorised under @c Control (added
+        // in P2-21) so callers iterating @c registeredIDsForCategory
+        // by content type (Captions / Timecode / …) do not surface it.
+        d.category = AncCategory::Control;
         d.canonicalTransport = AncTransport::St291;
         d.st291Did = 0x80;
         // Type-1 packet — word 1 carries DBN, not SDID.  Register as a
@@ -293,23 +290,13 @@ static AncFormat::Data makeOp47Multipack() {
         AncFormat::Data d;
         d.id = AncFormat::Op47Multipack;
         d.name = "Op47Multipack";
-        d.desc = "RDD 8 / OP-47 multipacket header (companion of the SDP)";
+        d.desc = "RDD 8 / OP-47 VANC Multipacket (companion of the SDP, carries SDP + WSS + other inner ANC)";
         d.category = AncCategory::Subtitles;
         d.canonicalTransport = AncTransport::St291;
+        // RDD 8:2008 §4.2(iii): "DID and SDID values 143h and 203h,
+        // respectively (includes parity)" → 8-bit DID/SDID 0x43/0x03.
         d.st291Did = 0x43;
-        d.st291Sdid = 0x01;
-        return d;
-}
-
-static AncFormat::Data makeCcfSt2106() {
-        AncFormat::Data d;
-        d.id = AncFormat::CcfSt2106;
-        d.name = "CcfSt2106";
-        d.desc = "SMPTE ST 2106 Caption Compatible Flag";
-        d.category = AncCategory::Captions;
-        d.canonicalTransport = AncTransport::St291;
-        d.st291Did = 0x41;
-        d.st291Sdid = 0x14;
+        d.st291Sdid = 0x03;
         return d;
 }
 
@@ -317,11 +304,13 @@ static AncFormat::Data makeVbiSt2031() {
         AncFormat::Data d;
         d.id = AncFormat::VbiSt2031;
         d.name = "VbiSt2031";
-        d.desc = "SMPTE ST 2031 NTSC VBI / line-21 carriage in HD-SDI";
+        d.desc = "SMPTE ST 2031 DVB-VBI / SCTE-VBI ancillary data (ETSI EN 301 775 / ANSI/SCTE 127)";
         d.category = AncCategory::Vbi;
         d.canonicalTransport = AncTransport::St291;
-        d.st291Did = 0x60;
-        d.st291Sdid = 0x01;
+        // ST 2031:2015 §5: "The DID word shall be set to the value 41h.
+        // The SDID word shall be set to the value of 08h."
+        d.st291Did = 0x41;
+        d.st291Sdid = 0x08;
         return d;
 }
 
@@ -362,6 +351,18 @@ struct AncFormatRegistry {
                 // ever grows.
                 Map<int, AncFormat::IDList> byCategory;
                 Map<int, AncFormat::IDList> byTransport;
+                // F9 hot-path lookup indexes for AncFormat::fromSt291DidSdid.
+                // RTP unpack calls that function once per ANC record (~9 k/s
+                // on HD-60, double on 4K60), and the linear-scan
+                // implementation was O(N) over the entire registry.  The
+                // exact-pair map keys on (did << 8) | sdid; the wildcard
+                // map keys on did alone for families that register
+                // st291Sdid == 0 (Smpte2020Audio, PacketForDeletion).
+                // Insertion is first-write-wins for both maps so the
+                // (0x60, 0x60) ATC trio anchors to AtcLtc (the first
+                // registered) just like the linear scan did.
+                Map<uint16_t, AncFormat::ID> byDidSdid;
+                Map<uint8_t, AncFormat::ID>  byDidWildcard;
 
                 AncFormatRegistry() {
                         add(makeInvalid());
@@ -371,9 +372,18 @@ struct AncFormatRegistry {
                         add(makePanScan());
                         add(makeScte104());
                         add(makeScte35());
+                        // ST 12-2:2014 §5: every ATC packet (LTC, VITC1,
+                        // VITC2) uses DID=0x60 / SDID=0x60.  The DBB1
+                        // byte (UDWs 1..8 b3, LSB-first) discriminates
+                        // the flavour; the ATC codec stamps that on the
+                        // returned @c AncAtc::payloadType.  All three
+                        // AncFormat IDs are kept so callers can drive
+                        // the build path with an explicit flavour; the
+                        // (DID,SDID) → ID lookup is anchored to
+                        // @c AtcLtc (lowest ID wins the wildcard match).
                         add(makeAtc(AncFormat::AtcLtc, "AtcLtc", "SMPTE 12M-2 Ancillary Timecode — LTC", 0x60));
-                        add(makeAtc(AncFormat::AtcVitc1, "AtcVitc1", "SMPTE 12M-2 Ancillary Timecode — VITC 1", 0x61));
-                        add(makeAtc(AncFormat::AtcVitc2, "AtcVitc2", "SMPTE 12M-2 Ancillary Timecode — VITC 2", 0x62));
+                        add(makeAtc(AncFormat::AtcVitc1, "AtcVitc1", "SMPTE 12M-2 Ancillary Timecode — VITC 1", 0x60));
+                        add(makeAtc(AncFormat::AtcVitc2, "AtcVitc2", "SMPTE 12M-2 Ancillary Timecode — VITC 2", 0x60));
                         add(makeSmpte2020Audio());
                         add(makeHdrStatic2086());
                         add(makeHdrDynamic2094_40());
@@ -385,11 +395,13 @@ struct AncFormatRegistry {
                         add(makeKlv0601());
                         add(makeVpid());
                         add(makePacketForDeletion());
-                        // F8 additions: OP-47 SDP family, ST 2106 CCF,
-                        // ST 2031 VBI, ST 2094-10 dynamic HDR.
+                        // F8 additions: OP-47 SDP family, ST 2031 VBI,
+                        // ST 2094-10 dynamic HDR.  No `CcfSt2106`
+                        // registration here — ST 2106:2016 is
+                        // "Non-PCM Audio in AES3 / DTS Type17",
+                        // not a caption flag, and defines no DID/SDID.
                         add(makeOp47Sdp());
                         add(makeOp47Multipack());
-                        add(makeCcfSt2106());
                         add(makeVbiSt2031());
                         add(makeHdrDynamic2094_10());
                 }
@@ -404,10 +416,31 @@ struct AncFormatRegistry {
                         const AncCategory    category = d.category;
                         const AncTransport   canonical = d.canonicalTransport;
                         const uint8_t        did = d.st291Did;
+                        const uint8_t        sdid = d.st291Sdid;
                         const uint8_t        hdmiType = d.hdmiInfoFrameType;
                         const uint8_t        tsTableId = d.mpegTsTableId;
                         entries[id] = std::move(d);
                         byCategory[category.value()].pushToBack(id);
+                        // F9 hot-path index for fromSt291DidSdid.  First
+                        // write wins so the (DID,SDID) collision case
+                        // (ATC trio at 0x60/0x60) anchors to the
+                        // first-registered ID — matches the linear scan's
+                        // historical behaviour.  Wildcards (sdid == 0)
+                        // populate the byDid wildcard map instead.
+                        if (did != 0) {
+                                if (sdid == 0) {
+                                        if (!byDidWildcard.contains(did)) {
+                                                byDidWildcard[did] = id;
+                                        }
+                                } else {
+                                        const uint16_t key = static_cast<uint16_t>(
+                                                (static_cast<uint16_t>(did) << 8) |
+                                                static_cast<uint16_t>(sdid));
+                                        if (!byDidSdid.contains(key)) {
+                                                byDidSdid[key] = id;
+                                        }
+                                }
+                        }
                         // Transport view honours canonicalTransport and
                         // any non-zero per-transport key byte (the same
                         // policy registeredIDsForTransport used to apply
@@ -494,18 +527,23 @@ AncFormat::AncFormat(const String &name) : d(lookupData(idFromName(name))) {}
 
 AncFormat AncFormat::fromSt291DidSdid(uint8_t did, uint8_t sdid) {
         if (did == 0) return AncFormat(Invalid);
-        auto         &reg = registry();
-        const Data   *wildcard = nullptr;
-        for (const auto &[id, data] : reg.entries) {
-                if (id == Invalid) continue;
-                if (data.st291Did != did) continue;
-                if (data.st291Sdid == sdid) return AncFormat(id);
-                // Wildcard SDID-0 entries absorb any SDID under their
-                // matching DID; remember the first one we see and only
-                // return it after an exhaustive exact-match search fails.
-                if (data.st291Sdid == 0 && wildcard == nullptr) wildcard = &data;
-        }
-        return wildcard != nullptr ? AncFormat(wildcard->id) : AncFormat(Invalid);
+        // F9 hot-path lookup: O(1) probes against the byDidSdid /
+        // byDidWildcard indexes maintained by AncFormatRegistry::add.
+        // The exact-pair probe wins when (DID,SDID) names a registered
+        // format directly; otherwise we fall back to the per-DID
+        // wildcard family (Smpte2020Audio at DID 0x45, PacketForDeletion
+        // at DID 0x80).  The previous linear scan over reg.entries was
+        // O(N) per call — ~30 ANC packets per HD-60 frame turned into
+        // ~9 k registry walks per channel per second, dominating the
+        // RX hot path.
+        auto          &reg = registry();
+        const uint16_t key = static_cast<uint16_t>(
+                (static_cast<uint16_t>(did) << 8) | static_cast<uint16_t>(sdid));
+        auto exactIt = reg.byDidSdid.find(key);
+        if (exactIt != reg.byDidSdid.end()) return AncFormat(exactIt->second);
+        auto wildcardIt = reg.byDidWildcard.find(did);
+        if (wildcardIt != reg.byDidWildcard.end()) return AncFormat(wildcardIt->second);
+        return AncFormat(Invalid);
 }
 
 AncFormat AncFormat::fromHdmiInfoFrameType(uint8_t type) {
@@ -523,6 +561,20 @@ AncFormat AncFormat::fromHdmiInfoFrameType(uint8_t type) {
                 if (data.hdmiInfoFrameType == type) return AncFormat(id);
         }
         return AncFormat(Invalid);
+}
+
+AncFormat AncFormat::fromHdmiInfoFrame(uint8_t type, uint32_t oui) {
+        // Non-vendor InfoFrame types resolve identically to
+        // @ref fromHdmiInfoFrameType regardless of OUI.
+        if (type != 0x81) return fromHdmiInfoFrameType(type);
+        // Vendor-Specific InfoFrame — promote on OUI.
+        constexpr uint32_t kOuiHdr10Plus = 0x00D046u;  // HDR10+ / Samsung
+        constexpr uint32_t kOuiDolby     = 0x00903Eu;  // Dolby Vision
+        switch (oui & 0xFFFFFFu) {
+                case kOuiHdr10Plus: return AncFormat(HdrDynamic2094_40);
+                case kOuiDolby:     return AncFormat(DvRpu);
+                default:            return AncFormat(VendorInfoFrame);
+        }
 }
 
 AncFormat AncFormat::fromMpegTsTableId(uint8_t tableId) {

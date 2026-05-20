@@ -86,38 +86,45 @@ TEST_CASE("ATC<->St291: round-trip 01:23:45:14 NDF30 on AtcLtc") {
         CHECK_FALSE(out.isDropFrame());
 }
 
-TEST_CASE("ATC<->St291: round-trip 00:00:00:00 NDF30 (boundary)") {
+TEST_CASE("ATC<->St291: round-trip 00:00:00:00 NDF30 on AtcVitc1") {
+        // ST 12-2:2014 §5 collapses LTC/VITC1/VITC2 onto (DID=0x60,
+        // SDID=0x60); the DBB1 byte discriminates.  AncAtc::payloadType
+        // round-trips through parse → build.
         Timecode           src(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
         AncTranslator::PacketsResult  built = buildVia(src, AncFormat::AtcVitc1);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
-        CHECK(rp.first().sdid() == 0x61);
+        CHECK(rp.first().sdid() == 0x60);
 
         AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
-        Timecode out = atcTimecode(parsed.first());
+        AncAtc atc = parsed.first().get<AncAtc>();
+        Timecode out = atc.timecode();
         CHECK(out.hour() == 0);
         CHECK(out.min() == 0);
         CHECK(out.sec() == 0);
         CHECK(out.frame() == 0);
+        CHECK(atc.payloadType() == AncAtc::Vitc1);
 }
 
-TEST_CASE("ATC<->St291: round-trip 23:59:59:29 NDF30 (max digits)") {
+TEST_CASE("ATC<->St291: round-trip 23:59:59:29 NDF30 on AtcVitc2") {
         Timecode          src(Timecode::Mode(Timecode::NDF30), 23, 59, 59, 29);
         AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc2);
         REQUIRE(built.second().isOk());
         Result<St291Packet> rp = St291Packet::from(built.first().front());
         REQUIRE(rp.second().isOk());
-        CHECK(rp.first().sdid() == 0x62);
+        CHECK(rp.first().sdid() == 0x60);
 
         AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
-        Timecode out = atcTimecode(parsed.first());
+        AncAtc atc = parsed.first().get<AncAtc>();
+        Timecode out = atc.timecode();
         CHECK(out.hour() == 23);
         CHECK(out.min() == 59);
         CHECK(out.sec() == 59);
         CHECK(out.frame() == 29);
+        CHECK(atc.payloadType() == AncAtc::Vitc2);
 }
 
 TEST_CASE("ATC<->St291: drop-frame bit round-trips") {
@@ -397,7 +404,8 @@ TEST_CASE("ATC reference: AtcVitc1 00:00:00:00 sets DBB1 bit 0 (UDW 1 b3 = 1)") 
         REQUIRE(built.second().isOk());
 
         // DBB1=0x01 (VITC1) → UDW 1 b3 = 1, all other DBB bits zero.
-        // SDID=0x61 per ST 12-2 §5.
+        // SDID=0x60 per ST 12-2:2014 §5 (every ATC flavour shares
+        // DID=0x60/SDID=0x60; DBB1 discriminates).
         const uint8_t expected[16] = {
                 0x08, 0x00,  // UDW 1: DBB1 LSB=1, nibble=0           | UDW 2 BG1=0
                 0x00, 0x00,  // UDW 3: nibble=0, DBB1 bit 2=0         | UDW 4 BG2=0
@@ -408,7 +416,7 @@ TEST_CASE("ATC reference: AtcVitc1 00:00:00:00 sets DBB1 bit 0 (UDW 1 b3 = 1)") 
                 0x00, 0x00,  //
                 0x00, 0x00   //
         };
-        checkAtcReferencePacket(built.first().front(), 0x61, expected);
+        checkAtcReferencePacket(built.first().front(), 0x60, expected);
 }
 
 TEST_CASE("ATC reference: AtcVitc2 23:59:59:29 NDF30 sets DBB1 bit 1 (UDW 2 b3 = 1)") {
@@ -416,7 +424,8 @@ TEST_CASE("ATC reference: AtcVitc2 23:59:59:29 NDF30 sets DBB1 bit 1 (UDW 2 b3 =
         AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcVitc2);
         REQUIRE(built.second().isOk());
 
-        // DBB1=0x02 (VITC2) → UDW 2 b3 = 1, others zero.  SDID=0x62.
+        // DBB1=0x02 (VITC2) → UDW 2 b3 = 1, others zero.  SDID=0x60
+        // per ST 12-2:2014 §5 (shared with LTC + VITC1).
         //                       frame=29    sec=59    min=59    hour=23
         const uint8_t expected[16] = {
                 0x90, 0x08,  // UDW 1-2:   frame units 9              | BG1 + DBB1 bit 1=1
@@ -428,7 +437,7 @@ TEST_CASE("ATC reference: AtcVitc2 23:59:59:29 NDF30 sets DBB1 bit 1 (UDW 2 b3 =
                 0x30, 0x00,  // UDW 13-14: hour units 3               | BG7=0
                 0x20, 0x00   // UDW 15-16: hour tens 2                | BG8=0
         };
-        checkAtcReferencePacket(built.first().front(), 0x62, expected);
+        checkAtcReferencePacket(built.first().front(), 0x60, expected);
 }
 
 TEST_CASE("ATC reference: parser decodes a hand-built ST 12-2 packet (12:34:56:21 DF30)") {
@@ -743,6 +752,25 @@ TEST_CASE("AncAtc F5 — flag bits round-trip independently") {
         }
 }
 
+TEST_CASE("AncAtc P2-1 — DBB1 payload type round-trips through UDW 1..8 b3 LSB-first") {
+        // ST 12-2:2014 §6.2.1: DBB1 is UDW 1..8 b3, LSB-first.  The
+        // codec must round-trip the byte byte-exact so a captured
+        // VITC2 packet re-emits as VITC2 even though the captured
+        // AncPacket's @c format() resolves to AtcLtc (lowest-ID match
+        // for the shared (0x60,0x60) slot).
+        for (uint8_t dbb1 : {AncAtc::Ltc, AncAtc::Vitc1, AncAtc::Vitc2}) {
+                AncFormat::ID fmtId = dbb1 == AncAtc::Vitc1 ? AncFormat::AtcVitc1
+                                    : dbb1 == AncAtc::Vitc2 ? AncFormat::AtcVitc2
+                                                            : AncFormat::AtcLtc;
+                Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
+                AncTranslator::PacketsResult built = buildVia(tc, fmtId);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front());
+                REQUIRE(parsed.second().isOk());
+                CHECK(parsed.first().get<AncAtc>().payloadType() == dbb1);
+        }
+}
+
 TEST_CASE("AncAtc F5 — DBB2 byte round-trips through UDW 9..16 b3 LSB-first") {
         // Bit-sweep DBB2 to confirm each bit lands in the correct UDW.
         for (unsigned bit = 0; bit < 8; ++bit) {
@@ -840,6 +868,7 @@ TEST_CASE("AncAtc F5 — DataStream round-trip preserves every field") {
         AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4),
                    AncAtc::UserBits{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8});
         src.setFlags(static_cast<uint8_t>(AncAtc::ColorFrame | AncAtc::Bgf1));
+        src.setPayloadType(AncAtc::Vitc2);
         src.setDbb2(0x42);
 
         Variant v(src);

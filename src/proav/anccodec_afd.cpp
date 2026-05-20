@@ -77,13 +77,26 @@ namespace {
                 return v;
         }
 
-        AncTranslator::ParseResult parseAfdSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseAfdSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
 
                 const St291Packet &p = rp.first();
                 List<uint16_t>     udw = p.udw();
                 if (udw.size() < 1) return makeError<Variant>(Error::CorruptData);
+
+                // ST 2016-3 §4 / Table 1: DC shall be 8.  Senders that
+                // truncate are non-conformant; warn so the divergence
+                // surfaces in diagnostics, but Postel-tolerate the AFD
+                // code + AR flag from UDW 1 which is what the rest of
+                // this codec needs to make forward progress.  Strict
+                // receivers should reject the packet; the library
+                // defers that to a follow-up StrictValidate policy.
+                if (udw.size() != kAfdUdwCount) {
+                        promekiWarn("anccodec_afd: ST 2016-3 §4 mandates DC=8; received DC=%zu — "
+                                    "Postel-tolerated, bar-data omitted on short packets",
+                                    udw.size());
+                }
 
                 // UDW 1: AFD code in bits 6..3, AR in bit 2 (ST 2016-3
                 // Table 1).  Reserved bits 7, 1, 0 are not checked
@@ -130,9 +143,10 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::Afd), udw, line,
-                                                        St291Packet::UnspecifiedHOffset, fieldB);
+                                                        St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(p.packet());
                 return makeResult<AncPacket::List>(std::move(out));

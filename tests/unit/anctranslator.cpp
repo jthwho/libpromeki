@@ -12,13 +12,18 @@
  * phases.
  */
 
+#include <stdexcept>
+
 #include <doctest/doctest.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
+#include <promeki/ancst2020audio.h>
 #include <promeki/anctranslateconfig.h>
 #include <promeki/anctranslator.h>
 #include <promeki/buffer.h>
+#include <promeki/list.h>
 #include <promeki/metadata.h>
+#include <promeki/st291packet.h>
 
 using namespace promeki;
 
@@ -311,4 +316,128 @@ TEST_CASE("AncTranslator: config getters / setters") {
         cfg2.set(AncTranslateConfig::AllowLossy, false);
         t.setConfig(cfg2);
         CHECK(t.config().getAs<bool>(AncTranslateConfig::AllowLossy) == false);
+}
+
+// ============================================================================
+// P2-23: parseGroup / multi-parser dispatch
+// ============================================================================
+
+TEST_CASE("AncTranslator: P2-23 hasParser true when only a multi-parser is registered") {
+        // The ST 2020 codec is the in-tree exemplar of a format that
+        // registers a multi-parser but no single-parser.  hasParser
+        // must report true for it on St291 so callers querying
+        // capability before parsing don't conclude "no parser
+        // available" and skip the format entirely.
+        CHECK(AncTranslator::hasParser(AncFormat(AncFormat::Smpte2020Audio),
+                                       AncTransport::St291));
+}
+
+TEST_CASE("AncTranslator: P2-23 parseGroup dispatches to the multi-parser") {
+        // Hand-construct a minimal valid 2-packet ST 2020 split: each
+        // packet carries the §5.4.3 descriptor byte (DOUBLE=1) plus
+        // 254 bytes of zero MDF payload, on SDID=0x02 (channel pair
+        // 1/2).
+        const uint8_t kSdid = 0x02;
+        auto makePkt = [&](bool second) -> AncPacket {
+                List<uint16_t> udw;
+                udw.resize(255);
+                // Descriptor: VERSION=01b, DOUBLE=1, SECOND=second.
+                udw[0] = static_cast<uint16_t>(0x08 | 0x04 | (second ? 0x02 : 0x00));
+                for (size_t i = 1; i < 255; ++i) udw[i] = 0;
+                St291Packet p = St291Packet::buildRaw(/*did*/ 0x45, kSdid, udw, /*line*/ 9);
+                return p.packet();
+        };
+
+        AncPacket::List pkts;
+        pkts.pushToBack(makePkt(false));
+        pkts.pushToBack(makePkt(true));
+
+        AncTranslator t;
+        AncTranslator::ParseResult r = t.parseGroup(pkts);
+        REQUIRE(r.second().isOk());
+        // The decoded Variant carries an AncSt2020Audio with both
+        // halves concatenated into a 508-byte MDF.
+        CHECK(r.first().type() == DataTypeSt2020Audio);
+}
+
+// Helper: allocate a brand-new test format ID *and* register its
+// AncFormat::Data so that @c AncFormat(id) resolves through
+// @c AncFormat::lookupData back to @p id (otherwise the AncFormat
+// ctor reports @c Invalid for IDs lacking a Data record, which
+// silently breaks @c hasParser / @c hasBuilder lookups keyed on the
+// returned AncFormat).  Mirrors the existing TestFormat fixture but
+// scoped per-test so each P2-31 case gets a private (format,
+// transport) slot.
+static AncFormat::ID p2_31_allocFormatId(const char *nameSuffix) {
+        AncFormat::ID id = AncFormat::registerType();
+        AncFormat::Data d;
+        d.id = id;
+        d.name = String("AncTranslatorP2_31_") + String(nameSuffix);
+        d.desc = String("Private test format for AncTranslator P2-31 tests");
+        d.category = AncCategory::UserDefined;
+        d.canonicalTransport = AncTransport::St291;
+        AncFormat::registerData(std::move(d));
+        return id;
+}
+
+TEST_CASE("AncTranslator: P2-31 re-registering the same fn is idempotent (no warn, no throw)") {
+        // Idempotent carve-out: a library that registers itself twice
+        // through a static-init graph, or a test that re-installs the
+        // same stub, should not see a collision warn or a DEBUG-build
+        // throw.  The dispatcher state is identical either way.
+        AncFormat::ID id = p2_31_allocFormatId("idempotent");
+        AncTranslator::registerParser(id, AncTransport::St291, &stubParseA);
+        // Same fn pointer → idempotent.
+        AncTranslator::registerParser(id, AncTransport::St291, &stubParseA);
+        AncTranslator::registerBuilder(id, AncTransport::St291, &stubBuildA);
+        AncTranslator::registerBuilder(id, AncTransport::St291, &stubBuildA);
+        CHECK(AncTranslator::hasParser(AncFormat(id), AncTransport::St291));
+        CHECK(AncTranslator::hasBuilder(AncFormat(id), AncTransport::St291));
+}
+
+#ifdef PROMEKI_DEBUG_ENABLE
+TEST_CASE("AncTranslator: P2-31 DEBUG builds hard-fail on registry collision with a different fn") {
+        // Static-init time collisions ("two TUs register the same
+        // (format, transport) key with *different* fn pointers") are
+        // programming errors — the dispatcher's final state becomes
+        // link-order dependent.  In PROMEKI_DEBUG_ENABLE builds the
+        // second register call throws via PROMEKI_ASSERT so a
+        // duplicate registration never ships silently with
+        // last-write-wins semantics.  In plain Release builds the
+        // warn + last-wins path is preserved (not tested here because
+        // the warn channel is not observable).
+        AncFormat::ID collidingId = p2_31_allocFormatId("collision");
+
+        // First registration must succeed cleanly.
+        AncTranslator::registerParser(collidingId, AncTransport::St291, &stubParseA);
+
+        // Second registration with a *different* fn must throw.
+        CHECK_THROWS_AS(
+                AncTranslator::registerParser(collidingId, AncTransport::St291, &stubParseB),
+                std::runtime_error);
+
+        // The same pattern holds for every other registry; spot-check
+        // the builder path to confirm the helper fires across all
+        // five entry points.
+        AncTranslator::registerBuilder(collidingId, AncTransport::St291, &stubBuildA);
+        CHECK_THROWS_AS(
+                AncTranslator::registerBuilder(collidingId, AncTransport::St291, &stubBuildB),
+                std::runtime_error);
+}
+#endif
+
+TEST_CASE("AncTranslator: P2-23 parse on a DOUBLE_PKT packet returns InsufficientContext") {
+        // ST 2020 codec deliberately signals "I need the multi-parser"
+        // via Error::InsufficientContext when a single packet arrives
+        // with DOUBLE=1.  Callers route the packet through parseGroup
+        // after observing the error.
+        List<uint16_t> udw;
+        udw.resize(255);
+        udw[0] = static_cast<uint16_t>(0x08 | 0x04); // VERSION=01b, DOUBLE=1.
+        for (size_t i = 1; i < 255; ++i) udw[i] = 0;
+        St291Packet p = St291Packet::buildRaw(/*did*/ 0x45, /*sdid*/ 0x02, udw, /*line*/ 9);
+
+        AncTranslator t;
+        AncTranslator::ParseResult r = t.parse(p.packet());
+        CHECK(r.second().code() == Error::InsufficientContext);
 }

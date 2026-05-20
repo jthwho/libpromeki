@@ -167,8 +167,7 @@ Each registered transport names a wire carrier.  The current set:
 
 | Transport                | Notes                                                                |
 |--------------------------|----------------------------------------------------------------------|
-| `St291`                  | SDI VANC, ST 291-1 / RFC 8331 / ST 2110-40 carriage.                 |
-| `RtpAncSt2110_40`        | RFC 8331 RTP payload format (smpte291/90000) on ST 2110-40.          |
+| `St291`                  | SDI VANC, ST 291-1 / RFC 8331 / ST 2110-40 carriage (the post-ADF wire bytes are identical for SDI and RTP, so RFC 8331 RTP payloads ride this transport too — see [RFC 8331 carriage](#anc_rfc8331)). |
 | `HdmiInfoFrame`          | CEA-861 InfoFrames over HDMI.                                        |
 | `NdiXml`                 | NDI metadata frames (XML element).                                   |
 | `RtmpAmf`                | RTMP AMF0 script tags (`onCaptionInfo`, `onCuePoint`, ...).          |
@@ -280,11 +279,10 @@ that sentinel correctly.
 
 ### Protected codes (ST 291-1 §9.1) {#anc_st291_protected}
 
-The library enforces a hard-fail on protected codes
-(`ancaudit.md` decision Q1).  ST 291-1 §9.1 SHALL NOT use 10-bit
-words whose data byte lies in the protected ranges — the
-upper-2-bit pattern `00` or `11` from a caller-supplied parity
-that lands on a protected code.
+The library enforces a hard-fail on protected codes.  ST 291-1
+§9.1 SHALL NOT use 10-bit words whose data byte lies in the
+protected ranges — the upper-2-bit pattern `00` or `11` from a
+caller-supplied parity that lands on a protected code.
 
 @ref promeki::St291Packet::buildRaw's pass-through path rejects
 any caller-supplied 10-bit word that violates this rule and
@@ -304,9 +302,9 @@ typical builders never trigger this error.
 @ref promeki::AncChecksumPolicy governs how the ST 291-1 §6.4
 Checksum_Word is treated on promotion:
 
-- `PreserveOrRecompute` (default — Q6).  Accept the packet
-  regardless of the stored checksum.  Preserves byte-exact replay
-  for captured packets that may contain occasional bit errors.
+- `PreserveOrRecompute` (default).  Accept the packet regardless
+  of the stored checksum.  Preserves byte-exact replay for
+  captured packets that may contain occasional bit errors.
 - `AlwaysRecompute`.  Same behaviour as `PreserveOrRecompute` on
   the parse path; only differs at emit time.
 - `StrictValidate`.  RFC 8331 §7 SHOULD-check: validate that the
@@ -339,10 +337,12 @@ Codec is the term for "the thing that parses an
 | `Vpid`                              | @ref promeki::SdiVpid                         | ST 352 Video Payload Identifier.                                               |
 | `PacketForDeletion`                 | (none yet)                                    | Type-1 sentinel; the framework supports the carriage.                          |
 
-Per `ancaudit.md` F10, follow-up deep audits are tracked for
-HDR-static SEI-style Frame Types (ST 2108-1 §5.3.2–§5.3.5), HDR-
-dynamic KLV multi-packet concatenation (ST 2108-2 §5.3 / §5.4),
-RDD 8 OP-47 SDP, and the ST 2020 Dolby family.
+Codec-level byte-position conformance is verified for the
+HDR-static SEI-style Frame Types (ST 2108-1 §5.3.2–§5.3.5), the
+HDR-dynamic KLV multi-packet concatenation (ST 2108-2 §5.3 /
+§5.4), RDD 8 OP-47 SDP, ST 2020 Dolby Method A, and ST 352 VPID.
+Pending future demand: ST 2020-3 Method B (Dolby E specific) and
+the RDD 8 §6 OP-47 Multipacket variant.
 
 ## AncPayload and AncDesc {#anc_payload}
 
@@ -393,35 +393,39 @@ This is enough when the destination transport's wire format
 matches the source's (the common case for ST 291 ↔ RFC 8331,
 which share the post-ADF 10-bit packing).
 
-## Audit cross-reference {#anc_audit}
+## Design decisions {#anc_decisions}
 
-The library's ANC framework was audited against the relevant
-SMPTE and IETF standards in `devplan/proav/ancaudit.md`.  Phases
-F1 through F8 landed wire-format corrections (CDP framing,
-RFC 8331 §2.1 / §2.2 contract, ST 2016-3 AFD / Bar Data, ATC
-value type, Type-1 packet support, checksum policy, registry
-housekeeping).  Phase F9 landed performance work (this doc's
-@ref anc_packet_st291 "direct ST 291 framing fields" and
-@ref anc_format "indexed format views") and this document.
-Phase F10 tracks remaining per-codec deep audits.
+The library's ANC framework was reviewed against the relevant
+SMPTE and IETF standards (ST 291-1, RP 291-2, RFC 8331,
+ST 2110-40, ST 12-1 / -2 / -3, ST 334-1 / -2, ST 352, ST 2016-3 /
+-4, ST 2020-1 / -2, ST 2086, ST 2094-*, ST 2106, ST 2108-1 / -2,
+RDD 8).  Codec-level byte-position conformance has been verified
+for the HDR-static SEI-style Frame Types (ST 2108-1 §5.3.2 /
+§5.3.3), the HDR-dynamic KLV multi-packet path (ST 2108-2 §5.3 /
+§5.4 + ST 2094-2 Tables 10-11), RDD 8 OP-47 SDP, ST 2020 Dolby
+Method A, and ST 352 VPID.
 
-Open design decisions captured in the audit:
+Notable design choices the library makes:
 
-- **Q1.**  Protected codes hard-fail with
-  @ref promeki::Error::ProtectedAncCode.
-- **Q2.**  Composite SDI (ADF = `3FC`) is declined by design —
-  no current or planned backend ingests composite-domain SDI.
-- **Q3.**  Keep-alives emitted per ST 2110-40 §5.5.
-- **Q4.**  ATC rate hint: sideband via `AncMeta::Atc::Rate`,
-  fallback to `AncTranslateConfig::AtcParseRateHint`, then
-  @ref promeki::Error::InsufficientContext.
-- **Q5.**  ATC value type: introduce @ref promeki::AncAtc rather
-  than overloading @ref promeki::Timecode.
-- **Q6.**  Default checksum policy: `PreserveOrRecompute` (see
+- Protected codes (ST 291-1 §9.1) hard-fail with
+  @ref promeki::Error::ProtectedAncCode rather than silently
+  masking — preserves the byte-exact replay contract.
+- Composite SDI (ADF = `3FC`) is declined by design — no current
+  or planned backend ingests composite-domain SDI.
+- ST 2110-40 §5.5 keep-alives are emitted for every video frame
+  / field with no ANC payload.
+- ATC rate hint: sideband via `AncMeta::Atc::Rate`, fallback to
+  `AncTranslateConfig::AtcParseRateHint`, then
+  @ref promeki::Error::InsufficientContext rather than a silent
+  30-fps default.
+- ATC carries its non-Timecode fields in a dedicated
+  @ref promeki::AncAtc value type rather than overloading
+  @ref promeki::Timecode.
+- Default checksum policy is `PreserveOrRecompute` (see
   @ref anc_st291_checksum).
-- **Q7.**  `AncFormat::BarData` renamed to
-  @ref promeki::AncFormat::PanScan; Bar Data folds into the AFD
-  codec.
+- `AncFormat::PanScan` (DID 0x41 / SDID 0x06) carries the
+  ST 2016-4 Pan-Scan registration; Bar Data folds into the AFD
+  codec because ST 2016-3 §4 carries both in one packet.
 
 @see promeki::AncPacket, promeki::AncFormat, promeki::AncTransport,
      promeki::AncCategory, promeki::AncPayload, promeki::AncDesc,

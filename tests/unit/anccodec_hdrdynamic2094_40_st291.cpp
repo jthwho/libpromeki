@@ -29,10 +29,16 @@ namespace {
 
         // Full single-window HDR10+ descriptor with every optional
         // sub-structure populated.  Exceeds 255 bytes on the wire,
-        // forcing multi-packet split.
+        // forcing multi-packet split.  Uses ApplicationVersion=0
+        // because ST 2094-40:2020 §9.4 SHALL-NOT-emits
+        // ColorSaturationWeight (and the two ActualPeakLuminance grids)
+        // at AppVer=1 — the codec strips them on emission, which
+        // would defeat the round-trip equality check downstream.
+        // §9.3 at AppVer=0 is the SHOULD-NOT softer form so the codec
+        // warns-but-emits, preserving every field for the round-trip.
         HdrDynamic2094_40 fullSingleWindow() {
                 HdrDynamic2094_40 md;
-                md.setApplicationVersion(1);
+                md.setApplicationVersion(0);
                 md.setNumWindows(1);
                 md.setTargetedSystemDisplayMaximumLuminance(10'000'000u); // 1000 cd/m²
 
@@ -601,6 +607,87 @@ TEST_CASE("HdrDynamic2094_40<->St291: parse(single packet) dispatches to multi-p
         // surfaces CorruptData.
         AncTranslator::ParseResult r = t.parse(built.first().front());
         CHECK(r.second().isError());
+}
+
+TEST_CASE("HdrDynamic2094_40<->St291: P2-26 §9.4 strips ColorSaturationWeight at AppVer=1") {
+        // ST 2094-40:2020 §9.4 SHALL NOT include ColorSaturationWeight
+        // (and the two ActualPeakLuminance grids) at
+        // ApplicationVersion=1.  The codec strips them on emission and
+        // logs a warn; the round-trip parses back with the field
+        // absent.
+        HdrDynamic2094_40 src = fullSingleWindow();
+        src.setApplicationVersion(1);
+        // fullSingleWindow() populates ColorSaturationWeight via
+        // hasColorSaturationMapping=true; the §9.4 strip should drop
+        // it from the wire.
+        REQUIRE(src.windowProcessing()[0].hasColorSaturationMapping);
+
+        AncTranslator t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(src), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncTranslator::ParseResult parsed = t.parseGroup(built.first());
+        REQUIRE(parsed.second().isOk());
+        HdrDynamic2094_40 out = parsed.first().get<HdrDynamic2094_40>();
+        CHECK(out.applicationVersion() == 1u);
+        // The §9.4-forbidden field was stripped on emission and is
+        // therefore absent on the parse-back.
+        CHECK_FALSE(out.windowProcessing()[0].hasColorSaturationMapping);
+}
+
+TEST_CASE("HdrDynamic2094_40<->St291: P2-26 §9.4 clamps numWindows>1 to 1 at AppVer=1") {
+        // §9.4 SHALL NOT include WindowNumber > 0 at
+        // ApplicationVersion=1, so multi-window metadata is clamped to
+        // a single-window emission with a warn.
+        HdrDynamic2094_40 src = fullSingleWindow();
+        src.setApplicationVersion(1);
+        src.setNumWindows(2);
+        HdrDynamic2094_40::Window w{};
+        w.upperLeftCornerX = 100;
+        w.upperLeftCornerY = 100;
+        w.lowerRightCornerX = 500;
+        w.lowerRightCornerY = 500;
+        src.extraWindows().pushToBack(w);
+        // windowProcessing list must grow to match numWindows.
+        src.windowProcessing().pushToBack(src.windowProcessing()[0]);
+
+        AncTranslator t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(src), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncTranslator::ParseResult parsed = t.parseGroup(built.first());
+        REQUIRE(parsed.second().isOk());
+        HdrDynamic2094_40 out = parsed.first().get<HdrDynamic2094_40>();
+        CHECK(out.applicationVersion() == 1u);
+        // Only window 0 survived the §9.4 clamp.
+        CHECK(out.numWindows() == 1u);
+}
+
+TEST_CASE("HdrDynamic2094_40<->St291: P2-26 §9.3 preserves optional fields at AppVer=0 (warn-but-emit)") {
+        // §9.3 at AppVer=0 is SHOULD NOT (softer than §9.4's SHALL
+        // NOT).  The codec warns but still emits, so the round-trip
+        // preserves every field that was populated.  This protects
+        // legacy senders that built on the 2016 edition where the
+        // ActualPeakLuminance grids + ColorSaturationWeight were
+        // common.
+        HdrDynamic2094_40 src = fullSingleWindow();
+        REQUIRE(src.applicationVersion() == 0u);
+        REQUIRE(src.windowProcessing()[0].hasColorSaturationMapping);
+
+        AncTranslator t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(src), AncFormat(AncFormat::HdrDynamic2094_40), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncTranslator::ParseResult parsed = t.parseGroup(built.first());
+        REQUIRE(parsed.second().isOk());
+        HdrDynamic2094_40 out = parsed.first().get<HdrDynamic2094_40>();
+        CHECK(out.applicationVersion() == 0u);
+        CHECK(out.windowProcessing()[0].hasColorSaturationMapping);
+        CHECK(out.windowProcessing()[0].colorSaturationWeight ==
+              src.windowProcessing()[0].colorSaturationWeight);
 }
 
 TEST_CASE("HdrDynamic2094_40<->St291: builder caps Packet Count at 255") {

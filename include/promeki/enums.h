@@ -2038,7 +2038,7 @@ class AncCategory : public TypedEnum<AncCategory> {
                                            {"Splice", 3}, {"Aspect", 4}, {"Hdr", 5}, {"AudioMetadata", 6},
                                            {"Display", 7}, {"Geolocation", 8}, {"PayloadId", 9},
                                            {"UserDefined", 10}, {"Subtitles", 11}, {"Klv", 12}, {"Sei", 13},
-                                           {"Vbi", 14}); // default: Unknown
+                                           {"Vbi", 14}, {"Control", 15}); // default: Unknown
 
                 using TypedEnum<AncCategory>::TypedEnum;
 
@@ -2057,6 +2057,13 @@ class AncCategory : public TypedEnum<AncCategory> {
                 static const AncCategory Klv;
                 static const AncCategory Sei;
                 static const AncCategory Vbi;
+                /// @brief In-band control / management packets (Packet
+                ///        Marked for Deletion ST 291-1 §6.3, EDH per
+                ///        RP 165, status descriptors, …).  Distinct
+                ///        from content-carrying categories so a caller
+                ///        iterating `registeredIDsForCategory(Unknown)`
+                ///        does not surface control packets.
+                static const AncCategory Control;
 };
 
 inline const AncCategory AncCategory::Unknown{0};
@@ -2074,6 +2081,7 @@ inline const AncCategory AncCategory::Subtitles{11};
 inline const AncCategory AncCategory::Klv{12};
 inline const AncCategory AncCategory::Sei{13};
 inline const AncCategory AncCategory::Vbi{14};
+inline const AncCategory AncCategory::Control{15};
 
 /**
  * @brief Well-known Enum naming the wire transport an @ref AncPacket

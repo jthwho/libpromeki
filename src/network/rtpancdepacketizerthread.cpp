@@ -93,12 +93,13 @@ void RtpAncDepacketizerThread::emitFrame() {
                             err.desc().cstr());
                 return;
         }
-        if (packets.isEmpty()) {
-                // Every RTP packet in this batch advertised ANC_Count=0;
-                // RFC 8331-aware receivers drop such payloads.  Silent
-                // skip — no warning.
-                return;
-        }
+        // ST 2110-40 §5.5 keep-alive carriage: an RTP batch whose
+        // unpack produced no records corresponds to a sender emitting
+        // an ANC_Count=0 marker for an empty ANC frame.  Surface it
+        // as a keepAlive=true @ref RxAncFrame so downstream consumers
+        // get a per-frame end-of-frame signal instead of a hole.  Set
+        // a flag so timing-only consumers can branch.
+        const bool keepAlive = packets.isEmpty();
 
         TimeStamp  captureTime;
         NtpTime    wallclockNtp;
@@ -123,6 +124,7 @@ void RtpAncDepacketizerThread::emitFrame() {
         bundle.wallclockNtp = wallclockNtp;
         bundle.captureTime = captureTime;
         bundle.firstPacketArrival = firstPktArrival;
+        bundle.keepAlive = keepAlive;
 
         if (_ctx.payloadQueue != nullptr) {
                 Error perr = _ctx.payloadQueue->pushBlocking(std::move(bundle));

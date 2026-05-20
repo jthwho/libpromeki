@@ -103,8 +103,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class RtpPayloadAnc : public RtpPayload {
         public:
-                /// @brief RTP clock rate for RFC 8331 ANC (90 kHz, fixed
-                ///        per §3.2).
+                /// @brief RTP clock rate for RFC 8331 ANC.  RFC 8331
+                ///        §3.1 sets 90 kHz as the default; ST 2110-40
+                ///        §5.3 hard-mandates 90 kHz.
                 static constexpr uint32_t ClockRate = 90000;
 
                 /// @brief Default dynamic RTP payload type number.
@@ -314,8 +315,7 @@ class RtpPayloadAnc : public RtpPayload {
                  * the failure remain in @p out.  The default
                  * @ref AncChecksumPolicy::PreserveOrRecompute accepts
                  * every well-framed record regardless of its
-                 * checksum (the byte-exact replay default — see
-                 * ancaudit.md Q6).
+                 * checksum (the byte-exact replay default).
                  *
                  * @param in     RTP packets to unpack (caller has
                  *               reassembled them across the marker

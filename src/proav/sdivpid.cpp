@@ -518,14 +518,14 @@ SdiVpid SdiVpid::fromUint32BE(uint32_t v) {
 // ANC packet round-trip
 // ---------------------------------------------------------------------------
 
-St291Packet SdiVpid::toSt291Packet(uint16_t line, bool fieldB) const {
+St291Packet SdiVpid::toSt291Packet(uint16_t line, bool fieldB, bool cBit) const {
         List<uint16_t> udw;
         udw.reserve(4);
         for (int i = 0; i < 4; ++i) {
                 udw.pushToBack(static_cast<uint16_t>(_bytes[i]));
         }
         return St291Packet::build(AncFormat(AncFormat::Vpid), udw, line,
-                                  St291Packet::UnspecifiedHOffset, fieldB, false, 0);
+                                  St291Packet::UnspecifiedHOffset, fieldB, cBit, 0);
 }
 
 Result<SdiVpid> SdiVpid::fromSt291Packet(const St291Packet &pkt) {

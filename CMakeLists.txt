@@ -3649,6 +3649,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/ancframesync.cpp
             tests/unit/ancpacket.cpp
             tests/unit/ancpayload.cpp
+            tests/unit/anc_roundtrip_property.cpp
             tests/unit/anctranslateconfig.cpp
             tests/unit/anctranslator.cpp
             tests/unit/anctranslator_syncpolicy.cpp

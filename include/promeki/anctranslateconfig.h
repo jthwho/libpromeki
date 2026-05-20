@@ -103,6 +103,10 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// @brief Enum @ref AncFidelity — output verbosity for
                 /// translators emitting on transports with multiple valid
                 /// representations (XML / JSON / AMF text forms mostly).
+                ///
+                /// @note Currently declared but not consumed by any
+                ///       in-tree codec.  Wired up once the multi-form
+                ///       text codecs land (NDI XML, RTMP AMF).
                 PROMEKI_DECLARE_ID(Fidelity,
                                    VariantSpec()
                                            .setType(DataTypeEnum)
@@ -121,6 +125,10 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
 
                 /// @brief Enum @ref AncOnUnsupported — what to do when
                 /// the input cannot be represented on the target transport.
+                ///
+                /// @note Currently declared but not consumed by any
+                ///       in-tree codec.  Wired up once cross-transport
+                ///       translation paths surface lossy-fallback cases.
                 PROMEKI_DECLARE_ID(OnUnsupported,
                                    VariantSpec()
                                            .setType(DataTypeEnum)
@@ -133,6 +141,10 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// subset for legacy targets).  Defaults to @c false so
                 /// lossless paths are the only fallback unless the
                 /// caller explicitly accepts loss.
+                ///
+                /// @note Currently declared but not consumed by any
+                ///       in-tree codec.  Wired up once a lossy codec
+                ///       path lands.
                 PROMEKI_DECLARE_ID(AllowLossy,
                                    VariantSpec()
                                            .setType(DataTypeBool)
@@ -177,8 +189,45 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                                            .setDefault(false)
                                            .setDescription("F-bit for built ST 291 packets (field-2 indicator)."));
 
+                /// @brief bool — C-bit (Y-vs-C stream selector) for built
+                /// ST 291 packets; stamped onto @c AncPacket::st291CBit().
+                ///
+                /// Default is @c false (Y stream).  Most ANC formats are
+                /// Y-only on the wire by spec mandate: ST 12-2 §8.2.1
+                /// (ATC), ST 2016-3 §5 (AFD/Bar Data), ST 2108-1 §5 (HDR
+                /// static), ST 2110-40 §5.2.2 (RFC 8331 carriage).
+                /// Codecs honour the knob verbatim — a caller that flips
+                /// this to @c true for an Y-only format is responsible
+                /// for whatever interop pain that produces.
+                PROMEKI_DECLARE_ID(St291BuildCBit,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription("C-bit (Y=false / C=true) for built ST 291 packets."));
+
+                /// @brief uint8_t — F-bit value for the ST 2110-40 §5.5
+                /// ANC_Count=0 keep-alive RTP packet, using the wire
+                /// codes of @c RtpPayloadAnc::FieldIndication
+                /// (@c 0=Progressive, @c 1=Invalid/reserved,
+                /// @c 2=InterlacedField1, @c 3=InterlacedField2).
+                /// Plumbed into @c RtpPayloadAnc::setKeepAliveField at
+                /// session construction.  Default is @c 0 (Progressive,
+                /// RFC 8331 §2.1).  Kept as a primitive instead of a
+                /// TypedEnum to avoid pulling the @c rtppayloadanc.h
+                /// header into every translator-config consumer; the
+                /// caller casts the byte through the enum class at the
+                /// setter boundary.
+                PROMEKI_DECLARE_ID(St291KeepAliveField,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt8)
+                                           .setDefault(uint8_t(0))
+                                           .setDescription("F-bit for the ST 2110-40 §5.5 ANC_Count=0 keep-alive RTP packet."));
+
                 /// @brief String — XML namespace prefix for built NDI
                 /// metadata frames.  Empty (default) lets the codec pick.
+                ///
+                /// @note Currently declared but not consumed — no NDI
+                ///       XML codec has landed yet.
                 PROMEKI_DECLARE_ID(NdiXmlNamespace,
                                    VariantSpec()
                                            .setType(DataTypeString)
@@ -201,11 +250,37 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 /// @c onCuePoint outputs.  Empty (default) resolves per
                 /// format (Cea708 → @c onCaptionInfo,
                 /// Scte104 → @c onCuePoint, …).
+                ///
+                /// @note Currently declared but not consumed — no RTMP
+                ///       AMF codec has landed yet.
                 PROMEKI_DECLARE_ID(RtmpAmfObjectName,
                                    VariantSpec()
                                            .setType(DataTypeString)
                                            .setDefault(String())
                                            .setDescription("AMF0 script-tag name override for built RTMP outputs (empty = codec default)."));
+
+                /// @brief uint32_t — Image width (pixels) for the
+                /// ST 2094-40 §9.2 Window 0 rectangle.  When zero
+                /// (default), the @c HdrDynamic2094_40 codec emits the
+                /// legacy @c (0xFFFF, 0xFFFF) sentinel and logs a warn
+                /// — that sentinel is not spec-conformant under §9.2
+                /// ("Window 0 shall cover all pixels in an image"), so
+                /// callers that have the dimensions should always
+                /// stamp them here.
+                PROMEKI_DECLARE_ID(HdrDynamicImageWidth,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt32)
+                                           .setDefault(uint32_t(0))
+                                           .setDescription("Image width (pixels) for ST 2094-40 §9.2 Window 0 (0 = unknown, emits sentinel)."));
+
+                /// @brief uint32_t — Image height (pixels) for the
+                /// ST 2094-40 §9.2 Window 0 rectangle.  Companion of
+                /// @ref HdrDynamicImageWidth.
+                PROMEKI_DECLARE_ID(HdrDynamicImageHeight,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt32)
+                                           .setDefault(uint32_t(0))
+                                           .setDescription("Image height (pixels) for ST 2094-40 §9.2 Window 0 (0 = unknown, emits sentinel)."));
 
                 /// @brief uint32_t — ATC parse-time frame-rate hint
                 /// (24 / 25 / 30; 0 = no hint).  The 8 time-code bytes
@@ -226,6 +301,39 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                 // ============================================================
                 // String round-trip (JSON)
                 // ============================================================
+
+                /**
+                 * @brief Returns the configured ST 291 checksum policy.
+                 *
+                 * Convenience accessor for the @ref Checksum key — codec
+                 * parsers forward the result to
+                 * @c St291Packet::from(pkt, policy) /
+                 * @c RtpPayloadAnc::unpackAncPackets(buf, out, policy).
+                 * Falls back to @c PreserveOrRecompute (the spec default
+                 * per audit Q6) when the key is absent.
+                 */
+                AncChecksumPolicy checksumPolicy() const {
+                        if (!contains(Checksum)) {
+                                return AncChecksumPolicy(AncChecksumPolicy::PreserveOrRecompute);
+                        }
+                        Enum e = getAs<Enum>(Checksum);
+                        return AncChecksumPolicy(e.value());
+                }
+
+                /**
+                 * @brief Returns the configured F-bit byte for
+                 *        ST 2110-40 §5.5 keep-alive RTP packets.
+                 *
+                 * Convenience accessor for the @ref St291KeepAliveField
+                 * key — @c RtpAncPacketizerThread plumbs the result
+                 * into @c RtpPayloadAnc::setKeepAliveField after
+                 * casting through @c RtpPayloadAnc::FieldIndication at
+                 * the call site.  Falls back to @c 0 (Progressive) when
+                 * the key is absent.
+                 */
+                uint8_t keepAliveFieldByte() const {
+                        return getAs<uint8_t>(St291KeepAliveField, uint8_t(0));
+                }
 
                 /**
                  * @brief Serializes this config as a JSON document.

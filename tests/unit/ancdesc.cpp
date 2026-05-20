@@ -311,11 +311,17 @@ TEST_CASE("AncDesc: empty allowedFormats emits the full St291 registry") {
 }
 
 TEST_CASE("AncDesc: fromSdp / toSdp round-trip preserves DID/SDID list") {
+        // SDP carries only (DID,SDID); on parse the registry returns
+        // the canonical AncFormat::ID for that pair.  ST 12-2:2014
+        // collapses AtcLtc/AtcVitc1/AtcVitc2 onto (0x60,0x60), so the
+        // round trip lands on AtcLtc regardless of which flavour rode
+        // into toSdp — the actual flavour is in the wire DBB1 byte,
+        // not in the SDP.
         AncDesc original;
         AncFormat::IDList allowed;
         allowed.pushToBack(AncFormat::Cea708);
         allowed.pushToBack(AncFormat::Afd);
-        allowed.pushToBack(AncFormat::AtcVitc1);
+        allowed.pushToBack(AncFormat::AtcLtc);
         original.setAllowedFormats(allowed);
 
         SdpMediaDescription md = original.toSdp(101);
@@ -325,6 +331,24 @@ TEST_CASE("AncDesc: fromSdp / toSdp round-trip preserves DID/SDID list") {
         for (size_t i = 0; i < allowed.size(); ++i) {
                 CHECK(parsed.allowedFormats().at(i) == allowed.at(i));
         }
+}
+
+TEST_CASE("AncDesc: fromSdp collapses ATC flavours to AtcLtc per ST 12-2:2014 §5") {
+        // An AncDesc that names AtcVitc1 or AtcVitc2 emits
+        // DID_SDID={0x60,0x60} (all three flavours share the slot).
+        // The parsed receiver-side desc resolves that pair to AtcLtc
+        // because (0x60,0x60) is keyed there; the SDP layer cannot
+        // distinguish the DBB1 byte.  Document that this is a
+        // deliberate lossy round-trip and not a bug.
+        AncDesc original;
+        AncFormat::IDList allowed;
+        allowed.pushToBack(AncFormat::AtcVitc1);
+        original.setAllowedFormats(allowed);
+
+        SdpMediaDescription md = original.toSdp(102);
+        AncDesc parsed = AncDesc::fromSdp(md);
+        REQUIRE(parsed.allowedFormats().size() == 1);
+        CHECK(parsed.allowedFormats().at(0) == AncFormat::AtcLtc);
 }
 
 TEST_CASE("AncDesc: fromSdp rejects wrong media type / rtpmap") {
@@ -403,9 +427,14 @@ TEST_CASE("AncDesc F3 — toSdp emits ST 2110-40 §7 mandatory fmtp parameters")
 
         const String fmtp = md.attribute(String("fmtp"));
         REQUIRE_FALSE(fmtp.isEmpty());
-        // C9: SSN and TM defaults must always be emitted.
+        // C9 / P2-9: SSN=ST2110-40:2018 is always emitted; TM is
+        // omitted because we are CTM-only.  Under ST 2110-40:2023 §7
+        // the SSN/TM coupling rule says "TM SHALL be paired with
+        // SSN=:2023; absence of TM means implicit CTM and pairs with
+        // SSN=:2018" — so emitting TM=CTM with SSN=:2018 (as we did
+        // pre-P2-9) violated the :2023 rule.
         CHECK(fmtp.contains(String("SSN=ST2110-40:2018")));
-        CHECK(fmtp.contains(String("TM=CTM")));
+        CHECK_FALSE(fmtp.contains(String("TM=")));
         // C9: exactframerate emitted from FrameRate.
         // FPS_59_94 = 60000/1001 → "60000/1001"
         CHECK(fmtp.contains(String("exactframerate=60000/1001")));

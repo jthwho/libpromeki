@@ -17,6 +17,7 @@
 #include <promeki/queue.h>
 #include <promeki/rtppacketbatch.h>
 #include <promeki/rtppacketizerthread.h>
+#include <promeki/rtppayloadanc.h>
 #include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -45,8 +46,9 @@ class RtpPayloadAnc;
 struct RtpAncPacketizerContext {
                 /// @brief Index of this stream's ANC essence inside
                 ///        the incoming @c Frame::ancPayloads list.
-                ///        Each @c m=application section gets a
-                ///        distinct index.
+                ///        Each @c m=video smpte291/90000 section in
+                ///        the SDP (RFC 8331 §3.1 / ST 2110-40 §7) gets
+                ///        a distinct index.
                 size_t streamIdx = 0;
 
                 /// @brief Per-stream RTP clock rate in Hz.  RFC 8331
@@ -64,6 +66,21 @@ struct RtpAncPacketizerContext {
                 ///        packetizer (and through it the strand)
                 ///        when the wire falls behind.  Must be set.
                 Queue<RtpPacketBatch> *txPacketQueue = nullptr;
+
+                /// @brief F-bit value for ST 2110-40 §5.5 keep-alive RTP
+                ///        packets (ANC_Count=0, Length=0).  The
+                ///        packetizer calls
+                ///        @c RtpPayloadAnc::setKeepAliveField with this
+                ///        at construction; sessions that pair an ANC
+                ///        stream with an interlaced video stream stamp
+                ///        @c RtpPayloadAnc::FieldIndication::InterlacedField1 /
+                ///        @c InterlacedField2 here as appropriate.
+                ///        Default is @c Progressive (RFC 8331 §2.1 0b00).
+                ///        Appended at the tail of the struct so existing
+                ///        positional brace initialisers in tests / call
+                ///        sites stay valid.
+                RtpPayloadAnc::FieldIndication keepAliveField =
+                        RtpPayloadAnc::FieldIndication::Progressive;
 };
 
 /**

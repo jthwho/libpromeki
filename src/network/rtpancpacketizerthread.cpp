@@ -20,7 +20,14 @@ PROMEKI_NAMESPACE_BEGIN
 
 RtpAncPacketizerThread::RtpAncPacketizerThread(
         RtpAncPacketizerContext ctx, const String &name, size_t depth)
-    : RtpPacketizerThread(name, depth), _ctx(std::move(ctx)) {}
+    : RtpPacketizerThread(name, depth), _ctx(std::move(ctx)) {
+        // ST 2110-40 §5.5 keep-alive F-bit: stamp from the per-stream
+        // context so an interlaced ANC session emits Field1/Field2 on
+        // its empty-frame keep-alives.  Default is Progressive.
+        if (_ctx.payload != nullptr) {
+                _ctx.payload->setKeepAliveField(_ctx.keepAliveField);
+        }
+}
 
 RtpAncPacketizerThread::~RtpAncPacketizerThread() {
         requestStop();

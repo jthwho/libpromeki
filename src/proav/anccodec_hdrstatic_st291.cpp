@@ -119,6 +119,17 @@ namespace {
         // ST 2108-1 frame types ---------------------------------------
         constexpr uint8_t kFrameTypeMasteringDisplay  = 0;
         constexpr uint8_t kFrameTypeContentLightLevel = 1;
+        // ST 2108-1 §5.3.4: Frame Type 2 carries ST 2094-10 dynamic
+        // metadata (ATSC A/341 Dolby DM).  No codec for that frame
+        // type lands in this static-metadata codec — Frame Type 2 is
+        // skipped with a one-time warn so production captures don't
+        // silently drop dynamic HDR.  The future
+        // `anccodec_hdrdynamic2094_10_st291.cpp` codec will own that
+        // frame type and the format-ID promotion path.
+        constexpr uint8_t kFrameTypeDynamic2094_10    = 2;
+        // ST 2108-1 §5.3.5: Frame Type 6 = ETSI TS 103 433-1 SL-HDR1.
+        // Same deferral story.
+        constexpr uint8_t kFrameTypeSlHdr1            = 6;
 
         // SEI payload type bytes --------------------------------------
         constexpr uint8_t kSeiPayloadTypeMasteringDisplay = 0x89; // 137
@@ -243,8 +254,8 @@ namespace {
                 out = ContentLightLevel(readU16Be(udw, off + 0), readU16Be(udw, off + 2));
         }
 
-        AncTranslator::ParseResult parseHdrStaticSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseHdrStaticSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 List<uint16_t> udw = rp.first().udw();
 
@@ -293,6 +304,26 @@ namespace {
                                         haveCll = true;
                                         break;
                                 }
+                                case kFrameTypeDynamic2094_10:
+                                        // ST 2108-1 §5.3.4 / ATSC A/341 ST 2094-10
+                                        // dynamic metadata.  No codec lands here yet;
+                                        // warn once per packet so production captures
+                                        // don't silently lose dynamic HDR.  The format
+                                        // promotion to @c AncFormat::HdrDynamic2094_10
+                                        // will move into a sibling codec once ATSC
+                                        // A/341 lands in the docs directory.
+                                        promekiWarn("anccodec_hdrstatic_st291: ST 2108-1 Frame Type 2 "
+                                                    "(ST 2094-10 dynamic metadata) present in packet but "
+                                                    "no codec is registered; dropping the frame's dynamic "
+                                                    "HDR payload");
+                                        break;
+                                case kFrameTypeSlHdr1:
+                                        // ST 2108-1 §5.3.5 / ETSI TS 103 433-1 SL-HDR1.
+                                        // Same deferral story as Frame Type 2.
+                                        promekiWarn("anccodec_hdrstatic_st291: ST 2108-1 Frame Type 6 "
+                                                    "(SL-HDR1) present in packet but no codec is "
+                                                    "registered; dropping the frame's SL-HDR1 payload");
+                                        break;
                                 default:
                                         // Unknown / reserved frame type — skip per ST 2108-1
                                         // forward-compatibility (Dynamic Metadata Types 1/5,
@@ -340,9 +371,10 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::HdrStatic2086), udw, line,
-                                                        St291Packet::UnspecifiedHOffset, fieldB);
+                                                        St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(p.packet());
                 return makeResult<AncPacket::List>(std::move(out));

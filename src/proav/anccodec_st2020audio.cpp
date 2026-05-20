@@ -9,8 +9,7 @@
  * serial metadata frame described in ST 2020-1 §5 into VANC packets
  * at DID=0x45 with a wildcard SDID range (0x01..0x09 per ST 2020-1
  * §7.1 Table 1, selecting the associated audio channel pair).  See
- * @ref AncSt2020Audio for the value-type field layout and
- * @c devplan/proav/ancaudit.md F10.4 for the byte-position audit.
+ * @ref AncSt2020Audio for the value-type field layout.
  *
  * Method A wire layout (ST 2020-2 §5):
  *
@@ -110,6 +109,7 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 AncPacket::List out;
 
@@ -125,7 +125,7 @@ namespace {
                                 udw[1 + i] = static_cast<uint16_t>(src[i]);
                         }
                         St291Packet pkt = St291Packet::buildRaw(0x45, meta.channelPair(), udw, line,
-                                                                 St291Packet::UnspecifiedHOffset, fieldB);
+                                                                 St291Packet::UnspecifiedHOffset, fieldB, cBit);
                         out.pushToBack(pkt.packet());
                         return makeResult<AncPacket::List>(std::move(out));
                 }
@@ -152,9 +152,9 @@ namespace {
                 }
 
                 St291Packet pkt1 = St291Packet::buildRaw(0x45, sdid, udw1, line,
-                                                         St291Packet::UnspecifiedHOffset, fieldB);
+                                                         St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 St291Packet pkt2 = St291Packet::buildRaw(0x45, sdid, udw2, line,
-                                                         St291Packet::UnspecifiedHOffset, fieldB);
+                                                         St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 out.pushToBack(pkt1.packet());
                 out.pushToBack(pkt2.packet());
                 return makeResult<AncPacket::List>(std::move(out));
@@ -162,8 +162,8 @@ namespace {
 
         // -- Single-packet parse (single-packet metadata only) ----------
 
-        AncTranslator::ParseResult parseSt2020AudioSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseSt2020AudioSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
 
                 const St291Packet &p = rp.first();
@@ -171,6 +171,33 @@ namespace {
                 if (udw.size() < 1) return makeError<Variant>(Error::CorruptData);
 
                 uint8_t desc = static_cast<uint8_t>(udw[0] & 0xFF);
+
+                // ST 2020-1 Annex C (normative): Method A and Method B
+                // are distinguished by the first UDW byte.  Method A
+                // starts with a Payload Descriptor whose bit 7 = 0;
+                // Method B carries a raw asynchronous-serial bitstream
+                // whose first byte is either 0x00 (pre-pad) or 0xCF
+                // (sync segment ID CF FCh from ST 2020-1 §5.1).  This
+                // codec is scoped to Method A — refuse Method B
+                // explicitly so we don't silently misparse a CF byte
+                // as a Payload Descriptor with COMPATIBILITY=1.
+                if (desc == 0x00 || desc == 0xCF) {
+                        promekiWarn("AncSt2020Audio parse: first UDW byte 0x%02X matches "
+                                    "ST 2020-1 Annex C Method B; this codec is scoped to "
+                                    "Method A — refusing",
+                                    static_cast<unsigned>(desc));
+                        return makeError<Variant>(Error::NotSupported);
+                }
+                // ST 2020-2 §5.4.1: "Bit 7 of the Payload Descriptor
+                // byte shall be set to logical zero."  A packet with
+                // bit 7 = 1 is malformed (and would also collide with
+                // the Method B 0xCF discriminator above when paired
+                // with version 0b01).
+                if ((desc & AncSt2020Audio::PayloadDescriptorCompatibilityBit) != 0) {
+                        promekiWarn("AncSt2020Audio parse: Payload Descriptor bit 7 "
+                                    "(COMPATIBILITY) is set; ST 2020-2 §5.4.1 requires it to be 0");
+                        return makeError<Variant>(Error::CorruptData);
+                }
                 if (!descriptorVersionIsV1(desc)) {
                         // Legacy / future syntax — accept but warn so
                         // downstream consumers can decide whether to
@@ -226,8 +253,9 @@ namespace {
                 // Both packets must agree on SDID (same channel pair),
                 // and the descriptor bits must indicate a proper
                 // (DOUBLE=1, SECOND=0) → (DOUBLE=1, SECOND=1) pair.
-                Result<St291Packet> r1 = St291Packet::from(pkts[0]);
-                Result<St291Packet> r2 = St291Packet::from(pkts[1]);
+                AncChecksumPolicy policy = cfg.checksumPolicy();
+                Result<St291Packet> r1 = St291Packet::from(pkts[0], policy);
+                Result<St291Packet> r2 = St291Packet::from(pkts[1], policy);
                 if (r1.second().isError()) return makeError<Variant>(r1.second());
                 if (r2.second().isError()) return makeError<Variant>(r2.second());
 
@@ -275,20 +303,50 @@ namespace {
                 return makeResult<Variant>(Variant(out));
         }
 
+        // Helper: rewrite an ST 2020 packet's Payload Descriptor byte
+        // (UDW[0]) so the DUPLICATE_PKT bit is set, leaving every other
+        // byte unchanged.  Used by the Repeat[idx>0] sync path so
+        // re-emitted packets correctly signal §5.4.4 duplicate
+        // semantics ("the second physical frame of a 50/60 Hz pair").
+        AncPacket markPacketAsDuplicate(const AncPacket &src) {
+                Result<St291Packet> rp = St291Packet::from(src);
+                if (rp.second().isError()) return src;
+                const St291Packet &p = rp.first();
+                List<uint16_t> udw = p.udw();
+                if (udw.isEmpty()) return src;
+                udw[0] = static_cast<uint16_t>(udw[0] | AncSt2020Audio::PayloadDescriptorDuplicateBit);
+                St291Packet rebuilt = St291Packet::buildRaw(
+                        p.did(), p.sdid(), udw, p.line(), p.hOffset(),
+                        p.fieldB(), p.cBit(), p.streamNum());
+                if (!rebuilt.isValid()) return src;
+                return rebuilt.packet();
+        }
+
         // -- Frame-sync policy ------------------------------------------
 
         // ST 2020 audio metadata describes a specific frame's audio
         // payload (Dolby E / DD+ / etc.).  Repeating the same packet on
-        // a held output frame is permitted by §5.4.4 (the DUPLICATE_PKT
-        // bit signals this case).  Dropping on FrameSyncDisposition::Drop
-        // discards the metadata for that frame; the audio still rides
-        // through but downstream Dolby decoders fall back to default
-        // metadata for that segment, which is acceptable.
+        // a held output frame is permitted by §5.4.4, which says
+        // "DUPLICATE_PKT bit shall be set to 1 if this packet contains
+        // the same payload data as the previous packet for this frame
+        // pair" — i.e. the second physical frame of a 50/60 Hz pair.
+        // On Repeat[idx>0] we set the bit so a downstream receiver can
+        // de-duplicate; Repeat[idx==0] and Play pass through verbatim
+        // (the held packet's bit is whatever the source already set).
+        // Dropping on FrameSyncDisposition::Drop discards the metadata
+        // for that frame; the audio still rides through but downstream
+        // Dolby decoders fall back to default metadata for that segment,
+        // which is acceptable.
         AncTranslator::PacketsResult syncPolicySt2020Audio(const AncPacket &pkt, FrameSyncDisposition d,
-                                                       uint8_t /*repeatIndex*/,
+                                                       uint8_t repeatIndex,
                                                        const AncTranslateConfig & /*cfg*/) {
                 AncPacket::List out;
-                if (d.kind() != FrameSyncDisposition::Drop) {
+                if (d.kind() == FrameSyncDisposition::Drop) {
+                        return makeResult<AncPacket::List>(std::move(out));
+                }
+                if (d.kind() == FrameSyncDisposition::Repeat && repeatIndex > 0) {
+                        out.pushToBack(markPacketAsDuplicate(pkt));
+                } else {
                         out.pushToBack(pkt);
                 }
                 return makeResult<AncPacket::List>(std::move(out));

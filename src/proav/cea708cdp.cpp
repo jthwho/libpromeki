@@ -51,6 +51,24 @@ namespace {
                 return static_cast<uint8_t>((tens << 4) | units);
         }
 
+        // ST 334-2:2015 §5 Table 3: max cc_count value per frame rate.
+        // CEA-708 bandwidth at 9600 bps yields different per-frame
+        // service-block quotas at each rate; the cdp_frame_rate code
+        // implies the cap.  Returns 0 on unknown codes (caller falls
+        // back to the 5-bit field width of 0x1F).
+        constexpr uint8_t kCcCountMaxByFrameRate[16] = {
+                /* 0  reserved   */ 0,
+                /* 1  23.976     */ 25,
+                /* 2  24         */ 25,
+                /* 3  25         */ 24,
+                /* 4  29.97      */ 20,
+                /* 5  30         */ 20,
+                /* 6  50         */ 12,
+                /* 7  59.94      */ 10,
+                /* 8  60         */ 10,
+                /* 9-15 reserved */ 0, 0, 0, 0, 0, 0, 0
+        };
+
         // Resolve a ST 334-2 §5.3 Table 3 cdp_frame_rate code (plus the
         // wire drop_frame_flag bit) into a Timecode::Mode.  Returns an
         // invalid Mode for unrecognised codes; drop_frame is silently
@@ -136,6 +154,20 @@ Buffer Cea708Cdp::toBuffer() const {
         // Optional cc_data section.
         if (ccDataPresent) {
                 out[pos + 0] = CcDataSectionId;
+                // ST 334-2:2015 §5 Table 3 caps cc_count per frame
+                // rate (e.g. 20 at 29.97/30, 10 at 59.94/60).  The
+                // 5-bit cc_count field can encode up to 31 triples,
+                // but a sender exceeding the per-rate cap produces a
+                // non-conformant CDP.  Warn so producer bugs surface.
+                const uint8_t cap = (frameRateCode < 16)
+                                            ? kCcCountMaxByFrameRate[frameRateCode]
+                                            : uint8_t(0);
+                if (cap != 0 && ccData.size() > cap) {
+                        promekiWarn("Cea708Cdp: cc_count=%zu exceeds ST 334-2 Table 3 cap of %u for "
+                                    "frameRateCode=%u — non-conformant CDP on the wire",
+                                    ccData.size(), static_cast<unsigned>(cap),
+                                    static_cast<unsigned>(frameRateCode));
+                }
                 // High 3 bits are "marker bits" (all 1s per SMPTE 334-2);
                 // low 5 bits are the cc_count.
                 uint8_t cnt = static_cast<uint8_t>(ccData.size() & 0x1F);

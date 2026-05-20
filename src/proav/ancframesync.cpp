@@ -167,6 +167,12 @@ Error AncFrameSync::applyToFrame(Frame &frame, FrameSyncDisposition disposition,
                 // Build the new packet list by dispatching each existing
                 // packet through the SyncPolicy registry.  Per-codec
                 // policies decide what each disposition actually does.
+                //
+                // Per-packet errors (corrupt wire bytes, codec-internal
+                // parse failures on the Repeat[idx>0] re-encode path)
+                // are swallowed with a warn rather than aborting the
+                // whole frame — losing one ANC packet is recoverable;
+                // losing the entire frame's worth is not.
                 AncPacket::List newPackets;
                 for (const AncPacket &pkt : anc->packets()) {
                         if (!AncTranslator::hasSyncPolicy(pkt.format())) {
@@ -174,7 +180,16 @@ Error AncFrameSync::applyToFrame(Frame &frame, FrameSyncDisposition disposition,
                         }
                         AncTranslator::PacketsResult res =
                                 _translator.applySyncPolicy(pkt, disposition, repeatIndex);
-                        if (res.second().isError()) return res.second();
+                        if (res.second().isError()) {
+                                promekiWarn("AncFrameSync: sync policy failed for format=%s "
+                                            "(payloadIdx=%zu, kind=%d, repeatIndex=%u): %s — "
+                                            "dropping this packet, continuing with frame",
+                                            pkt.format().name().cstr(), i,
+                                            static_cast<int>(disposition.kind()),
+                                            static_cast<unsigned>(repeatIndex),
+                                            res.second().desc().cstr());
+                                continue;
+                        }
                         for (const AncPacket &outPkt : res.first()) {
                                 newPackets.pushToBack(outPkt);
                         }

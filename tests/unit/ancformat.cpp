@@ -111,9 +111,14 @@ TEST_CASE("AncFormat: fromSt291DidSdid for every St291-canonical format") {
         CHECK(AncFormat::fromSt291DidSdid(0x41, 0x05).id() == AncFormat::Afd);
         CHECK(AncFormat::fromSt291DidSdid(0x41, 0x06).id() == AncFormat::PanScan);
         CHECK(AncFormat::fromSt291DidSdid(0x41, 0x07).id() == AncFormat::Scte104);
+        // ST 12-2:2014 §5: all ATC flavours share (DID=0x60, SDID=0x60);
+        // the registry returns the lowest-ID match (AtcLtc).  See the
+        // dedicated P2-1 test for the collapse rule.
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
-        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61).id() == AncFormat::AtcVitc1);
-        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x62).id() == AncFormat::AtcVitc2);
+        // 0x60/0x61 and 0x60/0x62 are not registered — ST 12-2:2014
+        // does not assign them.
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61).id() == AncFormat::Invalid);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x62).id() == AncFormat::Invalid);
         CHECK(AncFormat::fromSt291DidSdid(0x44, 0x04).id() == AncFormat::Klv0601);
 }
 
@@ -135,6 +140,55 @@ TEST_CASE("AncFormat: Smpte2020Audio wildcard SDID match (0x45, 0x01..0x09)") {
         }
 }
 
+TEST_CASE("AncFormat: P2-22 PacketForDeletion wildcard match (0x80, anyDBN)") {
+        // ST 291-1 §6.3 Packet-Marked-for-Deletion (DID 0x80, Type-1).
+        // Registered with wildcard SDID so any DBN value resolves
+        // back to the format ID.  Test a representative set covering
+        // the §6.4 DBN range (1..255 plus the "inactive" 0).
+        for (uint8_t dbn : {uint8_t(0x00), uint8_t(0x01), uint8_t(0x42),
+                            uint8_t(0x80), uint8_t(0xFE), uint8_t(0xFF)}) {
+                INFO("dbn=0x", String::number(static_cast<int>(dbn), 16));
+                AncFormat f = AncFormat::fromSt291DidSdid(0x80, dbn);
+                CHECK(f.id() == AncFormat::PacketForDeletion);
+        }
+        // Sanity: a real Type-2 DID at the same second byte must NOT
+        // resolve to PacketForDeletion.
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x05).id() == AncFormat::Afd);
+}
+
+TEST_CASE("AncFormat: P2-21 PacketForDeletion lands in the Control category") {
+        AncFormat f(AncFormat::PacketForDeletion);
+        CHECK(f.category() == AncCategory::Control);
+        // Control should not appear under any of the content
+        // categories — PacketForDeletion in particular must not pollute
+        // a caller iterating Unknown.
+        AncFormat::IDList unknownIds = AncFormat::registeredIDsForCategory(AncCategory::Unknown);
+        for (auto id : unknownIds) {
+                CHECK(id != AncFormat::PacketForDeletion);
+        }
+        AncFormat::IDList controlIds = AncFormat::registeredIDsForCategory(AncCategory::Control);
+        bool found = false;
+        for (auto id : controlIds) {
+                if (id == AncFormat::PacketForDeletion) {
+                        found = true;
+                        break;
+                }
+        }
+        CHECK(found);
+}
+
+TEST_CASE("AncFormat: P2-1 ATC family collapses onto (0x60, 0x60) per ST 12-2:2014 §5") {
+        // All three ATC flavours register at DID=0x60/SDID=0x60.  The
+        // DBB1 byte in the wire payload discriminates LTC vs VITC1 vs
+        // VITC2; the (DID,SDID) → ID lookup picks the lowest-ID match
+        // (AtcLtc) and the codec parser surfaces the actual flavour on
+        // @c AncAtc::payloadType.
+        CHECK(AncFormat(AncFormat::AtcLtc).st291Sdid() == 0x60);
+        CHECK(AncFormat(AncFormat::AtcVitc1).st291Sdid() == 0x60);
+        CHECK(AncFormat(AncFormat::AtcVitc2).st291Sdid() == 0x60);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
+}
+
 TEST_CASE("AncFormat: fromHdmiInfoFrameType for every HDMI-canonical format") {
         CHECK(AncFormat::fromHdmiInfoFrameType(0x82).id() == AncFormat::AviInfoFrame);
         CHECK(AncFormat::fromHdmiInfoFrameType(0x83).id() == AncFormat::SpdInfoFrame);
@@ -147,6 +201,26 @@ TEST_CASE("AncFormat: fromHdmiInfoFrameType for every HDMI-canonical format") {
 TEST_CASE("AncFormat: fromHdmiInfoFrameType returns Invalid for unregistered type") {
         CHECK(AncFormat::fromHdmiInfoFrameType(0x90).id() == AncFormat::Invalid);
         CHECK(AncFormat::fromHdmiInfoFrameType(0x00).id() == AncFormat::Invalid);
+}
+
+TEST_CASE("AncFormat: P2-24 fromHdmiInfoFrame promotes type 0x81 by OUI") {
+        // HDR10+ OUI (00:D0:46) → HdrDynamic2094_40.
+        CHECK(AncFormat::fromHdmiInfoFrame(0x81, 0x00D046u).id() ==
+              AncFormat::HdrDynamic2094_40);
+        // Dolby OUI (00:90:3E) → DvRpu.
+        CHECK(AncFormat::fromHdmiInfoFrame(0x81, 0x00903Eu).id() ==
+              AncFormat::DvRpu);
+        // Unknown OUI → VendorInfoFrame catch-all.
+        CHECK(AncFormat::fromHdmiInfoFrame(0x81, 0xABCDEFu).id() ==
+              AncFormat::VendorInfoFrame);
+        // Zero OUI with non-vendor type — OUI ignored, type drives.
+        CHECK(AncFormat::fromHdmiInfoFrame(0x82, 0u).id() ==
+              AncFormat::AviInfoFrame);
+        CHECK(AncFormat::fromHdmiInfoFrame(0x87, 0u).id() ==
+              AncFormat::HdrStatic2086);
+        // Unregistered non-vendor type → Invalid.
+        CHECK(AncFormat::fromHdmiInfoFrame(0x90, 0u).id() ==
+              AncFormat::Invalid);
 }
 
 TEST_CASE("AncFormat: fromMpegTsTableId for Scte35 and unregistered") {
@@ -298,42 +372,34 @@ TEST_CASE("AncFormat: F8 OP-47 SDP registration (DID 0x43 / SDID 0x02)") {
         CHECK(AncFormat::idFromName("Op47Sdp") == AncFormat::Op47Sdp);
 }
 
-TEST_CASE("AncFormat: F8 OP-47 Multipack registration (DID 0x43 / SDID 0x01)") {
+TEST_CASE("AncFormat: P2 OP-47 Multipack registration (DID 0x43 / SDID 0x03)") {
+        // RDD 8:2008 §4.2(iii): "DID and SDID values 143h and 203h,
+        // respectively (includes parity)" → 8-bit DID/SDID 0x43/0x03.
         AncFormat f(AncFormat::Op47Multipack);
         CHECK(f.isValid());
         CHECK(f.name() == "Op47Multipack");
         CHECK(f.category() == AncCategory::Subtitles);
         CHECK(f.canonicalTransport() == AncTransport::St291);
         CHECK(f.st291Did() == 0x43);
-        CHECK(f.st291Sdid() == 0x01);
-        CHECK(AncFormat::fromSt291DidSdid(0x43, 0x01).id() == AncFormat::Op47Multipack);
+        CHECK(f.st291Sdid() == 0x03);
+        CHECK(AncFormat::fromSt291DidSdid(0x43, 0x03).id() == AncFormat::Op47Multipack);
 }
 
-TEST_CASE("AncFormat: F8 ST 2106 CCF registration (DID 0x41 / SDID 0x14)") {
-        AncFormat f(AncFormat::CcfSt2106);
-        CHECK(f.isValid());
-        CHECK(f.name() == "CcfSt2106");
-        // ST 2106 CCF is a caption-companion signal; bucket it with
-        // captions (it isn't its own content family).
-        CHECK(f.category() == AncCategory::Captions);
-        CHECK(f.canonicalTransport() == AncTransport::St291);
-        CHECK(f.st291Did() == 0x41);
-        CHECK(f.st291Sdid() == 0x14);
-        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x14).id() == AncFormat::CcfSt2106);
-}
-
-TEST_CASE("AncFormat: F8 ST 2031 VBI registration (DID 0x60 / SDID 0x01)") {
+TEST_CASE("AncFormat: P2 ST 2031 VBI registration (DID 0x41 / SDID 0x08)") {
+        // ST 2031:2015 §5: "The DID word shall be set to the value 41h.
+        // The SDID word shall be set to the value of 08h."
         AncFormat f(AncFormat::VbiSt2031);
         CHECK(f.isValid());
         CHECK(f.name() == "VbiSt2031");
         CHECK(f.category() == AncCategory::Vbi);
         CHECK(f.canonicalTransport() == AncTransport::St291);
-        CHECK(f.st291Did() == 0x60);
-        CHECK(f.st291Sdid() == 0x01);
-        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x01).id() == AncFormat::VbiSt2031);
-        // DID 0x60 already hosts the ATC SDIDs (0x60..0x62); the
-        // 0x60/0x01 entry must not collide with them.
-        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
+        CHECK(f.st291Did() == 0x41);
+        CHECK(f.st291Sdid() == 0x08);
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x08).id() == AncFormat::VbiSt2031);
+        // ST 2031 lives on DID 0x41 alongside VPID (0x01), AFD (0x05),
+        // PanScan (0x06), SCTE-104 (0x07), HdrStatic2086 (0x0C),
+        // HdrDynamic2094_40 (0x0D); each SDID is uniquely assigned.
+        CHECK(AncFormat::fromSt291DidSdid(0x41, 0x05).id() == AncFormat::Afd);
 }
 
 TEST_CASE("AncFormat: F8 HdrDynamic2094_10 is name-addressable but shares no DID lookup with HdrStatic") {

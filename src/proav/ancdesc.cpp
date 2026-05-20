@@ -431,13 +431,20 @@ SdpMediaDescription AncDesc::toSdp(uint8_t payloadType) const {
                 fmtp += entry;
         };
 
-        // ST 2110-40 §7 mandatory parameters.  We always emit a
-        // conservative default for the two SHALL-be-present keys
-        // (SSN, TM) so receivers do not have to fall back to the
-        // implicit "CTM, 2018" default — explicit is friendlier on
-        // the wire and the audit's recommended posture.
+        // ST 2110-40 §7 mandatory parameters.  The :2023 revision
+        // tightens the SSN/TM coupling rule:
+        //
+        //   - Sender that signals @c TM SHALL set @c SSN=ST2110-40:2023.
+        //   - Sender that omits @c TM (the implicit CTM case) SHALL
+        //     set @c SSN=ST2110-40:2018 and SHALL NOT emit @c TM.
+        //
+        // The :2018 + always-emit @c TM=CTM pair the library emitted
+        // before P2-9 violated that rule under a :2023-aware receiver.
+        // Today we are CTM-only (LLTM is not modelled), so omit @c TM
+        // entirely and keep @c SSN=ST2110-40:2018.  When LLTM lands the
+        // emit path will bump @c SSN to :2023 alongside the @c TM=LLTM
+        // line.
         append(String("SSN=ST2110-40:2018"));
-        append(String("TM=CTM"));
 
         // exactframerate (ST 2110-40 §7) — required so ANC RTP
         // timestamps can be aligned to the paired video frame timing.

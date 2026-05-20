@@ -137,7 +137,16 @@ class RtpPacket : public BufferView {
                         List ret;
                         if (count == 0 || packetSize == 0) return ret;
                         size_t totalSize = count * packetSize;
-                        auto   buf = Buffer(totalSize);
+                        // F9 hot-path: RTP packets are wire-format byte
+                        // streams; no consumer requires page (4 KB)
+                        // alignment, and the default Buffer ctor rounds
+                        // the request *up* to a page for the underlying
+                        // aligned_alloc.  A ~200 byte ANC keep-alive
+                        // therefore allocates a whole 4 KB page.  16-byte
+                        // alignment matches malloc's natural alignment
+                        // and lets the small-block fast path serve every
+                        // sub-MTU packet without page-table churn.
+                        auto   buf = Buffer(totalSize, /*align=*/16);
                         std::memset(buf.data(), 0, totalSize);
                         ret.reserve(count);
                         for (size_t i = 0; i < count; ++i) {
@@ -164,7 +173,11 @@ class RtpPacket : public BufferView {
                         size_t totalSize = 0;
                         for (size_t i = 0; i < sizes.size(); ++i) totalSize += sizes[i];
                         if (totalSize == 0) return ret;
-                        auto buf = Buffer(totalSize);
+                        // F9 hot-path: see the uniform-size overload —
+                        // 16-byte alignment avoids the 4 KB-per-allocation
+                        // page-rounding tax on small ANC / audio / data
+                        // packets.
+                        auto buf = Buffer(totalSize, /*align=*/16);
                         std::memset(buf.data(), 0, totalSize);
                         ret.reserve(sizes.size());
                         size_t offset = 0;

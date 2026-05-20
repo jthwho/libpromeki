@@ -252,6 +252,26 @@ class AncPacket {
                 void setSt291StreamNum(uint8_t streamNum);
 
                 /**
+                 * @brief Sets all five ST 291 framing fields in one
+                 *        CoW detach.
+                 *
+                 * RFC 8331 unpack stamps every field on each freshly
+                 * built @c AncPacket; calling the five individual
+                 * setters paid five back-to-back @c SharedPtr::modify
+                 * calls (each an atomic refcount probe).  This
+                 * consolidates them into one mutation, dropping the RX
+                 * hot-path per-packet cost noticeably.
+                 *
+                 * @param line       VANC line number (RFC 8331 §2.2).
+                 * @param hOffset    Horizontal offset (RFC 8331 §2.2).
+                 * @param fieldB     F-bit (true for field 2).
+                 * @param cBit       C-bit (true for chrominance stream).
+                 * @param streamNum  Multi-link stream number.
+                 */
+                void setSt291Framing(uint16_t line, uint16_t hOffset,
+                                     bool fieldB, bool cBit, uint8_t streamNum);
+
+                /**
                  * @brief Returns a mutable reference to the wire-form
                  *        bytes after CoW-detaching when shared.
                  *

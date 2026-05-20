@@ -25,8 +25,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-        AncTranslator::ParseResult parseCea708St291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseCea708St291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 const St291Packet &p = rp.first();
                 List<uint16_t>     udw = p.udw();
@@ -66,9 +66,10 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(AncFormat::Cea708), udw, line,
-                                                        St291Packet::UnspecifiedHOffset, fieldB);
+                                                        St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(p.packet());
                 return makeResult<AncPacket::List>(std::move(out));

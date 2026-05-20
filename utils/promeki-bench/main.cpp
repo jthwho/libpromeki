@@ -125,6 +125,7 @@ namespace {
                 benchutil::registerCscCases();
                 benchutil::registerImageDataCases();
                 benchutil::registerInspectorCases();
+                benchutil::registerAncRtpCases();
         }
 
         /**
@@ -158,6 +159,8 @@ namespace {
                 std::fputs(benchutil::imageDataParamHelp().cstr(), stdout);
                 std::putchar('\n');
                 std::fputs(benchutil::inspectorParamHelp().cstr(), stdout);
+                std::putchar('\n');
+                std::fputs(benchutil::ancRtpParamHelp().cstr(), stdout);
                 std::printf("\n"
                             "Examples:\n"
                             "  promeki-bench                          # run every registered case\n"

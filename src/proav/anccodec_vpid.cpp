@@ -58,8 +58,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-        AncTranslator::ParseResult parseVpidSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseVpidSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
 
                 Result<SdiVpid> rv = SdiVpid::fromSt291Packet(rp.first());
@@ -77,8 +77,9 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
-                St291Packet     p = vpid.toSt291Packet(line, fieldB);
+                St291Packet     p = vpid.toSt291Packet(line, fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(p.packet());
                 return makeResult<AncPacket::List>(std::move(out));

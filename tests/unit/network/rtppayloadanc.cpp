@@ -548,7 +548,7 @@ TEST_CASE("CEA-708 codec defaults Line to UnspecifiedLine when no cfg supplied")
 }
 
 // ============================================================================
-// F7 — AncChecksumPolicy wiring on the depacketizer (ancaudit.md F7 / B2)
+// AncChecksumPolicy wiring on the depacketizer (RFC 8331 §7 / ST 291-1 §6.4)
 // ============================================================================
 
 namespace {
@@ -578,10 +578,10 @@ namespace {
 
 } // namespace
 
-TEST_CASE("RtpPayloadAnc F7 — default policy preserves a captured bad-checksum record") {
-        // Default PreserveOrRecompute mirrors ancaudit.md Q6's
-        // byte-exact replay contract: the depacketizer emits the record
-        // verbatim and leaves checksum verification to the codec layer.
+TEST_CASE("RtpPayloadAnc — default policy preserves a captured bad-checksum record") {
+        // Default PreserveOrRecompute honours the byte-exact replay
+        // contract: the depacketizer emits the record verbatim and
+        // leaves checksum verification to the codec layer.
         AncPacket::List packets;
         packets.pushToBack(cea708PacketWithBadChecksum());
 

@@ -48,6 +48,15 @@ void AncPacket::setSt291FieldB(bool fieldB) { _d.modify()->st291FieldB = fieldB;
 void AncPacket::setSt291CBit(bool cBit) { _d.modify()->st291CBit = cBit; }
 void AncPacket::setSt291StreamNum(uint8_t streamNum) { _d.modify()->st291StreamNum = streamNum; }
 
+void AncPacket::setSt291Framing(uint16_t line, uint16_t hOffset, bool fieldB, bool cBit, uint8_t streamNum) {
+        Impl *impl = _d.modify();
+        impl->st291Line = line;
+        impl->st291HOffset = hOffset;
+        impl->st291FieldB = fieldB;
+        impl->st291CBit = cBit;
+        impl->st291StreamNum = streamNum;
+}
+
 Buffer &AncPacket::dataMut() { return _d.modify()->data; }
 
 Metadata &AncPacket::metaMut() { return _d.modify()->meta; }

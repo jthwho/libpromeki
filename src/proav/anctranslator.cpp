@@ -15,6 +15,7 @@
 #include <promeki/map.h>
 #include <promeki/mutex.h>
 #include <promeki/result.h>
+#include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -150,14 +151,61 @@ namespace {
 // Registration
 // ============================================================================
 
+// ============================================================================
+// Registry-collision handling
+// ============================================================================
+//
+// Two distinct cases we want to handle differently:
+//
+//  1. **Same key, same fn pointer.**  Idempotent re-registration —
+//     legitimate when a library is linked twice through a static-init
+//     graph or when test fixtures re-install their stubs.  The
+//     dispatcher's final state is identical either way, so we treat
+//     this as a silent no-op.
+//
+//  2. **Same key, different fn pointer.**  Programming error: two
+//     TUs disagree about which codec owns the (format, transport)
+//     slot, and link order silently picks one.  Loud failure is the
+//     right policy:
+//
+//      - DEBUG / DevRelease builds (@c PROMEKI_DEBUG_ENABLE defined)
+//        @c PROMEKI_ASSERT(false) — the assert throws and unwinds out
+//        of the static-init runtime as @c std::terminate, crashing
+//        the process loudly so the build never ships with silent
+//        codec replacement.
+//      - Plain Release builds keep "warn + last-wins" so a misbehaving
+//        downstream deployment is not bricked by an upstream sanity
+//        check; ops see the warn in the log and fix it before it
+//        matters.
+
+namespace {
+template <typename Map, typename Key, typename Fn>
+[[maybe_unused]] inline bool checkRegistryCollision(Map &r, const Key &key, Fn fn, const char *what,
+                                                    const String &detail) {
+        if (!r.contains(key)) return false;
+        if (r.value(key) == fn) {
+                // Idempotent — same fn at the same key.  No-op.
+                return true;
+        }
+        promekiWarn("AncTranslator: re-registering %s with a different fn — %s",
+                    what, detail.cstr());
+#ifdef PROMEKI_DEBUG_ENABLE
+        PROMEKI_ASSERT(false /* AncTranslator registry collision (see warn above) */);
+#endif
+        return false;
+}
+} // namespace
+
 void AncTranslator::registerParser(AncFormat::ID format, const AncTransport &src, ParserFn fn) {
         if (fn == nullptr) return;
         ParserKey      key{format, src.value()};
         Mutex::Locker  lock(registryMutex());
         auto          &r = parserRegistry();
-        if (r.contains(key)) {
-                promekiWarn("AncTranslator: re-registering parser for format=%d transport=%s",
-                            static_cast<int>(format), src.valueName().cstr());
+        if (checkRegistryCollision(r, key, fn, "parser",
+                                   String::sprintf("format=%d transport=%s",
+                                                    static_cast<int>(format),
+                                                    src.valueName().cstr()))) {
+                return;
         }
         r.insert(key, fn);
 }
@@ -167,9 +215,11 @@ void AncTranslator::registerMultiParser(AncFormat::ID format, const AncTransport
         ParserKey      key{format, src.value()};
         Mutex::Locker  lock(registryMutex());
         auto          &r = multiParserRegistry();
-        if (r.contains(key)) {
-                promekiWarn("AncTranslator: re-registering multi-parser for format=%d transport=%s",
-                            static_cast<int>(format), src.valueName().cstr());
+        if (checkRegistryCollision(r, key, fn, "multi-parser",
+                                   String::sprintf("format=%d transport=%s",
+                                                    static_cast<int>(format),
+                                                    src.valueName().cstr()))) {
+                return;
         }
         r.insert(key, fn);
 }
@@ -179,9 +229,11 @@ void AncTranslator::registerBuilder(AncFormat::ID format, const AncTransport &ds
         BuilderKey    key{format, dst.value()};
         Mutex::Locker lock(registryMutex());
         auto         &r = builderRegistry();
-        if (r.contains(key)) {
-                promekiWarn("AncTranslator: re-registering builder for format=%d transport=%s",
-                            static_cast<int>(format), dst.valueName().cstr());
+        if (checkRegistryCollision(r, key, fn, "builder",
+                                   String::sprintf("format=%d transport=%s",
+                                                    static_cast<int>(format),
+                                                    dst.valueName().cstr()))) {
+                return;
         }
         r.insert(key, fn);
 }
@@ -192,9 +244,12 @@ void AncTranslator::registerTranslator(AncFormat::ID format, const AncTransport 
         TranslatorKey key{format, src.value(), dst.value()};
         Mutex::Locker lock(registryMutex());
         auto         &r = translatorRegistry();
-        if (r.contains(key)) {
-                promekiWarn("AncTranslator: re-registering translator for format=%d src=%s dst=%s",
-                            static_cast<int>(format), src.valueName().cstr(), dst.valueName().cstr());
+        if (checkRegistryCollision(r, key, fn, "translator",
+                                   String::sprintf("format=%d src=%s dst=%s",
+                                                    static_cast<int>(format),
+                                                    src.valueName().cstr(),
+                                                    dst.valueName().cstr()))) {
+                return;
         }
         r.insert(key, fn);
 }
@@ -203,9 +258,9 @@ void AncTranslator::registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn) {
         if (fn == nullptr) return;
         Mutex::Locker  lock(registryMutex());
         auto          &r = syncPolicyRegistry();
-        if (r.contains(format)) {
-                promekiWarn("AncTranslator: re-registering sync policy for format=%d",
-                            static_cast<int>(format));
+        if (checkRegistryCollision(r, format, fn, "sync policy",
+                                   String::sprintf("format=%d", static_cast<int>(format)))) {
+                return;
         }
         r.insert(format, fn);
 }

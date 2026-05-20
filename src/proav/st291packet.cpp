@@ -142,8 +142,8 @@ namespace {
                 // (its output always has bit 9 = NOT bit 8, giving
                 // upper-2-bit pattern 01 or 10).  The pass-through path
                 // (caller supplied a complete 10-bit word) can — refuse
-                // such inputs rather than emit spec-illegal wire bytes.
-                // See devplan/proav/ancaudit.md, Q1.
+                // such inputs rather than emit spec-illegal wire bytes
+                // (loud failure preserves the byte-exact replay contract).
                 for (size_t i = 0; i < dc; ++i) {
                         const uint16_t in = udw.at(i);
                         // Upper-2-bit pattern 00 = parity-compute path; the parityBits()
@@ -234,7 +234,9 @@ Result<St291Packet> St291Packet::from(const AncPacket &pkt, AncChecksumPolicy po
         //
         // PreserveOrRecompute and AlwaysRecompute accept the packet
         // as-is on the parse path — they govern emission, not ingest.
-        // See ancaudit.md Q6 for the rationale (byte-exact replay).
+        // The byte-exact replay contract requires captured packets
+        // with occasional bit errors to survive promotion; downstream
+        // codecs decide whether to tolerate them.
         if (policy == AncChecksumPolicy::StrictValidate && !wrapped.checksumValid()) {
                 return makeError<St291Packet>(Error::InvalidChecksum);
         }
@@ -246,21 +248,93 @@ St291Packet St291Packet::build(const AncFormat &fmt, const List<uint16_t> &udw, 
         // Caller must use a format that has a non-wildcard ST 291
         // SDID; wildcard-SDID formats (Smpte2020Audio) must go through
         // @ref buildRaw with a discriminating SDID byte.
-        return buildRaw(fmt.st291Did(), fmt.st291Sdid(), udw, line, hOffset, fieldB, cBit, streamNum);
+        //
+        // Preserve the caller's @p fmt verbatim on the resulting packet
+        // rather than running the wire (DID,SDID)→ID lookup that
+        // @ref buildRaw uses.  This matters for families where multiple
+        // @c AncFormat::ID values share a single (DID,SDID) slot
+        // (ST 12-2:2014 ATC: AtcLtc / AtcVitc1 / AtcVitc2 all share
+        // (0x60, 0x60) and the lookup would otherwise collapse all
+        // three onto AtcLtc).
+        const uint8_t did = fmt.st291Did();
+        const uint8_t sdid = fmt.st291Sdid();
+        if (did == 0) {
+                promekiErr("St291Packet::build: format '%s' has no ST 291 DID assigned (DID 0x00 is reserved)",
+                           fmt.name().cstr());
+                return St291Packet();
+        }
+        Buffer    wire = buildWireBytes(did, sdid, udw);
+        AncPacket pkt(fmt, AncTransport::St291, std::move(wire));
+        pkt.setSt291Line(line);
+        pkt.setSt291HOffset(hOffset);
+        pkt.setSt291FieldB(fieldB);
+        pkt.setSt291CBit(cBit);
+        pkt.setSt291StreamNum(streamNum);
+        return St291Packet(pkt);
 }
+
+namespace {
+
+// Reserved Type-2 DIDs per ST 291-1:2011 §6.1 Figure 4b.
+// Returns nullptr when the DID is permitted; otherwise a static
+// reason string for the diagnostic.
+inline const char *type2DidReservedReason(uint8_t did) {
+        if (did == 0x00) return "0x00 is reserved";
+        if (did >= 0x01 && did <= 0x03) return "0x01-0x03 are reserved";
+        // 0x04-0x0F "Reserved for 8-bit Application": only 0x04, 0x08,
+        // 0x0C are valid (the truncation pattern documented in §6.1).
+        if (did >= 0x04 && did <= 0x0F &&
+            did != 0x04 && did != 0x08 && did != 0x0C) {
+                return "0x04-0x0F are reserved for 8-bit applications (only 0x04/0x08/0x0C valid)";
+        }
+        return nullptr;
+}
+
+// Reserved Type-1 DIDs per ST 291-1:2011 §6.1 Figure 4a.
+// Returns nullptr when the DID is permitted; otherwise a static
+// reason string for the diagnostic.
+inline const char *type1DidReservedReason(uint8_t did) {
+        // 0x80: Packet Marked for Deletion (§6.3 — valid).
+        // 0x81-0x9F: Reserved (figure 4a).
+        // 0xA0-0xFF: SMPTE registered / User Application (valid).
+        if (did >= 0x81 && did <= 0x9F) return "0x81-0x9F are reserved";
+        return nullptr;
+}
+
+} // namespace
 
 St291Packet St291Packet::buildRaw(uint8_t did, uint8_t sdid, const List<uint16_t> &udw, uint16_t line, uint16_t hOffset,
                                   bool fieldB, bool cBit, uint8_t streamNum) {
-        // ST 291-1 §6.1 Figure 4a/4b: DID 00h is Reserved.  Refuse to
-        // emit a packet with a reserved DID rather than produce wire
-        // bytes a conforming receiver will discard.  Other reserved
-        // DID ranges (01h-03h, 20h-3Fh, 81h-83h, etc.) are deferred to
-        // a later phase that widens the buildRaw API to surface the
-        // specific error code; today's signal is "isValid() == false".
-        if (did == 0) {
-                promekiErr("St291Packet::buildRaw: DID 0x00 is reserved (ST 291-1 §6.1)");
-                return St291Packet();
+        // ST 291-1:2011 §6.1 Figure 4a/4b: validate the DID against the
+        // reserved-range table.  ST 291-1 §6.2: Type-2 SDID 0x00 is
+        // also reserved.  Refuse to emit a packet with a reserved
+        // identifier rather than produce wire bytes a conforming
+        // receiver will discard.  The return signal is an invalid
+        // @c St291Packet (`isValid() == false`) plus a diagnostic.
+        if ((did & 0x80u) != 0u) {
+                if (const char *reason = type1DidReservedReason(did)) {
+                        promekiErr("St291Packet::buildRaw: Type-1 DID 0x%02X reserved (ST 291-1 §6.1, %s)",
+                                   did, reason);
+                        return St291Packet();
+                }
+        } else {
+                if (const char *reason = type2DidReservedReason(did)) {
+                        promekiErr("St291Packet::buildRaw: Type-2 DID 0x%02X reserved (ST 291-1 §6.1, %s)",
+                                   did, reason);
+                        return St291Packet();
+                }
+                // §6.2: SDID 0x00 reserved on Type-2 packets only.  On
+                // Type-1 packets the second-byte slot carries a DBN
+                // value of 0x00 = "DBN inactive" per §6.4, which is
+                // legal; @ref buildRawType1 routes through this same
+                // function with a DBN argument we therefore must not
+                // reject.
+                if (sdid == 0x00) {
+                        promekiErr("St291Packet::buildRaw: Type-2 SDID 0x00 reserved (ST 291-1 §6.2)");
+                        return St291Packet();
+                }
         }
+
         Buffer    wire = buildWireBytes(did, sdid, udw);
         AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid);
 

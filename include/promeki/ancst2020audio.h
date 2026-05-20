@@ -128,6 +128,10 @@ class AncSt2020Audio {
                 ///        of split VANC packets (2 × 254 — §5.3).
                 static constexpr size_t MaxMetadataFrameBytes = 2 * MaxSinglePacketBytes;
 
+                /// @brief Mask for the COMPATIBILITY bit (§5.4.1, bit 7).
+                ///        Shall be 0 on every conformant Method-A packet.
+                static constexpr uint8_t PayloadDescriptorCompatibilityBit = 0x80;
+
                 /// @brief Payload Descriptor mask for the current ST 2020-2
                 ///        Mapping Syntax Version ("01b" per §5.4.2 Table 2):
                 ///        bit 4 = 0, bit 3 = 1 → byte value `0x08`.

@@ -9,9 +9,7 @@
  * packets at DID=0x43, SDID=0x02 (RDD 8 §4.2 (ii) / §5.1).  Each SDP
  * carries 0..5 ITU-R BT.653 / EBU World System Teletext (WST) VBI
  * lines plus a 16-bit Footer Sequence Counter and an 8-bit SDP
- * Checksum.  See @ref AncOp47Sdp for the value-type field layout and
- * @c devplan/proav/ancaudit.md F10.3 for the byte-position audit
- * findings.
+ * Checksum.  See @ref AncOp47Sdp for the value-type field layout.
  *
  * Wire layout (RDD 8 §5.1) — 13 + 45*N UDW bytes total:
  *
@@ -83,8 +81,8 @@ namespace {
 
         // -- Parse path --------------------------------------------------
 
-        AncTranslator::ParseResult parseOp47SdpSt291(const AncPacket &pkt, const AncTranslateConfig & /*cfg*/) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+        AncTranslator::ParseResult parseOp47SdpSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
 
                 const St291Packet &p = rp.first();
@@ -250,9 +248,10 @@ namespace {
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 St291Packet     pkt = St291Packet::build(AncFormat(AncFormat::Op47Sdp), udw, line,
-                                                         St291Packet::UnspecifiedHOffset, fieldB);
+                                                         St291Packet::UnspecifiedHOffset, fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(pkt.packet());
                 return makeResult<AncPacket::List>(std::move(out));

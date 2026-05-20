@@ -83,10 +83,15 @@ PROMEKI_NAMESPACE_BEGIN
  * the build helpers compute parity automatically from
  * caller-supplied 8-bit data bytes (or honour caller-supplied 10-bit
  * words when the upper 2 bits are non-zero).  Pass-through inputs
- * whose upper 2 bits are @c 11 (the 0x300-0x3FF range, which
- * includes the §9.1 protected codes 0x3FC-0x3FF) are rejected — the
- * build returns an invalid @c St291Packet rather than emit
- * spec-illegal wire bytes.
+ * whose upper 2 bits are @c 11 are rejected because such a word is
+ * a parity-violation per §6 (bit 9 = NOT bit 8 is the universal
+ * encoding rule for DID/SDID/DBN/DC/UDW): a caller-supplied
+ * 0x300-0x3FF word cannot be a parity-correct 10-bit ANC word.  The
+ * rejection band overlaps the §9.1 protected codes 0x3FC-0x3FF, but
+ * the rationale is parity-correctness, not §9.1 — the two §9.1
+ * protected codes 0x000-0x003 are unreachable from the pass-through
+ * path by construction (the parity-compute branch produces bits 8-9
+ * of @c 01b / @c 10b for every 8-bit input).
  *
  * @par Implicit decay
  *
@@ -222,10 +227,12 @@ class St291Packet {
                  *    On mismatch the promotion fails with
                  *    @ref Error::InvalidChecksum.
                  *
-                 * Default per @c ancaudit.md Q6: tolerant on the
-                 * general-purpose library entry point; production-grade
-                 * ingest sessions opt into @c StrictValidate via the
-                 * translator's @c AncTranslateConfig::Checksum key.
+                 * Default is tolerant on the general-purpose library
+                 * entry point so byte-exact replay of captured packets
+                 * with occasional bit errors keeps working;
+                 * production-grade ingest sessions opt into
+                 * @c StrictValidate via the translator's
+                 * @c AncTranslateConfig::Checksum key.
                  *
                  * @param pkt    The packet to promote.
                  * @param policy The checksum policy to apply on promotion

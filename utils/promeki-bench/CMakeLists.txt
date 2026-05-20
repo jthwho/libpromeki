@@ -4,5 +4,6 @@ add_executable(promeki-bench
     cases/csc.cpp
     cases/imagedata.cpp
     cases/inspector.cpp
+    cases/ancrtp.cpp
 )
 target_link_libraries(promeki-bench PRIVATE promeki::promeki)

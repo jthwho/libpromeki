@@ -52,10 +52,16 @@ TEST_CASE("St291Packet: build for every well-known St291 format") {
                         uint8_t       expectedDid;
                         uint8_t       expectedSdid;
         };
+        // ST 12-2:2014 §5 collapses all three ATC flavours onto
+        // (DID=0x60, SDID=0x60); the DBB1 byte in UDWs 1..8 b3 is the
+        // discriminator.  @c St291Packet::build preserves the caller's
+        // explicit @c AncFormat::ID on the packet so a builder-chosen
+        // AtcVitc1 / AtcVitc2 does not get re-stamped as AtcLtc by the
+        // (DID,SDID)→ID lookup.
         Case cases[] = {
                 {AncFormat::Cea708, 0x61, 0x01}, {AncFormat::Cea608, 0x61, 0x02}, {AncFormat::Afd, 0x41, 0x05},
                 {AncFormat::PanScan, 0x41, 0x06}, {AncFormat::Scte104, 0x41, 0x07}, {AncFormat::AtcLtc, 0x60, 0x60},
-                {AncFormat::AtcVitc1, 0x60, 0x61}, {AncFormat::AtcVitc2, 0x60, 0x62}, {AncFormat::Klv0601, 0x44, 0x04},
+                {AncFormat::AtcVitc1, 0x60, 0x60}, {AncFormat::AtcVitc2, 0x60, 0x60}, {AncFormat::Klv0601, 0x44, 0x04},
         };
 
         List<uint16_t> udw;
@@ -250,7 +256,7 @@ TEST_CASE("St291Packet: isType1 reflects high bit of DID") {
 }
 
 // ============================================================================
-// F1 negative-case validation (ancaudit.md A2 / A6 / B3)
+// Reserved-input + protected-code validation (ST 291-1 §6.1 / §6.2 / §6.5 / §9.1)
 // ============================================================================
 
 TEST_CASE("St291Packet: buildRaw rejects reserved DID 0x00 (ST 291-1 §6.1)") {
@@ -258,6 +264,59 @@ TEST_CASE("St291Packet: buildRaw rejects reserved DID 0x00 (ST 291-1 §6.1)") {
         udw.pushToBack(uint16_t(0x42));
         St291Packet p = St291Packet::buildRaw(/*did*/ 0x00, /*sdid*/ 0x05, udw, /*line*/ 9);
         CHECK_FALSE(p.isValid());
+}
+
+TEST_CASE("St291Packet: P2-17 buildRaw rejects Type-2 reserved DIDs (ST 291-1 §6.1 Figure 4b)") {
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x42));
+        // ST 291-1 §6.1 Figure 4b reserves 0x01-0x03.
+        for (uint8_t did : {uint8_t(0x01), uint8_t(0x02), uint8_t(0x03)}) {
+                INFO("did=0x", String::number(static_cast<int>(did), 16));
+                CHECK_FALSE(St291Packet::buildRaw(did, 0x05, udw, /*line*/ 9).isValid());
+        }
+        // 0x04-0x0F are "Reserved for 8-bit Application"; only 0x04,
+        // 0x08, 0x0C are valid per §6.1.
+        for (uint8_t did : {uint8_t(0x05), uint8_t(0x06), uint8_t(0x07),
+                            uint8_t(0x09), uint8_t(0x0A), uint8_t(0x0B),
+                            uint8_t(0x0D), uint8_t(0x0E), uint8_t(0x0F)}) {
+                INFO("did=0x", String::number(static_cast<int>(did), 16));
+                CHECK_FALSE(St291Packet::buildRaw(did, 0x05, udw, /*line*/ 9).isValid());
+        }
+        // 0x04, 0x08, 0x0C are valid 8-bit-app DIDs.
+        for (uint8_t did : {uint8_t(0x04), uint8_t(0x08), uint8_t(0x0C)}) {
+                INFO("did=0x", String::number(static_cast<int>(did), 16));
+                CHECK(St291Packet::buildRaw(did, 0x05, udw, /*line*/ 9).isValid());
+        }
+        // 0x10+ is SMPTE-registered or User-Application space — valid.
+        CHECK(St291Packet::buildRaw(0x10, 0x05, udw, /*line*/ 9).isValid());
+        CHECK(St291Packet::buildRaw(0x41, 0x05, udw, /*line*/ 9).isValid());
+}
+
+TEST_CASE("St291Packet: P2-17 buildRaw rejects Type-2 SDID 0x00 (ST 291-1 §6.2)") {
+        // ST 291-1 §6.2: SDID 0x00 is reserved on Type-2 packets.
+        // (Type-1 packets store a DBN in word 1 and 0x00 means "DBN
+        // inactive" per §6.4 — that path goes through buildRawType1.)
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x42));
+        St291Packet p = St291Packet::buildRaw(/*did*/ 0x41, /*sdid*/ 0x00, udw, /*line*/ 9);
+        CHECK_FALSE(p.isValid());
+}
+
+TEST_CASE("St291Packet: P2-17 buildRawType1 rejects Type-1 reserved DIDs (ST 291-1 §6.1 Figure 4a)") {
+        List<uint16_t> udw;
+        udw.pushToBack(uint16_t(0x42));
+        // ST 291-1 §6.1 Figure 4a reserves Type-1 DIDs 0x81-0x9F.
+        for (uint8_t did : {uint8_t(0x81), uint8_t(0x83), uint8_t(0x84),
+                            uint8_t(0x88), uint8_t(0x8C), uint8_t(0x9F)}) {
+                INFO("did=0x", String::number(static_cast<int>(did), 16));
+                CHECK_FALSE(St291Packet::buildRawType1(did, /*dbn*/ 0x01, udw, /*line*/ 9).isValid());
+        }
+        // 0x80 (Packet Marked for Deletion) is valid; 0xA0+ ranges are
+        // SMPTE-registered / User Application.
+        CHECK(St291Packet::buildRawType1(0x80, /*dbn*/ 0x01, udw, /*line*/ 9).isValid());
+        CHECK(St291Packet::buildRawType1(0xA0, /*dbn*/ 0x01, udw, /*line*/ 9).isValid());
+        // DBN=0x00 ("DBN inactive" per §6.4) is legal on Type-1 packets.
+        CHECK(St291Packet::buildRawType1(0x80, /*dbn*/ 0x00, udw, /*line*/ 9).isValid());
 }
 
 TEST_CASE("St291Packet: build rejects oversize UDW list (ST 291-1 §6.5)") {
@@ -334,7 +393,7 @@ TEST_CASE("St291Packet: implicit decay accepted by AncPacket-taking functions") 
 }
 
 // ============================================================================
-// F6 — Type-1 packet support + reserved validation (ancaudit.md A1 / A5 / B1 / B4)
+// Type-1 packet support (ST 291-1 §5.1 / §6.3 — DBN in word 1)
 // ============================================================================
 
 TEST_CASE("St291Packet: buildRawType1 builds a Type-1 packet (DID 0x80, DBN word 1)") {
@@ -500,7 +559,7 @@ TEST_CASE("St291Packet: from() rejects buffers shorter than DC implies") {
 }
 
 // ============================================================================
-// Checksum policy (F7 / ancaudit.md Q6)
+// Checksum policy (RFC 8331 §7 / ST 291-1 §6.4)
 // ============================================================================
 
 namespace {
@@ -534,9 +593,9 @@ namespace {
 } // namespace
 
 TEST_CASE("St291Packet: from() defaults to PreserveOrRecompute (tolerant of bad checksum)") {
-        // Default policy mirrors ancaudit.md Q6: a captured packet whose
-        // checksum drifted on the wire still promotes — downstream codecs
-        // are responsible for graceful tolerance under the byte-exact
+        // Default policy is tolerant: a captured packet whose checksum
+        // drifted on the wire still promotes — downstream codecs are
+        // responsible for graceful tolerance under the byte-exact
         // replay contract.
         AncPacket           bad = buildPacketWithCorruptedChecksum();
         Result<St291Packet> r = St291Packet::from(bad);

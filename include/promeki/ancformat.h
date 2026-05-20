@@ -122,9 +122,9 @@ class AncFormat {
                         PanScan = 4,             ///< SMPTE 2016-4 Pan-Scan Information.
                         Scte104 = 5,             ///< SCTE-104 splice-information signal.
                         Scte35 = 6,              ///< SCTE-35 splice_info_section (MPEG-TS).
-                        AtcLtc = 7,              ///< SMPTE 12M-2 ATC LTC.
-                        AtcVitc1 = 8,            ///< SMPTE 12M-2 ATC VITC 1.
-                        AtcVitc2 = 9,            ///< SMPTE 12M-2 ATC VITC 2.
+                        AtcLtc = 7,              ///< SMPTE 12M-2 ATC LTC (shared DID=0x60/SDID=0x60; DBB1=0x00 discriminates).
+                        AtcVitc1 = 8,            ///< SMPTE 12M-2 ATC VITC 1 (shared DID=0x60/SDID=0x60; DBB1=0x01 discriminates).
+                        AtcVitc2 = 9,            ///< SMPTE 12M-2 ATC VITC 2 (shared DID=0x60/SDID=0x60; DBB1=0x02 discriminates).
                         Smpte2020Audio = 10,     ///< SMPTE 2020 Dolby metadata family (DID 0x45, SDIDs 0x01–0x09).
                         HdrStatic2086 = 11,      ///< SMPTE 2086 static HDR mastering metadata.
                         HdrDynamic2094_40 = 12,  ///< SMPTE ST 2094-40 dynamic HDR (HDR10+).
@@ -137,9 +137,8 @@ class AncFormat {
                         Vpid = 19,               ///< SMPTE ST 352 Video Payload Identifier (DID 0x41, SDID 0x01).
                         PacketForDeletion = 20,  ///< ST 291-1 §6.3 Packet-Marked-for-Deletion (DID 0x80, Type-1).
                         Op47Sdp = 21,            ///< RDD 8 / OP-47 Subtitling Distribution Packet (DID 0x43, SDID 0x02).
-                        Op47Multipack = 22,      ///< RDD 8 / OP-47 multipacket header (DID 0x43, SDID 0x01).
-                        CcfSt2106 = 23,          ///< SMPTE ST 2106 Caption Compatible Flag (DID 0x41, SDID 0x14).
-                        VbiSt2031 = 24,          ///< SMPTE ST 2031 line-21 / VBI carriage in HD-SDI (DID 0x60, SDID 0x01).
+                        Op47Multipack = 22,      ///< RDD 8 / OP-47 multipacket header (DID 0x43, SDID 0x03 — §4.2(iii) "203h includes parity").
+                        VbiSt2031 = 24,          ///< SMPTE ST 2031 DVB-VBI / SCTE-VBI ancillary data (DID 0x41, SDID 0x08).
                         HdrDynamic2094_10 = 25,  ///< SMPTE ST 2094-10 dynamic HDR (Dolby DM) in ST 2108-1 Frame Type 2.
                         UserDefined = 1024       ///< First ID available for user-registered formats.
                 };
@@ -298,6 +297,35 @@ class AncFormat {
                  *         is not registered.
                  */
                 static AncFormat fromHdmiInfoFrameType(uint8_t type);
+
+                /**
+                 * @brief OUI-aware HDMI InfoFrame format lookup.
+                 *
+                 * Layer on top of @ref fromHdmiInfoFrameType that
+                 * inspects the 24-bit OUI carried in the Vendor-Specific
+                 * InfoFrame payload (type 0x81) and promotes the result
+                 * to the specific format the OUI identifies:
+                 *
+                 *  - @c 0x00D046 → @c AncFormat::HdrDynamic2094_40
+                 *    (HDR10+ / Samsung-led consortium).
+                 *  - @c 0x00903E → @c AncFormat::DvRpu (Dolby Vision).
+                 *  - All other OUIs (or non-vendor InfoFrame types) →
+                 *    same result as @ref fromHdmiInfoFrameType (catches
+                 *    @c AviInfoFrame / @c SpdInfoFrame / @c AudioInfoFrame
+                 *    / @c VendorInfoFrame fallthrough).
+                 *
+                 * Capture backends call this on each ingested HDMI
+                 * InfoFrame so the resulting @c AncPacket carries the
+                 * correct format identity before reaching the
+                 * @c AncTranslator dispatch path.
+                 *
+                 * @param type The InfoFrame type byte.
+                 * @param oui  The 24-bit OUI (Vendor-Specific only;
+                 *             ignored for other types).  Pass 0 when
+                 *             the type byte is non-vendor.
+                 * @return The promoted format.
+                 */
+                static AncFormat fromHdmiInfoFrame(uint8_t type, uint32_t oui);
 
                 /**
                  * @brief Looks up the @c AncFormat for an MPEG-TS

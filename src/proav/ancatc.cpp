@@ -55,6 +55,10 @@ String AncAtc::toString() const {
                 s += ", flags=0x";
                 s += String::number(static_cast<int>(_flags), 16);
         }
+        if (_payloadType != Ltc) {
+                s += ", payloadType=0x";
+                s += String::number(static_cast<int>(_payloadType), 16);
+        }
         if (_dbb2 != 0) {
                 s += ", dbb2=0x";
                 s += String::number(static_cast<int>(_dbb2), 16);
@@ -77,23 +81,27 @@ JsonObject AncAtc::toJson() const {
         obj.set("bgf0", bgf0());
         obj.set("bgf1", bgf1());
         obj.set("bgf2", bgf2());
+        obj.set("payloadType", static_cast<int64_t>(_payloadType));
         obj.set("dbb2", static_cast<int64_t>(_dbb2));
         return obj;
 }
 
 // ============================================================================
-// DataStream wire format (v1: timecode + 8 user-bit bytes + flags + dbb2).
+// DataStream wire format (v1: timecode + 8 user-bit bytes + flags +
+// payloadType + dbb2).
 // ============================================================================
 
 Error AncAtc::writeToStream(DataStream &s) const {
         s << _tc;
-        // Eight uint8_t user-bit nibbles, then flags + dbb2.  Each is
-        // tagged via DataStream operator<< so a reader can refuse a
-        // malformed prefix without dropping into the trailer.
+        // Eight uint8_t user-bit nibbles, then flags + payloadType +
+        // dbb2.  Each is tagged via DataStream operator<< so a reader
+        // can refuse a malformed prefix without dropping into the
+        // trailer.
         for (size_t i = 0; i < UserBitCount; ++i) {
                 s << static_cast<uint8_t>(_userBits[i]);
         }
         s << static_cast<uint8_t>(_flags);
+        s << static_cast<uint8_t>(_payloadType);
         s << static_cast<uint8_t>(_dbb2);
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
@@ -114,10 +122,12 @@ Result<AncAtc> AncAtc::readFromStream<1>(DataStream &s) {
         }
         out.setUserBits(ub);
         uint8_t flags = 0;
+        uint8_t payloadType = 0;
         uint8_t dbb2 = 0;
-        s >> flags >> dbb2;
+        s >> flags >> payloadType >> dbb2;
         if (s.status() != DataStream::Ok) return makeError<AncAtc>(s.toError());
         out.setFlags(flags);
+        out.setPayloadType(payloadType);
         out.setDbb2(dbb2);
         return makeResult<AncAtc>(std::move(out));
 }

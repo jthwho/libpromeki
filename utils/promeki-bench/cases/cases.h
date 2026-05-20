@@ -63,5 +63,17 @@ namespace benchutil {
         /** @brief Returns per-suite help text for the inspector suite. */
         String inspectorParamHelp();
 
+        /**
+ * @brief Registers RFC 8331 / ST 2110-40 ANC RTP pack/unpack cases.
+ *
+ * Reads `ancrtp.packets` and `ancrtp.mtu` from BenchParams.  Tracks
+ * the carriage-layer hot path throughput on a representative HD60 ANC
+ * frame load.
+ */
+        void registerAncRtpCases();
+
+        /** @brief Returns per-suite help text for the ancrtp suite. */
+        String ancRtpParamHelp();
+
 } // namespace benchutil
 PROMEKI_NAMESPACE_END

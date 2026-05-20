@@ -298,6 +298,16 @@ struct RxAncFrame {
                 ///        packet that participated in the
                 ///        reassembly.
                 TimeStamp firstPacketArrival;
+
+                /// @brief @c true when this frame carries no ANC packets
+                ///        (it's an ST 2110-40 §5.5 ANC_Count=0
+                ///        keep-alive that the sender emitted to mark
+                ///        end-of-frame for an empty ANC frame).
+                ///        Consumers that care only about content can
+                ///        skip these; consumers that need an
+                ///        end-of-frame signal (e.g. to clock per-frame
+                ///        aggregators) should still observe them.
+                bool keepAlive = false;
 };
 
 PROMEKI_NAMESPACE_END

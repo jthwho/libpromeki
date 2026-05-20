@@ -243,6 +243,10 @@ RtpPayload::ValidateResult RtpPayloadAnc::validate(const Buffer &unpacked) {
         if (ancCount == 0) {
                 return length == 0 ? ValidateResult::Accept : ValidateResult::DropSilently;
         }
+        // Reciprocal of the §5.5 keep-alive rule: ANC_Count != 0 with
+        // Length == 0 advertises records but carries zero bytes of
+        // record data — malformed.
+        if (length == 0) return ValidateResult::DropSilently;
         if (PayloadHeaderSize + length > unpacked.size()) {
                 return ValidateResult::DropSilently;
         }
@@ -408,6 +412,13 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                                     static_cast<unsigned>(length), payloadBytes);
                         return Error::OutOfRange;
                 }
+                // Reserve output capacity for this datagram's records so
+                // pushToBack doesn't trigger a List reallocation halfway
+                // through the loop.  Worst case the reservation is
+                // slightly larger than needed (records that fail the
+                // padded-overrun check exit the loop early), but it
+                // never overshoots ANC_Count itself.
+                out.reserve(out.size() + ancCount);
                 const uint8_t *recStart = p + PayloadHeaderSize;
                 const uint8_t *recEnd = recStart + length;
                 size_t         decoded = 0;
@@ -469,7 +480,17 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                                             static_cast<ptrdiff_t>(recEnd - recStart));
                         }
 
-                        Buffer data(bodyBytes);
+                        // F9 hot-path alloc: ANC records are tiny (DC ≤
+                        // 255 → max 328 bytes).  Buffer's default
+                        // alignment is page-size (4 KB) which produces
+                        // a 4 KB allocation per record; on a 20-packet
+                        // HD-60 frame that is 80 KB of allocation
+                        // churn per RTP unpack.  16-byte alignment is
+                        // plenty for the trailing SIMD reads the
+                        // codecs do and matches malloc's natural
+                        // alignment, so the allocator falls into its
+                        // fast small-block path.
+                        Buffer data(bodyBytes, /*align=*/16);
                         Error  cpyErr = data.copyFrom(body, bodyBytes, 0);
                         if (cpyErr.isError()) return cpyErr;
                         data.setSize(bodyBytes);
@@ -477,11 +498,9 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                         const AncFormat fmt = AncFormat::fromSt291DidSdid(didByte, sdidByte);
 
                         AncPacket pkt(fmt, AncTransport::St291, std::move(data));
-                        pkt.setSt291Line(line);
-                        pkt.setSt291HOffset(hOffset);
-                        pkt.setSt291FieldB(fieldB);
-                        pkt.setSt291CBit(cBit);
-                        pkt.setSt291StreamNum(streamNum);
+                        // F9 hot-path: one CoW detach for all five
+                        // framing fields instead of five.
+                        pkt.setSt291Framing(line, hOffset, fieldB, cBit, streamNum);
                         // Apply the §6.4 Checksum_Word policy at the
                         // promotion boundary so a StrictValidate session
                         // refuses records whose stored checksum does not
@@ -489,15 +508,21 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                         // check).  PreserveOrRecompute and AlwaysRecompute
                         // tolerate the wire bytes as-is on the parse
                         // path; the distinction matters only when the
-                        // packet is later re-emitted.
-                        Result<St291Packet> rp = St291Packet::from(pkt, policy);
-                        if (isError(rp)) {
-                                promekiWarn("RtpPayloadAnc::unpackAncPackets: record rejected "
-                                            "by checksum policy %s (DID=0x%02X SDID=0x%02X)",
-                                            policy.toString().cstr(),
-                                            static_cast<unsigned>(didByte),
-                                            static_cast<unsigned>(sdidByte));
-                                return error(rp);
+                        // packet is later re-emitted, so we skip the
+                        // full St291Packet::from() wrapper under those
+                        // policies (the loop already validated structure
+                        // and length).
+                        if (policy == AncChecksumPolicy::StrictValidate) {
+                                Result<St291Packet> rp = St291Packet::from(pkt, policy);
+                                if (isError(rp)) {
+                                        promekiWarn("RtpPayloadAnc::unpackAncPackets: record "
+                                                    "rejected by checksum policy %s "
+                                                    "(DID=0x%02X SDID=0x%02X)",
+                                                    policy.toString().cstr(),
+                                                    static_cast<unsigned>(didByte),
+                                                    static_cast<unsigned>(sdidByte));
+                                        return error(rp);
+                                }
                         }
                         out.pushToBack(std::move(pkt));
 
@@ -509,6 +534,16 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                                 break;
                         }
                         decoded += 1;
+                }
+                // RFC 8331 §7 SHOULD-check: the loop may have exited
+                // via the pad-overrun break before decoding every
+                // record the payload claimed.  Surface that as a warn
+                // (the records we did decode are valid; the sender
+                // miscounted or truncated).
+                if (decoded != ancCount) {
+                        promekiWarn("RtpPayloadAnc::unpackAncPackets: decoded %zu "
+                                    "records but ANC_Count=%u declared",
+                                    decoded, static_cast<unsigned>(ancCount));
                 }
         }
         return Error::Ok;

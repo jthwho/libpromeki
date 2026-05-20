@@ -138,20 +138,11 @@ namespace {
                 return v;
         }
 
-        // DBB1 payload-type byte per ST 12-2 Table 2.
-        inline uint8_t dbb1ForFormat(AncFormat::ID id) {
-                switch (id) {
-                        case AncFormat::AtcLtc: return 0x00;
-                        case AncFormat::AtcVitc1: return 0x01;
-                        case AncFormat::AtcVitc2: return 0x02;
-                        default: return 0x00;
-                }
-        }
 
         // -- Parsing ----------------------------------------------------------
 
         AncTranslator::ParseResult parseAtcSt291Impl(const AncPacket &pkt, const AncTranslateConfig &cfg) {
-                Result<St291Packet> rp = St291Packet::from(pkt);
+                Result<St291Packet> rp = St291Packet::from(pkt, cfg.checksumPolicy());
                 if (rp.second().isError()) return makeError<Variant>(rp.second());
                 const St291Packet &p   = rp.first();
                 List<uint16_t>     udw = p.udw();
@@ -219,6 +210,19 @@ namespace {
                 }
                 atc.setUserBits(ub);
 
+                // DBB1: UDW 1..8 b3, LSB-first across the eight UDWs.
+                // This is the §6.2.1 payload-type byte that discriminates
+                // ATC_LTC / ATC_VITC1 / ATC_VITC2 — ST 12-2:2014 §5
+                // assigns DID=0x60 / SDID=0x60 to all three flavours, so
+                // DBB1 is the only on-wire signal for the flavour.
+                uint8_t dbb1 = 0;
+                for (size_t i = 0; i < 8; ++i) {
+                        if ((udw[i] & 0x08u) != 0) {
+                                dbb1 = static_cast<uint8_t>(dbb1 | (1u << i));
+                        }
+                }
+                atc.setPayloadType(dbb1);
+
                 // DBB2: UDW 9..16 b3, LSB-first across the eight UDWs.
                 uint8_t dbb2 = 0;
                 for (size_t i = 0; i < 8; ++i) {
@@ -234,19 +238,23 @@ namespace {
         // -- Building ---------------------------------------------------------
 
         // Packs an AncAtc's BCD digits, flag bits, binary-group nibbles,
-        // and DBB2 byte plus the format's DBB1 payload-type byte into
-        // the 16-UDW SMPTE ST 12-2 layout.  Factored so the
-        // Variant-driven build entry point and the SyncPolicy re-encode
-        // path (Repeat[idx>0]) share one source of truth for the wire
-        // bit-twiddling.
-        List<uint16_t> packAtcUdw(const AncAtc &atc, AncFormat::ID fmtId) {
+        // and DBB2 byte plus the DBB1 payload-type byte into the 16-UDW
+        // SMPTE ST 12-2 layout.  Factored so the Variant-driven build
+        // entry point and the SyncPolicy re-encode path (Repeat[idx>0])
+        // share one source of truth for the wire bit-twiddling.  DBB1
+        // is taken from @c atc.payloadType() — the format-keyed build
+        // wrappers below stamp that field before calling here so a
+        // caller's explicit @c AncFormat::AtcLtc / @c AtcVitc1 /
+        // @c AtcVitc2 choice wins over any stale value rooted in the
+        // value type.
+        List<uint16_t> packAtcUdw(const AncAtc &atc) {
                 const Timecode &tc       = atc.timecode();
                 uint8_t         hour     = static_cast<uint8_t>(tc.hour());
                 uint8_t         min      = static_cast<uint8_t>(tc.min());
                 uint8_t         sec      = static_cast<uint8_t>(tc.sec());
                 uint8_t         frm      = static_cast<uint8_t>(tc.frame());
                 bool            df       = tc.isDropFrame();
-                uint8_t         dbb1     = dbb1ForFormat(fmtId);
+                uint8_t         dbb1     = atc.payloadType();
                 uint8_t         dbb2     = atc.dbb2();
                 uint8_t         flags    = atc.flags();
 
@@ -324,32 +332,62 @@ namespace {
         // comes from whichever build entry point fires (one per
         // registered AncFormat::AtcLtc / AtcVitc1 / AtcVitc2), and
         // drives both the SDID stamp and the DBB1 byte in packAtcUdw.
-        AncTranslator::PacketsResult buildAtcSt291(AncFormat::ID fmtId, const Variant &v,
-                                               const AncTranslateConfig &cfg) {
-                AncAtc         atc = variantToAncAtc(v);
-                List<uint16_t> udw = packAtcUdw(atc, fmtId);
+        // Maps the DBB1 payload-type byte back to the AncFormat::ID the
+        // (DID,SDID) lookup would *like* to resolve to.  Used by
+        // @c syncPolicyAtc when re-encoding a captured packet under
+        // Repeat[idx>0] — the captured @c pkt.format().id() is always
+        // @c AtcLtc (lowest ID wins the shared (0x60,0x60) slot), so
+        // we recover the real flavour from the parsed
+        // @c AncAtc::payloadType.
+        inline AncFormat::ID formatForPayloadType(uint8_t dbb1) {
+                switch (dbb1) {
+                        case AncAtc::Vitc1: return AncFormat::AtcVitc1;
+                        case AncAtc::Vitc2: return AncFormat::AtcVitc2;
+                        default: return AncFormat::AtcLtc;
+                }
+        }
+
+        // Core build path.  @c atc.payloadType() is the authoritative
+        // DBB1 byte — callers wanting a specific flavour override the
+        // field on the AncAtc before invoking this.  @p fmtId is used
+        // for the @c St291Packet::build registry lookup (DID/SDID
+        // resolution); all three ATC IDs resolve to (0x60,0x60).
+        AncTranslator::PacketsResult buildAtcSt291Impl(AncFormat::ID fmtId, const AncAtc &atc,
+                                                       const AncTranslateConfig &cfg) {
+                List<uint16_t> udw = packAtcUdw(atc);
 
                 uint16_t line   = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                       St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 St291Packet     p = St291Packet::build(AncFormat(fmtId), udw, line, St291Packet::UnspecifiedHOffset,
-                                                        fieldB);
+                                                        fieldB, cBit);
                 AncPacket::List out;
                 out.pushToBack(p.packet());
                 return makeResult<AncPacket::List>(std::move(out));
         }
 
+        // Format-keyed build wrappers.  Each overrides @c
+        // AncAtc::payloadType to its specific DBB1 value so the
+        // caller's explicit format choice wins over any stale value
+        // riding in the AncAtc.
         AncTranslator::PacketsResult buildAtcLtcSt291(const Variant &v, const AncTranslateConfig &cfg) {
-                return buildAtcSt291(AncFormat::AtcLtc, v, cfg);
+                AncAtc atc = variantToAncAtc(v);
+                atc.setPayloadType(AncAtc::Ltc);
+                return buildAtcSt291Impl(AncFormat::AtcLtc, atc, cfg);
         }
 
         AncTranslator::PacketsResult buildAtcVitc1St291(const Variant &v, const AncTranslateConfig &cfg) {
-                return buildAtcSt291(AncFormat::AtcVitc1, v, cfg);
+                AncAtc atc = variantToAncAtc(v);
+                atc.setPayloadType(AncAtc::Vitc1);
+                return buildAtcSt291Impl(AncFormat::AtcVitc1, atc, cfg);
         }
 
         AncTranslator::PacketsResult buildAtcVitc2St291(const Variant &v, const AncTranslateConfig &cfg) {
-                return buildAtcSt291(AncFormat::AtcVitc2, v, cfg);
+                AncAtc atc = variantToAncAtc(v);
+                atc.setPayloadType(AncAtc::Vitc2);
+                return buildAtcSt291Impl(AncFormat::AtcVitc2, atc, cfg);
         }
 
         // Sync policy: ATC must keep advancing across a Repeat run rather
@@ -394,7 +432,15 @@ namespace {
                 overrideCfg.set(AncTranslateConfig::St291BuildLine, rp.first().line());
                 overrideCfg.set(AncTranslateConfig::St291FieldB, rp.first().fieldB());
 
-                return buildAtcSt291(pkt.format().id(), Variant(atc), overrideCfg);
+                // ST 12-2:2014 §5 collapses LTC/VITC1/VITC2 onto a
+                // single (DID=0x60, SDID=0x60), so @c pkt.format().id()
+                // is always @c AtcLtc on capture.  Recover the actual
+                // flavour from the parsed @c AncAtc::payloadType so a
+                // Repeat re-emit preserves the original DBB1 byte
+                // (otherwise a captured VITC1 stream would silently
+                // re-emit as LTC under Repeat).
+                AncFormat::ID fmtId = formatForPayloadType(atc.payloadType());
+                return buildAtcSt291Impl(fmtId, atc, overrideCfg);
         }
 
 } // namespace

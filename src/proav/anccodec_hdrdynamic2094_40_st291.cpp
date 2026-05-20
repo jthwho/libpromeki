@@ -284,15 +284,38 @@ namespace {
         // Build: HdrDynamic2094_40 → ST 291 packet
         // ---------------------------------------------------------------
 
-        void emitWindowItems(List<uint8_t> &out, const HdrDynamic2094_40 &md, uint8_t windowIndex) {
+        void emitWindowItems(List<uint8_t> &out, const HdrDynamic2094_40 &md, uint8_t windowIndex,
+                              uint32_t imageWidth, uint32_t imageHeight) {
                 emitUInt8Item(out, kTagWindowNumber, windowIndex);
 
                 if (windowIndex == 0) {
-                        // Window 0 covers the full image; we have no dimension
-                        // info from the wire-bitstream value type, so emit a
-                        // sentinel "full image" rectangle.
+                        // ST 2094-40 §9.2: "Processing Window 0 shall be
+                        // always present and shall cover all pixels in
+                        // an image" — the rectangle must match real
+                        // image dimensions.  When the caller stamped
+                        // @c HdrDynamicImageWidth / @c HdrDynamicImageHeight
+                        // we emit that; otherwise we fall back to the
+                        // legacy (0xFFFF, 0xFFFF) sentinel and log a
+                        // warn (sentinel is not §9.2-conformant — a
+                        // receiver reading it sees a 65536×65536
+                        // window).
                         emitUInt16PairItem(out, kTagUpperLeftCorner, 0, 0);
-                        emitUInt16PairItem(out, kTagLowerRightCorner, 0xFFFF, 0xFFFF);
+                        if (imageWidth == 0 || imageHeight == 0) {
+                                promekiWarn("anccodec_hdrdynamic2094_40_st291: Window 0 image "
+                                            "dimensions absent — emitting (0xFFFF, 0xFFFF) sentinel "
+                                            "(not ST 2094-40 §9.2 conformant); set "
+                                            "AncTranslateConfig::HdrDynamicImageWidth/Height to fix");
+                                emitUInt16PairItem(out, kTagLowerRightCorner, 0xFFFF, 0xFFFF);
+                        } else {
+                                // ST 2094-40 §9.2 expresses the corner
+                                // coordinates as pixel-1 / pixel-(N-1),
+                                // i.e. inclusive last-pixel indices.
+                                const uint16_t rx = static_cast<uint16_t>(imageWidth > 0xFFFFu
+                                                                  ? 0xFFFFu : (imageWidth - 1));
+                                const uint16_t ry = static_cast<uint16_t>(imageHeight > 0xFFFFu
+                                                                  ? 0xFFFFu : (imageHeight - 1));
+                                emitUInt16PairItem(out, kTagLowerRightCorner, rx, ry);
+                        }
                         return;
                 }
 
@@ -330,10 +353,37 @@ namespace {
                 emitUInt8Item(out, rowsTag, grid.numRows);
         }
 
-        Buffer buildDmcvtApp4SetValue(const HdrDynamic2094_40 &md, uint8_t windowIndex) {
+        Buffer buildDmcvtApp4SetValue(const HdrDynamic2094_40 &md, uint8_t windowIndex,
+                                       uint32_t imageWidth, uint32_t imageHeight) {
                 const HdrDynamic2094_40::WindowProcessing &wp =
                         windowIndex < md.windowProcessing().size() ? md.windowProcessing()[windowIndex]
                                                                     : HdrDynamic2094_40::WindowProcessing();
+                // ST 2094-40:2020 §9.3 / §9.4 forbid three optional
+                // items (TargetedSystemDisplayActualPeakLuminance,
+                // MasteringDisplayActualPeakLuminance,
+                // ColorSaturationWeight) at both AppVer=0 and AppVer=1
+                // — with SHOULD NOT at AppVer=0 and SHALL NOT at
+                // AppVer=1.  Honour the spec on emission: strip the
+                // items at AppVer=1 (with a warn so the caller knows
+                // their value type carried fields the wire dropped);
+                // warn-but-emit at AppVer=0 so legacy senders are not
+                // surprised by silent stripping.
+                const bool appVer1 = (md.applicationVersion() == 1u);
+                const bool appVer0 = (md.applicationVersion() == 0u);
+                auto warnIfAppVer0 = [&](const char *fieldName) {
+                        if (appVer0) {
+                                promekiWarn("HdrDynamic2094_40: %s present at ApplicationVersion=0 "
+                                            "(ST 2094-40:2020 §9.3 SHOULD NOT include) — emitting anyway",
+                                            fieldName);
+                        }
+                };
+                auto warnIfAppVer1 = [&](const char *fieldName) {
+                        if (appVer1) {
+                                promekiWarn("HdrDynamic2094_40: %s forbidden at ApplicationVersion=1 "
+                                            "(ST 2094-40:2020 §9.4 SHALL NOT include) — stripping",
+                                            fieldName);
+                        }
+                };
 
                 List<uint8_t> bytes;
 
@@ -345,16 +395,24 @@ namespace {
                 emitUInt32Item(bytes, kTagTimeIntervalDuration, 1);
 
                 // ProcessingWindow.
-                emitWindowItems(bytes, md, windowIndex);
+                emitWindowItems(bytes, md, windowIndex, imageWidth, imageHeight);
 
                 // TargetedSystemDisplay: required TargetedSystemDisplayMaximumLuminance.
                 // Wire u(27) is 0.0001 cd/m² steps; ST 2094-2 Rational uses /100
                 // (cd/m² with two-decimal resolution), so divide by 100.
                 emitRationalItem(bytes, kTagTargetedSystemDisplayMaxLum,
                                   md.targetedSystemDisplayMaximumLuminance() / 100u, kDenTargetedSysDispMaxLum);
-                emitActualPeakLuminance(bytes, kTagTargetedSysDispActualPeakLuminance,
-                                         kTagRowsInTargetedSysDispActualPeak,
-                                         md.targetedSystemDisplayActualPeakLuminance());
+                // §9.3 / §9.4: TargetedSystemDisplayActualPeakLuminance.
+                if (md.targetedSystemDisplayActualPeakLuminance().isPresent()) {
+                        if (appVer1) {
+                                warnIfAppVer1("TargetedSystemDisplayActualPeakLuminance");
+                        } else {
+                                warnIfAppVer0("TargetedSystemDisplayActualPeakLuminance");
+                                emitActualPeakLuminance(bytes, kTagTargetedSysDispActualPeakLuminance,
+                                                         kTagRowsInTargetedSysDispActualPeak,
+                                                         md.targetedSystemDisplayActualPeakLuminance());
+                        }
+                }
 
                 // ColorVolumeTransform: MaxSCL (3 elements), AverageMaxRGB, Distribution*, FractionBrightPixels.
                 beginRationalArray(bytes, kTagMaxSCL, 3);
@@ -376,15 +434,20 @@ namespace {
                 emitRationalItem(bytes, kTagFractionBrightPixels, wp.fractionBrightPixels,
                                   kDenFractionBrightPixels);
 
-                // MasteringDisplayActualPeakLuminance is optional and shared across
-                // windows (per-set in ST 2094-40); emit once on window 0 only.
-                if (windowIndex == 0) {
-                        emitActualPeakLuminance(bytes, kTagMasteringDispActualPeakLuminance,
-                                                 kTagRowsInMasteringDispActualPeak,
-                                                 md.masteringDisplayActualPeakLuminance());
+                // §9.3 / §9.4: MasteringDisplayActualPeakLuminance.
+                // Shared across windows (per-set); emit once on window 0.
+                if (windowIndex == 0 && md.masteringDisplayActualPeakLuminance().isPresent()) {
+                        if (appVer1) {
+                                warnIfAppVer1("MasteringDisplayActualPeakLuminance");
+                        } else {
+                                warnIfAppVer0("MasteringDisplayActualPeakLuminance");
+                                emitActualPeakLuminance(bytes, kTagMasteringDispActualPeakLuminance,
+                                                         kTagRowsInMasteringDispActualPeak,
+                                                         md.masteringDisplayActualPeakLuminance());
+                        }
                 }
 
-                // BezierCurveToneMapper (optional).
+                // BezierCurveToneMapper (optional, allowed at both versions).
                 if (wp.hasToneMapping) {
                         beginRationalArray(bytes, kTagKneePoint, 2);
                         appendRationalElement(bytes, wp.toneMapping.kneePointX, kDenKneePoint);
@@ -399,9 +462,15 @@ namespace {
                                 }
                         }
                 }
+                // §9.3 / §9.4: ColorSaturationWeight.
                 if (wp.hasColorSaturationMapping) {
-                        emitRationalItem(bytes, kTagColorSaturationWeight, wp.colorSaturationWeight,
-                                          kDenColorSaturationWeight);
+                        if (appVer1) {
+                                warnIfAppVer1("ColorSaturationWeight");
+                        } else {
+                                warnIfAppVer0("ColorSaturationWeight");
+                                emitRationalItem(bytes, kTagColorSaturationWeight, wp.colorSaturationWeight,
+                                                  kDenColorSaturationWeight);
+                        }
                 }
 
                 Buffer buf(bytes.size());
@@ -412,12 +481,40 @@ namespace {
                 return buf;
         }
 
-        Buffer buildFullMessage(const HdrDynamic2094_40 &md) {
+        Buffer buildFullMessage(const HdrDynamic2094_40 &md, uint32_t imageWidth, uint32_t imageHeight) {
                 // For each window, emit one DMCVT App 4 Frame.
                 List<uint8_t> frames;
-                const uint8_t numWindows = md.numWindows() < 1 ? 1 : md.numWindows();
+                // ST 2094-40 §9.2: "the maximum number of processing
+                // windows within one image shall be 3".  Clamp here
+                // rather than silently emit a non-conformant payload.
+                uint8_t       numWindows = md.numWindows() < 1 ? 1 : md.numWindows();
+                if (numWindows > 3) {
+                        promekiWarn("anccodec_hdrdynamic2094_40_st291: numWindows=%u exceeds "
+                                    "ST 2094-40 §9.2 cap of 3; clamping",
+                                    static_cast<unsigned>(numWindows));
+                        numWindows = 3;
+                }
+                // ST 2094-40:2020 §9.4: at ApplicationVersion=1,
+                // "WindowNumber > 0 shall not be present" — so the
+                // metadata set is limited to one window (window 0).
+                // Clamp with a warn rather than silently emit a
+                // non-conformant multi-window payload.  §9.3 has the
+                // SHOULD-NOT softer form at AppVer=0; warn but emit.
+                if (md.applicationVersion() == 1u && numWindows > 1) {
+                        promekiWarn("HdrDynamic2094_40: numWindows=%u at ApplicationVersion=1 "
+                                    "(ST 2094-40:2020 §9.4 SHALL NOT include WindowNumber > 0) — "
+                                    "clamping to 1",
+                                    static_cast<unsigned>(numWindows));
+                        numWindows = 1;
+                }
+                if (md.applicationVersion() == 0u && numWindows > 1) {
+                        promekiWarn("HdrDynamic2094_40: numWindows=%u at ApplicationVersion=0 "
+                                    "(ST 2094-40:2020 §9.3 SHOULD NOT include WindowNumber > 0) — "
+                                    "emitting anyway",
+                                    static_cast<unsigned>(numWindows));
+                }
                 for (uint8_t w = 0; w < numWindows; ++w) {
-                        Buffer       setValue = buildDmcvtApp4SetValue(md, w);
+                        Buffer       setValue = buildDmcvtApp4SetValue(md, w, imageWidth, imageHeight);
                         const size_t valSize = setValue.size();
                         appendBytes(frames, kDmcvtApp4SetKey, sizeof(kDmcvtApp4SetKey));
                         appendBerLongLength4(frames, static_cast<uint32_t>(valSize));
@@ -439,11 +536,16 @@ namespace {
 
         AncTranslator::PacketsResult buildHdrDynamicSt291(const Variant &v, const AncTranslateConfig &cfg) {
                 HdrDynamic2094_40 md = v.get<HdrDynamic2094_40>();
-                Buffer            message = buildFullMessage(md);
+                const uint32_t imageWidth = cfg.getAs<uint32_t>(
+                        AncTranslateConfig::HdrDynamicImageWidth, uint32_t(0));
+                const uint32_t imageHeight = cfg.getAs<uint32_t>(
+                        AncTranslateConfig::HdrDynamicImageHeight, uint32_t(0));
+                Buffer            message = buildFullMessage(md, imageWidth, imageHeight);
 
                 uint16_t line = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                     St291Packet::UnspecifiedLine);
                 bool     fieldB = cfg.getAs<bool>(AncTranslateConfig::St291FieldB, false);
+                bool     cBit = cfg.getAs<bool>(AncTranslateConfig::St291BuildCBit, false);
 
                 // ST 291 DC field is one byte → UDW max is 255 bytes per
                 // packet.  UDW[0] is the Packet Count, leaving 254 bytes of
@@ -465,7 +567,7 @@ namespace {
                         List<uint16_t> udw;
                         udw.pushToBack(0x01);
                         St291Packet p = St291Packet::build(AncFormat(AncFormat::HdrDynamic2094_40), udw, line,
-                                                            St291Packet::UnspecifiedHOffset, fieldB);
+                                                            St291Packet::UnspecifiedHOffset, fieldB, cBit);
                         out.pushToBack(p.packet());
                         return makeResult<AncPacket::List>(std::move(out));
                 }
@@ -491,7 +593,7 @@ namespace {
                         for (size_t i = 0; i < chunk; ++i) udw.pushToBack(mp[off + i]);
 
                         St291Packet p = St291Packet::build(AncFormat(AncFormat::HdrDynamic2094_40), udw, line,
-                                                            St291Packet::UnspecifiedHOffset, fieldB);
+                                                            St291Packet::UnspecifiedHOffset, fieldB, cBit);
                         out.pushToBack(p.packet());
                 }
                 return makeResult<AncPacket::List>(std::move(out));
@@ -778,8 +880,18 @@ namespace {
         // the per-packet Message-bytes into the full HDR/WCG Metadata
         // Message, then walks the KLV frames inside.
         AncTranslator::ParseResult parseHdrDynamicSt291(const AncPacket::List &pkts,
-                                              const AncTranslateConfig & /*cfg*/) {
+                                              const AncTranslateConfig &cfg) {
                 if (pkts.isEmpty()) return makeError<Variant>(Error::InvalidArgument);
+                // ST 2108-2 §5.3: Packet Count is u8 (1..255), so a
+                // Message cannot span more than 255 ANC packets.
+                // Reject up front instead of wrapping uint8_t(256) → 0
+                // in the sequence validator below.
+                if (pkts.size() > 255) {
+                        promekiWarn("anccodec_hdrdynamic2094_40_st291: parseGroup received "
+                                    "%zu packets but ST 2108-2 §5.3 caps Packet Count at 255",
+                                    pkts.size());
+                        return makeError<Variant>(Error::OutOfRange);
+                }
 
                 // Step 1: extract (Packet Count, message-bytes) from every
                 // packet.  Packet Count is the first UDW; the remaining
@@ -790,8 +902,9 @@ namespace {
                 };
                 List<Segment> segs;
                 segs.resize(pkts.size());
+                AncChecksumPolicy policy = cfg.checksumPolicy();
                 for (size_t i = 0; i < pkts.size(); ++i) {
-                        Result<St291Packet> rp = St291Packet::from(pkts[i]);
+                        Result<St291Packet> rp = St291Packet::from(pkts[i], policy);
                         if (rp.second().isError()) return makeError<Variant>(rp.second());
                         List<uint16_t> udw = rp.first().udw();
                         if (udw.isEmpty()) return makeError<Variant>(Error::CorruptData);
@@ -882,6 +995,15 @@ namespace {
         // through individually, so the multi-packet structure is
         // preserved bit-for-bit on Repeat — the receiver re-aggregates
         // from the Packet Count bytes already in the wire payload.
+        //
+        // ST 2108-2 §5.3 defines Packet Count as **intra-Message**
+        // sequencing (resets to 1 for each new Message), so re-emitting
+        // the same Message across a Repeat run does not produce a
+        // sequence violation; both Repeat instances carry identical
+        // Packet Count bytes (1, 2, ..., N) and parse to the same
+        // Message.  Receivers that track Message-level identity for
+        // deduplication see two identical Messages and either de-dup or
+        // accept both — either way the wire is conformant.
         AncTranslator::PacketsResult syncPolicyHdrDynamic2094_40(const AncPacket &pkt, FrameSyncDisposition d,
                                                              uint8_t /*repeatIndex*/,
                                                              const AncTranslateConfig & /*cfg*/) {

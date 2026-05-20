@@ -16,7 +16,7 @@ parsers/builders on top so application code (closed-caption
 overlay, SCTE-104 driven splicers, AFD-aware scalers, ATC
 round-trip, HDR pass-through) does not have to touch raw bytes.
 
-## Status at a glance (2026-05-15)
+## Status at a glance (2026-05-20)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -25,6 +25,7 @@ round-trip, HDR pass-through) does not have to touch raw bytes.
 | 1.5   | ESN reorder handling | **Deferred** (packer writes 0, depacketizer ignores) |
 | 2     | `AncTranslateConfig` + `AncTranslator` + 3 registries + macros + initial ATC and AFD ← → St291 codecs | **Landed** |
 | 2b    | CEA-708 ← → St291 + `Cea708Cdp` + TPG caption injection + Inspector AncData JSONL dump | **Landed** |
+| P2    | Second-pass conformance audit (Phases A/B/C wire bugs, per-codec deep audits, registry / docs) — `devplan/proav/ancaudit.md` | **Complete — all F1–F10 findings landed; audit file retired 2026-05-20** |
 | 3     | Remaining typed parsers (full AFD value type, Atc helpers, Scte104, HdrStatic2086 St291, HDR dynamic, KLV) | **Partial** — HdrStatic2086 HdmiInfoFrame + St291 (ST 2108-1) codecs landed 2026-05-15; HdrDynamic2094_40 value type + HdmiInfoFrame + St291 (ST 2108-2 KLV, multi-packet) codecs landed 2026-05-15; AncOp47Sdp value type + OP-47 SDP codec (RDD 8, DID 0x43/SDID 0x02) landed 2026-05-20; AncSt2020Audio value type + ST 2020-2 Method A codec (DID 0x45, SDIDs 0x01–0x09) landed 2026-05-20; VPID codec (SdiVpid ← → AncTranslator, DID 0x41/SDID 0x01) landed 2026-05-20; Scte104 codec still pending |
 | 3.5   | Subtitle file I/O + CEA-608 codec (Subtitle/SubtitleList/SubRip, Scc, Cea608Encoder/Decoder all three modes, TPG injection, round-trip func test) | **Landed** |
 | 4     | MediaIO backend integration (codec API Frame-shaped refactor + ANC pairing, Cea708 ← / → HlsSei + NVENC SEI injection) | **Partial** — YouTube delivery path landed 2026-05-12; NdiMediaIO ANC + RtmpMediaIO ANC + AncMetadataStamper pending |
@@ -230,6 +231,67 @@ when that lands (Phase 6).
 
 ---
 
+## Phase P2 — Second-pass conformance audit follow-ups (landed 2026-05-20)
+
+All audit findings from the second-pass review (tracked in the now-retired
+`devplan/proav/ancaudit.md`) have landed.  Key items:
+
+- [x] **P2-1 / P2-ATC** — ATC DID/SDID collapse: ST 12-2:2014 §5 assigns
+  DID=0x60 / SDID=0x60 to every ATC flavour; `AncFormat::AtcLtc/Vitc1/Vitc2`
+  all key to that pair, with DBB1 as the discriminator.  `AncAtc::PayloadType`
+  enum (`Ltc`, `Vitc1`, `Vitc2`) added to `ancatc.h`; codec stamps it from
+  the wire DBB1 on parse and from the caller's format choice on build.
+  `AncAtc::payloadType()` / `setPayloadType()` accessors added.
+- [x] **P2-9** — `AncDesc::toSdp` no longer emits `TM=CTM` alongside
+  `SSN=ST2110-40:2018`; ST 2110-40:2023 §7 couples TM to :2023 SSN only.
+  CTM is implicit when TM is absent.
+- [x] **P2-17** — `St291Packet::buildRaw` / `buildRawType1` now hard-reject
+  reserved DID ranges (ST 291-1 §6.1 Figure 4a/4b) and SDID=0x00 for Type-2.
+- [x] **P2-21** — `AncCategory::Control{15}` added to `enums.h` for
+  in-band control packets (PacketForDeletion, EDH, RP 165 status).
+- [x] **P2-22** — `AncFormat::PacketForDeletion` wildcard match: `fromSt291DidSdid(0x80, anyDBN)` resolves via the Type-1 wildcard path.
+- [x] **P2-23** — `AncTranslator::parseGroup` + `hasParser` tested; confirmed
+  multi-parser takes precedence on `parse(single packet)` and that
+  `InsufficientContext` is returned when a multi-packet codec receives a lone
+  packet.
+- [x] **P2-24** — `AncFormat::fromHdmiInfoFrame(type, oui)` added; OUI
+  0x00D046 → `HdrDynamic2094_40`, 0x00903E → `DvRpu`, others fall through
+  to `fromHdmiInfoFrameType`.
+- [x] **P2-26** — HDR dynamic §9.4 (AppVer=1 SHALL NOT): codec strips
+  `ColorSaturationWeight` and clamps `numWindows > 1` to 1 on emission;
+  §9.3 (AppVer=0 SHOULD NOT): codec warns but emits for backward
+  compatibility with pre-2020 senders.
+- [x] **P2-31** — `AncTranslator` registry idempotency: re-registering the
+  same function pointer is a no-op; DEBUG builds hard-fail on collision with a
+  different pointer.
+- [x] **New `AncTranslateConfig` keys** — `St291BuildCBit` (C-bit for built
+  ST 291 packets), `St291KeepAliveField` (F-bit for §5.5 keep-alives),
+  `HdrDynamicImageWidth` / `HdrDynamicImageHeight` (§9.2 Window 0 sentinel
+  when zero). Convenience accessors `checksumPolicy()` and
+  `keepAliveFieldByte()` added.
+- [x] **`RxAncFrame::keepAlive`** — bool field identifying ST 2110-40 §5.5
+  ANC_Count=0 keep-alive frames at the depacketizer output.
+- [x] **`RtpAncPacketizerContext::keepAliveField`** — F-bit config for
+  keep-alive RTP packets; packetizer plumbs it into `RtpPayloadAnc`.
+- [x] **`AncFormat::Op47Multipack`** (DID 0x43/SDID 0x03) and
+  **`AncFormat::VbiSt2031`** (DID 0x41/SDID 0x08) registered.
+- [x] **`AncSt2020Audio::PayloadDescriptorCompatibilityBit`** constant added
+  (§5.4.1 bit 7; shall be 0 on Method-A packets).
+- [x] **Property-based round-trip tests** — `tests/unit/anc_roundtrip_property.cpp`
+  (Phase A/B/C): 200-iteration deterministic random walks over
+  `St291Packet` build/from (Type-1 + Type-2), sentinel line/hOffset values,
+  `RtpPayloadAnc` single-packet, multi-packet, Type-1 mixed, and MTU-split
+  frames.  Also covers `AncPacket` identity contract (wire-buffer = identity,
+  meta-only mutations don't alter wire bytes).
+- [x] **RFC 8331 hot-path micro-opt** — `RtpPacket::List` factory allocates
+  with 16-byte alignment instead of the default page-rounded allocation, eliminating
+  4 KB waste per small ANC/audio packet.
+- [x] **`utils/promeki-bench/cases/ancrtp.cpp`** — `ancrtp` bench suite:
+  `pack_hd60`, `unpack_hd60`, `roundtrip_hd60` cases measuring RFC 8331
+  TX/RX hot-path throughput at a representative ~20 ANC-packets/frame load.
+
+---
+
 ## Phase 2 follow-ups (deferred from Phase 2)
 
 - [ ] `MediaConfig::AncTranslateConfig` key — set on a MediaIO
@@ -386,13 +448,16 @@ the remaining gap.
   is u8); out-of-order delivery handled via defensive sort;
   gaps in the sequence rejected with `CorruptData`.
 - [x] `tests/unit/anccodec_hdrdynamic2094_40_st291.cpp` —
-  12 cases covering single-packet fast path, multi-packet
+  15 cases covering single-packet fast path, multi-packet
   split + reassembly, multi-window descriptors, actual-peak
   grids, out-of-order packet handling, gap rejection, empty
   list rejection, single-packet parse on a multi-packet
-  Message (truncated → error).
-- [ ] **AncTranslator framework extensions** that landed
-  alongside the codec:
+  Message (truncated → error), §9.4 SHALL NOT strip at
+  AppVer=1 (ColorSaturationWeight + numWindows>1 clamp),
+  §9.3 warn-but-emit preservation at AppVer=0 (P2-26,
+  2026-05-20).
+- [x] **AncTranslator framework extensions** that landed
+  alongside the codec (2026-05-20):
   - `BuilderFn` and `TranslatorFn` return type changed from
     `Result<AncPacket>` to `Result<List<AncPacket>>` so any
     codec can emit N wire packets per one logical message.
@@ -408,6 +473,10 @@ the remaining gap.
     `parseGroup(packet list)` entry point.
   - `PROMEKI_REGISTER_ANC_MULTI_PARSER` macro for static-init
     registration.
+  - `AncTranslator::parseGroup(AncPacket::List)` tested via
+    P2-23 (multi-parser dispatch, `hasParser` reporting, single-
+    packet `InsufficientContext` path) and P2-31 (idempotent
+    re-registration / DEBUG collision rejection).
 
 ### KLV (MISB ST 0601)
 
