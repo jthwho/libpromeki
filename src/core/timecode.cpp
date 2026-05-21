@@ -8,6 +8,8 @@
 #include <cstdio>
 #include <promeki/timecode.h>
 #include <promeki/datastream.h>
+#include <promeki/duration.h>
+#include <promeki/framerate.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -18,10 +20,18 @@ VtcTimecode Timecode::toVtc() const {
         vtc.min = _min;
         vtc.sec = _sec;
         vtc.frame = _frame;
-        vtc.userbits = 0;
+        vtc.userbits = _userbits.toUint32();
         vtc.format = _mode.vtcFormat();
         vtc.flags = 0;
         if (_flags & FirstField) vtc.flags |= VTC_TC_FLAG_FIELD_1;
+        if (_colorFrame) vtc.flags |= VTC_TC_FLAG_LTC_COLOR_FRAME;
+        // Surface the BGF mode triple on the libvtc bit positions so
+        // codecs that go through vtc_ltc_pack pick them up.  BGF flags
+        // encode the 3-bit Mode value as (BGF2 BGF1 BGF0).
+        const uint8_t mode = static_cast<uint8_t>(_userbits.mode());
+        if (mode & 0x01u) vtc.flags |= VTC_TC_FLAG_LTC_BGF0;
+        if (mode & 0x02u) vtc.flags |= VTC_TC_FLAG_LTC_BGF1;
+        if (mode & 0x04u) vtc.flags |= VTC_TC_FLAG_LTC_BGF2;
         return vtc;
 }
 
@@ -38,6 +48,14 @@ void Timecode::fromVtc(const VtcTimecode &vtc) {
         }
         _flags = 0;
         if (vtc.flags & VTC_TC_FLAG_FIELD_1) _flags |= FirstField;
+        _colorFrame = (vtc.flags & VTC_TC_FLAG_LTC_COLOR_FRAME) != 0;
+        // Reconstruct the BGF mode triple from libvtc's per-flag bits.
+        uint8_t modeBits = 0;
+        if (vtc.flags & VTC_TC_FLAG_LTC_BGF0) modeBits |= 0x01u;
+        if (vtc.flags & VTC_TC_FLAG_LTC_BGF1) modeBits |= 0x02u;
+        if (vtc.flags & VTC_TC_FLAG_LTC_BGF2) modeBits |= 0x04u;
+        _userbits = TimecodeUserbits::fromRawBits(
+                vtc.userbits, static_cast<TimecodeUserbits::Mode>(modeBits));
 }
 
 Timecode &Timecode::operator++() {
@@ -340,21 +358,37 @@ FrameNumber Timecode::toFrameNumber() const {
         return FrameNumber(static_cast<int64_t>(frameNum));
 }
 
+Result<Duration> Timecode::toRuntime(const FrameRate &rate) const {
+        if (!rate.isValid()) return makeError<Duration>(Error::Invalid);
+        const FrameNumber fn = toFrameNumber();
+        if (!fn.isValid()) return makeError<Duration>(Error::ConversionFailed);
+        const Duration period = rate.frameDuration();
+        if (!period.isValid()) return makeError<Duration>(Error::Invalid);
+        // Multiply by frame count.  Duration is stored in ns; the
+        // FrameRate-provided period folds the rational rate to the
+        // nearest ns per the FrameRate::frameDuration contract.
+        const int64_t ns = period.nanoseconds() * static_cast<int64_t>(fn.value());
+        return makeResult(Duration::fromNanoseconds(ns));
+}
+
 // ============================================================================
-// DataStream wire format (v1).
+// DataStream wire format.
 //
-// Native binary layout — no string detour:
-//   uint32_t modeFps      // 0 when the Mode has no format attached
-//   uint32_t flags        // bit0=DropFrame, bit1=FirstField, bit2=ModeValid
-//                         // (ModeValid distinguishes Mode(0u,0u) from default)
-//   uint8_t  hour
-//   uint8_t  min
-//   uint8_t  sec
-//   uint8_t  frame
+// Layout (current = v2):
+//   uint32_t          modeFps      // 0 when the Mode has no format attached
+//   uint32_t          flags        // bit0=DropFrame, bit1=FirstField,
+//                                  // bit31=ModeValid (distinguishes
+//                                  // Mode(0u,0u) from default)
+//   uint8_t           hour
+//   uint8_t           min
+//   uint8_t           sec
+//   uint8_t           frame
+//   uint8_t           colorFrame   // v2 only — ST 12-1 §8.3.2 bit 11
+//   TimecodeUserbits  userbits     // v2 only — 32 user bits + BGF mode
 //
-// Each scalar field rides its own tagged primitive sub-frame inside
-// the Timecode body, so endianness is handled by the primitive
-// operators and the format stays self-describing.
+// v1 omitted @c colorFrame and @c userbits.  The v1 reader path
+// preserves wire compatibility by leaving those fields at their
+// default values.
 // ============================================================================
 
 namespace {
@@ -371,6 +405,8 @@ Error Timecode::writeToStream(DataStream &s) const {
         s << static_cast<uint8_t>(_min);
         s << static_cast<uint8_t>(_sec);
         s << static_cast<uint8_t>(_frame);
+        s << static_cast<uint8_t>(_colorFrame ? 1u : 0u);
+        s << _userbits;
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
@@ -394,6 +430,33 @@ Result<Timecode> Timecode::readFromStream<1>(DataStream &s) {
         tc._min   = m;
         tc._sec   = sc;
         tc._frame = f;
+        // v1 had no colorFrame / userbits on the wire — defaults already in place.
+        return makeResult(tc);
+}
+
+template <>
+Result<Timecode> Timecode::readFromStream<2>(DataStream &s) {
+        uint32_t modeFps = 0;
+        uint32_t flagsW  = 0;
+        uint8_t  h = 0, m = 0, sc = 0, f = 0, cf = 0;
+        TimecodeUserbits ub;
+        s >> modeFps >> flagsW >> h >> m >> sc >> f >> cf >> ub;
+        if (s.status() != DataStream::Ok) return makeError<Timecode>(s.toError());
+        Timecode tc;
+        const bool modeValid = (flagsW & TimecodeFlagsModeValid) != 0;
+        const uint32_t userFlags = flagsW & ~TimecodeFlagsModeValid;
+        if (modeFps > 0) {
+                tc._mode = Mode(modeFps, userFlags & DropFrame);
+        } else if (modeValid) {
+                tc._mode = Mode(0u, 0u);
+        }
+        tc._flags = userFlags;
+        tc._hour  = h;
+        tc._min   = m;
+        tc._sec   = sc;
+        tc._frame = f;
+        tc._colorFrame = (cf != 0);
+        tc._userbits = ub;
         return makeResult(tc);
 }
 

@@ -19,11 +19,14 @@
 #include <promeki/framenumber.h>
 #include <promeki/array.h>
 #include <promeki/datatype.h>
+#include <promeki/timecodeuserbits.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class DataStream;
+class FrameRate;
+class Duration;
 
 /**
  * @brief Class for holding and manipulating timecode.
@@ -54,22 +57,44 @@ class DataStream;
  */
 class Timecode {
         public:
-                PROMEKI_DATATYPE(Timecode, DataTypeTimecode, 1)
+                PROMEKI_DATATYPE(Timecode, DataTypeTimecode, 2)
 
                 using DigitType = uint8_t;  ///< Type used for individual timecode digit fields.
                 using FlagsType = uint32_t; ///< Type used for timecode flag bitmasks.
 
-                /** @brief Writes the canonical SMPTE string form (body-only; framework wraps in a frame). */
+                /** @brief Writes the canonical wire body. */
                 Error writeToStream(DataStream &s) const;
-                /** @brief Reads the canonical string form for wire version @p V. */
+                /** @brief Reads the canonical wire body for wire version @p V. */
                 template <uint32_t V> static Result<Timecode> readFromStream(DataStream &s);
 
-                /** @brief Standard timecode types. */
+                /**
+                 * @brief Standard timecode-rate families covered by ST 12-1 / ST 12-3.
+                 *
+                 * The naming reflects the digit-family (the BCD rate emitted on the wire)
+                 * rather than the wall-clock rate.  An @c NDF30 timecode counts 30 frames
+                 * per second; whether that wall-clock rate is exactly 30 fps or the NTSC
+                 * 30000/1001 fps is a wall-clock-conversion concern that lives on the
+                 * @ref toRuntime / LTC encoder side, not on the value type.
+                 *
+                 * @c DF30 / @c DF60 / @c DF120 are the only ST-defined drop-frame rates
+                 * (29.97, 59.94, 119.88); their digit math is identical to their
+                 * integer-rate NDF counterparts, with drop-frame compensation on top.
+                 */
                 enum TimecodeType {
-                        NDF24, ///< 24 fps non-drop-frame (maps to VTC_FORMAT_24)
-                        NDF25, ///< 25 fps non-drop-frame (maps to VTC_FORMAT_25)
-                        NDF30, ///< 30 fps non-drop-frame (maps to VTC_FORMAT_30_NDF)
-                        DF30   ///< 29.97 fps drop-frame (maps to VTC_FORMAT_29_97_DF)
+                        NDF24,        ///< 24 fps non-drop-frame (VTC_FORMAT_24).
+                        NDF25,        ///< 25 fps non-drop-frame (VTC_FORMAT_25).
+                        NDF30,        ///< 30 fps non-drop-frame (VTC_FORMAT_30_NDF).
+                        DF30,         ///< 29.97 fps drop-frame  (VTC_FORMAT_29_97_DF).
+                        NDF48,        ///< 48 fps non-drop-frame (VTC_FORMAT_48, 24×2).
+                        NDF50,        ///< 50 fps non-drop-frame (VTC_FORMAT_50, 25×2).
+                        NDF60,        ///< 60 fps non-drop-frame (VTC_FORMAT_60, 30×2).
+                        DF60,         ///< 59.94 fps drop-frame  (VTC_FORMAT_59_94_DF, 30×2).
+                        NDF72,        ///< 72 fps non-drop-frame (VTC_FORMAT_72, 24×3).
+                        NDF96,        ///< 96 fps non-drop-frame (VTC_FORMAT_96, 24×4).
+                        NDF100,       ///< 100 fps non-drop-frame (VTC_FORMAT_100, 25×4).
+                        NDF120,       ///< 120 fps non-drop-frame (VTC_FORMAT_120_30X4, 30×4).
+                        DF120,        ///< 119.88 fps drop-frame  (VTC_FORMAT_119_88_DF, 30×4).
+                        NDF120_24x5,  ///< 120 fps non-drop-frame (VTC_FORMAT_120_24X5, 24×5).
                 };
 
                 /** @brief Timecode flag bits. */
@@ -94,25 +119,71 @@ class Timecode {
 
                                 /**
                                  * @brief Constructs a mode from a frame rate and flag set.
-                                 * @param fps  Frames per second.
+                                 *
+                                 * Walks the libvtc @c VTC_STANDARD_FORMATS table and selects
+                                 * the format whose actual fps (@c tc_fps × (hfr_n + 1)) and
+                                 * drop-frame flag match the request.  This is how HFR rates
+                                 * (48 / 50 / 60 / 72 / 96 / 100 / 120) lock onto the
+                                 * correct ST 12-3 format pointer with HFR_N populated; the
+                                 * previous implementation hit
+                                 * @c vtc_format_find_or_create(fps, 1, fps, …) which never
+                                 * matched any HFR format and silently created a malformed
+                                 * custom one that bypassed libvtc's HFR machinery.
+                                 *
+                                 * Falls back to @c vtc_format_find_or_create only when no
+                                 * standard format matches the requested rate.
+                                 *
+                                 * @param fps  Frames per second (wall-clock integer rate).
                                  * @param flags Bitmask of Flags values (e.g. DropFrame).
                                  */
                                 Mode(uint32_t fps, uint32_t flags) : _valid(true) {
-                                        if (fps > 0) {
-                                                uint32_t vtcFlags = 0;
-                                                if (flags & DropFrame) vtcFlags |= VTC_FORMAT_FLAG_DROP_FRAME;
-                                                _format = vtc_format_find_or_create(fps, 1, fps, vtcFlags);
+                                        if (fps == 0) return;
+                                        const bool wantDf = (flags & DropFrame) != 0;
+                                        // Prefer integer-rate formats over their NTSC
+                                        // (1000/1001) siblings.  Without an explicit
+                                        // wall-clock-rate hint a caller asking for "30 fps
+                                        // NDF" wants exact 30, not 29.97.
+                                        for (int i = 0; i < VTC_STANDARD_FORMATS_COUNT; ++i) {
+                                                const VtcFormat *f = VTC_STANDARD_FORMATS[i];
+                                                if (vtc_format_fps(f) != fps) continue;
+                                                if (vtc_format_is_drop_frame(f) != wantDf) continue;
+                                                if (vtc_format_is_ntsc(f)) continue;
+                                                _format = f;
+                                                return;
                                         }
+                                        // Second pass: accept NTSC variants if no integer
+                                        // match exists at this rate (the only DF HFR rates
+                                        // 59.94 DF and 119.88 DF are NTSC-only).
+                                        for (int i = 0; i < VTC_STANDARD_FORMATS_COUNT; ++i) {
+                                                const VtcFormat *f = VTC_STANDARD_FORMATS[i];
+                                                if (vtc_format_fps(f) != fps) continue;
+                                                if (vtc_format_is_drop_frame(f) != wantDf) continue;
+                                                _format = f;
+                                                return;
+                                        }
+                                        uint32_t vtcFlags = 0;
+                                        if (wantDf) vtcFlags |= VTC_FORMAT_FLAG_DROP_FRAME;
+                                        _format = vtc_format_find_or_create(fps, 1, fps, vtcFlags);
                                 }
 
                                 /** @brief Constructs a mode from a standard TimecodeType.
                                  *  @param type One of the TimecodeType enum values. */
                                 Mode(TimecodeType type) : _valid(true) {
                                         switch (type) {
-                                                case NDF24: _format = &VTC_FORMAT_24; break;
-                                                case NDF25: _format = &VTC_FORMAT_25; break;
-                                                case NDF30: _format = &VTC_FORMAT_30_NDF; break;
-                                                case DF30: _format = &VTC_FORMAT_29_97_DF; break;
+                                                case NDF24:       _format = &VTC_FORMAT_24;          break;
+                                                case NDF25:       _format = &VTC_FORMAT_25;          break;
+                                                case NDF30:       _format = &VTC_FORMAT_30_NDF;      break;
+                                                case DF30:        _format = &VTC_FORMAT_29_97_DF;    break;
+                                                case NDF48:       _format = &VTC_FORMAT_48;          break;
+                                                case NDF50:       _format = &VTC_FORMAT_50;          break;
+                                                case NDF60:       _format = &VTC_FORMAT_60;          break;
+                                                case DF60:        _format = &VTC_FORMAT_59_94_DF;    break;
+                                                case NDF72:       _format = &VTC_FORMAT_72;          break;
+                                                case NDF96:       _format = &VTC_FORMAT_96;          break;
+                                                case NDF100:      _format = &VTC_FORMAT_100;         break;
+                                                case NDF120:      _format = &VTC_FORMAT_120_30X4;    break;
+                                                case DF120:       _format = &VTC_FORMAT_119_88_DF;   break;
+                                                case NDF120_24x5: _format = &VTC_FORMAT_120_24X5;    break;
                                         }
                                 }
 
@@ -137,6 +208,35 @@ class Timecode {
                                 bool isDropFrame() const { return _format ? vtc_format_is_drop_frame(_format) : false; }
                                 /** @brief Returns true if a VtcFormat pointer is assigned. */
                                 bool hasFormat() const { return _format != nullptr; }
+
+                                /**
+                                 * @brief Returns the number of physical frames per ST 12-3 super-frame.
+                                 *
+                                 * For non-HFR formats this is 1 (one physical frame per super-frame).
+                                 * For HFR formats this is @c vtc_format_hfr_n(format) + 1, i.e. the
+                                 * "N" of the super-frame group per ST 12-3 §6.1 — 2 for 48/50/60,
+                                 * 3 for 72, 4 for 96/100/120(30×4)/119.88, 5 for 120(24×5).
+                                 *
+                                 * Returns 1 when no format is attached.
+                                 */
+                                uint32_t framesPerSuperFrame() const {
+                                        return _format ? vtc_format_hfr_n(_format) + 1u : 1u;
+                                }
+
+                                /**
+                                 * @brief Returns the super-frame rate (the rate at which audio LTC
+                                 *        codewords are emitted and the BCD super-frame digits cycle).
+                                 *
+                                 * Equals @c format->tc_fps — 24, 25 or 30 for every standard format.
+                                 * Returns 0 when no format is attached.
+                                 *
+                                 * At HFR rates this is the rate audio LTC actually runs at; the
+                                 * physical frame rate is @c fps() = superFrameRate() ×
+                                 * framesPerSuperFrame().  See @ref Timecode::isHfr.
+                                 */
+                                uint32_t superFrameRate() const {
+                                        return _format ? _format->tc_fps : 0u;
+                                }
 
                                 /** @brief Returns the underlying libvtc format pointer. */
                                 const VtcFormat *vtcFormat() const { return _format; }
@@ -211,7 +311,8 @@ class Timecode {
 
                 bool operator==(const Timecode &other) const {
                         return _mode == other._mode && _hour == other._hour && _min == other._min &&
-                               _sec == other._sec && _frame == other._frame;
+                               _sec == other._sec && _frame == other._frame &&
+                               _colorFrame == other._colorFrame && _userbits == other._userbits;
                 }
 
                 bool operator!=(const Timecode &other) const { return !(*this == other); }
@@ -310,6 +411,63 @@ class Timecode {
                 /** @brief Returns the frame digit. */
                 DigitType frame() const { return _frame; }
 
+                /**
+                 * @brief Returns the color-frame flag (ST 12-1 §8.3.2 / Table 2 bit 11).
+                 *
+                 * The color-frame flag is part of the time-address word, not the ATC
+                 * envelope.  Lives on @ref Timecode so it round-trips through every
+                 * codec — LTC, VITC, ATC — without each one having to surface it
+                 * separately.
+                 */
+                bool colorFrame() const { return _colorFrame; }
+                /** @brief Sets the color-frame flag. */
+                void setColorFrame(bool on) { _colorFrame = on; }
+
+                /** @brief Returns the binary-group user bits (and BGF mode triple). */
+                const TimecodeUserbits &userbits() const { return _userbits; }
+                /** @brief Replaces the binary-group user bits. */
+                void setUserbits(const TimecodeUserbits &ub) { _userbits = ub; }
+
+                /**
+                 * @brief Returns the super-frame index for this Timecode's @ref frame.
+                 *
+                 * Computed as <tt>frame() / mode().framesPerSuperFrame()</tt>.  At
+                 * non-HFR rates this is identical to @ref frame.  At HFR rates this
+                 * is the value that BCD-encodes into the codeword's super-frame
+                 * digit slot — 0..23 at 24×N, 0..24 at 25×N, 0..29 at 30×N.
+                 *
+                 * Returns @ref frame unchanged when no Mode is attached.
+                 */
+                uint32_t superFrameIndex() const {
+                        const uint32_t n = _mode.framesPerSuperFrame();
+                        return n > 0u ? static_cast<uint32_t>(_frame) / n : static_cast<uint32_t>(_frame);
+                }
+
+                /**
+                 * @brief Returns the frame-identifier number per ST 12-3 §6.3.
+                 *
+                 * Computed as <tt>frame() % mode().framesPerSuperFrame()</tt>.  At
+                 * non-HFR rates this is always 0.  At HFR rates it ranges 0..N-1
+                 * and drives the sub-frame identifier bits in the LTC / ATC_HFRTC
+                 * codeword (per Phase 1 libvtc support).
+                 *
+                 * Returns 0 when no Mode is attached.
+                 */
+                uint32_t subFrameIndex() const {
+                        const uint32_t n = _mode.framesPerSuperFrame();
+                        return n > 0u ? static_cast<uint32_t>(_frame) % n : 0u;
+                }
+
+                /** @brief Returns @c true when this Timecode is at an HFR rate
+                 *         (@c framesPerSuperFrame() > 1). */
+                bool isHfr() const { return _mode.framesPerSuperFrame() > 1u; }
+
+                /** @brief Returns @c true when @ref subFrameIndex is 0 — the first
+                 *         physical frame of a super-frame.  Used by HFR codecs to
+                 *         decide when to latch a new LTC codeword or ATC_HFRTC
+                 *         packet payload. */
+                bool isSuperFrameBoundary() const { return subFrameIndex() == 0u; }
+
                 /** @brief Returns the underlying libvtc format pointer from the mode. */
                 const VtcFormat *vtcFormat() const { return _mode.vtcFormat(); }
 
@@ -368,6 +526,27 @@ class Timecode {
                  * @return The absolute frame number, or @c Unknown on failure.
                  */
                 FrameNumber toFrameNumber() const;
+
+                /**
+                 * @brief Converts the timecode to a wall-clock duration at @p rate.
+                 *
+                 * The @c TimecodeType / @ref Mode of a Timecode carries only the
+                 * digit-family (24, 25, 30, …), not whether the wall-clock rate is
+                 * integer or NTSC fractional.  Wall-clock conversion is therefore
+                 * a function of an externally-supplied @ref FrameRate: a 30-fps
+                 * Timecode renders to one wall-clock duration at exactly 30 fps and
+                 * to a slightly longer one at 30000/1001 fps.
+                 *
+                 * The duration is computed as @c (frameNumber × rate.frameDuration())
+                 * after converting to an absolute frame number, so drop-frame
+                 * compensation in the digit math is preserved.
+                 *
+                 * @param rate The wall-clock rate to interpret the digits against.
+                 * @return A @ref Duration on success, or an Error if either the
+                 *         Timecode or @p rate is invalid, or the frame-number
+                 *         conversion fails.
+                 */
+                Result<Duration> toRuntime(const FrameRate &rate) const;
 
                 /**
                  * @brief Packs the timecode into the 64-bit BCD time-address word.
@@ -483,12 +662,14 @@ class Timecode {
                         return !_mode.hasFormat() || !other._mode.hasFormat();
                 }
 
-                Mode      _mode;
-                FlagsType _flags = 0;
-                DigitType _hour = 0;
-                DigitType _min = 0;
-                DigitType _sec = 0;
-                DigitType _frame = 0;
+                Mode             _mode;
+                FlagsType        _flags = 0;
+                DigitType        _hour = 0;
+                DigitType        _min = 0;
+                DigitType        _sec = 0;
+                DigitType        _frame = 0;
+                bool             _colorFrame = false;
+                TimecodeUserbits _userbits;
 };
 
 

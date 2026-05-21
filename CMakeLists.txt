@@ -2179,6 +2179,7 @@ set(PROMEKI_SOURCES
     src/core/threadpool.cpp
     src/core/timecode.cpp
     src/core/timecodegenerator.cpp
+    src/core/timecodeuserbits.cpp
     src/core/timestamp.cpp
     src/core/umid.cpp
     src/core/uniqueptr.cpp
@@ -2504,6 +2505,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ancatc.cpp
         src/proav/anccodec_afd.cpp
         src/proav/anccodec_atc.cpp
+        src/proav/anccodec_atc_hfrtc.cpp
         src/proav/anccodec_cea708.cpp
         src/proav/anccodec_cea708_hlssei.cpp
         src/proav/anccodec_hdrdynamic2094_40.cpp
@@ -3504,6 +3506,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/threadpool.cpp
         tests/unit/timecode.cpp
         tests/unit/timecodegenerator.cpp
+        tests/unit/timecodeuserbits.cpp
         tests/unit/timestamp.cpp
         tests/unit/umid.cpp
         tests/unit/uniqueptr.cpp
@@ -3635,6 +3638,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/videoformat.cpp
             tests/unit/anccodec_afd.cpp
             tests/unit/anccodec_atc.cpp
+            tests/unit/anccodec_atc_hfrtc.cpp
             tests/unit/anccodec_cea708.cpp
             tests/unit/anccodec_cea708_hlssei.cpp
             tests/unit/anccodec_hdrdynamic2094_40.cpp

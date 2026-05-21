@@ -78,8 +78,11 @@ class TimecodeGenerator {
                 /**
                  * @brief Enables or disables drop-frame counting.
                  *
-                 * Only takes effect when the frame rate is 30000/1001. At all other
-                 * rates, drop-frame is forced to false. Recalculates the timecode mode.
+                 * Takes effect at the three ST-defined fractional rates:
+                 * 30000/1001 (29.97), 60000/1001 (59.94), and 120000/1001
+                 * (119.88).  At all other rates drop-frame is forced to
+                 * false because the digit math would misalign with the
+                 * wall clock.  Recalculates the timecode mode.
                  *
                  * @param df true to enable drop-frame.
                  */

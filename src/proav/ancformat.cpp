@@ -384,6 +384,15 @@ struct AncFormatRegistry {
                         add(makeAtc(AncFormat::AtcLtc, "AtcLtc", "SMPTE 12M-2 Ancillary Timecode — LTC", 0x60));
                         add(makeAtc(AncFormat::AtcVitc1, "AtcVitc1", "SMPTE 12M-2 Ancillary Timecode — VITC 1", 0x60));
                         add(makeAtc(AncFormat::AtcVitc2, "AtcVitc2", "SMPTE 12M-2 Ancillary Timecode — VITC 2", 0x60));
+                        // ST 12-3 ATC_HFRTC: distinct SDID=0x61 (vs the
+                        // 0x60 shared by the ST 12-2 trio above).  DBB1
+                        // ranges 0x80..0x8F where the low nibble is the
+                        // bitstream number (per ST 12-3 §10.1, multiple
+                        // bitstream numbers can coexist per frame to
+                        // carry parallel timecode sources).  Discriminator
+                        // by full DBB1 / DBB2 happens in the codec.
+                        add(makeAtc(AncFormat::AtcHfrtc, "AtcHfrtc",
+                                    "SMPTE ST 12-3 ATC HFRTC (high-frame-rate timecode)", 0x61));
                         add(makeSmpte2020Audio());
                         add(makeHdrStatic2086());
                         add(makeHdrDynamic2094_40());

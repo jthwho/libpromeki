@@ -110,7 +110,12 @@ Error AudioTestPattern::configure() {
         }
 
         if (needsLtc) {
-                _ltcEncoder = LtcEncoder::UPtr::create(static_cast<int>(_desc.sampleRate()), _ltcLevel.toLinearFloat());
+                // AudioTestPattern has no wall-clock-rate context of its own
+                // (its API is keyed on AudioDesc); pass an invalid FrameRate so
+                // the encoder falls back to the Timecode's libvtc format for
+                // the per-frame sample count.
+                _ltcEncoder = LtcEncoder::UPtr::create(static_cast<int>(_desc.sampleRate()),
+                                                       FrameRate(), _ltcLevel.toLinearFloat());
         }
 
         if (needsWhiteNoise) buildWhiteNoiseBuffer();

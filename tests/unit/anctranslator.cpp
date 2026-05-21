@@ -233,6 +233,7 @@ TEST_CASE("AncTranslator: parse returns NotSupported when no parser registered")
 }
 
 TEST_CASE("AncTranslator: build dispatches to the registered handler") {
+        ensureStubs();
         AncTranslator     t;
         AncTranslator::PacketsResult r = t.build(Variant(String("ignored")), AncFormat(testFormat().id), xportA());
         REQUIRE(r.second().isOk());

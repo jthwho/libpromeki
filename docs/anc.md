@@ -331,7 +331,8 @@ Codec is the term for "the thing that parses an
 |-------------------------------------|-----------------------------------------------|--------------------------------------------------------------------------------|
 | `Cea708`                            | @ref promeki::Cea708Cdp + anccodec_cea708.cpp | SMPTE 334-2 CDP, ST 291 transport.                                             |
 | `Afd`                               | @ref promeki::AncAfd + anccodec_afd.cpp       | ST 2016-3 AFD + Bar Data, ST 291.                                              |
-| `AtcLtc` / `AtcVitc1` / `AtcVitc2`  | @ref promeki::AncAtc + anccodec_atc.cpp       | SMPTE 12M-2 timecode; rate sideband via `AncMeta::Atc::Rate`.                  |
+| `AtcLtc` / `AtcVitc1` / `AtcVitc2`  | @ref promeki::AncAtc + anccodec_atc.cpp       | SMPTE 12M-2 timecode; rate sideband via `AncMeta::Atc::Rate`.  See @ref anc_atc_carriage. |
+| `AtcHfrtc`                          | @ref promeki::AncAtc + anccodec_atc_hfrtc.cpp | SMPTE ST 12-3 HFR timecode (DID=0x60, SDID=0x61); the only conformant carriage at ≥72 fps. |
 | `HdrStatic2086`                     | anccodec_hdrstatic_st291.cpp                  | ST 2108-1 Frame Type 1 mastering display metadata.                             |
 | `HdrDynamic2094_40`                 | anccodec_hdrdynamic2094_40_st291.cpp          | ST 2094-40 dynamic HDR (HDR10+) KLV.                                           |
 | `Vpid`                              | @ref promeki::SdiVpid                         | ST 352 Video Payload Identifier.                                               |
@@ -393,6 +394,175 @@ This is enough when the destination transport's wire format
 matches the source's (the common case for ST 291 ↔ RFC 8331,
 which share the post-ADF 10-bit packing).
 
+## ATC carriage — ST 12-2 vs ST 12-3 {#anc_atc_carriage}
+
+ATC (Ancillary Timecode) covers two related-but-distinct ST 291
+carriages.  Both share DID=0x60 and the 16-UDW data layout, but
+they target different frame-rate regimes:
+
+- **ST 12-2:2014 + Am1:2013** — the classical carriage.  SDID=0x60
+  for all three flavours (LTC / VITC1 / VITC2).  Discriminator is
+  the DBB1 payload-type byte (0x00 / 0x01 / 0x02).  Covers base
+  rates (≤30 fps) and the four "pair-rate" HFR cases (48 / 50 /
+  60 / 59.94) via the §9.2 Am1 frame-mark mechanism.
+- **ST 12-3:2016** — the high-frame-rate carriage.  SDID=0x61.
+  DBB1 = 0x80..0x8F where the low nibble is the bitstream number
+  (multiple parallel HFR timecode streams can coexist per video
+  frame).  Covers the ≥72 fps rates (72 / 96 / 100 / 120 /
+  119.88) where the single-bit field-mark of ST 12-2 Am1 can't
+  disambiguate N>2 sub-frames per super-frame.
+
+### Carriage decision tree {#anc_atc_carriage_decision}
+
+| Wall-clock rate   | Carriage                          | DID  | SDID | DBB1 range  |
+|-------------------|-----------------------------------|------|------|-------------|
+| ≤30 fps           | ST 12-2 (LTC / VITC1 / VITC2)     | 0x60 | 0x60 | 0x00 / 0x01 / 0x02 |
+| 48, 50, 59.94, 60 | ST 12-2 pair-rate (VITC1 + VITC2) | 0x60 | 0x60 | 0x01 / 0x02 |
+| 72, 96, 100       | ST 12-3 ATC_HFRTC                 | 0x60 | 0x61 | 0x80..0x8F  |
+| 119.88, 120       | ST 12-3 ATC_HFRTC                 | 0x60 | 0x61 | 0x80..0x8F  |
+
+The library uses @ref promeki::ancAtcIsPairHfrRate and @ref
+promeki::ancAtcIsHfrtcRate to express the split at the codec
+layer.  The @ref promeki::AncAtc::atcVitcFormatForFrame helper
+returns the right VITC1/VITC2 alternation index for pair-rate
+emission; at HFRTC rates it returns the same alternation but the
+result is informational only (ATC_HFRTC is the conformant path
+at those rates).
+
+### DBB1 reference {#anc_atc_dbb1}
+
+DBB1 is byte 1 of the ATC packet (carried as bit 3 of UDWs 1..8,
+LSB-first across the eight UDWs).
+
+| DBB1 value     | Meaning                              | Spec reference          |
+|----------------|--------------------------------------|-------------------------|
+| `0x00`         | ATC_LTC (LTC time address)           | ST 12-2 §6.2.1, Table 2 |
+| `0x01`         | ATC_VITC1 (first VITC field)         | ST 12-2 §6.2.1, Table 2 |
+| `0x02`         | ATC_VITC2 (second VITC field)        | ST 12-2 §6.2.1, Table 2 |
+| `0x03..0x05`   | User-defined range                   | ST 12-2 Table 2         |
+| `0x06`         | Film-data reader                     | ST 12-2 Table 2         |
+| `0x07`         | Production-data reader               | ST 12-2 Table 2         |
+| `0x08..0x7C`   | Locally-generated range              | ST 12-2 Table 2         |
+| `0x7D`         | Video-tape data (local)              | ST 12-2 Table 2         |
+| `0x7E`         | Film data (local)                    | ST 12-2 Table 2         |
+| `0x7F`         | Production data (local)              | ST 12-2 Table 2         |
+| `0x80..0x8F`   | ATC_HFRTC, bitstream 0..15           | ST 12-3 §10.1           |
+
+The libpromeki enum @ref promeki::AncAtc::PayloadType names the
+five entries the codecs handle: `Ltc`, `Vitc1`, `Vitc2`, and
+`HfrtcBase` (= 0x80, the first of the 16-element HFRTC range).
+@ref promeki::AncAtc::isHfrtcPayload and @ref
+promeki::AncAtc::hfrtcBitstream split the HFRTC range out for
+convenience.
+
+### DBB2 reference {#anc_atc_dbb2}
+
+DBB2 is byte 2 of the ATC packet (UDWs 9..16 bit 3, LSB-first).
+Its bit semantics depend on which carriage applies — the same
+byte means different things under ST 12-2 vs ST 12-3.
+
+**ST 12-2 (LTC / VITC1 / VITC2) — Table 3:**
+
+| Bits | Field                  | Helper                                         |
+|------|------------------------|------------------------------------------------|
+| 0..4 | VITC line-select (HDTV: 0 = "don't care") | @ref promeki::AncAtc::dbb2DecodeVitc, @ref promeki::AncAtc::dbb2EncodeVitc |
+| 5    | Line-duplication flag  | (ditto)                                        |
+| 6    | 0 = valid, 1 = interpolated | (ditto)                                   |
+| 7    | 0 = processed, 1 = retransmitted | (ditto)                              |
+
+**ST 12-3 (ATC_HFRTC) — §9.2.2:**
+
+| Bits | Field                                      | Helper                                         |
+|------|--------------------------------------------|------------------------------------------------|
+| 0..4 | N (3, 4, or 5 — ST 12-3 super-frame group size) | @ref promeki::AncAtc::dbb2DecodeHfrtc, @ref promeki::AncAtc::dbb2EncodeHfrtc |
+| 5..6 | Super-frame rate (00 = 24, 01 = 25, 10 = 30) | (ditto)                                      |
+| 7    | Reserved (0)                               | (ditto)                                        |
+
+The `(super-frame count, N)` tuple uniquely identifies every
+standard ST 12-3 format — receivers don't need a separate rate
+hint to resolve the libvtc format from a captured HFRTC packet.
+The single ambiguity (NDF120 vs DF120 — both have super-frame
+count = 30 and N = 4) is broken by the codeword's drop-frame bit
+at codeword position 10.
+
+### Worked example — 60p pair-rate {#anc_atc_60p_pair_example}
+
+At 60p one wall-clock second contains 60 physical frames numbered
+0..59.  ST 12-1 §12 / ST 12-2 §9.2 Am1 packs them as 30 pairs
+sharing the same BCD super-frame digits (= pair-index in the
+0..29 range), distinguished by a single field-mark bit in the
+codeword.
+
+Mapping for physical frame 9 (the example used in the round-trip
+test suite):
+
+- `pair_index = 9 / 2 = 4` → wire frame_tens = 0, frame_units = 4.
+- `field_mark = 9 % 2 = 1` → UDW 7 b7 = 1 (the "polarity slot"
+  that ST 12-2 Am1 reinterprets as the field-mark at pair-rate).
+- Format ID = `AtcVitc2` (per `atcVitcFormatForFrame(60, 9)` —
+  even frames use VITC1, odd use VITC2).
+
+The receiver reads:
+
+- frame digits (0, 4) → `pair_index = 4`.
+- UDW 7 b7 → `field_mark = 1`.
+- `physical_frame = 4 × 2 + 1 = 9`.
+
+If `AncTranslateConfig::AtcVitcLegacyFieldMark` is set, the
+encoder clears the field-mark bit unconditionally (ST 12-2 Am1
+grandfathers this as compliant for pre-Am1 receivers).  Round-trip
+through such a stream loses one bit of sub-frame phase: pair 9
+collapses to pair 8 on decode.
+
+### Worked example — 120p HFRTC {#anc_atc_120p_hfrtc_example}
+
+At 120p (NDF120 = 30×4) one second contains 120 physical frames
+numbered 0..119, grouped into 30 super-frames of 4 sub-frames each.
+
+Mapping for physical frame 47:
+
+- `super_frame = 47 / 4 = 11` → wire frame_tens = 1, frame_units = 1.
+- `sub_frame_index = 47 % 4 = 3` → libvtc packs it as
+  `(sf_1, sf_2) = (1, 1)` per ST 12-3 Table 3 for the 30×N family.
+- DBB1 = 0x80 + bitstream_number (default bitstream 0 → 0x80).
+- DBB2 = 0x44 (super-frame count = 30 → 0b10 << 5; N = 4 → 0b00100).
+
+The sub-frame identifier bits land at codeword bit positions per
+ST 12-3 Table 3:
+
+| Family       | bit 11 | bit 27 | bit 43 | bit 58 | bit 59 |
+|--------------|--------|--------|--------|--------|--------|
+| 30×N (120p)  | sf_2   | sf_1   | 0      | 0      | 0      |
+| 24×N (72/96) | sf_2   | sf_1   | 0      | 0      | 0      |
+| 25×N (100p)  | sf_2   | 0      | 0      | 0      | sf_1   |
+| 24×5 (120p)  | sf_2   | sf_1   | sf_3   | 0      | 0      |
+
+For physical frame 47 at NDF120 → bit 11 = 1, bit 27 = 1, bit 43
+= 0, bit 58 = 0, bit 59 = 0.
+
+The 25×N swap (sf_1 at bit 59 instead of bit 27) is the
+load-bearing wire-position difference between the 25×N and
+24×N / 30×N families.  Receivers MUST consult DBB2 to recover the
+format before walking sub-frame bits.
+
+### What HFRTC strips on the wire {#anc_atc_hfrtc_strip}
+
+ST 12-3 §6.2 reassigns the bit positions ST 12-1 used for the
+color-frame flag (bit 11) and the BGF triple (bits 43 / 58 / 59)
+to the sub-frame identifier bits.  Consequently:
+
+- `Timecode::colorFrame()` does NOT survive an HFRTC round-trip
+  (the bit slot is reused for sf_2).
+- `Timecode::userbits().mode()` (the BGF triple) does NOT survive
+  an HFRTC round-trip.
+- The eight user-bit nibbles DO survive — they live at separate
+  bit positions (4-7, 12-15, 20-23, 28-31, 36-39, 44-47, 52-55,
+  60-63) that ST 12-3 leaves alone.
+
+Callers that need per-physical-frame BGF semantics at HFR rates
+must use an out-of-band channel — the ATC codeword cannot carry
+them.
+
 ## Design decisions {#anc_decisions}
 
 The library's ANC framework was reviewed against the relevant
@@ -420,7 +590,12 @@ Notable design choices the library makes:
   30-fps default.
 - ATC carries its non-Timecode fields in a dedicated
   @ref promeki::AncAtc value type rather than overloading
-  @ref promeki::Timecode.
+  @ref promeki::Timecode (whose fields cover the time-address
+  word, including the BGF mode triple and color-frame flag — see
+  @ref timecode_physical_frame).
+- ATC supports both ST 12-2 (≤30 + pair-rate HFR) and ST 12-3
+  (≥72 fps) carriages.  The codec picks per source rate; receivers
+  parse both.  See @ref anc_atc_carriage.
 - Default checksum policy is `PreserveOrRecompute` (see
   @ref anc_st291_checksum).
 - `AncFormat::PanScan` (DID 0x41 / SDID 0x06) carries the
@@ -431,4 +606,5 @@ Notable design choices the library makes:
      promeki::AncCategory, promeki::AncPayload, promeki::AncDesc,
      promeki::AncTranslator, promeki::St291Packet,
      promeki::RtpPayloadAnc, promeki::Cea708Cdp, promeki::AncAtc,
-     promeki::AncAfd, promeki::SdiVpid, @ref captions
+     promeki::AncAfd, promeki::SdiVpid, @ref captions,
+     @ref timecode

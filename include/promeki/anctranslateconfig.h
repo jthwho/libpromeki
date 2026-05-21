@@ -298,6 +298,66 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                                            .setDefault(uint32_t(0))
                                            .setDescription("ATC parse-time frame-rate hint (24/25/30; 0 = no hint)."));
 
+                /// @brief bool — when @c true the ATC builder emits the
+                /// ST 12-1 §12 / ST 12-2 §9.2 field-mark bit as @c 0
+                /// regardless of the source @ref Timecode's sub-frame
+                /// index.  Default @c false (modern ST 12-2 Am1:2013
+                /// behaviour: bit reflects the first/second frame of
+                /// the frame pair).
+                ///
+                /// ST 12-2 Am1 §9.2 grandfathers "always field-mark = 0"
+                /// legacy implementations as compliant.  Setting this
+                /// to @c true lets callers downgrade output for
+                /// receivers that reject Am1-conformant streams (rare
+                /// but observed on some pre-Am1 broadcast gear).  Has
+                /// no effect at non-pair-rates — the slot is reserved
+                /// (polarity in LTC, unused in ATC) at ≤30 fps and
+                /// HFRTC rates.
+                PROMEKI_DECLARE_ID(AtcVitcLegacyFieldMark,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Force the ST 12-2 §9.2 field-mark bit to 0 in built ATC "
+                                                           "packets (legacy pre-Am1 behaviour)."));
+
+                /// @brief uint8_t — ATC_HFRTC bitstream number (low
+                /// nibble of DBB1; range 0..15) the @c AtcHfrtc builder
+                /// stamps when the source @c AncAtc carries the default
+                /// payload type.  Default @c 0 (the first bitstream
+                /// slot per ST 12-3 §10.1).
+                ///
+                /// Callers that emit multiple HFRTC bitstreams in
+                /// parallel per video frame should override per-build
+                /// session.  An @c AncAtc whose @c payloadType is
+                /// already in the @c 0x80..0x8F range bypasses this
+                /// cfg — the caller-supplied value wins.
+                PROMEKI_DECLARE_ID(AtcHfrtcBitstreamNumber,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt8)
+                                           .setDefault(uint8_t(0))
+                                           .setDescription("Bitstream number (DBB1 low nibble, 0..15) for built ATC_HFRTC packets."));
+
+                /// @brief uint32_t — ATC_HFRTC parse-time format-rate
+                /// hint (72/96/100/120; 0 = no hint).  Fallback used
+                /// when DBB2 alone can't disambiguate the format
+                /// (extremely rare in this version of ST 12-3 — DBB2
+                /// encodes super-frame count + N, which uniquely
+                /// identifies every standard HFR format).
+                ///
+                /// The parser only consults this when @c
+                /// vtc_atc_decode_hfr_dbb2 returns NULL — typically
+                /// because the captured DBB2 is from a vendor
+                /// extension or a corrupted packet whose DBB2 byte
+                /// got mangled but the codeword digits are
+                /// recoverable.  A non-zero hint lets the codec stamp
+                /// a sensible Mode on the resulting Timecode in that
+                /// case instead of returning an unrecoverable error.
+                PROMEKI_DECLARE_ID(AtcHfrtcParseFormatHint,
+                                   VariantSpec()
+                                           .setType(DataTypeUInt32)
+                                           .setDefault(uint32_t(0))
+                                           .setDescription("ATC_HFRTC parse-time format-rate fallback (72/96/100/120; 0 = none)."));
+
                 // ============================================================
                 // String round-trip (JSON)
                 // ============================================================

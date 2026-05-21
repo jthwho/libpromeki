@@ -6,8 +6,13 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/timecode.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/datastream.h>
+#include <promeki/framerate.h>
 #include <promeki/logger.h>
+#include <promeki/timecode.h>
+#include <promeki/timecodeuserbits.h>
 
 using namespace promeki;
 
@@ -911,4 +916,425 @@ TEST_CASE("Timecode BCD64 Vitc field marker carries first-field bit") {
         auto           rt = Timecode::fromBcd64(synth, TimecodePackFormat::Vitc, src.mode());
         REQUIRE(rt.second().isOk());
         CHECK(rt.first().isFirstField());
+}
+
+// ============================================================================
+// Phase 2 expansion: HFR TimecodeType enum, Mode(fps, flags) lookup,
+// colorFrame + userbits fields, toRuntime, DataStream v2.
+// ============================================================================
+
+TEST_CASE("Timecode::Mode resolves every TimecodeType to the matching libvtc format") {
+        struct Case {
+                Timecode::TimecodeType type;
+                uint32_t expectedFps;
+                bool     expectDf;
+        };
+        const Case cases[] = {
+                {Timecode::NDF24, 24, false},   {Timecode::NDF25, 25, false},
+                {Timecode::NDF30, 30, false},   {Timecode::DF30, 30, true},
+                {Timecode::NDF48, 48, false},   {Timecode::NDF50, 50, false},
+                {Timecode::NDF60, 60, false},   {Timecode::DF60, 60, true},
+                {Timecode::NDF72, 72, false},   {Timecode::NDF96, 96, false},
+                {Timecode::NDF100, 100, false}, {Timecode::NDF120, 120, false},
+                {Timecode::DF120, 120, true},   {Timecode::NDF120_24x5, 120, false},
+        };
+        for (const auto &c : cases) {
+                Timecode::Mode m(c.type);
+                CAPTURE(static_cast<int>(c.type));
+                CHECK(m.isValid());
+                CHECK(m.hasFormat());
+                CHECK(m.fps() == c.expectedFps);
+                CHECK(m.isDropFrame() == c.expectDf);
+        }
+}
+
+TEST_CASE("Timecode::Mode(fps, flags) matches the standard HFR formats") {
+        // Before Phase 2 this called vtc_format_find_or_create(fps, 1, fps, …)
+        // which never matched an HFR format and silently created a malformed
+        // custom one.  After the fix it walks VTC_STANDARD_FORMATS and locks
+        // onto the correct ST 12-3 format pointer.
+        Timecode::Mode m60(60u, 0u);
+        CHECK(m60.fps() == 60);
+        CHECK_FALSE(m60.isDropFrame());
+        CHECK(m60.vtcFormat() == &VTC_FORMAT_60);
+
+        Timecode::Mode m5994df(60u, Timecode::DropFrame);
+        CHECK(m5994df.fps() == 60);
+        CHECK(m5994df.isDropFrame());
+        CHECK(m5994df.vtcFormat() == &VTC_FORMAT_59_94_DF);
+
+        Timecode::Mode m120(120u, 0u);
+        CHECK(m120.fps() == 120);
+        // Either integer-rate 120 fps variant (24x5 or 30x4) is acceptable;
+        // both produce identical digit math.  Use TimecodeType for an
+        // unambiguous choice.
+        CHECK((m120.vtcFormat() == &VTC_FORMAT_120_24X5 ||
+               m120.vtcFormat() == &VTC_FORMAT_120_30X4));
+
+        Timecode::Mode m11988df(120u, Timecode::DropFrame);
+        CHECK(m11988df.fps() == 120);
+        CHECK(m11988df.isDropFrame());
+        CHECK(m11988df.vtcFormat() == &VTC_FORMAT_119_88_DF);
+}
+
+TEST_CASE("Timecode at HFR walks 0..fps-1 across one second") {
+        // 60p: per-frame Timecode digits should walk 0..59 across one
+        // wall-clock second.  Drop-frame variants land later.
+        Timecode tc(Timecode::NDF60, 1, 0, 0, 0);
+        for (uint32_t f = 0; f < 60; ++f) {
+                CHECK(tc.frame() == f);
+                CHECK(tc.sec() == 0);
+                ++tc;
+        }
+        CHECK(tc.frame() == 0);
+        CHECK(tc.sec() == 1);
+}
+
+TEST_CASE("Timecode at 120p walks 0..119 across one second") {
+        Timecode tc(Timecode::NDF120, 0, 1, 2, 0);
+        for (uint32_t f = 0; f < 120; ++f) {
+                CHECK(tc.frame() == f);
+                CHECK(tc.sec() == 2);
+                ++tc;
+        }
+        CHECK(tc.frame() == 0);
+        CHECK(tc.sec() == 3);
+}
+
+TEST_CASE("Timecode DF60 (59.94) drops frames at minute boundaries") {
+        // 59.94 DF skips frames 0-3 at every minute except minutes 0,10,20…
+        Timecode tc(Timecode::DF60, 0, 0, 59, 59);
+        ++tc;
+        // At minute 1 the first valid frame is 4 (frames 0..3 dropped at HFR).
+        CHECK(tc.min() == 1);
+        CHECK(tc.sec() == 0);
+        CHECK(tc.frame() == 4);
+}
+
+TEST_CASE("Timecode DF120 (119.88) drops 8 frames at minute boundaries") {
+        Timecode tc(Timecode::DF120, 0, 0, 59, 119);
+        ++tc;
+        CHECK(tc.min() == 1);
+        CHECK(tc.sec() == 0);
+        CHECK(tc.frame() == 8);
+}
+
+TEST_CASE("Timecode digit walk: every TimecodeType produces fps frames per second") {
+        // For every standard TimecodeType, construct a fresh Timecode
+        // and increment through one wall-clock second.  Verify the
+        // digit sequence walks 0..fps-1 then rolls into the next
+        // second.  NDF rates produce exactly fps frames per second;
+        // the three DF rates produce exact wall-clock seconds at the
+        // 1000/1001 fraction but still walk the full 0..fps-1 digit
+        // sequence within a single second that isn't at a drop
+        // boundary.
+        struct Case {
+                        Timecode::TimecodeType type;
+                        uint32_t               fps;
+        };
+        const Case cases[] = {
+                {Timecode::NDF24, 24},        {Timecode::NDF25, 25},
+                {Timecode::NDF30, 30},        {Timecode::DF30, 30},
+                {Timecode::NDF48, 48},        {Timecode::NDF50, 50},
+                {Timecode::NDF60, 60},        {Timecode::DF60, 60},
+                {Timecode::NDF72, 72},        {Timecode::NDF96, 96},
+                {Timecode::NDF100, 100},      {Timecode::NDF120, 120},
+                {Timecode::DF120, 120},       {Timecode::NDF120_24x5, 120},
+        };
+        for (const Case &c : cases) {
+                CAPTURE(static_cast<int>(c.type));
+                // Land at sec 30 so we're well clear of any minute-
+                // boundary drop pattern for DF rates.
+                Timecode tc(Timecode::Mode(c.type), 0, 0, 30, 0);
+                CHECK(tc.fps() == c.fps);
+                for (uint32_t f = 0; f < c.fps; ++f) {
+                        CHECK(tc.frame() == f);
+                        CHECK(tc.sec() == 30);
+                        ++tc;
+                }
+                // After fps increments the second rolls over.
+                CHECK(tc.sec() == 31);
+                CHECK(tc.frame() == 0);
+        }
+}
+
+TEST_CASE("Timecode DF30 drop pattern: walks 2 minutes, fires drop at 01..09, skips at 10") {
+        // ST 12-1 §5.2.2: drop-frame format skips frames 00 and 01 at
+        // every minute boundary EXCEPT every 10th minute.  Walk from
+        // 00:00:59:29 forward and inspect every minute transition for
+        // 11 minutes to cover the full 00..10 pattern.
+        Timecode tc(Timecode::DF30, 0, 0, 59, 29);
+        for (uint8_t m = 1; m <= 10; ++m) {
+                ++tc;
+                CHECK(tc.min() == m);
+                CHECK(tc.sec() == 0);
+                if (m == 10) {
+                        // Minute 10 KEEPS frame 0 (no drop).
+                        CHECK(tc.frame() == 0);
+                } else {
+                        // Minutes 1..9 drop frames 0 and 1 → first valid frame is 2.
+                        CHECK(tc.frame() == 2);
+                }
+                // Advance to the end of this minute (one frame short of
+                // the next minute boundary) without re-checking every
+                // frame; libvtc's drop pattern is exercised exhaustively
+                // elsewhere.  Walk until we land at xx:59:29.
+                while (!(tc.sec() == 59 && tc.frame() == 29)) ++tc;
+        }
+}
+
+TEST_CASE("Timecode DF60 drop pattern: 4 frames per minute except minute 10") {
+        // ST 12-3 / Phase 1: HFR DF compensation scales the per-minute
+        // drop by the HFR multiplier.  59.94 DF (N=2) drops 4 frames
+        // per minute; the every-10th-minute exception is preserved.
+        Timecode tc(Timecode::DF60, 0, 0, 59, 59);
+        for (uint8_t m = 1; m <= 10; ++m) {
+                ++tc;
+                CHECK(tc.min() == m);
+                CHECK(tc.sec() == 0);
+                if (m == 10) {
+                        CHECK(tc.frame() == 0);
+                } else {
+                        CHECK(tc.frame() == 4);
+                }
+                while (!(tc.sec() == 59 && tc.frame() == 59)) ++tc;
+        }
+}
+
+TEST_CASE("Timecode DF120 drop pattern: 8 frames per minute except minute 10") {
+        // 119.88 DF (N=4) drops 8 frames per minute via the same
+        // multiplier rule as DF60.
+        Timecode tc(Timecode::DF120, 0, 0, 59, 119);
+        for (uint8_t m = 1; m <= 10; ++m) {
+                ++tc;
+                CHECK(tc.min() == m);
+                CHECK(tc.sec() == 0);
+                if (m == 10) {
+                        CHECK(tc.frame() == 0);
+                } else {
+                        CHECK(tc.frame() == 8);
+                }
+                while (!(tc.sec() == 59 && tc.frame() == 119)) ++tc;
+        }
+}
+
+TEST_CASE("Timecode colorFrame round-trips via setter / getter and ==") {
+        Timecode a(Timecode::NDF25, 1, 2, 3, 4);
+        Timecode b(Timecode::NDF25, 1, 2, 3, 4);
+        CHECK(a == b);
+        a.setColorFrame(true);
+        CHECK(a.colorFrame());
+        CHECK_FALSE(b.colorFrame());
+        CHECK(a != b);
+        b.setColorFrame(true);
+        CHECK(a == b);
+}
+
+TEST_CASE("Timecode userbits round-trip and participate in equality") {
+        Timecode a(Timecode::NDF30, 0, 0, 0, 0);
+        Timecode b(Timecode::NDF30, 0, 0, 0, 0);
+        CHECK(a == b);
+        a.setUserbits(TimecodeUserbits::fromRawBits(0xDEADBEEFu, TimecodeUserbits::ClockTime));
+        CHECK(a.userbits().toUint32() == 0xDEADBEEFu);
+        CHECK(a.userbits().mode() == TimecodeUserbits::ClockTime);
+        CHECK(a != b);
+}
+
+TEST_CASE("Timecode DataStream v2 round-trip preserves colorFrame + userbits") {
+        Timecode src(Timecode::NDF30, 1, 2, 3, 4);
+        src.setColorFrame(true);
+        src.setUserbits(TimecodeUserbits::fromRawBits(0xCAFE1234u, TimecodeUserbits::DateTimeZone));
+
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        DataStream ws = DataStream::createWriter(&dev);
+        ws << src;
+        REQUIRE(ws.status() == DataStream::Ok);
+
+        dev.seek(0);
+        DataStream rs = DataStream::createReader(&dev);
+        Timecode dst;
+        rs >> dst;
+        REQUIRE(rs.status() == DataStream::Ok);
+        CHECK(dst == src);
+        CHECK(dst.colorFrame());
+        CHECK(dst.userbits().toUint32() == 0xCAFE1234u);
+        CHECK(dst.userbits().mode() == TimecodeUserbits::DateTimeZone);
+}
+
+TEST_CASE("Timecode DataStream v1 wire body reads cleanly into a v2 Timecode") {
+        // v1 layout (pre-Phase 2): modeFps (u32), flags (u32),
+        // hour/min/sec/frame (4 × u8).  No colorFrame, no userbits.
+        // Hand-build a v1 body and feed it through readFromStream<1>
+        // directly to verify the v1 reader path still works after
+        // Phase 2's v2 bump.
+        Buffer         buf(256);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                // modeFps = 30 (NDF30 digit family), flags = ModeValid
+                // (high bit) | DropFrame (bit 0) for DF30.  The v1
+                // reader splits the high bit off via the same
+                // TimecodeFlagsModeValid sentinel the writer uses.
+                w << uint32_t(30);
+                w << uint32_t(0x80000001u);   // ModeValid + DropFrame
+                w << uint8_t(1) << uint8_t(0) << uint8_t(0) << uint8_t(2);
+                REQUIRE(w.status() == DataStream::Ok);
+        }
+        dev.seek(0);
+        DataStream r = DataStream::createReader(&dev);
+        auto rr = Timecode::readFromStream<1>(r);
+        REQUIRE(rr.second().isOk());
+        Timecode out = rr.first();
+        CHECK(out.hour() == 1);
+        CHECK(out.sec() == 0);
+        CHECK(out.frame() == 2);
+        CHECK(out.isDropFrame());
+        // v1 wire body had no colorFrame / userbits → defaults.
+        CHECK_FALSE(out.colorFrame());
+        CHECK(out.userbits().toUint32() == 0u);
+        CHECK(out.userbits().mode() == TimecodeUserbits::Unspecified);
+}
+
+TEST_CASE("Timecode::toRuntime at integer 30 fps equals seconds * 1s (within rounding)") {
+        Timecode tc(Timecode::NDF30, 0, 1, 2, 0);
+        FrameRate rate(FrameRate::RationalType(30, 1));
+        auto r = tc.toRuntime(rate);
+        REQUIRE(r.second().isOk());
+        // 0:01:02:00 at 30 fps = 62 seconds.  The per-frame period is
+        // computed by FrameRate::frameDuration() as nanoseconds rounded
+        // to an integer, so a 30 fps period truncates to 33333333 ns;
+        // 62 of those land ~20 microseconds short of the true value.
+        // Bound the tolerance to one millisecond so the test catches
+        // gross errors without depending on rounding-mode details.
+        const int64_t expectedNs = 62LL * 1'000'000'000LL;
+        const int64_t deltaNs    = r.first().nanoseconds() - expectedNs;
+        CHECK(deltaNs > -1'000'000);
+        CHECK(deltaNs < 1'000'000);
+}
+
+TEST_CASE("Timecode::toRuntime at NTSC 29.97 differs from integer 30 fps") {
+        // Same digits → different wall-clock at fractional rate.  This is
+        // exactly the property toRuntime exists to surface: the digit-family
+        // alone can't predict wall-clock seconds.
+        Timecode tc(Timecode::NDF30, 0, 1, 0, 0);
+        auto int30 = tc.toRuntime(FrameRate(FrameRate::RationalType(30, 1)));
+        auto ntsc  = tc.toRuntime(FrameRate(FrameRate::RationalType(30000, 1001)));
+        REQUIRE(int30.second().isOk());
+        REQUIRE(ntsc.second().isOk());
+        CHECK(int30.first().nanoseconds() != ntsc.first().nanoseconds());
+        // NTSC frames are slightly longer, so wall-clock is bigger.
+        CHECK(ntsc.first().nanoseconds() > int30.first().nanoseconds());
+}
+
+TEST_CASE("Timecode::toRuntime fails on invalid rate or invalid timecode") {
+        Timecode tc(Timecode::NDF30, 0, 0, 0, 0);
+        FrameRate bad; // default = invalid
+        auto r1 = tc.toRuntime(bad);
+        CHECK(r1.second().isError());
+
+        Timecode invalid;
+        auto r2 = invalid.toRuntime(FrameRate(FrameRate::RationalType(30, 1)));
+        CHECK(r2.second().isError());
+}
+
+// ============================================================================
+// Super-frame / sub-frame accessor cluster (ST 12-3 §6.1 / §6.3).
+// ============================================================================
+
+TEST_CASE("Timecode::Mode::framesPerSuperFrame matches ST 12-3 N values") {
+        CHECK(Timecode::Mode(Timecode::NDF24).framesPerSuperFrame() == 1);
+        CHECK(Timecode::Mode(Timecode::NDF25).framesPerSuperFrame() == 1);
+        CHECK(Timecode::Mode(Timecode::NDF30).framesPerSuperFrame() == 1);
+        CHECK(Timecode::Mode(Timecode::DF30).framesPerSuperFrame() == 1);
+        CHECK(Timecode::Mode(Timecode::NDF48).framesPerSuperFrame() == 2);
+        CHECK(Timecode::Mode(Timecode::NDF50).framesPerSuperFrame() == 2);
+        CHECK(Timecode::Mode(Timecode::NDF60).framesPerSuperFrame() == 2);
+        CHECK(Timecode::Mode(Timecode::DF60).framesPerSuperFrame() == 2);
+        CHECK(Timecode::Mode(Timecode::NDF72).framesPerSuperFrame() == 3);
+        CHECK(Timecode::Mode(Timecode::NDF96).framesPerSuperFrame() == 4);
+        CHECK(Timecode::Mode(Timecode::NDF100).framesPerSuperFrame() == 4);
+        CHECK(Timecode::Mode(Timecode::NDF120).framesPerSuperFrame() == 4);
+        CHECK(Timecode::Mode(Timecode::DF120).framesPerSuperFrame() == 4);
+        CHECK(Timecode::Mode(Timecode::NDF120_24x5).framesPerSuperFrame() == 5);
+        CHECK(Timecode::Mode().framesPerSuperFrame() == 1); // no format
+}
+
+TEST_CASE("Timecode::Mode::superFrameRate returns tc_fps for each family") {
+        CHECK(Timecode::Mode(Timecode::NDF24).superFrameRate() == 24);
+        CHECK(Timecode::Mode(Timecode::NDF25).superFrameRate() == 25);
+        CHECK(Timecode::Mode(Timecode::NDF30).superFrameRate() == 30);
+        CHECK(Timecode::Mode(Timecode::NDF48).superFrameRate() == 24);
+        CHECK(Timecode::Mode(Timecode::NDF50).superFrameRate() == 25);
+        CHECK(Timecode::Mode(Timecode::NDF60).superFrameRate() == 30);
+        CHECK(Timecode::Mode(Timecode::DF60).superFrameRate() == 30);
+        CHECK(Timecode::Mode(Timecode::NDF72).superFrameRate() == 24);
+        CHECK(Timecode::Mode(Timecode::NDF100).superFrameRate() == 25);
+        CHECK(Timecode::Mode(Timecode::NDF120).superFrameRate() == 30);
+        CHECK(Timecode::Mode(Timecode::NDF120_24x5).superFrameRate() == 24);
+        CHECK(Timecode::Mode().superFrameRate() == 0);
+}
+
+TEST_CASE("Timecode::superFrameIndex + subFrameIndex split physical frame at HFR") {
+        // 120p (30×4): physical frame 87 → super-frame 21, sub-frame 3.
+        Timecode tc(Timecode::NDF120, 0, 0, 0, 87);
+        CHECK(tc.superFrameIndex() == 21);
+        CHECK(tc.subFrameIndex() == 3);
+
+        // 60p (30×2): physical frame 41 → super-frame 20, sub-frame 1.
+        Timecode tc60(Timecode::NDF60, 0, 0, 0, 41);
+        CHECK(tc60.superFrameIndex() == 20);
+        CHECK(tc60.subFrameIndex() == 1);
+
+        // 120p (24×5): physical frame 119 → super-frame 23, sub-frame 4.
+        Timecode tc24x5(Timecode::NDF120_24x5, 0, 0, 0, 119);
+        CHECK(tc24x5.superFrameIndex() == 23);
+        CHECK(tc24x5.subFrameIndex() == 4);
+}
+
+TEST_CASE("Timecode::superFrameIndex degenerates to frame at non-HFR rates") {
+        Timecode tc(Timecode::NDF30, 0, 0, 0, 17);
+        CHECK(tc.superFrameIndex() == 17);
+        CHECK(tc.subFrameIndex() == 0);
+}
+
+TEST_CASE("Timecode::isHfr classifies every TimecodeType") {
+        CHECK_FALSE(Timecode(Timecode::NDF24, 0, 0, 0, 0).isHfr());
+        CHECK_FALSE(Timecode(Timecode::NDF25, 0, 0, 0, 0).isHfr());
+        CHECK_FALSE(Timecode(Timecode::NDF30, 0, 0, 0, 0).isHfr());
+        CHECK_FALSE(Timecode(Timecode::DF30, 0, 0, 0, 0).isHfr());
+        CHECK(Timecode(Timecode::NDF48, 0, 0, 0, 0).isHfr());
+        CHECK(Timecode(Timecode::NDF60, 0, 0, 0, 0).isHfr());
+        CHECK(Timecode(Timecode::DF60, 0, 0, 0, 0).isHfr());
+        CHECK(Timecode(Timecode::NDF120, 0, 0, 0, 0).isHfr());
+        CHECK(Timecode(Timecode::NDF120_24x5, 0, 0, 0, 0).isHfr());
+}
+
+TEST_CASE("Timecode::isSuperFrameBoundary fires every N physical frames at HFR") {
+        // At 60p (N=2) every even physical frame is a super-frame boundary.
+        Timecode tc(Timecode::NDF60, 0, 0, 0, 0);
+        for (uint32_t f = 0; f < 60; ++f) {
+                CAPTURE(f);
+                CHECK(tc.isSuperFrameBoundary() == ((f % 2u) == 0u));
+                ++tc;
+        }
+}
+
+TEST_CASE("Timecode::isSuperFrameBoundary fires every 4 frames at 120p (30x4)") {
+        Timecode tc(Timecode::NDF120, 0, 0, 0, 0);
+        for (uint32_t f = 0; f < 120; ++f) {
+                CAPTURE(f);
+                CHECK(tc.isSuperFrameBoundary() == ((f % 4u) == 0u));
+                ++tc;
+        }
+}
+
+TEST_CASE("Timecode super-frame helpers handle invalid Timecode safely") {
+        Timecode tc;
+        CHECK(tc.superFrameIndex() == 0);
+        CHECK(tc.subFrameIndex() == 0);
+        CHECK_FALSE(tc.isHfr());
+        CHECK(tc.isSuperFrameBoundary());
 }

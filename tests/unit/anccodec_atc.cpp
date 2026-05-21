@@ -702,18 +702,21 @@ namespace {
 } // namespace
 
 TEST_CASE("AncAtc F5 — round-trip preserves user bits across all eight nibbles") {
-        // Synthesize a UserBits pattern with every nibble distinct so a
-        // mis-routed slot would corrupt the test.
-        AncAtc::UserBits ub = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7};
-        AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4), ub);
+        // Phase 4: user bits ride on the Timecode now.  Synthesize a pattern
+        // with every nibble distinct so a mis-routed slot would corrupt
+        // the test.
+        TimecodeUserbits::Nibbles ub = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7};
+        Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
+        tc.setUserbits(TimecodeUserbits::fromNibbles(ub, TimecodeUserbits::Unspecified));
+        AncAtc src(tc);
 
         AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
-        for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
-                CHECK(out.userBit(i) == ub[i]);
+        for (size_t i = 0; i < TimecodeUserbits::NibbleCount; ++i) {
+                CHECK(out.timecode().userbits().nibbles()[i] == ub[i]);
         }
         CHECK(out.timecode().hour() == 1);
         CHECK(out.timecode().frame() == 4);
@@ -723,32 +726,43 @@ TEST_CASE("AncAtc F5 — round-trip preserves user bits with high nibble values"
         // The codec masks each user-bit nibble to its low 4 bits; verify
         // by feeding it bytes whose high bits would leak if the mask
         // wasn't applied.
-        AncAtc::UserBits ub = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
-        AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0), ub);
+        TimecodeUserbits::Nibbles ub = {0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+        Timecode tc(Timecode::Mode(Timecode::NDF30), 0, 0, 0, 0);
+        tc.setUserbits(TimecodeUserbits::fromNibbles(ub, TimecodeUserbits::Unspecified));
+        AncAtc src(tc);
 
         AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
         REQUIRE(built.second().isOk());
         AncTranslator::ParseResult parsed = parseVia(built.first().front());
         REQUIRE(parsed.second().isOk());
         AncAtc out = parsed.first().get<AncAtc>();
-        for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
-                CHECK(out.userBit(i) == ub[i]);
+        for (size_t i = 0; i < TimecodeUserbits::NibbleCount; ++i) {
+                CHECK(out.timecode().userbits().nibbles()[i] == ub[i]);
         }
 }
 
-TEST_CASE("AncAtc F5 — flag bits round-trip independently") {
-        // Each of the five flags is wired to a different UDW's b7 (or
-        // b6 for BGF1); sweep all 32 combinations to catch any
-        // crossed-bit errors.
-        for (uint8_t flags = 0; flags < 32; ++flags) {
-                AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4));
-                src.setFlags(flags);
-                AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
-                REQUIRE(built.second().isOk());
-                AncTranslator::ParseResult parsed = parseVia(built.first().front());
-                REQUIRE(parsed.second().isOk());
-                AncAtc out = parsed.first().get<AncAtc>();
-                CHECK(out.flags() == flags);
+TEST_CASE("AncAtc Phase 4 — color-frame and BGF mode round-trip via Timecode") {
+        // Color frame + the eight BGF mode combinations exercise the four
+        // flag-bit slots that survived the Phase 4 cull (color-frame at
+        // UDW 3 b7, BGF0/1/2 at UDW 11 b7 / 15 b6 / 15 b7).  The polarity
+        // slot is intentionally not surfaced post-Phase 4.
+        for (uint8_t mode = 0; mode < 8; ++mode) {
+                for (int cf = 0; cf < 2; ++cf) {
+                        Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
+                        tc.setColorFrame(cf != 0);
+                        tc.setUserbits(TimecodeUserbits::fromRawBits(
+                                0u, static_cast<TimecodeUserbits::Mode>(mode)));
+                        AncAtc src(tc);
+                        AncTranslator::PacketsResult built = buildAtcVia(src, AncFormat::AtcLtc);
+                        REQUIRE(built.second().isOk());
+                        AncTranslator::ParseResult parsed = parseVia(built.first().front());
+                        REQUIRE(parsed.second().isOk());
+                        AncAtc out = parsed.first().get<AncAtc>();
+                        CAPTURE(mode);
+                        CAPTURE(cf);
+                        CHECK(out.timecode().colorFrame() == (cf != 0));
+                        CHECK(static_cast<int>(out.timecode().userbits().mode()) == mode);
+                }
         }
 }
 
@@ -789,7 +803,7 @@ TEST_CASE("AncAtc F5 — Timecode-only Variant build promotes to default AncAtc"
         // Pre-F5 callers passed Variant(Timecode); the codec should
         // still accept that shape and produce a packet whose parse
         // returns an AncAtc with the requested timecode and zero
-        // user-bits / flags / DBB2.
+        // user-bits / colorFrame / DBB2.
         Timecode tc(Timecode::Mode(Timecode::NDF30), 7, 7, 7, 7);
         AncTranslator t;
         AncTranslator::PacketsResult built =
@@ -800,11 +814,10 @@ TEST_CASE("AncAtc F5 — Timecode-only Variant build promotes to default AncAtc"
         AncAtc out = parsed.first().get<AncAtc>();
         CHECK(out.timecode().hour() == 7);
         CHECK(out.timecode().frame() == 7);
-        CHECK(out.flags() == 0);
+        CHECK_FALSE(out.timecode().colorFrame());
+        CHECK(out.timecode().userbits().toUint32() == 0u);
+        CHECK(out.timecode().userbits().mode() == TimecodeUserbits::Unspecified);
         CHECK(out.dbb2() == 0);
-        for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
-                CHECK(out.userBit(i) == 0);
-        }
 }
 
 TEST_CASE("AncAtc F5 D1b — parse without rate context returns InsufficientContext") {
@@ -858,24 +871,21 @@ TEST_CASE("AncAtc F5 D1f — atcVitcFormatForFrame picks the right ID per ST 12-
 }
 
 TEST_CASE("AncAtc F5 — DataStream round-trip preserves every field") {
-        // Use NDF30 here; DF round-trip through Timecode's own
-        // DataStream serialization has a pre-existing quirk
-        // (Timecode::_flags doesn't track drop-frame, so the wire
-        // doesn't carry it), and that's outside F5 scope.  The
-        // through-the-ATC-codec path (covered by other tests in this
-        // file) preserves drop-frame because the wire bytes carry the
-        // DF bit explicitly.
-        AncAtc src(Timecode(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4),
-                   AncAtc::UserBits{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8});
-        src.setFlags(static_cast<uint8_t>(AncAtc::ColorFrame | AncAtc::Bgf1));
+        // Phase 4: color-frame + BGF mode + userbits live on the embedded
+        // Timecode now.  This test verifies the v2 wire body carries them
+        // (the v1 → v2 forward-compat reader is exercised separately by
+        // the @c AncAtc::readFromStream<1> path).
+        Timecode tc(Timecode::Mode(Timecode::NDF30), 1, 2, 3, 4);
+        tc.setColorFrame(true);
+        tc.setUserbits(TimecodeUserbits::fromNibbles(
+                TimecodeUserbits::Nibbles{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
+                TimecodeUserbits::ClockTime));
+        AncAtc src(tc);
         src.setPayloadType(AncAtc::Vitc2);
         src.setDbb2(0x42);
 
         Variant v(src);
         Variant restored;
-        // Use the Variant DataStream pathway (already covered by
-        // PROMEKI_DATATYPE wiring; here we just verify the wire body
-        // does not silently drop the new fields.)
         Buffer         buf(256);
         BufferIODevice dev(&buf);
         dev.open(IODevice::ReadWrite);
@@ -891,4 +901,543 @@ TEST_CASE("AncAtc F5 — DataStream round-trip preserves every field") {
         REQUIRE(restored.type() == DataTypeAncAtc);
         AncAtc out = restored.get<AncAtc>();
         CHECK(out == src);
+}
+
+TEST_CASE("AncAtc Phase 4 — DBB2 helpers round-trip ST 12-2 and ST 12-3 layouts") {
+        // ST 12-2 VITC DBB2: line + duplicate + validity + processed.
+        for (uint8_t line = 0; line < 32; ++line) {
+                for (int dup = 0; dup < 2; ++dup) {
+                        for (int valid = 0; valid < 2; ++valid) {
+                                for (int processed = 0; processed < 2; ++processed) {
+                                        uint8_t b = AncAtc::dbb2EncodeVitc(line, dup != 0,
+                                                                            valid != 0,
+                                                                            processed != 0);
+                                        auto d = AncAtc::dbb2DecodeVitc(b);
+                                        CHECK(d.line == line);
+                                        CHECK(d.duplicate == (dup != 0));
+                                        CHECK(d.valid == (valid != 0));
+                                        CHECK(d.processed == (processed != 0));
+                                }
+                        }
+                }
+        }
+
+        // ST 12-3 HFRTC DBB2: super-frame count (0..2) + N (3..5).
+        for (uint8_t sfCount = 0; sfCount <= 2; ++sfCount) {
+                for (uint8_t n = 3; n <= 5; ++n) {
+                        uint8_t b = AncAtc::dbb2EncodeHfrtc(sfCount, n);
+                        auto d = AncAtc::dbb2DecodeHfrtc(b);
+                        CHECK(d.superFrameCount == sfCount);
+                        CHECK(d.n == n);
+                }
+        }
+}
+
+TEST_CASE("AncAtc Phase 4 — payloadType isHfrtcPayload + hfrtcBitstream") {
+        AncAtc atc;
+        atc.setPayloadType(AncAtc::Ltc);
+        CHECK_FALSE(atc.isHfrtcPayload());
+        CHECK(atc.hfrtcBitstream() == 0);
+
+        atc.setPayloadType(AncAtc::Vitc1);
+        CHECK_FALSE(atc.isHfrtcPayload());
+
+        // Range 0x80..0x8F
+        for (uint8_t i = 0; i <= 0x0F; ++i) {
+                atc.setPayloadType(static_cast<uint8_t>(0x80u | i));
+                CHECK(atc.isHfrtcPayload());
+                CHECK(atc.hfrtcBitstream() == i);
+        }
+
+        atc.setPayloadType(0x90u);
+        CHECK_FALSE(atc.isHfrtcPayload());
+}
+
+TEST_CASE("AncAtc Phase 4 — v1 DataStream wire body is read-and-promoted") {
+        // Synthesize a v1 wire body by hand: the v1 layout was
+        //   Timecode + 8 user-bit bytes + flags + payloadType + dbb2
+        // where flags bit 0 = ColorFrame, bit 2 = BGF0, bit 3 = BGF1, bit 4 = BGF2.
+        // The v2 reader should not see this body — we exercise the v1
+        // reader through readFromStream<1> directly.
+        Buffer         buf(256);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                Timecode tc(Timecode::Mode(Timecode::NDF30), 9, 8, 7, 6);
+                w << tc;
+                // Eight user-bit nibbles.
+                w << uint8_t(0x1) << uint8_t(0x2) << uint8_t(0x3) << uint8_t(0x4);
+                w << uint8_t(0x5) << uint8_t(0x6) << uint8_t(0x7) << uint8_t(0x8);
+                // v1 flags byte: ColorFrame (0x01) + BGF1 (0x08) + BGF2 (0x10) = 0x19.
+                w << uint8_t(0x19);
+                w << uint8_t(AncAtc::Vitc2);
+                w << uint8_t(0x42);
+        }
+        dev.seek(0);
+        DataStream r = DataStream::createReader(&dev);
+        auto rr = AncAtc::readFromStream<1>(r);
+        REQUIRE(rr.second().isOk());
+        AncAtc out = rr.first();
+        // Color frame promoted onto Timecode.
+        CHECK(out.timecode().colorFrame());
+        // BGF1 + BGF2 (bits 0x08 + 0x10) → BGF mode bits 0b110 (mode 6 = DateTimeZoneClock).
+        CHECK(static_cast<int>(out.timecode().userbits().mode()) == 6);
+        // User-bit nibbles preserved.
+        CHECK(out.timecode().userbits().nibbles()[0] == 0x1);
+        CHECK(out.timecode().userbits().nibbles()[7] == 0x8);
+        // PayloadType + DBB2 preserved.
+        CHECK(out.payloadType() == AncAtc::Vitc2);
+        CHECK(out.dbb2() == 0x42);
+}
+
+// ============================================================================
+// Phase 5 — ST 12-1 §12 / ST 12-2 §9.2 Am1 pair-rate HFR carriage
+// ============================================================================
+
+TEST_CASE("ancAtcIsPairHfrRate / ancAtcIsHfrtcRate split per ST 12-2 vs ST 12-3") {
+        // Pair-rate HFR (ST 12-2 Am1 §9.2): 48/50/60.
+        CHECK(ancAtcIsPairHfrRate(48));
+        CHECK(ancAtcIsPairHfrRate(50));
+        CHECK(ancAtcIsPairHfrRate(60));   // covers both 60p and 59.94p (digit family)
+        CHECK_FALSE(ancAtcIsPairHfrRate(24));
+        CHECK_FALSE(ancAtcIsPairHfrRate(30));
+        CHECK_FALSE(ancAtcIsPairHfrRate(72));
+        CHECK_FALSE(ancAtcIsPairHfrRate(120));
+
+        // HFRTC rates (ST 12-3): 72/96/100/120.
+        CHECK(ancAtcIsHfrtcRate(72));
+        CHECK(ancAtcIsHfrtcRate(96));
+        CHECK(ancAtcIsHfrtcRate(100));
+        CHECK(ancAtcIsHfrtcRate(120));    // covers both 120p and 119.88p
+        CHECK_FALSE(ancAtcIsHfrtcRate(24));
+        CHECK_FALSE(ancAtcIsHfrtcRate(48));
+        CHECK_FALSE(ancAtcIsHfrtcRate(60));
+
+        // Disjunction: ancAtcIsHfrRate covers both.
+        CHECK(ancAtcIsHfrRate(50));
+        CHECK(ancAtcIsHfrRate(100));
+        CHECK_FALSE(ancAtcIsHfrRate(30));
+}
+
+TEST_CASE("ATC Phase 5 — NDF60 pair-rate physical-frame round-trip") {
+        // At 60p the physical frame walks 0..59 (Phase 2: physical-frame
+        // counting on Timecode).  The wire only has 2 bits for frame
+        // tens (max 39 raw), so the codec must encode super-frame
+        // index (= pair_index, 0..29) into the FF wire slots and the
+        // field-mark bit (= sub-frame index parity) into the polarity
+        // slot.  This verifies the round-trip across every physical
+        // frame in one second.
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(60));
+        for (uint32_t physFrame = 0; physFrame < 60; ++physFrame) {
+                CAPTURE(physFrame);
+                Timecode src(Timecode::Mode(Timecode::NDF60), 0, 0, 0,
+                             static_cast<Timecode::DigitType>(physFrame));
+                REQUIRE(src.frame() == physFrame);
+                REQUIRE(src.superFrameIndex() == physFrame / 2u);
+                REQUIRE(src.subFrameIndex() == physFrame % 2u);
+
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                Timecode out = atcTimecode(parsed.first());
+                CHECK(out.fps() == 60u);
+                CHECK(out.frame() == physFrame);
+                CHECK_FALSE(out.isDropFrame());
+        }
+}
+
+TEST_CASE("ATC Phase 5 — DF60 pair-rate physical-frame round-trip (59.94 DF)") {
+        // 59.94 DF: digit family 60, drop-frame compensation per ST 12-3.
+        // Pick a frame index well inside the second so DF rollover doesn't
+        // confound the round-trip.
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(60));
+        for (uint32_t physFrame : {0u, 1u, 2u, 3u, 30u, 31u, 58u, 59u}) {
+                CAPTURE(physFrame);
+                Timecode src(Timecode::Mode(Timecode::DF60), 1, 0, 0,
+                             static_cast<Timecode::DigitType>(physFrame));
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                Timecode out = atcTimecode(parsed.first());
+                CHECK(out.frame() == physFrame);
+                CHECK(out.isDropFrame());
+                CHECK(out.fps() == 60u);
+        }
+}
+
+TEST_CASE("ATC Phase 5 — NDF50 pair-rate physical-frame round-trip") {
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(50));
+        for (uint32_t physFrame : {0u, 1u, 24u, 25u, 48u, 49u}) {
+                CAPTURE(physFrame);
+                Timecode src(Timecode::Mode(Timecode::NDF50), 0, 0, 0,
+                             static_cast<Timecode::DigitType>(physFrame));
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                Timecode out = atcTimecode(parsed.first());
+                CHECK(out.frame() == physFrame);
+                CHECK(out.fps() == 50u);
+        }
+}
+
+TEST_CASE("ATC Phase 5 — NDF48 pair-rate physical-frame round-trip") {
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(48));
+        for (uint32_t physFrame : {0u, 1u, 22u, 23u, 46u, 47u}) {
+                CAPTURE(physFrame);
+                Timecode src(Timecode::Mode(Timecode::NDF48), 0, 0, 0,
+                             static_cast<Timecode::DigitType>(physFrame));
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                Timecode out = atcTimecode(parsed.first());
+                CHECK(out.frame() == physFrame);
+                CHECK(out.fps() == 48u);
+        }
+}
+
+TEST_CASE("ATC Phase 5 — field-mark bit lands at UDW 7 b7 on the wire") {
+        // Physical frame 1 at 60p: super_frame=0, sub_frame=1.
+        // Wire encoding: frame_units=0, frame_tens=0, polarity bit set
+        // = UDW 7 high nibble bit 3 → UDW 7 data byte = 0x80.
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(60));
+        Timecode src(Timecode::Mode(Timecode::NDF60), 0, 0, 0, 1);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+        REQUIRE(built.second().isOk());
+        Result<St291Packet> rp = St291Packet::from(built.first().front());
+        REQUIRE(rp.second().isOk());
+        List<uint16_t> wire = rp.first().udw();
+        REQUIRE(wire.size() == 16);
+        // UDW 1 frame_units = 0, UDW 3 frame_tens = 0 — pair_index=0.
+        CHECK((wire[0] & 0xFFu) == 0x00);
+        CHECK((wire[2] & 0xFFu) == 0x00);
+        // UDW 7 polarity bit (b7) set → field-mark = 1.
+        CHECK((wire[6] & 0x80u) == 0x80);
+
+        // Physical frame 0 at 60p: super_frame=0, sub_frame=0 → field-mark cleared.
+        Timecode srcZero(Timecode::Mode(Timecode::NDF60), 0, 0, 0, 0);
+        AncTranslator::PacketsResult built0 = buildVia(srcZero, AncFormat::AtcLtc, cfg);
+        REQUIRE(built0.second().isOk());
+        Result<St291Packet> rp0 = St291Packet::from(built0.first().front());
+        REQUIRE(rp0.second().isOk());
+        List<uint16_t> wire0 = rp0.first().udw();
+        CHECK((wire0[6] & 0x80u) == 0x00);
+}
+
+TEST_CASE("ATC Phase 5 — AtcVitcLegacyFieldMark forces field-mark to 0") {
+        // Pre-Am1 receivers reject Am1-conformant streams; the
+        // legacy-mark cfg lets the encoder downgrade for them.
+        // Physical frame 3 at 60p would normally produce field-mark=1;
+        // verify the cfg flag clears it.
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(60));
+        cfg.set(AncTranslateConfig::AtcVitcLegacyFieldMark, true);
+        Timecode src(Timecode::Mode(Timecode::NDF60), 0, 0, 0, 3);
+        AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+        REQUIRE(built.second().isOk());
+        Result<St291Packet> rp = St291Packet::from(built.first().front());
+        REQUIRE(rp.second().isOk());
+        List<uint16_t> wire = rp.first().udw();
+        // UDW 7 polarity bit must be clear.
+        CHECK((wire[6] & 0x80u) == 0x00);
+        // pair_index = 1 → frame units=1, tens=0.
+        CHECK((wire[0] & 0xFFu) == 0x10);
+        CHECK((wire[2] & 0xFFu) == 0x00);
+
+        // The parser interprets a clear field-mark as sub_frame=0, so
+        // the recovered physical frame is pair_index*2 = 2 (not 3).
+        // This is a lossy downgrade; the test documents that the
+        // receiver-side recovery follows the wire.
+        AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+        REQUIRE(parsed.second().isOk());
+        Timecode out = atcTimecode(parsed.first());
+        CHECK(out.frame() == 2u);
+}
+
+TEST_CASE("ATC Phase 5 — atcVitcFormatForFrame retains alternation at pair-rates") {
+        // 48/50/60 pair-rates → even frames are VITC1, odd frames are VITC2.
+        CHECK(AncAtc::atcVitcFormatForFrame(48, 0) == AncFormat::AtcVitc1);
+        CHECK(AncAtc::atcVitcFormatForFrame(48, 1) == AncFormat::AtcVitc2);
+        CHECK(AncAtc::atcVitcFormatForFrame(48, 46) == AncFormat::AtcVitc1);
+        CHECK(AncAtc::atcVitcFormatForFrame(48, 47) == AncFormat::AtcVitc2);
+}
+
+TEST_CASE("ATC Phase 5 — modeForRate stamps the right libvtc format for each pair-rate") {
+        // The build-then-parse round-trip already exercises modeForRate
+        // indirectly; verify the resulting Timecode reports the expected
+        // VTC format properties so a future refactor that breaks the
+        // mapping fails loudly here.
+        struct Case {
+                        uint32_t fps;
+                        bool     df;
+                        uint32_t expectedFps;
+                        bool     expectedDf;
+        };
+        const Case cases[] = {
+                {48, false, 48, false},
+                {50, false, 50, false},
+                {60, false, 60, false},
+                {60, true, 60, true}, // 59.94 DF
+        };
+        for (const Case &c : cases) {
+                CAPTURE(c.fps);
+                CAPTURE(c.df);
+                Timecode src(c.df ? Timecode::Mode(Timecode::DF60)
+                                  : c.fps == 48 ? Timecode::Mode(Timecode::NDF48)
+                                  : c.fps == 50 ? Timecode::Mode(Timecode::NDF50)
+                                                : Timecode::Mode(Timecode::NDF60),
+                             0, 0, 0, 0);
+                AncTranslateConfig cfg;
+                cfg.set(AncTranslateConfig::AtcParseRateHint, c.fps);
+                AncTranslator::PacketsResult built = buildVia(src, AncFormat::AtcLtc, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                Timecode out = atcTimecode(parsed.first());
+                CHECK(out.fps() == c.expectedFps);
+                CHECK(out.isDropFrame() == c.expectedDf);
+                CHECK(out.mode().framesPerSuperFrame() == 2u);
+        }
+}
+
+TEST_CASE("ATC Phase 5 — pair-rate alternation drives VITC1/VITC2 builder selection") {
+        // End-to-end check: pick the format per AncAtc::atcVitcFormatForFrame,
+        // build the packet, and verify the resulting payloadType matches
+        // and the round-trip recovers the original physical frame.
+        AncTranslateConfig cfg;
+        cfg.set(AncTranslateConfig::AtcParseRateHint, uint32_t(60));
+        for (uint32_t physFrame : {0u, 1u, 2u, 3u}) {
+                CAPTURE(physFrame);
+                Timecode src(Timecode::Mode(Timecode::NDF60), 0, 0, 1,
+                             static_cast<Timecode::DigitType>(physFrame));
+                int fmtIdRaw = AncAtc::atcVitcFormatForFrame(60, physFrame);
+                AncFormat::ID fmtId = static_cast<AncFormat::ID>(fmtIdRaw);
+
+                AncTranslator::PacketsResult built = buildVia(src, fmtId, cfg);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                AncAtc out = parsed.first().get<AncAtc>();
+                CHECK(out.timecode().frame() == physFrame);
+                CHECK(out.payloadType() == (physFrame % 2u == 0u
+                                                    ? AncAtc::Vitc1
+                                                    : AncAtc::Vitc2));
+        }
+}
+
+// ============================================================================
+// Phase 7 — extended pair-rate frame-mark coverage at 48p / 50p / 59.94p
+// ============================================================================
+//
+// Phase 5 covered the alternation rule at 60p; the test below extends
+// that to the three remaining pair-rate variants and verifies a tight
+// (VITC1, fm=0) → (VITC2, fm=1) wire shape across the full pair-index
+// space for each rate.
+
+TEST_CASE("ATC Phase 7 — pair-rate frame-mark round-trip at 48p / 50p / 59.94p") {
+        struct Case {
+                        const char            *name;
+                        Timecode::TimecodeType type;
+                        uint32_t               fps;
+                        bool                   df;
+        };
+        const Case cases[] = {
+                {"NDF48", Timecode::NDF48, 48, false},
+                {"NDF50", Timecode::NDF50, 50, false},
+                {"DF60 (59.94)", Timecode::DF60, 60, true},
+        };
+        for (const Case &c : cases) {
+                CAPTURE(c.name);
+                AncTranslateConfig cfg;
+                cfg.set(AncTranslateConfig::AtcParseRateHint, c.fps);
+                const uint32_t pairCount = c.fps / 2u;
+                for (uint32_t pairIdx = 0; pairIdx < pairCount; ++pairIdx) {
+                        CAPTURE(pairIdx);
+                        // Build the two consecutive physical-frame packets
+                        // making up one pair (VITC1 then VITC2).
+                        for (uint32_t sub = 0; sub < 2; ++sub) {
+                                CAPTURE(sub);
+                                const uint32_t physFrame = pairIdx * 2u + sub;
+                                Timecode src(Timecode::Mode(c.type), 0, 0, 0,
+                                             static_cast<Timecode::DigitType>(physFrame));
+                                AncFormat::ID fmtId = static_cast<AncFormat::ID>(
+                                        AncAtc::atcVitcFormatForFrame(c.fps, physFrame));
+                                CHECK(fmtId == (sub == 0 ? AncFormat::AtcVitc1
+                                                         : AncFormat::AtcVitc2));
+
+                                AncTranslator::PacketsResult built =
+                                        buildVia(src, fmtId, cfg);
+                                REQUIRE(built.second().isOk());
+                                Result<St291Packet> rp = St291Packet::from(
+                                        built.first().front());
+                                REQUIRE(rp.second().isOk());
+                                List<uint16_t> wire = rp.first().udw();
+                                REQUIRE(wire.size() == 16);
+                                // UDW 7 polarity bit (b7) encodes the
+                                // field-mark — must equal sub-frame index.
+                                const uint8_t fmBit = static_cast<uint8_t>(wire[6] & 0x80u);
+                                CHECK(fmBit == (sub == 1 ? 0x80u : 0x00u));
+                                // FF wire (units + tens) carries the
+                                // pair_index, never the raw physical frame.
+                                const uint8_t units = static_cast<uint8_t>(
+                                        (wire[0] >> 4) & 0x0Fu);
+                                const uint8_t tens = static_cast<uint8_t>(
+                                        (wire[2] >> 4) & 0x03u);
+                                CHECK(static_cast<uint32_t>(tens * 10u + units)
+                                              == pairIdx);
+
+                                // Parse back to a physical-frame Timecode.
+                                AncTranslator::ParseResult parsed =
+                                        parseVia(built.first().front(), cfg);
+                                REQUIRE(parsed.second().isOk());
+                                Timecode out = atcTimecode(parsed.first());
+                                CHECK(out.frame() == physFrame);
+                                CHECK(out.fps() == c.fps);
+                                CHECK(out.isDropFrame() == c.df);
+                        }
+                }
+        }
+}
+
+// ============================================================================
+// Phase 7 — cartesian payload × rate parse / build round-trip
+// ============================================================================
+//
+// Phase 5/6 covered each carriage path at its own rate set; the test
+// below sweeps the full cartesian product of payload type × base /
+// pair rate to catch any unintended interaction between the DBB1
+// flavour byte and the rate-driven wire layout.  HFRTC is exercised
+// separately by tests/unit/anccodec_atc_hfrtc.cpp (the dispatch
+// rules require AtcHfrtc to flow through that codec, not the
+// ST 12-2 codec under test here).
+//
+// Round-trip shape: build → parse → rebuild → byte-for-byte equality
+// against the first build's wire UDWs.  Exercises both build paths
+// (initial + sync-policy re-encode) and the parse path in one go.
+
+namespace {
+
+        struct CartesianRate {
+                        const char            *name;
+                        Timecode::TimecodeType type;
+                        uint32_t               fps;
+        };
+
+        const CartesianRate cartesianRates[] = {
+                {"NDF24", Timecode::NDF24, 24},
+                {"NDF25", Timecode::NDF25, 25},
+                {"NDF30", Timecode::NDF30, 30},
+                {"DF30",  Timecode::DF30,  30},
+                {"NDF48", Timecode::NDF48, 48},
+                {"NDF50", Timecode::NDF50, 50},
+                {"NDF60", Timecode::NDF60, 60},
+                {"DF60",  Timecode::DF60,  60},
+        };
+
+        const AncFormat::ID cartesianPayloads[] = {
+                AncFormat::AtcLtc,
+                AncFormat::AtcVitc1,
+                AncFormat::AtcVitc2,
+        };
+
+        // Pick a physical-frame index that's safely inside the rate's
+        // frame range and (for pair-rate carriage) lands on a non-zero
+        // pair_index + non-zero field_mark so both wire-encoded fields
+        // get exercised.
+        uint32_t cartesianPickFrame(uint32_t fps) {
+                if (fps <= 30u) return 7u; // 0..29
+                return 9u;                  // pair_index=4, field_mark=1 at all pair-rates
+        }
+
+} // namespace
+
+TEST_CASE("ATC Phase 7 — cartesian payload x rate parse / build round-trip") {
+        for (const CartesianRate &r : cartesianRates) {
+                CAPTURE(r.name);
+                for (AncFormat::ID payload : cartesianPayloads) {
+                        CAPTURE(static_cast<int>(payload));
+                        AncTranslateConfig cfg;
+                        cfg.set(AncTranslateConfig::AtcParseRateHint, r.fps);
+                        Timecode src(Timecode::Mode(r.type), 1, 2, 3,
+                                     static_cast<Timecode::DigitType>(
+                                             cartesianPickFrame(r.fps)));
+                        AncTranslator::PacketsResult first = buildVia(src, payload, cfg);
+                        REQUIRE(first.second().isOk());
+
+                        AncTranslator::ParseResult parsed =
+                                parseVia(first.first().front(), cfg);
+                        REQUIRE(parsed.second().isOk());
+                        AncAtc parsedAtc = parsed.first().get<AncAtc>();
+
+                        // Round-trip the digits + payload-type discriminator.
+                        CHECK(parsedAtc.timecode().frame() == src.frame());
+                        CHECK(parsedAtc.timecode().fps() == r.fps);
+                        const uint8_t expectedDbb1 =
+                                payload == AncFormat::AtcLtc   ? AncAtc::Ltc :
+                                payload == AncFormat::AtcVitc1 ? AncAtc::Vitc1 :
+                                                                 AncAtc::Vitc2;
+                        CHECK(parsedAtc.payloadType() == expectedDbb1);
+
+                        // Rebuild from the parsed AncAtc, with the same
+                        // cfg, and compare the wire bytes against the
+                        // first build.  Any drift here proves a
+                        // parse-then-encode asymmetry.
+                        AncTranslator t(cfg);
+                        AncTranslator::PacketsResult second = t.build(
+                                Variant(parsedAtc), AncFormat(payload),
+                                AncTransport::St291);
+                        REQUIRE(second.second().isOk());
+                        Result<St291Packet> rpA = St291Packet::from(first.first().front());
+                        Result<St291Packet> rpB = St291Packet::from(second.first().front());
+                        REQUIRE(rpA.second().isOk());
+                        REQUIRE(rpB.second().isOk());
+                        List<uint16_t> wireA = rpA.first().udw();
+                        List<uint16_t> wireB = rpB.first().udw();
+                        REQUIRE(wireA.size() == wireB.size());
+                        for (size_t i = 0; i < wireA.size(); ++i) {
+                                CAPTURE(i);
+                                CHECK((wireA[i] & 0xFFu) == (wireB[i] & 0xFFu));
+                        }
+                }
+        }
+}
+
+TEST_CASE("ATC Phase 7 — DBB2 byte round-trips on VITC under every rate") {
+        // ST 12-2 DBB2 = (line, duplicate, valid, processed).  Set a
+        // recognisable non-default DBB2 and verify it survives a
+        // parse → build cycle at every rate.
+        const uint8_t dbb2 = AncAtc::dbb2EncodeVitc(11, /*duplicate*/ true,
+                                                    /*valid*/ true,
+                                                    /*processed*/ false);
+        for (const CartesianRate &r : cartesianRates) {
+                CAPTURE(r.name);
+                AncTranslateConfig cfg;
+                cfg.set(AncTranslateConfig::AtcParseRateHint, r.fps);
+                Timecode tc(Timecode::Mode(r.type), 1, 2, 3,
+                            static_cast<Timecode::DigitType>(cartesianPickFrame(r.fps)));
+                AncAtc src(tc);
+                src.setDbb2(dbb2);
+                AncTranslator t(cfg);
+                AncTranslator::PacketsResult built = t.build(
+                        Variant(src), AncFormat(AncFormat::AtcVitc1), AncTransport::St291);
+                REQUIRE(built.second().isOk());
+                AncTranslator::ParseResult parsed = parseVia(built.first().front(), cfg);
+                REQUIRE(parsed.second().isOk());
+                AncAtc out = parsed.first().get<AncAtc>();
+                CHECK(out.dbb2() == dbb2);
+                AncAtc::VitcDbb2 d = AncAtc::dbb2DecodeVitc(out.dbb2());
+                CHECK(d.line == 11);
+                CHECK(d.duplicate == true);
+                CHECK(d.valid == true);
+                CHECK(d.processed == false);
+        }
 }

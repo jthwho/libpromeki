@@ -28,6 +28,7 @@
 #include <promeki/uuid.h>
 #include <promeki/umid.h>
 #include <promeki/timecode.h>
+#include <promeki/timecodeuserbits.h>
 #include <promeki/rational.h>
 #include <promeki/framerate.h>
 #include <promeki/stringlist.h>
@@ -287,6 +288,7 @@ void registerBuiltinDataTypes() {
                 registerDataType<UUID>();
                 registerDataType<UMID>();
                 registerDataType<Timecode>();
+                registerDataType<TimecodeUserbits>();
                 registerDataType<FrameRate>();
                 registerDataType<StringList>();
                 registerDataType<Color>();

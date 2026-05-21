@@ -115,9 +115,10 @@ TEST_CASE("AncFormat: fromSt291DidSdid for every St291-canonical format") {
         // the registry returns the lowest-ID match (AtcLtc).  See the
         // dedicated P2-1 test for the collapse rule.
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
-        // 0x60/0x61 and 0x60/0x62 are not registered — ST 12-2:2014
-        // does not assign them.
-        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61).id() == AncFormat::Invalid);
+        // ST 12-3:2016 §6 assigns (0x60, 0x61) to ATC_HFRTC (Phase 6).
+        // (0x60, 0x62) is still unassigned — ST 12-2:2014 doesn't use it
+        // and ST 12-3 only uses 0x61.
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61).id() == AncFormat::AtcHfrtc);
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x62).id() == AncFormat::Invalid);
         CHECK(AncFormat::fromSt291DidSdid(0x44, 0x04).id() == AncFormat::Klv0601);
 }

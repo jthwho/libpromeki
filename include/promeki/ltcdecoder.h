@@ -56,9 +56,16 @@ class LtcDecoder {
 
                 /**
                  * @brief Result of decoding a single LTC frame.
+                 *
+                 * The returned @ref timecode carries the recovered physical-frame
+                 * digit value in @c frame().  At HFR rates per ST 12-3 §6.3 libvtc
+                 * combines the BCD super-frame digits with the sub-frame identifier
+                 * bits (codeword bits 11/27/43/58/59) to reconstruct the physical
+                 * frame, so @c frame() may range up to @c fps()-1 (e.g. 0..119 at
+                 * 120 fps).
                  */
                 struct DecodedTimecode {
-                                Timecode timecode;     ///< @brief The decoded timecode value.
+                                Timecode timecode;     ///< @brief The decoded timecode value (physical-frame digits).
                                 int64_t  sampleStart;  ///< @brief Sample position where this frame began.
                                 int64_t  sampleLength; ///< @brief Number of samples in this frame.
                 };

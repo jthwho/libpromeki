@@ -36,8 +36,9 @@
  *   UDW 15: Tens of hours (b4-5), BGF1 (b6), BGF2 (b7)
  *
  * The remaining even-numbered UDWs (2, 4, 6, 8, 10, 12, 14, 16) carry
- * the eight 4-bit binary-group nibbles (= @ref AncAtc::UserBits
- * indices 0..7), preserved verbatim across a parse / build round trip.
+ * the eight 4-bit binary-group nibbles (= the @c TimecodeUserbits
+ * embedded in the parsed packet's @ref Timecode), preserved verbatim
+ * across a parse / build round trip.
  *
  * DBB1 (UDW 1-8 b3, LSB-first; ST 12-2 Table 2):
  *   0x00 = ATC_LTC, 0x01 = ATC_VITC1, 0x02 = ATC_VITC2.
@@ -96,7 +97,11 @@ namespace {
 
         // 0-indexed UDW positions of the eight binary-group nibble
         // slots (UDWs 2, 4, 6, 8, 10, 12, 14, 16 in 1-indexed form).
-        constexpr size_t UserBitIdx[AncAtc::UserBitCount] = {
+        // The eight nibbles map to the @ref TimecodeUserbits eight-nibble
+        // array on the Timecode itself (Phase 4 audit reshape — the user
+        // bits live on Timecode, not on AncAtc).
+        constexpr size_t UserBitCount = 8;
+        constexpr size_t UserBitIdx[UserBitCount] = {
                 1, 3, 5, 7, 9, 11, 13, 15};
 
         // -- Mode helpers -----------------------------------------------------
@@ -106,15 +111,27 @@ namespace {
         // themselves don't disambiguate 24 / 25 / 30-NDF — only the DF
         // bit narrows 30 → 29.97-DF and 60 → 59.94-DF, so the rate hint
         // (Q4) must come from somewhere external.
+        //
+        // Explicit pair-HFR cases (48/50/60) are kept here for
+        // documentation: Phase 2's Mode(fps, flags) walk already
+        // resolves them via the standard-formats table, but spelling
+        // them out makes the parser's pair-rate intent obvious at the
+        // call site below.
         Timecode::Mode modeForRate(uint32_t fps, bool df) {
                 if (fps == 0) return Timecode::Mode();
                 if (df && fps == 30) return Timecode::Mode(Timecode::DF30);
+                if (df && fps == 60) return Timecode::Mode(Timecode::DF60);   // 59.94 DF
                 if (fps == 24) return Timecode::Mode(Timecode::NDF24);
                 if (fps == 25) return Timecode::Mode(Timecode::NDF25);
                 if (fps == 30) return Timecode::Mode(Timecode::NDF30);
-                // HFR rates that ST 12-3 covers: 50, 59.94, 60 — libvtc
-                // exposes them; the parser falls back to plain NDF when
-                // the caller hands us anything else.
+                if (fps == 48) return Timecode::Mode(Timecode::NDF48);
+                if (fps == 50) return Timecode::Mode(Timecode::NDF50);
+                if (fps == 60) return Timecode::Mode(Timecode::NDF60);
+                // Genuine HFRTC rates (72/96/100/120) and custom rates
+                // fall through to the standard-formats walk.  Phase 2
+                // makes this path produce the right libvtc format
+                // pointer for every standard rate; truly custom rates
+                // hit vtc_format_find_or_create.
                 uint32_t vtcFlags = df ? uint32_t(Timecode::DropFrame) : 0u;
                 return Timecode::Mode(fps, vtcFlags);
         }
@@ -192,23 +209,48 @@ namespace {
                         return makeError<Variant>(Error::InsufficientContext);
                 }
 
+                // Pair-rate HFR (ST 12-1 §12 / ST 12-2 §9.2 Am1:2013):
+                // at 48/50/60 fps the FF wire slots carry pair_index
+                // (0..fps/2-1) and the polarity bit slot (UDW 7 bit 7,
+                // = sub-frame_1 in ST 12-1 §12) carries the field-mark.
+                // The physical frame is reconstructed as
+                //   physical_frame = pair_index * 2 + field_mark.
+                // Re-uses the "polarity" bit we decoded above as the
+                // field-mark per the ST 12-2 Am1 reinterpretation —
+                // the pre-Am1 meaning (LTC polarity) is non-sensical
+                // for ATC anyway (ATC has no biphase mark to
+                // polarity-correct).
+                if (ancAtcIsPairHfrRate(fps)) {
+                        uint32_t pairIndex = static_cast<uint32_t>(frm);
+                        uint32_t fieldMark = polarity ? 1u : 0u;
+                        frm = static_cast<Timecode::DigitType>(pairIndex * 2u + fieldMark);
+                }
+
                 Timecode tc(modeForRate(fps, df), hour, min, sec, frm);
 
-                AncAtc atc(tc);
-                uint8_t flags = 0;
-                if (colorFrame) flags = static_cast<uint8_t>(flags | AncAtc::ColorFrame);
-                if (polarity) flags = static_cast<uint8_t>(flags | AncAtc::Polarity);
-                if (bgf0) flags = static_cast<uint8_t>(flags | AncAtc::Bgf0);
-                if (bgf1) flags = static_cast<uint8_t>(flags | AncAtc::Bgf1);
-                if (bgf2) flags = static_cast<uint8_t>(flags | AncAtc::Bgf2);
-                atc.setFlags(flags);
-
-                // Binary-group nibbles → user bits.
-                AncAtc::UserBits ub{};
-                for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
-                        ub[i] = udwNibble(udw[UserBitIdx[i]]);
+                // Phase 4: BGF + color-frame + user bits ride on the
+                // Timecode now, not on the AncAtc envelope.  Polarity
+                // (UDW 7 b7) is not surfaced — at non-pair-rates the
+                // captured bit has no semantic meaning (libvtc
+                // recomputes the LTC polarity-correction bit at pack
+                // time per ST 12-1 §9.2.3, and ATC itself has no
+                // biphase mark to polarity-correct).  At pair-rate HFR
+                // the same wire bit is reinterpreted as the ST 12-2
+                // Am1 §9.2 field-mark and consumed above to recover
+                // the physical-frame index.
+                tc.setColorFrame(colorFrame);
+                TimecodeUserbits::Nibbles ubNibs{};
+                for (size_t i = 0; i < UserBitCount; ++i) {
+                        ubNibs[i] = udwNibble(udw[UserBitIdx[i]]);
                 }
-                atc.setUserBits(ub);
+                uint8_t modeBits = 0;
+                if (bgf0) modeBits |= 0x01u;
+                if (bgf1) modeBits |= 0x02u;
+                if (bgf2) modeBits |= 0x04u;
+                tc.setUserbits(TimecodeUserbits::fromNibbles(
+                        ubNibs, static_cast<TimecodeUserbits::Mode>(modeBits)));
+
+                AncAtc atc(tc);
 
                 // DBB1: UDW 1..8 b3, LSB-first across the eight UDWs.
                 // This is the §6.2.1 payload-type byte that discriminates
@@ -247,16 +289,52 @@ namespace {
         // caller's explicit @c AncFormat::AtcLtc / @c AtcVitc1 /
         // @c AtcVitc2 choice wins over any stale value rooted in the
         // value type.
-        List<uint16_t> packAtcUdw(const AncAtc &atc) {
+        //
+        // @p legacyFieldMark forces the ST 12-2 §9.2 field-mark bit
+        // to 0 at pair-rate HFR — see AncTranslateConfig::
+        // AtcVitcLegacyFieldMark for the rationale.  Has no effect at
+        // non-pair-rates (the polarity slot is already always zero
+        // at those rates).
+        List<uint16_t> packAtcUdw(const AncAtc &atc, bool legacyFieldMark) {
                 const Timecode &tc       = atc.timecode();
                 uint8_t         hour     = static_cast<uint8_t>(tc.hour());
                 uint8_t         min      = static_cast<uint8_t>(tc.min());
                 uint8_t         sec      = static_cast<uint8_t>(tc.sec());
-                uint8_t         frm      = static_cast<uint8_t>(tc.frame());
                 bool            df       = tc.isDropFrame();
                 uint8_t         dbb1     = atc.payloadType();
                 uint8_t         dbb2     = atc.dbb2();
-                uint8_t         flags    = atc.flags();
+
+                // Pair-rate HFR (ST 12-1 §12 / ST 12-2 §9.2 Am1:2013):
+                // the FF wire slots carry pair_index (= super-frame
+                // index, 0..fps/2-1) rather than the raw physical
+                // frame, and the polarity bit slot becomes the
+                // field-mark.  See parseAtcSt291Impl for the inverse.
+                //
+                // At non-pair-rates @c frm carries the raw frame
+                // digit (0..fps-1 at base rates) and @c fieldMark is
+                // forced to zero — both libvtc-side LTC polarity
+                // computation and the ATC informational slot keep the
+                // bit clear.
+                const bool isPair    = ancAtcIsPairHfrRate(tc.fps());
+                uint8_t    frm       = isPair
+                                              ? static_cast<uint8_t>(tc.superFrameIndex())
+                                              : static_cast<uint8_t>(tc.frame());
+                bool       fieldMark = false;
+                if (isPair && !legacyFieldMark) {
+                        fieldMark = (tc.subFrameIndex() & 1u) != 0u;
+                }
+
+                // Phase 4: BGF + color-frame + user bits ride on the
+                // Timecode now.  Polarity is left at zero on the wire
+                // at non-pair-rates — libvtc recomputes it during LTC
+                // pack; ATC is informational so the bit has no semantic
+                // meaning there.
+                const bool colorFrame = tc.colorFrame();
+                const uint8_t bgfMode = static_cast<uint8_t>(tc.userbits().mode());
+                const bool bgf0 = (bgfMode & 0x01u) != 0u;
+                const bool bgf1 = (bgfMode & 0x02u) != 0u;
+                const bool bgf2 = (bgfMode & 0x04u) != 0u;
+                const TimecodeUserbits::Nibbles &ub = tc.userbits().nibbles();
 
                 // UDW 1-8 (indices 0-7) carry DBB1 bit i LSB-first per §6.2.1;
                 // UDW 9-16 (indices 8-15) carry DBB2 bit (i-8) LSB-first
@@ -278,24 +356,19 @@ namespace {
                 // upper 2 bits per ST 12-2 Table 6.
                 uint8_t frameTensNibble = static_cast<uint8_t>((frm / 10) & 0x03);
                 if (df) frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x04);
-                if (flags & AncAtc::ColorFrame) {
-                        frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x08);
-                }
+                if (colorFrame) frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x08);
                 uint8_t secTensNibble = static_cast<uint8_t>((sec / 10) & 0x07);
-                if (flags & AncAtc::Polarity) {
-                        secTensNibble = static_cast<uint8_t>(secTensNibble | 0x08);
-                }
+                // bit 3 of secTens is the polarity slot — at non-pair-rates
+                // this is left clear (libvtc handles polarity on the LTC
+                // wire and ATC carries no biphase mark).  At pair-rate
+                // HFR (48/50/60) the same bit is repurposed as the
+                // ST 12-2 Am1 §9.2 field-mark.
+                if (fieldMark) secTensNibble = static_cast<uint8_t>(secTensNibble | 0x08);
                 uint8_t minTensNibble = static_cast<uint8_t>((min / 10) & 0x07);
-                if (flags & AncAtc::Bgf0) {
-                        minTensNibble = static_cast<uint8_t>(minTensNibble | 0x08);
-                }
+                if (bgf0) minTensNibble = static_cast<uint8_t>(minTensNibble | 0x08);
                 uint8_t hourTensNibble = static_cast<uint8_t>((hour / 10) & 0x03);
-                if (flags & AncAtc::Bgf1) {
-                        hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x04);
-                }
-                if (flags & AncAtc::Bgf2) {
-                        hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x08);
-                }
+                if (bgf1) hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x04);
+                if (bgf2) hourTensNibble = static_cast<uint8_t>(hourTensNibble | 0x08);
 
                 udw[IdxFrameUnits] = makeUdw(static_cast<uint8_t>(frm % 10), dbbBit(IdxFrameUnits));
                 udw[IdxFrameTens]  = makeUdw(frameTensNibble, dbbBit(IdxFrameTens));
@@ -307,8 +380,7 @@ namespace {
                 udw[IdxHourTens]   = makeUdw(hourTensNibble, dbbBit(IdxHourTens));
 
                 // Binary-group nibbles into the even-1-indexed UDW slots.
-                const AncAtc::UserBits &ub = atc.userBits();
-                for (size_t i = 0; i < AncAtc::UserBitCount; ++i) {
+                for (size_t i = 0; i < UserBitCount; ++i) {
                         udw[UserBitIdx[i]] = makeUdw(static_cast<uint8_t>(ub[i] & 0x0F),
                                                      dbbBit(UserBitIdx[i]));
                 }
@@ -354,7 +426,9 @@ namespace {
         // resolution); all three ATC IDs resolve to (0x60,0x60).
         AncTranslator::PacketsResult buildAtcSt291Impl(AncFormat::ID fmtId, const AncAtc &atc,
                                                        const AncTranslateConfig &cfg) {
-                List<uint16_t> udw = packAtcUdw(atc);
+                bool legacyFieldMark = cfg.getAs<bool>(
+                        AncTranslateConfig::AtcVitcLegacyFieldMark, false);
+                List<uint16_t> udw = packAtcUdw(atc, legacyFieldMark);
 
                 uint16_t line   = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                       St291Packet::UnspecifiedLine);

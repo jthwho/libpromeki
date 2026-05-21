@@ -162,6 +162,7 @@ enum DataTypeID : uint16_t {
         DataTypeAncAfd                = 0x6B,
         DataTypeAncOp47Sdp            = 0x6C,
         DataTypeSt2020Audio           = 0x6D,
+        DataTypeTimecodeUserbits      = 0x6E,
 };
 
 /** @brief First @ref DataTypeID value available for user-defined types. */

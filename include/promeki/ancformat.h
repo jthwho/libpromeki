@@ -138,6 +138,7 @@ class AncFormat {
                         PacketForDeletion = 20,  ///< ST 291-1 §6.3 Packet-Marked-for-Deletion (DID 0x80, Type-1).
                         Op47Sdp = 21,            ///< RDD 8 / OP-47 Subtitling Distribution Packet (DID 0x43, SDID 0x02).
                         Op47Multipack = 22,      ///< RDD 8 / OP-47 multipacket header (DID 0x43, SDID 0x03 — §4.2(iii) "203h includes parity").
+                        AtcHfrtc = 23,           ///< SMPTE 12-3 ATC HFRTC (DID 0x60, SDID 0x61; DBB1 0x80..0x8F is the bitstream number).
                         VbiSt2031 = 24,          ///< SMPTE ST 2031 DVB-VBI / SCTE-VBI ancillary data (DID 0x41, SDID 0x08).
                         HdrDynamic2094_10 = 25,  ///< SMPTE ST 2094-10 dynamic HDR (Dolby DM) in ST 2108-1 Frame Type 2.
                         UserDefined = 1024       ///< First ID available for user-registered formats.

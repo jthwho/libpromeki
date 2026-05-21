@@ -49,7 +49,7 @@ TEST_CASE("LtcDecoder_DecodeEmpty") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_RoundTrip") {
-        LtcEncoder enc(48000, 0.5f);
+        LtcEncoder enc(48000, FrameRate(), 0.5f);
         LtcDecoder dec(48000);
 
         // Encode several sequential frames and concatenate the samples
@@ -98,7 +98,7 @@ TEST_CASE("LtcDecoder_Reset") {
 // ============================================================================
 
 TEST_CASE("LtcDecoder_DecodeAudio") {
-        LtcEncoder enc(48000, 0.5f);
+        LtcEncoder enc(48000, FrameRate(), 0.5f);
         LtcDecoder dec(48000);
 
         Timecode     tc(Timecode::NDF24, 1, 0, 0, 0);
@@ -118,7 +118,7 @@ TEST_CASE("LtcDecoder_DecodeAudio") {
 TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
         // Encode several frames of LTC at 24fps to give the decoder enough
         // continuous biphase-mark transitions to lock and emit a frame.
-        LtcEncoder enc(48000, 0.8f);
+        LtcEncoder enc(48000, FrameRate(), 0.8f);
         LtcDecoder dec(48000);
 
         // Stitch a few frames of mono int8 LTC together so the decoder has

@@ -91,7 +91,20 @@ void LtcDecoder::reset() {
 void LtcDecoder::decoderCallback(const VtcTimecode *tc, int64_t sampleStart, int64_t sampleLength, void *userData) {
         LtcDecoder     *self = static_cast<LtcDecoder *>(userData);
         DecodedTimecode result;
+        // tc->frame is the physical-frame value at HFR rates (libvtc combines
+        // the BCD super-frame digits with the sub-frame identifier bits at
+        // codeword bits 11/27/43/58/59 per ST 12-3 §6.3), so it can range up
+        // to vtc_format_fps(tc->format) - 1.
         result.timecode = Timecode(Timecode::Mode(tc->format), tc->hour, tc->min, tc->sec, tc->frame);
+        // Surface color-frame and user-bit state recovered from the LTC
+        // codeword so callers see the same data the wire carried.
+        result.timecode.setColorFrame((tc->flags & VTC_TC_FLAG_LTC_COLOR_FRAME) != 0);
+        uint8_t modeBits = 0;
+        if (tc->flags & VTC_TC_FLAG_LTC_BGF0) modeBits |= 0x01u;
+        if (tc->flags & VTC_TC_FLAG_LTC_BGF1) modeBits |= 0x02u;
+        if (tc->flags & VTC_TC_FLAG_LTC_BGF2) modeBits |= 0x04u;
+        result.timecode.setUserbits(TimecodeUserbits::fromRawBits(
+                tc->userbits, static_cast<TimecodeUserbits::Mode>(modeBits)));
         result.sampleStart = sampleStart;
         result.sampleLength = sampleLength;
         self->_results.pushToBack(result);

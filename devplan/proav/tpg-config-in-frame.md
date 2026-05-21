@@ -12,6 +12,15 @@ travels with each frame as a single `Metadata::TpgConfig` JSON
 blob. The Inspector or a future `inspector-init-from-tpg` helper
 reads it back and knows exactly what to validate.
 
+**Note (2026-05-20):** the Timecode / ATC audit (see
+`docs/timecode.md`) introduces `TimecodeUserbits` as the value
+type for the SMPTE 12M user-bits payload (32 bits + the BGF mode
+triple per ST 12-1 Table 1).  Any TPG-side userbits surface
+should round-trip through `TimecodeUserbits` rather than rolling
+a bespoke representation.  `TimecodeUserbits` ships full
+DataStream / Variant / JSON serialisation, so the metadata blob
+can carry it directly.
+
 ## Tasks
 
 - [ ] New `Metadata::TpgConfig` ID (`Variant::TypeJsonObject` or

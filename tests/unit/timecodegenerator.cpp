@@ -257,6 +257,116 @@ TEST_CASE("TimecodeGenerator_DFSkip") {
         CHECK(tc_skip.frame() == 2);
 }
 
+// ============================================================================
+// Phase 3: HFR rate derivation (ST 12-1 §12 + ST 12-3) — every rate above 30
+// must lock onto the matching libvtc HFR format and walk the correct digit
+// range when advanced.
+// ============================================================================
+
+TEST_CASE("TimecodeGenerator_Mode48") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_48));
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF48));
+        CHECK_FALSE(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode50") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_50));
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF50));
+        CHECK_FALSE(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode60NDF") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_60));
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF60));
+        CHECK_FALSE(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode5994NDF") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_59_94));
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF60));
+        CHECK_FALSE(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode5994DF") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_59_94));
+        gen.setDropFrame(true);
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::DF60));
+        CHECK(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode120NDF") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_120));
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::NDF120));
+        CHECK_FALSE(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Mode11988DF") {
+        TimecodeGenerator gen;
+        gen.setFrameRate(FrameRate(FrameRate::FPS_119_88));
+        gen.setDropFrame(true);
+        CHECK(gen.timecodeMode() == Timecode::Mode(Timecode::DF120));
+        CHECK(gen.dropFrame());
+}
+
+TEST_CASE("TimecodeGenerator_Forward60p_walks_0_to_59") {
+        TimecodeGenerator gen(FrameRate(FrameRate::FPS_60));
+        gen.setTimecode(Timecode(Timecode::NDF60, 0, 0, 0, 0));
+        for (uint32_t f = 0; f < 60; ++f) {
+                Timecode tc = gen.advance();
+                CHECK(tc.frame() == f);
+                CHECK(tc.sec() == 0);
+        }
+        // After 60 advances we should be at 00:00:01:00
+        Timecode tcSecond = gen.advance();
+        CHECK(tcSecond.sec() == 1);
+        CHECK(tcSecond.frame() == 0);
+}
+
+TEST_CASE("TimecodeGenerator_5994DF_drops_4_frames_at_minute_boundary") {
+        // 59.94 DF skips the first 4 frames at every minute except minutes
+        // divisible by 10 (per ST 12-3 §6.4.3 applied to 30×2 HFR).
+        TimecodeGenerator gen(FrameRate(FrameRate::FPS_59_94), true);
+        REQUIRE(gen.dropFrame());
+
+        gen.setTimecode(Timecode(Timecode::DF60, 0, 0, 59, 59));
+        gen.advance(); // consume 00:00:59:59
+        Timecode after = gen.advance();
+        CHECK(after.min() == 1);
+        CHECK(after.sec() == 0);
+        CHECK(after.frame() == 4);
+}
+
+TEST_CASE("TimecodeGenerator_11988DF_drops_8_frames_at_minute_boundary") {
+        TimecodeGenerator gen(FrameRate(FrameRate::FPS_119_88), true);
+        REQUIRE(gen.dropFrame());
+
+        gen.setTimecode(Timecode(Timecode::DF120, 0, 0, 59, 119));
+        gen.advance();
+        Timecode after = gen.advance();
+        CHECK(after.min() == 1);
+        CHECK(after.sec() == 0);
+        CHECK(after.frame() == 8);
+}
+
+TEST_CASE("TimecodeGenerator_5994DF_keeps_frame_0_at_minute_10") {
+        // Drop-frame rule excludes minutes divisible by 10 — frames 0..3 are
+        // not dropped at 00:10:00:00.  Walk the full minute boundary to
+        // confirm.
+        TimecodeGenerator gen(FrameRate(FrameRate::FPS_59_94), true);
+        gen.setTimecode(Timecode(Timecode::DF60, 0, 9, 59, 59));
+        gen.advance();
+        Timecode after = gen.advance();
+        CHECK(after.min() == 10);
+        CHECK(after.sec() == 0);
+        CHECK(after.frame() == 0);
+}
+
 TEST_CASE("TimecodeGenerator_DFNoSkipAt10Min") {
         TimecodeGenerator gen(FrameRate(FrameRate::FPS_29_97), true);
 
