@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <promeki/videodecoder.h>
 #include <promeki/videocodec.h>
+#include <promeki/logger.h>
 #include <promeki/pixelformat.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/map.h>
@@ -201,6 +202,7 @@ Result<VideoDecoder *> VideoDecoder::create(VideoCodec::ID codecId, VideoCodec::
                 ReadWriteLock::ReadLocker lock(reg.mutex);
                 auto                      it = reg.entries.find(codecId);
                 if (it == reg.entries.end() || it->second.isEmpty()) {
+                        promekiWarn("VideoDecoder::create: no backends registered for codec id=%d", (int)codecId);
                         return makeError<VideoDecoder *>(Error::IdNotFound);
                 }
                 const auto &list = it->second;
@@ -214,6 +216,8 @@ Result<VideoDecoder *> VideoDecoder::create(VideoCodec::ID codecId, VideoCodec::
                                 }
                         }
                         if (chosen == nullptr) {
+                                promekiWarn("VideoDecoder::create: pinned backend not found for codec id=%d",
+                                            (int)codecId);
                                 return makeError<VideoDecoder *>(Error::IdNotFound);
                         }
                 } else {
@@ -230,6 +234,9 @@ Result<VideoDecoder *> VideoDecoder::create(VideoCodec::ID codecId, VideoCodec::
                                                         }
                                                 }
                                                 if (chosen == nullptr) {
+                                                        promekiWarn("VideoDecoder::create: requested backend '%s' "
+                                                                    "not found for codec id=%d",
+                                                                    backendName.cstr(), (int)codecId);
                                                         return makeError<VideoDecoder *>(Error::IdNotFound);
                                                 }
                                         }
@@ -240,10 +247,16 @@ Result<VideoDecoder *> VideoDecoder::create(VideoCodec::ID codecId, VideoCodec::
                 chosenTag = chosen->backend;
                 factory = chosen->factory;
         }
-        if (!factory) return makeError<VideoDecoder *>(Error::IdNotFound);
+        if (!factory) {
+                promekiWarn("VideoDecoder::create: null factory for codec id=%d", (int)codecId);
+                return makeError<VideoDecoder *>(Error::IdNotFound);
+        }
 
         VideoDecoder *dec = factory();
-        if (dec == nullptr) return makeError<VideoDecoder *>(Error::LibraryFailure);
+        if (dec == nullptr) {
+                promekiWarn("VideoDecoder::create: factory returned null for codec id=%d", (int)codecId);
+                return makeError<VideoDecoder *>(Error::LibraryFailure);
+        }
         dec->setCodec(VideoCodec(codecId, chosenTag));
         if (config != nullptr) dec->configure(*config);
         return makeResult(dec);

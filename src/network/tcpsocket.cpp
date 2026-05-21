@@ -7,6 +7,9 @@
 
 #include <promeki/tcpsocket.h>
 #include <promeki/platform.h>
+#include <promeki/logger.h>
+#include <cerrno>
+#include <cstring>
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
@@ -50,14 +53,22 @@ Error TcpSocket::close() {
 }
 
 int64_t TcpSocket::read(void *data, int64_t maxSize) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "TcpSocket::read on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         ssize_t ret = ::recv(_fd, data, static_cast<size_t>(maxSize), 0);
         if (ret < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000, "TcpSocket::recv failed (maxSize=%lld errno=%d %s)",
+                                             static_cast<long long>(maxSize), errno, strerror(errno));
+                }
                 setError(Error::syserr());
                 return -1;
         }
         if (ret == 0) {
-                // Peer disconnected
+                promekiInfo("TcpSocket: peer disconnected (graceful close)");
                 setState(Unconnected);
                 disconnectedSignal.emit();
         }
@@ -65,11 +76,23 @@ int64_t TcpSocket::read(void *data, int64_t maxSize) {
 }
 
 int64_t TcpSocket::write(const void *data, int64_t maxSize) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "TcpSocket::write on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         ssize_t ret = ::send(_fd, data, static_cast<size_t>(maxSize), MSG_NOSIGNAL);
         if (ret < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000, "TcpSocket::send failed (maxSize=%lld errno=%d %s)",
+                                             static_cast<long long>(maxSize), errno, strerror(errno));
+                }
                 setError(Error::syserr());
                 return -1;
+        }
+        if (ret < maxSize) {
+                promekiWarnThrottled(1000, "TcpSocket::send short write: %lld of %lld",
+                                     static_cast<long long>(ret), static_cast<long long>(maxSize));
         }
         return static_cast<int64_t>(ret);
 }

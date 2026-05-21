@@ -266,6 +266,8 @@ int64_t SslSocket::read(void *data, int64_t maxSize) {
         if (rc == 0 || rc == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
                 return 0; // clean shutdown
         }
+        promekiWarnThrottled(1000, "SslSocket::read mbedtls_ssl_read failed: %s",
+                             mbedtlsErrText(rc).cstr());
         return -1;
 }
 
@@ -278,6 +280,8 @@ int64_t SslSocket::write(const void *data, int64_t maxSize) {
                 errno = EAGAIN;
                 return -1;
         }
+        promekiWarnThrottled(1000, "SslSocket::write mbedtls_ssl_write failed: %s",
+                             mbedtlsErrText(rc).cstr());
         return -1;
 }
 

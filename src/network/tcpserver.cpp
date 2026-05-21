@@ -8,6 +8,9 @@
 #include <promeki/tcpserver.h>
 #include <promeki/tcpsocket.h>
 #include <promeki/platform.h>
+#include <promeki/logger.h>
+#include <cerrno>
+#include <cstring>
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
@@ -40,7 +43,11 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
         if (address.isIPv6()) domain = AF_INET6;
 
         _fd = ::socket(domain, SOCK_STREAM, 0);
-        if (_fd < 0) return Error::syserr();
+        if (_fd < 0) {
+                promekiWarn("TcpServer::listen socket(domain=%d) failed (errno=%d %s)", domain, errno,
+                            strerror(errno));
+                return Error::syserr();
+        }
 
         // Enable SO_REUSEADDR
         int reuse = 1;
@@ -49,6 +56,7 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
         struct sockaddr_storage storage;
         size_t                  addrLen = address.toSockAddr(&storage);
         if (addrLen == 0) {
+                promekiWarn("TcpServer::listen invalid address '%s'", address.toString().cstr());
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
 #else
@@ -60,6 +68,8 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
 
         if (::bind(_fd, reinterpret_cast<struct sockaddr *>(&storage), static_cast<socklen_t>(addrLen)) < 0) {
                 Error err = Error::syserr();
+                promekiWarn("TcpServer::listen bind(%s) failed (errno=%d %s)", address.toString().cstr(), errno,
+                            strerror(errno));
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
 #else
@@ -71,6 +81,8 @@ Error TcpServer::listen(const SocketAddress &address, int backlog) {
 
         if (::listen(_fd, backlog) < 0) {
                 Error err = Error::syserr();
+                promekiWarn("TcpServer::listen listen(backlog=%d) failed on %s (errno=%d %s)", backlog,
+                            address.toString().cstr(), errno, strerror(errno));
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 SOCK_CLOSE(_fd);
 #else
@@ -117,6 +129,10 @@ int TcpServer::nextPendingDescriptor() {
         struct sockaddr_storage storage;
         socklen_t               addrLen = sizeof(storage);
         const int               clientFd = ::accept(_fd, reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
+        if (clientFd < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+                promekiWarnThrottled(1000, "TcpServer::accept failed on %s (errno=%d %s)",
+                                     _address.toString().cstr(), errno, strerror(errno));
+        }
         return clientFd;
 }
 

@@ -5,6 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstring>
+
 #include <promeki/basicthread.h>
 #include <promeki/atomic.h>
 #include <promeki/logger.h>
@@ -170,9 +172,19 @@ BasicThread::~BasicThread() {
 }
 
 Error BasicThread::start(Entry entry, size_t stackSize) {
-        if (!d) return Error::Invalid;
-        if (!entry) return Error::Invalid;
-        if (isJoinable()) return Error::Busy;
+        if (!d) {
+                promekiWarn("BasicThread::start refused: thread state is null");
+                return Error::Invalid;
+        }
+        if (!entry) {
+                promekiWarn("BasicThread::start('%s') refused: empty entry function",
+                            d->name.cstr());
+                return Error::Invalid;
+        }
+        if (isJoinable()) {
+                promekiWarn("BasicThread::start('%s') refused: already joinable", d->name.cstr());
+                return Error::Busy;
+        }
 
         // Capture a raw Data* — the BasicThread destructor joins before
         // the UniquePtr<Data> goes away, so the pointer is always live
@@ -217,7 +229,11 @@ Error BasicThread::start(Entry entry, size_t stackSize) {
                         },
                         ctx.get());
                 pthread_attr_destroy(&attr);
-                if (ret != 0) return Error::LibraryFailure;
+                if (ret != 0) {
+                        promekiWarn("BasicThread::start('%s') pthread_create failed: rc=%d (%s)",
+                                    d->name.cstr(), ret, ::strerror(ret));
+                        return Error::LibraryFailure;
+                }
                 (void)ctx.release();
                 d->pthreadHandle = handle;
                 d->usesPthread = true;
@@ -228,7 +244,13 @@ Error BasicThread::start(Entry entry, size_t stackSize) {
 #endif
         try {
                 d->thread = std::thread(std::move(wrapped));
+        } catch (const std::exception &e) {
+                promekiWarn("BasicThread::start('%s') std::thread ctor threw: %s",
+                            d->name.cstr(), e.what());
+                return Error::LibraryFailure;
         } catch (...) {
+                promekiWarn("BasicThread::start('%s') std::thread ctor threw unknown exception",
+                            d->name.cstr());
                 return Error::LibraryFailure;
         }
         return Error::Ok;
@@ -241,13 +263,22 @@ Error BasicThread::join() {
                 int rc = pthread_join(d->pthreadHandle, nullptr);
                 d->usesPthread = false;
                 d->pthreadHandle = {};
-                return rc == 0 ? Error::Ok : Error::LibraryFailure;
+                if (rc != 0) {
+                        promekiWarn("BasicThread::join('%s') pthread_join failed: rc=%d (%s)",
+                                    d->name.cstr(), rc, ::strerror(rc));
+                        return Error::LibraryFailure;
+                }
+                return Error::Ok;
         }
 #endif
         if (!d->thread.joinable()) return Error::Ok;
         try {
                 d->thread.join();
+        } catch (const std::exception &e) {
+                promekiWarn("BasicThread::join('%s') threw: %s", d->name.cstr(), e.what());
+                return Error::LibraryFailure;
         } catch (...) {
+                promekiWarn("BasicThread::join('%s') threw unknown exception", d->name.cstr());
                 return Error::LibraryFailure;
         }
         return Error::Ok;
@@ -385,18 +416,33 @@ int BasicThread::priority() const {
 }
 
 Error BasicThread::setPriority(int prio, SchedulePolicy policy) {
-        if (!d || !d->running.value()) return Error::Invalid;
+        if (!d || !d->running.value()) {
+                promekiWarn("BasicThread::setPriority(prio=%d) refused: thread not running", prio);
+                return Error::Invalid;
+        }
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         struct sched_param param;
         param.sched_priority = prio;
         int ret = pthread_setschedparam(nativeHandle(), schedulePolicyToNative(policy), &param);
-        return ret == 0 ? Error::Ok : Error::LibraryFailure;
+        if (ret != 0) {
+                promekiWarn("BasicThread::setPriority('%s', prio=%d) pthread_setschedparam failed: "
+                            "rc=%d (%s) — RLIMIT_RTPRIO?",
+                            d->name.cstr(), prio, ret, ::strerror(ret));
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         (void)policy;
-        return SetThreadPriority(nativeHandle(), prio) ? Error::Ok : Error::LibraryFailure;
+        if (!SetThreadPriority(nativeHandle(), prio)) {
+                promekiWarn("BasicThread::setPriority(prio=%d) SetThreadPriority failed: err=%lu",
+                            prio, (unsigned long)GetLastError());
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #else
         (void)prio;
         (void)policy;
+        promekiWarnOnce("BasicThread::setPriority refused: not supported on this platform");
         return Error::NotSupported;
 #endif
 }
@@ -418,7 +464,10 @@ Set<int> BasicThread::affinity() const {
 }
 
 Error BasicThread::setAffinity(const Set<int> &cpus) {
-        if (!d || !d->running.value()) return Error::Invalid;
+        if (!d || !d->running.value()) {
+                promekiWarn("BasicThread::setAffinity refused: thread not running");
+                return Error::Invalid;
+        }
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -429,15 +478,24 @@ Error BasicThread::setAffinity(const Set<int> &cpus) {
                 for (int cpu : cpus) CPU_SET(cpu, &cpuset);
         }
         int ret = pthread_setaffinity_np(nativeHandle(), sizeof(cpuset), &cpuset);
-        return ret == 0 ? Error::Ok : Error::LibraryFailure;
+        if (ret != 0) {
+                promekiWarn("BasicThread::setAffinity('%s', %zu cpus) pthread_setaffinity_np failed: "
+                            "rc=%d (%s)",
+                            d->name.cstr(), cpus.size(), ret, ::strerror(ret));
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_APPLE)
         (void)cpus;
+        promekiWarnOnce("BasicThread::setAffinity refused: not supported on Apple platforms");
         return Error::NotSupported;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         (void)cpus;
+        promekiWarnOnce("BasicThread::setAffinity refused: not implemented on Windows");
         return Error::NotSupported;
 #else
         (void)cpus;
+        promekiWarnOnce("BasicThread::setAffinity refused: not supported on this platform");
         return Error::NotSupported;
 #endif
 }

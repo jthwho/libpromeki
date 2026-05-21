@@ -25,6 +25,7 @@
 #include <promeki/atomic.h>
 #include <promeki/promise.h>
 #include <promeki/datetime.h>
+#include <promeki/gate.h>
 #include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -80,6 +81,43 @@ static consteval const char *sourceFileName(const char *path) {
 #define promekiInfo(format, ...) promekiLog(Logger::LogLevel::Info, format, ##__VA_ARGS__)
 #define promekiWarn(format, ...) promekiLog(Logger::LogLevel::Warn, format, ##__VA_ARGS__)
 #define promekiErr(format, ...) promekiLog(Logger::LogLevel::Err, format, ##__VA_ARGS__)
+
+/**
+ * @def promekiInfoOnce
+ * @brief Emits an Info-level log line exactly once per call site for the program's lifetime.
+ *
+ * Equivalent to @c PROMEKI_ONCE wrapping a @c promekiInfo.  Each
+ * call site has an independent @ref OnceGate, so distinct sites do
+ * not gate each other.
+ */
+#define promekiInfoOnce(format, ...)                                                                                   \
+        PROMEKI_ONCE { promekiInfo(format, ##__VA_ARGS__); }
+
+/** @brief @c promekiWarn variant that emits at most once per call site. @see PROMEKI_ONCE */
+#define promekiWarnOnce(format, ...)                                                                                   \
+        PROMEKI_ONCE { promekiWarn(format, ##__VA_ARGS__); }
+
+/** @brief @c promekiErr variant that emits at most once per call site. @see PROMEKI_ONCE */
+#define promekiErrOnce(format, ...)                                                                                    \
+        PROMEKI_ONCE { promekiErr(format, ##__VA_ARGS__); }
+
+/**
+ * @def promekiInfoThrottled
+ * @brief Emits an Info-level log line at most once per @p intervalMs per call site.
+ *
+ * Equivalent to @c PROMEKI_THROTTLED wrapping a @c promekiInfo.
+ * @param intervalMs Minimum milliseconds between successive emissions.
+ */
+#define promekiInfoThrottled(intervalMs, format, ...)                                                                  \
+        PROMEKI_THROTTLED(intervalMs) { promekiInfo(format, ##__VA_ARGS__); }
+
+/** @brief @c promekiWarn variant that emits at most once per @p intervalMs per call site. @see PROMEKI_THROTTLED */
+#define promekiWarnThrottled(intervalMs, format, ...)                                                                  \
+        PROMEKI_THROTTLED(intervalMs) { promekiWarn(format, ##__VA_ARGS__); }
+
+/** @brief @c promekiErr variant that emits at most once per @p intervalMs per call site. @see PROMEKI_THROTTLED */
+#define promekiErrThrottled(intervalMs, format, ...)                                                                   \
+        PROMEKI_THROTTLED(intervalMs) { promekiErr(format, ##__VA_ARGS__); }
 
 bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line);
 

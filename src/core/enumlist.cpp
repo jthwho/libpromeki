@@ -7,15 +7,19 @@
 
 #include <promeki/enumlist.h>
 #include <promeki/datastream.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 bool EnumList::append(const Enum &e, Error *err) {
         if (!_type.isValid()) {
+                promekiWarn("EnumList::append(Enum) refused: list has no element type bound");
                 if (err) *err = Error::InvalidArgument;
                 return false;
         }
         if (e.type() != _type) {
+                promekiWarn("EnumList::append(Enum) refused: type mismatch (list=%s, value=%s)",
+                            _type.name(), e.type().name());
                 if (err) *err = Error::InvalidArgument;
                 return false;
         }
@@ -40,11 +44,15 @@ bool EnumList::append(int value, Error *err) {
 
 bool EnumList::append(const String &name, Error *err) {
         if (!_type.isValid()) {
+                promekiWarn("EnumList::append('%s') refused: list has no element type bound",
+                            name.cstr());
                 if (err) *err = Error::InvalidArgument;
                 return false;
         }
         auto lookup = Enum::valueOf(_type, name);
         if (lookup.second().isError()) {
+                promekiWarn("EnumList::append('%s') failed: not a valid value of enum %s",
+                            name.cstr(), _type.name());
                 if (err) *err = lookup.second();
                 return false;
         }
@@ -114,6 +122,8 @@ Result<EnumList> EnumList::fromString(const String &text) {
                 Error  le;
                 Enum   e = Enum::lookup(entry, &le);
                 if (le.isError() || !e.type().isValid()) {
+                        promekiWarn("EnumList::fromString failed: invalid enum entry '%s' (in input '%s')",
+                                    entry.cstr(), text.cstr());
                         return makeError<EnumList>(Error::ParseFailed);
                 }
                 if (!type.isValid()) {
@@ -123,6 +133,8 @@ Result<EnumList> EnumList::fromString(const String &text) {
                         // Every entry must share the type deduced from
                         // the first entry — mixing types in a single
                         // EnumList is meaningless.
+                        promekiWarn("EnumList::fromString failed: mixed enum types (deduced=%s, got=%s)",
+                                    type.name(), e.type().name());
                         return makeError<EnumList>(Error::ParseFailed);
                 }
                 out._values.pushToBack(e.value());
@@ -150,7 +162,10 @@ Result<EnumList> EnumList::readFromStream<1>(DataStream &s) {
         uint32_t count = 0;
         s >> typeName >> count;
         if (s.status() != DataStream::Ok) return makeError<EnumList>(s.toError());
-        if (count > (256u * 1024u * 1024u)) return makeError<EnumList>(Error::CorruptData);
+        if (count > (256u * 1024u * 1024u)) {
+                promekiWarn("EnumList::readFromStream rejected absurd count %u", (unsigned)count);
+                return makeError<EnumList>(Error::CorruptData);
+        }
         Enum::Type t = typeName.isEmpty() ? Enum::Type() : Enum::findType(typeName);
         EnumList out(t);
         for (uint32_t i = 0; i < count; ++i) {

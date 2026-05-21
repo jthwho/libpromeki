@@ -86,14 +86,25 @@ Error BurnMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _outputQueue.clear();
 
         MediaIOPortGroup *group = addPortGroup("burn");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("BurnMediaIO: addPortGroup('burn') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(cmd.pendingMediaDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("BurnMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         // Burn passes the input shape through unchanged (it overlays
         // text on top); the source has the same desc as the sink.
-        if (addSource(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSource(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("BurnMediaIO: addSource failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

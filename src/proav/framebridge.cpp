@@ -1011,8 +1011,14 @@ FrameBridge::~FrameBridge() {
 }
 
 Error FrameBridge::openOutput(const String &name, const Config &config) {
-        if (isOpen()) return Error::AlreadyOpen;
-        if (name.isEmpty()) return Error::Invalid;
+        if (isOpen()) {
+                promekiWarn("FrameBridge::openOutput('%s'): bridge already open", name.cstr());
+                return Error::AlreadyOpen;
+        }
+        if (name.isEmpty()) {
+                promekiWarn("FrameBridge::openOutput: empty name");
+                return Error::Invalid;
+        }
         _d->role = Impl::RoleOutput;
         _d->name = name;
         _d->mediaDesc = config.mediaDesc;
@@ -1026,6 +1032,10 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
 
         Error err = _d->computeGeometry();
         if (err.isError()) {
+                promekiWarn("FrameBridge::openOutput('%s'): computeGeometry failed: %s (fps=%s images=%zu)",
+                            name.cstr(), err.name().cstr(),
+                            _d->mediaDesc.frameRate().toString().cstr(),
+                            _d->mediaDesc.imageList().size());
                 _d->role = Impl::RoleNone;
                 return err;
         }
@@ -1047,6 +1057,8 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
                 Error       perr = probe.connectTo(_d->socketPath);
                 probe.close();
                 if (perr.isOk()) {
+                        promekiWarn("FrameBridge::openOutput('%s'): another publisher is live on %s",
+                                    name.cstr(), _d->socketPath.cstr());
                         _d->role = Impl::RoleNone;
                         return Error::Exists;
                 }
@@ -1064,6 +1076,8 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
 
         err = _d->shm.create(_d->shmName, totalBytes, config.accessMode, config.groupName);
         if (err.isError()) {
+                promekiWarn("FrameBridge::openOutput('%s'): shm create '%s' (%zu bytes) failed: %s",
+                            name.cstr(), _d->shmName.cstr(), totalBytes, err.name().cstr());
                 _d->role = Impl::RoleNone;
                 return err;
         }
@@ -1102,6 +1116,8 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
         Dir::ipc().mkpath();
         err = _d->server.listen(_d->socketPath, config.accessMode, config.groupName);
         if (err.isError()) {
+                promekiWarn("FrameBridge::openOutput('%s'): listen on '%s' failed: %s",
+                            name.cstr(), _d->socketPath.cstr(), err.name().cstr());
                 close();
                 return err;
         }
@@ -1117,8 +1133,14 @@ Error FrameBridge::openOutput(const String &name, const Config &config) {
 }
 
 Error FrameBridge::openInput(const String &name, bool sync) {
-        if (isOpen()) return Error::AlreadyOpen;
-        if (name.isEmpty()) return Error::Invalid;
+        if (isOpen()) {
+                promekiWarn("FrameBridge::openInput('%s'): bridge already open", name.cstr());
+                return Error::AlreadyOpen;
+        }
+        if (name.isEmpty()) {
+                promekiWarn("FrameBridge::openInput: empty name");
+                return Error::Invalid;
+        }
         _d->role = Impl::RoleInput;
         _d->name = name;
         _d->inputSyncMode = sync;
@@ -1127,6 +1149,8 @@ Error FrameBridge::openInput(const String &name, bool sync) {
 
         Error err = _d->client.connectTo(_d->socketPath);
         if (err.isError()) {
+                promekiWarn("FrameBridge::openInput('%s'): connect to '%s' failed: %s",
+                            name.cstr(), _d->socketPath.cstr(), err.name().cstr());
                 _d->role = Impl::RoleNone;
                 return err;
         }
@@ -1135,6 +1159,8 @@ Error FrameBridge::openInput(const String &name, bool sync) {
 
         err = _d->handshakeAsInput(name);
         if (err.isError()) {
+                promekiWarn("FrameBridge::openInput('%s'): handshake failed: %s",
+                            name.cstr(), err.name().cstr());
                 close();
                 return err;
         }

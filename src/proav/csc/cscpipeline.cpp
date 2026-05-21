@@ -934,14 +934,24 @@ void CSCPipeline::processLine(const void *const *srcPlanes, const size_t *srcStr
 }
 
 Error CSCPipeline::execute(const UncompressedVideoPayload &src, UncompressedVideoPayload &dst) const {
-        if (!_valid) return Error::Invalid;
-        if (!src.isValid() || !dst.isValid()) return Error::Invalid;
+        if (!_valid) {
+                promekiWarnThrottled(5000, "CSCPipeline::execute: pipeline not valid (src=%s dst=%s)",
+                                     _srcDesc.name().cstr(), _dstDesc.name().cstr());
+                return Error::Invalid;
+        }
+        if (!src.isValid() || !dst.isValid()) {
+                promekiWarnThrottled(1000, "CSCPipeline::execute: invalid payload(s) src=%d dst=%d",
+                                     src.isValid() ? 1 : 0, dst.isValid() ? 1 : 0);
+                return Error::Invalid;
+        }
 
         const ImageDesc &srcDesc = src.desc();
         const ImageDesc &dstDesc = dst.desc();
         const size_t     width = srcDesc.size().width();
         const size_t     height = srcDesc.size().height();
         if (dstDesc.size().width() != width || dstDesc.size().height() != height) {
+                promekiWarnThrottled(1000, "CSCPipeline::execute: size mismatch src=%zux%zu dst=%zux%zu",
+                                     width, height, dstDesc.size().width(), dstDesc.size().height());
                 return Error::Invalid;
         }
 

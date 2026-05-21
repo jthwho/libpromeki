@@ -6,8 +6,12 @@
  */
 
 #include <promeki/env.h>
+#include <promeki/logger.h>
 #include <promeki/regex.h>
 #include <promeki/platform.h>
+
+#include <cerrno>
+#include <cstring>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <cstdlib>
@@ -20,21 +24,43 @@ PROMEKI_NAMESPACE_BEGIN
 
 bool Env::set(const char *name, const String &value, bool overwrite) {
 #if defined(PROMEKI_PLATFORM_POSIX)
-        return setenv(name, value.cstr(), overwrite ? 1 : 0) == 0;
+        if (setenv(name, value.cstr(), overwrite ? 1 : 0) != 0) {
+                int e = errno;
+                promekiWarn("Env::set('%s') failed: %s (errno=%d)", name, std::strerror(e), e);
+                return false;
+        }
+        return true;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         if (!overwrite && std::getenv(name) != nullptr) return true;
-        return SetEnvironmentVariableA(name, value.cstr()) != 0;
+        if (SetEnvironmentVariableA(name, value.cstr()) == 0) {
+                promekiWarn("Env::set('%s') failed: SetEnvironmentVariable err=%lu",
+                            name, (unsigned long)GetLastError());
+                return false;
+        }
+        return true;
 #else
+        promekiWarnOnce("Env::set('%s') refused: unsupported platform", name);
         return false;
 #endif
 }
 
 bool Env::unset(const char *name) {
 #if defined(PROMEKI_PLATFORM_POSIX)
-        return unsetenv(name) == 0;
+        if (unsetenv(name) != 0) {
+                int e = errno;
+                promekiWarn("Env::unset('%s') failed: %s (errno=%d)", name, std::strerror(e), e);
+                return false;
+        }
+        return true;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
-        return SetEnvironmentVariableA(name, nullptr) != 0;
+        if (SetEnvironmentVariableA(name, nullptr) == 0) {
+                promekiWarn("Env::unset('%s') failed: SetEnvironmentVariable err=%lu",
+                            name, (unsigned long)GetLastError());
+                return false;
+        }
+        return true;
 #else
+        promekiWarnOnce("Env::unset('%s') refused: unsupported platform", name);
         return false;
 #endif
 }

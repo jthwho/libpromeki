@@ -145,6 +145,8 @@ MemSpace::Ops makeNumaHostOps(MemSpace::ID id, int node) {
                 // of a memcpy as long as it's host-accessible.  But
                 // the test path keys on the well-known IDs above for
                 // clarity.
+                promekiWarn("NumaHostBufferImpl copy refused: unsupported dst memspace id=%d (bytes=%zu)",
+                            (int)did, bytes);
                 return Error::NotSupported;
         };
         ops.fill = [](void *ptr, size_t bytes, char value) -> Error {

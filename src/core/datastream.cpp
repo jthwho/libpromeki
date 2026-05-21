@@ -8,6 +8,7 @@
 #include <cstring>
 #include <promeki/datastream.h>
 #include <promeki/datatype.h>
+#include <promeki/logger.h>
 #include <promeki/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -94,6 +95,7 @@ void DataStream::setError(Status s, String ctx) {
         if (_status != Ok) return;
         _status = s;
         _errorContext = std::move(ctx);
+        promekiWarn("DataStream error: status=%d ctx='%s'", (int)s, _errorContext.cstr());
 }
 
 void DataStream::resetStatus() {
@@ -586,6 +588,9 @@ DataStream &DataStream::operator<<(const Variant &val) {
         if (td == nullptr || td->ops.writeStream == nullptr) {
                 // No registered writer.  Emit an empty NoValue frame so
                 // the reader can recover.
+                promekiWarn("DataStream::operator<<(Variant): no registered writer for DataType id=%u; "
+                            "emitting NoValue frame",
+                            static_cast<unsigned>(val.dataType().id()));
                 beginFrame(DataTypeNoValue, 1);
                 endFrame();
                 return *this;
@@ -832,6 +837,10 @@ DataStream &DataStream::operator>>(Variant &val) {
                 return *this;
         }
         // Unknown tag — consume the cached header and skip past the body.
+        promekiWarn("DataStream::operator>>(Variant): unknown DataType tag 0x%04X "
+                    "(version=%u, size=%u) — skipping body",
+                    static_cast<unsigned>(tag), static_cast<unsigned>(ver),
+                    static_cast<unsigned>(sz));
         readFrameHeader(tag, ver, sz);
         skipFrameBody(sz);
         val = Variant();

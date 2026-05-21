@@ -76,7 +76,11 @@ LocalSocket::~LocalSocket() {
 Error LocalSocket::open(OpenMode mode) {
         if (isOpen()) return Error::AlreadyOpen;
         int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
-        if (fd < 0) return Error::syserr();
+        if (fd < 0) {
+                promekiWarn("LocalSocket::open AF_UNIX/SOCK_STREAM socket() failed (errno=%d %s)", errno,
+                            strerror(errno));
+                return Error::syserr();
+        }
         _fd = fd;
         _connected = false;
         _peerPath = String();
@@ -102,7 +106,11 @@ Error LocalSocket::close() {
 }
 
 Error LocalSocket::connectTo(const String &path, unsigned int /*timeoutMs*/) {
-        if (_connected) return Error::AlreadyOpen;
+        if (_connected) {
+                promekiWarn("LocalSocket::connectTo('%s') called while already connected to '%s'", path.cstr(),
+                            _peerPath.cstr());
+                return Error::AlreadyOpen;
+        }
         if (!isOpen()) {
                 Error err = open(ReadWrite);
                 if (err.isError()) return err;
@@ -111,9 +119,13 @@ Error LocalSocket::connectTo(const String &path, unsigned int /*timeoutMs*/) {
         struct sockaddr_un addr;
         socklen_t          addrLen = 0;
         Error              err = fillSunPath(path, addr, addrLen);
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarn("LocalSocket::connectTo: invalid socket path '%s' (%s)", path.cstr(), err.name().cstr());
+                return err;
+        }
 
         if (::connect(_fd, reinterpret_cast<struct sockaddr *>(&addr), addrLen) != 0) {
+                promekiWarn("LocalSocket::connectTo('%s') failed (errno=%d %s)", path.cstr(), errno, strerror(errno));
                 return Error::syserr();
         }
 
@@ -127,6 +139,11 @@ int64_t LocalSocket::read(void *data, int64_t maxSize) {
         if (_fd < 0) return -1;
         ssize_t ret = ::recv(_fd, data, static_cast<size_t>(maxSize), 0);
         if (ret < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000,
+                                             "LocalSocket::read recv failed on '%s' (errno=%d %s)",
+                                             _peerPath.cstr(), errno, strerror(errno));
+                }
                 errorOccurredSignal.emit(Error::syserr());
                 return -1;
         }
@@ -143,6 +160,11 @@ int64_t LocalSocket::write(const void *data, int64_t maxSize) {
         ssize_t ret = ::send(_fd, data, static_cast<size_t>(maxSize), MSG_NOSIGNAL);
         if (ret < 0) {
                 int e = errno;
+                if (e != EAGAIN && e != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000,
+                                             "LocalSocket::write send failed on '%s' (errno=%d %s)",
+                                             _peerPath.cstr(), e, strerror(e));
+                }
                 errorOccurredSignal.emit(Error::syserr(e));
                 // Terminal peer-gone errors: flip the socket to
                 // disconnected so callers' isConnected() checks see

@@ -6,6 +6,7 @@
  */
 
 #include <promeki/rtpseqtracker.h>
+#include <promeki/logger.h>
 
 #include <algorithm>
 #include <chrono>
@@ -131,6 +132,7 @@ RtpSeqTracker::ObserveResult RtpSeqTracker::observe(uint16_t seq, uint32_t rtpTs
                         // location" path the RFC describes.
                 }
                 if (seq == _badSeq) {
+                        promekiWarn("RtpSeqTracker: detected sender restart at seq=%u (re-anchoring)", seq);
                         initSourceLocked(seq);
                         _maxSeq = seq;
                         _initialised = true;
@@ -142,6 +144,10 @@ RtpSeqTracker::ObserveResult RtpSeqTracker::observe(uint16_t seq, uint32_t rtpTs
                         res.jitterRtpTsUnits = _jitter;
                         return res;
                 }
+                promekiWarnThrottled(2000,
+                                     "RtpSeqTracker: dropping large-jump seq=%u (max=%u udelta=%u) — "
+                                     "tagging as bad_seq candidate",
+                                     seq, _maxSeq, udelta);
                 _badSeq = (static_cast<uint32_t>(seq) + 1u) & (SeqMod - 1u);
                 res.duplicate = true;
                 res.extendedSeq = (_cycles | static_cast<uint32_t>(seq));

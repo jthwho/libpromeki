@@ -85,15 +85,26 @@ SdpMediaDescription::RtpMap SdpMediaDescription::rtpMap() const {
 
         // Expected form: "<pt> <encoding>/<rate>[/<channels>]".
         size_t sp = value.find(String(" "));
-        if (sp == String::npos || sp == 0) return result;
+        if (sp == String::npos || sp == 0) {
+                promekiWarn("SdpMediaDescription::rtpMap: malformed 'a=rtpmap' (no space): '%s'", value.cstr());
+                return result;
+        }
         String ptStr = value.substr(0, sp);
         String tail = value.substr(sp + 1).trim();
         size_t slash = tail.find(String("/"));
-        if (slash == String::npos || slash == 0) return result;
+        if (slash == String::npos || slash == 0) {
+                promekiWarn("SdpMediaDescription::rtpMap: malformed 'a=rtpmap' (no encoding/rate slash): '%s'",
+                            value.cstr());
+                return result;
+        }
 
         Error ptErr;
         int   pt = ptStr.toInt(&ptErr);
-        if (ptErr.isError() || pt < 0 || pt > 127) return result;
+        if (ptErr.isError() || pt < 0 || pt > 127) {
+                promekiWarn("SdpMediaDescription::rtpMap: invalid payload type '%s' in '%s'", ptStr.cstr(),
+                            value.cstr());
+                return result;
+        }
 
         result.encoding = tail.substr(0, slash).trim();
         String   rest = tail.substr(slash + 1);
@@ -108,7 +119,10 @@ SdpMediaDescription::RtpMap SdpMediaDescription::rtpMap() const {
                 int ch = rest.substr(slash2 + 1).trim().toInt();
                 result.channels = (ch > 0) ? static_cast<unsigned int>(ch) : 1;
         }
-        if (rateErr.isError() || rate == 0) return result;
+        if (rateErr.isError() || rate == 0) {
+                promekiWarn("SdpMediaDescription::rtpMap: invalid clock rate in '%s'", value.cstr());
+                return result;
+        }
 
         result.payloadType = static_cast<uint8_t>(pt);
         result.clockRate = rate;
@@ -177,7 +191,11 @@ Result<SdpSession> SdpSession::fromString(const String &sdp) {
                                         try {
                                                 sid = std::stoull(parts[1].str());
                                                 sver = std::stoull(parts[2].str());
-                                        } catch (...) {}
+                                        } catch (const std::exception &e) {
+                                                promekiWarn(
+                                                        "SdpSession::fromString: bad o= numerics ('%s'/'%s'): %s",
+                                                        parts[1].cstr(), parts[2].cstr(), e.what());
+                                        }
                                         session.setOrigin(parts[0], sid, sver, parts[3], parts[4], parts[5]);
                                 }
                                 break;

@@ -661,7 +661,13 @@ class NvdecVideoDecoder::Impl {
                 Error ensureSession(Codec codec) {
                         if (_parser != nullptr) return Error::Ok;
                         if (!loadCuvid()) {
-                                return Error::LibraryFailure;
+                                // libnvcuvid.so is absent or a version we
+                                // don't speak.  Same conceptual bucket as
+                                // a missing CUDA driver — see the
+                                // matching path in NvencVideoEncoder.
+                                promekiWarn("NVDEC: failed to load libnvcuvid.so.1 "
+                                            "(install nvidia-driver-NNN matching your CUDA build)");
+                                return Error::NotSupported;
                         }
                         if (Error err = retainCudaContext(); err.isError()) return err;
 

@@ -208,12 +208,23 @@ Error CscMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // Transform: one sink (input) + one source (output) sharing
         // a single port group / clock.
         MediaIOPortGroup *group = addPortGroup("csc");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("CscMediaIO: addPortGroup('csc') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(outDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
-        if (addSource(group, outDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("CscMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
+        if (addSource(group, outDesc) == nullptr) {
+                promekiWarn("CscMediaIO: addSource failed (fps=%s)",
+                            outDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

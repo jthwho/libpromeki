@@ -300,14 +300,25 @@ namespace {
         static Error readWholeFile(const FilePath &path, Buffer &out, bool secure) {
                 File  f(path.toString());
                 Error err = f.open(IODevice::ReadOnly);
-                if (err.isError()) return err;
+                if (err.isError()) {
+                        promekiWarn("SslContext: open '%s' failed (%s)", path.toString().cstr(), err.name().cstr());
+                        return err;
+                }
                 auto sizeRes = f.size();
-                if (sizeRes.second().isError()) return sizeRes.second();
+                if (sizeRes.second().isError()) {
+                        promekiWarn("SslContext: size('%s') failed (%s)", path.toString().cstr(),
+                                    sizeRes.second().name().cstr());
+                        return sizeRes.second();
+                }
                 const int64_t sz = sizeRes.first();
                 const MemSpace ms = secure ? MemSpace(MemSpace::SystemSecure) : MemSpace::Default;
                 Buffer        b(static_cast<size_t>(sz) + 1, Buffer::DefaultAlign, ms);
                 int64_t       got = f.read(b.data(), sz);
-                if (got < 0) return Error::IOError;
+                if (got < 0) {
+                        promekiWarn("SslContext: read('%s') failed (expected %lld bytes)", path.toString().cstr(),
+                                    static_cast<long long>(sz));
+                        return Error::IOError;
+                }
                 static_cast<char *>(b.data())[got] = '\0';
                 b.setSize(static_cast<size_t>(got) + 1);
                 out = std::move(b);
@@ -451,6 +462,7 @@ Error SslContext::setSystemCaCertificates() {
                 Error e = setCaCertificates(FilePath(path));
                 if (e.isOk()) return Error::Ok;
         }
+        promekiWarnOnce("SslContext::setSystemCaCertificates: no system CA bundle found in any of the well-known paths");
         return Error::NotExist;
 }
 

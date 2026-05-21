@@ -135,13 +135,22 @@ Error SrtServer::openAndConfigure() {
 }
 
 Error SrtServer::listen(const SocketAddress &address, int backlog) {
-        if (_listening) return Error::AlreadyOpen;
+        if (_listening) {
+                promekiWarn("SrtServer::listen(%s) called while already listening on %s",
+                            address.toString().cstr(), _address.toString().cstr());
+                return Error::AlreadyOpen;
+        }
         Error e = openAndConfigure();
-        if (e.isError()) return e;
+        if (e.isError()) {
+                promekiWarn("SrtServer::listen: openAndConfigure failed (%s): %s", e.name().cstr(),
+                            _lastError.cstr());
+                return e;
+        }
 
         if (_listenCb) {
                 if (srt_listen_callback(_sock, &listenCallbackBridge, this) == SRT_ERROR) {
                         captureLastError();
+                        promekiWarn("SrtServer::listen: srt_listen_callback failed: %s", _lastError.cstr());
                         close();
                         return Error::LibraryFailure;
                 }
@@ -149,15 +158,22 @@ Error SrtServer::listen(const SocketAddress &address, int backlog) {
 
         struct sockaddr_storage storage;
         const size_t            len = address.toSockAddr(&storage);
-        if (len == 0) return Error::Invalid;
+        if (len == 0) {
+                promekiWarn("SrtServer::listen: invalid address '%s'", address.toString().cstr());
+                return Error::Invalid;
+        }
 
         if (srt_bind(_sock, reinterpret_cast<struct sockaddr *>(&storage), static_cast<int>(len)) == SRT_ERROR) {
                 captureLastError();
+                promekiWarn("SrtServer::listen: srt_bind(%s) failed: %s", address.toString().cstr(),
+                            _lastError.cstr());
                 close();
                 return Error::LibraryFailure;
         }
         if (srt_listen(_sock, backlog) == SRT_ERROR) {
                 captureLastError();
+                promekiWarn("SrtServer::listen: srt_listen(backlog=%d) failed on %s: %s", backlog,
+                            address.toString().cstr(), _lastError.cstr());
                 close();
                 return Error::LibraryFailure;
         }

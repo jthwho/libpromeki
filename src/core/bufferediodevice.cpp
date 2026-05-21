@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <promeki/list.h>
 #include <promeki/bufferediodevice.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -49,8 +50,14 @@ void BufferedIODevice::resetReadBuffer() {
 }
 
 Error BufferedIODevice::setReadBuffer(Buffer &&buf) {
-        if (isOpen()) return Error(Error::AlreadyOpen);
-        if (!buf.isHostAccessible()) return Error(Error::NotHostAccessible);
+        if (isOpen()) {
+                promekiWarn("BufferedIODevice::setReadBuffer refused: device already open");
+                return Error(Error::AlreadyOpen);
+        }
+        if (!buf.isHostAccessible()) {
+                promekiWarn("BufferedIODevice::setReadBuffer refused: buffer not host-accessible");
+                return Error(Error::NotHostAccessible);
+        }
         _readBuf = std::move(buf);
         _bufferAllocated = true;
         _readBufPos = 0;

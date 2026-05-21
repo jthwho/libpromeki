@@ -142,14 +142,23 @@ Error SubtitleBurnMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         MediaIOPortGroup *group = addPortGroup("subtitleburn");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("SubtitleBurnMediaIO: addPortGroup('subtitleburn') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(cmd.pendingMediaDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("SubtitleBurnMediaIO: addSink failed (fps=%s)", cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         // SubtitleBurn passes the input shape through unchanged — the
         // overlay rides on top of the existing pixels.
-        if (addSource(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSource(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("SubtitleBurnMediaIO: addSource failed (fps=%s)", cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

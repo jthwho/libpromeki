@@ -8,6 +8,7 @@
 #include <climits>
 #include <promeki/mediaduration.h>
 #include <promeki/datastream.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -113,7 +114,13 @@ bool MediaDuration::canAppend(const MediaDuration &other) const {
 }
 
 Error MediaDuration::append(const MediaDuration &other) {
-        if (!canAppend(other)) return Error::NotAdjacent;
+        if (!canAppend(other)) {
+                promekiWarn("MediaDuration::append refused: durations not adjacent "
+                            "(this=[%lld+%lld] other=[%lld+%lld])",
+                            (long long)_start.value(), (long long)_length.value(),
+                            (long long)other._start.value(), (long long)other._length.value());
+                return Error::NotAdjacent;
+        }
         _length += other._length;
         return Error::Ok;
 }
@@ -130,18 +137,38 @@ bool MediaDuration::canPrepend(const MediaDuration &other) const {
 }
 
 Error MediaDuration::prepend(const MediaDuration &other) {
-        if (!canPrepend(other)) return Error::NotAdjacent;
+        if (!canPrepend(other)) {
+                promekiWarn("MediaDuration::prepend refused: durations not adjacent "
+                            "(this=[%lld+%lld] other=[%lld+%lld])",
+                            (long long)_start.value(), (long long)_length.value(),
+                            (long long)other._start.value(), (long long)other._length.value());
+                return Error::NotAdjacent;
+        }
         _start = other._start;
         _length += other._length;
         return Error::Ok;
 }
 
 Result<MediaDuration::FrameRange> MediaDuration::toFrameRange() const {
-        if (isUnknown()) return makeError<FrameRange>(Error::DurationUnknown);
-        if (isInfinite()) return makeError<FrameRange>(Error::FrameRangeInfinite);
-        if (_length.isEmpty()) return makeError<FrameRange>(Error::Invalid);
+        if (isUnknown()) {
+                promekiWarn("MediaDuration::toFrameRange refused: duration is Unknown");
+                return makeError<FrameRange>(Error::DurationUnknown);
+        }
+        if (isInfinite()) {
+                promekiWarn("MediaDuration::toFrameRange refused: duration is Infinite");
+                return makeError<FrameRange>(Error::FrameRangeInfinite);
+        }
+        if (_length.isEmpty()) {
+                promekiWarn("MediaDuration::toFrameRange refused: length is empty (start=%lld)",
+                            (long long)_start.value());
+                return makeError<FrameRange>(Error::Invalid);
+        }
         const int64_t last = safeInclusiveEnd(_start.value(), _length.value());
-        if (last < 0) return makeError<FrameRange>(Error::OutOfRange);
+        if (last < 0) {
+                promekiWarn("MediaDuration::toFrameRange refused: out of range (start=%lld, len=%lld)",
+                            (long long)_start.value(), (long long)_length.value());
+                return makeError<FrameRange>(Error::OutOfRange);
+        }
         FrameRange r;
         r.start = _start;
         r.end = FrameNumber(last);

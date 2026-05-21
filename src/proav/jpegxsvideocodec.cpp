@@ -481,6 +481,7 @@ Error JpegXsVideoEncoder::submitFrame(const Frame &frame) {
         clearError();
         UncompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid()) {
+                promekiWarnThrottled(1000, "JpegXsVideoEncoder::submitFrame: no uncompressed video payload on frame");
                 setError(Error::Invalid, "JpegXsVideoEncoder: no uncompressed video payload on frame");
                 return _lastError;
         }
@@ -493,6 +494,11 @@ Error JpegXsVideoEncoder::submitFrame(const Frame &frame) {
         String codecMsg;
         auto   cvp = _impl->encodeFrame(*payload, _bpp, _decomposition, codecErr, codecMsg);
         if (!cvp.isValid()) {
+                promekiWarnThrottled(1000, "JpegXsVideoEncoder::submitFrame: encode failed: %s (size=%ux%u fmt=%s bpp=%d)",
+                                     codecMsg.isEmpty() ? "encode failed" : codecMsg.cstr(),
+                                     (unsigned)payload->desc().size().width(),
+                                     (unsigned)payload->desc().size().height(),
+                                     payload->desc().pixelFormat().name().cstr(), _bpp);
                 setError(codecErr.isError() ? codecErr : Error::ConversionFailed,
                          codecMsg.isEmpty() ? String("JpegXsVideoEncoder: encode failed") : codecMsg);
                 return _lastError;
@@ -558,6 +564,7 @@ Error JpegXsVideoDecoder::submitFrame(const Frame &frame) {
         clearError();
         CompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid() || payload->size() == 0) {
+                promekiWarnThrottled(1000, "JpegXsVideoDecoder::submitFrame: no compressed video payload on frame");
                 setError(Error::Invalid, "JpegXsVideoDecoder: no compressed video payload on frame");
                 return _lastError;
         }
@@ -571,6 +578,10 @@ Error JpegXsVideoDecoder::submitFrame(const Frame &frame) {
         auto   uvp = _impl->decodeFrame(*payload, _outputPd.isValid() ? _outputPd.id() : PixelFormat::Invalid, codecErr,
                                         codecMsg);
         if (!uvp.isValid()) {
+                promekiWarnThrottled(1000, "JpegXsVideoDecoder::submitFrame: decode failed: %s (bytes=%zu out=%s)",
+                                     codecMsg.isEmpty() ? "decode failed" : codecMsg.cstr(),
+                                     payload->size(),
+                                     _outputPd.isValid() ? _outputPd.name().cstr() : "auto");
                 setError(codecErr.isError() ? codecErr : Error::ConversionFailed,
                          codecMsg.isEmpty() ? String("JpegXsVideoDecoder: decode failed") : codecMsg);
                 return _lastError;

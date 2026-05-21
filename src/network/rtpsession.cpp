@@ -104,6 +104,9 @@ class RtpSession::ReceiveThread : public Thread {
                                 if (n < 4) {
                                         // Too short to even hold an
                                         // RTCP common header.  Drop.
+                                        promekiWarnThrottled(5000,
+                                                             "RtpSession: dropping runt datagram (%zd bytes < 4)",
+                                                             n);
                                         continue;
                                 }
                                 buf.setSize(static_cast<size_t>(n));
@@ -128,6 +131,9 @@ class RtpSession::ReceiveThread : public Thread {
                                 if (static_cast<size_t>(n) < RtpPacket::HeaderSize) {
                                         // Too short to contain a
                                         // fixed RTP header; drop.
+                                        promekiWarnThrottled(2000,
+                                                             "RtpSession: dropping short RTP datagram (%zd < %zu)",
+                                                             n, RtpPacket::HeaderSize);
                                         continue;
                                 }
                                 RtpPacket pkt(buf, 0, static_cast<size_t>(n));
@@ -135,6 +141,14 @@ class RtpSession::ReceiveThread : public Thread {
                                         // Not a valid RTP packet
                                         // (wrong version, truncated
                                         // extension, etc.) — drop.
+                                        const uint8_t *bd = static_cast<const uint8_t *>(buf.data());
+                                        promekiWarnThrottled(2000,
+                                                             "RtpSession: dropping invalid RTP packet (size=%zd "
+                                                             "bytes=%02x %02x %02x %02x ...)",
+                                                             n, static_cast<unsigned>(bd[0]),
+                                                             static_cast<unsigned>(bd[1]),
+                                                             static_cast<unsigned>(bd[2]),
+                                                             static_cast<unsigned>(bd[3]));
                                         continue;
                                 }
                                 pkt.arrivalSteady = arrivalSteady;
@@ -200,6 +214,11 @@ class RtpSession::ReceiveThread : public Thread {
                                         // Tracker flagged the packet as a
                                         // very-large-jump candidate; drop
                                         // before the reorder buffer.
+                                        promekiWarnThrottled(2000,
+                                                             "RtpSession: dropping duplicate/large-jump RTP "
+                                                             "(pt=%u ssrc=%08x seq=%u)",
+                                                             static_cast<unsigned>(pt), ssrc,
+                                                             static_cast<unsigned>(pkt.sequenceNumber()));
                                         return;
                                 }
                                 r.reorderBuffer->insert(pkt, obs.extendedSeq, pkt.arrivalSteady,
@@ -260,6 +279,8 @@ class RtpSession::ReceiveThread : public Thread {
                         pin.mismatchCount = 0;
                         if (r.seqTracker) r.seqTracker->reset();
                         if (r.reorderBuffer) r.reorderBuffer->clear();
+                        promekiWarn("RtpSession: SSRC change accepted on pt=%u (%08x -> %08x)",
+                                    static_cast<unsigned>(pt), oldSsrc, ssrc);
                         _session->ssrcChangeSignal.emit(oldSsrc, ssrc, pt);
                         return true;
                 }
@@ -287,13 +308,20 @@ void RtpSession::generateSsrc() {
 }
 
 Error RtpSession::start(const SocketAddress &localAddr) {
-        if (_running) return Error::Busy;
+        if (_running) {
+                promekiWarn("RtpSession::start(%s) called while already running", localAddr.toString().cstr());
+                return Error::Busy;
+        }
 
         // Build an owned UdpSocketTransport for the simple case.
         auto owned = UdpSocketTransport::UPtr::create();
         owned->setLocalAddress(localAddr);
         Error err = owned->open();
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarn("RtpSession::start: failed to open UDP transport on %s (err=%s)",
+                            localAddr.toString().cstr(), err.name().cstr());
+                return err;
+        }
         _transport = owned.ptr();
         _ownedTransport = std::move(owned);
         _running = true;
@@ -301,9 +329,18 @@ Error RtpSession::start(const SocketAddress &localAddr) {
 }
 
 Error RtpSession::start(PacketTransport *transport) {
-        if (_running) return Error::Busy;
-        if (transport == nullptr) return Error::InvalidArgument;
-        if (!transport->isOpen()) return Error::NotOpen;
+        if (_running) {
+                promekiWarn("RtpSession::start(transport) called while already running");
+                return Error::Busy;
+        }
+        if (transport == nullptr) {
+                promekiWarn("RtpSession::start called with null transport");
+                return Error::InvalidArgument;
+        }
+        if (!transport->isOpen()) {
+                promekiWarn("RtpSession::start called with closed transport");
+                return Error::NotOpen;
+        }
         _transport = transport;
         _ownedTransport.clear();
         _running = true;
@@ -322,8 +359,15 @@ void RtpSession::stop() {
 }
 
 Error RtpSession::startReceiving(List<StreamReceiver> receivers, const String &threadName) {
-        if (!_running || _transport == nullptr) return Error::NotOpen;
-        if (_receiving.value()) return Error::Busy;
+        if (!_running || _transport == nullptr) {
+                promekiWarn("RtpSession::startReceiving called while not running (running=%d transport=%p)",
+                            _running ? 1 : 0, _transport);
+                return Error::NotOpen;
+        }
+        if (_receiving.value()) {
+                promekiWarn("RtpSession::startReceiving called while already receiving");
+                return Error::Busy;
+        }
         if (receivers.isEmpty()) {
                 promekiErr("RtpSession::startReceiving: empty receivers list");
                 return Error::InvalidArgument;
@@ -392,21 +436,42 @@ void RtpSession::fillTransportHeader(RtpPacket &pkt) {
 }
 
 Error RtpSession::sendPacket(const Buffer &payload, uint32_t timestamp, uint8_t payloadType, bool marker) {
-        if (!_running || _transport == nullptr) return Error::NotOpen;
-        if (_remote.isNull()) return Error::InvalidArgument;
+        if (!_running || _transport == nullptr) {
+                promekiWarnThrottled(5000, "RtpSession::sendPacket called while not running (pt=%u ts=%u)",
+                                     static_cast<unsigned>(payloadType), timestamp);
+                return Error::NotOpen;
+        }
+        if (_remote.isNull()) {
+                promekiWarnThrottled(5000, "RtpSession::sendPacket called with null remote (pt=%u ts=%u)",
+                                     static_cast<unsigned>(payloadType), timestamp);
+                return Error::InvalidArgument;
+        }
 
         RtpPacket pkt(RtpPacket::HeaderSize + payload.size());
         std::memcpy(pkt.payload(), payload.data(), payload.size());
         fillHeader(pkt, payloadType, marker, timestamp);
 
         ssize_t sent = _transport->sendPacket(pkt.data(), pkt.size(), _remote);
-        if (sent < 0) return Error::IOError;
+        if (sent < 0) {
+                promekiWarnThrottled(1000,
+                                     "RtpSession::sendPacket transport->sendPacket failed (pt=%u size=%zu dest=%s)",
+                                     static_cast<unsigned>(payloadType), pkt.size(), _remote.toString().cstr());
+                return Error::IOError;
+        }
         return Error::Ok;
 }
 
 Error RtpSession::sendPackets(RtpPacketBatch &batch) {
-        if (!_running || _transport == nullptr) return Error::NotOpen;
-        if (_remote.isNull()) return Error::InvalidArgument;
+        if (!_running || _transport == nullptr) {
+                promekiWarnThrottled(5000, "RtpSession::sendPackets called while not running (count=%zu)",
+                                     batch.packets.size());
+                return Error::NotOpen;
+        }
+        if (_remote.isNull()) {
+                promekiWarnThrottled(5000, "RtpSession::sendPackets called with null remote (count=%zu)",
+                                     batch.packets.size());
+                return Error::InvalidArgument;
+        }
         if (batch.packets.isEmpty()) return Error::Ok;
 
         // VBR compressed-video path stamps a per-frame rate cap on
@@ -450,8 +515,19 @@ Error RtpSession::sendPackets(RtpPacketBatch &batch) {
                         sub.pushToBack(dgs[i]);
                 }
                 int sent = _transport->sendPackets(sub);
-                if (sent < 0) return Error::IOError;
-                if (sent == 0) return Error::IOError; // no progress
+                if (sent < 0) {
+                        promekiWarnThrottled(
+                                1000,
+                                "RtpSession::sendPackets transport->sendPackets failed (offset=%zu remaining=%zu)",
+                                offset, remaining);
+                        return Error::IOError;
+                }
+                if (sent == 0) {
+                        promekiWarnThrottled(1000,
+                                             "RtpSession::sendPackets stalled — no progress (offset=%zu remaining=%zu)",
+                                             offset, remaining);
+                        return Error::IOError; // no progress
+                }
                 offset += static_cast<size_t>(sent);
         }
         return Error::Ok;
@@ -597,7 +673,12 @@ Error RtpSession::emitRtcpSr(uint32_t senderPacketCount, uint32_t senderOctetCou
         PacketTransport::DatagramList list;
         list.pushToBack(d);
         int sent = _transport->sendPackets(list);
-        return sent <= 0 ? Error::IOError : Error::Ok;
+        if (sent <= 0) {
+                promekiWarn("RtpSession: RTCP send failed to %s (sent=%d size=%zu)", _remote.toString().cstr(),
+                            sent, compound.size());
+                return Error::IOError;
+        }
+        return Error::Ok;
 }
 
 Error RtpSession::emitRtcpRr(const RtcpPacket::ReportBlock &block) {
@@ -639,7 +720,12 @@ Error RtpSession::emitRtcpRr(const RtcpPacket::ReportBlock &block) {
         PacketTransport::DatagramList list;
         list.pushToBack(d);
         int sent = _transport->sendPackets(list);
-        return sent <= 0 ? Error::IOError : Error::Ok;
+        if (sent <= 0) {
+                promekiWarn("RtpSession: RTCP send failed to %s (sent=%d size=%zu)", _remote.toString().cstr(),
+                            sent, compound.size());
+                return Error::IOError;
+        }
+        return Error::Ok;
 }
 
 Error RtpSession::emitRtcpBye() {
@@ -670,7 +756,12 @@ Error RtpSession::emitRtcpBye() {
         PacketTransport::DatagramList list;
         list.pushToBack(d);
         int sent = _transport->sendPackets(list);
-        return sent <= 0 ? Error::IOError : Error::Ok;
+        if (sent <= 0) {
+                promekiWarn("RtpSession: RTCP send failed to %s (sent=%d size=%zu)", _remote.toString().cstr(),
+                            sent, compound.size());
+                return Error::IOError;
+        }
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

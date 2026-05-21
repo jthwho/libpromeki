@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <promeki/logger.h>
 #include <promeki/stringiodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -25,8 +26,14 @@ void StringIODevice::setString(String *string) {
 }
 
 Error StringIODevice::open(OpenMode mode) {
-        if (isOpen()) return Error(Error::AlreadyOpen);
-        if (_string == nullptr) return Error(Error::Invalid);
+        if (isOpen()) {
+                promekiWarn("StringIODevice::open refused: already open");
+                return Error(Error::AlreadyOpen);
+        }
+        if (_string == nullptr) {
+                promekiWarn("StringIODevice::open refused: no String bound");
+                return Error(Error::Invalid);
+        }
         setOpenMode(mode);
         _pos = 0;
         return Error();
@@ -94,8 +101,14 @@ bool StringIODevice::isSequential() const {
 }
 
 Error StringIODevice::seek(int64_t pos) {
-        if (!isOpen()) return Error(Error::NotOpen);
-        if (pos < 0) return Error(Error::OutOfRange);
+        if (!isOpen()) {
+                promekiWarn("StringIODevice::seek(%lld) refused: not open", (long long)pos);
+                return Error(Error::NotOpen);
+        }
+        if (pos < 0) {
+                promekiWarn("StringIODevice::seek(%lld) refused: negative offset", (long long)pos);
+                return Error(Error::OutOfRange);
+        }
         _pos = pos;
         return Error();
 }

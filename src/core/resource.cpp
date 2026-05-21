@@ -6,6 +6,7 @@
  */
 
 #include <promeki/resource.h>
+#include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
 
@@ -124,6 +125,7 @@ bool Resource::exists(const String &path) {
 Buffer Resource::data(const String &path, Error *err) {
         const cirf_file_t *file = findFile(path);
         if (file == nullptr) {
+                promekiWarn("Resource::data('%s') failed: resource not found", path.cstr());
                 if (err != nullptr) *err = Error(Error::NotExist);
                 return Buffer();
         }
@@ -151,6 +153,7 @@ List<FilePath> Resource::listFiles(const String &path, Error *err) {
         List<FilePath>       result;
         const cirf_folder_t *folder = findFolder(path);
         if (folder == nullptr) {
+                promekiWarn("Resource::listFiles('%s') failed: folder not found", path.cstr());
                 if (err != nullptr) *err = Error(Error::NotExist);
                 return result;
         }
@@ -165,6 +168,7 @@ List<FilePath> Resource::listFolders(const String &path, Error *err) {
         List<FilePath>       result;
         const cirf_folder_t *folder = findFolder(path);
         if (folder == nullptr) {
+                promekiWarn("Resource::listFolders('%s') failed: folder not found", path.cstr());
                 if (err != nullptr) *err = Error(Error::NotExist);
                 return result;
         }
@@ -179,6 +183,7 @@ List<FilePath> Resource::listEntries(const String &path, Error *err) {
         List<FilePath>       result;
         const cirf_folder_t *folder = findFolder(path);
         if (folder == nullptr) {
+                promekiWarn("Resource::listEntries('%s') failed: folder not found", path.cstr());
                 if (err != nullptr) *err = Error(Error::NotExist);
                 return result;
         }
@@ -193,7 +198,10 @@ List<FilePath> Resource::listEntries(const String &path, Error *err) {
 }
 
 Error Resource::registerRoot(const cirf_folder_t *root, const String &prefix) {
-        if (root == nullptr) return Error(Error::InvalidArgument);
+        if (root == nullptr) {
+                promekiWarn("Resource::registerRoot('%s') refused: null root pointer", prefix.cstr());
+                return Error(Error::InvalidArgument);
+        }
         Mutex::Locker lock(registryMutex());
         // If a mount with this prefix already exists pointing at the
         // same root, do nothing. If it exists pointing at a different
@@ -208,6 +216,8 @@ Error Resource::registerRoot(const cirf_folder_t *root, const String &prefix) {
         }
         const char *stablePrefix = prefixRegistry().intern(prefix);
         if (cirf_mount(stablePrefix, root) != 0) {
+                promekiWarn("Resource::registerRoot('%s') failed: cirf_mount returned non-zero",
+                            prefix.cstr());
                 prefixRegistry().remove(prefix);
                 return Error(Error::NoMem);
         }

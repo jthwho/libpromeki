@@ -63,11 +63,18 @@ Error RawBitstreamMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _warnedNoPackets = false;
 
         MediaIOPortGroup *group = addPortGroup("rawbitstream");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("RawBitstreamMediaIO: addPortGroup('rawbitstream') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(cmd.pendingMediaDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("RawBitstreamMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

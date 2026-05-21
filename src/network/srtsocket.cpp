@@ -171,27 +171,43 @@ bool SrtSocket::isOpen() const {
 }
 
 int64_t SrtSocket::read(void *data, int64_t maxSize) {
-        if (!isOpen()) return -1;
+        if (!isOpen()) {
+                promekiWarnThrottled(5000, "SrtSocket::read called on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         const int n = srt_recv(_sock, static_cast<char *>(data), static_cast<int>(maxSize));
         if (n == SRT_ERROR) {
                 captureLastError();
+                promekiWarnThrottled(1000, "SrtSocket::read srt_recv failed: %s", _lastError.cstr());
                 setError(Error::IOError);
                 return -1;
         }
         if (n == 0) {
                 // Peer closed cleanly.
+                promekiInfo("SrtSocket: peer closed cleanly (peer=%s)", _peerAddress.toString().cstr());
                 disconnectedSignal.emit();
         }
         return static_cast<int64_t>(n);
 }
 
 int64_t SrtSocket::write(const void *data, int64_t maxSize) {
-        if (!isOpen()) return -1;
+        if (!isOpen()) {
+                promekiWarnThrottled(5000, "SrtSocket::write called on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         const int n = srt_send(_sock, static_cast<const char *>(data), static_cast<int>(maxSize));
         if (n == SRT_ERROR) {
                 captureLastError();
+                promekiWarnThrottled(1000, "SrtSocket::write srt_send failed (maxSize=%lld): %s",
+                                     static_cast<long long>(maxSize), _lastError.cstr());
                 setError(Error::IOError);
                 return -1;
+        }
+        if (n < maxSize) {
+                promekiWarnThrottled(1000, "SrtSocket::write short write: %d of %lld", n,
+                                     static_cast<long long>(maxSize));
         }
         return static_cast<int64_t>(n);
 }
@@ -201,12 +217,19 @@ int64_t SrtSocket::write(const void *data, int64_t maxSize) {
 // ============================================================
 
 Error SrtSocket::bind(const SocketAddress &address) {
-        if (!isOpen()) return Error::NotOpen;
+        if (!isOpen()) {
+                promekiWarn("SrtSocket::bind(%s) on closed socket", address.toString().cstr());
+                return Error::NotOpen;
+        }
         struct sockaddr_storage storage;
         const size_t            len = address.toSockAddr(&storage);
-        if (len == 0) return Error::Invalid;
+        if (len == 0) {
+                promekiWarn("SrtSocket::bind invalid address '%s'", address.toString().cstr());
+                return Error::Invalid;
+        }
         if (srt_bind(_sock, reinterpret_cast<struct sockaddr *>(&storage), static_cast<int>(len)) == SRT_ERROR) {
                 captureLastError();
+                promekiWarn("SrtSocket::bind(%s) failed: %s", address.toString().cstr(), _lastError.cstr());
                 return Error::LibraryFailure;
         }
         updateLocalAddress();
@@ -214,16 +237,24 @@ Error SrtSocket::bind(const SocketAddress &address) {
 }
 
 Error SrtSocket::connectToHost(const SocketAddress &address) {
-        if (!isOpen()) return Error::NotOpen;
+        if (!isOpen()) {
+                promekiWarn("SrtSocket::connectToHost(%s) on closed socket", address.toString().cstr());
+                return Error::NotOpen;
+        }
         struct sockaddr_storage storage;
         const size_t            len = address.toSockAddr(&storage);
-        if (len == 0) return Error::Invalid;
+        if (len == 0) {
+                promekiWarn("SrtSocket::connectToHost invalid address '%s'", address.toString().cstr());
+                return Error::Invalid;
+        }
         const int rc = srt_connect(_sock, reinterpret_cast<struct sockaddr *>(&storage), static_cast<int>(len));
         if (rc == SRT_ERROR) {
                 captureLastError();
                 // Map a few well-known SRT error codes to our enum.  Anything
                 // else falls back to a generic ConnectionFailed-equivalent.
                 const int err = srt_getlasterror(nullptr);
+                promekiWarn("SrtSocket::connectToHost(%s) failed (srtErr=%d): %s", address.toString().cstr(), err,
+                            _lastError.cstr());
                 switch (err) {
                         case SRT_ECONNREJ: return Error::ConnectionRefused;
                         case SRT_ECONNLOST: return Error::ConnectionReset;

@@ -174,12 +174,23 @@ Error VideoDecoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         MediaIOPortGroup *group = addPortGroup("vdecoder");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("VideoDecoderMediaIO: addPortGroup('vdecoder') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(outDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
-        if (addSource(group, outDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("VideoDecoderMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
+        if (addSource(group, outDesc) == nullptr) {
+                promekiWarn("VideoDecoderMediaIO: addSource failed (fps=%s)",
+                            outDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

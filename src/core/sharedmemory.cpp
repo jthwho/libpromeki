@@ -34,7 +34,10 @@ namespace {
         // contain no other slashes.  Returns Error::Invalid on a bad name; on
         // success, @p out holds the canonical form and errnoOut is untouched.
         Error canonicalizeShmName(const String &name, String &out) {
-                if (name.isEmpty()) return Error::Invalid;
+                if (name.isEmpty()) {
+                        promekiWarn("SharedMemory: refused empty name");
+                        return Error::Invalid;
+                }
                 String canonical;
                 if (name.byteAt(0) != '/') {
                         canonical = String("/") + name;
@@ -43,7 +46,11 @@ namespace {
                 }
                 // After the leading slash there must be no further '/'.
                 for (size_t i = 1; i < canonical.byteCount(); ++i) {
-                        if (canonical.byteAt(i) == '/') return Error::Invalid;
+                        if (canonical.byteAt(i) == '/') {
+                                promekiWarn("SharedMemory: invalid name '%s' (contains '/' after position 0)",
+                                            name.cstr());
+                                return Error::Invalid;
+                        }
                 }
                 out = canonical;
                 return Error::Ok;
@@ -68,14 +75,18 @@ Error SharedMemory::unlink(const String &name) {
         Error  err = canonicalizeShmName(name, canonical);
         if (err.isError()) return err;
         if (::shm_unlink(canonical.cstr()) != 0 && errno != ENOENT) {
-                return Error::syserr();
+                Error e = Error::syserr();
+                promekiWarn("SharedMemory::unlink('%s') failed: %s (errno=%d)",
+                            canonical.cstr(), e.name().cstr(), e.systemError());
+                return e;
         }
         return Error::Ok;
 }
 
 #else // !PROMEKI_PLATFORM_POSIX
 
-Error SharedMemory::unlink(const String &) {
+Error SharedMemory::unlink(const String &name) {
+        promekiWarnOnce("SharedMemory::unlink('%s') refused: not supported on this platform", name.cstr());
         return Error::NotSupported;
 }
 
@@ -118,8 +129,15 @@ SharedMemory &SharedMemory::operator=(SharedMemory &&other) noexcept {
 #if defined(PROMEKI_PLATFORM_POSIX)
 
 Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const String &groupName) {
-        if (isValid()) return Error::AlreadyOpen;
-        if (size == 0) return Error::Invalid;
+        if (isValid()) {
+                promekiWarn("SharedMemory::create('%s') refused: already open as '%s'",
+                            name.cstr(), _name.cstr());
+                return Error::AlreadyOpen;
+        }
+        if (size == 0) {
+                promekiWarn("SharedMemory::create('%s') refused: size=0", name.cstr());
+                return Error::Invalid;
+        }
 
         String canonical;
         Error  err = canonicalizeShmName(name, canonical);
@@ -129,13 +147,18 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
         // matching the documented contract.
         int fd = ::shm_open(canonical.cstr(), O_CREAT | O_EXCL | O_RDWR, static_cast<mode_t>(mode));
         if (fd < 0) {
-                return Error::syserr();
+                Error e = Error::syserr();
+                promekiWarn("SharedMemory::create('%s', size=%zu) shm_open failed: %s (errno=%d)",
+                            canonical.cstr(), size, e.name().cstr(), e.systemError());
+                return e;
         }
 
         // umask on the running process may have masked bits off the
         // requested mode; force the exact mode explicitly.
         if (::fchmod(fd, static_cast<mode_t>(mode)) != 0) {
                 Error fmErr = Error::syserr();
+                promekiWarn("SharedMemory::create('%s') fchmod(0%o) failed: %s (errno=%d)",
+                            canonical.cstr(), (unsigned)mode, fmErr.name().cstr(), fmErr.systemError());
                 ::close(fd);
                 ::shm_unlink(canonical.cstr());
                 return fmErr;
@@ -152,12 +175,17 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
                 int               rc = ::getgrnam_r(groupName.cstr(), &gr, buf.data(), buf.size(), &result);
                 if (rc != 0 || result == nullptr) {
                         Error grErr = (rc == 0) ? Error(Error::NotExist) : Error::syserr(rc);
+                        promekiWarn("SharedMemory::create('%s') getgrnam_r('%s') failed: %s (rc=%d)",
+                                    canonical.cstr(), groupName.cstr(), grErr.name().cstr(), rc);
                         ::close(fd);
                         ::shm_unlink(canonical.cstr());
                         return grErr;
                 }
                 if (::fchown(fd, static_cast<uid_t>(-1), gr.gr_gid) != 0) {
                         Error chErr = Error::syserr();
+                        promekiWarn("SharedMemory::create('%s') fchown(group='%s') failed: %s (errno=%d)",
+                                    canonical.cstr(), groupName.cstr(), chErr.name().cstr(),
+                                    chErr.systemError());
                         ::close(fd);
                         ::shm_unlink(canonical.cstr());
                         return chErr;
@@ -166,6 +194,8 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
 
         if (::ftruncate(fd, static_cast<off_t>(size)) != 0) {
                 Error ftErr = Error::syserr();
+                promekiWarn("SharedMemory::create('%s') ftruncate(%zu) failed: %s (errno=%d)",
+                            canonical.cstr(), size, ftErr.name().cstr(), ftErr.systemError());
                 ::close(fd);
                 ::shm_unlink(canonical.cstr());
                 return ftErr;
@@ -174,6 +204,8 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
         void *addr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (addr == MAP_FAILED) {
                 Error mmErr = Error::syserr();
+                promekiWarn("SharedMemory::create('%s') mmap(%zu) failed: %s (errno=%d)",
+                            canonical.cstr(), size, mmErr.name().cstr(), mmErr.systemError());
                 ::close(fd);
                 ::shm_unlink(canonical.cstr());
                 return mmErr;
@@ -189,7 +221,11 @@ Error SharedMemory::create(const String &name, size_t size, uint32_t mode, const
 }
 
 Error SharedMemory::open(const String &name, Access access) {
-        if (isValid()) return Error::AlreadyOpen;
+        if (isValid()) {
+                promekiWarn("SharedMemory::open('%s') refused: already open as '%s'",
+                            name.cstr(), _name.cstr());
+                return Error::AlreadyOpen;
+        }
 
         String canonical;
         Error  err = canonicalizeShmName(name, canonical);
@@ -198,17 +234,23 @@ Error SharedMemory::open(const String &name, Access access) {
         int openFlags = (access == ReadOnly) ? O_RDONLY : O_RDWR;
         int fd = ::shm_open(canonical.cstr(), openFlags, 0);
         if (fd < 0) {
-                return Error::syserr();
+                Error e = Error::syserr();
+                promekiWarn("SharedMemory::open('%s', access=%d) shm_open failed: %s (errno=%d)",
+                            canonical.cstr(), (int)access, e.name().cstr(), e.systemError());
+                return e;
         }
 
         // Learn the size from the file; callers don't need to know it.
         struct stat st{};
         if (::fstat(fd, &st) != 0) {
                 Error stErr = Error::syserr();
+                promekiWarn("SharedMemory::open('%s') fstat failed: %s (errno=%d)",
+                            canonical.cstr(), stErr.name().cstr(), stErr.systemError());
                 ::close(fd);
                 return stErr;
         }
         if (st.st_size <= 0) {
+                promekiWarn("SharedMemory::open('%s') refused: zero-sized region", canonical.cstr());
                 ::close(fd);
                 return Error::Invalid;
         }
@@ -218,6 +260,8 @@ Error SharedMemory::open(const String &name, Access access) {
         void *addr = ::mmap(nullptr, sz, prot, MAP_SHARED, fd, 0);
         if (addr == MAP_FAILED) {
                 Error mmErr = Error::syserr();
+                promekiWarn("SharedMemory::open('%s') mmap(%zu) failed: %s (errno=%d)",
+                            canonical.cstr(), sz, mmErr.name().cstr(), mmErr.systemError());
                 ::close(fd);
                 return mmErr;
         }
@@ -255,11 +299,13 @@ void SharedMemory::close() {
 
 #else // !PROMEKI_PLATFORM_POSIX
 
-Error SharedMemory::create(const String &, size_t, uint32_t, const String &) {
+Error SharedMemory::create(const String &name, size_t, uint32_t, const String &) {
+        promekiWarnOnce("SharedMemory::create('%s') refused: not supported on this platform", name.cstr());
         return Error::NotSupported;
 }
 
-Error SharedMemory::open(const String &, Access) {
+Error SharedMemory::open(const String &name, Access) {
+        promekiWarnOnce("SharedMemory::open('%s') refused: not supported on this platform", name.cstr());
         return Error::NotSupported;
 }
 

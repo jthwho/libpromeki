@@ -33,6 +33,7 @@
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediatimestamp.h>
+#include <promeki/logger.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
 #include <promeki/pcmaudiopayload.h>
@@ -108,6 +109,7 @@ namespace {
                                 clearError();
                                 PcmAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                        promekiWarnThrottled(1000, "FdkAacEncoder::submitFrame: no PCM audio payload on frame");
                                         setError(Error::Invalid, "no PCM audio payload on frame");
                                         return _lastError;
                                 }
@@ -116,6 +118,12 @@ namespace {
                                 if (!ensureEncoder(payload->desc())) return _lastError;
                                 if (payload->desc().sampleRate() != _sampleRate ||
                                     payload->desc().channels() != _channels) {
+                                        promekiWarn("FdkAacEncoder::submitFrame: payload format %s sr=%g ch=%u "
+                                                    "does not match encoder configured sr=%g ch=%u",
+                                                    payload->desc().format().toString().cstr(),
+                                                    static_cast<double>(payload->desc().sampleRate()),
+                                                    payload->desc().channels(),
+                                                    static_cast<double>(_sampleRate), _channels);
                                         setError(Error::Invalid, "payload format does not match encoder configuration");
                                         return _lastError;
                                 }
@@ -127,6 +135,10 @@ namespace {
                                 if (payload->desc().format().id() != AudioFormat::PCMI_S16LE) {
                                         converted = payload->convert(AudioFormat::PCMI_S16LE);
                                         if (!converted.isValid()) {
+                                                promekiWarnThrottled(1000,
+                                                        "FdkAacEncoder::submitFrame: failed to convert payload "
+                                                        "format %s -> PCMI_S16LE",
+                                                        payload->desc().format().toString().cstr());
                                                 setError(Error::Invalid, "failed to convert input to PCMI_S16LE");
                                                 return _lastError;
                                         }
@@ -227,6 +239,8 @@ namespace {
                                 if (_enc != nullptr) return true;
                                 CHANNEL_MODE mode = channelModeFor(desc.channels());
                                 if (mode == MODE_INVALID) {
+                                        promekiWarn("FdkAacEncoder::ensureEncoder: unsupported channel count %u",
+                                                    desc.channels());
                                         setError(Error::Invalid,
                                                  String::sprintf("AAC: unsupported channel count %u", desc.channels()));
                                         return false;
@@ -234,6 +248,9 @@ namespace {
 
                                 AACENC_ERROR err = aacEncOpen(&_enc, /*encModules=*/0, /*maxChannels=*/desc.channels());
                                 if (err != AACENC_OK || _enc == nullptr) {
+                                        promekiWarn("FdkAacEncoder::ensureEncoder: aacEncOpen failed: %s (sr=%g ch=%u)",
+                                                    aacEncErrName(err), static_cast<double>(desc.sampleRate()),
+                                                    desc.channels());
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("aacEncOpen failed: %s", aacEncErrName(err)));
                                         _enc = nullptr;
@@ -244,6 +261,9 @@ namespace {
                                         do {                                                                 \
                                                 AACENC_ERROR e = aacEncoder_SetParam(_enc, (p), (v));        \
                                                 if (e != AACENC_OK) {                                        \
+                                                        promekiWarn("FdkAacEncoder::ensureEncoder: "         \
+                                                                    "aacEncoder_SetParam(%s) failed: %s",    \
+                                                                    #p, aacEncErrName(e));                   \
                                                         setError(Error::LibraryFailure,                      \
                                                                  String::sprintf("aacEncoder_SetParam(%s) " \
                                                                                  "failed: %s",               \
@@ -265,6 +285,8 @@ namespace {
 
                                 AACENC_ERROR initErr = aacEncEncode(_enc, nullptr, nullptr, nullptr, nullptr);
                                 if (initErr != AACENC_OK) {
+                                        promekiWarn("FdkAacEncoder::ensureEncoder: aacEncEncode init failed: %s",
+                                                    aacEncErrName(initErr));
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("aacEncEncode init failed: %s", aacEncErrName(initErr)));
                                         aacEncClose(&_enc);
@@ -275,6 +297,8 @@ namespace {
                                 AACENC_InfoStruct info{};
                                 AACENC_ERROR      iErr = aacEncInfo(_enc, &info);
                                 if (iErr != AACENC_OK) {
+                                        promekiWarn("FdkAacEncoder::ensureEncoder: aacEncInfo failed: %s",
+                                                    aacEncErrName(iErr));
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("aacEncInfo failed: %s", aacEncErrName(iErr)));
                                         aacEncClose(&_enc);
@@ -361,6 +385,9 @@ namespace {
                                 AACENC_ERROR err    = aacEncEncode(_enc, &inBuf, &outBuf, &inArgs, &outArgs);
                                 if (err == AACENC_ENCODE_EOF) return false;
                                 if (err != AACENC_OK) {
+                                        promekiWarnThrottled(1000, "FdkAacEncoder::encodeOnceWithInput: "
+                                                                   "aacEncEncode failed: %s (inSamples=%d)",
+                                                             aacEncErrName(err), (int)inputSamplesLen);
                                         setError(Error::EncodeFailed,
                                                  String::sprintf("aacEncEncode failed: %s", aacEncErrName(err)));
                                         return false;
@@ -495,6 +522,7 @@ namespace {
                                 clearError();
                                 CompressedAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid()) {
+                                        promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: no compressed audio payload on frame");
                                         setError(Error::Invalid, "no compressed audio payload on frame");
                                         return _lastError;
                                 }
@@ -517,6 +545,8 @@ namespace {
                                         reinterpret_cast<unsigned int *>(&inSize),
                                         reinterpret_cast<unsigned int *>(&valid));
                                 if (fillErr != AAC_DEC_OK) {
+                                        promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_Fill failed: %s (size=%u)",
+                                                             aacDecErrName(fillErr), (unsigned)view.size());
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("aacDecoder_Fill failed: %s",
                                                                  aacDecErrName(fillErr)));
@@ -531,6 +561,8 @@ namespace {
                                             aacDecoder_DecodeFrame(_dec, pcm, kMaxPcmSamplesPerFrame, 0);
                                         if (dErr == AAC_DEC_NOT_ENOUGH_BITS) break;
                                         if (dErr != AAC_DEC_OK) {
+                                                promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_DecodeFrame failed: %s",
+                                                                     aacDecErrName(dErr));
                                                 setError(Error::DecodeFailed,
                                                          String::sprintf("aacDecoder_DecodeFrame failed: %s",
                                                                          aacDecErrName(dErr)));
@@ -538,6 +570,7 @@ namespace {
                                         }
                                         CStreamInfo *info = aacDecoder_GetStreamInfo(_dec);
                                         if (info == nullptr) {
+                                                promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_GetStreamInfo returned null");
                                                 setError(Error::LibraryFailure,
                                                          "aacDecoder_GetStreamInfo returned null");
                                                 break;
@@ -572,6 +605,7 @@ namespace {
                                 if (_dec != nullptr) return true;
                                 _dec = aacDecoder_Open(TT_MP4_RAW, /*nrOfLayers=*/1);
                                 if (_dec == nullptr) {
+                                        promekiWarn("FdkAacDecoder::ensureDecoder: aacDecoder_Open(TT_MP4_RAW) failed");
                                         setError(Error::LibraryFailure, "aacDecoder_Open failed");
                                         return false;
                                 }
@@ -583,6 +617,10 @@ namespace {
                                 Buffer           ascBytes;
                                 Error            sErr = cfg.serialize(ascBytes);
                                 if (sErr.isError()) {
+                                        promekiWarn("FdkAacDecoder::ensureDecoder: failed to serialize "
+                                                    "AudioSpecificConfig from desc sr=%g ch=%u: %s",
+                                                    static_cast<double>(desc.sampleRate()), desc.channels(),
+                                                    sErr.name().cstr());
                                         setError(sErr, "failed to serialize AudioSpecificConfig from desc");
                                         return false;
                                 }
@@ -593,6 +631,8 @@ namespace {
                                         _dec, reinterpret_cast<unsigned char **>(ascArr),
                                         reinterpret_cast<unsigned int *>(&ascLen));
                                 if (err != AAC_DEC_OK) {
+                                        promekiWarn("FdkAacDecoder::ensureDecoder: aacDecoder_ConfigRaw failed: %s",
+                                                    aacDecErrName(err));
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("aacDecoder_ConfigRaw failed: %s",
                                                                  aacDecErrName(err)));

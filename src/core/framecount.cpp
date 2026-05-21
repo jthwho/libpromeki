@@ -7,6 +7,7 @@
 
 #include <promeki/framecount.h>
 #include <promeki/datastream.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -30,13 +31,24 @@ Result<FrameCount> FrameCount::fromString(const String &str) {
                 char last = body.cstr()[body.byteCount() - 1];
                 if (last == 'f' || last == 'F') {
                         body = String(body.cstr(), body.byteCount() - 1).trim();
-                        if (body.isEmpty()) return makeError<FrameCount>(Error::ParseFailed);
+                        if (body.isEmpty()) {
+                                promekiWarn("FrameCount::fromString('%s') failed: 'f'/'F' suffix with no value",
+                                            str.cstr());
+                                return makeError<FrameCount>(Error::ParseFailed);
+                        }
                 }
         }
         Error   parseErr;
         int64_t v = body.to<int64_t>(&parseErr);
-        if (parseErr.isError()) return makeError<FrameCount>(Error::ParseFailed);
-        if (v < 0) return makeError<FrameCount>(Error::OutOfRange);
+        if (parseErr.isError()) {
+                promekiWarn("FrameCount::fromString('%s') failed: not a valid integer", str.cstr());
+                return makeError<FrameCount>(Error::ParseFailed);
+        }
+        if (v < 0) {
+                promekiWarn("FrameCount::fromString('%s') failed: negative value %lld",
+                            str.cstr(), (long long)v);
+                return makeError<FrameCount>(Error::OutOfRange);
+        }
         return makeResult(FrameCount(v));
 }
 
@@ -117,7 +129,11 @@ Result<FrameCount> FrameCount::readFromStream<1>(DataStream &s) {
         if (v == UnknownValue) c = FrameCount::unknown();
         else if (v == InfinityValue) c = FrameCount::infinity();
         else if (v >= 0) c = FrameCount(v);
-        else return makeError<FrameCount>(Error::CorruptData);
+        else {
+                promekiWarn("FrameCount::readFromStream: corrupt value %lld (not Unknown/Infinity/>=0)",
+                            (long long)v);
+                return makeError<FrameCount>(Error::CorruptData);
+        }
         return makeResult(c);
 }
 

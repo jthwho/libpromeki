@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <promeki/asyncbufferqueue.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -18,12 +19,22 @@ AsyncBufferQueue::~AsyncBufferQueue() {
 }
 
 Error AsyncBufferQueue::open(OpenMode mode) {
-        if (isOpen()) return Error(Error::AlreadyOpen);
+        if (isOpen()) {
+                promekiWarn("AsyncBufferQueue::open refused: already open");
+                return Error(Error::AlreadyOpen);
+        }
         // Only ReadOnly makes sense — bytes arrive via enqueue, not
         // via write().  Reject everything else loudly so the
         // consumer side can tell intent at construction time.
-        if ((mode & WriteOnly) != 0) return Error(Error::NotSupported);
-        if ((mode & ReadOnly) == 0) return Error(Error::Invalid);
+        if ((mode & WriteOnly) != 0) {
+                promekiWarn("AsyncBufferQueue::open(mode=%d) refused: write side is via enqueue() only",
+                            (int)mode);
+                return Error(Error::NotSupported);
+        }
+        if ((mode & ReadOnly) == 0) {
+                promekiWarn("AsyncBufferQueue::open(mode=%d) refused: must include ReadOnly", (int)mode);
+                return Error(Error::Invalid);
+        }
         setOpenMode(mode);
         {
                 Mutex::Locker lk(_mutex);
@@ -147,7 +158,11 @@ Error AsyncBufferQueue::enqueue(const Buffer &segment) {
         if (segment.size() == 0) return Error::Ok;
         {
                 Mutex::Locker lk(_mutex);
-                if (_writingClosed) return Error(Error::NotOpen);
+                if (_writingClosed) {
+                        promekiWarn("AsyncBufferQueue::enqueue(%zu bytes) refused: writing side closed",
+                                    segment.size());
+                        return Error(Error::NotOpen);
+                }
                 Segment s;
                 s.buffer = segment;
                 s.offset = 0;

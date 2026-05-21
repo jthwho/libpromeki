@@ -192,7 +192,9 @@ struct MemSpaceRegistry {
                                 .release = [](MemAllocation &) -> void {
                                         PROMEKI_ASSERT(false && "MemSpace::SystemCow release must go through BufferImpl");
                                 },
-                                .copy = [](const MemAllocation &, const MemAllocation &, size_t) -> Error {
+                                .copy = [](const MemAllocation &, const MemAllocation &dst, size_t bytes) -> Error {
+                                        promekiWarn("MemSpace::SystemCow copy refused: dst memspace id=%d unsupported (bytes=%llu)",
+                                                    (int)dst.ms.id(), (unsigned long long)bytes);
                                         return Error::NotSupported;
                                 },
                                 .fill = [](void *ptr, size_t bytes, char value) -> Error {
@@ -230,6 +232,8 @@ struct MemSpaceRegistry {
                                                 std::memcpy(dst.ptr, src.ptr, bytes);
                                                 return Error::Ok;
                                         }
+                                        promekiWarn("MemSpace::NumaHost copy refused: dst memspace id=%d unsupported (bytes=%llu)",
+                                                    (int)did, (unsigned long long)bytes);
                                         return Error::NotSupported;
                                 },
                                 .fill = [](void *ptr, size_t bytes, char value) -> Error {
@@ -265,6 +269,8 @@ struct MemSpaceRegistry {
                                                 std::memcpy(dst.ptr, src.ptr, bytes);
                                                 return Error::Ok;
                                         }
+                                        promekiWarn("MemSpace::PinnedHost copy refused: dst memspace id=%d unsupported (bytes=%llu)",
+                                                    (int)did, (unsigned long long)bytes);
                                         return Error::NotSupported;
                                 },
                                 .fill = [](void *ptr, size_t bytes, char value) -> Error {

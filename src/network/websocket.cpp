@@ -129,6 +129,8 @@ namespace {
                 struct addrinfo *res = nullptr;
                 const int        rc = ::getaddrinfo(host.cstr(), nullptr, &hints, &res);
                 if (rc != 0 || res == nullptr) {
+                        promekiWarn("WebSocket: getaddrinfo('%s') failed (rc=%d %s)", host.cstr(), rc,
+                                    gai_strerror(rc));
                         if (res != nullptr) ::freeaddrinfo(res);
                         return Error::HostNotFound;
                 }
@@ -176,20 +178,33 @@ void WebSocket::setRequestHeader(const String &name, const String &value) {
 }
 
 Error WebSocket::connectToUrl(const String &urlStr) {
-        if (_state != Disconnected) return Error::AlreadyOpen;
+        if (_state != Disconnected) {
+                promekiWarn("WebSocket::connectToUrl('%s') called while not Disconnected (state=%d)",
+                            urlStr.cstr(), static_cast<int>(_state));
+                return Error::AlreadyOpen;
+        }
         Result<Url> parsed = Url::fromString(urlStr);
-        if (parsed.second().isError() || !parsed.first().isValid()) return Error::Invalid;
+        if (parsed.second().isError() || !parsed.first().isValid()) {
+                promekiWarn("WebSocket::connectToUrl: failed to parse URL '%s'", urlStr.cstr());
+                return Error::Invalid;
+        }
         Url u = parsed.first();
-        if (u.host().isEmpty()) return Error::Invalid;
+        if (u.host().isEmpty()) {
+                promekiWarn("WebSocket::connectToUrl: URL '%s' missing host", urlStr.cstr());
+                return Error::Invalid;
+        }
 
         _useTls = false;
         if (u.scheme() == "wss") {
 #if PROMEKI_ENABLE_TLS
                 _useTls = true;
 #else
+                promekiWarnOnce("WebSocket: 'wss://' URL '%s' but TLS support not compiled in", urlStr.cstr());
                 return Error::NotImplemented;
 #endif
         } else if (u.scheme() != "ws") {
+                promekiWarn("WebSocket::connectToUrl: unsupported scheme '%s' in URL '%s'",
+                            u.scheme().cstr(), urlStr.cstr());
                 return Error::Invalid;
         }
 

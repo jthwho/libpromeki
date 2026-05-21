@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <promeki/logger.h>
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -138,7 +139,10 @@ CpuMonitor::~CpuMonitor() {
 }
 
 Error CpuMonitor::start(const Duration &interval) {
-        if (Thread::isRunning()) return Error::AlreadyOpen;
+        if (Thread::isRunning()) {
+                promekiWarn("CpuMonitor::start refused: monitor already running");
+                return Error::AlreadyOpen;
+        }
         const int64_t ns = interval.nanoseconds() > 0
                                    ? interval.nanoseconds()
                                    : Duration::fromSeconds(DefaultIntervalSec).nanoseconds();

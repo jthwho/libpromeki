@@ -3065,14 +3065,25 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // Single-port-group RTP backend: source when reader, sink
         // when writer.
         MediaIOPortGroup *group = addPortGroup("rtp");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("RtpMediaIO: addPortGroup('rtp') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(_frameRate);
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
         if (isWrite) {
-                if (addSink(group, resolved) == nullptr) return Error::Invalid;
+                if (addSink(group, resolved) == nullptr) {
+                        promekiWarn("RtpMediaIO: addSink failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         } else {
-                if (addSource(group, resolved) == nullptr) return Error::Invalid;
+                if (addSource(group, resolved) == nullptr) {
+                        promekiWarn("RtpMediaIO: addSource failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         }
         return Error::Ok;
 }
@@ -3376,7 +3387,10 @@ Error RtpMediaIO::injectParameterSets(const uint8_t *data, size_t size, Buffer &
 
 
 Error RtpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        if (!cmd.frame.isValid()) return Error::InvalidArgument;
+        if (!cmd.frame.isValid()) {
+                promekiWarnThrottled(1000, "RtpMediaIO::Write: invalid frame submitted");
+                return Error::InvalidArgument;
+        }
         const Frame &frame = cmd.frame;
 
         // First-frame anchor refinement.  At openStream time every

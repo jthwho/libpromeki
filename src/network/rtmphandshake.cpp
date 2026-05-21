@@ -465,6 +465,8 @@ Error RtmpHandshake::consumePeerC0C1() {
         if (_inBuffer.size() < static_cast<size_t>(1 + ChunkSize)) return Error::Ok;  // need more
         uint8_t version = _inBuffer.data()[0];
         if (version != Version) {
+                promekiWarn("RtmpHandshake (server): peer C0 version=0x%02x, expected 0x%02x", version,
+                            static_cast<unsigned>(Version));
                 fail(Error::CorruptData);
                 return Error::CorruptData;
         }
@@ -490,6 +492,7 @@ Error RtmpHandshake::consumePeerC0C1() {
                         _peerScheme = scheme;
                         _negotiatedMode = RtmpHandshakeMode::Complex;
                 } else if (_mode == RtmpHandshakeMode::Complex) {
+                        promekiWarn("RtmpHandshake (server): peer C1 digest invalid in strict Complex mode");
                         fail(Error::CorruptData);
                         return Error::CorruptData;
                 } else {
@@ -499,6 +502,7 @@ Error RtmpHandshake::consumePeerC0C1() {
         } else {
                 if (_mode == RtmpHandshakeMode::Complex) {
                         // Peer is plainly Simple but we demanded Complex.
+                        promekiWarn("RtmpHandshake (server): peer C1 is Simple but Complex was required");
                         fail(Error::CorruptData);
                         return Error::CorruptData;
                 }
@@ -515,6 +519,8 @@ Error RtmpHandshake::consumePeerS0S1() {
         if (_inBuffer.size() < static_cast<size_t>(1 + ChunkSize)) return Error::Ok;  // need more
         uint8_t version = _inBuffer.data()[0];
         if (version != Version) {
+                promekiWarn("RtmpHandshake (client): peer S0 version=0x%02x, expected 0x%02x", version,
+                            static_cast<unsigned>(Version));
                 fail(Error::CorruptData);
                 return Error::CorruptData;
         }
@@ -539,6 +545,7 @@ Error RtmpHandshake::consumePeerS0S1() {
                         _peerScheme = scheme;
                         _negotiatedMode = RtmpHandshakeMode::Complex;
                 } else if (_mode == RtmpHandshakeMode::Complex) {
+                        promekiWarn("RtmpHandshake (client): peer S1 digest invalid in strict Complex mode");
                         fail(Error::CorruptData);
                         return Error::CorruptData;
                 } else {
@@ -568,6 +575,7 @@ Error RtmpHandshake::consumePeerC2() {
                                      kGenuineFPKey, sizeof(kGenuineFPKey),
                                      c2, expected);
                 if (!constantTimeEqual(expected, c2 + (ChunkSize - kDigestLen), kDigestLen)) {
+                        promekiWarn("RtmpHandshake (server): peer C2 signature mismatch in Complex mode");
                         fail(Error::CorruptData);
                         return Error::CorruptData;
                 }
@@ -591,6 +599,7 @@ Error RtmpHandshake::consumePeerS2() {
                                      kGenuineFMSKey, sizeof(kGenuineFMSKey),
                                      s2, expected);
                 if (!constantTimeEqual(expected, s2 + (ChunkSize - kDigestLen), kDigestLen)) {
+                        promekiWarn("RtmpHandshake (client): peer S2 signature mismatch in Complex mode");
                         fail(Error::CorruptData);
                         return Error::CorruptData;
                 }

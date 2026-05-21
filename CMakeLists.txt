@@ -3431,6 +3431,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/framerate.cpp
         tests/unit/function.cpp
         tests/unit/future.cpp
+        tests/unit/gate.cpp
         tests/unit/hashmap.cpp
         tests/unit/hashset.cpp
         tests/unit/histogram.cpp

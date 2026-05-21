@@ -295,7 +295,10 @@ void *Numa::allocOnNode(size_t bytes, int node) {
 #  else
         void *ptr = nullptr;
         const size_t pageSize = static_cast<size_t>(sysconf(_SC_PAGESIZE));
-        if (posix_memalign(&ptr, pageSize, bytes) != 0) return nullptr;
+        if (posix_memalign(&ptr, pageSize, bytes) != 0) {
+                promekiWarn("Numa::allocOnNode posix_memalign(%zu, %zu) failed", pageSize, bytes);
+                return nullptr;
+        }
         return ptr;
 #  endif
 #endif
@@ -309,7 +312,10 @@ Error Numa::free(void *ptr, size_t bytes) {
                 ? ((bytes + static_cast<size_t>(pageSize) - 1) & ~(static_cast<size_t>(pageSize) - 1))
                 : bytes;
         if (munmap(ptr, rounded) != 0) {
-                return Error::syserr();
+                Error e = Error::syserr();
+                promekiWarn("Numa::free munmap(%p, %zu) failed: %s (errno=%d)",
+                            ptr, rounded, e.name().cstr(), e.systemError());
+                return e;
         }
         return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)

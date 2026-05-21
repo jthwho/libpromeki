@@ -53,7 +53,10 @@ void AudioGen::setConfig(size_t chan, Config config) {
 }
 
 bool AudioGen::generate(float *out, size_t samples) {
-        if (out == nullptr) return false;
+        if (out == nullptr) {
+                promekiWarnThrottled(1000, "AudioGen::generate: null output buffer (samples=%zu)", samples);
+                return false;
+        }
         float *data = out;
         for (size_t chan = 0; chan < _desc.channels(); ++chan) {
                 switch (_chanConfig[chan].type) {

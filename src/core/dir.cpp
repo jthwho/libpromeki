@@ -10,6 +10,7 @@
 #include <fnmatch.h>
 #include <promeki/dir.h>
 #include <promeki/libraryoptions.h>
+#include <promeki/logger.h>
 #include <promeki/platform.h>
 #include <promeki/stringlist.h>
 #include <promeki/resource.h>
@@ -127,34 +128,74 @@ NumNameSeq::List Dir::numberedSequences() const {
 }
 
 Error Dir::mkdir() const {
-        if (Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
+        if (Resource::isResourcePath(_path.toString())) {
+                promekiWarn("Dir::mkdir('%s') refused: resource paths are read-only",
+                            _path.toString().cstr());
+                return Error(Error::ReadOnly);
+        }
         std::error_code ec;
         if (std::filesystem::create_directory(_path.toStdPath(), ec)) return Error();
-        if (ec) return Error::syserr(ec);
+        if (ec) {
+                Error e = Error::syserr(ec);
+                promekiWarn("Dir::mkdir('%s') failed: %s (errno=%d, msg=%s)",
+                            _path.toString().cstr(), e.name().cstr(), ec.value(),
+                            ec.message().c_str());
+                return e;
+        }
         return Error();
 }
 
 Error Dir::mkpath() const {
-        if (Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
+        if (Resource::isResourcePath(_path.toString())) {
+                promekiWarn("Dir::mkpath('%s') refused: resource paths are read-only",
+                            _path.toString().cstr());
+                return Error(Error::ReadOnly);
+        }
         std::error_code ec;
         std::filesystem::create_directories(_path.toStdPath(), ec);
-        if (ec) return Error::syserr(ec);
+        if (ec) {
+                Error e = Error::syserr(ec);
+                promekiWarn("Dir::mkpath('%s') failed: %s (errno=%d, msg=%s)",
+                            _path.toString().cstr(), e.name().cstr(), ec.value(),
+                            ec.message().c_str());
+                return e;
+        }
         return Error();
 }
 
 Error Dir::remove() const {
-        if (Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
+        if (Resource::isResourcePath(_path.toString())) {
+                promekiWarn("Dir::remove('%s') refused: resource paths are read-only",
+                            _path.toString().cstr());
+                return Error(Error::ReadOnly);
+        }
         std::error_code ec;
         if (std::filesystem::remove(_path.toStdPath(), ec)) return Error();
-        if (ec) return Error::syserr(ec);
+        if (ec) {
+                Error e = Error::syserr(ec);
+                promekiWarn("Dir::remove('%s') failed: %s (errno=%d, msg=%s)",
+                            _path.toString().cstr(), e.name().cstr(), ec.value(),
+                            ec.message().c_str());
+                return e;
+        }
         return Error();
 }
 
 Error Dir::removeRecursively() const {
-        if (Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
+        if (Resource::isResourcePath(_path.toString())) {
+                promekiWarn("Dir::removeRecursively('%s') refused: resource paths are read-only",
+                            _path.toString().cstr());
+                return Error(Error::ReadOnly);
+        }
         std::error_code ec;
         std::filesystem::remove_all(_path.toStdPath(), ec);
-        if (ec) return Error::syserr(ec);
+        if (ec) {
+                Error e = Error::syserr(ec);
+                promekiWarn("Dir::removeRecursively('%s') failed: %s (errno=%d, msg=%s)",
+                            _path.toString().cstr(), e.name().cstr(), ec.value(),
+                            ec.message().c_str());
+                return e;
+        }
         return Error();
 }
 
@@ -207,7 +248,13 @@ Dir Dir::ipc() {
 Error Dir::setCurrent(const FilePath &path) {
         std::error_code ec;
         std::filesystem::current_path(path.toStdPath(), ec);
-        if (ec) return Error::syserr(ec);
+        if (ec) {
+                Error e = Error::syserr(ec);
+                promekiWarn("Dir::setCurrent('%s') failed: %s (errno=%d, msg=%s)",
+                            path.toString().cstr(), e.name().cstr(), ec.value(),
+                            ec.message().c_str());
+                return e;
+        }
         return Error();
 }
 

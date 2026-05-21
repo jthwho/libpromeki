@@ -1101,8 +1101,16 @@ class NvencVideoEncoder::Impl {
                         }
 
                         if (!loadNvenc()) {
-                                return setError(Error::LibraryFailure, "failed to load libnvidia-encode.so.1 (install "
-                                                                       "libnvidia-encode-NNN matching your driver)");
+                                // The shared object is absent or a version
+                                // we don't speak — same conceptual bucket
+                                // as a missing CUDA driver, so surface as
+                                // @ref Error::NotSupported.  Callers that
+                                // classify backend availability (test
+                                // runner, MediaIO planner) treat this as
+                                // "skip" rather than a hard fault.
+                                return setError(Error::NotSupported,
+                                                "failed to load libnvidia-encode.so.1 (install "
+                                                "libnvidia-encode-NNN matching your driver)");
                         }
 
                         if (Error err = retainCudaContext(); err.isError()) return err;

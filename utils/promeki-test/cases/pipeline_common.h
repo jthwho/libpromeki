@@ -133,6 +133,14 @@ namespace promekitest {
                         Error      openError;
                         Error      startError;
                         Error      closeError;
+                        Error      firstError; ///< Error code captured from the first
+                                                ///< @c pipelineErrorSignal firing.  Test
+                                                ///< classification reads this to decide
+                                                ///< between Skip and Fail — e.g. a
+                                                ///< mid-stream @ref Error::NotSupported
+                                                ///< (codec advertised but CUDA / NVENC
+                                                ///< unusable at runtime) is a Skip, not
+                                                ///< a Fail.
                         String     errorDetail; // first stage+error string from pipelineErrorSignal
                         JsonObject resolvedConfig;
                         ///< Post-autoplan resolved @ref MediaPipelineConfig

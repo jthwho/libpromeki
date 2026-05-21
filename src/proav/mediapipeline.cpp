@@ -303,7 +303,10 @@ Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {
         }
 
         Error vErr = effectiveConfig->validate();
-        if (vErr.isError()) return vErr;
+        if (vErr.isError()) {
+                promekiWarn("MediaPipeline::build: config validation failed: %s", vErr.name().cstr());
+                return vErr;
+        }
 
         // Fan-in check — for this first implementation a stage may have
         // at most one incoming route.  Fan-out is unrestricted.

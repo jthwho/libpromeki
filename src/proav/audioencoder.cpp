@@ -17,6 +17,7 @@
 #include <promeki/audiodecoder.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
+#include <promeki/logger.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/map.h>
 #include <promeki/set.h>
@@ -184,6 +185,7 @@ Result<AudioEncoder *> AudioEncoder::create(AudioCodec::ID codecId, AudioCodec::
                 ReadWriteLock::ReadLocker lock(reg.mutex);
                 auto                      it = reg.entries.find(codecId);
                 if (it == reg.entries.end() || it->second.isEmpty()) {
+                        promekiWarn("AudioEncoder::create: no backends registered for codec id=%d", (int)codecId);
                         return makeError<AudioEncoder *>(Error::IdNotFound);
                 }
                 const auto &list = it->second;
@@ -197,6 +199,8 @@ Result<AudioEncoder *> AudioEncoder::create(AudioCodec::ID codecId, AudioCodec::
                                 }
                         }
                         if (chosen == nullptr) {
+                                promekiWarn("AudioEncoder::create: pinned backend not found for codec id=%d",
+                                            (int)codecId);
                                 return makeError<AudioEncoder *>(Error::IdNotFound);
                         }
                 } else {
@@ -213,6 +217,9 @@ Result<AudioEncoder *> AudioEncoder::create(AudioCodec::ID codecId, AudioCodec::
                                                         }
                                                 }
                                                 if (chosen == nullptr) {
+                                                        promekiWarn("AudioEncoder::create: requested backend '%s' "
+                                                                    "not found for codec id=%d",
+                                                                    backendName.cstr(), (int)codecId);
                                                         return makeError<AudioEncoder *>(Error::IdNotFound);
                                                 }
                                         }
@@ -223,10 +230,16 @@ Result<AudioEncoder *> AudioEncoder::create(AudioCodec::ID codecId, AudioCodec::
                 chosenTag = chosen->backend;
                 factory = chosen->factory;
         }
-        if (!factory) return makeError<AudioEncoder *>(Error::IdNotFound);
+        if (!factory) {
+                promekiWarn("AudioEncoder::create: null factory for codec id=%d", (int)codecId);
+                return makeError<AudioEncoder *>(Error::IdNotFound);
+        }
 
         AudioEncoder *enc = factory();
-        if (enc == nullptr) return makeError<AudioEncoder *>(Error::LibraryFailure);
+        if (enc == nullptr) {
+                promekiWarn("AudioEncoder::create: factory returned null for codec id=%d", (int)codecId);
+                return makeError<AudioEncoder *>(Error::LibraryFailure);
+        }
         enc->setCodec(AudioCodec(codecId, chosenTag));
         if (config != nullptr) enc->configure(*config);
         return makeResult(enc);

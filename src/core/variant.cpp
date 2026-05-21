@@ -369,7 +369,9 @@ String Variant::format(const String &spec, Error *err) const {
                                 return String(std::vformat(fmtStr, std::make_format_args(sv)));
                         }
                 }
-        } catch (const std::format_error &) {
+        } catch (const std::format_error &e) {
+                promekiWarn("Variant::toString format_error: %s (defaulting to '%s')",
+                            e.what(), defaultStr.cstr());
                 if (err != nullptr) *err = Error::Invalid;
                 return defaultStr;
         }
@@ -1033,6 +1035,7 @@ VariantList VariantList::fromJsonString(const String &json, Error *err) {
         try {
                 nlohmann::json j = nlohmann::json::parse(json.cstr());
                 if (!j.is_array()) {
+                        promekiWarn("VariantList::fromJsonString: parsed JSON is not an array");
                         if (err != nullptr) *err = Error::ParseFailed;
                         return VariantList();
                 }
@@ -1040,7 +1043,12 @@ VariantList VariantList::fromJsonString(const String &json, Error *err) {
                 list.reserve(j.size());
                 for (const auto &item : j) list.pushToBack(jsonToVariant(item));
                 return list;
+        } catch (const std::exception &e) {
+                promekiWarn("VariantList::fromJsonString parse failed: %s", e.what());
+                if (err != nullptr) *err = Error::ParseFailed;
+                return VariantList();
         } catch (...) {
+                promekiWarn("VariantList::fromJsonString parse failed: unknown exception");
                 if (err != nullptr) *err = Error::ParseFailed;
                 return VariantList();
         }
@@ -1191,6 +1199,7 @@ VariantMap VariantMap::fromJsonString(const String &json, Error *err) {
         try {
                 nlohmann::json j = nlohmann::json::parse(json.cstr());
                 if (!j.is_object()) {
+                        promekiWarn("VariantMap::fromJsonString: parsed JSON is not an object");
                         if (err != nullptr) *err = Error::ParseFailed;
                         return VariantMap();
                 }
@@ -1199,7 +1208,12 @@ VariantMap VariantMap::fromJsonString(const String &json, Error *err) {
                         map.insert(String(it.key()), jsonToVariant(it.value()));
                 }
                 return map;
+        } catch (const std::exception &e) {
+                promekiWarn("VariantMap::fromJsonString parse failed: %s", e.what());
+                if (err != nullptr) *err = Error::ParseFailed;
+                return VariantMap();
         } catch (...) {
+                promekiWarn("VariantMap::fromJsonString parse failed: unknown exception");
                 if (err != nullptr) *err = Error::ParseFailed;
                 return VariantMap();
         }

@@ -104,14 +104,25 @@ HttpServer::~HttpServer() {
 // ============================================================
 
 Error HttpServer::listen(const SocketAddress &address, int backlog) {
-        if (_tcpServer->isListening()) return Error::AlreadyOpen;
+        if (_tcpServer->isListening()) {
+                promekiWarn("HttpServer::listen(%s) called while already listening on %s",
+                            address.toString().cstr(), _tcpServer->serverAddress().toString().cstr());
+                return Error::AlreadyOpen;
+        }
 
         if (_loop == nullptr) _loop = EventLoop::current();
         if (_loop == nullptr) _loop = Application::mainEventLoop();
-        if (_loop == nullptr) return Error::Invalid;
+        if (_loop == nullptr) {
+                promekiWarn("HttpServer::listen(%s) called with no EventLoop available", address.toString().cstr());
+                return Error::Invalid;
+        }
 
         Error err = _tcpServer->listen(address, backlog);
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarn("HttpServer::listen: TcpServer::listen(%s, backlog=%d) failed (%s)",
+                            address.toString().cstr(), backlog, err.name().cstr());
+                return err;
+        }
 
         // Register the listening socket with the EventLoop so
         // accept() runs whenever the kernel reports the fd readable.

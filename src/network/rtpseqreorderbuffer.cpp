@@ -6,6 +6,7 @@
  */
 
 #include <promeki/rtpseqreorderbuffer.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -30,10 +31,19 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
         // dup events, only the cumulative count.
         if (static_cast<int32_t>(extendedSeq - _expectedSeq) < 0) {
                 _stats.droppedAsDuplicate++;
+                promekiWarnThrottled(5000,
+                                     "RtpSeqReorderBuffer: dropping late seq %u (expected >= %u) "
+                                     "[total dups=%llu]",
+                                     extendedSeq, _expectedSeq,
+                                     static_cast<unsigned long long>(_stats.droppedAsDuplicate));
                 return;
         }
         if (_buf.contains(extendedSeq)) {
                 _stats.droppedAsDuplicate++;
+                promekiWarnThrottled(5000,
+                                     "RtpSeqReorderBuffer: dropping in-window dup seq %u [total dups=%llu]",
+                                     extendedSeq,
+                                     static_cast<unsigned long long>(_stats.droppedAsDuplicate));
                 return;
         }
 
@@ -46,6 +56,11 @@ void RtpSeqReorderBuffer::insert(RtpPacket pkt, uint32_t extendedSeq,
                 auto it = _buf.begin();
                 if (it != _buf.end()) {
                         _stats.droppedOnOverflow++;
+                        promekiWarnThrottled(2000,
+                                             "RtpSeqReorderBuffer: window overflow (size=%zu maxWindow=%zu) "
+                                             "— evicting seq %u [total overflows=%llu]",
+                                             _buf.size(), _config.maxWindow, it->first,
+                                             static_cast<unsigned long long>(_stats.droppedOnOverflow));
                         // The dropped packet's seq becomes the new
                         // floor — anything strictly older than it
                         // is a stale dup from this point onward.
@@ -115,6 +130,11 @@ void RtpSeqReorderBuffer::emitHeadLocked(RtpPacket::Queue &out, bool deadline) {
         }
         if (deadline) {
                 _stats.emittedOnDeadline++;
+                promekiWarnThrottled(2000,
+                                     "RtpSeqReorderBuffer: gap-fill emission (seq=%u expected=%u) "
+                                     "[total deadline-emits=%llu]",
+                                     seq, _expectedSeq,
+                                     static_cast<unsigned long long>(_stats.emittedOnDeadline));
         } else {
                 _stats.emittedInOrder++;
         }

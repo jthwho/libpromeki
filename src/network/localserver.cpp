@@ -94,26 +94,43 @@ LocalServer::~LocalServer() {
 #if defined(PROMEKI_PLATFORM_POSIX)
 
 Error LocalServer::listen(const String &path, uint32_t mode, const String &groupName, int backlog) {
-        if (_listening) return Error::AlreadyOpen;
-        if (path.isEmpty()) return Error::Invalid;
+        if (_listening) {
+                promekiWarn("LocalServer::listen('%s') called while already listening on '%s'", path.cstr(),
+                            _path.cstr());
+                return Error::AlreadyOpen;
+        }
+        if (path.isEmpty()) {
+                promekiWarn("LocalServer::listen called with empty path");
+                return Error::Invalid;
+        }
 
         // Clean up a stale socket from a previous crashed run.
         Error err = removeStaleSocket(path);
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarn("LocalServer::listen: removeStaleSocket('%s') failed (%s)", path.cstr(),
+                            err.name().cstr());
+                return err;
+        }
 
         int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
-        if (fd < 0) return Error::syserr();
+        if (fd < 0) {
+                promekiWarn("LocalServer::listen socket(AF_UNIX) failed (errno=%d %s)", errno, strerror(errno));
+                return Error::syserr();
+        }
 
         struct sockaddr_un addr;
         socklen_t          addrLen = 0;
         err = fillSunPath(path, addr, addrLen);
         if (err.isError()) {
+                promekiWarn("LocalServer::listen invalid sun_path for '%s' (%s)", path.cstr(), err.name().cstr());
                 ::close(fd);
                 return err;
         }
 
         if (::bind(fd, reinterpret_cast<struct sockaddr *>(&addr), addrLen) != 0) {
                 Error bindErr = Error::syserr();
+                promekiWarn("LocalServer::listen bind('%s') failed (errno=%d %s)", path.cstr(), errno,
+                            strerror(errno));
                 ::close(fd);
                 return bindErr;
         }
@@ -148,6 +165,8 @@ Error LocalServer::listen(const String &path, uint32_t mode, const String &group
 
         if (::listen(fd, backlog) != 0) {
                 Error lErr = Error::syserr();
+                promekiWarn("LocalServer::listen listen('%s', backlog=%d) failed (errno=%d %s)", path.cstr(),
+                            backlog, errno, strerror(errno));
                 ::close(fd);
                 ::unlink(path.cstr());
                 _unlinkOnClose = false;
@@ -181,7 +200,13 @@ LocalSocket *LocalServer::nextPendingConnection() {
         socklen_t          peerLen = sizeof(peer);
         std::memset(&peer, 0, sizeof(peer));
         int clientFd = ::accept(_fd, reinterpret_cast<struct sockaddr *>(&peer), &peerLen);
-        if (clientFd < 0) return nullptr;
+        if (clientFd < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000, "LocalServer::accept failed on '%s' (errno=%d %s)",
+                                             _path.cstr(), errno, strerror(errno));
+                }
+                return nullptr;
+        }
         // The peer path is usually empty for unnamed clients; only set
         // it if the kernel returned one.
         String peerPath;

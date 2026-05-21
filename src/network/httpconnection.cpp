@@ -358,6 +358,9 @@ int HttpConnection::cbBody(void *parser, const char *at, size_t len) {
         auto *self = CONN(parser);
         self->_bodyBytesSoFar += static_cast<int64_t>(len);
         if (self->_maxBodyBytes >= 0 && self->_bodyBytesSoFar > self->_maxBodyBytes) {
+                promekiWarn("HttpConnection: request body exceeded maxBodyBytes=%lld (received=%lld) — replying 413",
+                            static_cast<long long>(self->_maxBodyBytes),
+                            static_cast<long long>(self->_bodyBytesSoFar));
                 // 413: stop reading, queue the error reply, and ask
                 // llhttp to bail so the next execute() returns the
                 // user error.

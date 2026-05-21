@@ -13,6 +13,7 @@
 #include <promeki/resource.h>
 #include <promeki/stringlist.h>
 #include <promeki/iodevice.h>
+#include <promeki/logger.h>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -261,6 +262,8 @@ bool HttpFileHandler::serveRange(const HttpRequest &request, HttpResponse &respo
         File            *f = static_cast<File *>(const_cast<IODevice *>(dev.ptr()));
         Error            err = f->open(IODevice::ReadOnly);
         if (err.isError()) {
+                promekiWarn("HttpFileHandler: failed to open '%s' for ranged GET (%s)", fullPath.cstr(),
+                            err.name().cstr());
                 response = HttpResponse::internalError("Could not open file");
                 return true;
         }
@@ -348,6 +351,8 @@ void HttpFileHandler::serve(const HttpRequest &request, HttpResponse &response) 
                 File            *f = static_cast<File *>(const_cast<IODevice *>(dev.ptr()));
                 Error            err = f->open(IODevice::ReadOnly);
                 if (err.isError()) {
+                        promekiWarn("HttpFileHandler: failed to open resource '%s' (%s)", full.cstr(),
+                                    err.name().cstr());
                         response = HttpResponse::internalError("Could not open resource");
                         return;
                 }
@@ -438,6 +443,7 @@ void HttpFileHandler::serve(const HttpRequest &request, HttpResponse &response) 
         File            *f = static_cast<File *>(const_cast<IODevice *>(dev.ptr()));
         Error            err = f->open(IODevice::ReadOnly);
         if (err.isError()) {
+                promekiWarn("HttpFileHandler: failed to open '%s' (%s)", full.cstr(), err.name().cstr());
                 response = HttpResponse::internalError("Could not open file");
                 return;
         }

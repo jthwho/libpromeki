@@ -101,6 +101,7 @@ namespace promekitest {
                         [&p](const String &stageName, Error err) {
                                 if (!p.sawError) {
                                         p.errorDetail = stageName + String(": ") + err.desc();
+                                        p.firstError = err;
                                 }
                                 p.sawError = true;
                         },
@@ -179,6 +180,7 @@ namespace promekitest {
                         [&out](const String &stageName, Error err) {
                                 if (!out.tx.sawError) {
                                         out.tx.errorDetail = stageName + String(": ") + err.desc();
+                                        out.tx.firstError = err;
                                 }
                                 out.tx.sawError = true;
                         },
@@ -187,6 +189,7 @@ namespace promekitest {
                         [&out](const String &stageName, Error err) {
                                 if (!out.rx.sawError) {
                                         out.rx.errorDetail = stageName + String(": ") + err.desc();
+                                        out.rx.firstError = err;
                                 }
                                 out.rx.sawError = true;
                         },

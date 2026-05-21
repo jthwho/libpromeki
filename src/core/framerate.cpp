@@ -12,6 +12,7 @@
 #include <limits>
 #include <promeki/framerate.h>
 #include <promeki/datastream.h>
+#include <promeki/logger.h>
 #include <promeki/structdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -70,6 +71,7 @@ FrameRate::WellKnownRate FrameRate::wellKnownRate() const {
 
 Result<FrameRate> FrameRate::fromDouble(double val) {
         if (std::isnan(val) || std::isinf(val) || val <= 0.0) {
+                promekiWarn("FrameRate::fromDouble(%g) refused: nan/inf/non-positive", val);
                 return makeError<FrameRate>(Error::ParseFailed);
         }
         // Snap to a well-known rate when we're within 0.01 fps — that's
@@ -94,6 +96,8 @@ Result<FrameRate> FrameRate::fromDouble(double val) {
                                 static_cast<unsigned int>(rounded), 1u)));
                 }
         }
+        promekiWarn("FrameRate::fromDouble(%g) failed: no well-known match and not a positive integer",
+                    val);
         return makeError<FrameRate>(Error::ParseFailed);
 }
 
@@ -128,6 +132,8 @@ Result<FrameRate> FrameRate::fromString(const String &str) {
                 }
         }
 
+        promekiWarn("FrameRate::fromString('%s') failed: not a well-known name or valid fraction",
+                    str.cstr());
         return makeError<FrameRate>(Error::Invalid);
 }
 
@@ -146,7 +152,11 @@ Result<FrameRate> FrameRate::readFromStream<1>(DataStream &s) {
         uint32_t num = 0, den = 1;
         s >> num >> den;
         if (s.status() != DataStream::Ok) return makeError<FrameRate>(s.toError());
-        if (den == 0) return makeError<FrameRate>(Error::CorruptData);
+        if (den == 0) {
+                promekiWarn("FrameRate::readFromStream: corrupt data (denominator=0, num=%u)",
+                            (unsigned)num);
+                return makeError<FrameRate>(Error::CorruptData);
+        }
         return makeResult(FrameRate(RationalType(num, den)));
 }
 

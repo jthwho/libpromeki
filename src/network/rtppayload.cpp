@@ -161,13 +161,21 @@ RtpPayloadRawVideo::RtpPayloadRawVideo(int width, int height, int bitsPerPixel, 
 
 RtpPacket::List RtpPayloadRawVideo::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadRawVideo::pack invalid input (size=%zu data=%p)", size,
+                                     mediaData);
+                return packets;
+        }
 
         const size_t bytesPerLine = static_cast<size_t>(_width) * _bitsPerPixel / 8;
         const size_t maxPayload = maxPayloadSize();
         // Available space for pixel data per packet (after ext seq num and one line header)
         const size_t overhead = Rfc4175ExtSeqSize + Rfc4175LineHeaderSize;
-        if (maxPayload <= overhead) return packets;
+        if (maxPayload <= overhead) {
+                promekiWarnOnce("RtpPayloadRawVideo::pack maxPayloadSize=%zu too small for RFC 4175 overhead=%zu",
+                                maxPayload, overhead);
+                return packets;
+        }
         const size_t rawMax = maxPayload - overhead;
 
         // Align the maximum chunk size down to a whole number of
@@ -178,7 +186,11 @@ RtpPacket::List RtpPayloadRawVideo::pack(const void *mediaData, size_t size) {
         // errors and garbled pixels on the receiver.
         const size_t pg = static_cast<size_t>(_pgroupBytes);
         const size_t maxChunkBytes = (pg > 0) ? (rawMax / pg) * pg : rawMax;
-        if (maxChunkBytes == 0) return packets;
+        if (maxChunkBytes == 0) {
+                promekiWarnOnce("RtpPayloadRawVideo::pack pgroupBytes=%zu > rawMax=%zu — MTU too small",
+                                pg, rawMax);
+                return packets;
+        }
 
         // Estimate total packets needed
         size_t totalPackets = 0;
@@ -387,13 +399,19 @@ RtpPayloadJpeg::RtpPayloadJpeg(int width, int height, int quality)
 
 RtpPacket::List RtpPayloadJpeg::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadJpeg::pack invalid input (size=%zu data=%p)", size, mediaData);
+                return packets;
+        }
 
         const uint8_t *jpeg = static_cast<const uint8_t *>(mediaData);
 
         // Locate the entropy-coded segment (after SOS header)
         size_t ecsStart = findEntropyCoded(jpeg, size);
-        if (ecsStart >= size) return packets;
+        if (ecsStart >= size) {
+                promekiWarnThrottled(1000, "RtpPayloadJpeg::pack no SOS marker found in %zu-byte JPEG", size);
+                return packets;
+        }
 
         // The entropy-coded data runs from ecsStart to just before the EOI
         // marker.  The receiver reconstructs its own EOI after the last RTP
@@ -416,7 +434,11 @@ RtpPacket::List RtpPayloadJpeg::pack(const void *mediaData, size_t size) {
         size_t qtHdrSize = Rfc2435QtHeaderSize + dqtLen;
 
         const size_t maxPayload = maxPayloadSize();
-        if (maxPayload <= Rfc2435HeaderSize + qtHdrSize) return packets;
+        if (maxPayload <= Rfc2435HeaderSize + qtHdrSize) {
+                promekiWarnOnce("RtpPayloadJpeg::pack maxPayload=%zu < RFC2435 header+QT=%zu — MTU too small",
+                                maxPayload, Rfc2435HeaderSize + qtHdrSize);
+                return packets;
+        }
 
         // Max JPEG data per packet (first packet has less room due to QT header)
         const size_t maxJpegFirst = maxPayload - Rfc2435HeaderSize - qtHdrSize;
@@ -607,6 +629,10 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
         // the first packet's fields describe the whole frame.
         const RtpPacket &firstPkt = packets[0];
         if (firstPkt.isNull() || firstPkt.payloadSize() < Rfc2435HeaderSize) {
+                promekiWarnThrottled(1000,
+                                     "RtpPayloadJpeg::unpack first packet too small (null=%d payloadSize=%zu min=%zu)",
+                                     firstPkt.isNull() ? 1 : 0, firstPkt.isNull() ? 0 : firstPkt.payloadSize(),
+                                     Rfc2435HeaderSize);
                 return Buffer();
         }
         const uint8_t *firstPl = firstPkt.payload();
@@ -618,6 +644,8 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
                 // Zero width/height reserved by RFC 2435 — we could
                 // fall back to _width/_height, but rejecting is
                 // safer than producing a broken JPEG.
+                promekiWarnThrottled(1000, "RtpPayloadJpeg::unpack zero width/height in RFC2435 header (w=%u h=%u)",
+                                     width, height);
                 return Buffer();
         }
 
@@ -642,6 +670,9 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
                 makeDefaultQuantTables(rtpQ, quantTables);
         } else {
                 if (firstPkt.payloadSize() < Rfc2435HeaderSize + Rfc2435QtHeaderSize) {
+                        promekiWarnThrottled(1000,
+                                             "RtpPayloadJpeg::unpack truncated QT header (payloadSize=%zu min=%zu)",
+                                             firstPkt.payloadSize(), Rfc2435HeaderSize + Rfc2435QtHeaderSize);
                         return Buffer();
                 }
                 const uint8_t *qtHdr = firstPl + Rfc2435HeaderSize;
@@ -650,15 +681,16 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
                 const uint16_t qtLen = (static_cast<uint16_t>(qtHdr[2]) << 8) | qtHdr[3];
                 (void)qtMbz;
                 if (qtPrecision != 0 || (qtLen != 64 && qtLen != 128)) {
-                        // 16-bit precision (precision != 0) is legal
-                        // per RFC 2435 but no common encoder uses
-                        // it, and real-world encoders only ever emit
-                        // one or two 8-bit tables.  Reject anything
-                        // else so a malformed / truncated QT header
-                        // does not wander into uninitialised memory.
+                        promekiWarnThrottled(1000,
+                                             "RtpPayloadJpeg::unpack unsupported QT (precision=%u qtLen=%u)",
+                                             qtPrecision, qtLen);
                         return Buffer();
                 }
                 if (firstPkt.payloadSize() < Rfc2435HeaderSize + Rfc2435QtHeaderSize + static_cast<size_t>(qtLen)) {
+                        promekiWarnThrottled(1000,
+                                             "RtpPayloadJpeg::unpack truncated QT data (payloadSize=%zu need=%zu)",
+                                             firstPkt.payloadSize(),
+                                             Rfc2435HeaderSize + Rfc2435QtHeaderSize + static_cast<size_t>(qtLen));
                         return Buffer();
                 }
                 std::memcpy(quantTables, firstPl + Rfc2435HeaderSize + Rfc2435QtHeaderSize, qtLen);
@@ -834,7 +866,10 @@ RtpPayloadJpegXs::RtpPayloadJpegXs(int width, int height, uint8_t payloadType)
 
 RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadJpegXs::pack invalid input (size=%zu data=%p)", size, mediaData);
+                return packets;
+        }
 
         const uint8_t *jxs = static_cast<const uint8_t *>(mediaData);
 
@@ -842,7 +877,11 @@ RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
         // packetization mode (K=0) does not care about slice / header
         // boundaries — it's a byte-stream splitter.
         const size_t maxPayload = maxPayloadSize();
-        if (maxPayload <= HeaderSize) return packets;
+        if (maxPayload <= HeaderSize) {
+                promekiWarnOnce("RtpPayloadJpegXs::pack maxPayload=%zu < JXS header=%zu — MTU too small",
+                                maxPayload, static_cast<size_t>(HeaderSize));
+                return packets;
+        }
         const size_t maxData = maxPayload - HeaderSize;
 
         const size_t numPackets = (size + maxData - 1) / maxData;
@@ -1002,14 +1041,23 @@ RtpPayloadH264::RtpPayloadH264(uint8_t payloadType) : _payloadType(payloadType) 
 
 RtpPacket::List RtpPayloadH264::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadH264::pack invalid input (size=%zu data=%p)", size, mediaData);
+                return packets;
+        }
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         const auto     nals = collectAnnexBNals(src, size);
-        if (nals.isEmpty()) return packets;
+        if (nals.isEmpty()) {
+                promekiWarnThrottled(1000, "RtpPayloadH264::pack no Annex-B NALs in %zu-byte AU", size);
+                return packets;
+        }
 
         const size_t maxPayload = maxPayloadSize();
-        if (maxPayload < 3) return packets; // need room for at least the FU header
+        if (maxPayload < 3) {
+                promekiWarnOnce("RtpPayloadH264::pack maxPayload=%zu < 3 — MTU too small for FU framing", maxPayload);
+                return packets; // need room for at least the FU header
+        }
 
         // Per-NAL plan: count packet sizes so RtpPacket::createList can
         // pack them into a single shared buffer.  For each NAL we
@@ -1067,7 +1115,11 @@ RtpPacket::List RtpPayloadH264::pack(const void *mediaData, size_t size) {
 
         if (sizes.isEmpty()) return packets;
         packets = RtpPacket::createList(sizes);
-        if (packets.size() != plan.size()) return RtpPacket::List();
+        if (packets.size() != plan.size()) {
+                promekiWarn("RtpPayloadH264::pack createList returned %zu packets, expected %zu", packets.size(),
+                            plan.size());
+                return RtpPacket::List();
+        }
 
         for (size_t i = 0; i < plan.size(); i++) {
                 const PlanEntry &e = plan[i];
@@ -1267,14 +1319,23 @@ RtpPayloadH265::RtpPayloadH265(uint8_t payloadType) : _payloadType(payloadType) 
 
 RtpPacket::List RtpPayloadH265::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadH265::pack invalid input (size=%zu data=%p)", size, mediaData);
+                return packets;
+        }
 
         const uint8_t *src = static_cast<const uint8_t *>(mediaData);
         const auto     nals = collectAnnexBNals(src, size);
-        if (nals.isEmpty()) return packets;
+        if (nals.isEmpty()) {
+                promekiWarnThrottled(1000, "RtpPayloadH265::pack no Annex-B NALs in %zu-byte AU", size);
+                return packets;
+        }
 
         const size_t maxPayload = maxPayloadSize();
-        if (maxPayload < 4) return packets; // need 2-byte payload header + 1-byte FU header
+        if (maxPayload < 4) {
+                promekiWarnOnce("RtpPayloadH265::pack maxPayload=%zu < 4 — MTU too small for FU framing", maxPayload);
+                return packets; // need 2-byte payload header + 1-byte FU header
+        }
 
         // For each NAL: single packet when ≤ MTU, else FU.  An FU
         // packet's framing is 3 bytes (PayloadHdr 2 + FU header 1)
@@ -1327,7 +1388,11 @@ RtpPacket::List RtpPayloadH265::pack(const void *mediaData, size_t size) {
 
         if (sizes.isEmpty()) return packets;
         packets = RtpPacket::createList(sizes);
-        if (packets.size() != plan.size()) return RtpPacket::List();
+        if (packets.size() != plan.size()) {
+                promekiWarn("RtpPayloadH265::pack createList returned %zu packets, expected %zu", packets.size(),
+                            plan.size());
+                return RtpPacket::List();
+        }
 
         for (size_t i = 0; i < plan.size(); i++) {
                 const PlanEntry &e = plan[i];
@@ -1542,10 +1607,16 @@ RtpPayloadJson::RtpPayloadJson(uint8_t payloadType, uint32_t clockRate)
 
 RtpPacket::List RtpPayloadJson::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) return packets;
+        if (size == 0 || mediaData == nullptr) {
+                promekiWarnThrottled(5000, "RtpPayloadJson::pack invalid input (size=%zu data=%p)", size, mediaData);
+                return packets;
+        }
 
         const size_t maxPayload = maxPayloadSize();
-        if (maxPayload == 0) return packets;
+        if (maxPayload == 0) {
+                promekiWarnOnce("RtpPayloadJson::pack maxPayloadSize=0 — MTU configuration error");
+                return packets;
+        }
 
         const size_t numPackets = packetCount(size, maxPayload);
         // Each packet gets space for the 12-byte RTP header plus up

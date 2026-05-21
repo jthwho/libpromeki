@@ -13,6 +13,7 @@
 #include <promeki/xml.h>
 #include <promeki/file.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
 #include <promeki/pair.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -374,6 +375,8 @@ XmlElement XmlElement::parse(const String &str, XmlParseError *err) {
         XmlElement             ret;
         pugi::xml_parse_result res = ret._d.modify()->doc.load_string(str.cstr(), kParseFlags);
         if (!res) {
+                promekiWarn("XmlElement::parse failed: pugi status=%d offset=%td desc='%s'",
+                            (int)res.status, (ptrdiff_t)res.offset, res.description());
                 if (err) err->setFromPugi(res, str);
                 return XmlElement();
         }
@@ -382,6 +385,7 @@ XmlElement XmlElement::parse(const String &str, XmlParseError *err) {
                 pugi::xml_parse_result synth = res;
                 synth.status                 = pugi::status_no_document_element;
                 synth.offset                 = 0;
+                promekiWarn("XmlElement::parse: input has no root element");
                 if (err) err->setFromPugi(synth, str);
                 return XmlElement();
         }
@@ -632,7 +636,9 @@ XmlElement XmlElement::selectFirst(const String &query, Error *err) const {
                         ret.resetTo(n);
                 }
                 return ret;
-        } catch (const pugi::xpath_exception &) {
+        } catch (const pugi::xpath_exception &e) {
+                promekiWarn("XmlElement::selectFirst: XPath '%s' failed: %s",
+                            query.cstr(), e.what());
                 if (err) *err = Error::ParseFailed;
                 return XmlElement();
         }
@@ -658,7 +664,9 @@ List<XmlElement> XmlElement::selectAll(const String &query, Error *err) const {
                         }
                 }
                 return ret;
-        } catch (const pugi::xpath_exception &) {
+        } catch (const pugi::xpath_exception &e) {
+                promekiWarn("XmlElement::selectAll: XPath '%s' failed: %s",
+                            query.cstr(), e.what());
                 if (err) *err = Error::ParseFailed;
                 return List<XmlElement>();
         }
@@ -678,7 +686,9 @@ XmlAttribute XmlElement::selectFirstAttribute(const String &query, Error *err) c
                 auto owner = hit.parent();
                 XmlName qn = resolveAttributeName(owner, attr);
                 return XmlAttribute(String(attr.name()), std::move(qn), String(attr.value()));
-        } catch (const pugi::xpath_exception &) {
+        } catch (const pugi::xpath_exception &e) {
+                promekiWarn("XmlElement::selectFirstAttribute: XPath '%s' failed: %s",
+                            query.cstr(), e.what());
                 if (err) *err = Error::ParseFailed;
                 return XmlAttribute();
         }
@@ -704,7 +714,9 @@ List<XmlAttribute> XmlElement::selectAllAttributes(const String &query, Error *e
                                 XmlAttribute(String(attr.name()), std::move(qn), String(attr.value())));
                 }
                 return ret;
-        } catch (const pugi::xpath_exception &) {
+        } catch (const pugi::xpath_exception &e) {
+                promekiWarn("XmlElement::selectAllAttributes: XPath '%s' failed: %s",
+                            query.cstr(), e.what());
                 if (err) *err = Error::ParseFailed;
                 return List<XmlAttribute>();
         }
@@ -1249,7 +1261,11 @@ Error XmlDocument::saveToPath(const String &path, unsigned int indent) const {
         int64_t want = static_cast<int64_t>(text.size());
         int64_t got  = f.write(text.cstr(), want);
         Error   closeErr = f.close();
-        if (got != want) return Error::IOError;
+        if (got != want) {
+                promekiWarn("XmlDocument::saveToPath('%s') short write: wrote %lld of %lld",
+                            path.cstr(), (long long)got, (long long)want);
+                return Error::IOError;
+        }
         return closeErr;
 }
 

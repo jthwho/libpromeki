@@ -694,12 +694,19 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // MediaIOClock for the group, since TPG has no hardware
         // timing reference of its own.
         MediaIOPortGroup *group = addPortGroup("av");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("TpgMediaIO: addPortGroup('av') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(_frameRate);
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
 
-        if (addSource(group, mediaDesc) == nullptr) return Error::Invalid;
+        if (addSource(group, mediaDesc) == nullptr) {
+                promekiWarn("TpgMediaIO: addSource failed (fps=%s)",
+                            mediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
 
         // Install the SystemCow-routing allocator so the cached video
         // background is sealed once after populate; per-frame burn-in

@@ -72,6 +72,7 @@ Error SrtSocketTransport::open() {
                 // local address before connect; caller mode treats
                 // bind as optional.
                 if (_mode == Rendezvous && _localAddress.isNull()) {
+                        promekiWarn("SrtSocketTransport::open Rendezvous mode requires a bound local address");
                         _socket.reset();
                         return Error::Invalid;
                 }
@@ -83,6 +84,7 @@ Error SrtSocketTransport::open() {
                         }
                 }
                 if (_peerAddress.isNull()) {
+                        promekiWarn("SrtSocketTransport::open Caller/Rendezvous mode requires a peer address");
                         _socket.reset();
                         return Error::Invalid;
                 }
@@ -106,16 +108,21 @@ Error SrtSocketTransport::open() {
         if (_maxBw != 0) _listener->setMaxBandwidth(_maxBw);
 
         if (_localAddress.isNull()) {
+                promekiWarn("SrtSocketTransport::open Listener mode requires a bound local address");
                 _listener.reset();
                 return Error::Invalid;
         }
         Error e = _listener->listen(_localAddress);
         if (e.isError()) {
+                promekiWarn("SrtSocketTransport::open SrtServer::listen(%s) failed (%s)",
+                            _localAddress.toString().cstr(), e.name().cstr());
                 _listener.reset();
                 return e;
         }
         _socket = _listener->accept(_acceptTimeoutMs);
         if (!_socket) {
+                promekiWarn("SrtSocketTransport::open SrtServer::accept timed out after %u ms on %s",
+                            _acceptTimeoutMs, _localAddress.toString().cstr());
                 _listener.reset();
                 return Error::Timeout;
         }

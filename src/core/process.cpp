@@ -7,6 +7,7 @@
 
 #include <promeki/process.h>
 #include <promeki/elapsedtimer.h>
+#include <promeki/logger.h>
 
 #ifndef __EMSCRIPTEN__
 #include <unistd.h>
@@ -89,10 +90,18 @@ Buffer Process::assembleChunks(List<Buffer> &chunks, size_t &total) {
 
 Error Process::start() {
 #ifdef __EMSCRIPTEN__
+        promekiWarnOnce("Process::start refused: Process is not supported on this platform (Emscripten)");
         return Error::NotSupported;
 #else
-        if (_state == Running) return Error::AlreadyOpen;
-        if (_program.isEmpty()) return Error::Invalid;
+        if (_state == Running) {
+                promekiWarn("Process::start('%s') refused: already running (pid=%d)",
+                            _program.cstr(), (int)_pid);
+                return Error::AlreadyOpen;
+        }
+        if (_program.isEmpty()) {
+                promekiWarn("Process::start refused: program path is empty");
+                return Error::Invalid;
+        }
 
         _exitCode = -1;
         _stdoutChunks.clear();
@@ -104,6 +113,8 @@ Error Process::start() {
         // Create pipes for stdin, stdout, stderr
         if (::pipe(_stdinPipe) != 0 || ::pipe(_stdoutPipe) != 0 || ::pipe(_stderrPipe) != 0) {
                 Error err = Error::syserr();
+                promekiWarn("Process::start('%s') pipe() failed: %s (errno=%d)",
+                            _program.cstr(), err.name().cstr(), err.systemError());
                 closeAllPipes();
                 _state = NotRunning;
                 errorOccurredSignal.emit(err);
@@ -116,6 +127,8 @@ Error Process::start() {
         int execPipe[2];
         if (::pipe2(execPipe, O_CLOEXEC) != 0) {
                 Error err = Error::syserr();
+                promekiWarn("Process::start('%s') pipe2() failed: %s (errno=%d)",
+                            _program.cstr(), err.name().cstr(), err.systemError());
                 closeAllPipes();
                 _state = NotRunning;
                 errorOccurredSignal.emit(err);
@@ -125,6 +138,8 @@ Error Process::start() {
         _pid = ::fork();
         if (_pid < 0) {
                 Error err = Error::syserr();
+                promekiWarn("Process::start('%s') fork() failed: %s (errno=%d)",
+                            _program.cstr(), err.name().cstr(), err.systemError());
                 closeAllPipes();
                 ::close(execPipe[0]);
                 ::close(execPipe[1]);
@@ -227,6 +242,8 @@ Error Process::start() {
                 _state = NotRunning;
                 _pid = -1;
                 Error err = Error::syserr(execErr);
+                promekiWarn("Process::start exec failed for '%s': %s (errno=%d)",
+                            _program.cstr(), err.name().cstr(), execErr);
                 errorOccurredSignal.emit(err);
                 return err;
         }
@@ -254,15 +271,22 @@ Error Process::waitForStarted(unsigned int timeoutMs) {
         // start() is synchronous via fork()+exec-notify pipe, so if we reach
         // here the process is either Running or failed to start.
         if (_state == Running || _state == Starting) return Error::Ok;
+        promekiWarn("Process::waitForStarted('%s') refused: state is NotRunning",
+                    _program.cstr());
         return Error::NotOpen;
 }
 
 Error Process::waitForFinished(unsigned int timeoutMs) {
 #ifdef __EMSCRIPTEN__
         (void)timeoutMs;
+        promekiWarnOnce("Process::waitForFinished refused: not supported on Emscripten");
         return Error::NotSupported;
 #else
-        if (_state != Running) return Error::NotOpen;
+        if (_state != Running) {
+                promekiWarn("Process::waitForFinished('%s') refused: not running",
+                            _program.cstr());
+                return Error::NotOpen;
+        }
 
         // Use poll() to drain stdout/stderr while waiting for the child.
         // This prevents deadlock when the child writes more than the pipe buffer.
@@ -292,6 +316,8 @@ Error Process::waitForFinished(unsigned int timeoutMs) {
                                 return Error::Ok;
                         }
                         Error err = Error::syserr(e);
+                        promekiWarn("Process::waitForFinished('%s') waitpid failed: %s (errno=%d)",
+                                    _program.cstr(), err.name().cstr(), e);
                         errorOccurredSignal.emit(err);
                         return err;
                 }
@@ -395,12 +421,20 @@ ssize_t Process::writeToStdin(const void *buf, size_t bytes) {
 #ifdef __EMSCRIPTEN__
         (void)buf;
         (void)bytes;
+        promekiWarnOnce("Process::writeToStdin refused: not supported on Emscripten");
         return -1;
 #else
-        if (_stdinPipe[1] == -1) return -1;
+        if (_stdinPipe[1] == -1) {
+                promekiWarn("Process::writeToStdin('%s', %zu) refused: stdin pipe closed",
+                            _program.cstr(), bytes);
+                return -1;
+        }
         ssize_t written = ::write(_stdinPipe[1], buf, bytes);
         if (written < 0) {
-                errorOccurredSignal.emit(Error::syserr());
+                Error err = Error::syserr();
+                promekiWarnThrottled(1000, "Process::writeToStdin('%s', %zu) failed: %s (errno=%d)",
+                                     _program.cstr(), bytes, err.name().cstr(), err.systemError());
+                errorOccurredSignal.emit(err);
         }
         return written;
 #endif

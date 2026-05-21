@@ -193,12 +193,23 @@ Error FrameSyncMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         MediaIOPortGroup *group = addPortGroup("framesync");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("FrameSyncMediaIO: addPortGroup('framesync') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(outFps);
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
-        if (addSource(group, outDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("FrameSyncMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
+        if (addSource(group, outDesc) == nullptr) {
+                promekiWarn("FrameSyncMediaIO: addSource failed (fps=%s)",
+                            outDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

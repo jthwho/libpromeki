@@ -515,8 +515,20 @@ namespace promekitest {
                                         return true;
                                 }
                                 if (p.sawError) {
-                                        ctx.setFail(String(side) + String(" pipeline error: ") +
-                                                    p.errorDetail);
+                                        // A mid-stream @ref Error::NotSupported
+                                        // means a stage advertised support
+                                        // but couldn't actually wire up at
+                                        // runtime (e.g. NVENC with a CUDA
+                                        // driver mismatch).  Treat it the
+                                        // same as the build/open/start
+                                        // planner-gap paths above — Skip.
+                                        String msg = String(side) + String(" pipeline error: ") +
+                                                     p.errorDetail;
+                                        if (p.firstError == Error::NotSupported) {
+                                                ctx.setSkip(msg);
+                                        } else {
+                                                ctx.setFail(msg);
+                                        }
                                         return true;
                                 }
                                 return false;

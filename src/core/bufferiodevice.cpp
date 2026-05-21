@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <promeki/bufferiodevice.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,14 +26,23 @@ void BufferIODevice::setBuffer(Buffer *buffer) {
 }
 
 Error BufferIODevice::open(OpenMode mode) {
-        if (isOpen()) return Error(Error::AlreadyOpen);
-        if (_buffer == nullptr) return Error(Error::Invalid);
+        if (isOpen()) {
+                promekiWarn("BufferIODevice::open() refused: already open");
+                return Error(Error::AlreadyOpen);
+        }
+        if (_buffer == nullptr) {
+                promekiWarn("BufferIODevice::open() refused: no Buffer bound");
+                return Error(Error::Invalid);
+        }
         // When auto-grow is enabled, allocate an initial buffer if
         // the caller handed us an empty/invalid one.
         if (!_buffer->isValid() && _autoGrow && (mode & WriteOnly)) {
                 *_buffer = Buffer(4096);
         }
-        if (!_buffer->isValid()) return Error(Error::Invalid);
+        if (!_buffer->isValid()) {
+                promekiWarn("BufferIODevice::open(mode=%d) refused: buffer is invalid", (int)mode);
+                return Error(Error::Invalid);
+        }
         setOpenMode(mode);
         _pos = 0;
         return Error();
@@ -61,10 +71,17 @@ int64_t BufferIODevice::read(void *data, int64_t maxSize) {
 }
 
 int64_t BufferIODevice::write(const void *data, int64_t maxSize) {
-        if (!isOpen() || !isWritable()) return -1;
+        if (!isOpen() || !isWritable()) {
+                promekiWarn("BufferIODevice::write(%lld) refused: not open or not writable",
+                            (long long)maxSize);
+                return -1;
+        }
         int64_t endPos = _pos + maxSize;
         if (endPos > static_cast<int64_t>(_buffer->availSize())) {
                 if (!_autoGrow) {
+                        promekiWarn("BufferIODevice::write refused: would exceed capacity "
+                                    "(pos=%lld, write=%lld, cap=%zu) and auto-grow disabled",
+                                    (long long)_pos, (long long)maxSize, _buffer->availSize());
                         setError(Error(Error::BufferTooSmall));
                         return -1;
                 }
@@ -103,12 +120,22 @@ bool BufferIODevice::isSequential() const {
 }
 
 Error BufferIODevice::seek(int64_t pos) {
-        if (!isOpen()) return Error(Error::NotOpen);
-        if (pos < 0) return Error(Error::OutOfRange);
+        if (!isOpen()) {
+                promekiWarn("BufferIODevice::seek(%lld) refused: not open", (long long)pos);
+                return Error(Error::NotOpen);
+        }
+        if (pos < 0) {
+                promekiWarn("BufferIODevice::seek(%lld) refused: negative offset", (long long)pos);
+                return Error(Error::OutOfRange);
+        }
         // Allow seeking up to availSize for writers, up to size for readers
         int64_t limit =
                 isWritable() ? static_cast<int64_t>(_buffer->availSize()) : static_cast<int64_t>(_buffer->size());
-        if (pos > limit) return Error(Error::OutOfRange);
+        if (pos > limit) {
+                promekiWarn("BufferIODevice::seek(%lld) refused: exceeds limit %lld",
+                            (long long)pos, (long long)limit);
+                return Error(Error::OutOfRange);
+        }
         _pos = pos;
         return Error();
 }

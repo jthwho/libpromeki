@@ -269,11 +269,18 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _isOpen = true;
 
         MediaIOPortGroup *group = addPortGroup("mjpeg");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("MjpegStreamMediaIO: addPortGroup('mjpeg') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(cmd.pendingMediaDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("MjpegStreamMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 
@@ -326,8 +333,14 @@ Error MjpegStreamMediaIO::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MjpegStreamMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        if (!_isOpen) return Error::NotOpen;
-        if (!cmd.frame.isValid()) return Error::InvalidArgument;
+        if (!_isOpen) {
+                promekiWarnThrottled(5000, "MjpegStreamMediaIO::Write: not open");
+                return Error::NotOpen;
+        }
+        if (!cmd.frame.isValid()) {
+                promekiWarnThrottled(1000, "MjpegStreamMediaIO::Write: invalid frame");
+                return Error::InvalidArgument;
+        }
 
         const TimeStamp arrival = TimeStamp::now();
 
@@ -433,13 +446,23 @@ Error MjpegStreamMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pref
 // ---------------------------------------------------------------------------
 
 Error MjpegStreamMediaIO::encodeFrame(const Frame &frame, Buffer *out, TimeStamp *ts) {
-        if (!_encoder.isValid()) return Error::NotOpen;
+        if (!_encoder.isValid()) {
+                promekiWarnOnce("MjpegStreamMediaIO::encodeFrame: encoder not built");
+                return Error::NotOpen;
+        }
 
         UncompressedVideoPayload::Ptr uvp = VideoEncoder::selectInputPayload(frame);
-        if (!uvp.isValid()) return Error::NotSupported;
+        if (!uvp.isValid()) {
+                promekiWarnThrottled(1000, "MjpegStreamMediaIO::encodeFrame: frame has no uncompressed video payload");
+                return Error::NotSupported;
+        }
 
         Error err = _encoder->submitFrame(frame);
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarnThrottled(1000, "MjpegStreamMediaIO::encodeFrame: encoder submitFrame failed: %s",
+                                     err.name().cstr());
+                return err;
+        }
 
         Frame outFrame = _encoder->receiveFrame();
         if (!outFrame.isValid()) return Error::TryAgain;

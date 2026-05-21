@@ -238,12 +238,23 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _outputQueue.clear();
 
         MediaIOPortGroup *group = addPortGroup("vencoder");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("VideoEncoderMediaIO: addPortGroup('vencoder') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(outDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
-        if (addSource(group, outDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("VideoEncoderMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
+        if (addSource(group, outDesc) == nullptr) {
+                promekiWarn("VideoEncoderMediaIO: addSource failed (fps=%s)",
+                            outDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

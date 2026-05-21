@@ -219,14 +219,25 @@ Error AudioFileMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _currentFrame = 0;
 
         MediaIOPortGroup *group = addPortGroup("audiofile");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("AudioFileMediaIO: addPortGroup('audiofile') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(_frameRate);
         group->setCanSeek(canSeek);
         group->setFrameCount(frameCount);
         if (isWrite) {
-                if (addSink(group, mediaDesc) == nullptr) return Error::Invalid;
+                if (addSink(group, mediaDesc) == nullptr) {
+                        promekiWarn("AudioFileMediaIO: addSink failed (fps=%s)",
+                                    mediaDesc.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         } else {
-                if (addSource(group, mediaDesc) == nullptr) return Error::Invalid;
+                if (addSource(group, mediaDesc) == nullptr) {
+                        promekiWarn("AudioFileMediaIO: addSource failed (fps=%s)",
+                                    mediaDesc.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         }
         return Error::Ok;
 }

@@ -518,15 +518,16 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
 
         Logger &logger = Logger::defaultLogger();
         size_t  savedHistory = logger.historySize();
-        logger.setHistorySize(64);
+        logger.setHistorySize(256);
 
-        // Drain prior history so the replay assertion below is
-        // deterministic.  setHistorySize(0) drops the ring on the
-        // next log; we then push a small known set of entries.
+        // Drain prior history so the replay window below is bounded
+        // to what this test produces.  setHistorySize(0) drops the
+        // ring on the next log; we then push a small known set of
+        // entries.
         logger.setHistorySize(0);
         logger.log(Logger::Info, "ws_drain.cpp", 1, "drain");
         logger.sync();
-        logger.setHistorySize(64);
+        logger.setHistorySize(256);
 
         for (int i = 0; i < 4; ++i) {
                 logger.log(Logger::Info, "ws_replay.cpp", 100 + i, String::sprintf("ws-replay-%d", i));
@@ -541,19 +542,32 @@ TEST_CASE("DebugServer_WebSocket_LogStream_DeliversReplayAndLive") {
                 client.ws->textMessageReceivedSignal.connect([&](String msg) { cap.onMessage(msg); });
         });
 
-        const String url = String::sprintf("ws://127.0.0.1:%u/api/promeki/log/stream?replay=4", f.port);
+        const String url = String::sprintf("ws://127.0.0.1:%u/api/promeki/log/stream?replay=256", f.port);
         REQUIRE(client.connect(url).isOk());
         REQUIRE(waitForFor(2000, [&]() { return cap.connected.load(); }));
 
         // Wait for the replayed entries to arrive.
         REQUIRE(waitForFor(2000, [&]() { return cap.size() >= 4; }));
         StringList replayed = cap.snapshot();
-        // The first 4 messages should be our replay set.
+        // The replay set must appear in order, but any number of
+        // unrelated log entries from the network / HTTP / WebSocket
+        // setup path may sit between them or surround them; scan for
+        // ws-replay-0 and verify the next three entries follow in
+        // order from that anchor.
         REQUIRE(replayed.size() >= 4);
-        CHECK(replayed[replayed.size() - 4].contains("ws-replay-0"));
-        CHECK(replayed[replayed.size() - 3].contains("ws-replay-1"));
-        CHECK(replayed[replayed.size() - 2].contains("ws-replay-2"));
-        CHECK(replayed[replayed.size() - 1].contains("ws-replay-3"));
+        ssize_t anchor = -1;
+        for (size_t i = 0; i < replayed.size(); ++i) {
+                if (replayed[i].contains("ws-replay-0")) {
+                        anchor = static_cast<ssize_t>(i);
+                        break;
+                }
+        }
+        REQUIRE(anchor >= 0);
+        REQUIRE(static_cast<size_t>(anchor) + 3 < replayed.size());
+        CHECK(replayed[anchor + 0].contains("ws-replay-0"));
+        CHECK(replayed[anchor + 1].contains("ws-replay-1"));
+        CHECK(replayed[anchor + 2].contains("ws-replay-2"));
+        CHECK(replayed[anchor + 3].contains("ws-replay-3"));
 
         const size_t baseline = cap.size();
 

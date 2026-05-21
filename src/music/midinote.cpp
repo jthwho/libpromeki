@@ -6,6 +6,7 @@
  */
 
 #include <cmath>
+#include <promeki/logger.h>
 #include <promeki/midinote.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -65,7 +66,10 @@ String MidiNote::nameFromMidiNote(int midiNote) {
 }
 
 MidiNote MidiNote::fromName(const String &name) {
-        if (name.length() < 2) return MidiNote();
+        if (name.length() < 2) {
+                promekiWarnThrottled(1000, "MidiNote::fromName: name '%s' too short (need >=2 chars)", name.cstr());
+                return MidiNote();
+        }
 
         int pc = -1;
         int nameLen = 0;
@@ -94,15 +98,26 @@ MidiNote MidiNote::fromName(const String &name) {
                 }
         }
 
-        if (pc < 0) return MidiNote();
+        if (pc < 0) {
+                promekiWarnThrottled(1000, "MidiNote::fromName: unrecognized pitch class in '%s'", name.cstr());
+                return MidiNote();
+        }
 
         // Parse the octave number.
         String octStr = name.substr(static_cast<size_t>(nameLen));
         Error  err;
         int    oct = octStr.toInt(&err);
-        if (err.isError()) return MidiNote();
+        if (err.isError()) {
+                promekiWarnThrottled(1000, "MidiNote::fromName: failed to parse octave '%s' in '%s'", octStr.cstr(),
+                                     name.cstr());
+                return MidiNote();
+        }
         int note = (oct + 1) * 12 + pc;
-        if (note < 0 || note > 127) return MidiNote();
+        if (note < 0 || note > 127) {
+                promekiWarnThrottled(1000, "MidiNote::fromName: note '%s' produced MIDI %d out of range [0,127]",
+                                     name.cstr(), note);
+                return MidiNote();
+        }
         return MidiNote(static_cast<uint8_t>(note));
 }
 

@@ -354,11 +354,18 @@ Error InspectorMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // group with the upstream-supplied desc.  The group reports
         // unbounded length and no seek capability.
         MediaIOPortGroup *group = addPortGroup("inspector");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("InspectorMediaIO: addPortGroup('inspector') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(cmd.pendingMediaDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("InspectorMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

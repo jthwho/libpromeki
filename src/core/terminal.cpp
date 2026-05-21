@@ -9,6 +9,7 @@
 #include <cstring>
 #include <promeki/terminal.h>
 #include <promeki/env.h>
+#include <promeki/logger.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <termios.h>
@@ -74,7 +75,12 @@ Error Terminal::enableRawMode() {
         if (_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
         ::termios *orig = static_cast<::termios *>(_origState);
-        if (tcgetattr(_inputFd, orig) == -1) return Error::syserr();
+        if (tcgetattr(_inputFd, orig) == -1) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode tcgetattr(fd=%d) failed: %s (errno=%d)",
+                            _inputFd, e.name().cstr(), e.systemError());
+                return e;
+        }
         ::termios raw = *orig;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
         raw.c_oflag &= ~(OPOST);
@@ -82,24 +88,46 @@ Error Terminal::enableRawMode() {
         raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
         raw.c_cc[VMIN] = 0;
         raw.c_cc[VTIME] = 0;
-        if (tcsetattr(_inputFd, TCSAFLUSH, &raw) == -1) return Error::syserr();
+        if (tcsetattr(_inputFd, TCSAFLUSH, &raw) == -1) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode tcsetattr(fd=%d) failed: %s (errno=%d)",
+                            _inputFd, e.name().cstr(), e.systemError());
+                return e;
+        }
         _rawMode = true;
         return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
         DWORD  mode;
-        if (!GetConsoleMode(hStdin, &mode)) return Error::syserr();
+        if (!GetConsoleMode(hStdin, &mode)) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode GetConsoleMode(stdin) failed: %s", e.name().cstr());
+                return e;
+        }
         mode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
         mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-        if (!SetConsoleMode(hStdin, mode)) return Error::syserr();
+        if (!SetConsoleMode(hStdin, mode)) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode SetConsoleMode(stdin) failed: %s", e.name().cstr());
+                return e;
+        }
         HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
         DWORD  outMode;
-        if (!GetConsoleMode(hStdout, &outMode)) return Error::syserr();
+        if (!GetConsoleMode(hStdout, &outMode)) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode GetConsoleMode(stdout) failed: %s", e.name().cstr());
+                return e;
+        }
         outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        if (!SetConsoleMode(hStdout, outMode)) return Error::syserr();
+        if (!SetConsoleMode(hStdout, outMode)) {
+                Error e = Error::syserr();
+                promekiWarn("Terminal::enableRawMode SetConsoleMode(stdout) failed: %s", e.name().cstr());
+                return e;
+        }
         _rawMode = true;
         return Error();
 #else
+        promekiWarnOnce("Terminal::enableRawMode refused: not supported on this platform");
         return Error(Error::NotSupported);
 #endif
 }

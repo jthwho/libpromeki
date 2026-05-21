@@ -147,14 +147,25 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         MediaIOPortGroup *group = addPortGroup("framebridge");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("FrameBridgeMediaIO: addPortGroup('framebridge') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(frameRate);
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
         if (isWrite) {
-                if (addSink(group, resolved) == nullptr) return Error::Invalid;
+                if (addSink(group, resolved) == nullptr) {
+                        promekiWarn("FrameBridgeMediaIO: addSink failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         } else {
-                if (addSource(group, resolved) == nullptr) return Error::Invalid;
+                if (addSource(group, resolved) == nullptr) {
+                        promekiWarn("FrameBridgeMediaIO: addSource failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         }
         return Error::Ok;
 }

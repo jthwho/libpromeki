@@ -112,8 +112,15 @@ Thread::~Thread() {
 }
 
 Error Thread::start(size_t stackSize) {
-        if (_adopted) return Error::Invalid;
-        if (_running.value()) return Error::Busy;
+        if (_adopted) {
+                promekiWarn("Thread::start('%s') refused: thread is adopted, cannot be started",
+                            _name.cstr());
+                return Error::Invalid;
+        }
+        if (_running.value()) {
+                promekiWarn("Thread::start('%s') refused: already running", _name.cstr());
+                return Error::Busy;
+        }
         // Propagate any name set before start() down into the
         // BasicThread, so its start-side OS-name application picks
         // it up.
@@ -123,6 +130,8 @@ Error Thread::start(size_t stackSize) {
                 // Crucial: do NOT enter _startedCv.wait — the worker
                 // never spawned, so nothing will ever set _started and
                 // we would deadlock the caller.
+                promekiWarn("Thread::start('%s') BasicThread::start failed: %s",
+                            _name.cstr(), err.name().cstr());
                 return err;
         }
         // Wait until the thread has set up its EventLoop.
@@ -133,7 +142,10 @@ Error Thread::start(size_t stackSize) {
 }
 
 Error Thread::wait(unsigned int timeoutMs) {
-        if (_adopted) return Error::Invalid;
+        if (_adopted) {
+                promekiWarn("Thread::wait('%s') refused: thread is adopted", _name.cstr());
+                return Error::Invalid;
+        }
         if (!isJoinable()) return Error::Ok;
         if (timeoutMs == 0) {
                 _basic.join();
@@ -141,7 +153,10 @@ Error Thread::wait(unsigned int timeoutMs) {
                 _mutex.lock();
                 Error err = _finishedCv.wait(_mutex, [this] { return _finished; }, timeoutMs);
                 _mutex.unlock();
-                if (err != Error::Ok) return Error::Timeout;
+                if (err != Error::Ok) {
+                        promekiWarn("Thread::wait('%s', %ums) timed out", _name.cstr(), timeoutMs);
+                        return Error::Timeout;
+                }
                 _basic.join();
         }
         // Reset state so the Thread object could be started again
@@ -283,7 +298,10 @@ Set<int> Thread::affinity() const {
 }
 
 Error Thread::setAffinity(const Set<int> &cpus) {
-        if (!_running.value()) return Error::Invalid;
+        if (!_running.value()) {
+                promekiWarn("Thread::setAffinity('%s') refused: thread not running", _name.cstr());
+                return Error::Invalid;
+        }
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -295,35 +313,58 @@ Error Thread::setAffinity(const Set<int> &cpus) {
                 for (int cpu : cpus) CPU_SET(cpu, &cpuset);
         }
         int ret = pthread_setaffinity_np(nativeHandle(), sizeof(cpuset), &cpuset);
-        return ret == 0 ? Error::Ok : Error::LibraryFailure;
+        if (ret != 0) {
+                promekiWarn("Thread::setAffinity('%s', %zu cpus) pthread_setaffinity_np failed: rc=%d",
+                            _name.cstr(), cpus.size(), ret);
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_APPLE)
         // macOS uses thread affinity tags (thread_policy_set with
         // THREAD_AFFINITY_POLICY) which are hints, not hard bindings.
         // Not implemented — return NotSupported.
         (void)cpus;
+        promekiWarnOnce("Thread::setAffinity refused: not supported on Apple platforms");
         return Error::NotSupported;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         (void)cpus;
+        promekiWarnOnce("Thread::setAffinity refused: not implemented on Windows");
         return Error::NotSupported;
 #else
         (void)cpus;
+        promekiWarnOnce("Thread::setAffinity refused: not supported on this platform");
         return Error::NotSupported;
 #endif
 }
 
 Error Thread::setPriority(int prio, SchedulePolicy policy) {
-        if (!_running.value()) return Error::Invalid;
+        if (!_running.value()) {
+                promekiWarn("Thread::setPriority('%s', %d) refused: thread not running",
+                            _name.cstr(), prio);
+                return Error::Invalid;
+        }
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         struct sched_param param;
         param.sched_priority = prio;
         int ret = pthread_setschedparam(nativeHandle(), schedulePolicyToNative(policy), &param);
-        return ret == 0 ? Error::Ok : Error::LibraryFailure;
+        if (ret != 0) {
+                promekiWarn("Thread::setPriority('%s', %d) pthread_setschedparam failed: rc=%d "
+                            "— RLIMIT_RTPRIO?", _name.cstr(), prio, ret);
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         (void)policy;
-        return SetThreadPriority(nativeHandle(), prio) ? Error::Ok : Error::LibraryFailure;
+        if (!SetThreadPriority(nativeHandle(), prio)) {
+                promekiWarn("Thread::setPriority(%d) SetThreadPriority failed: err=%lu",
+                            prio, (unsigned long)GetLastError());
+                return Error::LibraryFailure;
+        }
+        return Error::Ok;
 #else
         (void)prio;
         (void)policy;
+        promekiWarnOnce("Thread::setPriority refused: not supported on this platform");
         return Error::NotSupported;
 #endif
 }

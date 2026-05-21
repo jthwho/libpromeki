@@ -6,6 +6,7 @@
  */
 
 #include <promeki/file.h>
+#include <promeki/logger.h>
 #include <promeki/resource.h>
 
 #include <cirf/types.h>
@@ -183,7 +184,10 @@ Error File::open(OpenMode mode) {
 }
 
 Error File::open(OpenMode mode, int fileFlags) {
-        if (isOpen()) return Error(Error::AlreadyOpen);
+        if (isOpen()) {
+                promekiWarn("File::open('%s') refused: already open", _filename.cstr());
+                return Error(Error::AlreadyOpen);
+        }
 
         // Resource paths (":/...") map to compiled-in cirf data and
         // are served from memory. Only ReadOnly access is supported
@@ -191,9 +195,17 @@ Error File::open(OpenMode mode, int fileFlags) {
         // non-blocking flags are silently ignored: the bytes are
         // already in RAM, so they are meaningless here.
         if (Resource::isResourcePath(_filename)) {
-                if (mode != ReadOnly) return Error(Error::ReadOnly);
+                if (mode != ReadOnly) {
+                        promekiWarn("File::open('%s') refused: resource paths are ReadOnly (mode=%d)",
+                                    _filename.cstr(), (int)mode);
+                        return Error(Error::ReadOnly);
+                }
                 _resourceFile = Resource::findFile(_filename);
-                if (_resourceFile == nullptr) return Error(Error::NotExist);
+                if (_resourceFile == nullptr) {
+                        promekiWarn("File::open('%s') failed: resource not found in registry",
+                                    _filename.cstr());
+                        return Error(Error::NotExist);
+                }
                 _resourcePos = 0;
                 _fileFlags = fileFlags;
                 setOpenMode(mode);
@@ -216,7 +228,12 @@ Error File::open(OpenMode mode, int fileFlags) {
         } else {
                 _handle = ::open(_filename.cstr(), posixFlags);
         }
-        if (_handle == FileHandleClosedValue) return Error::syserr();
+        if (_handle == FileHandleClosedValue) {
+                Error e = Error::syserr();
+                promekiWarn("File::open('%s', mode=%d, flags=0x%x) failed: %s (errno=%d)",
+                            _filename.cstr(), (int)mode, fileFlags, e.name().cstr(), e.systemError());
+                return e;
+        }
         _fileFlags = fileFlags;
         setOpenMode(mode);
         if (!_directIO) ensureReadBuffer();
@@ -243,13 +260,24 @@ Error File::close() {
 
 int64_t File::write(const void *data, int64_t maxSize) {
         if (_resourceFile != nullptr) {
+                promekiWarn("File::write('%s', %lld) refused: resource files are read-only",
+                            _filename.cstr(), (long long)maxSize);
                 setError(Error(Error::ReadOnly));
                 return -1;
         }
-        if (!isOpen() || !isWritable()) return -1;
+        if (!isOpen() || !isWritable()) {
+                promekiWarn("File::write('%s', %lld) refused: not open or not writable",
+                            _filename.cstr(), (long long)maxSize);
+                return -1;
+        }
         ssize_t n = ::write(_handle, data, static_cast<size_t>(maxSize));
         if (n > 0) bytesWrittenSignal.emit(static_cast<int64_t>(n));
-        if (n < 0) setError(Error::syserr());
+        if (n < 0) {
+                Error e = Error::syserr();
+                promekiWarnThrottled(1000, "File::write('%s', %lld) failed: %s (errno=%d)",
+                                     _filename.cstr(), (long long)maxSize, e.name().cstr(), e.systemError());
+                setError(e);
+        }
         return static_cast<int64_t>(n);
 }
 
@@ -263,7 +291,12 @@ int64_t File::readFromDevice(void *data, int64_t maxSize) {
                 return n;
         }
         ssize_t n = ::read(_handle, data, static_cast<size_t>(maxSize));
-        if (n < 0) setError(Error::syserr());
+        if (n < 0) {
+                Error e = Error::syserr();
+                promekiWarnThrottled(1000, "File::read('%s', %lld) failed: %s (errno=%d)",
+                                     _filename.cstr(), (long long)maxSize, e.name().cstr(), e.systemError());
+                setError(e);
+        }
         return static_cast<int64_t>(n);
 }
 
@@ -284,17 +317,28 @@ bool File::isSequential() const {
 }
 
 Error File::seek(int64_t offset) {
-        if (!isOpen()) return Error(Error::NotOpen);
+        if (!isOpen()) {
+                promekiWarn("File::seek('%s', %lld) refused: not open", _filename.cstr(), (long long)offset);
+                return Error(Error::NotOpen);
+        }
         resetReadBuffer();
         if (_resourceFile != nullptr) {
                 if (offset < 0 || offset > static_cast<int64_t>(_resourceFile->size)) {
+                        promekiWarn("File::seek('%s', %lld) refused: out of range [0..%llu]",
+                                    _filename.cstr(), (long long)offset,
+                                    (unsigned long long)_resourceFile->size);
                         return Error(Error::IllegalSeek);
                 }
                 _resourcePos = offset;
                 return Error();
         }
         off64_t result = ::lseek64(_handle, offset, SEEK_SET);
-        if (result < 0) return Error::syserr();
+        if (result < 0) {
+                Error e = Error::syserr();
+                promekiWarn("File::seek('%s', %lld) failed: %s (errno=%d)",
+                            _filename.cstr(), (long long)offset, e.name().cstr(), e.systemError());
+                return e;
+        }
         return Error();
 }
 
@@ -314,7 +358,12 @@ Result<int64_t> File::size() const {
         }
         if (!isOpen()) return makeResult<int64_t>(0);
         struct stat64 st;
-        if (::fstat64(_handle, &st) != 0) return makeError<int64_t>(Error::syserr());
+        if (::fstat64(_handle, &st) != 0) {
+                Error e = Error::syserr();
+                promekiWarn("File::size('%s') fstat failed: %s (errno=%d)",
+                            _filename.cstr(), e.name().cstr(), e.systemError());
+                return makeError<int64_t>(e);
+        }
         return makeResult(st.st_size);
 }
 
@@ -359,10 +408,24 @@ Result<int64_t> File::seekFromEnd(int64_t offset) const {
 }
 
 Error File::truncate(int64_t offset) const {
-        if (_resourceFile != nullptr) return Error(Error::ReadOnly);
-        if (!isOpen()) return Error(Error::NotOpen);
+        if (_resourceFile != nullptr) {
+                promekiWarn("File::truncate('%s', %lld) refused: resource is read-only",
+                            _filename.cstr(), (long long)offset);
+                return Error(Error::ReadOnly);
+        }
+        if (!isOpen()) {
+                promekiWarn("File::truncate('%s', %lld) refused: not open",
+                            _filename.cstr(), (long long)offset);
+                return Error(Error::NotOpen);
+        }
         int val = ::ftruncate64(_handle, offset);
-        return val == -1 ? Error::syserr() : Error();
+        if (val == -1) {
+                Error e = Error::syserr();
+                promekiWarn("File::truncate('%s', %lld) failed: %s (errno=%d)",
+                            _filename.cstr(), (long long)offset, e.name().cstr(), e.systemError());
+                return e;
+        }
+        return Error();
 }
 
 int64_t File::writev(const IOVec *iov, int count) {
@@ -379,7 +442,10 @@ int64_t File::writev(const IOVec *iov, int count) {
         }
         ssize_t n = ::writev(_handle, posixIov, count);
         if (n < 0) {
-                setError(Error::syserr());
+                Error e = Error::syserr();
+                promekiWarnThrottled(1000, "File::writev('%s', count=%d) failed: %s (errno=%d)",
+                                     _filename.cstr(), count, e.name().cstr(), e.systemError());
+                setError(e);
                 return -1;
         }
         bytesWrittenSignal.emit(static_cast<int64_t>(n));
@@ -387,10 +453,24 @@ int64_t File::writev(const IOVec *iov, int count) {
 }
 
 Error File::preallocate(int64_t offset, int64_t length) {
-        if (_resourceFile != nullptr) return Error(Error::ReadOnly);
-        if (!isOpen()) return Error(Error::NotOpen);
+        if (_resourceFile != nullptr) {
+                promekiWarn("File::preallocate('%s', %lld, %lld) refused: resource is read-only",
+                            _filename.cstr(), (long long)offset, (long long)length);
+                return Error(Error::ReadOnly);
+        }
+        if (!isOpen()) {
+                promekiWarn("File::preallocate('%s', %lld, %lld) refused: not open",
+                            _filename.cstr(), (long long)offset, (long long)length);
+                return Error(Error::NotOpen);
+        }
         int ret = ::posix_fallocate(_handle, offset, length);
-        if (ret != 0) return Error::syserr(ret);
+        if (ret != 0) {
+                Error e = Error::syserr(ret);
+                promekiWarn("File::preallocate('%s', %lld, %lld) failed: %s (errno=%d)",
+                            _filename.cstr(), (long long)offset, (long long)length,
+                            e.name().cstr(), ret);
+                return e;
+        }
         return Error();
 }
 
@@ -420,16 +500,32 @@ static int64_t readFull(int fd, void *dest, int64_t size) {
 }
 
 Error File::readBulk(Buffer &buf, int64_t size) {
-        if (!isOpen() || !isReadable()) return Error(Error::NotOpen);
-        if (size <= 0) return Error(Error::InvalidArgument);
-        if (!buf.isHostAccessible()) return Error(Error::NotHostAccessible);
+        if (!isOpen() || !isReadable()) {
+                promekiWarn("File::readBulk('%s', %lld) refused: not open or not readable",
+                            _filename.cstr(), (long long)size);
+                return Error(Error::NotOpen);
+        }
+        if (size <= 0) {
+                promekiWarn("File::readBulk('%s') refused: invalid size %lld",
+                            _filename.cstr(), (long long)size);
+                return Error(Error::InvalidArgument);
+        }
+        if (!buf.isHostAccessible()) {
+                promekiWarn("File::readBulk('%s', %lld) refused: destination buffer not host-accessible",
+                            _filename.cstr(), (long long)size);
+                return Error(Error::NotHostAccessible);
+        }
         // The DIO read loop treats EAGAIN as a hard error and may already
         // have advanced the file position before failing — combining that
         // with a non-blocking fd silently corrupts the transfer.  Refuse
         // up front rather than handing back partial data.  Lifting this
         // restriction requires reworking the loop to retry on EAGAIN
         // (likely with a poll() / event-loop integration).
-        if (_nonBlocking) return Error(Error::NotSupported);
+        if (_nonBlocking) {
+                promekiWarn("File::readBulk('%s', %lld) refused: non-blocking mode not supported on bulk path",
+                            _filename.cstr(), (long long)size);
+                return Error(Error::NotSupported);
+        }
 
         // Resource-mode reads have no fd, no alignment requirement,
         // and the bytes are already in RAM. Drop straight into a
@@ -437,11 +533,18 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         // shiftData().
         if (_resourceFile != nullptr) {
                 if (buf.allocSize() < static_cast<size_t>(size)) {
+                        promekiWarn("File::readBulk('%s', %lld) refused: buffer too small (have=%zu)",
+                                    _filename.cstr(), (long long)size, buf.allocSize());
                         return Error(Error::BufferTooSmall);
                 }
                 buf.shiftData(0);
                 int64_t n = readFromDevice(buf.data(), size);
-                if (n < 0) return Error::syserr();
+                if (n < 0) {
+                        Error e = Error::syserr();
+                        promekiWarn("File::readBulk('%s', %lld) resource read failed: %s (errno=%d)",
+                                    _filename.cstr(), (long long)size, e.name().cstr(), e.systemError());
+                        return e;
+                }
                 buf.setSize(static_cast<size_t>(n));
                 return Error();
         }
@@ -453,7 +556,12 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         // shift = fileOffset % align (0 when already aligned or no alignment).
         size_t shift = (align > 0) ? static_cast<size_t>(fileOffset % static_cast<int64_t>(align)) : 0;
 
-        if (buf.allocSize() < shift + static_cast<size_t>(size)) return Error(Error::BufferTooSmall);
+        if (buf.allocSize() < shift + static_cast<size_t>(size)) {
+                promekiWarn("File::readBulk('%s', %lld) refused: buffer too small (have=%zu, need=%zu)",
+                            _filename.cstr(), (long long)size, buf.allocSize(),
+                            shift + static_cast<size_t>(size));
+                return Error(Error::BufferTooSmall);
+        }
 
         buf.shiftData(shift);
         uint8_t *dest = static_cast<uint8_t *>(buf.data());

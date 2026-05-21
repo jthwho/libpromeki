@@ -342,14 +342,25 @@ Error ImageFileMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _writerFrameRate = mediaDesc.frameRate();
 
         MediaIOPortGroup *group = addPortGroup("imagefile");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("ImageFileMediaIO: addPortGroup('imagefile') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(mediaDesc.frameRate());
         group->setCanSeek(canSeek);
         group->setFrameCount(frameCount);
         if (isWrite) {
-                if (addSink(group, mediaDesc) == nullptr) return Error::Invalid;
+                if (addSink(group, mediaDesc) == nullptr) {
+                        promekiWarn("ImageFileMediaIO: addSink failed (fps=%s)",
+                                    mediaDesc.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         } else {
-                if (addSource(group, mediaDesc) == nullptr) return Error::Invalid;
+                if (addSource(group, mediaDesc) == nullptr) {
+                        promekiWarn("ImageFileMediaIO: addSource failed (fps=%s)",
+                                    mediaDesc.frameRate().toString().cstr());
+                        return Error::Invalid;
+                }
         }
         return Error::Ok;
 }

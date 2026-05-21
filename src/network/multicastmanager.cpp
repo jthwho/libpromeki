@@ -8,6 +8,9 @@
 #include <promeki/multicastmanager.h>
 #include <promeki/udpsocket.h>
 #include <promeki/platform.h>
+#include <promeki/logger.h>
+#include <cerrno>
+#include <cstring>
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
@@ -106,17 +109,31 @@ bool MulticastManager::isMemberOf(const SocketAddress &group) const {
 }
 
 Error MulticastManager::joinSourceGroup(const SocketAddress &group, const SocketAddress &source, UdpSocket *socket) {
-        if (!group.isMulticast()) return Error::Invalid;
-        if (!group.isIPv4() || !source.isIPv4()) return Error::Invalid;
+        if (!group.isMulticast()) {
+                promekiWarn("MulticastManager::joinSourceGroup(%s,%s) rejected — group is not multicast",
+                            group.toString().cstr(), source.toString().cstr());
+                return Error::Invalid;
+        }
+        if (!group.isIPv4() || !source.isIPv4()) {
+                promekiWarn("MulticastManager::joinSourceGroup(%s,%s) rejected — IPv6 SSM not supported here",
+                            group.toString().cstr(), source.toString().cstr());
+                return Error::Invalid;
+        }
 
         int fd = socket->socketDescriptor();
-        if (fd < 0) return Error::NotOpen;
+        if (fd < 0) {
+                promekiWarn("MulticastManager::joinSourceGroup(%s,%s) socket is not open",
+                            group.toString().cstr(), source.toString().cstr());
+                return Error::NotOpen;
+        }
 
         struct ip_mreq_source mreq;
         mreq.imr_multiaddr.s_addr = htonl(group.address().toIpv4().toUint32());
         mreq.imr_sourceaddr.s_addr = htonl(source.address().toIpv4().toUint32());
         mreq.imr_interface.s_addr = INADDR_ANY;
         if (::setsockopt(fd, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+                promekiWarn("MulticastManager: IP_ADD_SOURCE_MEMBERSHIP failed for group=%s source=%s (errno=%d %s)",
+                            group.toString().cstr(), source.toString().cstr(), errno, strerror(errno));
                 return Error::syserr();
         }
 
@@ -131,16 +148,26 @@ Error MulticastManager::joinSourceGroup(const SocketAddress &group, const Socket
 }
 
 Error MulticastManager::leaveSourceGroup(const SocketAddress &group, const SocketAddress &source, UdpSocket *socket) {
-        if (!group.isIPv4() || !source.isIPv4()) return Error::Invalid;
+        if (!group.isIPv4() || !source.isIPv4()) {
+                promekiWarn("MulticastManager::leaveSourceGroup(%s,%s) rejected — IPv6 SSM not supported here",
+                            group.toString().cstr(), source.toString().cstr());
+                return Error::Invalid;
+        }
 
         int fd = socket->socketDescriptor();
-        if (fd < 0) return Error::NotOpen;
+        if (fd < 0) {
+                promekiWarn("MulticastManager::leaveSourceGroup(%s,%s) socket is not open",
+                            group.toString().cstr(), source.toString().cstr());
+                return Error::NotOpen;
+        }
 
         struct ip_mreq_source mreq;
         mreq.imr_multiaddr.s_addr = htonl(group.address().toIpv4().toUint32());
         mreq.imr_sourceaddr.s_addr = htonl(source.address().toIpv4().toUint32());
         mreq.imr_interface.s_addr = INADDR_ANY;
         if (::setsockopt(fd, IPPROTO_IP, IP_DROP_SOURCE_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+                promekiWarn("MulticastManager: IP_DROP_SOURCE_MEMBERSHIP failed for group=%s source=%s (errno=%d %s)",
+                            group.toString().cstr(), source.toString().cstr(), errno, strerror(errno));
                 return Error::syserr();
         }
 

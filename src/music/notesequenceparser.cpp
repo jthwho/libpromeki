@@ -7,6 +7,7 @@
 
 #include <cctype>
 #include <cmath>
+#include <promeki/logger.h>
 #include <promeki/notesequenceparser.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -583,6 +584,7 @@ double NoteSequenceParser::applyDots(double length, int dots) {
 }
 
 void NoteSequenceParser::addError(const String &msg) {
+        promekiWarnThrottled(1000, "NoteSequenceParser: %s (pos=%zu)", msg.cstr(), _pos);
         _errors.pushToBack(msg);
         return;
 }

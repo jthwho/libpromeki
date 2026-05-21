@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <promeki/logger.h>
 #include <promeki/optional.h>
 #include <promeki/regex.h>
 #include <promeki/uniqueptr.h>
@@ -836,6 +837,8 @@ namespace detail {
                 auto   root = p.parseExpr();
                 if (!root) {
                         errorDetail = p.error().isEmpty() ? String("parse failed") : p.error();
+                        promekiWarn("VariantQuery parse failed: %s — expression: %s",
+                                    errorDetail.cstr(), expr.cstr());
                         return nullptr;
                 }
                 return root;

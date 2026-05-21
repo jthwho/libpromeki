@@ -29,6 +29,7 @@
 #include <promeki/enums.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/string.h>
@@ -94,6 +95,7 @@ namespace {
                                 clearError();
                                 PcmAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioEncoder::submitFrame: no PCM audio payload on frame");
                                         setError(Error::Invalid, "no PCM audio payload on frame");
                                         return _lastError;
                                 }
@@ -102,6 +104,11 @@ namespace {
                                 if (!ensureEncoder(payload->desc())) return _lastError;
                                 if (payload->desc().sampleRate() != _sampleRate ||
                                     payload->desc().channels() != _channels) {
+                                        promekiWarn("OpusAudioEncoder::submitFrame: payload sr=%g ch=%u does not match "
+                                                    "encoder configured sr=%g ch=%u",
+                                                    static_cast<double>(payload->desc().sampleRate()),
+                                                    payload->desc().channels(),
+                                                    static_cast<double>(_sampleRate), _channels);
                                         setError(Error::Invalid, "payload format does not match encoder configuration");
                                         return _lastError;
                                 }
@@ -112,6 +119,10 @@ namespace {
                                         if (payload->desc().format().id() != AudioFormat::PCMI_Float32LE) {
                                                 converted = payload->convert(AudioFormat::PCMI_Float32LE);
                                                 if (!converted.isValid()) {
+                                                        promekiWarnThrottled(1000,
+                                                                "OpusAudioEncoder::submitFrame: failed to convert "
+                                                                "payload %s -> PCMI_Float32LE",
+                                                                payload->desc().format().toString().cstr());
                                                         setError(Error::Invalid,
                                                                  "failed to convert input to PCMI_Float32LE");
                                                         return _lastError;
@@ -123,6 +134,10 @@ namespace {
                                         if (payload->desc().format().id() != AudioFormat::PCMI_S16LE) {
                                                 converted = payload->convert(AudioFormat::PCMI_S16LE);
                                                 if (!converted.isValid()) {
+                                                        promekiWarnThrottled(1000,
+                                                                "OpusAudioEncoder::submitFrame: failed to convert "
+                                                                "payload %s -> PCMI_S16LE",
+                                                                payload->desc().format().toString().cstr());
                                                         setError(Error::Invalid,
                                                                  "failed to convert input to PCMI_S16LE");
                                                         return _lastError;
@@ -218,16 +233,24 @@ namespace {
                         bool ensureEncoder(const AudioDesc &desc) {
                                 if (_enc != nullptr) return true;
                                 if (!isSupportedRate(desc.sampleRate())) {
+                                        promekiWarn("OpusAudioEncoder::ensureEncoder: unsupported sample rate %g "
+                                                    "(Opus accepts 8/12/16/24/48 kHz)",
+                                                    static_cast<double>(desc.sampleRate()));
                                         setError(Error::Invalid, "Opus does not support this sample rate "
                                                                  "(supported: 8/12/16/24/48 kHz)");
                                         return false;
                                 }
                                 unsigned int ch = desc.channels();
                                 if (ch != 1 && ch != 2) {
+                                        promekiWarn("OpusAudioEncoder::ensureEncoder: unsupported channel count %u "
+                                                    "(Opus accepts 1 or 2)", ch);
                                         setError(Error::Invalid, "Opus encoder supports 1 or 2 channels only");
                                         return false;
                                 }
                                 if (!isSupportedFrameSizeMs(_frameSizeMs)) {
+                                        promekiWarn("OpusAudioEncoder::ensureEncoder: unsupported frame size %g ms "
+                                                    "(Opus accepts 2.5/5/10/20/40/60 ms)",
+                                                    static_cast<double>(_frameSizeMs));
                                         setError(Error::Invalid,
                                                  "Opus frame size must be 2.5, 5, 10, 20, 40, or 60 ms");
                                         return false;
@@ -241,6 +264,9 @@ namespace {
                                                            static_cast<int>(_channels),
                                                            applicationFromEnum(_application), &err);
                                 if (err != OPUS_OK || _enc == nullptr) {
+                                        promekiWarn("OpusAudioEncoder::ensureEncoder: opus_encoder_create failed: %s "
+                                                    "(sr=%g ch=%u)",
+                                                    opus_strerror(err), static_cast<double>(_sampleRate), _channels);
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("opus_encoder_create failed: %s", opus_strerror(err)));
                                         _enc = nullptr;
@@ -314,6 +340,8 @@ namespace {
                                                                kMaxPacketBytes);
                                 size_t     consumed = n * _channels;
                                 if (wrote < 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioEncoder::flushOneFrameS16: opus_encode failed: %s "
+                                                                   "(samples=%zu)", opus_strerror(wrote), n);
                                         setError(Error::EncodeFailed,
                                                  String::sprintf("opus_encode failed: %s", opus_strerror(wrote)));
                                         _pendingS16.erase(_pendingS16.begin(), _pendingS16.begin() + consumed);
@@ -332,6 +360,8 @@ namespace {
                                                                      kMaxPacketBytes);
                                 size_t     consumed = n * _channels;
                                 if (wrote < 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioEncoder::flushOneFrameFloat: opus_encode_float failed: %s "
+                                                                   "(samples=%zu)", opus_strerror(wrote), n);
                                         setError(Error::EncodeFailed,
                                                  String::sprintf("opus_encode_float failed: %s", opus_strerror(wrote)));
                                         _pendingFloat.erase(_pendingFloat.begin(), _pendingFloat.begin() + consumed);
@@ -425,12 +455,14 @@ namespace {
                                 clearError();
                                 CompressedAudioPayload::Ptr payload = selectInputPayload(frame);
                                 if (!payload.isValid() || !payload->isValid() || payload->planeCount() == 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioDecoder::submitFrame: no compressed audio payload on frame");
                                         setError(Error::Invalid, "no compressed audio payload on frame");
                                         return _lastError;
                                 }
                                 if (!ensureDecoder()) return _lastError;
                                 auto view = payload->plane(0);
                                 if (view.size() == 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioDecoder::submitFrame: empty opus payload");
                                         setError(Error::Invalid, "empty opus payload");
                                         return _lastError;
                                 }
@@ -450,6 +482,8 @@ namespace {
                                                           kMaxPcmSamplesPerChannel,
                                                           /* decode_fec = */ 0);
                                 if (decoded < 0) {
+                                        promekiWarnThrottled(1000, "OpusAudioDecoder::submitFrame: opus_decode failed: %s (size=%u)",
+                                                             opus_strerror(decoded), (unsigned)view.size());
                                         setError(Error::DecodeFailed,
                                                  String::sprintf("opus_decode failed: %s", opus_strerror(decoded)));
                                         return _lastError;
@@ -481,10 +515,14 @@ namespace {
                         bool ensureDecoder() {
                                 if (_dec != nullptr) return true;
                                 if (_outChannels != 1 && _outChannels != 2) {
+                                        promekiWarn("OpusAudioDecoder::ensureDecoder: unsupported channel count %u "
+                                                    "(Opus accepts 1 or 2)", _outChannels);
                                         setError(Error::Invalid, "Opus decoder supports 1 or 2 channels only");
                                         return false;
                                 }
                                 if (!isSupportedRate(_outRate)) {
+                                        promekiWarn("OpusAudioDecoder::ensureDecoder: unsupported output rate %g "
+                                                    "(Opus accepts 8/12/16/24/48 kHz)", static_cast<double>(_outRate));
                                         setError(Error::Invalid,
                                                  "Opus decoder output sample rate must be 8/12/16/24/48 kHz");
                                         return false;
@@ -493,6 +531,9 @@ namespace {
                                 _dec = opus_decoder_create(static_cast<opus_int32>(_outRate),
                                                            static_cast<int>(_outChannels), &err);
                                 if (err != OPUS_OK || _dec == nullptr) {
+                                        promekiWarn("OpusAudioDecoder::ensureDecoder: opus_decoder_create failed: %s "
+                                                    "(sr=%g ch=%u)",
+                                                    opus_strerror(err), static_cast<double>(_outRate), _outChannels);
                                         setError(Error::LibraryFailure,
                                                  String::sprintf("opus_decoder_create failed: %s", opus_strerror(err)));
                                         _dec = nullptr;

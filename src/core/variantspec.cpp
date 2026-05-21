@@ -14,6 +14,7 @@
 #include <promeki/enumlist.h>
 #include <promeki/framerate.h>
 #include <promeki/audiocodec.h>
+#include <promeki/logger.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pixelmemlayout.h>
 #include <promeki/rational.h>
@@ -535,6 +536,8 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
                         }
                 }
                 if (!typeOk) {
+                        promekiWarn("VariantSpec::validate: type mismatch (got %d), %zu accepted types declared",
+                                    (int)value.type(), _types.size());
                         if (err) *err = Error::InvalidArgument;
                         return false;
                 }
@@ -548,6 +551,7 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
                         if (_min.isValid()) {
                                 double minVal = _min.get<double>();
                                 if (val < minVal) {
+                                        promekiWarn("VariantSpec::validate: value %g below min %g", val, minVal);
                                         if (err) *err = Error::OutOfRange;
                                         return false;
                                 }
@@ -555,6 +559,7 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
                         if (_max.isValid()) {
                                 double maxVal = _max.get<double>();
                                 if (val > maxVal) {
+                                        promekiWarn("VariantSpec::validate: value %g above max %g", val, maxVal);
                                         if (err) *err = Error::OutOfRange;
                                         return false;
                                 }

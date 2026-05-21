@@ -8,6 +8,7 @@
 #include <promeki/udpsocket.h>
 #include <promeki/platform.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
 #include <cstring>
 #include <cerrno>
 
@@ -70,9 +71,15 @@ Error UdpSocket::close() {
 }
 
 int64_t UdpSocket::read(void *data, int64_t maxSize) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::read called on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         ssize_t ret = ::recv(_fd, data, static_cast<size_t>(maxSize), 0);
         if (ret < 0) {
+                promekiWarnThrottled(1000, "UdpSocket::recv failed (maxSize=%lld errno=%d %s)",
+                                     static_cast<long long>(maxSize), errno, strerror(errno));
                 setError(Error::syserr());
                 return -1;
         }
@@ -80,9 +87,15 @@ int64_t UdpSocket::read(void *data, int64_t maxSize) {
 }
 
 int64_t UdpSocket::write(const void *data, int64_t maxSize) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::write called on closed socket (maxSize=%lld)",
+                                     static_cast<long long>(maxSize));
+                return -1;
+        }
         ssize_t ret = ::send(_fd, data, static_cast<size_t>(maxSize), 0);
         if (ret < 0) {
+                promekiWarnThrottled(1000, "UdpSocket::send failed (maxSize=%lld errno=%d %s)",
+                                     static_cast<long long>(maxSize), errno, strerror(errno));
                 setError(Error::syserr());
                 return -1;
         }
@@ -103,12 +116,28 @@ int64_t UdpSocket::bytesAvailable() const {
 }
 
 int64_t UdpSocket::writeDatagram(const void *data, size_t size, const SocketAddress &dest) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::writeDatagram on closed socket (dest=%s size=%zu)",
+                                     dest.toString().cstr(), size);
+                return -1;
+        }
         struct sockaddr_storage storage;
         size_t                  addrLen = dest.toSockAddr(&storage);
-        if (addrLen == 0) return -1;
-        return ::sendto(_fd, data, size, 0, reinterpret_cast<struct sockaddr *>(&storage),
-                        static_cast<socklen_t>(addrLen));
+        if (addrLen == 0) {
+                promekiWarnThrottled(5000, "UdpSocket::writeDatagram invalid dest address '%s'",
+                                     dest.toString().cstr());
+                return -1;
+        }
+        int64_t ret = ::sendto(_fd, data, size, 0, reinterpret_cast<struct sockaddr *>(&storage),
+                               static_cast<socklen_t>(addrLen));
+        if (ret < 0) {
+                promekiWarnThrottled(1000, "UdpSocket::sendto(%s) failed (size=%zu errno=%d %s)",
+                                     dest.toString().cstr(), size, errno, strerror(errno));
+        } else if (static_cast<size_t>(ret) < size) {
+                promekiWarnThrottled(1000, "UdpSocket::sendto(%s) short write: %lld of %zu",
+                                     dest.toString().cstr(), static_cast<long long>(ret), size);
+        }
+        return ret;
 }
 
 int64_t UdpSocket::writeDatagram(const Buffer &data, const SocketAddress &dest) {
@@ -116,7 +145,11 @@ int64_t UdpSocket::writeDatagram(const Buffer &data, const SocketAddress &dest) 
 }
 
 int UdpSocket::writeDatagrams(const DatagramList &datagrams) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::writeDatagrams on closed socket (count=%zu)",
+                                     datagrams.size());
+                return -1;
+        }
         if (datagrams.isEmpty()) return 0;
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -143,10 +176,20 @@ int UdpSocket::writeDatagrams(const DatagramList &datagrams) {
         bool anyTxTime = false;
         for (size_t i = 0; i < count; i++) {
                 const Datagram &d = datagrams[i];
-                if (d.data == nullptr || d.size == 0) return -1;
+                if (d.data == nullptr || d.size == 0) {
+                        promekiWarnThrottled(5000,
+                                             "UdpSocket::writeDatagrams empty/null datagram at index %zu (size=%zu)", i,
+                                             d.size);
+                        return -1;
+                }
 
                 size_t addrLen = d.dest.toSockAddr(&addrs[i]);
-                if (addrLen == 0) return -1;
+                if (addrLen == 0) {
+                        promekiWarnThrottled(5000,
+                                             "UdpSocket::writeDatagrams invalid dest address at index %zu ('%s')", i,
+                                             d.dest.toString().cstr());
+                        return -1;
+                }
 
                 iovs[i].iov_base = const_cast<void *>(d.data);
                 iovs[i].iov_len = d.size;
@@ -174,8 +217,13 @@ int UdpSocket::writeDatagrams(const DatagramList &datagrams) {
 
         int sent = ::sendmmsg(_fd, msgs.data(), static_cast<unsigned int>(count), 0);
         if (sent < 0) {
+                promekiWarnThrottled(1000, "UdpSocket::sendmmsg failed (count=%zu errno=%d %s)", count, errno,
+                                     strerror(errno));
                 setError(Error::syserr());
                 return -1;
+        }
+        if (static_cast<size_t>(sent) < count) {
+                promekiWarnThrottled(1000, "UdpSocket::sendmmsg partial: %d of %zu datagrams sent", sent, count);
         }
         return sent;
 #else
@@ -200,12 +248,19 @@ Error UdpSocket::setPacingRate(uint64_t bytesPerSec) {
         // Kernel caps at 32 Gbps via a 32-bit setsockopt argument
         // before ~5.x; clamp to UINT32_MAX to match the older ABI.
         uint32_t rate = bytesPerSec > 0xFFFFFFFFu ? 0xFFFFFFFFu : static_cast<uint32_t>(bytesPerSec);
+        if (bytesPerSec > 0xFFFFFFFFu) {
+                promekiWarnOnce("UdpSocket::setPacingRate clamped %llu B/s to UINT32_MAX (kernel ABI limit)",
+                                static_cast<unsigned long long>(bytesPerSec));
+        }
         if (::setsockopt(_fd, SOL_SOCKET, SO_MAX_PACING_RATE, &rate, sizeof(rate)) < 0) {
+                promekiWarnOnce("UdpSocket::setPacingRate setsockopt SO_MAX_PACING_RATE failed (rate=%u errno=%d %s)",
+                                rate, errno, strerror(errno));
                 return Error::syserr();
         }
         return Error::Ok;
 #else
         (void)bytesPerSec;
+        promekiWarnOnce("UdpSocket::setPacingRate not supported on this platform");
         return Error::NotSupported;
 #endif
 }
@@ -228,25 +283,44 @@ Error UdpSocket::setTxTime(bool enable, int clockId) {
         cfg.clockid = static_cast<clockid_t>(clockId);
         cfg.flags = 0;
         if (::setsockopt(_fd, SOL_SOCKET, SO_TXTIME, &cfg, sizeof(cfg)) < 0) {
+                promekiWarnOnce("UdpSocket::setTxTime setsockopt SO_TXTIME failed (clockId=%d errno=%d %s)", clockId,
+                                errno, strerror(errno));
                 return Error::syserr();
         }
         return Error::Ok;
 #else
         (void)enable;
         (void)clockId;
+        promekiWarnOnce("UdpSocket::setTxTime not supported on this platform");
         return Error::NotSupported;
 #endif
 }
 
 int64_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sender) {
-        if (_fd < 0) return -1;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::readDatagram on closed socket (maxSize=%zu)", maxSize);
+                return -1;
+        }
         struct sockaddr_storage storage;
         socklen_t               addrLen = sizeof(storage);
         ssize_t ret = ::recvfrom(_fd, data, maxSize, 0, reinterpret_cast<struct sockaddr *>(&storage), &addrLen);
-        if (ret < 0) return -1;
+        if (ret < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000, "UdpSocket::recvfrom failed (maxSize=%zu errno=%d %s)", maxSize,
+                                             errno, strerror(errno));
+                } else {
+                        promekiWarnThrottled(5000, "UdpSocket::recvfrom EAGAIN (maxSize=%zu)", maxSize);
+                }
+                return -1;
+        }
         if (sender != nullptr) {
                 auto [addr, err] = SocketAddress::fromSockAddr(reinterpret_cast<struct sockaddr *>(&storage), addrLen);
-                if (err.isOk()) *sender = addr;
+                if (err.isOk()) {
+                        *sender = addr;
+                } else {
+                        promekiWarnThrottled(5000, "UdpSocket::readDatagram failed to decode sender (err=%s)",
+                                             err.name().cstr());
+                }
         }
         return static_cast<int64_t>(ret);
 }
@@ -263,13 +337,22 @@ int64_t UdpSocket::pendingDatagramSize() const {
 }
 
 Error UdpSocket::joinMulticastGroup(const SocketAddress &group) {
-        if (_fd < 0) return Error::NotOpen;
-        if (!group.isMulticast()) return Error::Invalid;
+        if (_fd < 0) {
+                promekiWarn("UdpSocket::joinMulticastGroup(%s) on closed socket", group.toString().cstr());
+                return Error::NotOpen;
+        }
+        if (!group.isMulticast()) {
+                promekiWarn("UdpSocket::joinMulticastGroup(%s) rejected — not a multicast address",
+                            group.toString().cstr());
+                return Error::Invalid;
+        }
         if (group.isIPv4()) {
                 struct ip_mreq mreq;
                 mreq.imr_multiaddr.s_addr = htonl(group.address().toIpv4().toUint32());
                 mreq.imr_interface.s_addr = INADDR_ANY;
                 if (::setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+                        promekiWarn("UdpSocket: IP_ADD_MEMBERSHIP failed for %s (errno=%d %s)",
+                                    group.toString().cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         } else {
@@ -278,6 +361,8 @@ Error UdpSocket::joinMulticastGroup(const SocketAddress &group) {
                 std::memcpy(&mreq6.ipv6mr_multiaddr, v6.raw(), 16);
                 mreq6.ipv6mr_interface = 0;
                 if (::setsockopt(_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6, sizeof(mreq6)) < 0) {
+                        promekiWarn("UdpSocket: IPV6_JOIN_GROUP failed for %s (errno=%d %s)",
+                                    group.toString().cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         }
@@ -285,15 +370,29 @@ Error UdpSocket::joinMulticastGroup(const SocketAddress &group) {
 }
 
 Error UdpSocket::joinMulticastGroup(const SocketAddress &group, const String &iface) {
-        if (_fd < 0) return Error::NotOpen;
-        if (!group.isMulticast()) return Error::Invalid;
+        if (_fd < 0) {
+                promekiWarn("UdpSocket::joinMulticastGroup(%s iface=%s) on closed socket",
+                            group.toString().cstr(), iface.cstr());
+                return Error::NotOpen;
+        }
+        if (!group.isMulticast()) {
+                promekiWarn("UdpSocket::joinMulticastGroup(%s iface=%s) rejected — not a multicast address",
+                            group.toString().cstr(), iface.cstr());
+                return Error::Invalid;
+        }
         if (group.isIPv4()) {
                 struct ip_mreqn mreq;
                 mreq.imr_multiaddr.s_addr = htonl(group.address().toIpv4().toUint32());
                 mreq.imr_address.s_addr = INADDR_ANY;
                 mreq.imr_ifindex = static_cast<int>(if_nametoindex(iface.cstr()));
-                if (mreq.imr_ifindex == 0) return Error::Invalid;
+                if (mreq.imr_ifindex == 0) {
+                        promekiWarn("UdpSocket::joinMulticastGroup(%s) interface '%s' not found (errno=%d %s)",
+                                    group.toString().cstr(), iface.cstr(), errno, strerror(errno));
+                        return Error::Invalid;
+                }
                 if (::setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+                        promekiWarn("UdpSocket: IP_ADD_MEMBERSHIP failed for %s on iface=%s (errno=%d %s)",
+                                    group.toString().cstr(), iface.cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         } else {
@@ -301,8 +400,14 @@ Error UdpSocket::joinMulticastGroup(const SocketAddress &group, const String &if
                 const auto      &v6 = group.address().toIpv6();
                 std::memcpy(&mreq6.ipv6mr_multiaddr, v6.raw(), 16);
                 mreq6.ipv6mr_interface = if_nametoindex(iface.cstr());
-                if (mreq6.ipv6mr_interface == 0) return Error::Invalid;
+                if (mreq6.ipv6mr_interface == 0) {
+                        promekiWarn("UdpSocket::joinMulticastGroup(%s) IPv6 interface '%s' not found (errno=%d %s)",
+                                    group.toString().cstr(), iface.cstr(), errno, strerror(errno));
+                        return Error::Invalid;
+                }
                 if (::setsockopt(_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq6, sizeof(mreq6)) < 0) {
+                        promekiWarn("UdpSocket: IPV6_JOIN_GROUP failed for %s on iface=%s (errno=%d %s)",
+                                    group.toString().cstr(), iface.cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         }
@@ -310,13 +415,22 @@ Error UdpSocket::joinMulticastGroup(const SocketAddress &group, const String &if
 }
 
 Error UdpSocket::leaveMulticastGroup(const SocketAddress &group) {
-        if (_fd < 0) return Error::NotOpen;
-        if (!group.isMulticast()) return Error::Invalid;
+        if (_fd < 0) {
+                promekiWarn("UdpSocket::leaveMulticastGroup(%s) on closed socket", group.toString().cstr());
+                return Error::NotOpen;
+        }
+        if (!group.isMulticast()) {
+                promekiWarn("UdpSocket::leaveMulticastGroup(%s) rejected — not a multicast address",
+                            group.toString().cstr());
+                return Error::Invalid;
+        }
         if (group.isIPv4()) {
                 struct ip_mreq mreq;
                 mreq.imr_multiaddr.s_addr = htonl(group.address().toIpv4().toUint32());
                 mreq.imr_interface.s_addr = INADDR_ANY;
                 if (::setsockopt(_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+                        promekiWarn("UdpSocket: IP_DROP_MEMBERSHIP failed for %s (errno=%d %s)",
+                                    group.toString().cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         } else {
@@ -325,6 +439,8 @@ Error UdpSocket::leaveMulticastGroup(const SocketAddress &group) {
                 std::memcpy(&mreq6.ipv6mr_multiaddr, v6.raw(), 16);
                 mreq6.ipv6mr_interface = 0;
                 if (::setsockopt(_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mreq6, sizeof(mreq6)) < 0) {
+                        promekiWarn("UdpSocket: IPV6_LEAVE_GROUP failed for %s (errno=%d %s)",
+                                    group.toString().cstr(), errno, strerror(errno));
                         return Error::syserr();
                 }
         }
@@ -351,7 +467,11 @@ Error UdpSocket::setMulticastLoopback(bool enable) {
 Error UdpSocket::setMulticastInterface(const String &iface) {
         if (_fd < 0) return Error::NotOpen;
         unsigned int ifindex = if_nametoindex(iface.cstr());
-        if (ifindex == 0) return Error::Invalid;
+        if (ifindex == 0) {
+                promekiWarn("UdpSocket::setMulticastInterface interface '%s' not found (errno=%d %s)", iface.cstr(),
+                            errno, strerror(errno));
+                return Error::Invalid;
+        }
         if (_domain == AF_INET6) {
                 return setSocketOption(IPPROTO_IPV6, IPV6_MULTICAST_IF, static_cast<int>(ifindex));
         }
@@ -359,6 +479,8 @@ Error UdpSocket::setMulticastInterface(const String &iface) {
         std::memset(&mreq, 0, sizeof(mreq));
         mreq.imr_ifindex = static_cast<int>(ifindex);
         if (::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_IF, &mreq, sizeof(mreq)) < 0) {
+                promekiWarn("UdpSocket::setMulticastInterface IP_MULTICAST_IF failed for '%s' (errno=%d %s)",
+                            iface.cstr(), errno, strerror(errno));
                 return Error::syserr();
         }
         return Error::Ok;

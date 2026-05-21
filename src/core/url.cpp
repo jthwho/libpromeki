@@ -7,6 +7,7 @@
 
 #include <promeki/url.h>
 #include <promeki/datastream.h>
+#include <promeki/logger.h>
 #include <promeki/stringlist.h>
 #include <cctype>
 
@@ -75,12 +76,15 @@ String Url::percentDecode(const String &s, Error *err) {
                 // bail rather than emitting a partial escape — callers
                 // rely on an all-or-nothing decode for correctness.
                 if (bytes[i + 1] == '\0' || bytes[i + 2] == '\0') {
+                        promekiWarn("Url::percentDecode failed: truncated '%%' escape in '%s'", s.cstr());
                         if (err != nullptr) *err = Error::Invalid;
                         return String();
                 }
                 int hi = hexValue(bytes[i + 1]);
                 int lo = hexValue(bytes[i + 2]);
                 if (hi < 0 || lo < 0) {
+                        promekiWarn("Url::percentDecode failed: invalid hex escape '%%%c%c' in '%s'",
+                                    bytes[i + 1], bytes[i + 2], s.cstr());
                         if (err != nullptr) *err = Error::Invalid;
                         return String();
                 }
@@ -135,16 +139,21 @@ static String toLowerAscii(const String &s) {
 Result<Url> Url::fromString(const String &s) {
         Url url;
         if (s.isEmpty()) {
+                promekiWarn("Url::fromString failed: input string is empty");
                 return Result<Url>(url, Error::Invalid);
         }
 
         // scheme
         size_t colon = s.find(':');
         if (colon == String::npos || colon == 0) {
+                promekiWarn("Url::fromString('%s') failed: missing scheme (no leading ':' delimiter)",
+                            s.cstr());
                 return Result<Url>(url, Error::Invalid);
         }
         String scheme = s.left(colon);
         if (!isValidScheme(scheme)) {
+                promekiWarn("Url::fromString('%s') failed: invalid scheme '%s'",
+                            s.cstr(), scheme.cstr());
                 return Result<Url>(url, Error::Invalid);
         }
         url._scheme = toLowerAscii(scheme);
@@ -193,6 +202,8 @@ Result<Url> Url::fromString(const String &s) {
                 if (!authority.isEmpty() && authority.cstr()[0] == '[') {
                         size_t closeBracket = authority.find(']');
                         if (closeBracket == String::npos) {
+                                promekiWarn("Url::fromString('%s') failed: unterminated IPv6 literal '%s'",
+                                            s.cstr(), authority.cstr());
                                 return Result<Url>(url, Error::Invalid);
                         }
                         url._host = authority.mid(1, closeBracket - 1);
@@ -201,6 +212,8 @@ Result<Url> Url::fromString(const String &s) {
                                 Error perr = Error::Ok;
                                 int   p = afterBracket.mid(1).toInt(&perr);
                                 if (perr.isError()) {
+                                        promekiWarn("Url::fromString('%s') failed: invalid IPv6 port '%s'",
+                                                    s.cstr(), afterBracket.mid(1).cstr());
                                         return Result<Url>(url, Error::Invalid);
                                 }
                                 url._port = p;
@@ -212,6 +225,8 @@ Result<Url> Url::fromString(const String &s) {
                                 Error perr = Error::Ok;
                                 int   p = authority.mid(portColon + 1).toInt(&perr);
                                 if (perr.isError()) {
+                                        promekiWarn("Url::fromString('%s') failed: invalid port '%s'",
+                                                    s.cstr(), authority.mid(portColon + 1).cstr());
                                         return Result<Url>(url, Error::Invalid);
                                 }
                                 url._port = p;

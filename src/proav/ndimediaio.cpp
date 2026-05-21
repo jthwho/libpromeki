@@ -265,6 +265,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 group = addPortGroup(String("ndi"));
         }
         if (group == nullptr) {
+                promekiWarn("NdiMediaIO: addPortGroup('ndi') failed");
                 if (isWrite) closeSink(); else closeSource();
                 return Error::Invalid;
         }
@@ -273,11 +274,15 @@ Error NdiMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         group->setFrameCount(MediaIO::FrameCountInfinite);
         if (isWrite) {
                 if (addSink(group, resolved) == nullptr) {
+                        promekiWarn("NdiMediaIO: addSink failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
                         closeSink();
                         return Error::Invalid;
                 }
         } else {
                 if (addSource(group, resolved) == nullptr) {
+                        promekiWarn("NdiMediaIO: addSource failed (fps=%s)",
+                                    resolved.frameRate().toString().cstr());
                         closeSource();
                         return Error::Invalid;
                 }

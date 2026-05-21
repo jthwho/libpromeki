@@ -213,6 +213,8 @@ namespace {
                 const PixelMemLayout &ml = pd.memLayout();
 
                 if (setjmp(jerr.jmpBuf)) {
+                        promekiWarnThrottled(1000, "JpegVideoEncoder::encodeRGB: libjpeg longjmp from %dx%d %s",
+                                             width, height, pd.name().cstr());
                         jpeg_abort_compress(&cinfo);
                         return CompressedVideoPayload::Ptr();
                 }
@@ -298,6 +300,8 @@ namespace {
                 int                   chromaWidth = width / 2;
 
                 if (setjmp(jerr.jmpBuf)) {
+                        promekiWarnThrottled(1000, "JpegVideoEncoder::encodeYCbCr: libjpeg longjmp from %dx%d %s",
+                                             width, height, idesc.pixelFormat().name().cstr());
                         jpeg_abort_compress(&cinfo);
                         return CompressedVideoPayload::Ptr();
                 }
@@ -457,6 +461,8 @@ namespace {
                                                          const CompressedVideoPayload &input,
                                                          PixelFormat::ID               outputPd) {
                 if (setjmp(jerr.jmpBuf)) {
+                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToRGB: libjpeg longjmp (bytes=%zu out=%s)",
+                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr());
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }
@@ -472,6 +478,9 @@ namespace {
                 ImageDesc outDesc(dinfo.output_width, dinfo.output_height, PixelFormat(outputPd));
                 auto      output = UncompressedVideoPayload::allocate(outDesc);
                 if (!output.isValid()) {
+                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToRGB: failed to allocate %ux%u %s payload",
+                                             (unsigned)dinfo.output_width, (unsigned)dinfo.output_height,
+                                             PixelFormat(outputPd).name().cstr());
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }
@@ -498,6 +507,8 @@ namespace {
                                                            const CompressedVideoPayload &input,
                                                            PixelFormat::ID outputPd, YCbCrInfo info) {
                 if (setjmp(jerr.jmpBuf)) {
+                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToYCbCr: libjpeg longjmp (bytes=%zu out=%s)",
+                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr());
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }
@@ -518,6 +529,8 @@ namespace {
                 ImageDesc outDesc(width, height, PixelFormat(outputPd));
                 auto      output = UncompressedVideoPayload::allocate(outDesc);
                 if (!output.isValid()) {
+                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToYCbCr: failed to allocate %dx%d %s payload",
+                                             width, height, PixelFormat(outputPd).name().cstr());
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }
@@ -665,7 +678,11 @@ namespace {
                                                                 PixelFormat::ID               outPd) {
                 if (outPd == PixelFormat::Invalid) {
                         const auto &targets = input.desc().pixelFormat().decodeTargets();
-                        if (targets.isEmpty()) return UncompressedVideoPayload::Ptr();
+                        if (targets.isEmpty()) {
+                                promekiWarnOnce("JpegVideoDecoder: input PixelFormat %s has no decode targets",
+                                                input.desc().pixelFormat().name().cstr());
+                                return UncompressedVideoPayload::Ptr();
+                        }
                         outPd = targets[0];
                 }
 
@@ -677,6 +694,8 @@ namespace {
                 if (info.layout != LayoutNone) {
                         return decodeToYCbCr(dinfo, jerr, input, outPd, info);
                 }
+                promekiWarnOnce("JpegVideoDecoder: no decoder path for output PixelFormat %s",
+                                PixelFormat(outPd).name().cstr());
                 return UncompressedVideoPayload::Ptr();
         }
 
@@ -768,6 +787,7 @@ Error JpegVideoEncoder::submitFrame(const Frame &frame) {
         clearError();
         UncompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid()) {
+                promekiWarnThrottled(1000, "JpegVideoEncoder::submitFrame: no uncompressed video payload on frame");
                 setError(Error::Invalid, "JpegVideoEncoder: no uncompressed video payload on frame");
                 return _lastError;
         }
@@ -777,11 +797,16 @@ Error JpegVideoEncoder::submitFrame(const Frame &frame) {
         }
 
         if (!_impl->created) {
+                promekiWarnOnce("JpegVideoEncoder: libjpeg-turbo state not initialized");
                 setError(Error::LibraryFailure, "JpegVideoEncoder: libjpeg-turbo state not initialized");
                 return _lastError;
         }
         auto cvp = encodeOneJpegFrame(_impl->cinfo, _impl->jerr, *payload, _quality, _subsampling);
         if (!cvp.isValid()) {
+                promekiWarnThrottled(1000, "JpegVideoEncoder::submitFrame: encode failed (size=%ux%u fmt=%s quality=%d)",
+                                     (unsigned)payload->desc().size().width(),
+                                     (unsigned)payload->desc().size().height(),
+                                     payload->desc().pixelFormat().name().cstr(), _quality);
                 setError(Error::ConversionFailed, "JpegVideoEncoder: libjpeg-turbo encode failed");
                 return _lastError;
         }
@@ -866,6 +891,7 @@ Error JpegVideoDecoder::submitFrame(const Frame &frame) {
         clearError();
         CompressedVideoPayload::Ptr payload = selectInputPayload(frame);
         if (!payload.isValid() || !payload->isValid() || payload->size() == 0) {
+                promekiWarnThrottled(1000, "JpegVideoDecoder::submitFrame: no compressed video payload on frame");
                 setError(Error::Invalid, "JpegVideoDecoder: no compressed video payload on frame");
                 return _lastError;
         }
@@ -879,11 +905,14 @@ Error JpegVideoDecoder::submitFrame(const Frame &frame) {
         // PixelFormat, matching the pre-Phase-4 behaviour.
         PixelFormat::ID outPd = _outputPd.isValid() ? _outputPd.id() : PixelFormat::Invalid;
         if (!_impl->created) {
+                promekiWarnOnce("JpegVideoDecoder: libjpeg-turbo state not initialized");
                 setError(Error::LibraryFailure, "JpegVideoDecoder: libjpeg-turbo state not initialized");
                 return _lastError;
         }
         auto uvp = decodeOneJpegFrame(_impl->dinfo, _impl->jerr, *payload, outPd);
         if (!uvp.isValid()) {
+                promekiWarnThrottled(1000, "JpegVideoDecoder::submitFrame: decode failed (bytes=%zu out=%s)",
+                                     payload->size(), PixelFormat(outPd).name().cstr());
                 setError(Error::ConversionFailed, "JpegVideoDecoder: libjpeg-turbo decode failed");
                 return _lastError;
         }

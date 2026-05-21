@@ -16,7 +16,11 @@ ImageFile::ImageFile(int id) : _io(ImageFileIO::lookup(id)) {}
 
 Error ImageFile::load(const MediaConfig &config) {
         Error err = _io->load(*this, config);
-        if (err.isError()) return err;
+        if (err.isError()) {
+                promekiWarn("ImageFile::load failed: %s (filename='%s')", err.name().cstr(),
+                            config.getAs<String>(MediaConfig::Filename).cstr());
+                return err;
+        }
 
         // Stamp the Keyframe flag onto every compressed video
         // payload the backend loaded — intraframe codecs (JPEG,
@@ -34,7 +38,12 @@ Error ImageFile::load(const MediaConfig &config) {
 }
 
 Error ImageFile::save(const MediaConfig &config) {
-        return _io->save(*this, config);
+        Error err = _io->save(*this, config);
+        if (err.isError()) {
+                promekiWarn("ImageFile::save failed: %s (filename='%s')", err.name().cstr(),
+                            config.getAs<String>(MediaConfig::Filename).cstr());
+        }
+        return err;
 }
 
 PROMEKI_NAMESPACE_END

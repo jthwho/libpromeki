@@ -40,6 +40,20 @@ static Error mapCudaError(cudaError_t e) {
                 case cudaErrorInvalidValue: return Error::Invalid;
                 case cudaErrorInvalidDevice: return Error::Invalid;
                 case cudaErrorNoDevice: return Error::NotExist;
+                // "Driver / GPU pair is present but cannot run this CUDA
+                // build" — distinct from a generic library failure.
+                // Surfaces as @ref Error::NotSupported so callers can
+                // treat it the same way they treat a missing backend
+                // (skip / fall back) rather than a real fault.  Log a
+                // warn alongside so the user sees *why* CUDA was
+                // rejected without having to grep for the upstream
+                // promekiErr.
+                case cudaErrorInsufficientDriver:          // host driver older than the runtime
+                case cudaErrorDevicesUnavailable:          // all GPUs in exclusive use
+                case cudaErrorCompatNotSupportedOnDevice:  // forward-compat layer rejected the device
+                        promekiWarn("CUDA: device unusable — %s (%d); reporting as NotSupported",
+                                    cudaGetErrorString(e), (int)e);
+                        return Error::NotSupported;
                 default: return Error::LibraryFailure;
         }
 }

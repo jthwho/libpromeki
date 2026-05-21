@@ -7,6 +7,9 @@
 
 #include <promeki/abstractsocket.h>
 #include <promeki/platform.h>
+#include <promeki/logger.h>
+#include <cerrno>
+#include <cstring>
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
@@ -36,11 +39,19 @@ AbstractSocket::~AbstractSocket() {
 }
 
 Error AbstractSocket::bind(const SocketAddress &address) {
-        if (_fd < 0) return Error::NotOpen;
+        if (_fd < 0) {
+                promekiWarn("AbstractSocket::bind(%s) on closed socket", address.toString().cstr());
+                return Error::NotOpen;
+        }
         struct sockaddr_storage storage;
         size_t                  len = address.toSockAddr(&storage);
-        if (len == 0) return Error::Invalid;
+        if (len == 0) {
+                promekiWarn("AbstractSocket::bind invalid address '%s'", address.toString().cstr());
+                return Error::Invalid;
+        }
         if (::bind(_fd, reinterpret_cast<struct sockaddr *>(&storage), static_cast<socklen_t>(len)) < 0) {
+                promekiWarn("AbstractSocket::bind(%s) failed (errno=%d %s)", address.toString().cstr(), errno,
+                            strerror(errno));
                 return Error::syserr();
         }
         updateLocalAddress();
@@ -49,10 +60,16 @@ Error AbstractSocket::bind(const SocketAddress &address) {
 }
 
 Error AbstractSocket::connectToHost(const SocketAddress &address) {
-        if (_fd < 0) return Error::NotOpen;
+        if (_fd < 0) {
+                promekiWarn("AbstractSocket::connectToHost(%s) on closed socket", address.toString().cstr());
+                return Error::NotOpen;
+        }
         struct sockaddr_storage storage;
         size_t                  len = address.toSockAddr(&storage);
-        if (len == 0) return Error::Invalid;
+        if (len == 0) {
+                promekiWarn("AbstractSocket::connectToHost invalid address '%s'", address.toString().cstr());
+                return Error::Invalid;
+        }
         if (::connect(_fd, reinterpret_cast<struct sockaddr *>(&storage), static_cast<socklen_t>(len)) < 0) {
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 int e = WSAGetLastError();
@@ -68,6 +85,8 @@ Error AbstractSocket::connectToHost(const SocketAddress &address) {
                         return Error::Ok;
                 }
 #endif
+                promekiWarn("AbstractSocket::connect(%s) failed (errno=%d %s)", address.toString().cstr(), errno,
+                            strerror(errno));
                 return Error::syserr();
         }
         _peerAddress = address;
@@ -113,23 +132,40 @@ bool AbstractSocket::waitForReadyRead(unsigned int timeoutMs) {
 
 Error AbstractSocket::waitForConnected(unsigned int timeoutMs) {
         if (_state == Connected) return Error::Ok;
-        if (_state != Connecting) return Error::Invalid;
+        if (_state != Connecting) {
+                promekiWarn("AbstractSocket::waitForConnected called in wrong state (state=%d)",
+                            static_cast<int>(_state));
+                return Error::Invalid;
+        }
 
         struct pollfd pfd;
         pfd.fd = _fd;
         pfd.events = POLLOUT;
         int timeout = (timeoutMs == 0) ? -1 : static_cast<int>(timeoutMs);
         int ret = ::poll(&pfd, 1, timeout);
-        if (ret < 0) return Error::syserr();
-        if (ret == 0) return Error::Timeout;
+        if (ret < 0) {
+                promekiWarn("AbstractSocket::waitForConnected poll failed (errno=%d %s)", errno, strerror(errno));
+                return Error::syserr();
+        }
+        if (ret == 0) {
+                promekiWarn("AbstractSocket::waitForConnected timed out after %u ms (peer=%s)", timeoutMs,
+                            _peerAddress.toString().cstr());
+                return Error::Timeout;
+        }
 
         // Check for connection error
         int       err = 0;
         socklen_t errLen = sizeof(err);
         if (::getsockopt(_fd, SOL_SOCKET, SO_ERROR, &err, &errLen) < 0) {
+                promekiWarn("AbstractSocket::waitForConnected getsockopt SO_ERROR failed (errno=%d %s)", errno,
+                            strerror(errno));
                 return Error::syserr();
         }
-        if (err != 0) return Error::syserr(err);
+        if (err != 0) {
+                promekiWarn("AbstractSocket::waitForConnected connect to %s failed (so_error=%d %s)",
+                            _peerAddress.toString().cstr(), err, strerror(err));
+                return Error::syserr(err);
+        }
 
         updateLocalAddress();
         setState(Connected);
@@ -187,9 +223,16 @@ Result<int> AbstractSocket::socketOption(int level, int option) const {
 }
 
 Error AbstractSocket::createSocket(int domain, int type, int protocol) {
-        if (_fd >= 0) return Error::AlreadyOpen;
+        if (_fd >= 0) {
+                promekiWarn("AbstractSocket::createSocket called on already-open socket");
+                return Error::AlreadyOpen;
+        }
         _fd = ::socket(domain, type, protocol);
-        if (_fd < 0) return Error::syserr();
+        if (_fd < 0) {
+                promekiWarn("AbstractSocket::createSocket socket(domain=%d type=%d proto=%d) failed (errno=%d %s)",
+                            domain, type, protocol, errno, strerror(errno));
+                return Error::syserr();
+        }
         setOpenMode(ReadWrite);
         setReceiveTimeout(DefaultReceiveTimeoutMs);
         setSendTimeout(DefaultSendTimeoutMs);

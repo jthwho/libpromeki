@@ -6,6 +6,7 @@
  */
 
 #include <promeki/rtcppacket.h>
+#include <promeki/logger.h>
 #include <algorithm>
 #include <cstring>
 
@@ -181,17 +182,36 @@ RtcpPacket::Header RtcpPacket::parseHeader(const uint8_t *data, size_t size) {
 }
 
 bool RtcpPacket::parseSenderReport(const uint8_t *data, size_t size, SenderReportInfo *out) {
-        if (data == nullptr || out == nullptr) return false;
+        if (data == nullptr || out == nullptr) {
+                promekiWarn("RtcpPacket::parseSenderReport called with null data/out");
+                return false;
+        }
         const Header h = parseHeader(data, size);
-        if (!h.isValid()) return false;
-        if (h.pt != SenderReport) return false;
+        if (!h.isValid()) {
+                promekiWarnThrottled(2000, "RtcpPacket::parseSenderReport invalid header (size=%zu)", size);
+                return false;
+        }
+        if (h.pt != SenderReport) {
+                promekiWarnThrottled(2000, "RtcpPacket::parseSenderReport wrong PT (got=%u expected=%u)",
+                                     static_cast<unsigned>(h.pt), static_cast<unsigned>(SenderReport));
+                return false;
+        }
         // Sender info block is 24 bytes immediately after the 4-byte
         // common header.  Length must cover that minimum; report
         // blocks (RC × 24 bytes) extend the packet beyond it but
         // don't change the sender info offsets.
         constexpr size_t kSenderInfoEnd = 4u + 24u;
-        if (h.lengthBytes < kSenderInfoEnd) return false;
-        if (size < kSenderInfoEnd) return false;
+        if (h.lengthBytes < kSenderInfoEnd) {
+                promekiWarnThrottled(2000,
+                                     "RtcpPacket::parseSenderReport length field too small (lengthBytes=%zu < %zu)",
+                                     h.lengthBytes, kSenderInfoEnd);
+                return false;
+        }
+        if (size < kSenderInfoEnd) {
+                promekiWarnThrottled(2000, "RtcpPacket::parseSenderReport truncated (size=%zu < %zu)", size,
+                                     kSenderInfoEnd);
+                return false;
+        }
         out->ssrc = readU32BE(data + 4);
         const uint32_t ntpSec = readU32BE(data + 8);
         const uint32_t ntpFrac = readU32BE(data + 12);

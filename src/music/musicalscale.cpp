@@ -6,6 +6,7 @@
  */
 
 #include <cmath>
+#include <promeki/logger.h>
 #include <promeki/musicalscale.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -33,7 +34,10 @@ MusicalScale::MusicalScale(int rootPitchClass, Mode mode) : _rootPitchClass(root
 }
 
 Result<MusicalScale> MusicalScale::fromName(const String &name) {
-        if (name.isEmpty()) return makeError<MusicalScale>(Error::Invalid);
+        if (name.isEmpty()) {
+                promekiWarn("MusicalScale::fromName: empty scale name");
+                return makeError<MusicalScale>(Error::Invalid);
+        }
 
         // Find where the root note ends and the mode name begins.
         // Root can be 1 char (C) or 2 chars (C#, Db, Ab).
@@ -42,7 +46,11 @@ Result<MusicalScale> MusicalScale::fromName(const String &name) {
 
         String rootStr = name.substr(0, modeStart);
         int    root = pitchClassFromName(rootStr);
-        if (root < 0) return makeError<MusicalScale>(Error::Invalid);
+        if (root < 0) {
+                promekiWarn("MusicalScale::fromName: invalid root pitch class '%s' in scale '%s'", rootStr.cstr(),
+                            name.cstr());
+                return makeError<MusicalScale>(Error::Invalid);
+        }
 
         // Extract mode string, trimming leading whitespace.
         Mode mode = Chromatic;
@@ -50,7 +58,11 @@ Result<MusicalScale> MusicalScale::fromName(const String &name) {
                 String modeStr = name.substr(modeStart).trim();
                 if (!modeStr.isEmpty()) {
                         auto [m, err] = modeFromName(modeStr);
-                        if (err.isError()) return makeError<MusicalScale>(err);
+                        if (err.isError()) {
+                                promekiWarn("MusicalScale::fromName: unknown mode '%s' in scale '%s'", modeStr.cstr(),
+                                            name.cstr());
+                                return makeError<MusicalScale>(err);
+                        }
                         mode = m;
                 }
         }
@@ -116,7 +128,10 @@ float MusicalScale::constrainNote(float midiNote, float strength) const {
 }
 
 int MusicalScale::pitchClassFromName(const String &name) {
-        if (name.isEmpty()) return -1;
+        if (name.isEmpty()) {
+                promekiWarnThrottled(1000, "MusicalScale::pitchClassFromName: empty name");
+                return -1;
+        }
 
         int base = -1;
         switch (name.charAt(0).codepoint()) {
@@ -127,7 +142,10 @@ int MusicalScale::pitchClassFromName(const String &name) {
                 case 'G': base = 7; break;
                 case 'A': base = 9; break;
                 case 'B': base = 11; break;
-                default: return -1;
+                default:
+                        promekiWarnThrottled(1000, "MusicalScale::pitchClassFromName: unrecognized note letter in '%s'",
+                                             name.cstr());
+                        return -1;
         }
 
         for (size_t i = 1; i < name.length(); i++) {
@@ -158,6 +176,7 @@ Result<MusicalScale::Mode> MusicalScale::modeFromName(const String &name) {
         if (lower == "pentatonic" || lower == "major pentatonic") return makeResult(Pentatonic);
         if (lower == "blues") return makeResult(Blues);
 
+        promekiWarn("MusicalScale::modeFromName: unrecognized mode '%s'", name.cstr());
         return makeError<Mode>(Error::Invalid);
 }
 

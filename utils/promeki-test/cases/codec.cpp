@@ -313,7 +313,20 @@ namespace promekitest {
                                         return;
                                 }
                                 if (p.sawError) {
-                                        ctx.setFail(String("pipeline error: ") + p.errorDetail);
+                                        // A mid-stream @ref Error::NotSupported
+                                        // means the codec was advertised but
+                                        // the runtime can't actually wire it
+                                        // up (e.g. NVENC's CUDA context
+                                        // failed to retain on a host with a
+                                        // driver mismatch).  That's the same
+                                        // bucket as the build/open/start
+                                        // planner-gap path above — Skip,
+                                        // not Fail.
+                                        if (p.firstError == Error::NotSupported) {
+                                                ctx.setSkip(String("pipeline error: ") + p.errorDetail);
+                                        } else {
+                                                ctx.setFail(String("pipeline error: ") + p.errorDetail);
+                                        }
                                         return;
                                 }
                         }

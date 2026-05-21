@@ -195,12 +195,23 @@ Error AudioEncoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _outputQueue.clear();
 
         MediaIOPortGroup *group = addPortGroup("aencoder");
-        if (group == nullptr) return Error::Invalid;
+        if (group == nullptr) {
+                promekiWarn("AudioEncoderMediaIO: addPortGroup('aencoder') failed");
+                return Error::Invalid;
+        }
         group->setFrameRate(outDesc.frameRate());
         group->setCanSeek(false);
         group->setFrameCount(MediaIO::FrameCountInfinite);
-        if (addSink(group, cmd.pendingMediaDesc) == nullptr) return Error::Invalid;
-        if (addSource(group, outDesc) == nullptr) return Error::Invalid;
+        if (addSink(group, cmd.pendingMediaDesc) == nullptr) {
+                promekiWarn("AudioEncoderMediaIO: addSink failed (fps=%s)",
+                            cmd.pendingMediaDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
+        if (addSource(group, outDesc) == nullptr) {
+                promekiWarn("AudioEncoderMediaIO: addSource failed (fps=%s)",
+                            outDesc.frameRate().toString().cstr());
+                return Error::Invalid;
+        }
         return Error::Ok;
 }
 

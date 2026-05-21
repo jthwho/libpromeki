@@ -9,6 +9,7 @@
 #include <promeki/buffer.h>
 #include <promeki/buffercommand.h>
 #include <promeki/hostbufferimpl.h>
+#include <promeki/logger.h>
 #include <promeki/string.h>
 #include <promeki/util.h>
 
@@ -67,10 +68,17 @@ Result<Buffer> Buffer::fromHex(const String &hex) {
         for (size_t i = 0; i < n; ++i) {
                 char c = cp[i];
                 if (isHexSkip(c)) continue;
-                if (hexNibble(c) < 0) return makeError<Buffer>(Error::ParseFailed);
+                if (hexNibble(c) < 0) {
+                        promekiWarn("Buffer::fromHex failed: non-hex character '%c' (0x%02x) at offset %zu",
+                                    c, (unsigned)(uint8_t)c, i);
+                        return makeError<Buffer>(Error::ParseFailed);
+                }
                 ++nibbles;
         }
-        if ((nibbles & 1u) != 0) return makeError<Buffer>(Error::ParseFailed);
+        if ((nibbles & 1u) != 0) {
+                promekiWarn("Buffer::fromHex failed: odd number of hex nibbles (%zu)", nibbles);
+                return makeError<Buffer>(Error::ParseFailed);
+        }
         const size_t bytes = nibbles / 2;
         Buffer       out(bytes == 0 ? 1 : bytes);
         out.setSize(bytes);
@@ -113,10 +121,21 @@ String Buffer::toHex() const {
 }
 
 Error Buffer::copyFrom(const void *src, size_t bytes, size_t offset) const {
-        if (!_d.isValid()) return Error::Invalid;
-        if (!isHostAccessible()) return Error::NotHostAccessible;
+        if (!_d.isValid()) {
+                promekiWarn("Buffer::copyFrom(%zu @ %zu) refused: invalid destination buffer", bytes, offset);
+                return Error::Invalid;
+        }
+        if (!isHostAccessible()) {
+                promekiWarn("Buffer::copyFrom(%zu @ %zu) refused: destination not host-accessible "
+                            "(memSpace=%s)", bytes, offset, memSpace().toString().cstr());
+                return Error::NotHostAccessible;
+        }
         const size_t avail = availSize();
-        if (offset > avail || bytes > avail - offset) return Error::BufferTooSmall;
+        if (offset > avail || bytes > avail - offset) {
+                promekiWarn("Buffer::copyFrom refused: out of range (bytes=%zu, offset=%zu, avail=%zu)",
+                            bytes, offset, avail);
+                return Error::BufferTooSmall;
+        }
         return _d.modify()->copyFromHost(src, bytes, _d->shift() + offset);
 }
 
@@ -140,6 +159,8 @@ BufferRequest resolvedCopy(size_t bytes, size_t srcOffset, size_t dstOffset, Err
 
 BufferRequest Buffer::copyTo(Buffer &dst, size_t bytes, size_t srcOffset, size_t dstOffset) const {
         if (!_d.isValid() || !dst._d.isValid()) {
+                promekiWarn("Buffer::copyTo refused: invalid source (%s) or destination (%s)",
+                            _d.isValid() ? "ok" : "bad", dst._d.isValid() ? "ok" : "bad");
                 return resolvedCopy(bytes, srcOffset, dstOffset, Error::Invalid);
         }
         if (bytes == 0) {
@@ -149,6 +170,9 @@ BufferRequest Buffer::copyTo(Buffer &dst, size_t bytes, size_t srcOffset, size_t
         const size_t dstAvail = dst.availSize();
         if (srcOffset > srcAvail || bytes > srcAvail - srcOffset ||
             dstOffset > dstAvail || bytes > dstAvail - dstOffset) {
+                promekiWarn("Buffer::copyTo refused: out of range (bytes=%zu, srcOff=%zu, dstOff=%zu, "
+                            "srcAvail=%zu, dstAvail=%zu)",
+                            bytes, srcOffset, dstOffset, srcAvail, dstAvail);
                 return resolvedCopy(bytes, srcOffset, dstOffset, Error::BufferTooSmall);
         }
 
@@ -174,6 +198,8 @@ BufferRequest Buffer::copyTo(Buffer &dst, size_t bytes, size_t srcOffset, size_t
                 return resolvedCopy(bytes, srcOffset, dstOffset, Error::Ok);
         }
 
+        promekiWarn("Buffer::copyTo refused: no registered copy fn for srcSpace=%s dstSpace=%s "
+                    "(bytes=%zu)", memSpace().toString().cstr(), dst.memSpace().toString().cstr(), bytes);
         return resolvedCopy(bytes, srcOffset, dstOffset, Error::NotSupported);
 }
 

@@ -12,6 +12,7 @@
 #include <promeki/iodevice.h>
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
+#include <promeki/logger.h>
 #include <promeki/stringiodevice.h>
 #include <promeki/fileiodevice.h>
 
@@ -75,6 +76,8 @@ void TextStream::writeString(const String &str) {
         if (_status != Ok) return;
         if (str.isEmpty()) return;
         if (_device == nullptr) {
+                promekiWarn("TextStream::writeString refused: no device attached (%zu bytes lost)",
+                            str.byteCount());
                 _status = WriteFailed;
                 return;
         }
@@ -85,6 +88,8 @@ void TextStream::writeString(const String &str) {
         while (total < len) {
                 int64_t n = _device->write(src + total, static_cast<int64_t>(len - total));
                 if (n <= 0) {
+                        promekiWarnThrottled(1000, "TextStream::writeString short write: %zu of %zu bytes",
+                                             total, len);
                         _status = WriteFailed;
                         return;
                 }

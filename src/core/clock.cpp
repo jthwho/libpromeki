@@ -6,6 +6,7 @@
  */
 
 #include <promeki/clock.h>
+#include <promeki/logger.h>
 #include <promeki/timestamp.h>
 
 #include <algorithm>
@@ -105,6 +106,8 @@ Result<int64_t> Clock::nowNs() const {
 
 Error Clock::setPause(bool paused) {
         if (_pauseMode == ClockPauseMode::CannotPause) {
+                promekiWarn("Clock::setPause(%s) refused: clock is configured as CannotPause",
+                            paused ? "true" : "false");
                 return Error::NotSupported;
         }
 
@@ -147,13 +150,18 @@ Error Clock::setPause(bool paused) {
 
 Error Clock::sleepUntil(const MediaTimeStamp &deadline) const {
         if (deadline.domain() != _domain) {
+                promekiWarn("Clock::sleepUntil refused: domain mismatch (deadline=%s, clock=%s)",
+                            deadline.domain().toString().cstr(), _domain.toString().cstr());
                 return Error::ClockDomainMismatch;
         }
 
         int64_t totalOffsetNs;
         {
                 Mutex::Locker lock(_mutex);
-                if (_paused) return Error::ClockPaused;
+                if (_paused) {
+                        promekiWarn("Clock::sleepUntil refused: clock is paused");
+                        return Error::ClockPaused;
+                }
                 totalOffsetNs = _fixedOffsetNs + _pausedOffsetNs;
         }
 

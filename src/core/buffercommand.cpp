@@ -9,6 +9,7 @@
 #include <promeki/buffercommand.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/eventloop.h>
+#include <promeki/logger.h>
 #include <utility>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -75,10 +76,17 @@ Error BufferCommand::waitForCompletion(unsigned int timeoutMs) const {
         t.start();
         while (!_completed.value()) {
                 const int64_t elapsed = t.elapsed();
-                if (elapsed >= static_cast<int64_t>(timeoutMs)) return Error::Timeout;
+                if (elapsed >= static_cast<int64_t>(timeoutMs)) {
+                        promekiWarn("BufferCommand::waitForCompletion timed out after %ums", timeoutMs);
+                        return Error::Timeout;
+                }
                 const unsigned int remaining = timeoutMs - static_cast<unsigned int>(elapsed);
                 Error              err = _completionCv.wait(_completionMutex, remaining);
-                if (err == Error::Timeout && !_completed.value()) return Error::Timeout;
+                if (err == Error::Timeout && !_completed.value()) {
+                        promekiWarn("BufferCommand::waitForCompletion timed out after %ums (cv wait)",
+                                    timeoutMs);
+                        return Error::Timeout;
+                }
         }
         return Error::Ok;
 }

@@ -194,6 +194,8 @@ namespace {
                 struct addrinfo *res = nullptr;
                 const int        rc = ::getaddrinfo(host.cstr(), nullptr, &hints, &res);
                 if (rc != 0 || res == nullptr) {
+                        promekiWarn("HttpClient: getaddrinfo('%s') failed (rc=%d %s)", host.cstr(), rc,
+                                    gai_strerror(rc));
                         if (res != nullptr) ::freeaddrinfo(res);
                         return Error::HostNotFound;
                 }
@@ -258,6 +260,9 @@ int HttpClient::Pending::cbBody(llhttp_t *p, const char *at, size_t len) {
         auto *self = PEND(p);
         self->bodyBytesSoFar += static_cast<int64_t>(len);
         if (self->maxBodyBytes >= 0 && self->bodyBytesSoFar > self->maxBodyBytes) {
+                promekiWarn("HttpClient: response body exceeded maxBodyBytes=%lld (received=%lld) — aborting",
+                            static_cast<long long>(self->maxBodyBytes),
+                            static_cast<long long>(self->bodyBytesSoFar));
                 return -1;
         }
         // Append to the response body buffer.  Reuse the

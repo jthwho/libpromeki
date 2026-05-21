@@ -104,6 +104,7 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         _sourceClock = _device->sampleClock();
         MediaIOPortGroup *group = addPortGroup(String("ntv2"), _sourceClock);
         if (group == nullptr) {
+                promekiWarn("Ntv2MediaIO: addPortGroup('ntv2') failed (channel %d)", _channel);
                 if (isWrite) closeSink(); else closeSource();
                 return Error::Invalid;
         }
@@ -112,11 +113,15 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         group->setFrameCount(MediaIO::FrameCountInfinite);
         if (isWrite) {
                 if (addSink(group, resolved) == nullptr) {
+                        promekiWarn("Ntv2MediaIO: addSink failed (channel %d, fps=%s)",
+                                    _channel, resolved.frameRate().toString().cstr());
                         closeSink();
                         return Error::Invalid;
                 }
         } else {
                 if (addSource(group, resolved) == nullptr) {
+                        promekiWarn("Ntv2MediaIO: addSource failed (channel %d, fps=%s)",
+                                    _channel, resolved.frameRate().toString().cstr());
                         closeSource();
                         return Error::Invalid;
                 }
@@ -160,8 +165,15 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandRead &cmd) {
 }
 
 Error Ntv2MediaIO::executeCmd(MediaIOCommandWrite &cmd) {
-        if (_device == nullptr || !_sinkMode) return Error::NotOpen;
-        if (!cmd.frame.isValid()) return Error::InvalidArgument;
+        if (_device == nullptr || !_sinkMode) {
+                promekiWarnThrottled(5000, "Ntv2MediaIO::Write: not open (device=%p sinkMode=%d)",
+                                     (void*)_device, _sinkMode ? 1 : 0);
+                return Error::NotOpen;
+        }
+        if (!cmd.frame.isValid()) {
+                promekiWarnThrottled(1000, "Ntv2MediaIO::Write: invalid frame submitted (channel %d)", _channel);
+                return Error::InvalidArgument;
+        }
 
         // Validate at least one uncompressed video payload is on the
         // frame — sink mode requires it (compressed needs a decode
@@ -170,6 +182,7 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // playout thread can emit both video and ANC together.
         auto vids = cmd.frame.videoPayloads();
         if (vids.isEmpty() || !vids[0].isValid()) {
+                promekiWarnThrottled(1000, "Ntv2MediaIO::Write: frame has no video payload (channel %d)", _channel);
                 return Error::InvalidArgument;
         }
         if (!sharedPointerCast<UncompressedVideoPayload>(vids[0]).isValid()) {
