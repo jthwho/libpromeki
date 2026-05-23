@@ -114,7 +114,7 @@ String Units::fromByteCount(uint64_t bytes, int maxDecimals) {
 }
 
 String Units::fromByteCount(uint64_t bytes, int maxDecimals, const ByteCountStyle &style) {
-        return formatByteCount(bytes, maxDecimals, style.value() == ByteCountStyle::Binary.value());
+        return formatByteCount(bytes, maxDecimals, style == ByteCountStyle::Binary);
 }
 
 String Units::fromDurationNs(double ns, int precision) {

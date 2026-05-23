@@ -9,6 +9,7 @@
 
 #include <promeki/datastream.h>
 #include <promeki/error.h>
+#include <promeki/logger.h>
 #include <promeki/sdpsession.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -77,6 +78,12 @@ uint8_t AncDesc::vpidCode() const { return _d->vpidCode; }
 
 void AncDesc::setVpidCode(uint8_t code) { _d.modify()->vpidCode = code; }
 
+AncTransmissionModel AncDesc::transmissionModel() const { return _d->transmissionModel; }
+
+void AncDesc::setTransmissionModel(const AncTransmissionModel &tm) {
+        _d.modify()->transmissionModel = tm;
+}
+
 // ---------------------------------------------------------------------------
 // Predicates
 // ---------------------------------------------------------------------------
@@ -129,6 +136,7 @@ bool AncDesc::formatEquals(const AncDesc &other) const {
         if (_d->pairedAudioStreamIndex != other._d->pairedAudioStreamIndex) return false;
         if (_d->troff != other._d->troff) return false;
         if (_d->vpidCode != other._d->vpidCode) return false;
+        if (!(_d->transmissionModel == other._d->transmissionModel)) return false;
         return true;
 }
 
@@ -146,7 +154,13 @@ DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
         // §7 SDP fmtp emission.  v1 readers see no trailing fields;
         // v2 readers fall back to the defaults (0, 0) when reading
         // a v1 stream.
-        stream.beginFrame(DataTypeAncDesc, 2);
+        //
+        // v3 (2026-05-21): appended transmissionModel for ST 2110-40
+        // §6 LLTM / CTM signalling.  v2 readers ignore the trailing
+        // field; v3 readers fall back to
+        // AncTransmissionModel::Unsignalled when reading a v2 (or
+        // earlier) stream.
+        stream.beginFrame(DataTypeAncDesc, 3);
         stream << desc.sourceRaster();
         stream << desc.scanMode();
         stream << desc.frameRate();
@@ -162,13 +176,15 @@ DataStream &operator<<(DataStream &stream, const AncDesc &desc) {
         // v2 trailer.
         stream << static_cast<uint32_t>(desc.troff());
         stream << static_cast<uint8_t>(desc.vpidCode());
+        // v3 trailer.
+        stream << desc.transmissionModel();
         stream.endFrame();
         return stream;
 }
 
 DataStream &operator>>(DataStream &stream, AncDesc &desc) {
         uint16_t version = 0;
-        if (!stream.readFrame(DataTypeAncDesc, /*maxVersion=*/2, &version)) {
+        if (!stream.readFrame(DataTypeAncDesc, /*maxVersion=*/3, &version)) {
                 desc = AncDesc();
                 return stream;
         }
@@ -204,6 +220,10 @@ DataStream &operator>>(DataStream &stream, AncDesc &desc) {
         if (version >= 2) {
                 stream >> troff >> vpidCode;
         }
+        AncTransmissionModel tm = AncTransmissionModel::Unsignalled;
+        if (version >= 3) {
+                stream >> tm;
+        }
         if (stream.status() != DataStream::Ok) {
                 desc = AncDesc();
                 return stream;
@@ -219,6 +239,7 @@ DataStream &operator>>(DataStream &stream, AncDesc &desc) {
         desc.setMetadata(std::move(meta));
         desc.setTroff(troff);
         desc.setVpidCode(vpidCode);
+        desc.setTransmissionModel(tm);
         return stream;
 }
 
@@ -316,18 +337,51 @@ namespace {
         // empty, every registered St291 format; otherwise the
         // intersection of @ref AncDesc::allowedFormats with the
         // St291-registered set.
+        //
+        // ST 2110-40 §5.2.1 forbids embedded-audio metadata on this
+        // transport ("audio metadata is part of the AES67 / -30 audio
+        // stream"), so AudioMetadata-category formats are stripped
+        // here with a warning.  The packetizer carries an equivalent
+        // egress-side filter (rtppayloadanc.cpp orderedSt291Indices),
+        // but doing it here too keeps the SDP from advertising
+        // DID_SDID pairs the wire path would refuse to emit.
         AncFormat::IDList selectSt291Formats(const AncDesc &desc) {
                 const AncFormat::IDList  all = AncFormat::registeredIDsForTransport(AncTransport::St291);
                 const AncFormat::IDList &allowed = desc.allowedFormats();
-                if (allowed.isEmpty()) return all;
-                AncFormat::IDList out;
+                AncFormat::IDList        out;
+                if (allowed.isEmpty()) {
+                        out.reserve(all.size());
+                        for (auto id : all) {
+                                const AncFormat fmt(id);
+                                if (fmt.category() == AncCategory::AudioMetadata) {
+                                        promekiWarn("AncDesc::toSdp: stripping %s from "
+                                                    "smpte291 SDP fmtp (§5.2.1 forbids "
+                                                    "audio metadata on ST 2110-40)",
+                                                    fmt.name().cstr());
+                                        continue;
+                                }
+                                out.pushToBack(id);
+                        }
+                        return out;
+                }
                 for (auto id : allowed) {
+                        bool isSt291 = false;
                         for (auto valid : all) {
                                 if (id == valid) {
-                                        out.pushToBack(id);
+                                        isSt291 = true;
                                         break;
                                 }
                         }
+                        if (!isSt291) continue;
+                        const AncFormat fmt(id);
+                        if (fmt.category() == AncCategory::AudioMetadata) {
+                                promekiWarn("AncDesc::toSdp: stripping %s from "
+                                            "smpte291 SDP fmtp (§5.2.1 forbids audio "
+                                            "metadata on ST 2110-40)",
+                                            fmt.name().cstr());
+                                continue;
+                        }
+                        out.pushToBack(id);
                 }
                 return out;
         }
@@ -360,6 +414,7 @@ AncDesc AncDesc::fromSdp(const SdpMediaDescription &md) {
         AncFormat::IDList allowed;
         uint32_t          troffVal = 0;
         uint8_t           vpidCodeVal = 0;
+        AncTransmissionModel tmVal = AncTransmissionModel::Unsignalled;
         for (const String &entry : entries) {
                 if (entry.startsWith(String("DID_SDID"))) {
                         uint8_t did = 0, sdid = 0;
@@ -407,10 +462,29 @@ AncDesc AncDesc::fromSdp(const SdpMediaDescription &md) {
                         }
                         continue;
                 }
+                if (entry.startsWith(String("TM="))) {
+                        // ST 2110-40 §6 / §7: TM=LLTM | CTM.  An
+                        // unknown / malformed value leaves @c tmVal at
+                        // Unsignalled — receivers shouldn't trust a TM
+                        // they can't interpret.  SSN parsing is
+                        // intentionally not enforced: a receiver
+                        // accepts either edition's SSN string and
+                        // keys off TM alone.  The prefix match
+                        // includes the '=' so it doesn't shadow
+                        // @c TROFF.
+                        const String val = entry.substr(3).trim();
+                        if (val == "LLTM") {
+                                tmVal = AncTransmissionModel::Lltm;
+                        } else if (val == "CTM") {
+                                tmVal = AncTransmissionModel::Ctm;
+                        }
+                        continue;
+                }
         }
         out.setAllowedFormats(std::move(allowed));
         out.setTroff(troffVal);
         out.setVpidCode(vpidCodeVal);
+        out.setTransmissionModel(tmVal);
         return out;
 }
 
@@ -438,13 +512,24 @@ SdpMediaDescription AncDesc::toSdp(uint8_t payloadType) const {
         //   - Sender that omits @c TM (the implicit CTM case) SHALL
         //     set @c SSN=ST2110-40:2018 and SHALL NOT emit @c TM.
         //
-        // The :2018 + always-emit @c TM=CTM pair the library emitted
-        // before P2-9 violated that rule under a :2023-aware receiver.
-        // Today we are CTM-only (LLTM is not modelled), so omit @c TM
-        // entirely and keep @c SSN=ST2110-40:2018.  When LLTM lands the
-        // emit path will bump @c SSN to :2023 alongside the @c TM=LLTM
-        // line.
-        append(String("SSN=ST2110-40:2018"));
+        // The default @ref AncTransmissionModel::Unsignalled keeps
+        // @c SSN=:2018 with no @c TM line — the implicit-CTM form.
+        // An explicit @c Lltm / @c Ctm bumps @c SSN to :2023 and
+        // emits the matching @c TM= line.  LLTM scheduling itself
+        // is the application's responsibility (it requires a
+        // per-packet-deadline @c PacketScheduler — Phase D1's
+        // @c TxTimePacketScheduler); the descriptor only carries the
+        // SDP signalling.
+        const AncTransmissionModel tm = transmissionModel();
+        if (tm == AncTransmissionModel::Lltm) {
+                append(String("SSN=ST2110-40:2023"));
+                append(String("TM=LLTM"));
+        } else if (tm == AncTransmissionModel::Ctm) {
+                append(String("SSN=ST2110-40:2023"));
+                append(String("TM=CTM"));
+        } else {
+                append(String("SSN=ST2110-40:2018"));
+        }
 
         // exactframerate (ST 2110-40 §7) — required so ANC RTP
         // timestamps can be aligned to the paired video frame timing.

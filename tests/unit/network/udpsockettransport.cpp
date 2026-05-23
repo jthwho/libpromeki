@@ -145,6 +145,24 @@ TEST_CASE("UdpSocketTransport") {
                 t.close();
         }
 
+        SUBCASE("setDontFragment defaults off, accessor round-trips") {
+                UdpSocketTransport t;
+                CHECK_FALSE(t.dontFragment());
+                t.setDontFragment(true);
+                CHECK(t.dontFragment());
+                t.setDontFragment(false);
+                CHECK_FALSE(t.dontFragment());
+        }
+
+        SUBCASE("setDontFragment applied at open") {
+                UdpSocketTransport t;
+                t.setDontFragment(true);
+                Error err = t.open();
+                CHECK(err.isOk());
+                CHECK(t.isOpen());
+                t.close();
+        }
+
         SUBCASE("setMulticastTTL applied at open") {
                 UdpSocketTransport t;
                 t.setMulticastTTL(8);

@@ -1158,9 +1158,9 @@ TEST_CASE("Cea608Encoder + Decoder: pop-on then paint-on cues round-trip with th
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 2);
         CHECK(out[0].text() == "POPS");
-        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
+        CHECK(out[0].mode() == CaptionMode::PopOn);
         CHECK(out[1].text() == "PAIN");
-        CHECK(out[1].mode().value() == CaptionMode::PaintOn.value());
+        CHECK(out[1].mode() == CaptionMode::PaintOn);
 }
 
 TEST_CASE("Cea608Encoder + Decoder: paint-on then roll-up round-trip with their own modes") {
@@ -1183,9 +1183,9 @@ TEST_CASE("Cea608Encoder + Decoder: paint-on then roll-up round-trip with their 
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 2);
         CHECK(out[0].text() == "PAIN");
-        CHECK(out[0].mode().value() == CaptionMode::PaintOn.value());
+        CHECK(out[0].mode() == CaptionMode::PaintOn);
         CHECK(out[1].text() == "ROLL");
-        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+        CHECK(out[1].mode() == CaptionMode::RollUp);
 }
 
 TEST_CASE("Cea608Encoder + Decoder: three-mode cue list round-trips per-cue modes") {
@@ -1211,11 +1211,11 @@ TEST_CASE("Cea608Encoder + Decoder: three-mode cue list round-trips per-cue mode
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 3);
         CHECK(out[0].text() == "ONEX");
-        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
+        CHECK(out[0].mode() == CaptionMode::PopOn);
         CHECK(out[1].text() == "TWOY");
-        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+        CHECK(out[1].mode() == CaptionMode::RollUp);
         CHECK(out[2].text() == "TREZ");
-        CHECK(out[2].mode().value() == CaptionMode::PaintOn.value());
+        CHECK(out[2].mode() == CaptionMode::PaintOn);
 }
 
 TEST_CASE("Cea608Encoder: re-entering RollUp after another mode re-emits RUx") {
@@ -1304,7 +1304,7 @@ TEST_CASE("Cea608Encoder + Decoder: Default cue mode falls back to Config::mode"
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "DEFX");
-        CHECK(out[0].mode().value() == CaptionMode::PaintOn.value());
+        CHECK(out[0].mode() == CaptionMode::PaintOn);
 }
 
 // ============================================================================
@@ -1445,7 +1445,7 @@ TEST_CASE("Cea608Encoder + Decoder: BottomCenter anchor round-trips horizontal h
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "WORD");
-        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomCenter.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomCenter);
 }
 
 TEST_CASE("Cea608Encoder + Decoder: BottomRight anchor round-trips horizontal half") {
@@ -1464,7 +1464,7 @@ TEST_CASE("Cea608Encoder + Decoder: BottomRight anchor round-trips horizontal ha
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "ABCDEF");
-        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomRight.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomRight);
 }
 
 TEST_CASE("Cea608Encoder + Decoder: BottomLeft anchor round-trips horizontal half") {
@@ -1483,7 +1483,7 @@ TEST_CASE("Cea608Encoder + Decoder: BottomLeft anchor round-trips horizontal hal
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "WORD");
-        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomLeft.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomLeft);
 }
 
 TEST_CASE("Cea608Encoder + Decoder: TopCenter and MiddleCenter anchors round-trip") {
@@ -1504,9 +1504,9 @@ TEST_CASE("Cea608Encoder + Decoder: TopCenter and MiddleCenter anchors round-tri
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 2);
         CHECK(out[0].text() == "TOPX");
-        CHECK(out[0].anchor().value() == SubtitleAnchor::TopCenter.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::TopCenter);
         CHECK(out[1].text() == "MIDX");
-        CHECK(out[1].anchor().value() == SubtitleAnchor::MiddleCenter.value());
+        CHECK(out[1].anchor() == SubtitleAnchor::MiddleCenter);
 }
 
 TEST_CASE("Cea608Encoder: coloured BottomCenter cue degrades to flush-left (PAC colour wins over indent)") {

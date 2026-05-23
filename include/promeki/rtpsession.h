@@ -17,7 +17,10 @@
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/buffer.h>
+#include <promeki/clockdomain.h>
 #include <promeki/duration.h>
+#include <promeki/enums.h>
+#include <promeki/packetscheduler.h>
 #include <promeki/queue.h>
 #include <promeki/rtcppacket.h>
 #include <promeki/socketaddress.h>
@@ -125,6 +128,41 @@ class RtpSession : public ObjectBase {
                  */
                 Error start(PacketTransport *transport);
 
+                /**
+                 * @brief Starts the session with two caller-owned
+                 *        transports for ST 2022-7 dual-leg dispatch.
+                 *
+                 * Both transports must be @ref PacketTransport::open
+                 * "open" before the call.  Every @ref sendPackets call
+                 * stamps the RTP header (sequence number + SSRC) once,
+                 * then fans the resulting packet list out to both
+                 * transports with leg-specific destinations (set via
+                 * @ref setRemote and @ref setRemoteSecondary) — the
+                 * receiver sees bit-identical packets on both legs and
+                 * dedups by extended sequence number per RFC 7104 §3.
+                 * Each transport runs its own
+                 * @ref PacketScheduler (set via @ref setScheduler and
+                 * @ref setSchedulerSecondary) so back-pressure on one
+                 * leg's socket never stalls the other.  The receive
+                 * loop spawns one @c "rtp-rx" thread per leg, both
+                 * dispatching into the same per-stream receivers (the
+                 * @ref RtpSeqReorderBuffer's silent duplicate discard
+                 * handles dedup).
+                 *
+                 * RtpSession does not take ownership of either
+                 * transport; the caller closes / destroys them after
+                 * @ref stop().
+                 *
+                 * @param primary   The primary leg's already-open transport.
+                 * @param secondary The secondary leg's already-open
+                 *                  transport.  Passing @c nullptr is
+                 *                  equivalent to the single-arg
+                 *                  @ref start(PacketTransport*)
+                 *                  overload.
+                 * @return @c Error::Ok on success, otherwise an error.
+                 */
+                Error start(PacketTransport *primary, PacketTransport *secondary);
+
                 /** @brief Stops the session and closes any owned transport. */
                 void stop();
 
@@ -145,6 +183,22 @@ class RtpSession : public ObjectBase {
 
                 /** @brief Returns the current destination address. */
                 const SocketAddress &remote() const { return _remote; }
+
+                /**
+                 * @brief Sets the ST 2022-7 secondary-leg destination.
+                 *
+                 * Only meaningful when the session was started with the
+                 * dual-transport @ref start(PacketTransport*,PacketTransport*)
+                 * overload.  In single-leg mode the secondary remote is
+                 * unused; setting it has no effect on the wire.
+                 */
+                void setRemoteSecondary(const SocketAddress &dest) { _remoteSecondary = dest; }
+
+                /** @brief Returns the secondary-leg destination address (may be null). */
+                const SocketAddress &remoteSecondary() const { return _remoteSecondary; }
+
+                /** @brief Returns true when a secondary transport is attached (ST 2022-7 mode). */
+                bool hasSecondaryLeg() const { return _transportSecondary != nullptr; }
 
                 /**
                  * @brief Sends a single RTP packet with raw payload data.
@@ -338,19 +392,74 @@ class RtpSession : public ObjectBase {
                 unsigned int receivePollIntervalMs() const { return _receivePollMs; }
 
                 /**
-                 * @brief Applies a transmit-rate cap to the transport.
+                 * @brief Applies a transmit-rate cap to the bound scheduler.
                  *
-                 * Convenience wrapper around
-                 * @ref PacketTransport::setPacingRate() that works
-                 * whether the transport is internally or externally
-                 * owned.  For UDP sockets this maps to the kernel
-                 * @c SO_MAX_PACING_RATE option, i.e. true
-                 * kernel pacing with no per-packet CPU cost.
+                 * Convenience wrapper that updates the active
+                 * @ref PacketScheduler's @c bytesPerSec field.  For
+                 * @ref KernelFqPacketScheduler this maps through to
+                 * the kernel @c SO_MAX_PACING_RATE option; other
+                 * scheduler subclasses use the value for
+                 * @c predictedTxDelayUs accounting only.
                  *
                  * @param bytesPerSec Maximum transmit rate in bytes/sec.
-                 * @return Error::Ok on success, an error otherwise.
+                 * @return Error::Ok on success, Error::NotOpen if no
+                 *         scheduler has been installed, or another
+                 *         error if the scheduler rejects the update.
                  */
                 Error setPacingRate(uint64_t bytesPerSec);
+
+                /**
+                 * @brief Installs (or replaces) the per-session @ref PacketScheduler.
+                 *
+                 * Called by @ref RtpMediaIO at @ref start() time once
+                 * @c MediaConfig::RtpPacingMode has been resolved.
+                 * Ownership transfers to the session; the prior
+                 * scheduler (if any) is destroyed.  The new scheduler
+                 * is bound to the session's current transport via
+                 * @ref PacketScheduler::setTransport.
+                 *
+                 * @param scheduler New scheduler instance.  Passing
+                 *                  null detaches the scheduler — used
+                 *                  by tests; production callers always
+                 *                  pass a real scheduler.
+                 */
+                void setScheduler(PacketScheduler::UPtr scheduler);
+
+                /** @brief Returns the bound scheduler, or null if none is installed. */
+                PacketScheduler *scheduler() const { return _scheduler.get(); }
+
+                /**
+                 * @brief Installs the per-session secondary
+                 *        @ref PacketScheduler for ST 2022-7 dual-leg
+                 *        dispatch.
+                 *
+                 * Mirrors @ref setScheduler — the scheduler is bound to
+                 * the secondary transport at the next
+                 * @ref start(PacketTransport*,PacketTransport*) call.
+                 * Passing null detaches the secondary scheduler; an
+                 * RtpSession with a secondary transport but no
+                 * secondary scheduler falls back to a raw transport
+                 * sendmmsg loop for that leg.
+                 */
+                void setSchedulerSecondary(PacketScheduler::UPtr scheduler);
+
+                /** @brief Returns the secondary scheduler, or null if none is installed. */
+                PacketScheduler *schedulerSecondary() const { return _schedulerSecondary.get(); }
+
+                /**
+                 * @brief Applies a scheduler configuration.
+                 *
+                 * Thin pass-through to the installed scheduler's
+                 * @ref PacketScheduler::configure.  Useful for callers
+                 * that change the per-frame budget (e.g.  framerate
+                 * change) after start time.
+                 *
+                 * @param spec Configuration to apply.
+                 * @return Error::Ok on success, Error::NotOpen if no
+                 *         scheduler is installed, otherwise the
+                 *         scheduler's failure.
+                 */
+                Error configureScheduler(const PacketScheduler::Spec &spec);
 
                 /** @brief Returns the locally generated SSRC. */
                 uint32_t ssrc() const { return _ssrc; }
@@ -411,6 +520,39 @@ class RtpSession : public ObjectBase {
                  *                   pair works.
                  */
                 void setRtpAnchor(NtpTime captureNtp, uint32_t rtpTs);
+
+                /**
+                 * @brief Overload that derives the anchor NTP from a
+                 *        @ref ClockDomain with a bound wallclock-now
+                 *        provider.
+                 *
+                 * The classic @ref setRtpAnchor(NtpTime, uint32_t)
+                 * captures @c NtpTime::now() (which on Linux reads
+                 * @c CLOCK_REALTIME) — fine when the host's
+                 * @c CLOCK_REALTIME is itself driven by @c phc2sys, but
+                 * lying when the host's wallclock is unsynced and the
+                 * media stream is supposed to ride a PTP grandmaster.
+                 * This overload reads
+                 * @c domain.nowUtcNs() — typically PHC-derived for
+                 * @ref ClockDomain::Ptp — and feeds it through
+                 * @ref NtpTime::fromSystemClock so the SR carries the
+                 * PTP-traceable wallclock instead.
+                 *
+                 * Falls back to @c NtpTime::now() (with a one-shot
+                 * warn) when @p domain has no provider bound, so an
+                 * application that opts into PTP signalling without
+                 * actually wiring a clock degrades to today's
+                 * behaviour rather than emitting a zeroed SR.
+                 *
+                 * Writer-only — same semantics as the @c NtpTime
+                 * overload otherwise.
+                 *
+                 * @param domain A registered @ref ClockDomain with a
+                 *               bound @ref ClockDomain::WallClockProvider.
+                 * @param rtpTs  The RTP-TS that aligns with
+                 *               @c domain's @c nowUtcNs.
+                 */
+                void setRtpAnchor(const ClockDomain &domain, uint32_t rtpTs);
 
                 /**
                  * @brief Returns the most-recently configured anchor
@@ -702,6 +844,25 @@ class RtpSession : public ObjectBase {
 
                 PacketTransport      *_transport = nullptr;
                 PacketTransport::UPtr _ownedTransport;
+                PacketScheduler::UPtr _scheduler;
+
+                // ST 2022-7 dual-leg state.  When _transportSecondary is
+                // non-null sendPackets stamps the RTP header once and
+                // fans the resulting Datagram list out to both
+                // transports — leg-specific destinations are taken from
+                // _remote (primary) and _remoteSecondary; each scheduler
+                // is bound to its own transport so back-pressure on
+                // one leg cannot stall the other.  Receive side: a
+                // second receive thread services the secondary transport
+                // and joins the primary thread on shutdown.  Both
+                // recv threads dispatch through _dispatchMutex so the
+                // per-stream seq tracker / SSRC pin / reorder buffer
+                // stay coherent.
+                PacketTransport      *_transportSecondary = nullptr;
+                PacketTransport::UPtr _ownedTransportSecondary;
+                PacketScheduler::UPtr _schedulerSecondary;
+                SocketAddress         _remoteSecondary;
+
                 bool                  _running = false;
                 SocketAddress         _remote;
                 uint32_t              _ssrc = 0;
@@ -759,6 +920,8 @@ class RtpSession : public ObjectBase {
                 // points at.
                 using ReceiveThreadUPtr = UniquePtr<ReceiveThread>;
                 ReceiveThreadUPtr    _receiveThread;
+                ReceiveThreadUPtr    _receiveThreadSecondary; ///< ST 2022-7 secondary-leg recv thread.
+                Mutex                _dispatchMutex;          ///< Guards dispatchToReceivers under dual-leg recv.
                 List<StreamReceiver> _streamReceivers;
                 Atomic<bool>         _receiving;
                 unsigned int         _receivePollMs = 200;

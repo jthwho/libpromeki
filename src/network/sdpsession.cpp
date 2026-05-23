@@ -46,6 +46,25 @@ String SdpSession::toString() const {
 
         out += "t=0 0\r\n";
 
+        // Session-level a= lines (RFC 4566 §5.13).  Emitted between
+        // t= and the first m= so they apply to every media section.
+        // ST 2110 uses this scope for a=group:DUP (RFC 5888 +
+        // RFC 7104) and any other session-wide hints.
+        for (size_t ai = 0; ai < _sessionAttributes.size(); ai++) {
+                const auto &attr = _sessionAttributes[ai];
+                if (attr.second().isEmpty()) {
+                        out += "a=";
+                        out += attr.first();
+                        out += "\r\n";
+                } else {
+                        out += "a=";
+                        out += attr.first();
+                        out += ":";
+                        out += attr.second();
+                        out += "\r\n";
+                }
+        }
+
         for (const auto &md : _mediaDescriptions) {
                 out += String::sprintf("m=%s %d %s", md.mediaType().cstr(), static_cast<int>(md.port()),
                                        md.protocol().cstr());
@@ -255,13 +274,18 @@ Result<SdpSession> SdpSession::fromString(const String &sdp) {
                         }
 
                         case 'a': {
-                                // a=<attribute> or a=<attribute>:<value>
-                                if (!currentMedia) break;
+                                // a=<attribute> or a=<attribute>:<value>.
+                                // RFC 4566 §5.13 places @c a= lines that
+                                // precede the first @c m= at session
+                                // scope; lines that follow apply to the
+                                // current media section.
                                 size_t colonPos = value.find(':');
-                                if (colonPos == String::npos) {
-                                        currentMedia->setAttribute(value, String());
+                                String name = (colonPos == String::npos) ? value : value.left(colonPos);
+                                String val = (colonPos == String::npos) ? String() : value.mid(colonPos + 1);
+                                if (currentMedia) {
+                                        currentMedia->setAttribute(name, val);
                                 } else {
-                                        currentMedia->setAttribute(value.left(colonPos), value.mid(colonPos + 1));
+                                        session.setSessionAttribute(name, val);
                                 }
                                 break;
                         }

@@ -198,7 +198,7 @@ Error NdiMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // shape as RtpMediaIO).  We dispatch to openSink / openSource
         // based on the mode; both wire into a single port-group below.
         Enum modeEnum      = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
 
         // The NDI runtime must be loaded before we can do anything.
         // The bootstrap singleton failure path is logged at first
@@ -746,7 +746,7 @@ Error NdiMediaIO::sendVideo(const UncompressedVideoPayload &vp) {
                 (h.matrix != 0 && h.matrix != 2);
         if (needColorInfo) {
                 const VideoRange vr = desc.pixelFormat().videoRange();
-                const int        rangeCode = (vr.value() == VideoRange::Full.value()) ? 1 : 0;
+                const int        rangeCode = (vr == VideoRange::Full) ? 1 : 0;
                 colorInfoXml = String::sprintf(
                         "<ndi_color_info colour_primaries=\"%u\" transfer_function=\"%u\" "
                         "matrix_coefficients=\"%u\" video_range=\"%d\"/>",
@@ -905,29 +905,29 @@ namespace {
         // through the table (forward-compat: a future enum value we
         // don't know about should still produce a reasonable receiver).
         int ndiBandwidthFor(const Enum &e) {
-                if (e.value() == NdiBandwidth::Lowest.value())       return NDIlib_recv_bandwidth_lowest;
-                if (e.value() == NdiBandwidth::AudioOnly.value())    return NDIlib_recv_bandwidth_audio_only;
-                if (e.value() == NdiBandwidth::MetadataOnly.value()) return NDIlib_recv_bandwidth_metadata_only;
+                if (e == NdiBandwidth::Lowest)       return NDIlib_recv_bandwidth_lowest;
+                if (e == NdiBandwidth::AudioOnly)    return NDIlib_recv_bandwidth_audio_only;
+                if (e == NdiBandwidth::MetadataOnly) return NDIlib_recv_bandwidth_metadata_only;
                 return NDIlib_recv_bandwidth_highest;
         }
 
         // Convert the project's NdiColorFormat enum to the SDK's
         // color-format value.  Same forward-compat default story.
         NDIlib_recv_color_format_e ndiColorFormatFor(const Enum &e) {
-                if (e.value() == NdiColorFormat::Fastest.value())  return NDIlib_recv_color_format_fastest;
-                if (e.value() == NdiColorFormat::UyvyBgra.value()) return NDIlib_recv_color_format_UYVY_BGRA;
-                if (e.value() == NdiColorFormat::UyvyRgba.value()) return NDIlib_recv_color_format_UYVY_RGBA;
-                if (e.value() == NdiColorFormat::BgrxBgra.value()) return NDIlib_recv_color_format_BGRX_BGRA;
-                if (e.value() == NdiColorFormat::RgbxRgba.value()) return NDIlib_recv_color_format_RGBX_RGBA;
+                if (e == NdiColorFormat::Fastest)  return NDIlib_recv_color_format_fastest;
+                if (e == NdiColorFormat::UyvyBgra) return NDIlib_recv_color_format_UYVY_BGRA;
+                if (e == NdiColorFormat::UyvyRgba) return NDIlib_recv_color_format_UYVY_RGBA;
+                if (e == NdiColorFormat::BgrxBgra) return NDIlib_recv_color_format_BGRX_BGRA;
+                if (e == NdiColorFormat::RgbxRgba) return NDIlib_recv_color_format_RGBX_RGBA;
                 return NDIlib_recv_color_format_best;
         }
 
         // Translate the project's NdiReceiveBitDepth enum into the
         // BitDepth selector consumed by NdiFormat::fourccToPixelFormat.
         NdiFormat::BitDepth ndiBitDepthFor(const Enum &e) {
-                if (e.value() == NdiReceiveBitDepth::Bits10.value()) return NdiFormat::BitDepth10;
-                if (e.value() == NdiReceiveBitDepth::Bits12.value()) return NdiFormat::BitDepth12;
-                if (e.value() == NdiReceiveBitDepth::Bits16.value()) return NdiFormat::BitDepth16;
+                if (e == NdiReceiveBitDepth::Bits10) return NdiFormat::BitDepth10;
+                if (e == NdiReceiveBitDepth::Bits12) return NdiFormat::BitDepth12;
+                if (e == NdiReceiveBitDepth::Bits16) return NdiFormat::BitDepth16;
                 return NdiFormat::BitDepthAuto;
         }
 

@@ -502,6 +502,34 @@ TEST_CASE("SdpSession ts-refclk RFC 7273 / SMPTE ST 2110-10 grammar") {
                 CHECK(e.isOk());
                 CHECK(off == 4096);
         }
+
+        SUBCASE("mediaclk:sender round-trips through toString / fromString") {
+                // RFC 7273 §5 — `a=mediaclk:sender` is a flag-only
+                // form signalling that the media clock is async to the
+                // reference clock.  Confirm the SDP layer preserves it
+                // verbatim through serialise / parse so RtpMediaIO::
+                // applySdp can map it to RtpMediaClkMode::Sender.
+                SdpSession sdp;
+                sdp.setSessionName("E10 mediaclk:sender round-trip");
+                sdp.setOrigin("-", 0, 0, "IN", "IP4", "0.0.0.0");
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E:127");
+                md.setAttribute("mediaclk", "sender");
+                sdp.addMediaDescription(md);
+
+                const String text = sdp.toString();
+                CHECK(text.find("a=mediaclk:sender") != String::npos);
+
+                Result<SdpSession> parsed = SdpSession::fromString(text);
+                REQUIRE(parsed.second().isOk());
+                REQUIRE(parsed.first().mediaDescriptions().size() == 1u);
+                CHECK(parsed.first().mediaDescriptions()[0].attribute("mediaclk") ==
+                      String("sender"));
+        }
 }
 
 TEST_CASE("SdpSession flag-only attributes") {
@@ -537,6 +565,72 @@ TEST_CASE("SdpSession flag-only attributes") {
                 CHECK(sdp.mediaDescriptions()[0].attribute("recvonly").isEmpty());
                 // Verify it's in the attributes map
                 CHECK(sdp.mediaDescriptions()[0].attributes().size() == 1);
+        }
+}
+
+TEST_CASE("SdpSession session-level attributes") {
+
+        SUBCASE("setSessionAttribute round-trips through getter") {
+                SdpSession sdp;
+                sdp.setSessionAttribute(String("group"), String("DUP primary secondary"));
+                CHECK(sdp.sessionAttribute(String("group")) == String("DUP primary secondary"));
+                // Updating an existing key replaces in place rather than appending.
+                sdp.setSessionAttribute(String("group"), String("DUP a b"));
+                CHECK(sdp.sessionAttributes().size() == 1);
+                CHECK(sdp.sessionAttribute(String("group")) == String("DUP a b"));
+        }
+
+        SUBCASE("toString emits session-level attributes between t= and m=") {
+                SdpSession sdp;
+                sdp.setSessionName("test");
+                sdp.setOrigin("-", 1, 1);
+                sdp.setSessionAttribute(String("group"), String("DUP video-primary video-secondary"));
+
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                sdp.addMediaDescription(md);
+
+                String text = sdp.toString();
+                size_t groupPos = text.str().find("a=group:DUP video-primary video-secondary\r\n");
+                size_t mPos = text.str().find("m=video");
+                REQUIRE(groupPos != std::string::npos);
+                REQUIRE(mPos != std::string::npos);
+                // Session-level a= line must appear before any m= line.
+                CHECK(groupPos < mPos);
+        }
+
+        SUBCASE("fromString routes session-level a= lines to the session") {
+                String sdpText = "v=0\r\n"
+                                 "o=- 1 1 IN IP4 0.0.0.0\r\n"
+                                 "s=test\r\n"
+                                 "t=0 0\r\n"
+                                 "a=group:DUP primary secondary\r\n"
+                                 "m=video 5004 RTP/AVP 96\r\n"
+                                 "a=mid:primary\r\n";
+
+                auto [sdp, err] = SdpSession::fromString(sdpText);
+                REQUIRE(err.isOk());
+                CHECK(sdp.sessionAttribute(String("group")) == String("DUP primary secondary"));
+                REQUIRE(sdp.mediaDescriptions().size() == 1);
+                CHECK(sdp.mediaDescriptions()[0].attribute(String("mid")) == String("primary"));
+                // Confirm the session-level a= did NOT leak into the media section.
+                CHECK(sdp.mediaDescriptions()[0].attribute(String("group")).isEmpty());
+        }
+
+        SUBCASE("toString → fromString round-trip preserves session attributes") {
+                SdpSession sdp;
+                sdp.setSessionName("rtrip");
+                sdp.setOrigin("-", 42, 1);
+                sdp.setSessionAttribute(String("group"), String("DUP a b"));
+                sdp.setSessionAttribute(String("tool"), String("libpromeki"));
+
+                String      text = sdp.toString();
+                auto [back, err] = SdpSession::fromString(text);
+                REQUIRE(err.isOk());
+                CHECK(back == sdp);
         }
 }
 
@@ -820,5 +914,76 @@ TEST_CASE("SdpMediaDescription") {
                 b.setSessionName("different");
                 CHECK_FALSE(a == b);
                 CHECK(a != b);
+        }
+}
+
+TEST_CASE("SdpSession: ST 2022-7 a=group:DUP + dual m= round-trip (RFC 7104)") {
+        // Build a 2022-7-style session by hand: one session-level
+        // a=group:DUP attribute that names two mids, plus two video
+        // m= sections that carry matching a=mid: tokens and distinct
+        // ports / connection addresses (the two redundancy legs).
+        SUBCASE("toString emits a=group:DUP at session level + a=mid: per m=") {
+                SdpSession sdp;
+                sdp.setSessionName("st2110 dup test");
+                sdp.setOrigin("-", 42, 1, "IN", "IP4", "127.0.0.1");
+                sdp.setConnectionAddress("127.0.0.1");
+                sdp.setSessionAttribute("group", "DUP video-primary video-secondary");
+
+                SdpMediaDescription pri;
+                pri.setMediaType("video");
+                pri.setPort(50000);
+                pri.setProtocol("RTP/AVP");
+                pri.addPayloadType(96);
+                pri.setAttribute("rtpmap", "96 raw/90000");
+                pri.setAttribute("mid", "video-primary");
+                pri.setConnectionAddress("127.0.0.1");
+                sdp.addMediaDescription(pri);
+
+                SdpMediaDescription sec;
+                sec.setMediaType("video");
+                sec.setPort(50002);
+                sec.setProtocol("RTP/AVP");
+                sec.addPayloadType(96);
+                sec.setAttribute("rtpmap", "96 raw/90000");
+                sec.setAttribute("mid", "video-secondary");
+                sec.setConnectionAddress("127.0.0.2");
+                sdp.addMediaDescription(sec);
+
+                String text = sdp.toString();
+                CHECK(text.contains("a=group:DUP video-primary video-secondary"));
+                CHECK(text.contains("a=mid:video-primary"));
+                CHECK(text.contains("a=mid:video-secondary"));
+                CHECK(text.contains("m=video 50000 RTP/AVP 96"));
+                CHECK(text.contains("m=video 50002 RTP/AVP 96"));
+        }
+
+        SUBCASE("fromString round-trips a=group:DUP + a=mid:") {
+                const String wire =
+                        "v=0\r\n"
+                        "o=- 17 1 IN IP4 192.0.2.1\r\n"
+                        "s=dup roundtrip\r\n"
+                        "c=IN IP4 239.10.20.30/64\r\n"
+                        "t=0 0\r\n"
+                        "a=group:DUP audio-primary audio-secondary\r\n"
+                        "m=audio 51000 RTP/AVP 97\r\n"
+                        "a=rtpmap:97 L24/48000/8\r\n"
+                        "a=mid:audio-primary\r\n"
+                        "m=audio 51002 RTP/AVP 97\r\n"
+                        "c=IN IP4 239.10.20.31/64\r\n"
+                        "a=rtpmap:97 L24/48000/8\r\n"
+                        "a=mid:audio-secondary\r\n";
+                auto parsed = SdpSession::fromString(wire);
+                REQUIRE(parsed.second().isOk());
+                const SdpSession &p = parsed.first();
+                CHECK(p.sessionAttribute("group") == String("DUP audio-primary audio-secondary"));
+                REQUIRE(p.mediaDescriptions().size() == 2u);
+                CHECK(p.mediaDescriptions()[0].attribute("mid") == String("audio-primary"));
+                CHECK(p.mediaDescriptions()[0].port() == 51000u);
+                CHECK(p.mediaDescriptions()[1].attribute("mid") == String("audio-secondary"));
+                CHECK(p.mediaDescriptions()[1].port() == 51002u);
+                // The connection address is captured verbatim from the
+                // c= line value (sans the "IN IP4 " prefix); the
+                // trailing /TTL mask is preserved.
+                CHECK(p.mediaDescriptions()[1].connectionAddress().contains(String("239.10.20.31")));
         }
 }

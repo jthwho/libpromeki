@@ -109,10 +109,10 @@ namespace {
                                           | channelTo2Bit(edge.b8()));
                 // Worth emitting?  Anything off-default counts.
                 const bool fgDefault = !s.color().isValid()
-                                       && s.foregroundOpacity().value() == SubtitleOpacity::Solid.value();
+                                       && s.foregroundOpacity() == SubtitleOpacity::Solid;
                 const bool bgDefault = !s.backgroundColor().isValid();
                 const bool edgeDefault = !s.edgeColor().isValid()
-                                         && s.edgeStyle().value() == SubtitleEdgeStyle::None.value();
+                                         && s.edgeStyle() == SubtitleEdgeStyle::None;
                 return !(fgDefault && bgDefault && edgeDefault);
         }
 
@@ -140,7 +140,7 @@ namespace {
                         const Color           &spanBg = s.backgroundColor();
                         const SubtitleOpacity &spanOp = s.backgroundOpacity();
                         if (!spanBg.isValid()) return false;
-                        if (spanOp.value() == SubtitleOpacity::Transparent.value()) return false;
+                        if (spanOp == SubtitleOpacity::Transparent) return false;
                         if (!anyValid) {
                                 bg = spanBg;
                                 op = spanOp;

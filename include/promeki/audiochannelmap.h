@@ -348,6 +348,99 @@ class AudioChannelMap {
                  */
                 String toString() const;
 
+                /**
+                 * @brief Formats this map as a SMPTE ST 2110-30:2025
+                 *        §6.2.2 @c channel-order value.
+                 *
+                 * Walks the per-channel role list greedily and emits
+                 * Table 1 Channel Grouping Symbols
+                 * (@c M / @c ST / @c LtRt / @c 51 / @c 71) where the
+                 * role sequence matches their canonical pattern,
+                 * falling back to an Undefined group (@c U01..U64)
+                 * for anything that doesn't.  Returns just the
+                 * <tt>(grp1,grp2,...)</tt> body so the caller can
+                 * prepend the @c "SMPTE2110." convention prefix:
+                 *
+                 * @code
+                 * String body = map.toSt2110ChannelOrder();
+                 * String attr = String("SMPTE2110") + body;  // SMPTE2110.(...)
+                 * @endcode
+                 *
+                 * Notes on the detection strategy:
+                 *  - Detection only matches the **exact** ST 2110-30
+                 *    canonical orderings.  The library's 7.1
+                 *    well-known layout puts back surrounds before
+                 *    side surrounds (@c FL, @c FR, @c FC, @c LFE,
+                 *    @c BL, @c BR, @c SL, @c SR) which does not
+                 *    match Table 1's @c 71 (@c L, @c R, @c C,
+                 *    @c LFE, @c Lss, @c Rss, @c Lrs, @c Rrs); such
+                 *    a map emits as @c (U08).  Construct an
+                 *    explicit ST 2110-30 ordering when @c 71
+                 *    emission is required.
+                 *  - @c DM (Dual Mono) is never produced by
+                 *    detection — two consecutive @c Mono roles
+                 *    emit as @c (M,M).  On the wire the channel
+                 *    sequence is identical to @c (DM).
+                 *  - @c SGRP (one SDI audio group) is never produced
+                 *    by detection — four consecutive @c Unused
+                 *    roles emit as @c (U04).  Same wire-channel
+                 *    sequence.
+                 *  - @c 222 (22.2) is never produced — SMPTE ST
+                 *    2036-2 is not yet wired into the library, so
+                 *    24-channel runs emit as @c (U24) with no
+                 *    runtime warning.
+                 *
+                 * Returns an empty @c String for empty maps.
+                 *
+                 * @see fromSt2110ChannelOrder for the inverse.
+                 */
+                String toSt2110ChannelOrder() const;
+
+                /**
+                 * @brief Parses a SMPTE ST 2110-30:2025 §6.2.2
+                 *        @c channel-order value into an
+                 *        @c AudioChannelMap.
+                 *
+                 * Accepts either the full SDP form
+                 * <tt>"SMPTE2110.(grp1,grp2,...)"</tt> or just the
+                 * <tt>(grp1,grp2,...)</tt> body.  The
+                 * @c SMPTE2110 convention prefix is the only
+                 * accepted convention; other RFC 3190 conventions
+                 * (e.g. @c DV) return @c Error::Invalid.
+                 *
+                 * Each grouping symbol expands to its Table 1
+                 * canonical role sequence:
+                 *
+                 * | Symbol  | Channels | Role sequence                                              |
+                 * | ------- | -------- | ---------------------------------------------------------- |
+                 * | @c M    | 1        | @c Mono                                                    |
+                 * | @c DM   | 2        | @c Mono, @c Mono                                           |
+                 * | @c ST   | 2        | @c FrontLeft, @c FrontRight                                |
+                 * | @c LtRt | 2        | @c LeftTotal, @c RightTotal                                |
+                 * | @c 51   | 6        | @c FrontLeft, @c FrontRight, @c FrontCenter, @c LFE,
+                 *                        @c BackLeft, @c BackRight                                  |
+                 * | @c 71   | 8        | @c FrontLeft, @c FrontRight, @c FrontCenter, @c LFE,
+                 *                        @c SideLeft, @c SideRight, @c BackLeft, @c BackRight       |
+                 * | @c 222  | 24       | 24× @c Unused (SMPTE ST 2036-2 deferred)                    |
+                 * | @c SGRP | 4        | 4× @c Unused                                                |
+                 * | @c U01..U64 | 1..64 | N× @c Unused                                              |
+                 *
+                 * All channels in the returned map take the
+                 * @ref AudioStreamDesc::Undefined stream — the
+                 * SDP grammar carries no stream-identity information.
+                 *
+                 * @param value  The @c channel-order value to parse.
+                 *               Whitespace around tokens and grouping
+                 *               symbols is tolerated.
+                 * @return The parsed map, or @c Error::Invalid when
+                 *         the value is malformed (unknown grouping
+                 *         symbol, mismatched parentheses,
+                 *         out-of-range @c U-symbol count, etc.).
+                 *
+                 * @see toSt2110ChannelOrder for the inverse.
+                 */
+                static Result<AudioChannelMap> fromSt2110ChannelOrder(const String &value);
+
                 /** @brief Equality: same length and identical (stream, role) pairs in order. */
                 bool operator==(const AudioChannelMap &o) const { return _entries == o._entries; }
                 bool operator!=(const AudioChannelMap &o) const { return !(*this == o); }

@@ -8,6 +8,7 @@
 #include <promeki/rtppayload.h>
 #include <promeki/base64.h>
 #include <promeki/h264bitstream.h>
+#include <promeki/jxsmarker.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/string.h>
@@ -147,156 +148,8 @@ Buffer RtpPayloadL16::unpack(const RtpPacket::List &packets) {
 }
 
 // ============================================================================
-// RtpPayloadRawVideo
+// RtpPayloadRawVideo — implementation lives in rtppayloadrawvideo.cpp.
 // ============================================================================
-
-// RFC 4175 per-line header size: 2 (length) + 2 (line number) + 2 (offset/field/continuation)
-static constexpr size_t Rfc4175LineHeaderSize = 6;
-// Extended sequence number field (2 bytes after RTP header)
-static constexpr size_t Rfc4175ExtSeqSize = 2;
-
-RtpPayloadRawVideo::RtpPayloadRawVideo(int width, int height, int bitsPerPixel, int pgroupBytes)
-    : _width(width), _height(height), _bitsPerPixel(bitsPerPixel),
-      _pgroupBytes(pgroupBytes > 0 ? pgroupBytes : (bitsPerPixel / 8)) {}
-
-RtpPacket::List RtpPayloadRawVideo::pack(const void *mediaData, size_t size) {
-        RtpPacket::List packets;
-        if (size == 0 || mediaData == nullptr) {
-                promekiWarnThrottled(5000, "RtpPayloadRawVideo::pack invalid input (size=%zu data=%p)", size,
-                                     mediaData);
-                return packets;
-        }
-
-        const size_t bytesPerLine = static_cast<size_t>(_width) * _bitsPerPixel / 8;
-        const size_t maxPayload = maxPayloadSize();
-        // Available space for pixel data per packet (after ext seq num and one line header)
-        const size_t overhead = Rfc4175ExtSeqSize + Rfc4175LineHeaderSize;
-        if (maxPayload <= overhead) {
-                promekiWarnOnce("RtpPayloadRawVideo::pack maxPayloadSize=%zu too small for RFC 4175 overhead=%zu",
-                                maxPayload, overhead);
-                return packets;
-        }
-        const size_t rawMax = maxPayload - overhead;
-
-        // Align the maximum chunk size down to a whole number of
-        // pgroups so that a pixel group is never split across two
-        // packets.  Without this, formats like RGB 8-bit (pgroup =
-        // 3 bytes) would produce chunks of 1192 bytes which is not
-        // a multiple of 3, causing byte↔pixel offset rounding
-        // errors and garbled pixels on the receiver.
-        const size_t pg = static_cast<size_t>(_pgroupBytes);
-        const size_t maxChunkBytes = (pg > 0) ? (rawMax / pg) * pg : rawMax;
-        if (maxChunkBytes == 0) {
-                promekiWarnOnce("RtpPayloadRawVideo::pack pgroupBytes=%zu > rawMax=%zu — MTU too small",
-                                pg, rawMax);
-                return packets;
-        }
-
-        // Estimate total packets needed
-        size_t totalPackets = 0;
-        for (int line = 0; line < _height; line++) {
-                size_t lineRemaining = bytesPerLine;
-                while (lineRemaining > 0) {
-                        size_t chunk = std::min(lineRemaining, maxChunkBytes);
-                        totalPackets++;
-                        lineRemaining -= chunk;
-                }
-        }
-
-        // Allocate single shared buffer
-        const size_t maxPktSize = RtpPacket::HeaderSize + overhead + maxChunkBytes;
-        auto         buf = Buffer(totalPackets * maxPktSize);
-        buf.setSize(totalPackets * maxPktSize);
-        uint8_t *bufData = static_cast<uint8_t *>(buf.data());
-
-        const uint8_t *src = static_cast<const uint8_t *>(mediaData);
-        size_t         bufOffset = 0;
-        uint16_t       extSeq = 0;
-
-        for (int line = 0; line < _height; line++) {
-                size_t lineOffset = 0;
-                size_t lineRemaining = bytesPerLine;
-
-                while (lineRemaining > 0) {
-                        size_t   chunk = std::min(lineRemaining, maxChunkBytes);
-                        uint8_t *pkt = bufData + bufOffset;
-
-                        // RTP header placeholder (12 bytes)
-                        std::memset(pkt, 0, RtpPacket::HeaderSize);
-
-                        // Extended sequence number (2 bytes)
-                        pkt[RtpPacket::HeaderSize + 0] = static_cast<uint8_t>(extSeq >> 8);
-                        pkt[RtpPacket::HeaderSize + 1] = static_cast<uint8_t>(extSeq & 0xFF);
-
-                        // Per-line header (6 bytes)
-                        size_t hdrOff = RtpPacket::HeaderSize + Rfc4175ExtSeqSize;
-                        // Data length
-                        pkt[hdrOff + 0] = static_cast<uint8_t>((chunk >> 8) & 0xFF);
-                        pkt[hdrOff + 1] = static_cast<uint8_t>(chunk & 0xFF);
-                        // Line number (F=0 for progressive)
-                        uint16_t lineNum = static_cast<uint16_t>(line);
-                        pkt[hdrOff + 2] = static_cast<uint8_t>((lineNum >> 8) & 0x7F);
-                        pkt[hdrOff + 3] = static_cast<uint8_t>(lineNum & 0xFF);
-                        // C=0 (no additional line header in this packet) + pixel offset.
-                        // RFC 4175 §4: C is set when another scan line header
-                        // follows in the SAME packet.  We emit one line segment
-                        // per packet, so C is always 0.
-                        uint16_t pixelOffset = static_cast<uint16_t>(lineOffset * 8 / _bitsPerPixel);
-                        uint16_t offsetField = (pixelOffset & 0x7FFF);
-                        pkt[hdrOff + 4] = static_cast<uint8_t>((offsetField >> 8) & 0xFF);
-                        pkt[hdrOff + 5] = static_cast<uint8_t>(offsetField & 0xFF);
-
-                        // Pixel data
-                        size_t dataOff = RtpPacket::HeaderSize + overhead;
-                        size_t srcOff = static_cast<size_t>(line) * bytesPerLine + lineOffset;
-                        if (srcOff + chunk <= size) {
-                                std::memcpy(pkt + dataOff, src + srcOff, chunk);
-                        }
-
-                        size_t pktSize = dataOff + chunk;
-                        packets.pushToBack(RtpPacket(buf, bufOffset, pktSize));
-                        bufOffset += pktSize;
-                        lineOffset += chunk;
-                        lineRemaining -= chunk;
-                        extSeq++;
-                }
-        }
-        return packets;
-}
-
-Buffer RtpPayloadRawVideo::unpack(const RtpPacket::List &packets) {
-        const size_t bytesPerLine = static_cast<size_t>(_width) * _bitsPerPixel / 8;
-        const size_t frameSize = bytesPerLine * static_cast<size_t>(_height);
-        Buffer       result(frameSize);
-        result.setSize(frameSize);
-        std::memset(result.data(), 0, frameSize);
-        uint8_t *dst = static_cast<uint8_t *>(result.data());
-
-        const size_t overhead = Rfc4175ExtSeqSize + Rfc4175LineHeaderSize;
-
-        for (const auto &pkt : packets) {
-                if (pkt.isNull() || pkt.payloadSize() <= overhead) continue;
-                const uint8_t *pl = pkt.payload();
-
-                // Parse per-line header (ext seq + line header within payload)
-                size_t   lineHdrOff = Rfc4175ExtSeqSize;
-                uint16_t dataLen = (static_cast<uint16_t>(pl[lineHdrOff + 0]) << 8) | pl[lineHdrOff + 1];
-                uint16_t lineNum = ((static_cast<uint16_t>(pl[lineHdrOff + 2]) & 0x7F) << 8) | pl[lineHdrOff + 3];
-                uint16_t offsetField = (static_cast<uint16_t>(pl[lineHdrOff + 4]) << 8) | pl[lineHdrOff + 5];
-                uint16_t pixelOffset = offsetField & 0x7FFF;
-                size_t   byteOffset = static_cast<size_t>(pixelOffset) * _bitsPerPixel / 8;
-
-                const uint8_t *pixelData = pl + overhead;
-                size_t         payloadAvail = pkt.payloadSize() - overhead;
-                size_t         copySize = std::min(static_cast<size_t>(dataLen), payloadAvail);
-
-                size_t dstOff = static_cast<size_t>(lineNum) * bytesPerLine + byteOffset;
-                if (dstOff + copySize <= frameSize) {
-                        std::memcpy(dst + dstOff, pixelData, copySize);
-                }
-        }
-        return result;
-}
 
 // ============================================================================
 // RtpPayloadJpeg
@@ -402,6 +255,28 @@ RtpPacket::List RtpPayloadJpeg::pack(const void *mediaData, size_t size) {
         if (size == 0 || mediaData == nullptr) {
                 promekiWarnThrottled(5000, "RtpPayloadJpeg::pack invalid input (size=%zu data=%p)", size, mediaData);
                 return packets;
+        }
+
+        // RFC 2435 §3.1.5 encodes width and height as 8-bit "W/8" and
+        // "H/8" fields, capping the largest representable dimension at
+        // 255 × 8 = 2040 pixels.  Resolutions above that saturate to
+        // 2040 on the wire and the receiver reconstructs a SOF0 marker
+        // for a 2040-pixel image.  libjpeg then reads only the MCUs
+        // needed for the smaller grid and tags the remainder as
+        // "extraneous bytes before marker 0xd9", and the decoded
+        // image dimensions don't match the sender.  RFC 2435 has no
+        // standardised extension for higher resolutions — FFmpeg's
+        // rtpenc_jpeg.c refuses outright.  We surface a clear warning
+        // here (throttled to once per second per process) so misuse
+        // doesn't masquerade as a quiet picture-quality regression;
+        // callers needing UHD over RTP should use JPEG XS
+        // (ST 2110-22) or uncompressed (ST 2110-20).
+        if (_width > 2040 || _height > 2040) {
+                promekiWarnThrottled(1000,
+                                     "RtpPayloadJpeg::pack RFC 2435 cannot represent %dx%d "
+                                     "(max 2040x2040); receiver will see a truncated image. "
+                                     "Use JPEG XS or ST 2110-20 raw for UHD video.",
+                                     _width, _height);
         }
 
         const uint8_t *jpeg = static_cast<const uint8_t *>(mediaData);
@@ -864,6 +739,119 @@ static void writeJxsHeader(uint8_t *hdr, bool T, bool K, bool L, uint8_t I, uint
 RtpPayloadJpegXs::RtpPayloadJpegXs(int width, int height, uint8_t payloadType)
     : _width(width), _height(height), _payloadType(payloadType) {}
 
+// Slice-mode (K=1) packing: walk the codestream's SLH markers and
+// group complete slices into MTU-sized RTP packets.  The first
+// emitted packet additionally carries the main-header marker
+// segments so a receiver sees PIH / CDT / WGT before any slice.
+// Per RFC 9134 §4.2 a slice MUST NOT be fragmented across packets;
+// a slice that exceeds the per-packet MTU forces a fallback to
+// codestream mode so the writer still produces deliverable wire
+// bytes.
+static RtpPacket::List packJxsSliceMode(const void *mediaData, size_t size, size_t maxPayload,
+                                        size_t headerSize, uint8_t thisFrame) {
+        RtpPacket::List packets;
+        const auto      result = JxsMarker::parse(mediaData, size);
+        if (!result.valid || result.slices.isEmpty()) {
+                // Malformed codestream or no slice boundaries —
+                // signal "fall back" via empty list; the dispatch
+                // wrapper retries codestream-mode below.
+                return packets;
+        }
+        const size_t maxData = maxPayload - headerSize;
+
+        // Reject when a single slice exceeds the per-packet data
+        // capacity (RFC 9134 §4.2 prohibits slice fragmentation).
+        // The dispatch wrapper falls back to codestream mode in
+        // that case so the caller still gets wire bytes.
+        for (size_t i = 0; i < result.slices.size(); i++) {
+                const size_t firstPacketHeader =
+                        (i == 0) ? result.mainHeaderSize : 0;
+                if (firstPacketHeader + result.slices[i].size > maxData) {
+                        return packets;
+                }
+        }
+
+        const uint8_t *jxs = static_cast<const uint8_t *>(mediaData);
+        // Maximum possible packet count: one per slice (when each
+        // slice exactly fits its packet); the actual packet count
+        // is &le; slice count, which the loop below derives.
+        const size_t maxPossiblePackets = result.slices.size() + 1; // +1 for EOC
+        const size_t maxPktSize = RtpPacket::HeaderSize + maxPayload;
+        auto         buf = Buffer(maxPossiblePackets * maxPktSize);
+        buf.setSize(maxPossiblePackets * maxPktSize);
+        uint8_t *bufData = static_cast<uint8_t *>(buf.data());
+
+        uint16_t packetCounter = 0;
+        uint16_t sepCounter = 0;
+        size_t   bufOffset = 0;
+
+        size_t sliceIdx = 0;
+        bool   firstPacket = true;
+        while (sliceIdx < result.slices.size()) {
+                // Compose this packet's payload: main header (first
+                // packet only) + one or more complete slices that fit.
+                size_t       payloadBytes = firstPacket ? result.mainHeaderSize : 0;
+                const size_t startSlice = sliceIdx;
+                while (sliceIdx < result.slices.size()) {
+                        const size_t slcSize = result.slices[sliceIdx].size;
+                        if (payloadBytes + slcSize > maxData) break;
+                        payloadBytes += slcSize;
+                        ++sliceIdx;
+                }
+                // No slice fit (only possible when a single slice
+                // exceeds maxData — guarded above so we don't reach
+                // here in practice, but the assertion-style fall
+                // back keeps us safe).
+                if (sliceIdx == startSlice) {
+                        packets.clear();
+                        return packets;
+                }
+                const bool isLastPacket =
+                        (sliceIdx == result.slices.size()); // last in this run
+
+                uint8_t *pkt = bufData + bufOffset;
+                std::memset(pkt, 0, RtpPacket::HeaderSize);
+                writeJxsHeader(pkt + RtpPacket::HeaderSize,
+                               /*T=*/true,
+                               /*K=*/true, // slice mode
+                               /*L=*/isLastPacket,
+                               /*I=*/0, // progressive
+                               thisFrame, sepCounter, packetCounter);
+
+                // Copy main header (first packet only) followed by
+                // the slice bytes that fit.
+                uint8_t *dst = pkt + RtpPacket::HeaderSize + headerSize;
+                if (firstPacket && result.mainHeaderSize > 0) {
+                        std::memcpy(dst, jxs, result.mainHeaderSize);
+                        dst += result.mainHeaderSize;
+                }
+                for (size_t i = startSlice; i < sliceIdx; i++) {
+                        std::memcpy(dst, jxs + result.slices[i].offset,
+                                    result.slices[i].size);
+                        dst += result.slices[i].size;
+                }
+                // Append the EOC marker on the final packet so the
+                // receiver's decoder can detect frame boundaries
+                // without consulting the RTP marker bit.
+                if (isLastPacket && result.eocOffset > 0 && result.eocOffset + 2 <= size) {
+                        std::memcpy(dst, jxs + result.eocOffset, 2);
+                        payloadBytes += 2;
+                }
+                const size_t pktSize = RtpPacket::HeaderSize + headerSize + payloadBytes;
+                packets.pushToBack(RtpPacket(buf, bufOffset, pktSize));
+                bufOffset += pktSize;
+
+                if (packetCounter == 0x7FF) {
+                        packetCounter = 0;
+                        sepCounter = (uint16_t)((sepCounter + 1) & 0x7FF);
+                } else {
+                        packetCounter++;
+                }
+                firstPacket = false;
+        }
+        return packets;
+}
+
 RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
         RtpPacket::List packets;
         if (size == 0 || mediaData == nullptr) {
@@ -882,6 +870,27 @@ RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
                                 maxPayload, static_cast<size_t>(HeaderSize));
                 return packets;
         }
+
+        // Frame counter is per-frame state on the payload instance.
+        // Advances once per successful pack() call so each frame gets
+        // a distinct 5-bit F value (mod 32) that the receiver can use
+        // to detect reordering / loss across frame boundaries.
+        const uint8_t thisFrame = _frameCounter;
+        _frameCounter = (uint8_t)((_frameCounter + 1) & 0x1F);
+
+        // Slice mode (K=1) — attempt slice-aware packing; falls
+        // back to codestream mode if the codestream is malformed
+        // or a slice exceeds the per-packet MTU (slice mode
+        // forbids slice fragmentation).
+        if (_sliceMode) {
+                packets = packJxsSliceMode(mediaData, size, maxPayload, HeaderSize, thisFrame);
+                if (!packets.isEmpty()) return packets;
+                promekiWarnThrottled(5000,
+                                     "RtpPayloadJpegXs::pack slice-mode failed (size=%zu) — "
+                                     "falling back to codestream mode",
+                                     size);
+        }
+
         const size_t maxData = maxPayload - HeaderSize;
 
         const size_t numPackets = (size + maxData - 1) / maxData;
@@ -893,13 +902,6 @@ RtpPacket::List RtpPayloadJpegXs::pack(const void *mediaData, size_t size) {
         auto buf = Buffer(numPackets * maxPktSize);
         buf.setSize(numPackets * maxPktSize);
         uint8_t *bufData = static_cast<uint8_t *>(buf.data());
-
-        // Frame counter is per-frame state on the payload instance.
-        // Advances once per successful pack() call so each frame gets
-        // a distinct 5-bit F value (mod 32) that the receiver can use
-        // to detect reordering / loss across frame boundaries.
-        const uint8_t thisFrame = _frameCounter;
-        _frameCounter = (uint8_t)((_frameCounter + 1) & 0x1F);
 
         size_t   remaining = size;
         size_t   srcOffset = 0;

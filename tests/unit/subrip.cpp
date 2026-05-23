@@ -80,7 +80,7 @@ TEST_CASE("SubRip: parses three sequential cues with CRLF endings") {
         CHECK(sl[0].start() == tsFromMs(1000));
         CHECK(sl[0].end() == tsFromMs(2500));
         CHECK(sl[0].text() == "Hello, world.");
-        CHECK(sl[0].anchor().value() == SubtitleAnchor::Default.value());
+        CHECK(sl[0].anchor() == SubtitleAnchor::Default);
 
         CHECK(sl[1].start() == tsFromMs(3000));
         CHECK(sl[1].end() == tsFromMs(5000));
@@ -173,7 +173,7 @@ TEST_CASE("SubRip: parses ASS-style {\\an8} into SubtitleAnchor::TopCenter") {
         Result<SubtitleList> r = SubRip::parse(String(src));
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().size() == 1);
-        CHECK(r.first()[0].anchor().value() == SubtitleAnchor::TopCenter.value());
+        CHECK(r.first()[0].anchor() == SubtitleAnchor::TopCenter);
         CHECK(r.first()[0].text() == "Top-centered cue");
 }
 
@@ -234,7 +234,7 @@ TEST_CASE("SubRip: round-trips anchor + region preserved") {
         Result<SubtitleList> r = SubRip::parse(emitted);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().size() == 1);
-        CHECK(r.first()[0].anchor().value() == SubtitleAnchor::MiddleCenter.value());
+        CHECK(r.first()[0].anchor() == SubtitleAnchor::MiddleCenter);
         CHECK(r.first()[0].region() == Rect2Di32(100, 200, 400, 40));
         CHECK(r.first()[0].text() == "Anchored");
 }
@@ -469,7 +469,7 @@ TEST_CASE("Subtitle: mode round-trips through Variant + DataStream") {
         Variant         v(s);
         const Subtitle *got = v.peek<Subtitle>();
         REQUIRE(got != nullptr);
-        CHECK(got->mode().value() == CaptionMode::RollUp.value());
+        CHECK(got->mode() == CaptionMode::RollUp);
 }
 
 TEST_CASE("SubtitleSpan: full styling fields round-trip via Subtitle/Variant") {
@@ -503,11 +503,11 @@ TEST_CASE("SubtitleSpan: full styling fields round-trip via Subtitle/Variant") {
         CHECK(gotSpan.color() == Color::Red);
         CHECK(gotSpan.backgroundColor() == Color::Blue);
         CHECK(gotSpan.edgeColor() == Color::Green);
-        CHECK(gotSpan.edgeStyle().value() == SubtitleEdgeStyle::Raised.value());
-        CHECK(gotSpan.fontFace().value() == SubtitleFontFace::MonoSerif.value());
-        CHECK(gotSpan.foregroundOpacity().value() == SubtitleOpacity::Translucent.value());
-        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Flash.value());
-        CHECK(gotSpan.edgeOpacity().value() == SubtitleOpacity::Transparent.value());
+        CHECK(gotSpan.edgeStyle() == SubtitleEdgeStyle::Raised);
+        CHECK(gotSpan.fontFace() == SubtitleFontFace::MonoSerif);
+        CHECK(gotSpan.foregroundOpacity() == SubtitleOpacity::Translucent);
+        CHECK(gotSpan.backgroundOpacity() == SubtitleOpacity::Flash);
+        CHECK(gotSpan.edgeOpacity() == SubtitleOpacity::Transparent);
 }
 
 // ============================================================================
@@ -539,7 +539,7 @@ TEST_CASE("SubRip: etc/substest.srt parses cleanly and exercises every parser br
         CHECK(sl[0].text() == "Welcome to the libpromeki SubRip test file!");
         CHECK(sl[0].start() == tsFromMs(1000));
         CHECK(sl[0].end() == tsFromMs(4000));
-        CHECK(sl[0].anchor().value() == SubtitleAnchor::Default.value());
+        CHECK(sl[0].anchor() == SubtitleAnchor::Default);
         CHECK_FALSE(sl[0].region().isValid());
 
         // -- Branch 2: multi-line cue text (literal '\n' in Subtitle).
@@ -547,15 +547,15 @@ TEST_CASE("SubRip: etc/substest.srt parses cleanly and exercises every parser br
         CHECK(sl[1].text() == "This cue has two lines (this one):\nand one more (this other one)");
 
         // -- Branch 3: ASS-style {\an8} → SubtitleAnchor::TopCenter (=8).
-        CHECK(sl[2].anchor().value() == SubtitleAnchor::TopCenter.value());
+        CHECK(sl[2].anchor() == SubtitleAnchor::TopCenter);
         // Anchor prefix is stripped from the text.
         CHECK_FALSE(sl[2].text().startsWith("{"));
 
         // -- Branch 4: {\an5} → MiddleCenter.
-        CHECK(sl[3].anchor().value() == SubtitleAnchor::MiddleCenter.value());
+        CHECK(sl[3].anchor() == SubtitleAnchor::MiddleCenter);
 
         // -- Branch 5: {\an1} → BottomLeft.
-        CHECK(sl[4].anchor().value() == SubtitleAnchor::BottomLeft.value());
+        CHECK(sl[4].anchor() == SubtitleAnchor::BottomLeft);
 
         // -- Branch 6: X1:.. Y2:.. coordinate suffix → Rect2Di32 region.
         CHECK(sl[5].region().isValid());
@@ -642,7 +642,7 @@ TEST_CASE("SubRip: etc/substest.srt parses cleanly and exercises every parser br
         // -- Branch 20: {\an2} → BottomCenter (the SubRip default for
         //    captioning; explicit here so the round-trip emit re-stamps
         //    the prefix).
-        CHECK(sl[19].anchor().value() == SubtitleAnchor::BottomCenter.value());
+        CHECK(sl[19].anchor() == SubtitleAnchor::BottomCenter);
 }
 
 TEST_CASE("SubRip: etc/substest.srt round-trips byte-stable through parse->emit->parse") {

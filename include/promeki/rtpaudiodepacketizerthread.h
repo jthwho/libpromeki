@@ -172,7 +172,8 @@ class RtpAudioDepacketizerThread : public RtpDepacketizerThread {
                  */
                 RtpAudioDepacketizerThread(RtpAudioDepacketizerContext ctx,
                                            const String &name,
-                                           uint32_t clockRateHz);
+                                           uint32_t clockRateHz,
+                                           size_t queueDepth = DefaultInputQueueDepth);
 
                 ~RtpAudioDepacketizerThread() override;
 

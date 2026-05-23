@@ -486,6 +486,29 @@ Error UdpSocket::setMulticastInterface(const String &iface) {
         return Error::Ok;
 }
 
+Error UdpSocket::setBindInterface(const String &iface) {
+        if (_fd < 0) return Error::NotOpen;
+        if (iface.isEmpty()) return Error::Ok; // no-op
+#if defined(PROMEKI_PLATFORM_LINUX) && defined(SO_BINDTODEVICE)
+        // SO_BINDTODEVICE pins both egress and ingress on the named
+        // interface — required for ST 2022-7 deployments where both
+        // legs share a subnet and the routing table cannot
+        // disambiguate.  Needs CAP_NET_RAW on Linux.
+        if (::setsockopt(_fd, SOL_SOCKET, SO_BINDTODEVICE, iface.cstr(),
+                         static_cast<socklen_t>(iface.size())) < 0) {
+                promekiWarn("UdpSocket::setBindInterface SO_BINDTODEVICE '%s' failed (errno=%d %s) — "
+                            "may need CAP_NET_RAW",
+                            iface.cstr(), errno, strerror(errno));
+                return Error::syserr();
+        }
+        return Error::Ok;
+#else
+        (void)iface;
+        promekiWarnOnce("UdpSocket::setBindInterface SO_BINDTODEVICE not supported on this platform");
+        return Error::NotSupported;
+#endif
+}
+
 Error UdpSocket::setReuseAddress(bool enable) {
         if (_fd < 0) return Error::NotOpen;
         return setSocketOption(SOL_SOCKET, SO_REUSEADDR, enable ? 1 : 0);
@@ -500,10 +523,51 @@ Error UdpSocket::setDscp(uint8_t dscp) {
         return setSocketOption(IPPROTO_IP, IP_TOS, tos);
 }
 
+Error UdpSocket::setDontFragment(bool enable) {
+        if (_fd < 0) return Error::NotOpen;
+#if defined(PROMEKI_PLATFORM_LINUX)
+        if (_domain == AF_INET6) {
+                int v = enable ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_WANT;
+                return setSocketOption(IPPROTO_IPV6, IPV6_MTU_DISCOVER, v);
+        }
+        int v = enable ? IP_PMTUDISC_DO : IP_PMTUDISC_WANT;
+        return setSocketOption(IPPROTO_IP, IP_MTU_DISCOVER, v);
+#else
+        (void)enable;
+        return Error::NotSupported;
+#endif
+}
+
 Error UdpSocket::setReceiveBufferSize(int bytes) {
         if (_fd < 0) return Error::NotOpen;
         if (bytes <= 0) return Error::Ok;
-        return setSocketOption(SOL_SOCKET, SO_RCVBUF, bytes);
+        Error err = setSocketOption(SOL_SOCKET, SO_RCVBUF, bytes);
+        if (err.isError()) return err;
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // Linux silently caps SO_RCVBUF to @c net.core.rmem_max and
+        // then doubles the kept value for kernel bookkeeping (see
+        // @c socket(7)).  Read back the kept value and warn when it's
+        // less than half of what we asked for so the caller knows
+        // they're walking into a likely UDP packet-loss situation on
+        // high-burst streams (ST 2110-20 raw, JPEG XS, multi-megabit
+        // codec output).  Surfacing this once at @c setReceiveBufferSize
+        // time is the right plumbing layer — the alternative (silently
+        // tolerating an undersized kernel buffer) hides a real
+        // operational requirement behind a "mysterious packet loss"
+        // failure mode.
+        int       actual = 0;
+        socklen_t alen = sizeof(actual);
+        if (::getsockopt(_fd, SOL_SOCKET, SO_RCVBUF, &actual, &alen) == 0) {
+                if (actual < bytes) {
+                        promekiWarnOnce(
+                                "UdpSocket::setReceiveBufferSize: kernel kept SO_RCVBUF=%d, requested %d "
+                                "(Linux caps at net.core.rmem_max; consider 'sudo sysctl -w "
+                                "net.core.rmem_max=%d' for high-burst RTP streams)",
+                                actual, bytes, bytes * 2);
+                }
+        }
+#endif
+        return Error::Ok;
 }
 
 Error UdpSocket::setSendBufferSize(int bytes) {

@@ -10,6 +10,8 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
+#include <cstdint>
+#include <promeki/function.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringregistry.h>
@@ -99,6 +101,42 @@ class ClockDomain {
                 static const ID SystemMonotonic;
 
                 /**
+                 * @brief ID for the PTP clock domain (IEEE 1588 /
+                 *        SMPTE ST 2059-2, absolute timescale).
+                 *
+                 * Conceptually "the wallclock derived from a PTP
+                 * grandmaster".  Timestamps in this domain are
+                 * cross-machine-comparable when every host shares the
+                 * same grandmaster and PTP profile.  The library does
+                 * not embed a PTP slave today (see
+                 * @c devplan/network/2110.md Phase D2); applications
+                 * bind the domain to a wallclock source by calling
+                 * @ref setNowProvider — typically with a
+                 * @c PhcClock::ntpNow-derived lambda that reads a
+                 * @c ptp4l-disciplined @c /dev/ptpN device.
+                 *
+                 * The well-known ID is reserved at library startup so
+                 * @c ClockDomain::lookup("Ptp") works whether or not
+                 * a provider has been bound yet.
+                 */
+                static const ID Ptp;
+
+                /**
+                 * @brief Function type for "what's the wallclock time
+                 *        in this domain now" providers.
+                 *
+                 * Returns nanoseconds since the Unix epoch in **UTC**
+                 * (matching @c CLOCK_REALTIME's contract on Linux).
+                 * Domains in the TAI timescale (PTP / GPS) convert TAI
+                 * → UTC internally before returning.
+                 *
+                 * Return @c 0 (or a negative value) to indicate the
+                 * provider has no current sample available; callers
+                 * treat the result as invalid.
+                 */
+                using WallClockProvider = ::promeki::Function<int64_t()>;
+
+                /**
                  * @brief Registers a new clock domain.
                  *
                  * Creates a Data record in the registry with the given
@@ -123,6 +161,49 @@ class ClockDomain {
                  * @param metadata The new metadata.
                  */
                 static void setDomainMetadata(const ID &id, const Metadata &metadata);
+
+                /**
+                 * @brief Binds a wallclock-now provider to a registered domain.
+                 *
+                 * The provider is invoked by @ref nowUtcNs to read the
+                 * current UTC nanoseconds for this domain.  Bind a
+                 * @c PhcClock-driven provider against
+                 * @ref ClockDomain::Ptp so consumers reading "what is
+                 * the PTP wallclock right now" don't need a separate
+                 * handle to the @c PhcClock instance.
+                 *
+                 * Pass a default-constructed @ref WallClockProvider to
+                 * unbind.  Re-binding an already-bound domain replaces
+                 * the previous provider.
+                 *
+                 * The registry holds the provider's storage; the
+                 * lambda's captures must outlive the registry entry
+                 * (typically: bind at backend open, unbind at
+                 * backend close).
+                 *
+                 * @param id       The domain to bind.
+                 * @param provider The provider function (or empty to
+                 *                 unbind).
+                 */
+                static void setNowProvider(const ID &id, WallClockProvider provider);
+
+                /**
+                 * @brief Reads the current UTC wallclock for a registered domain.
+                 *
+                 * Returns @c 0 when @p id has no provider bound or the
+                 * registered provider returns 0/negative.  Callers
+                 * treat 0 as "no current sample available" and fall
+                 * back to whatever the legacy path was (typically
+                 * @c std::chrono::system_clock::now).
+                 *
+                 * @param id The domain to query.
+                 * @return UTC nanoseconds since the Unix epoch, or
+                 *         @c 0 when no provider is bound.
+                 */
+                static int64_t nowUtcNs(const ID &id);
+
+                /// @brief Convenience: returns @c true when @p id has a bound provider.
+                static bool hasNowProvider(const ID &id);
 
                 /**
                  * @brief Returns the IDs of all registered clock domains.
@@ -201,6 +282,18 @@ class ClockDomain {
                  * True only for Absolute epochs (e.g. PTP, GPS).
                  */
                 bool isCrossMachineComparable() const;
+
+                /**
+                 * @brief Returns the current UTC wallclock nanoseconds for this domain.
+                 *
+                 * Convenience wrapper for @ref nowUtcNs(const ID &)
+                 * keyed off this handle's registered ID.  Returns
+                 * @c 0 when the domain is invalid or has no provider.
+                 */
+                int64_t nowUtcNs() const;
+
+                /// @brief Convenience: @c true when this handle's domain has a bound provider.
+                bool hasNowProvider() const;
 
                 /**
                  * @brief Returns the domain name.

@@ -442,14 +442,20 @@ JpegXsVideoEncoder::JpegXsVideoEncoder() : _impl(ImplPtr::create()) {}
 JpegXsVideoEncoder::~JpegXsVideoEncoder() = default;
 
 List<int> JpegXsVideoEncoder::supportedInputList() {
+        // Must mirror @ref classifyInput exactly — the planner picks
+        // the TPG output format (and inserts a CSC stage as needed)
+        // from this list, so any ID here that classifyInput rejects
+        // produces a runtime PixelFormatNotSupported once the encoder
+        // sees the frame.  SVT-JPEG-XS accepts planar YUV (4:2:0 /
+        // 4:2:2) at matching bit depth and planar RGB only.
         return {
-                static_cast<int>(PixelFormat::YUV8_422_Rec709),
-                static_cast<int>(PixelFormat::YUV10_422_Rec709),
-                static_cast<int>(PixelFormat::YUV12_422_UYVY_LE_Rec709),
+                static_cast<int>(PixelFormat::YUV8_422_Planar_Rec709),
+                static_cast<int>(PixelFormat::YUV10_422_Planar_LE_Rec709),
+                static_cast<int>(PixelFormat::YUV12_422_Planar_LE_Rec709),
                 static_cast<int>(PixelFormat::YUV8_420_Planar_Rec709),
                 static_cast<int>(PixelFormat::YUV10_420_Planar_LE_Rec709),
                 static_cast<int>(PixelFormat::YUV12_420_Planar_LE_Rec709),
-                static_cast<int>(PixelFormat::RGB8_sRGB),
+                static_cast<int>(PixelFormat::RGB8_Planar_sRGB),
         };
 }
 
@@ -582,6 +588,14 @@ Error JpegXsVideoDecoder::submitFrame(const Frame &frame) {
                                      codecMsg.isEmpty() ? "decode failed" : codecMsg.cstr(),
                                      payload->size(),
                                      _outputPd.isValid() ? _outputPd.name().cstr() : "auto");
+                // Tear the persistent SVT decoder context down so the
+                // next bitstream re-parses its picture header from
+                // scratch.  Without this, a single malformed bitstream
+                // (e.g. a startup-loss-corrupted first frame) leaves
+                // the SVT context in a state where subsequent
+                // @c svt_jpeg_xs_decoder_get_frame calls keep failing
+                // even on perfectly-valid follow-on frames.
+                _impl->closeIfOpen();
                 setError(codecErr.isError() ? codecErr : Error::ConversionFailed,
                          codecMsg.isEmpty() ? String("JpegXsVideoDecoder: decode failed") : codecMsg);
                 return _lastError;

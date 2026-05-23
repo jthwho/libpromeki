@@ -162,10 +162,19 @@ class RtpVideoDepacketizerThread : public RtpDepacketizerThread {
                  * @param ctx         Static dependencies.
                  * @param name        Short OS thread name.
                  * @param clockRateHz Per-stream RTP clock rate.
+                 * @param queueDepth  Post-reorder queue depth.  Sized
+                 *                    by the caller from the configured
+                 *                    stream's packets-per-frame budget
+                 *                    (see
+                 *                    @ref RtpMediaIO::computeStreamPacketBudget);
+                 *                    defaults to the small base-class
+                 *                    default for callers that don't
+                 *                    have format info handy.
                  */
                 RtpVideoDepacketizerThread(RtpVideoDepacketizerContext ctx,
                                            const String &name,
-                                           uint32_t clockRateHz);
+                                           uint32_t clockRateHz,
+                                           size_t queueDepth = DefaultInputQueueDepth);
 
                 ~RtpVideoDepacketizerThread() override;
 

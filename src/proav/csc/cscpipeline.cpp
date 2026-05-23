@@ -31,7 +31,7 @@ static bool resolveUseSimd(const MediaConfig &config) {
         Variant v = config.get(MediaConfig::CscPath);
         Enum    e = v.asEnum(CscPath::Type);
         if (!e.hasListedValue()) return true;
-        return e.value() != CscPath::Scalar.value();
+        return e != CscPath::Scalar;
 }
 
 // --- Stage copy/move ---
@@ -716,9 +716,9 @@ void CSCPipeline::compile() {
                         _config.getAs<Enum>(MediaConfig::CscToneMapping).value());
         }
         bool wantToneMap = false;
-        if (toneMapPolicy.value() == CscToneMapping::Enabled.value()) {
+        if (toneMapPolicy == CscToneMapping::Enabled) {
                 wantToneMap = (srcIsPq || srcIsHlg);
-        } else if (toneMapPolicy.value() == CscToneMapping::Auto.value()) {
+        } else if (toneMapPolicy == CscToneMapping::Auto) {
                 // Auto: tone-map when source is HDR and destination
                 // is SDR.  HDR-to-HDR transitions don't auto-trigger
                 // even when the target's nominal peak is lower —
@@ -949,9 +949,11 @@ Error CSCPipeline::execute(const UncompressedVideoPayload &src, UncompressedVide
         const ImageDesc &dstDesc = dst.desc();
         const size_t     width = srcDesc.size().width();
         const size_t     height = srcDesc.size().height();
-        if (dstDesc.size().width() != width || dstDesc.size().height() != height) {
+        const size_t     dstWidth = dstDesc.size().width();
+        const size_t     dstHeight = dstDesc.size().height();
+        if (dstWidth != width || dstHeight != height) {
                 promekiWarnThrottled(1000, "CSCPipeline::execute: size mismatch src=%zux%zu dst=%zux%zu",
-                                     width, height, dstDesc.size().width(), dstDesc.size().height());
+                                     width, height, dstWidth, dstHeight);
                 return Error::Invalid;
         }
 
@@ -973,7 +975,19 @@ Error CSCPipeline::execute(const UncompressedVideoPayload &src, UncompressedVide
         CSCContext ctx(width);
         if (!ctx.isValid()) return Error::NoMem;
 
-        for (size_t y = 0; y < height; ++y) {
+        // Destination plane 0 with @c vSubsampling > 1 signals a wire
+        // layout whose byte rows each cover @c vSubsampling image
+        // rows (ST 2110-20 4:2:0 §6.2.5).  In that case we iterate the
+        // loop body once per *wire* row instead of once per image
+        // row; the kernel reads the second source row internally via
+        // @c srcStrides.  For standard destinations (plane 0 vSub=1)
+        // this falls back to the existing per-image-row iteration.
+        const size_t dstYStep =
+                _dstDesc.memLayout().planeCount() > 0 && _dstDesc.memLayout().planeDesc(0).vSubsampling > 0
+                        ? _dstDesc.memLayout().planeDesc(0).vSubsampling
+                        : 1;
+
+        for (size_t y = 0; y < height; y += dstYStep) {
                 const void *srcLinePtrs[4] = {};
                 size_t      srcStrides[4] = {};
                 void       *dstLinePtrs[4] = {};

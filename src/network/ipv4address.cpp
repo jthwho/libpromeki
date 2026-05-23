@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/datastream.h>
 #include <promeki/ipv4address.h>
 #include <promeki/ipv6address.h>
 #include <promeki/macaddress.h>
@@ -89,6 +90,27 @@ Error Ipv4Address::toSockAddr(struct sockaddr_in *sa) const {
 TextStream &operator<<(TextStream &stream, const Ipv4Address &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: 4 bytes, network byte order).
+//
+// @c _addr is stored in host-endian form with the MSB carrying the
+// network-most-significant octet — emitting it through DataStream's
+// big-endian @c uint32_t operator yields the canonical four octets in
+// network byte order regardless of host endianness.
+// ============================================================================
+
+Error Ipv4Address::writeToStream(DataStream &s) const {
+        s << static_cast<uint32_t>(_addr);
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <> Result<Ipv4Address> Ipv4Address::readFromStream<1>(DataStream &s) {
+        uint32_t addr = 0;
+        s >> addr;
+        if (s.status() != DataStream::Ok) return makeError<Ipv4Address>(s.toError());
+        return makeResult(Ipv4Address::fromUint32(addr));
 }
 
 PROMEKI_NAMESPACE_END

@@ -282,81 +282,9 @@ class RtpPayloadL16 : public RtpPayload {
                 uint8_t  _payloadType = 96;
 };
 
-/**
- * @brief RTP payload handler for RFC 4175 raw video (ST 2110-20).
- * @ingroup network
- *
- * Implements packing/unpacking of uncompressed video frames as
- * defined by RFC 4175 for use with SMPTE ST 2110-20. Each packet
- * carries one or more scan line segments with a per-line header.
- *
- * @par RFC 4175 Packet Layout
- * @code
- * +--12 bytes--+--2 bytes--+--per-line headers--+--pixel data--+
- * | RTP Header | Extended  | Line 1 Header (6B) | Pixel Data   |
- * |            | Seq Num   | [Line 2 Header...]  |              |
- * +------------+-----------+--------------------+--------------+
- * @endcode
- *
- * Each per-line header is 6 bytes:
- * - 2 bytes: data length for this line segment
- * - 2 bytes: line number
- * - 2 bytes: field ID (1 bit) + offset (15 bits) + continuation (1 bit)
- *
- * @par Example
- * @code
- * RtpPayloadRawVideo payload(1920, 1080, 24); // 1080p, 24 bits/pixel
- * auto packets = payload.pack(frameData, frameSize);
- * @endcode
- */
-class RtpPayloadRawVideo : public RtpPayload {
-        public:
-                /**
-                 * @brief Constructs a raw video payload handler.
-                 * @param width Frame width in pixels.
-                 * @param height Frame height in pixels.
-                 * @param bitsPerPixel Bits per pixel (e.g. 24 for RGB8).
-                 * @param pgroupBytes RFC 4175 pixel group (pgroup) size in bytes.
-                 *        A pgroup is the smallest byte-aligned unit of pixel
-                 *        data — e.g. 3 for RGB 8-bit, 4 for YCbCr-4:2:2 8-bit.
-                 *        Chunk sizes are aligned to this boundary so that a
-                 *        pixel is never split across packets.  If 0, the pgroup
-                 *        is inferred as bitsPerPixel/8 (correct for formats
-                 *        where one pixel equals one pgroup).
-                 */
-                RtpPayloadRawVideo(int width, int height, int bitsPerPixel, int pgroupBytes = 0);
-
-                /** @copydoc RtpPayload::payloadType() */
-                uint8_t payloadType() const override { return _payloadType; }
-                /** @copydoc RtpPayload::clockRate() */
-                uint32_t clockRate() const override { return 90000; }
-                /** @copydoc RtpPayload::pack() */
-                RtpPacket::List pack(const void *mediaData, size_t size) override;
-                /** @copydoc RtpPayload::unpack() */
-                Buffer unpack(const RtpPacket::List &packets) override;
-
-                /** @brief Sets the RTP payload type number. */
-                void setPayloadType(uint8_t pt) { _payloadType = pt; }
-
-                /** @brief Returns the frame width. */
-                int width() const { return _width; }
-
-                /** @brief Returns the frame height. */
-                int height() const { return _height; }
-
-                /** @brief Returns bits per pixel. */
-                int bitsPerPixel() const { return _bitsPerPixel; }
-
-                /** @brief Returns the pgroup size in bytes. */
-                int pgroupBytes() const { return _pgroupBytes; }
-
-        private:
-                int     _width;
-                int     _height;
-                int     _bitsPerPixel;
-                int     _pgroupBytes;
-                uint8_t _payloadType = 96;
-};
+// RFC 4175 / ST 2110-20 uncompressed video lives in its own header
+// (rtppayloadrawvideo.h) so the full SRD / ESN / pgroup machinery can
+// be reviewed independently of the other RTP payload classes.
 
 /**
  * @brief RTP payload handler for JSON blobs.
@@ -576,11 +504,37 @@ class RtpPayloadJpegXs : public RtpPayload {
                 /// @brief Resets the frame counter to 0 (testing hook).
                 void resetFrameCounter() { _frameCounter = 0; }
 
+                /**
+                 * @brief Selects RFC 9134 §4.3 packetization mode.
+                 *
+                 * @c false (default) — codestream mode (K=0): the
+                 * codestream is split into MTU-sized fragments
+                 * without regard to slice boundaries.  Today's
+                 * behaviour.
+                 *
+                 * @c true — slice mode (K=1): the packetizer walks
+                 * the codestream's @c SLH markers via
+                 * @ref JxsMarker::parse and emits one or more
+                 * complete slices per RTP packet (never fragmenting
+                 * a slice across packets).  The first packet of
+                 * each frame additionally carries the main-header
+                 * marker segments.  Falls back to codestream mode
+                 * silently when the codestream is malformed or has
+                 * no SLH markers.
+                 *
+                 * @param sliceMode @c true to enable K=1.
+                 */
+                void setSliceMode(bool sliceMode) { _sliceMode = sliceMode; }
+
+                /// @brief Returns the active packetization mode.
+                bool isSliceMode() const { return _sliceMode; }
+
         private:
                 int     _width;
                 int     _height;
                 uint8_t _payloadType;
                 uint8_t _frameCounter = 0;
+                bool    _sliceMode = false;
 };
 
 /**

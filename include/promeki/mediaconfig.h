@@ -28,6 +28,7 @@
 #include <promeki/sdisignalconfig.h>
 #include <promeki/videocodec.h>
 #include <promeki/videoreferenceconfig.h>
+#include <promeki/pixelaspect.h>
 #include <promeki/pixelformat.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -2203,6 +2204,37 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                 .setDescription("Kernel SO_SNDBUF size for each RTP UDP socket "
                                                 "(0 = leave kernel default; Linux clamps to net.core.wmem_max)."));
 
+                /// @brief bool — assert IP "Don't Fragment" on egress sockets.
+                ///
+                /// SMPTE ST 2110-10 §6.3 requires senders never produce
+                /// fragmented IP datagrams.  Default @c true for all RTP
+                /// transports; disable only for legacy interop where
+                /// downstream MTU is known to be smaller than the
+                /// packetizer's output and on-path PMTU discovery is
+                /// unwanted.
+                PROMEKI_DECLARE_ID(RtpDontFragment,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Set IP DF (don't fragment) on RTP egress sockets."));
+
+                /// @brief String — sender source IP for SDP @c source-filter
+                ///        (RFC 4570).
+                ///
+                /// Per ST 2110-10, every multicast media section should
+                /// carry @c "a=source-filter: incl IN IP4 <group> <source>"
+                /// so SSM-enabled receivers join only this sender's
+                /// distribution tree.  An empty value leaves the
+                /// attribute off — defer to receivers that already know
+                /// the source via control plane.  When set, the value
+                /// must be a dotted-quad IPv4 address; the SDP layer
+                /// pairs it with the per-section destination group.
+                PROMEKI_DECLARE_ID(RtpSourceAddress,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("Source IP for SDP source-filter (RFC 4570)."));
+
                 // --- Video stream ---
 
                 /// @brief SocketAddress — destination for the video stream. Empty = disabled.
@@ -2232,12 +2264,18 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                          .setMin(int32_t(0))
                                                          .setDescription("Video RTP SSRC (0 = auto)."));
 
-                /// @brief int — DSCP marking for the video stream (default 46 / EF).
+                /// @brief int — DSCP marking for the video stream (default 34 / AF41).
+                ///
+                /// Per EBU TECH 3371 + AMWA BCP-006-01 + SMPTE ST 2022-6
+                /// deployment notes: video RTP rides at AF41 (DSCP 34,
+                /// TOS 0x88).  Reserved for emergency / control traffic
+                /// at EF (DSCP 46); ST 2110 PTP rides EF on its own
+                /// socket and must not collide with media DSCP marking.
                 PROMEKI_DECLARE_ID(VideoRtpDscp, VariantSpec()
                                                          .setType(DataTypeInt32)
-                                                         .setDefault(int32_t(46))
+                                                         .setDefault(int32_t(34))
                                                          .setRange(int32_t(0), int32_t(63))
-                                                         .setDescription("Video RTP DSCP marking."));
+                                                         .setDescription("Video RTP DSCP marking (AF41 by default)."));
 
                 /// @brief int — target bitrate in bits/sec (0 = compute from descriptor).
                 PROMEKI_DECLARE_ID(VideoRtpTargetBitrate,
@@ -2294,12 +2332,18 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                          .setMin(int32_t(0))
                                                          .setDescription("Audio RTP SSRC (0 = auto)."));
 
-                /// @brief int — DSCP marking for the audio stream (default 34 / AF41).
+                /// @brief int — DSCP marking for the audio stream (default 26 / AF31).
+                ///
+                /// Per EBU TECH 3371: AES67 / ST 2110-30 audio rides at
+                /// AF31 (DSCP 26, TOS 0x68), one priority class above
+                /// metadata, one below video.  Matches the per-stream
+                /// DSCP map declared in @c devplan/network/2110.md
+                /// Appendix A.
                 PROMEKI_DECLARE_ID(AudioRtpDscp, VariantSpec()
                                                          .setType(DataTypeInt32)
-                                                         .setDefault(int32_t(34))
+                                                         .setDefault(int32_t(26))
                                                          .setRange(int32_t(0), int32_t(63))
-                                                         .setDescription("Audio RTP DSCP marking."));
+                                                         .setDescription("Audio RTP DSCP marking (AF31 by default)."));
 
                 /// @brief int — packet time in microseconds (AES67 default 1000).
                 PROMEKI_DECLARE_ID(AudioRtpPacketTimeUs,
@@ -2308,6 +2352,23 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(int32_t(1000))
                                            .setMin(int32_t(1))
                                            .setDescription("Audio RTP packet time in microseconds."));
+
+                /// @brief Enum @ref AudioWireFormat — AES67 / ST 2110-30
+                ///        on-wire encoding for the audio stream.
+                ///
+                /// Picks @c L16 or @c L24 on the wire.  Default is
+                /// @c Auto, which resolves to @c L24 when the source
+                /// @c AudioDesc carries 24-bit samples, otherwise
+                /// @c L16.  Per AES67 §7.1 the 96 kHz path requires
+                /// @c L24; the writer falls back to @c L24 on @c Auto
+                /// when running at 96 kHz regardless of the source
+                /// bit depth.
+                PROMEKI_DECLARE_ID(RtpAudioWireFormat,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(AudioWireFormat::Auto)
+                                           .setEnumType(AudioWireFormat::Type)
+                                           .setDescription("AES67 / ST 2110-30 on-wire PCM format."));
 
                 /// @brief int — audio TX preroll in milliseconds.  The
                 /// per-stream audio TX worker waits for this much
@@ -2381,12 +2442,16 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                         .setMin(int32_t(0))
                                                         .setDescription("Metadata RTP SSRC (0 = auto)."));
 
-                /// @brief int — DSCP marking for the metadata stream.
+                /// @brief int — DSCP marking for the metadata stream (default 18 / AF21).
+                ///
+                /// Per EBU TECH 3371: ST 2110-40 ANC / metadata rides at
+                /// AF21 (DSCP 18, TOS 0x48), one priority class below
+                /// audio.
                 PROMEKI_DECLARE_ID(DataRtpDscp, VariantSpec()
                                                         .setType(DataTypeInt32)
-                                                        .setDefault(int32_t(34))
+                                                        .setDefault(int32_t(18))
                                                         .setRange(int32_t(0), int32_t(63))
-                                                        .setDescription("Metadata RTP DSCP marking."));
+                                                        .setDescription("Metadata RTP DSCP marking (AF21 by default)."));
 
                 /// @brief Enum @ref MetadataRtpFormat — wire format for the metadata stream.
                 PROMEKI_DECLARE_ID(DataRtpFormat, VariantSpec()
@@ -2394,6 +2459,571 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                           .setDefault(MetadataRtpFormat::JsonMetadata)
                                                           .setEnumType(MetadataRtpFormat::Type)
                                                           .setDescription("Wire format for the metadata RTP stream."));
+
+                // --- ST 2110-10 per-stream SDP fmtp ---
+
+                /// @brief int — @c MAXUDP fmtp value for the video
+                ///        stream (Standard UDP datagram size limit per
+                ///        ST 2110-10 §6.3).  Default 0 = @c 1460
+                ///        (Standard Size Limit).  Set up to @c 8960 for
+                ///        the Extended Size Limit (jumbo frames; check
+                ///        the open question in @c devplan/network/2110.md).
+                PROMEKI_DECLARE_ID(RtpVideoMaxUdp,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Video SDP MAXUDP fmtp (0 = standard 1460)."));
+
+                /// @brief int — @c MAXUDP fmtp value for the audio
+                ///        stream.  ST 2110-30 §6.2.1 always uses the
+                ///        Standard Size Limit; default 0 = 1460.
+                PROMEKI_DECLARE_ID(RtpAudioMaxUdp,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Audio SDP MAXUDP fmtp (0 = standard 1460)."));
+
+                /// @brief int — @c MAXUDP fmtp value for the data
+                ///        (ANC / metadata) stream.  Default 0 = 1460.
+                PROMEKI_DECLARE_ID(RtpDataMaxUdp,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Data / ANC SDP MAXUDP fmtp (0 = standard 1460)."));
+
+                /// @brief Enum @ref RtpTsMode — @c TSMODE fmtp on the video stream.
+                PROMEKI_DECLARE_ID(RtpVideoTsMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(RtpTsMode::Samp)
+                                           .setEnumType(RtpTsMode::Type)
+                                           .setDescription("Video SDP TSMODE fmtp."));
+
+                /// @brief Enum @ref RtpTsMode — @c TSMODE fmtp on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioTsMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(RtpTsMode::Samp)
+                                           .setEnumType(RtpTsMode::Type)
+                                           .setDescription("Audio SDP TSMODE fmtp."));
+
+                /// @brief Enum @ref RtpTsMode — @c TSMODE fmtp on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataTsMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(RtpTsMode::Samp)
+                                           .setEnumType(RtpTsMode::Type)
+                                           .setDescription("Data / ANC SDP TSMODE fmtp."));
+
+                /// @brief Enum @ref RtpMediaClkMode — RFC 7273
+                ///        @c mediaclk attribute mode on the video stream.
+                ///
+                /// Default @c Auto: emit
+                /// @c mediaclk:direct=&lt;offset&gt; whenever a
+                /// reference clock is advertised, omit otherwise.
+                /// Override to @c Sender for sources whose media
+                /// clock is asynchronous to the reference (free-running
+                /// encoders, network-fed transcoders).
+                PROMEKI_DECLARE_ID(RtpVideoMediaClkMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpMediaClkMode::Auto)
+                                           .setEnumType(promeki::RtpMediaClkMode::Type)
+                                           .setDescription("Video SDP mediaclk mode (direct/sender)."));
+
+                /// @brief Enum @ref RtpMediaClkMode — RFC 7273
+                ///        @c mediaclk attribute mode on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioMediaClkMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpMediaClkMode::Auto)
+                                           .setEnumType(promeki::RtpMediaClkMode::Type)
+                                           .setDescription("Audio SDP mediaclk mode (direct/sender)."));
+
+                /// @brief Enum @ref RtpMediaClkMode — RFC 7273
+                ///        @c mediaclk attribute mode on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataMediaClkMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpMediaClkMode::Auto)
+                                           .setEnumType(promeki::RtpMediaClkMode::Type)
+                                           .setDescription("Data / ANC SDP mediaclk mode (direct/sender)."));
+
+                /// @brief int — @c TSDELAY fmtp microseconds on the video stream
+                ///        (sender's @c D_TX = T_TX − T_RTP).  Default 0
+                ///        omits the attribute.
+                PROMEKI_DECLARE_ID(RtpVideoTsDelayUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Video SDP TSDELAY fmtp in microseconds (0 = omit)."));
+
+                /// @brief int — @c TSDELAY fmtp microseconds on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioTsDelayUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Audio SDP TSDELAY fmtp in microseconds (0 = omit)."));
+
+                /// @brief int — @c TSDELAY fmtp microseconds on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataTsDelayUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Data / ANC SDP TSDELAY fmtp in microseconds (0 = omit)."));
+
+                /// @brief Enum @ref RtpSenderType — ST 2110-21 @c TP
+                ///        fmtp on the video stream.
+                ///
+                /// Default @c Auto: derive from the bound
+                /// @ref RtpPacingMode at open time (Userspace /
+                /// KernelFq → TypeW, TxTime → TypeNL, None →
+                /// Unknown).  Override to one of @c TypeN / @c TypeNL
+                /// / @c TypeW to pin a specific narrow-timing
+                /// classification.  @c Unknown suppresses the @c TP
+                /// fmtp emission entirely.
+                PROMEKI_DECLARE_ID(RtpVideoSenderType,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpSenderType::Auto)
+                                           .setEnumType(promeki::RtpSenderType::Type)
+                                           .setDescription("Video SDP TP fmtp (2110TPN/NL/W)."));
+
+                /// @brief Enum @ref RtpSenderType — ST 2110-21 @c TP fmtp on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioSenderType,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpSenderType::Auto)
+                                           .setEnumType(promeki::RtpSenderType::Type)
+                                           .setDescription("Audio SDP TP fmtp (2110TPN/NL/W)."));
+
+                /// @brief Enum @ref RtpSenderType — ST 2110-21 @c TP fmtp on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataSenderType,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::RtpSenderType::Auto)
+                                           .setEnumType(promeki::RtpSenderType::Type)
+                                           .setDescription("Data / ANC SDP TP fmtp (2110TPN/NL/W)."));
+
+                /// @brief int — ST 2110-21 @c TROFF fmtp microseconds
+                ///        on the video stream (0 = omit / use
+                ///        TRO_DEFAULT).
+                ///
+                /// Pins the sender's TR_OFFSET; @c 0 (default) means
+                /// "let the library compute TRO_DEFAULT per §7.4 from
+                /// the resolved sender type, frame interval, MAXUDP,
+                /// and active-line ratio".  Non-zero values are
+                /// emitted directly in the SDP @c TROFF= fmtp.
+                PROMEKI_DECLARE_ID(RtpVideoTrOffsetUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setDescription("Video SDP TROFF fmtp in µs (0 = TRO_DEFAULT)."));
+
+                /// @brief int — ST 2110-21 @c TROFF fmtp microseconds on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioTrOffsetUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setDescription("Audio SDP TROFF fmtp in µs (0 = TRO_DEFAULT)."));
+
+                /// @brief int — ST 2110-21 @c TROFF fmtp microseconds on the data / ANC stream.
+                ///
+                /// ANC streams use this knob distinct from
+                /// @ref RtpAncTrOffsetUs which drives the LLTM
+                /// @c T_EPO computation; this one drives the SDP
+                /// @c TROFF fmtp on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataTrOffsetUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setDescription("Data / ANC SDP TROFF fmtp in µs (0 = TRO_DEFAULT)."));
+
+                /// @brief int — ST 2110-21 @c CMAX fmtp on the video
+                ///        stream (0 = compute from sender type).
+                ///
+                /// Informational — declares the sender's observed
+                /// peak burst in packets.  Default 0 = "let the
+                /// library compute CMAX_narrow or CMAX_wide from the
+                /// resolved sender type, packets-per-frame, and
+                /// frame interval per §7.1".  Non-zero values are
+                /// emitted directly in the SDP @c CMAX= fmtp.
+                PROMEKI_DECLARE_ID(RtpVideoCmax,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Video SDP CMAX fmtp (0 = compute from sender type)."));
+
+                /// @brief int — ST 2110-21 @c CMAX fmtp on the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioCmax,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Audio SDP CMAX fmtp (0 = compute from sender type)."));
+
+                /// @brief int — ST 2110-21 @c CMAX fmtp on the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataCmax,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Data / ANC SDP CMAX fmtp (0 = compute from sender type)."));
+
+                /// @brief Enum @ref JxsPacketMode — RFC 9134 §4.3
+                ///        @c packetmode (K bit) on the video stream.
+                ///
+                /// Default @c Codestream (K=0, MTU fragmentation).
+                /// Set to @c Slice (K=1) to engage one-or-more-
+                /// complete-slices-per-packet packetization — drives
+                /// the @ref RtpPayloadJpegXs::pack slice path.
+                PROMEKI_DECLARE_ID(RtpVideoJxsPacketMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::JxsPacketMode::Codestream)
+                                           .setEnumType(promeki::JxsPacketMode::Type)
+                                           .setDescription("RFC 9134 packetmode (K bit)."));
+
+                /// @brief Enum @ref JxsTransMode — RFC 9134 §4.3
+                ///        @c transmode (T bit) on the video stream.
+                ///
+                /// Default @c SequentialOnly (T=1) per the RFC's
+                /// "absent ⇒ T=1" rule.  Override to
+                /// @c OutOfOrderAllowed when the receiver can
+                /// tolerate network reorder before decode.
+                PROMEKI_DECLARE_ID(RtpVideoJxsTransMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::JxsTransMode::SequentialOnly)
+                                           .setEnumType(promeki::JxsTransMode::Type)
+                                           .setDescription("RFC 9134 transmode (T bit)."));
+
+                /// @brief Enum @ref JxsProfile — RFC 9134 §7.1
+                ///        @c profile fmtp value.  @c Unspecified
+                ///        suppresses emission.
+                PROMEKI_DECLARE_ID(RtpVideoJxsProfile,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::JxsProfile::Unspecified)
+                                           .setEnumType(promeki::JxsProfile::Type)
+                                           .setDescription("RFC 9134 JPEG XS profile."));
+
+                /// @brief Enum @ref JxsLevel — RFC 9134 §7.1
+                ///        @c level fmtp value.  @c Unspecified
+                ///        suppresses emission.
+                PROMEKI_DECLARE_ID(RtpVideoJxsLevel,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::JxsLevel::Unspecified)
+                                           .setEnumType(promeki::JxsLevel::Type)
+                                           .setDescription("RFC 9134 JPEG XS level."));
+
+                /// @brief Enum @ref JxsSublevel — RFC 9134 §7.1
+                ///        @c sublevel fmtp value.  @c Unspecified
+                ///        suppresses emission.
+                PROMEKI_DECLARE_ID(RtpVideoJxsSublevel,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::JxsSublevel::Unspecified)
+                                           .setEnumType(promeki::JxsSublevel::Type)
+                                           .setDescription("RFC 9134 JPEG XS sublevel."));
+
+                /// @brief bool — emit @c ts-refclk:ptp=...:traceable
+                ///        (RFC 7273 §4.7) in lieu of the explicit
+                ///        GMID+domain form.
+                ///
+                /// When @c true and @ref RtpRefClock resolves to
+                /// @c Ptp, the SDP writer emits the @c traceable form
+                /// regardless of @ref RtpPtpGrandmaster.  ST 2110-10
+                /// §8.2 narrows this to deployments where the slave
+                /// reports a traceable grandmaster
+                /// (@c clockAccuracy ≤ 250 ns,
+                /// @c timeTraceable asserted).
+                ///
+                /// **Auto-resolution (Phase D2, 2026-05-21):** when
+                /// @ref RtpPtpDevicePath is set and the opened
+                /// @c PhcClock reports a sub-microsecond
+                /// @c sysOffsetPrecise sample (its
+                /// @c PhcClock::isLocked heuristic), the writer
+                /// behaves as if this flag were @c true even when the
+                /// caller left it @c false.  An explicit @c true is
+                /// still honoured (the deployment may know it's
+                /// running against a traceable grandmaster even if the
+                /// host's @c CLOCK_REALTIME hasn't been disciplined to
+                /// it yet); an explicit @c false suppresses the
+                /// @c traceable emit even on a locked PHC.
+                PROMEKI_DECLARE_ID(RtpPtpTraceable,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription("Emit ts-refclk:ptp=...:traceable instead of GMID+domain."));
+
+                /// @brief String — path to a @c /dev/ptpN PHC device
+                ///        to bind as the PTP wallclock source.
+                ///
+                /// Empty (the default) means "no PHC source"; the SR
+                /// anchor falls back to @c NtpTime::now()
+                /// (@c CLOCK_REALTIME), matching the pre-Phase-D2
+                /// behaviour.  When set, @ref RtpMediaIO opens a
+                /// @ref PhcClock at the path, binds it to
+                /// @ref ClockDomain::Ptp as the wallclock provider,
+                /// and routes the writer-side SR anchor through the
+                /// @c setRtpAnchor(ClockDomain, …) overload so the
+                /// emitted NTP timestamps reflect the PTP timescale
+                /// rather than the host's @c CLOCK_REALTIME.
+                ///
+                /// Typical values: @c "/dev/ptp0" (when the NIC is
+                /// already running @c ptp4l with default settings),
+                /// or @c "/dev/ptpN" for a specific NIC index.
+                ///
+                /// Errors during PHC open are non-fatal — the writer
+                /// emits a @c promekiWarn and falls back to the
+                /// system-clock path.  Linux-only; ignored elsewhere.
+                PROMEKI_DECLARE_ID(RtpPtpDevicePath,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription(
+                                                   "Linux PHC device path "
+                                                   "(/dev/ptpN) for PTP-traceable "
+                                                   "SR anchors; empty = use "
+                                                   "system_clock."));
+
+                // --- ST 2110-20 video fmtp (§7.2 / §7.3) ---
+                //
+                // When any of these are set to a non-Invalid value, the
+                // corresponding fmtp parameter is emitted explicitly;
+                // otherwise the value is derived from the source
+                // @ref PixelFormat via @ref St2110Video::bridgeForPixelFormat.
+                // The PixelFormat-derived defaults already cover every
+                // PixelFormat with a clean ST 2110-20 wire-format
+                // counterpart, so these keys exist primarily for callers
+                // that need to override the inferred values (e.g. force
+                // a specific colorimetry for ALPHA / KEY signals where
+                // the PixelFormat doesn't carry the right hint).
+
+                /// @brief Enum @ref St2110Sampling — @c sampling fmtp (§7.4.1).
+                PROMEKI_DECLARE_ID(RtpVideoSampling,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110Sampling::Invalid)
+                                           .setEnumType(St2110Sampling::Type)
+                                           .setDescription("Video SDP sampling fmtp (Invalid = derive from PixelFormat)."));
+
+                /// @brief Enum @ref St2110Depth — @c depth fmtp (§7.4.2).
+                PROMEKI_DECLARE_ID(RtpVideoDepth,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110Depth::Invalid)
+                                           .setEnumType(St2110Depth::Type)
+                                           .setDescription("Video SDP depth fmtp (Invalid = derive from PixelFormat)."));
+
+                /// @brief Enum @ref St2110Colorimetry — @c colorimetry fmtp (§7.5).
+                PROMEKI_DECLARE_ID(RtpVideoColorimetry,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110Colorimetry::Invalid)
+                                           .setEnumType(St2110Colorimetry::Type)
+                                           .setDescription("Video SDP colorimetry fmtp (Invalid = derive from PixelFormat)."));
+
+                /// @brief Enum @ref St2110Tcs — @c TCS fmtp (§7.6).
+                PROMEKI_DECLARE_ID(RtpVideoTcs,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110Tcs::Invalid)
+                                           .setEnumType(St2110Tcs::Type)
+                                           .setDescription("Video SDP TCS fmtp (Invalid = derive from PixelFormat)."));
+
+                /// @brief Enum @ref St2110Range — @c RANGE fmtp (§7.3).
+                PROMEKI_DECLARE_ID(RtpVideoRange,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110Range::Invalid)
+                                           .setEnumType(St2110Range::Type)
+                                           .setDescription("Video SDP RANGE fmtp (Invalid = derive from PixelFormat)."));
+
+                /// @brief Enum @ref St2110PackingMode — @c PM fmtp (§6.3).
+                PROMEKI_DECLARE_ID(RtpVideoPackingMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(St2110PackingMode::Gpm)
+                                           .setEnumType(St2110PackingMode::Type)
+                                           .setDescription("Video SDP PM fmtp (default 2110GPM)."));
+
+                /// @brief PixelAspect — @c PAR fmtp (§7.3).
+                ///
+                /// Default 1:1 (square pixels) is omitted from the SDP
+                /// fmtp per §7.3 ("If PAR is not signaled, the receiver
+                /// shall assume that PAR = '1:1'").  Anamorphic sources
+                /// override here with the explicit width:height ratio.
+                PROMEKI_DECLARE_ID(RtpVideoPar,
+                                   VariantSpec()
+                                           .setType(DataTypePixelAspect)
+                                           .setDefault(PixelAspect())
+                                           .setDescription("Video SDP PAR fmtp (default 1:1 = omit)."));
+
+                /// @brief SocketAddress — secondary destination for the
+                ///        video stream (ST 2022-7 redundancy leg).
+                ///        Empty = no redundancy.
+                ///
+                /// When set, the SDP writer emits
+                /// @c "a=group:DUP <primary-mid> <secondary-mid>" at
+                /// session level plus per-section @c a=mid:<token>
+                /// (RFC 5888 + RFC 7104).  Actual dual-leg transport
+                /// management lands in Phase E2022.
+                PROMEKI_DECLARE_ID(RtpVideoDestinationSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary destination for video."));
+
+                /// @brief SocketAddress — secondary destination for the audio stream.
+                PROMEKI_DECLARE_ID(RtpAudioDestinationSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary destination for audio."));
+
+                /// @brief SocketAddress — secondary destination for the data / ANC stream.
+                PROMEKI_DECLARE_ID(RtpDataDestinationSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary destination for data / ANC."));
+
+                /// @brief SocketAddress — per-leg local bind address for
+                ///        the *secondary* video leg.  When non-null,
+                ///        overrides @ref RtpLocalAddress on the secondary
+                ///        transport so the secondary leg can be pinned to
+                ///        a NIC distinct from the primary.  Setting just
+                ///        the IP portion (port 0) forces egress through
+                ///        the NIC that owns the IP — the canonical
+                ///        ST 2022-7 deployment pattern with two NICs on
+                ///        two disjoint subnets.  Empty / unset = the
+                ///        secondary transport reuses @ref RtpLocalAddress.
+                PROMEKI_DECLARE_ID(RtpVideoLocalAddressSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary local bind address for video."));
+
+                /// @brief String — per-leg @c SO_BINDTODEVICE interface
+                ///        name for the *secondary* video leg (e.g.
+                ///        @c "eth1").  Use for the rare same-subnet two-
+                ///        NIC case where a source-IP bind cannot
+                ///        disambiguate egress.  Requires @c CAP_NET_RAW
+                ///        on Linux.  Empty / unset = no @c SO_BINDTODEVICE.
+                PROMEKI_DECLARE_ID(RtpVideoInterfaceSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("ST 2022-7 secondary SO_BINDTODEVICE interface for video."));
+
+                /// @brief SocketAddress — per-leg local bind address for the *secondary* audio leg.
+                /// @see RtpVideoLocalAddressSecondary for the semantics.
+                PROMEKI_DECLARE_ID(RtpAudioLocalAddressSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary local bind address for audio."));
+
+                /// @brief String — per-leg @c SO_BINDTODEVICE interface for the *secondary* audio leg.
+                /// @see RtpVideoInterfaceSecondary for the semantics.
+                PROMEKI_DECLARE_ID(RtpAudioInterfaceSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("ST 2022-7 secondary SO_BINDTODEVICE interface for audio."));
+
+                /// @brief SocketAddress — per-leg local bind address for the *secondary* data leg.
+                /// @see RtpVideoLocalAddressSecondary for the semantics.
+                PROMEKI_DECLARE_ID(RtpDataLocalAddressSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeSocketAddress)
+                                           .setDescription("ST 2022-7 secondary local bind address for data / ANC."));
+
+                /// @brief String — per-leg @c SO_BINDTODEVICE interface for the *secondary* data leg.
+                /// @see RtpVideoInterfaceSecondary for the semantics.
+                PROMEKI_DECLARE_ID(RtpDataInterfaceSecondary,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("ST 2022-7 secondary SO_BINDTODEVICE interface for data / ANC."));
+
+                /// @brief Enum @ref AncTransmissionModel — ST 2110-40
+                ///        §6 transmission model fmtp.
+                ///
+                /// Default @c Unsignalled (no @c TM= in the SDP fmtp,
+                /// pairs with @c SSN=ST2110-40:2018 — the 2018-edition
+                /// default).  Set to @c Lltm to advertise Low-Latency
+                /// Transmission Model (§6.4) — the writer additionally
+                /// stamps a per-batch @c CLOCK_TAI deadline of
+                /// @c T_FST + T_EPO + T_D on every ANC frame when a
+                /// PTP-anchored @ref RtpMediaClock and
+                /// @ref RtpPacingMode::TxTime are both available.
+                /// Set to @c Ctm to advertise Compatible Transmission
+                /// Model (§6.5) — no per-batch deadline; the kernel's
+                /// existing 1 ms pacing is sufficient.  Setting
+                /// @c Lltm or @c Ctm also bumps the SDP @c SSN to
+                /// @c ST2110-40:2023.
+                PROMEKI_DECLARE_ID(RtpAncTransmissionModel,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::AncTransmissionModel::Unsignalled)
+                                           .setEnumType(promeki::AncTransmissionModel::Type)
+                                           .setDescription("ST 2110-40 §6 transmission model (TM fmtp)."));
+
+                /// @brief int — ST 2110-40 §6.4 @c T_EPO (Epoch Offset)
+                ///        in microseconds.
+                ///
+                /// Added to @c T_FST before the LLTM @c T_D slack
+                /// window in the per-batch deadline computation.  Same
+                /// semantics as ST 2110-10 §7.4 TR_OFFSET but
+                /// namespaced to ANC's per-stream adjustment.  Default
+                /// 0 — natural-anchor LLTM.  Also emitted as the
+                /// @c TROFFSETANC fmtp in the SDP when non-zero.
+                PROMEKI_DECLARE_ID(RtpAncTrOffsetUs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setDescription("ST 2110-40 LLTM T_EPO offset in µs."));
+
+                /// @brief int — ST 2110-40 §6.4 TotalLines override.
+                ///
+                /// Used in the LLTM @c T_D computation
+                /// (<tt>T_D = 8 / (FrameRate × TotalLines)</tt>).
+                /// Default 0 = Auto — the library resolves TotalLines
+                /// from the paired video stream's @ref VideoFormat via
+                /// @ref VideoFormatDetails.  Set non-zero to override
+                /// the Auto resolution when the application knows the
+                /// SDI total-line count better than the
+                /// @ref VideoFormat lookup (e.g. for non-SMPTE
+                /// rasters, or to pin a conservative value).
+                PROMEKI_DECLARE_ID(RtpAncTotalLines,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("ST 2110-40 LLTM TotalLines (0 = Auto)."));
+
+                /// @brief int — ST 2110-40 §5.2.3 VPID_Code fmtp.
+                ///
+                /// Optional SDI Video Payload Identifier code (per
+                /// SMPTE 352M) that lets a receiver reconstruct the
+                /// exact SDI line / stream layout for downstream
+                /// SDI emission.  Default 0 = "do not emit
+                /// @c VPID_Code in the SDP fmtp".  Stored on the
+                /// per-stream context for SDP emission; the receive
+                /// side does not consume it today (gated on the
+                /// future SDI write-back path).
+                PROMEKI_DECLARE_ID(RtpAncVpidCode,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("ST 2110-40 VPID_Code fmtp (0 = omit)."));
 
                 // ============================================================
                 // RTMP / RTMPS (RtmpMediaIO)

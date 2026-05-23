@@ -1440,7 +1440,7 @@ TEST_CASE("CSC HDR: pipeline picks the direct-compute PQ/HLG kernel over the LUT
         CSCPipeline pPq(PixelFormat::RGB16_LE_sRGB, PixelFormat::RGB16_LE_Rec2020_PQ, scalarConfig());
         REQUIRE(pPq.isValid());
         bool sawPqOETF = false;
-        for (size_t i = 0; i < pPq.stageCount(); ++i) {
+        for (int i = 0; i < pPq.stageCount(); ++i) {
                 const auto &s = pPq.stage(i);
                 if (s.type == CSCPipeline::StageOETF) {
                         CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferPqOETF);
@@ -1453,7 +1453,7 @@ TEST_CASE("CSC HDR: pipeline picks the direct-compute PQ/HLG kernel over the LUT
         CSCPipeline pPqRev(PixelFormat::RGB16_LE_Rec2020_PQ, PixelFormat::RGB16_LE_sRGB, scalarConfig());
         REQUIRE(pPqRev.isValid());
         bool sawPqEOTF = false;
-        for (size_t i = 0; i < pPqRev.stageCount(); ++i) {
+        for (int i = 0; i < pPqRev.stageCount(); ++i) {
                 const auto &s = pPqRev.stage(i);
                 if (s.type == CSCPipeline::StageEOTF) {
                         CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferPqEOTF);
@@ -1466,7 +1466,7 @@ TEST_CASE("CSC HDR: pipeline picks the direct-compute PQ/HLG kernel over the LUT
         CSCPipeline pHlg(PixelFormat::RGB16_LE_sRGB, PixelFormat::RGB16_LE_Rec2020_HLG, scalarConfig());
         REQUIRE(pHlg.isValid());
         bool sawHlgOETF = false;
-        for (size_t i = 0; i < pHlg.stageCount(); ++i) {
+        for (int i = 0; i < pHlg.stageCount(); ++i) {
                 const auto &s = pHlg.stage(i);
                 if (s.type == CSCPipeline::StageOETF) {
                         CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferHlgOETF);
@@ -1479,7 +1479,7 @@ TEST_CASE("CSC HDR: pipeline picks the direct-compute PQ/HLG kernel over the LUT
         // HdrTransferNone so the LUT path stays the default.
         CSCPipeline pSdr(PixelFormat::RGBA8_sRGB, PixelFormat::YUV8_422_Rec709, scalarConfig());
         REQUIRE(pSdr.isValid());
-        for (size_t i = 0; i < pSdr.stageCount(); ++i) {
+        for (int i = 0; i < pSdr.stageCount(); ++i) {
                 const auto &s = pSdr.stage(i);
                 if (s.type == CSCPipeline::StageOETF || s.type == CSCPipeline::StageEOTF) {
                         CHECK(s.hdrTransfer == CSCPipeline::Stage::HdrTransferNone);

@@ -52,13 +52,13 @@ struct Cea708PenAttr {
                 ///        fg, no bg, no edge).
                 bool hasAnyStyle() const {
                         return italic || underline
-                                || edgeStyle.value() != SubtitleEdgeStyle::None.value()
-                                || fontFace.value() != SubtitleFontFace::Default.value()
+                                || edgeStyle != SubtitleEdgeStyle::None
+                                || fontFace != SubtitleFontFace::Default
                                 || foregroundColor.isValid() || backgroundColor.isValid()
                                 || edgeColor.isValid()
-                                || foregroundOpacity.value() != SubtitleOpacity::Solid.value()
-                                || backgroundOpacity.value() != SubtitleOpacity::Solid.value()
-                                || edgeOpacity.value() != SubtitleOpacity::Solid.value();
+                                || foregroundOpacity != SubtitleOpacity::Solid
+                                || backgroundOpacity != SubtitleOpacity::Solid
+                                || edgeOpacity != SubtitleOpacity::Solid;
                 }
 
                 bool operator==(const Cea708PenAttr &o) const {
@@ -136,7 +136,7 @@ struct Cea708WindowAttr {
                 ///        wrap, snap effect).
                 bool hasAnyAttribute() const {
                         return fillColor.isValid()
-                               || fillOpacity.value() != SubtitleOpacity::Solid.value()
+                               || fillOpacity != SubtitleOpacity::Solid
                                || borderColor.isValid()
                                || borderType != 0
                                || justify != 0

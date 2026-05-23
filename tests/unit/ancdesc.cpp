@@ -450,29 +450,31 @@ TEST_CASE("AncDesc F3 — integer frame rates emit bare integers") {
         CHECK_FALSE(fmtp.contains(String("exactframerate=60/1")));
 }
 
-TEST_CASE("AncDesc F3 — A7 wildcard-SDID expands across the registered range") {
-        // Smpte2020Audio registers under DID 0x45 with wildcard SDID,
-        // backed by the concrete SDID range 0x01..0x09.
-        AncDesc desc;
+TEST_CASE("AncDesc — toSdp strips AudioMetadata-category formats (§5.2.1)") {
+        // Smpte2020Audio is the only AudioMetadata-category format
+        // currently registered with St291 carriage.  ST 2110-40
+        // §5.2.1 forbids audio metadata on this transport, so the
+        // SDP fmtp DID_SDID list must NOT advertise any of its
+        // concrete (0x45, 0x01..0x09) entries — regardless of
+        // whether the application set @c allowedFormats explicitly
+        // or left it empty (meaning "every registered format").
+        AncDesc descExplicit;
         AncFormat::IDList allowed;
         allowed.pushToBack(AncFormat::Smpte2020Audio);
-        desc.setAllowedFormats(std::move(allowed));
-
-        SdpMediaDescription md = desc.toSdp(100);
-        const String fmtp = md.attribute(String("fmtp"));
-        REQUIRE_FALSE(fmtp.isEmpty());
-        // Wildcard SDID=0x00 must NOT appear (collides with Type-1
-        // sentinel per RFC 8331 §3.1).
-        CHECK_FALSE(fmtp.contains(String("DID_SDID={0x45,0x00}")));
-        // Every concrete SDID under DID 0x45 must appear.
+        descExplicit.setAllowedFormats(std::move(allowed));
+        const String fmtpExplicit = descExplicit.toSdp(100).attribute(String("fmtp"));
         for (uint8_t sdid = 0x01; sdid <= 0x09; ++sdid) {
-                char  hex[3] = {'0', static_cast<char>('1' + (sdid - 1)), '\0'};
                 const String expected = String("DID_SDID={0x45,0x0") +
                                         String::number(static_cast<int>(sdid)) +
                                         String("}");
-                CHECK(fmtp.contains(expected));
-                (void)hex;
+                CHECK_FALSE(fmtpExplicit.contains(expected));
         }
+
+        AncDesc descDefault;
+        const String fmtpDefault = descDefault.toSdp(100).attribute(String("fmtp"));
+        // Even the "ship every registered St291 format" default
+        // must not surface audio DIDs.
+        CHECK_FALSE(fmtpDefault.contains(String("DID_SDID={0x45,")));
 }
 
 TEST_CASE("AncDesc F3 — fromSdp dedupes wildcard SDIDs into one family ID") {
@@ -578,4 +580,141 @@ TEST_CASE("AncFormat F3 — st291ConcreteSdids resolves wildcard families") {
         // Format with no St291 carriage returns empty.
         const auto scte35 = AncFormat(AncFormat::Scte35).st291ConcreteSdids();
         CHECK(scte35.isEmpty());
+}
+
+// ============================================================================
+// Phase E40 — ST 2110-40 transmission model (TM) SDP signalling
+// ============================================================================
+
+TEST_CASE("AncDesc E40 — default transmission model is Unsignalled") {
+        AncDesc desc;
+        CHECK(desc.transmissionModel() == AncTransmissionModel::Unsignalled);
+}
+
+TEST_CASE("AncDesc E40 — Unsignalled keeps SSN=:2018, no TM line (implicit CTM)") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        SdpMediaDescription md = desc.toSdp(100);
+        const String fmtp = md.attribute(String("fmtp"));
+        REQUIRE_FALSE(fmtp.isEmpty());
+        CHECK(fmtp.contains(String("SSN=ST2110-40:2018")));
+        CHECK_FALSE(fmtp.contains(String("SSN=ST2110-40:2023")));
+        CHECK_FALSE(fmtp.contains(String("TM=")));
+}
+
+TEST_CASE("AncDesc E40 — LLTM emits TM=LLTM and bumps SSN to :2023") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        desc.setTransmissionModel(AncTransmissionModel::Lltm);
+        SdpMediaDescription md = desc.toSdp(100);
+        const String fmtp = md.attribute(String("fmtp"));
+        REQUIRE_FALSE(fmtp.isEmpty());
+        CHECK(fmtp.contains(String("SSN=ST2110-40:2023")));
+        CHECK_FALSE(fmtp.contains(String("SSN=ST2110-40:2018")));
+        CHECK(fmtp.contains(String("TM=LLTM")));
+        CHECK_FALSE(fmtp.contains(String("TM=CTM")));
+}
+
+TEST_CASE("AncDesc E40 — CTM emits TM=CTM and bumps SSN to :2023") {
+        AncDesc desc(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        desc.setTransmissionModel(AncTransmissionModel::Ctm);
+        SdpMediaDescription md = desc.toSdp(100);
+        const String fmtp = md.attribute(String("fmtp"));
+        REQUIRE_FALSE(fmtp.isEmpty());
+        CHECK(fmtp.contains(String("SSN=ST2110-40:2023")));
+        CHECK_FALSE(fmtp.contains(String("SSN=ST2110-40:2018")));
+        CHECK(fmtp.contains(String("TM=CTM")));
+        CHECK_FALSE(fmtp.contains(String("TM=LLTM")));
+}
+
+TEST_CASE("AncDesc E40 — fromSdp parses TM=LLTM") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        md.setAttribute("fmtp",
+                        "100 SSN=ST2110-40:2023;TM=LLTM;exactframerate=60;"
+                        "DID_SDID={0x61,0x01}");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.transmissionModel() == AncTransmissionModel::Lltm);
+}
+
+TEST_CASE("AncDesc E40 — fromSdp parses TM=CTM") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        md.setAttribute("fmtp",
+                        "100 SSN=ST2110-40:2023;TM=CTM;exactframerate=60;"
+                        "DID_SDID={0x61,0x01}");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.transmissionModel() == AncTransmissionModel::Ctm);
+}
+
+TEST_CASE("AncDesc E40 — fromSdp absent TM yields Unsignalled") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        md.setAttribute("fmtp",
+                        "100 SSN=ST2110-40:2018;exactframerate=60;DID_SDID={0x61,0x01}");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.transmissionModel() == AncTransmissionModel::Unsignalled);
+}
+
+TEST_CASE("AncDesc E40 — fromSdp unknown TM falls back to Unsignalled") {
+        SdpMediaDescription md;
+        md.setMediaType("video");
+        md.setProtocol("RTP/AVP");
+        md.addPayloadType(100);
+        md.setAttribute("rtpmap", "100 smpte291/90000");
+        // TM=SOMETHING_NEW — a receiver that can't interpret it
+        // should refuse to assume LLTM/CTM behaviour.
+        md.setAttribute("fmtp",
+                        "100 SSN=ST2110-40:2023;TM=FUTURE;exactframerate=60");
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.transmissionModel() == AncTransmissionModel::Unsignalled);
+}
+
+TEST_CASE("AncDesc E40 — TM round-trips through fromSdp/toSdp") {
+        AncDesc original(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        original.setTransmissionModel(AncTransmissionModel::Lltm);
+        AncFormat::IDList allowed;
+        allowed.pushToBack(AncFormat::Cea708);
+        original.setAllowedFormats(std::move(allowed));
+
+        SdpMediaDescription md = original.toSdp(100);
+        AncDesc parsed = AncDesc::fromSdp(md);
+        CHECK(parsed.transmissionModel() == AncTransmissionModel::Lltm);
+}
+
+TEST_CASE("AncDesc E40 — DataStream v3 preserves transmission model") {
+        AncDesc original(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        original.setTransmissionModel(AncTransmissionModel::Ctm);
+
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        dev.open(IODevice::ReadWrite);
+        {
+                DataStream w = DataStream::createWriter(&dev);
+                w << original;
+        }
+        dev.seek(0);
+        AncDesc restored;
+        {
+                DataStream r = DataStream::createReader(&dev);
+                r >> restored;
+        }
+        CHECK(restored.transmissionModel() == AncTransmissionModel::Ctm);
+}
+
+TEST_CASE("AncDesc E40 — transmissionModel participates in formatEquals / operator==") {
+        AncDesc a(Size2Du32(1920, 1080), VideoScanMode::Progressive, FrameRate::FPS_60);
+        AncDesc b = a;
+        CHECK(a.formatEquals(b));
+        CHECK(a == b);
+        b.setTransmissionModel(AncTransmissionModel::Lltm);
+        CHECK_FALSE(a.formatEquals(b));
+        CHECK_FALSE(a == b);
 }

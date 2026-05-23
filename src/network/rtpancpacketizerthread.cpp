@@ -13,6 +13,7 @@
 #include <promeki/error.h>
 #include <promeki/frame.h>
 #include <promeki/logger.h>
+#include <promeki/phcclock.h>
 #include <promeki/rtppayloadanc.h>
 #include <promeki/sharedptr.h>
 
@@ -70,6 +71,38 @@ void RtpAncPacketizerThread::packetize(const RtpFrameWork &work) {
         batch.clockRate = _ctx.clockRateHz;
         batch.markerOnLast = true;
         batch.enqueuedAt = TimeStamp::now();
+
+        // ST 2110-40 §6.4 LLTM deadline: sender shall transmit every
+        // RTP packet for frame @c N no later than
+        // @c T_FST + T_EPO + T_D, where @c T_FST is the SMPTE Epoch-
+        // grid wallclock of frame @c N's first sample (UTC via the
+        // PTP-anchored @ref RtpMediaClock), @c T_EPO is the per-stream
+        // Epoch Offset (TR_OFFSET-equivalent), and @c T_D = 8 /
+        // (FrameRate × TotalLines) is the egress slack window.
+        //
+        // When @c lltmEnabled is set and the media clock has a valid
+        // PTP anchor we stamp the resulting CLOCK_TAI nanosecond
+        // deadline onto @c batch.deadlineTaiNs; the session forwards
+        // it to every datagram and the @ref TxTimePacketScheduler
+        // passes the pre-stamped value through to the kernel's ETF
+        // qdisc.  No PTP anchor → silently degrade to Compatible
+        // (CTM) pacing (no per-batch deadline) so the SDP-advertised
+        // TM=LLTM is best-effort honoured on hosts without a PHC.
+        if (_ctx.lltmEnabled && _ctx.mediaClock != nullptr &&
+            _ctx.mediaClock->hasPtpAnchor()) {
+                const int64_t tFstUtcNs =
+                        _ctx.mediaClock->tvdUtcNs(work.frameIndex.value());
+                if (tFstUtcNs > 0) {
+                        const int64_t tEpoNs = _ctx.trOffset.isValid()
+                                                       ? _ctx.trOffset.nanoseconds()
+                                                       : 0;
+                        const int64_t tDNs = _ctx.tD.isValid()
+                                                     ? _ctx.tD.nanoseconds()
+                                                     : 0;
+                        const int64_t deadlineUtcNs = tFstUtcNs + tEpoNs + tDNs;
+                        batch.deadlineTaiNs = PhcClock::utcNsToTaiNs(deadlineUtcNs);
+                }
+        }
 
         Error pushErr = _ctx.txPacketQueue->pushBlocking(std::move(batch));
         if (pushErr.isError() && pushErr != Error::Cancelled) {

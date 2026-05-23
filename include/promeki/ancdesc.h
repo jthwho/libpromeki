@@ -230,6 +230,23 @@ class AncDesc {
                 void setVpidCode(uint8_t code);
 
                 /**
+                 * @brief Returns the ST 2110-40 transmission model
+                 *        (TM, §6) this descriptor signals in SDP fmtp.
+                 *
+                 * Default @ref AncTransmissionModel::Unsignalled means
+                 * "omit @c TM from SDP and pin @c SSN=ST2110-40:2018".
+                 * @ref AncTransmissionModel::Lltm and
+                 * @ref AncTransmissionModel::Ctm emit
+                 * @c TM=LLTM / @c TM=CTM respectively and bump
+                 * @c SSN to @c ST2110-40:2023 per the :2023 §7 SSN/TM
+                 * coupling rule.
+                 */
+                AncTransmissionModel transmissionModel() const;
+
+                /** @brief Sets the transmission model (default @ref AncTransmissionModel::Unsignalled). */
+                void setTransmissionModel(const AncTransmissionModel &tm);
+
+                /**
                  * @brief Returns @c true when the descriptor carries
                  *        enough information to be meaningfully consumed.
                  *
@@ -360,6 +377,7 @@ class AncDesc {
                                 int                          pairedAudioStreamIndex = -1;
                                 uint32_t                     troff = 0;
                                 uint8_t                      vpidCode = 0;
+                                AncTransmissionModel         transmissionModel = AncTransmissionModel::Unsignalled;
                 };
 
         private:

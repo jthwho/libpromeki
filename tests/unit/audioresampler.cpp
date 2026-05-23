@@ -76,7 +76,7 @@ TEST_CASE("AudioResampler: setup and teardown") {
         CHECK(err.isOk());
         CHECK(r.isValid());
         CHECK(r.channels() == 2);
-        CHECK(r.quality().value() == SrcQuality::SincMedium.value());
+        CHECK(r.quality() == SrcQuality::SincMedium);
 }
 
 TEST_CASE("AudioResampler: setup with zero channels fails") {
@@ -90,11 +90,11 @@ TEST_CASE("AudioResampler: reinitialize with different params") {
         AudioResampler r;
         CHECK(r.setup(1, SrcQuality::Linear).isOk());
         CHECK(r.channels() == 1);
-        CHECK(r.quality().value() == SrcQuality::Linear.value());
+        CHECK(r.quality() == SrcQuality::Linear);
 
         CHECK(r.setup(4, SrcQuality::SincBest).isOk());
         CHECK(r.channels() == 4);
-        CHECK(r.quality().value() == SrcQuality::SincBest.value());
+        CHECK(r.quality() == SrcQuality::SincBest);
 }
 
 // ============================================================================

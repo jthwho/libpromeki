@@ -127,13 +127,20 @@ struct StreamAnchor {
 class RtpDepacketizerThread : public Thread {
         public:
                 /// @brief Default depth of the post-reorder
-                ///        @c RtpPacket::Queue bound.  Sized to
-                ///        match @c RtpSeqReorderBuffer::Config's
-                ///        @c maxWindow default.  Drop-oldest fires
-                ///        at this depth when the depacketizer
+                ///        @c RtpPacket::Queue bound.  Drop-oldest
+                ///        fires at this depth when the depacketizer
                 ///        falls behind, surfacing as
                 ///        @c reorderOutputDropped on the stream's
-                ///        stats.
+                ///        stats.  The default of 64 is calibrated
+                ///        for the smallest expected stream (RFC 2435
+                ///        JPEG at low resolution, AES67 L16); the
+                ///        caller almost always overrides via the
+                ///        @c depth constructor parameter, sizing the
+                ///        queue from the expected packets-per-frame
+                ///        budget computed at @c openReaderStream
+                ///        time.  See
+                ///        @ref RtpMediaIO::expectedPacketsPerFrame
+                ///        for the per-stream sizing math.
                 static constexpr size_t DefaultInputQueueDepth = 64;
 
                 /**

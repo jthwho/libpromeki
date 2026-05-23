@@ -220,7 +220,7 @@ TEST_CASE("Matrix: rotationMatrix valid dimension") {
 
 TEST_CASE("Matrix: rotationMatrix invalid dimension returns error") {
         Error err;
-        auto  r = Matrix<double, 3, 3>::rotationMatrix(1.0, 2, &err);
+        Matrix<double, 3, 3>::rotationMatrix(1.0, 2, &err);
         CHECK(err.isError());
         CHECK(err.code() == Error::InvalidDimension);
 }

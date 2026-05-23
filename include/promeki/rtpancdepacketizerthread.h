@@ -133,7 +133,8 @@ class RtpAncDepacketizerThread : public RtpDepacketizerThread {
                  */
                 RtpAncDepacketizerThread(RtpAncDepacketizerContext ctx,
                                          const String              &name,
-                                         uint32_t                   clockRateHz);
+                                         uint32_t                   clockRateHz,
+                                         size_t                     queueDepth = DefaultInputQueueDepth);
 
                 ~RtpAncDepacketizerThread() override;
 

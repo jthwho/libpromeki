@@ -295,7 +295,7 @@ TEST_CASE("TPG: Metadata::Subtitle preserves SRT anchor + styled spans") {
                 if (!frame.metadata().contains(Metadata::Subtitle)) continue;
                 Subtitle s = frame.metadata().get(Metadata::Subtitle).get<Subtitle>();
                 if (s.text() != "top italic") continue;
-                if (s.anchor().value() == SubtitleAnchor::TopCenter.value()) sawAnchoredCue = true;
+                if (s.anchor() == SubtitleAnchor::TopCenter) sawAnchoredCue = true;
                 for (size_t i = 0; i < s.spans().size(); ++i) {
                         if (s.spans()[i].italic()) sawItalicSpan = true;
                 }

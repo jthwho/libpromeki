@@ -119,6 +119,22 @@ class UdpSocketTransport : public PacketTransport {
                 const String &multicastInterface() const { return _multicastInterface; }
 
                 /**
+                 * @brief Pins the underlying socket to a specific
+                 *        network interface via @c SO_BINDTODEVICE.
+                 *
+                 * Applied at @ref open() time after the socket is
+                 * created.  Empty / unset = no @c SO_BINDTODEVICE.
+                 * See @ref UdpSocket::setBindInterface for platform
+                 * notes.
+                 *
+                 * @param iface Linux interface name (e.g. @c "eth1").
+                 */
+                void setBindInterface(const String &iface) { _bindInterface = iface; }
+
+                /** @brief Returns the configured bind interface name (empty = unset). */
+                const String &bindInterface() const { return _bindInterface; }
+
+                /**
                  * @brief Enables multicast loopback.
                  *
                  * When enabled, multicast packets sent on this
@@ -140,6 +156,24 @@ class UdpSocketTransport : public PacketTransport {
 
                 /** @brief Returns true if @c SO_REUSEADDR is enabled. */
                 bool reuseAddress() const { return _reuseAddress; }
+
+                /**
+                 * @brief Sets the IP "Don't Fragment" bit on outgoing packets.
+                 *
+                 * Applied at @ref open() time via
+                 * @ref UdpSocket::setDontFragment().  SMPTE ST 2110
+                 * transports default this on — §6.3 of ST 2110-10
+                 * requires senders to never produce fragmented IP
+                 * datagrams.  Disable only for legacy / debugging.
+                 *
+                 * @param enable True to assert DF, false to leave the
+                 *               socket using the kernel default
+                 *               (per-route MTU discovery).
+                 */
+                void setDontFragment(bool enable) { _dontFragment = enable; }
+
+                /** @brief Returns true if the IP DF bit will be asserted on egress. */
+                bool dontFragment() const { return _dontFragment; }
 
                 /**
                  * @brief Sets the desired kernel receive buffer size.
@@ -208,6 +242,7 @@ class UdpSocketTransport : public PacketTransport {
                 UdpSocket::UPtr _socket;
                 SocketAddress   _localAddress;
                 String          _multicastInterface;
+                String          _bindInterface;
                 int             _recvBufferSize = 0;
                 int             _sendBufferSize = 0;
                 uint8_t         _dscp = 0;
@@ -215,6 +250,7 @@ class UdpSocketTransport : public PacketTransport {
                 bool            _ipv6 = false;
                 bool            _reuseAddress = false;
                 bool            _multicastLoopback = false;
+                bool            _dontFragment = false;
 };
 
 PROMEKI_NAMESPACE_END

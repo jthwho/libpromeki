@@ -173,138 +173,9 @@ TEST_CASE("RtpPayloadL16") {
         }
 }
 
-TEST_CASE("RtpPayloadRawVideo") {
-
-        SUBCASE("construction") {
-                RtpPayloadRawVideo payload(1920, 1080, 24);
-                CHECK(payload.width() == 1920);
-                CHECK(payload.height() == 1080);
-                CHECK(payload.bitsPerPixel() == 24);
-                CHECK(payload.clockRate() == 90000);
-                CHECK(payload.payloadType() == 96);
-        }
-
-        SUBCASE("set payload type") {
-                RtpPayloadRawVideo payload(320, 240, 24);
-                payload.setPayloadType(112);
-                CHECK(payload.payloadType() == 112);
-        }
-
-        SUBCASE("pack empty data") {
-                RtpPayloadRawVideo payload(320, 240, 24);
-                auto               packets = payload.pack(nullptr, 0);
-                CHECK(packets.isEmpty());
-        }
-
-        SUBCASE("pack small frame") {
-                // 8x4 pixels at 24bpp = 96 bytes total
-                RtpPayloadRawVideo payload(8, 4, 24);
-                const size_t       frameSize = 8 * 4 * 3;
-                uint8_t            data[96];
-                for (size_t i = 0; i < frameSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
-
-                auto packets = payload.pack(data, frameSize);
-                CHECK(packets.size() > 0);
-        }
-
-        SUBCASE("pack/unpack round-trip small") {
-                RtpPayloadRawVideo payload(16, 8, 24);
-                const size_t       frameSize = 16 * 8 * 3; // 384 bytes
-                uint8_t            data[384];
-                for (size_t i = 0; i < frameSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
-
-                auto   packets = payload.pack(data, frameSize);
-                Buffer result = payload.unpack(packets);
-                CHECK(result.size() == frameSize);
-                CHECK(std::memcmp(result.data(), data, frameSize) == 0);
-        }
-
-        SUBCASE("pack/unpack round-trip large") {
-                // 320x240 at 24bpp = 230400 bytes
-                RtpPayloadRawVideo   payload(320, 240, 24);
-                const size_t         frameSize = 320 * 240 * 3;
-                std::vector<uint8_t> data(frameSize);
-                for (size_t i = 0; i < frameSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
-
-                auto packets = payload.pack(data.data(), frameSize);
-                CHECK(packets.size() > 100); // Should be many packets
-
-                Buffer result = payload.unpack(packets);
-                CHECK(result.size() == frameSize);
-                CHECK(std::memcmp(result.data(), data.data(), frameSize) == 0);
-        }
-
-        SUBCASE("all packets share one buffer") {
-                RtpPayloadRawVideo   payload(64, 64, 24);
-                const size_t         frameSize = 64 * 64 * 3;
-                std::vector<uint8_t> data(frameSize, 0x42);
-
-                auto packets = payload.pack(data.data(), frameSize);
-                for (size_t i = 1; i < packets.size(); i++) {
-                        CHECK(packets[i].buffer().impl().ptr() == packets[0].buffer().impl().ptr());
-                }
-        }
-
-        SUBCASE("continuation bit is always zero") {
-                // RFC 4175 §4: C is set only when another scan line
-                // header follows in the SAME packet.  We emit one
-                // line header per packet, so C must always be 0.
-                RtpPayloadRawVideo   payload(320, 240, 24, 3);
-                const size_t         frameSize = 320 * 240 * 3;
-                std::vector<uint8_t> data(frameSize, 0x55);
-                auto                 packets = payload.pack(data.data(), frameSize);
-                REQUIRE(packets.size() > 10);
-
-                // Per-line header starts at payload offset 2 (ext seq).
-                // C bit is MSB of the offset field at byte 4 of the
-                // line header (payload bytes 6-7).
-                for (size_t i = 0; i < packets.size(); i++) {
-                        const uint8_t *pl = packets[i].payload();
-                        uint8_t        offsetHi = pl[2 + 4]; // ext_seq(2) + line_hdr byte 4
-                        CHECK((offsetHi & 0x80) == 0);
-                }
-        }
-
-        SUBCASE("pgroup alignment for RGB8") {
-                // RGB8 has pgroup = 3 bytes.  Every chunk's byte count
-                // (the Length field in the per-line header) must be a
-                // multiple of 3 so that no pixel is split across packets.
-                RtpPayloadRawVideo   payload(320, 240, 24, 3);
-                const size_t         frameSize = 320 * 240 * 3;
-                std::vector<uint8_t> data(frameSize, 0xAA);
-                auto                 packets = payload.pack(data.data(), frameSize);
-
-                for (size_t i = 0; i < packets.size(); i++) {
-                        const uint8_t *pl = packets[i].payload();
-                        uint16_t       dataLen = (static_cast<uint16_t>(pl[2]) << 8) | pl[3];
-                        CHECK((dataLen % 3) == 0);
-                }
-        }
-
-        SUBCASE("pgroup alignment for UYVY8") {
-                // UYVY8 422 has pgroup = 4 bytes (2 pixels per 4 bytes).
-                RtpPayloadRawVideo   payload(320, 240, 16, 4);
-                const size_t         frameSize = 320 * 240 * 2;
-                std::vector<uint8_t> data(frameSize, 0xBB);
-                auto                 packets = payload.pack(data.data(), frameSize);
-
-                for (size_t i = 0; i < packets.size(); i++) {
-                        const uint8_t *pl = packets[i].payload();
-                        uint16_t       dataLen = (static_cast<uint16_t>(pl[2]) << 8) | pl[3];
-                        CHECK((dataLen % 4) == 0);
-                }
-        }
-
-        SUBCASE("pgroupBytes accessor") {
-                RtpPayloadRawVideo a(320, 240, 24, 3);
-                CHECK(a.pgroupBytes() == 3);
-                RtpPayloadRawVideo b(320, 240, 16, 4);
-                CHECK(b.pgroupBytes() == 4);
-                // Default: inferred from bpp
-                RtpPayloadRawVideo c(320, 240, 32);
-                CHECK(c.pgroupBytes() == 4);
-        }
-}
+// RtpPayloadRawVideo tests live in their own file (rtppayloadrawvideo.cpp)
+// so the multi-SRD / 32-bit-extseq / F-bit coverage stays adjacent to
+// the standalone wire-format class.
 
 TEST_CASE("RtpPayloadJpeg") {
 
@@ -689,6 +560,114 @@ TEST_CASE("RtpPayloadJpegXs") {
                 jumbo.setMaxPayloadSize(8000); // one-shot
                 auto jumboPackets = jumbo.pack(data.data(), data.size());
                 CHECK(jumboPackets.size() == 1);
+        }
+
+        SUBCASE("setSliceMode default is off (K=0)") {
+                RtpPayloadJpegXs payload(320, 240);
+                CHECK_FALSE(payload.isSliceMode());
+                payload.setSliceMode(true);
+                CHECK(payload.isSliceMode());
+                payload.setSliceMode(false);
+                CHECK_FALSE(payload.isSliceMode());
+        }
+
+        SUBCASE("slice mode falls back to codestream mode when input has no SLH markers") {
+                // buildJxsBytes() produces a raw byte stream with no
+                // JPEG XS marker structure; slice-mode packing
+                // returns empty, and the pack() dispatcher falls
+                // back to codestream mode so the caller still gets
+                // wire bytes.
+                RtpPayloadJpegXs payload(320, 240);
+                payload.setSliceMode(true);
+                auto data = buildJxsBytes(500);
+                auto packets = payload.pack(data.data(), data.size());
+                REQUIRE(!packets.isEmpty());
+                // Decode the K bit of the first packet's header
+                // (byte 1 after the RTP header).  K=0 confirms the
+                // fallback to codestream mode.
+                const uint8_t kBit = (packets[0].payload()[0] >> 6) & 0x01;
+                CHECK(kBit == 0);
+        }
+
+        SUBCASE("slice mode produces K=1 packets on a well-formed codestream") {
+                // Build a synthetic 3-slice codestream mirroring the
+                // jxsmarker.cpp fixture: SOC + CAP(8) + PIH(16) +
+                // 3×(SLH(4) + 100 bytes coeffs) + EOC.
+                std::vector<uint8_t> bytes;
+                auto                 pushMarker = [&](uint16_t code) {
+                        bytes.push_back(static_cast<uint8_t>(code >> 8));
+                        bytes.push_back(static_cast<uint8_t>(code & 0xFF));
+                };
+                auto pushBe16 = [&](uint16_t v) {
+                        bytes.push_back(static_cast<uint8_t>(v >> 8));
+                        bytes.push_back(static_cast<uint8_t>(v & 0xFF));
+                };
+
+                pushMarker(0xFF10); // SOC
+                pushMarker(0xFF50); // CAP
+                pushBe16(10);       // len = 2 (self) + 8 payload
+                for (int i = 0; i < 8; i++) bytes.push_back(static_cast<uint8_t>(0x20 + i));
+                pushMarker(0xFF12); // PIH
+                pushBe16(18);       // len = 2 + 16
+                for (int i = 0; i < 16; i++) bytes.push_back(static_cast<uint8_t>(0x40 + i));
+                for (int s = 0; s < 3; s++) {
+                        pushMarker(0xFF20); // SLH
+                        pushBe16(6);        // len = 2 + 4
+                        for (int i = 0; i < 4; i++)
+                                bytes.push_back(static_cast<uint8_t>(s));
+                        for (int i = 0; i < 100; i++)
+                                bytes.push_back(static_cast<uint8_t>((s * 11 + i) & 0x7F));
+                }
+                pushMarker(0xFF11); // EOC
+
+                RtpPayloadJpegXs payload(320, 240);
+                payload.setSliceMode(true);
+                auto packets = payload.pack(bytes.data(), bytes.size());
+                REQUIRE(!packets.isEmpty());
+                // First packet should carry K=1.  The K bit lives at
+                // bit 6 of the first JXS header byte (byte 0 of the
+                // RTP payload).
+                const uint8_t kBit = (packets[0].payload()[0] >> 6) & 0x01;
+                CHECK(kBit == 1);
+                // The L bit (last-of-frame) on the final packet
+                // should be set.
+                const uint8_t lBitLast = (packets[packets.size() - 1].payload()[0] >> 5) & 0x01;
+                CHECK(lBitLast == 1);
+                // Earlier packets should have L=0.
+                for (size_t i = 0; i + 1 < packets.size(); i++) {
+                        const uint8_t lBit = (packets[i].payload()[0] >> 5) & 0x01;
+                        CHECK(lBit == 0);
+                }
+        }
+
+        SUBCASE("slice mode falls back when a single slice exceeds the MTU") {
+                // One huge slice (~3000 bytes coeffs).  Default MTU
+                // is 1200; one slice can't fit so the packetizer
+                // falls back to codestream mode (K=0).
+                std::vector<uint8_t> bytes;
+                auto                 pushMarker = [&](uint16_t code) {
+                        bytes.push_back(static_cast<uint8_t>(code >> 8));
+                        bytes.push_back(static_cast<uint8_t>(code & 0xFF));
+                };
+                auto pushBe16 = [&](uint16_t v) {
+                        bytes.push_back(static_cast<uint8_t>(v >> 8));
+                        bytes.push_back(static_cast<uint8_t>(v & 0xFF));
+                };
+                pushMarker(0xFF10);
+                pushMarker(0xFF12);
+                pushBe16(4); // empty PIH
+                pushMarker(0xFF20);
+                pushBe16(4); // empty SLH
+                for (int i = 0; i < 3000; i++) bytes.push_back(static_cast<uint8_t>(i & 0x7F));
+                pushMarker(0xFF11);
+
+                RtpPayloadJpegXs payload(320, 240);
+                payload.setSliceMode(true);
+                auto packets = payload.pack(bytes.data(), bytes.size());
+                REQUIRE(!packets.isEmpty());
+                // Fallback path: K=0 on the first packet.
+                const uint8_t kBit = (packets[0].payload()[0] >> 6) & 0x01;
+                CHECK(kBit == 0);
         }
 }
 

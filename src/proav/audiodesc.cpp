@@ -6,6 +6,7 @@
  */
 
 #include <promeki/optional.h>
+#include <promeki/audiochannelmap.h>
 #include <promeki/audiodesc.h>
 #include <promeki/sdpsession.h>
 #include <promeki/variantlookup.h>
@@ -32,7 +33,25 @@ AudioDesc AudioDesc::fromSdp(const SdpMediaDescription &md) {
         } else {
                 return AudioDesc();
         }
-        return AudioDesc(AudioFormat(fmtId), static_cast<float>(rm.clockRate), rm.channels);
+        AudioDesc out(AudioFormat(fmtId), static_cast<float>(rm.clockRate), rm.channels);
+
+        // ST 2110-30:2025 §6.2.2 / RFC 3190 channel-order fmtp.
+        // When present and parseable, replace the constructor's
+        // default channel map with the explicit ordering from the
+        // SDP — and only when the parsed map's channel count
+        // matches the rtpmap so a malformed sender can't corrupt
+        // the per-channel role assignment.
+        const auto fmtp = md.fmtpParameters();
+        const auto orderIt = fmtp.find(String("channel-order"));
+        if (orderIt != fmtp.end()) {
+                auto parsed = AudioChannelMap::fromSt2110ChannelOrder(orderIt->second);
+                if (isOk(parsed) &&
+                    value(parsed).channels() == static_cast<size_t>(rm.channels)) {
+                        out.setChannelMap(value(parsed));
+                }
+        }
+
+        return out;
 }
 
 SdpMediaDescription AudioDesc::toSdp(uint8_t payloadType) const {
@@ -60,6 +79,21 @@ SdpMediaDescription AudioDesc::toSdp(uint8_t payloadType) const {
                 rtpmap += String("/") + String::number(_channels);
         }
         md.setAttribute("rtpmap", rtpmap);
+
+        // ST 2110-30:2025 §6.2.2 channel-order fmtp.  RFC 3190 §3
+        // requires that the attribute MUST NOT be included for 1,
+        // 2 or 3-channel streams (AIFF-C ordering is implicit at
+        // those channel counts).  At ≥4 channels and with a
+        // non-empty channel map, format the SMPTE2110 convention
+        // value through @ref AudioChannelMap::toSt2110ChannelOrder.
+        if (_channels >= 4 && channelMap().isValid()) {
+                const String body = channelMap().toSt2110ChannelOrder();
+                if (!body.isEmpty()) {
+                        md.setAttribute("fmtp",
+                                        String::number(payloadType) +
+                                                String(" channel-order=SMPTE2110.") + body);
+                }
+        }
         return md;
 }
 

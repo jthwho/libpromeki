@@ -409,12 +409,12 @@ TEST_CASE("VariantSpec_ParseString_Enum") {
         VariantSpec s = VariantSpec().setType(DataTypeEnum).setEnumType(VideoPattern::Type);
         Variant     v = s.parseString("Grid");
         REQUIRE(v.isValid());
-        CHECK(v.get<Enum>().value() == VideoPattern::Grid.value());
+        CHECK(v.get<Enum>() == VideoPattern::Grid);
 
         // Fully qualified form
         Variant v2 = s.parseString("VideoPattern::Ramp");
         REQUIRE(v2.isValid());
-        CHECK(v2.get<Enum>().value() == VideoPattern::Ramp.value());
+        CHECK(v2.get<Enum>() == VideoPattern::Ramp);
 
         Error err;
         s.parseString("NonexistentValue", &err);

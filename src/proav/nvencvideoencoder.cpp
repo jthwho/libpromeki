@@ -573,7 +573,7 @@ class NvencVideoEncoder::Impl {
                                 VideoScanMode frameScan = _effectiveScanMode;
                                 if (idesc.metadata().contains(Metadata::VideoScanMode)) {
                                         VideoScanMode m(idesc.metadata().getAs<Enum>(Metadata::VideoScanMode).value());
-                                        if (m.value() != VideoScanMode::Unknown.value()) {
+                                        if (m != VideoScanMode::Unknown) {
                                                 frameScan = m;
                                         }
                                 }
@@ -1092,9 +1092,9 @@ class NvencVideoEncoder::Impl {
                         // @c Progressive — the historical default and the
                         // safe choice when nothing upstream claimed to
                         // know the scan order.
-                        if (_cfgScanMode.value() != VideoScanMode::Unknown.value()) {
+                        if (_cfgScanMode != VideoScanMode::Unknown) {
                                 _effectiveScanMode = _cfgScanMode;
-                        } else if (firstFrameScanMode.value() != VideoScanMode::Unknown.value()) {
+                        } else if (firstFrameScanMode != VideoScanMode::Unknown) {
                                 _effectiveScanMode = firstFrameScanMode;
                         } else {
                                 _effectiveScanMode = VideoScanMode::Progressive;

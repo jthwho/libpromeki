@@ -383,7 +383,7 @@ TEST_CASE("Cea708Encoder + Decoder: roll-up cue round-trips with mode stamped") 
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "ROLLUP");
-        CHECK(out[0].mode().value() == CaptionMode::RollUp.value());
+        CHECK(out[0].mode() == CaptionMode::RollUp);
 }
 
 TEST_CASE("Cea708Encoder + Decoder: styled span round-trips italic/underline/edge/font via SPA") {
@@ -416,8 +416,8 @@ TEST_CASE("Cea708Encoder + Decoder: styled span round-trips italic/underline/edg
         const SubtitleSpan &gotSpan = out[0].spans()[0];
         CHECK(gotSpan.italic());
         CHECK(gotSpan.underline());
-        CHECK(gotSpan.edgeStyle().value() == SubtitleEdgeStyle::Raised.value());
-        CHECK(gotSpan.fontFace().value() == SubtitleFontFace::ProportionalSans.value());
+        CHECK(gotSpan.edgeStyle() == SubtitleEdgeStyle::Raised);
+        CHECK(gotSpan.fontFace() == SubtitleFontFace::ProportionalSans);
 }
 
 TEST_CASE("Cea708Encoder + Decoder: styled span round-trips fg/bg/edge colour via SPC") {
@@ -515,7 +515,7 @@ TEST_CASE("Cea708Encoder + Decoder: pop-on cue round-trips with mode stamped") {
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == "POP");
-        CHECK(out[0].mode().value() == CaptionMode::PopOn.value());
+        CHECK(out[0].mode() == CaptionMode::PopOn);
 }
 
 // ============================================================================
@@ -794,7 +794,7 @@ TEST_CASE("Cea708Encoder: PopOn cue followed by RollUp at same frame keeps both"
         REQUIRE(out.size() == 2);
         CHECK(out[0].text() == "POP");
         CHECK(out[1].text() == "RU");
-        CHECK(out[1].mode().value() == CaptionMode::RollUp.value());
+        CHECK(out[1].mode() == CaptionMode::RollUp);
 }
 
 TEST_CASE("Cea708Encoder: trailing PopOn cue still emits its HideWindow") {

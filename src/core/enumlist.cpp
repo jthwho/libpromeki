@@ -19,7 +19,7 @@ bool EnumList::append(const Enum &e, Error *err) {
         }
         if (e.type() != _type) {
                 promekiWarn("EnumList::append(Enum) refused: type mismatch (list=%s, value=%s)",
-                            _type.name(), e.type().name());
+                            _type.name().cstr(), e.type().name().cstr());
                 if (err) *err = Error::InvalidArgument;
                 return false;
         }
@@ -52,7 +52,7 @@ bool EnumList::append(const String &name, Error *err) {
         auto lookup = Enum::valueOf(_type, name);
         if (lookup.second().isError()) {
                 promekiWarn("EnumList::append('%s') failed: not a valid value of enum %s",
-                            name.cstr(), _type.name());
+                            name.cstr(), _type.name().cstr());
                 if (err) *err = lookup.second();
                 return false;
         }
@@ -134,7 +134,7 @@ Result<EnumList> EnumList::fromString(const String &text) {
                         // the first entry — mixing types in a single
                         // EnumList is meaningless.
                         promekiWarn("EnumList::fromString failed: mixed enum types (deduced=%s, got=%s)",
-                                    type.name(), e.type().name());
+                                    type.name().cstr(), e.type().name().cstr());
                         return makeError<EnumList>(Error::ParseFailed);
                 }
                 out._values.pushToBack(e.value());

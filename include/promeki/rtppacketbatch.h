@@ -47,14 +47,19 @@ PROMEKI_NAMESPACE_BEGIN
  * unit / metadata blob), and @c RtpPacketBatch is the natural
  * carrier for that handoff.
  *
- * @par No per-packet TXTIME deadline here
- * Per-packet @c SCM_TXTIME deadlines (the deferred kernel-side
- * pacing path under @c RtpPacingMode::TxTime) live on the
- * @ref PacketTransport::Datagram::txTimeNs field at @c sendPackets
- * time, populated by the TX thread.  Keeping the batch flat means
- * @c RtpPacketBatch stays a plain value type that can be copied
- * cheaply and stored in @c Queue<RtpPacketBatch> without inflating
- * the queue node size.
+ * @par Per-batch TXTIME deadline
+ * @ref deadlineTaiNs carries an optional ST 2110-40 §6.4 LLTM-style
+ * per-batch TX deadline through to the wire.  When non-zero,
+ * @ref RtpSession::sendPackets stamps every datagram in this batch
+ * with @c txTimeNs = deadlineTaiNs before the scheduler runs; the
+ * @ref TxTimePacketScheduler then passes the pre-stamped values
+ * through to the kernel's @c SCM_TXTIME path instead of computing
+ * its own deadlines.  The @em per-packet @c SCM_TXTIME field still
+ * lives on @ref PacketTransport::Datagram::txTimeNs (zero on entry
+ * unless this batch-level deadline is in play); keeping the batch
+ * flat means @c RtpPacketBatch stays a plain value type that can be
+ * copied cheaply and stored in @c Queue<RtpPacketBatch> without
+ * inflating the queue node size.
  *
  * @par Thread safety
  * @c RtpPacketBatch itself carries no synchronization.  Producer-
@@ -116,6 +121,47 @@ struct RtpPacketBatch {
                 ///        defaulted to @c TimeStamp() so callers
                 ///        that don't care just leave it.
                 TimeStamp enqueuedAt;
+
+                /// @brief Optional ST 2110-40 §6.4 LLTM-style
+                ///        @c CLOCK_TAI deadline in nanoseconds since
+                ///        the Unix epoch (TAI timescale).
+                ///
+                ///        When non-zero, @ref RtpSession::sendPackets
+                ///        stamps every datagram in this batch with
+                ///        @c txTimeNs = @ref deadlineTaiNs +
+                ///        j × @ref deadlineStrideNs before handing
+                ///        the list to the scheduler.  The
+                ///        @ref TxTimePacketScheduler then passes the
+                ///        pre-stamped values through to the kernel's
+                ///        ETF qdisc instead of computing its own
+                ///        deadlines.
+                ///
+                ///        ST 2110-40 LLTM ANC packetizers fill this
+                ///        with @c T_FST + T_EPO + T_D and leave
+                ///        @ref deadlineStrideNs at @c 0 (every
+                ///        packet of the frame shares the same
+                ///        deadline).  ST 2110-21 narrow-timing
+                ///        video TX paths fill this with @c T_VD
+                ///        and set @ref deadlineStrideNs to
+                ///        @c T_RS so the kernel receives per-packet
+                ///        @c TPR_j deadlines.  Video / data / audio
+                ///        TX paths that don't engage either model
+                ///        leave both fields at @c 0 to keep the
+                ///        scheduler in charge of pacing.
+                uint64_t deadlineTaiNs = 0;
+
+                /// @brief Optional ST 2110-21 §7.1 @c T_RS stride
+                ///        between successive packets' deadlines, in
+                ///        nanoseconds.  0 = every packet shares
+                ///        @ref deadlineTaiNs (LLTM ANC behaviour);
+                ///        non-zero = per-packet
+                ///        @c TPR_j = deadlineTaiNs + j × stride
+                ///        (ST 2110-21 narrow-timing video).
+                ///
+                ///        Only consulted when @ref deadlineTaiNs is
+                ///        non-zero — there's no concept of a stride
+                ///        without an anchor.
+                uint64_t deadlineStrideNs = 0;
 };
 
 PROMEKI_NAMESPACE_END

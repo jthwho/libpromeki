@@ -1919,6 +1919,133 @@ static PixelFormat::Data makeProRes_4444_XQ() {
 }
 
 // ---------------------------------------------------------------------------
+// ST 2110-20 wire-format PixelFormat factory functions
+//
+// The CompSemantic ranges use the canonical limited-range numeric
+// values for YCbCr (matching ycbcrSem10 / ycbcrSem12) and full-range
+// values for RGB / XYZ / Key.  Each PixelFormat references the
+// matching wire-format PixelMemLayout (e.g. I_3x10_BE_2110) plus an
+// existing ColorModel.  The actual bit-packing lives in CSC kernels
+// registered in E20c-3.
+// ---------------------------------------------------------------------------
+
+static PixelFormat::Data makeRGB10_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::RGB10_BE_2110_sRGB;
+        d.name = "RGB10_BE_2110_sRGB";
+        d.desc = "10-bit RGB ST 2110-20 wire (15 octets / 4 pixels BE), sRGB, full range";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_3x10_BE_2110);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0] = {"Red", "R", 0, 1023};
+        d.compSemantics[1] = {"Green", "G", 0, 1023};
+        d.compSemantics[2] = {"Blue", "B", 0, 1023};
+        return d;
+}
+
+static PixelFormat::Data makeRGB12_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::RGB12_BE_2110_sRGB;
+        d.name = "RGB12_BE_2110_sRGB";
+        d.desc = "12-bit RGB ST 2110-20 wire (9 octets / 2 pixels BE), sRGB, full range";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_3x12_BE_2110);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0] = {"Red", "R", 0, 4095};
+        d.compSemantics[1] = {"Green", "G", 0, 4095};
+        d.compSemantics[2] = {"Blue", "B", 0, 4095};
+        return d;
+}
+
+static PixelFormat::Data makeYUV10_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV10_2110_Rec709, "YUV10_2110_Rec709",
+                             "10-bit YCbCr 4:4:4 ST 2110-20 wire BE, Rec.709, limited range",
+                             PixelMemLayout::I_3x10_BE_2110, ycbcrSem10());
+}
+
+static PixelFormat::Data makeYUV12_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV12_2110_Rec709, "YUV12_2110_Rec709",
+                             "12-bit YCbCr 4:4:4 ST 2110-20 wire BE, Rec.709, limited range",
+                             PixelMemLayout::I_3x12_BE_2110, ycbcrSem12());
+}
+
+static PixelFormat::Data makeYUV10_422_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV10_422_2110_Rec709, "YUV10_422_2110_Rec709",
+                             "10-bit YCbCr 4:2:2 ST 2110-20 wire BE (5 octets / 2 pixels), Rec.709, limited range",
+                             PixelMemLayout::I_422_UYVY_3x10_BE_2110, ycbcrSem10());
+}
+
+static PixelFormat::Data makeYUV12_422_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV12_422_2110_Rec709, "YUV12_422_2110_Rec709",
+                             "12-bit YCbCr 4:2:2 ST 2110-20 wire BE (6 octets / 2 pixels), Rec.709, limited range",
+                             PixelMemLayout::I_422_UYVY_3x12_BE_2110, ycbcrSem12());
+}
+
+static PixelFormat::Data makeYUV8_420_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV8_420_2110_Rec709, "YUV8_420_2110_Rec709",
+                             "8-bit YCbCr 4:2:0 ST 2110-20 wire (single-plane pgroup-interleaved), Rec.709, limited range",
+                             PixelMemLayout::I_420_BE_2110_8, ycbcrSem8());
+}
+
+static PixelFormat::Data makeYUV10_420_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV10_420_2110_Rec709, "YUV10_420_2110_Rec709",
+                             "10-bit YCbCr 4:2:0 ST 2110-20 wire BE (single-plane pgroup-interleaved), Rec.709, limited range",
+                             PixelMemLayout::I_420_BE_2110_10, ycbcrSem10());
+}
+
+static PixelFormat::Data makeYUV12_420_2110_Rec709() {
+        return makeYCbCrDesc(PixelFormat::YUV12_420_2110_Rec709, "YUV12_420_2110_Rec709",
+                             "12-bit YCbCr 4:2:0 ST 2110-20 wire BE (single-plane pgroup-interleaved), Rec.709, limited range",
+                             PixelMemLayout::I_420_BE_2110_12, ycbcrSem12());
+}
+
+static PixelFormat::Data makeMono10_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::Mono10_BE_2110_sRGB;
+        d.name = "Mono10_BE_2110_sRGB";
+        d.desc = "10-bit Key ST 2110-20 wire BE (5 octets / 4 pixels), sRGB";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_1x10_BE_2110);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0] = {"Luma", "Y", 0, 1023};
+        return d;
+}
+
+static PixelFormat::Data makeMono12_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::Mono12_BE_2110_sRGB;
+        d.name = "Mono12_BE_2110_sRGB";
+        d.desc = "12-bit Key ST 2110-20 wire BE (3 octets / 2 pixels), sRGB";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_1x12_BE_2110);
+        d.colorModel = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0] = {"Luma", "Y", 0, 4095};
+        return d;
+}
+
+static PixelFormat::Data makeXYZ12_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::XYZ12_BE_2110;
+        d.name = "XYZ12_BE_2110";
+        d.desc = "12-bit XYZ cinema ST 2110-20 wire BE (9 octets / 2 pixels)";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_3x12_BE_2110);
+        d.colorModel = ColorModel(ColorModel::CIEXYZ);
+        d.compSemantics[0] = {"X", "X", 0, 4095};
+        d.compSemantics[1] = {"Y", "Y", 0, 4095};
+        d.compSemantics[2] = {"Z", "Z", 0, 4095};
+        return d;
+}
+
+static PixelFormat::Data makeXYZ16_BE_2110() {
+        PixelFormat::Data d;
+        d.id = PixelFormat::XYZ16_BE_2110;
+        d.name = "XYZ16_BE_2110";
+        d.desc = "16-bit XYZ cinema ST 2110-20 wire BE (6 octets / 1 pixel)";
+        d.memLayout = PixelMemLayout(PixelMemLayout::I_3x16_BE);
+        d.colorModel = ColorModel(ColorModel::CIEXYZ);
+        d.compSemantics[0] = {"X", "X", 0, 65535};
+        d.compSemantics[1] = {"Y", "Y", 0, 65535};
+        d.compSemantics[2] = {"Z", "Z", 0, 65535};
+        return d;
+}
+
+// ---------------------------------------------------------------------------
 // Construct-on-first-use registry
 // ---------------------------------------------------------------------------
 
@@ -2118,6 +2245,19 @@ struct PixelFormatRegistry {
                         add(makeAV1());
                         add(makeYUV8_444_Planar());
                         add(makeYUV10_444_Planar_LE());
+                        add(makeRGB10_BE_2110());
+                        add(makeRGB12_BE_2110());
+                        add(makeYUV10_2110_Rec709());
+                        add(makeYUV12_2110_Rec709());
+                        add(makeYUV10_422_2110_Rec709());
+                        add(makeYUV12_422_2110_Rec709());
+                        add(makeYUV8_420_2110_Rec709());
+                        add(makeYUV10_420_2110_Rec709());
+                        add(makeYUV12_420_2110_Rec709());
+                        add(makeMono10_BE_2110());
+                        add(makeMono12_BE_2110());
+                        add(makeXYZ12_BE_2110());
+                        add(makeXYZ16_BE_2110());
                         add(makeProRes_422_Proxy());
                         add(makeProRes_422_LT());
                         add(makeProRes_422());

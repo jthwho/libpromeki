@@ -108,7 +108,7 @@ Error FrameBridgeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // and we consume from the bridge; Write opens us as a sink — the
         // caller writes frames into us and we publish to the bridge.
         Enum       modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _isOutput = isWrite;
 
         MediaDesc resolved;

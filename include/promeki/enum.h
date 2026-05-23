@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
 #include <cstdint>
+#include <type_traits>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -594,6 +595,41 @@ template <typename Derived> class TypedEnum : public Enum {
                  * and @ref Enum::hasListedValue returns false.
                  */
                 explicit TypedEnum(const String &name) : Enum(Derived::Type, name) {}
+
+                /**
+                 * @brief Same-type equality — preferred over the @ref Enum base
+                 *        operator by overload resolution since it matches both
+                 *        arguments exactly with no derived-to-base conversion.
+                 *
+                 * Hidden friend (ADL-only). Falls through to
+                 * @ref Enum::operator==, so the comparison still checks both
+                 * type identity and integer value.
+                 */
+                friend bool operator==(const Derived &a, const Derived &b) {
+                        return static_cast<const Enum &>(a) == static_cast<const Enum &>(b);
+                }
+
+                /// @brief Same-type inequality — see @ref operator==.
+                friend bool operator!=(const Derived &a, const Derived &b) { return !(a == b); }
+
+                /**
+                 * @brief Deleted overload that turns cross-TypedEnum
+                 *        comparisons into compile errors.
+                 *
+                 * Without this, `VideoRange == MediaIOOpenMode` would slice
+                 * both operands to @ref Enum and silently return false at
+                 * runtime.  The constraint restricts the trap to other
+                 * @ref TypedEnum subclasses so unrelated overloads
+                 * (e.g. @ref Enum on the right) still resolve normally.
+                 */
+                template <typename Other>
+                        requires(::std::is_base_of_v<TypedEnum<Other>, Other> && !::std::is_same_v<Other, Derived>)
+                friend bool operator==(const Derived &, const Other &) = delete;
+
+                /// @brief Deleted cross-type inequality — see @ref operator==.
+                template <typename Other>
+                        requires(::std::is_base_of_v<TypedEnum<Other>, Other> && !::std::is_same_v<Other, Derived>)
+                friend bool operator!=(const Derived &, const Other &) = delete;
 };
 
 namespace detail {

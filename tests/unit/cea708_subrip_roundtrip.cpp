@@ -248,7 +248,7 @@ TEST_CASE("Cea708 SubRip round-trip: per-cue anchor flows through encoder + deco
         // verify the matching decoded cue carries the same anchor.
         for (size_t i = 0; i < in.size(); ++i) {
                 const Subtitle &src = in[i];
-                if (src.anchor().value() == SubtitleAnchor::Default.value()) continue;
+                if (src.anchor() == SubtitleAnchor::Default) continue;
                 const int64_t idx = findMatchingCue(out, src);
                 if (idx < 0) continue; // text test will already flag it
                 const Subtitle &got = out[static_cast<size_t>(idx)];

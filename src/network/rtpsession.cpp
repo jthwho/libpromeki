@@ -7,6 +7,7 @@
 
 #include <promeki/rtpsession.h>
 #include <algorithm>
+#include <chrono>
 #include <promeki/logger.h>
 #include <promeki/packettransport.h>
 #include <promeki/random.h>
@@ -40,7 +41,8 @@ PROMEKI_NAMESPACE_BEGIN
 // ----------------------------------------------------------------------------
 class RtpSession::ReceiveThread : public Thread {
         public:
-                ReceiveThread(RtpSession *session, const String &name) : _session(session) {
+                ReceiveThread(RtpSession *session, PacketTransport *transport, const String &name)
+                    : _session(session), _transport(transport) {
                         _stopRequested.setValue(false);
                         Thread::setName(name);
                 }
@@ -75,7 +77,7 @@ class RtpSession::ReceiveThread : public Thread {
                         // flag even on an idle stream.  Non-UDP
                         // transports (e.g. Loopback) are left as-is
                         // and rely on their own timeout semantics.
-                        if (auto *udpTransport = dynamic_cast<UdpSocketTransport *>(_session->_transport)) {
+                        if (auto *udpTransport = dynamic_cast<UdpSocketTransport *>(_transport)) {
                                 if (UdpSocket *sock = udpTransport->socket()) {
                                         (void)sock->setReceiveTimeout(_session->_receivePollMs);
                                 }
@@ -83,7 +85,7 @@ class RtpSession::ReceiveThread : public Thread {
 
                         while (!_stopRequested.value()) {
                                 Buffer  buf = Buffer(kMaxPacketSize);
-                                ssize_t n = _session->_transport->receivePacket(buf.data(), kMaxPacketSize);
+                                ssize_t n = _transport->receivePacket(buf.data(), kMaxPacketSize);
                                 // Stamp the per-packet arrival anchor as
                                 // close to @c receivePacket return as
                                 // possible, before any further work
@@ -178,6 +180,17 @@ class RtpSession::ReceiveThread : public Thread {
                  * the PT match is trivial.
                  */
                 void dispatchToReceivers(RtpPacket &pkt) {
+                        // ST 2022-7 dual-leg recv: when a secondary
+                        // recv thread is running, both threads call
+                        // here concurrently and must not race on the
+                        // per-source seq tracker / SSRC pin /
+                        // reorder buffer mutations.  The mutex is a
+                        // no-op cost in single-leg mode (uncontended);
+                        // in dual-leg mode it serialises ~50µs of
+                        // per-packet work, which is well below the
+                        // packet inter-arrival time for any wire
+                        // format we ship today.
+                        Mutex::Locker lock(_session->_dispatchMutex);
                         const uint8_t pt = pkt.payloadType();
                         const uint32_t ssrc = pkt.ssrc();
                         for (size_t i = 0; i < _session->_streamReceivers.size(); ++i) {
@@ -288,9 +301,10 @@ class RtpSession::ReceiveThread : public Thread {
                 static constexpr uint32_t kSsrcDebounceCount = 5;
                 static constexpr uint32_t kSsrcDebounceWindowMs = 1000;
 
-                RtpSession  *_session = nullptr;
-                Atomic<bool> _stopRequested;
-                bool         _warnedMissing = false;
+                RtpSession      *_session = nullptr;
+                PacketTransport *_transport = nullptr; ///< Per-leg transport (primary or ST 2022-7 secondary).
+                Atomic<bool>     _stopRequested;
+                bool             _warnedMissing = false;
 };
 
 RtpSession::RtpSession(ObjectBase *parent) : ObjectBase(parent) {
@@ -324,37 +338,67 @@ Error RtpSession::start(const SocketAddress &localAddr) {
         }
         _transport = owned.ptr();
         _ownedTransport = std::move(owned);
+        if (_scheduler.isValid()) _scheduler->setTransport(_transport);
         _running = true;
         return Error::Ok;
 }
 
 Error RtpSession::start(PacketTransport *transport) {
+        return start(transport, nullptr);
+}
+
+Error RtpSession::start(PacketTransport *primary, PacketTransport *secondary) {
         if (_running) {
-                promekiWarn("RtpSession::start(transport) called while already running");
+                promekiWarn("RtpSession::start(primary, secondary) called while already running");
                 return Error::Busy;
         }
-        if (transport == nullptr) {
-                promekiWarn("RtpSession::start called with null transport");
+        if (primary == nullptr) {
+                promekiWarn("RtpSession::start called with null primary transport");
                 return Error::InvalidArgument;
         }
-        if (!transport->isOpen()) {
-                promekiWarn("RtpSession::start called with closed transport");
+        if (!primary->isOpen()) {
+                promekiWarn("RtpSession::start called with closed primary transport");
                 return Error::NotOpen;
         }
-        _transport = transport;
+        if (secondary != nullptr && !secondary->isOpen()) {
+                promekiWarn("RtpSession::start called with closed secondary transport");
+                return Error::NotOpen;
+        }
+        _transport = primary;
         _ownedTransport.clear();
+        _transportSecondary = secondary;
+        _ownedTransportSecondary.clear();
+        if (_scheduler.isValid()) _scheduler->setTransport(_transport);
+        if (_schedulerSecondary.isValid()) _schedulerSecondary->setTransport(_transportSecondary);
         _running = true;
+        if (secondary != nullptr) {
+                promekiInfo("RtpSession: started ST 2022-7 dual-leg session (primary=%s secondary=%s)",
+                            _remote.toString().cstr(), _remoteSecondary.toString().cstr());
+        }
         return Error::Ok;
 }
 
 void RtpSession::stop() {
         if (!_running) return;
         stopReceiving();
+        if (_scheduler.isValid()) {
+                (void)_scheduler->flushPending();
+                _scheduler->setTransport(nullptr);
+        }
+        if (_schedulerSecondary.isValid()) {
+                (void)_schedulerSecondary->flushPending();
+                _schedulerSecondary->setTransport(nullptr);
+        }
         if (_ownedTransport.isValid()) {
                 _ownedTransport->close();
                 _ownedTransport.clear();
         }
+        if (_ownedTransportSecondary.isValid()) {
+                _ownedTransportSecondary->close();
+                _ownedTransportSecondary.clear();
+        }
         _transport = nullptr;
+        _transportSecondary = nullptr;
         _running = false;
 }
 
@@ -391,17 +435,28 @@ Error RtpSession::startReceiving(List<StreamReceiver> receivers, const String &t
         for (size_t i = 0; i < _streamReceivers.size(); ++i) {
                 _ssrcPinStates.pushToBack(SsrcPinState{});
         }
-        _receiveThread = ReceiveThreadUPtr::create(this, threadName);
+        _receiveThread = ReceiveThreadUPtr::create(this, _transport, threadName);
+        if (_transportSecondary != nullptr) {
+                _receiveThreadSecondary = ReceiveThreadUPtr::create(this, _transportSecondary,
+                                                                    threadName + String("-sec"));
+        }
         _receiving.setValue(true);
         _receiveThread->start();
+        if (_receiveThreadSecondary.isValid()) _receiveThreadSecondary->start();
         return Error::Ok;
 }
 
 void RtpSession::stopReceiving() {
-        if (!_receiving.value() && _receiveThread.isNull()) return;
+        if (!_receiving.value() && _receiveThread.isNull() && _receiveThreadSecondary.isNull()) return;
+
+        // Signal both threads to stop before joining either one — the
+        // recv loops poll the stop flag on @c SO_RCVTIMEO timeouts, so
+        // issuing requestStop on both in advance lets them exit in
+        // parallel instead of serially.
+        if (_receiveThread.isValid()) _receiveThread->requestStop();
+        if (_receiveThreadSecondary.isValid()) _receiveThreadSecondary->requestStop();
 
         if (_receiveThread.isValid()) {
-                _receiveThread->requestStop();
                 // Delete the Thread object — Thread's destructor
                 // joins the underlying std::thread.  Skip the join
                 // when we are ourselves running on the receive
@@ -410,6 +465,11 @@ void RtpSession::stopReceiving() {
                 // the stop flag.
                 if (!_receiveThread->isCurrentThread()) {
                         _receiveThread.clear();
+                }
+        }
+        if (_receiveThreadSecondary.isValid()) {
+                if (!_receiveThreadSecondary->isCurrentThread()) {
+                        _receiveThreadSecondary.clear();
                 }
         }
         _receiving.setValue(false);
@@ -475,17 +535,25 @@ Error RtpSession::sendPackets(RtpPacketBatch &batch) {
         if (batch.packets.isEmpty()) return Error::Ok;
 
         // VBR compressed-video path stamps a per-frame rate cap on
-        // each batch.  Apply it here so the kernel @c fq qdisc has a
-        // chance to spread the bytes before we hand them over.
-        if (batch.rateCapBps > 0) {
-                (void)_transport->setPacingRate(batch.rateCapBps / 8u);
+        // each batch.  Forward it to the scheduler so KernelFq /
+        // future DPDK backends can update their underlying knob; non-
+        // rate-aware schedulers (Burst / Cadence) ignore it.
+        if (batch.rateCapBps > 0 && _scheduler.isValid()) {
+                (void)_scheduler->setRate(batch.rateCapBps / 8u);
         }
 
         // The TX thread has already stamped marker + RTP-TS on each
         // packet.  We fill the transport-owned header fields and
         // build a parallel Datagram batch referencing the shared
         // backing buffer (zero copy — the transport's batch send does
-        // the kernel copy).
+        // the kernel copy).  Per-packet @c txTimeNs is stamped from
+        // @ref RtpPacketBatch::deadlineTaiNs (with the optional
+        // @ref RtpPacketBatch::deadlineStrideNs adding the
+        // ST 2110-21 §7.1 @c TPR_j stride): every packet @c j gets
+        // @c base + j × stride.  When stride is 0 every datagram
+        // gets the same deadline (ST 2110-40 LLTM ANC); when stride
+        // is non-zero packets land on the SMPTE Epoch grid at
+        // @c TPR_j = T_VD + j × T_RS (ST 2110-21 narrow timing).
         PacketTransport::DatagramList dgs;
         dgs.reserve(batch.packets.size());
         for (size_t i = 0; i < batch.packets.size(); i++) {
@@ -498,50 +566,164 @@ Error RtpSession::sendPackets(RtpPacketBatch &batch) {
                 d.data = pkt.data();
                 d.size = pkt.size();
                 d.dest = _remote;
+                if (batch.deadlineTaiNs != 0) {
+                        d.txTimeNs = batch.deadlineTaiNs +
+                                     static_cast<uint64_t>(i) * batch.deadlineStrideNs;
+                } else {
+                        d.txTimeNs = 0;
+                }
                 dgs.pushToBack(d);
         }
         if (dgs.isEmpty()) return Error::Ok;
 
-        // sendmmsg may not accept all datagrams in one call when
-        // the socket buffer is full (common for large uncompressed
-        // video frames that produce thousands of packets).  Loop
-        // to drain the remainder.
-        size_t offset = 0;
-        while (offset < dgs.size()) {
-                PacketTransport::DatagramList sub;
-                size_t                        remaining = dgs.size() - offset;
-                sub.reserve(remaining);
-                for (size_t i = offset; i < dgs.size(); i++) {
-                        sub.pushToBack(dgs[i]);
+        // Hand the datagrams to the primary scheduler / transport,
+        // then — if ST 2022-7 dual-leg dispatch is configured —
+        // re-stamp dest on a copy of the Datagram list and fan out
+        // to the secondary scheduler / transport.  The packet
+        // payload bytes are shared via the refcounted Buffer
+        // underneath every @ref RtpPacket, so the fan-out is
+        // zero-copy.
+        //
+        // Fall back to a raw transport sendmmsg loop when a leg has
+        // no scheduler installed (test / bring-up paths); production
+        // callers always set up a scheduler per leg at session start.
+        auto dispatchLeg = [&](PacketTransport::DatagramList &legDgs, PacketScheduler *sched,
+                               PacketTransport *xport, const char *legName) -> Error {
+                if (sched != nullptr) {
+                        const int accepted = sched->enqueue(legDgs);
+                        if (accepted < 0) {
+                                promekiWarnThrottled(1000,
+                                                     "RtpSession::sendPackets %s scheduler->enqueue failed (count=%zu)",
+                                                     legName, legDgs.size());
+                                return Error::IOError;
+                        }
+                        return Error::Ok;
                 }
-                int sent = _transport->sendPackets(sub);
-                if (sent < 0) {
-                        promekiWarnThrottled(
-                                1000,
-                                "RtpSession::sendPackets transport->sendPackets failed (offset=%zu remaining=%zu)",
-                                offset, remaining);
-                        return Error::IOError;
+                size_t offset = 0;
+                while (offset < legDgs.size()) {
+                        PacketTransport::DatagramList sub;
+                        size_t                        remaining = legDgs.size() - offset;
+                        sub.reserve(remaining);
+                        for (size_t i = offset; i < legDgs.size(); i++) {
+                                sub.pushToBack(legDgs[i]);
+                        }
+                        int sent = xport->sendPackets(sub);
+                        if (sent < 0) {
+                                promekiWarnThrottled(
+                                        1000,
+                                        "RtpSession::sendPackets %s transport->sendPackets failed (offset=%zu remaining=%zu)",
+                                        legName, offset, remaining);
+                                return Error::IOError;
+                        }
+                        if (sent == 0) {
+                                promekiWarnThrottled(
+                                        1000,
+                                        "RtpSession::sendPackets %s stalled — no progress (offset=%zu remaining=%zu)",
+                                        legName, offset, remaining);
+                                return Error::IOError;
+                        }
+                        offset += static_cast<size_t>(sent);
                 }
-                if (sent == 0) {
-                        promekiWarnThrottled(1000,
-                                             "RtpSession::sendPackets stalled — no progress (offset=%zu remaining=%zu)",
-                                             offset, remaining);
-                        return Error::IOError; // no progress
+                return Error::Ok;
+        };
+
+        Error primaryErr = dispatchLeg(dgs, _scheduler.get(), _transport, "primary");
+        if (primaryErr.isError()) return primaryErr;
+
+        if (_transportSecondary != nullptr && !_remoteSecondary.isNull()) {
+                // Apply the secondary leg's rate cap too — kernel fq /
+                // future DPDK backends honour it; non-rate-aware
+                // schedulers (Burst / Cadence) ignore.
+                if (batch.rateCapBps > 0 && _schedulerSecondary.isValid()) {
+                        (void)_schedulerSecondary->setRate(batch.rateCapBps / 8u);
                 }
-                offset += static_cast<size_t>(sent);
+                // Rewrite dest on a shallow copy of the Datagram list.
+                // The payload `data` pointers reference the same
+                // RtpPacket Buffer storage as the primary list —
+                // refcount stays at 2 until both legs finish their
+                // sendmmsg, then drops as each leg's scheduler
+                // releases its references.
+                PacketTransport::DatagramList dgsSec;
+                dgsSec.reserve(dgs.size());
+                for (size_t i = 0; i < dgs.size(); i++) {
+                        PacketTransport::Datagram d = dgs[i];
+                        d.dest = _remoteSecondary;
+                        dgsSec.pushToBack(d);
+                }
+                Error secondaryErr = dispatchLeg(dgsSec, _schedulerSecondary.get(),
+                                                 _transportSecondary, "secondary");
+                if (secondaryErr.isError()) {
+                        // Single-leg-down is the whole point of 2022-7;
+                        // log it but don't surface as a session error
+                        // — the primary leg's bytes already left.
+                        promekiWarnThrottled(2000,
+                                             "RtpSession::sendPackets secondary leg dispatch failed (err=%s) — "
+                                             "primary leg unaffected",
+                                             secondaryErr.name().cstr());
+                }
         }
+
         return Error::Ok;
 }
 
 Error RtpSession::setPacingRate(uint64_t bytesPerSec) {
+        if (_scheduler.isValid()) {
+                return _scheduler->setRate(bytesPerSec);
+        }
+        // Fallback: no scheduler installed, talk to the transport
+        // directly so tests that exercise the prior API keep working.
         if (_transport == nullptr) return Error::NotOpen;
         return _transport->setPacingRate(bytesPerSec);
+}
+
+void RtpSession::setScheduler(PacketScheduler::UPtr scheduler) {
+        _scheduler = std::move(scheduler);
+        if (_scheduler.isValid()) {
+                _scheduler->setTransport(_transport);
+        }
+}
+
+void RtpSession::setSchedulerSecondary(PacketScheduler::UPtr scheduler) {
+        _schedulerSecondary = std::move(scheduler);
+        if (_schedulerSecondary.isValid()) {
+                _schedulerSecondary->setTransport(_transportSecondary);
+        }
+}
+
+Error RtpSession::configureScheduler(const PacketScheduler::Spec &spec) {
+        if (!_scheduler.isValid()) return Error::NotOpen;
+        return _scheduler->configure(spec);
 }
 
 void RtpSession::setRtpAnchor(NtpTime captureNtp, uint32_t rtpTs) {
         Mutex::Locker lock(_rtcpMutex);
         _anchorNtp = captureNtp;
         _anchorRtpTs = rtpTs;
+}
+
+void RtpSession::setRtpAnchor(const ClockDomain &domain, uint32_t rtpTs) {
+        // Read the domain's provider before taking the RTCP lock so
+        // we don't hold it across the user-supplied lambda.  Falls
+        // back to NtpTime::now() (system_clock) when the domain has
+        // no provider bound — emitting a zeroed SR would silently
+        // break receiver alignment, so the legacy behaviour is
+        // preferable.
+        int64_t utcNs = 0;
+        if (domain.isValid()) {
+                utcNs = domain.nowUtcNs();
+        }
+        NtpTime captureNtp;
+        if (utcNs > 0) {
+                using clock_t = std::chrono::system_clock;
+                const auto tp = clock_t::time_point(std::chrono::nanoseconds(utcNs));
+                captureNtp = NtpTime::fromSystemClock(tp);
+        } else {
+                promekiWarnOnce("RtpSession::setRtpAnchor: domain '%s' has no bound "
+                                "wallclock provider — falling back to system_clock",
+                                domain.isValid() ? domain.name().cstr() : "(invalid)");
+                captureNtp = NtpTime::now();
+        }
+        setRtpAnchor(captureNtp, rtpTs);
 }
 
 NtpTime RtpSession::anchorNtp() const {

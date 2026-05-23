@@ -14,9 +14,13 @@
 #include <promeki/audiopayload.h>
 #include <promeki/base64.h>
 #include <promeki/buffer.h>
-#include <promeki/cadence.h>
 #include <promeki/clockdomain.h>
+#include <promeki/set.h>
 #include <promeki/compressedvideopayload.h>
+#include <promeki/config.h>
+#if PROMEKI_ENABLE_CSC
+#include <promeki/cscregistry.h>
+#endif
 #include <promeki/enums.h>
 #include <promeki/eui64.h>
 #include <promeki/file.h>
@@ -42,12 +46,16 @@
 #include <promeki/pixelformat.h>
 #include <promeki/ancdesc.h>
 #include <promeki/ancpayload.h>
+#include <promeki/rfc7273refclk.h>
 #include <promeki/rtpancdepacketizerthread.h>
 #include <promeki/rtpancpacketizerthread.h>
 #include <promeki/rtpmediaio.h>
 #include <promeki/rtppacketbatch.h>
 #include <promeki/rtppayload.h>
 #include <promeki/rtppayloadanc.h>
+#include <promeki/rtppayloadrawvideo.h>
+#include <promeki/st2110tx.h>
+#include <promeki/st2110video.h>
 #include <promeki/rtpsession.h>
 #include <promeki/rtpstreamclock.h>
 #include <promeki/mutex.h>
@@ -60,6 +68,8 @@
 #include <promeki/udpsocket.h>
 #include <promeki/udpsockettransport.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/videoformat.h>
+#include <promeki/videoformatdetails.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -132,68 +142,102 @@ class RtpMediaIO::VideoTxThread : public RtpTxThread {
                         auto sendBatch = [&](RtpPacketBatch &batch) {
                                 if (batch.packets.isEmpty() || vs.session == nullptr) return;
 
-                                // RTP timestamp via cumulativeTicks() —
-                                // exact 64-bit rational math against the
-                                // stream's clock rate, so integer + NTSC
-                                // fractional rates both stay drift-free.
-                                const uint32_t ts = static_cast<uint32_t>(
-                                        rate.cumulativeTicks(batch.clockRate, batch.frameIndex.value()));
+                                // Phase D3 — RTP-TS via the per-stream
+                                // RtpMediaClock.  When a PHC is bound the
+                                // sequence rides the SMPTE Epoch grid
+                                // (`mediaclk:direct=0` interop); when not,
+                                // the media clock degrades to
+                                // frame-zero-anchored and the returned
+                                // value matches the legacy
+                                // @c cumulativeTicks(clockRate, frameIndex)
+                                // call exactly.  The fallback to
+                                // raw @c cumulativeTicks below covers the
+                                // invalid-mediaClock case (closed session,
+                                // misconfigured stream); the value is
+                                // identical to today's behaviour.
+                                uint32_t ts;
+                                if (vs.mediaClock.isValid()) {
+                                        ts = vs.mediaClock.rtpTsForFrame(batch.frameIndex.value());
+                                } else {
+                                        ts = static_cast<uint32_t>(
+                                                rate.cumulativeTicks(batch.clockRate,
+                                                                     batch.frameIndex.value()));
+                                }
 
                                 // Stamp ts + marker on every packet
                                 // before handoff.  The session is
                                 // responsible only for the transport-
                                 // owned fields (version / seq / SSRC /
-                                // PT) plus the @c rateCapBps update.
+                                // PT); the per-packet egress pacing
+                                // lives in the scheduler the session
+                                // owns (set up at openStream time).
                                 const size_t nPackets = batch.packets.size();
                                 for (size_t i = 0; i < nPackets; i++) {
                                         const bool isLast = (i + 1 == nPackets);
                                         batch.packets[i].setTimestamp(ts);
-                                        batch.packets[i].setMarker(isLast && batch.markerOnLast);
+                                        // OR with any pre-stamp from the
+                                        // payload's pack() (e.g. ST 2110-20
+                                        // §6.1.2 marker-on-field-boundary
+                                        // for interlaced/PsF, where the
+                                        // packetizer sets marker on the
+                                        // last packet of each field/segment).
+                                        const bool preStamped = batch.packets[i].marker();
+                                        batch.packets[i].setMarker(preStamped || (isLast && batch.markerOnLast));
                                 }
 
-                                Error err;
-                                const bool wantSpread = rate.isValid() &&
-                                                        _owner->_pacingMode.value() != RtpPacingMode::None.value();
-                                if (wantSpread) {
-                                        // Userspace pacing: spread the
-                                        // batch's packets across one
-                                        // frame interval via @c Cadence.
-                                        // The deadline scheme is anchored
-                                        // at this frame's start — drift
-                                        // across frames is bounded by
-                                        // the strand's own per-frame
-                                        // cadence and does not accumulate.
-                                        const Duration interval = rate.frameDuration();
-                                        const Duration perPacket =
-                                                nPackets > 1 ? interval / static_cast<int64_t>(nPackets) : interval;
-                                        Cadence pacer(perPacket);
-                                        pacer.anchor(TimeStamp::now());
-                                        err = Error::Ok;
-                                        // Per-packet pacing: build a
-                                        // single-packet sub-batch each
-                                        // tick.  rateCapBps applies
-                                        // once on the first sub-batch;
-                                        // subsequent ones leave the
-                                        // cap alone so the kernel
-                                        // doesn't see a setPacingRate
-                                        // storm.
-                                        for (size_t i = 0; i < nPackets; i++) {
-                                                pacer.next().sleepUntil();
-                                                RtpPacketBatch one;
-                                                one.packets.pushToBack(batch.packets[i]);
-                                                one.frameIndex = batch.frameIndex;
-                                                one.clockRate = batch.clockRate;
-                                                one.markerOnLast = batch.markerOnLast;
-                                                if (i == 0) one.rateCapBps = batch.rateCapBps;
-                                                Error e = vs.session->sendPackets(one);
-                                                if (e.isError()) {
-                                                        err = e;
-                                                        break;
+                                // ST 2110-21 narrow-timing TPR_j
+                                // injection (Phase E21).  When the
+                                // resolved sender type is TypeN /
+                                // TypeNL and the media clock has a
+                                // PTP anchor, stamp
+                                // @c batch.deadlineTaiNs = T_VD and
+                                // @c batch.deadlineStrideNs = T_RS
+                                // so @c RtpSession::sendPackets
+                                // emits per-packet TPR_j deadlines.
+                                // Silently degrades to no-deadline
+                                // (the kernel-fq path keeps running
+                                // at whatever Wide-class pacing the
+                                // scheduler does today) when either
+                                // gating condition fails.
+                                if ((vs.senderType == RtpSenderType::TypeN ||
+                                     vs.senderType == RtpSenderType::TypeNL) &&
+                                    vs.mediaClock.hasPtpAnchor()) {
+                                        const int64_t tFstUtcNs =
+                                                vs.mediaClock.tvdUtcNs(batch.frameIndex.value());
+                                        if (tFstUtcNs > 0) {
+                                                const int64_t trOffsetNs =
+                                                        static_cast<int64_t>(vs.trOffsetUs) *
+                                                        1000LL;
+                                                const int64_t tvdUtcNs =
+                                                        tFstUtcNs + trOffsetNs;
+                                                Duration trs;
+                                                const Duration frameInterval = rate.frameDuration();
+                                                if (vs.senderType == RtpSenderType::TypeN) {
+                                                        VideoFormatDetails vfd(VideoFormat(
+                                                                vs.imageDesc.size(),
+                                                                rate,
+                                                                vs.imageDesc.videoScanMode()));
+                                                        const double rActive =
+                                                                vfd.isValid()
+                                                                        ? static_cast<double>(vfd.activeLines()) /
+                                                                                  static_cast<double>(vfd.totalLines())
+                                                                        : 1.0;
+                                                        trs = St2110Tx::trsGapped(
+                                                                static_cast<int>(nPackets),
+                                                                frameInterval, rActive);
+                                                } else {
+                                                        trs = St2110Tx::trsLinear(
+                                                                static_cast<int>(nPackets),
+                                                                frameInterval);
                                                 }
+                                                batch.deadlineTaiNs =
+                                                        PhcClock::utcNsToTaiNs(tvdUtcNs);
+                                                batch.deadlineStrideNs = static_cast<uint64_t>(
+                                                        trs.nanoseconds());
                                         }
-                                } else {
-                                        err = vs.session->sendPackets(batch);
                                 }
+
+                                Error err = vs.session->sendPackets(batch);
                                 if (err.isError()) {
                                         promekiErr("RtpMediaIO::VideoTxThread: sendPackets failed: %s",
                                                    err.desc().cstr());
@@ -318,7 +362,7 @@ class RtpMediaIO::VideoPacketizerThread : public RtpPacketizerThread {
                         // from the actual packed byte count.  The TX
                         // thread reads this and calls setPacingRate
                         // before dispatch.
-                        if (_owner->_pacingMode.value() == RtpPacingMode::KernelFq.value() &&
+                        if (_owner->_pacingMode == RtpPacingMode::KernelFq &&
                             _owner->_frameRate.isValid() && payload.isCompressed()) {
                                 size_t frameBytes = 0;
                                 for (size_t i = 0; i < batch.packets.size(); i++) {
@@ -393,16 +437,39 @@ class RtpMediaIO::DataTxThread : public RtpTxThread {
                         // for the drain-on-close rationale.
                         auto sendBatch = [&](RtpPacketBatch &batch) {
                                 if (batch.packets.isEmpty() || ds.session == nullptr) return;
-                                const double fps = _owner->_frameRate.isValid()
-                                                           ? _owner->_frameRate.toDouble()
-                                                           : 30.0;
-                                const uint32_t ts = static_cast<uint32_t>(
-                                        static_cast<double>(batch.frameIndex.value()) *
-                                        static_cast<double>(batch.clockRate) / fps);
+                                // Phase D3 — RTP-TS via the per-stream
+                                // RtpMediaClock when bound (drives the
+                                // ANC stream's RTP-TS against the same
+                                // SMPTE Epoch grid as the paired video).
+                                // The legacy double-precision path below
+                                // is the fallback for misconfigured
+                                // streams; the RtpMediaClock result is
+                                // bit-exact (rational arithmetic) and
+                                // matches the legacy approximation to
+                                // within one ULP for the integer-cadence
+                                // frame rates ANC actually rides.
+                                uint32_t ts;
+                                if (ds.mediaClock.isValid()) {
+                                        ts = ds.mediaClock.rtpTsForFrame(batch.frameIndex.value());
+                                } else {
+                                        const double fps = _owner->_frameRate.isValid()
+                                                                   ? _owner->_frameRate.toDouble()
+                                                                   : 30.0;
+                                        ts = static_cast<uint32_t>(
+                                                static_cast<double>(batch.frameIndex.value()) *
+                                                static_cast<double>(batch.clockRate) / fps);
+                                }
                                 for (size_t i = 0; i < batch.packets.size(); i++) {
                                         const bool isLast = (i + 1 == batch.packets.size());
                                         batch.packets[i].setTimestamp(ts);
-                                        batch.packets[i].setMarker(isLast && batch.markerOnLast);
+                                        // OR with any pre-stamp from the
+                                        // payload's pack() (e.g. ST 2110-20
+                                        // §6.1.2 marker-on-field-boundary
+                                        // for interlaced/PsF, where the
+                                        // packetizer sets marker on the
+                                        // last packet of each field/segment).
+                                        const bool preStamped = batch.packets[i].marker();
+                                        batch.packets[i].setMarker(preStamped || (isLast && batch.markerOnLast));
                                 }
                                 Error err = ds.session->sendPackets(batch);
                                 if (err.isError()) {
@@ -641,6 +708,45 @@ String RtpMediaIO::pickEgressHostForCname(const SocketAddress &destination) {
         return String();
 }
 
+String RtpMediaIO::formatAes67Ptime(int packetSamples, int sampleRateHz) {
+        if (packetSamples <= 0 || sampleRateHz <= 0) return String("0");
+        // packetMs = packetSamples * 1000 / sampleRateHz.  Compute in
+        // integer microseconds first to keep the rounding controlled,
+        // then split into whole milliseconds + a 3-digit fractional
+        // micro-component for the decimal form.  Sub-microsecond
+        // precision is irrelevant for AES67 §8.1 — the only
+        // requirement is that the value's error stays below half a
+        // sample period, which 3 decimals satisfies for every Table 4
+        // packet time at 44.1 / 48 / 96 kHz.
+        const int64_t packetUs =
+                (static_cast<int64_t>(packetSamples) * 1'000'000ll +
+                 static_cast<int64_t>(sampleRateHz) / 2) /
+                static_cast<int64_t>(sampleRateHz);
+        const int64_t wholeMs = packetUs / 1000;
+        const int64_t fracUs = packetUs % 1000;
+        if (fracUs == 0) return String::number(wholeMs);
+        // Render N.XXX with trailing zeros stripped (the trim leaves
+        // the decimal point in place when every fractional digit is
+        // zero — which can only happen when fracUs is zero, handled
+        // above).
+        String s = String::number(wholeMs) + String(".") +
+                   String::number(fracUs, 10, 3, '0');
+        while (s.endsWith('0')) {
+                s = s.left(s.length() - 1);
+        }
+        return s;
+}
+
+int RtpMediaIO::parseAes67PtimeUs(const String &ptimeMs) {
+        const String trimmed = ptimeMs.trim();
+        if (trimmed.isEmpty()) return 0;
+        Error  err;
+        double ms = trimmed.toDouble(&err);
+        if (err.isError() || ms <= 0.0) return 0;
+        // Round half-up to the nearest microsecond.
+        return static_cast<int>(ms * 1000.0 + 0.5);
+}
+
 void RtpMediaIO::resetStreamCommon(Stream &s) {
         // Identity teardown shared by writer and reader modes.
         // Caller has already stopped the per-mode worker threads
@@ -663,9 +769,17 @@ void RtpMediaIO::resetStreamCommon(Stream &s) {
                 delete s.transport;
                 s.transport = nullptr;
         }
+        if (s.transportSecondary != nullptr) {
+                s.transportSecondary->close();
+                delete s.transportSecondary;
+                s.transportSecondary = nullptr;
+        }
         delete s.payload;
         s.payload = nullptr;
         s.destination = SocketAddress();
+        s.destinationSecondary = SocketAddress();
+        s.localAddressSecondary = SocketAddress();
+        s.interfaceSecondary.clear();
         s.rtpmap.clear();
         s.fmtp.clear();
         s.active = false;
@@ -702,6 +816,82 @@ void RtpMediaIO::resetWriterStream(WriterStream &s) {
         s.txSendDuration.reset();
         s.txHasLastSend = false;
         s.txLastSendStart = TimeStamp();
+}
+
+size_t RtpMediaIO::computeStreamPacketBudget(const ReaderStream &s) const {
+        // Hard floor / ceiling.  64 is the historical default —
+        // sized for the smallest expected stream (RFC 2435 JPEG at
+        // low resolution, AES67 L16) — and stays as the floor so a
+        // truly tiny stream still gets a sensible queue.  65,536 is
+        // half the 16-bit RTP seq space; any further would let
+        // duplicate-by-seq detection collide with a real backwards
+        // jump, so it caps the reorder window's safety.
+        constexpr size_t kFloor = 64;
+        constexpr size_t kCeil = 65'536;
+        // Effective MTU payload after the RTP header.  ~1300 bytes is
+        // the common worst case for 1500-MTU Ethernet with the 12-byte
+        // fixed RTP header + payload-specific headers (RFC 4175 SRD,
+        // RFC 9134 JXS, etc.).  Slightly conservative on purpose so
+        // the budget rounds up rather than down.
+        constexpr size_t kPayloadBytesPerPacket = 1300;
+        size_t pktsPerFrame = 0;
+        if (s.mediaType == "video") {
+                const ImageDesc &img = s.readerImageDesc;
+                if (img.isValid() && img.size().width() > 0 && img.size().height() > 0) {
+                        const PixelMemLayout &ml = img.pixelFormat().memLayout();
+                        size_t                totalBytes = 0;
+                        for (size_t p = 0; p < ml.planeCount(); ++p) {
+                                totalBytes += ml.planeSize(p, img.size().width(), img.size().height());
+                        }
+                        if (totalBytes > 0) {
+                                pktsPerFrame = (totalBytes + kPayloadBytesPerPacket - 1) / kPayloadBytesPerPacket;
+                        }
+                }
+                if (pktsPerFrame == 0) {
+                        // Compressed pre-IDR placeholder (H.264 / HEVC /
+                        // JPEG XS reader desc lands at 0×0 until the
+                        // first parameter set / bitstream header).
+                        // Size from @c VideoRtpTargetBitrate when
+                        // configured, otherwise default for
+                        // 50 Mbps / 60 fps which covers typical broadcast
+                        // codec output.
+                        const int    bitrateKbps = config().getAs<int>(MediaConfig::VideoRtpTargetBitrate, 50'000);
+                        const double fps =
+                                _frameRate.isValid() ? _frameRate.toDouble() : 60.0;
+                        const double bitsPerFrame = (bitrateKbps * 1000.0) / std::max(fps, 1.0);
+                        const double bytesPerFrame = bitsPerFrame / 8.0;
+                        pktsPerFrame = static_cast<size_t>(bytesPerFrame / kPayloadBytesPerPacket) + 1;
+                }
+        } else if (s.mediaType == "audio") {
+                const AudioDesc &ad = s.readerAudioDesc;
+                if (ad.isValid()) {
+                        // One AES67 packet per @c AudioRtpPacketTimeUs.
+                        // Budget the entire frame's worth (one video
+                        // frame interval) so audio packets never trip
+                        // the drop policy ahead of the matching video.
+                        const int ptimeUs = config().getAs<int>(MediaConfig::AudioRtpPacketTimeUs, 1000);
+                        const double fps =
+                                _frameRate.isValid() ? _frameRate.toDouble() : 60.0;
+                        const double frameIntervalUs = 1'000'000.0 / std::max(fps, 1.0);
+                        if (ptimeUs > 0) {
+                                pktsPerFrame =
+                                        static_cast<size_t>(frameIntervalUs / static_cast<double>(ptimeUs)) + 1;
+                        }
+                }
+                if (pktsPerFrame == 0) pktsPerFrame = 8; // small default
+        } else {
+                // Data / ANC — low packet rate per RFC 8331, sized
+                // for the worst-case "every ANC packet on every line"
+                // SDI carriage (~50 packets per frame for HD, ~200 for
+                // 4K).  Round up so the worst case fits.
+                pktsPerFrame = 256;
+        }
+        // 2× safety factor: one frame in flight while the next is
+        // mid-arrival.
+        const size_t budget = pktsPerFrame * 2;
+        if (budget < kFloor) return kFloor;
+        if (budget > kCeil) return kCeil;
+        return budget;
 }
 
 void RtpMediaIO::resetReaderStream(ReaderStream &s) {
@@ -909,6 +1099,16 @@ void RtpMediaIO::resetAll() {
         // fresh @c (steady, wall) reference instant when the first
         // frame arrives.
         _anchorSeeded.setValue(false);
+        // Phase D2 PHC teardown.  Unbind before closing so the
+        // ClockDomain registry's lambda doesn't reference a stale
+        // fd between unbind and destruction.  The destructor would
+        // also call close(), but explicit unbind first makes the
+        // registry visibly empty for a subsequent re-open.
+        if (_phcClock.isValid()) {
+                _phcClock->unbindDomain(ClockDomain::Ptp);
+                _phcClock.clear();
+        }
+        _phcAutoTraceable = false;
 }
 
 static bool isJpegPixelFormat(const PixelFormat &pd) {
@@ -923,6 +1123,81 @@ static bool isJpegPixelFormat(const PixelFormat &pd) {
 
 static bool isJpegXsPixelFormat(const PixelFormat &pd) {
         return pd.isValid() && pd.isCompressed() && pd.videoCodec().id() == VideoCodec::JPEG_XS;
+}
+
+// RFC 9134 §7.1 wire-form names for JPEG XS profile / level / sublevel
+// fmtp parameters.  The TypedEnum identifiers are CamelCase (project
+// convention); the SDP wire spellings carry dots / dashes / mixed
+// case per ISO 21122-2.  This pair of helpers is the explicit
+// translation point the conformance audit can inspect.
+static String jxsProfileToFmtp(const JxsProfile &profile) {
+        if (profile == JxsProfile::Light422_10) return String("Light422.10");
+        if (profile == JxsProfile::Light444_12) return String("Light444.12");
+        if (profile == JxsProfile::LightSubline422_10) return String("LightSubline422.10");
+        if (profile == JxsProfile::Main422_10) return String("Main422.10");
+        if (profile == JxsProfile::Main444_12) return String("Main444.12");
+        if (profile == JxsProfile::Main4444_12) return String("Main4444.12");
+        if (profile == JxsProfile::High444_12) return String("High444.12");
+        if (profile == JxsProfile::High4444_12) return String("High4444.12");
+        if (profile == JxsProfile::Tdc422_10) return String("TDC422.10");
+        return String();
+}
+
+static JxsProfile jxsProfileFromFmtp(const String &value) {
+        if (value == String("Light422.10")) return JxsProfile::Light422_10;
+        if (value == String("Light444.12")) return JxsProfile::Light444_12;
+        if (value == String("LightSubline422.10")) return JxsProfile::LightSubline422_10;
+        if (value == String("Main422.10")) return JxsProfile::Main422_10;
+        if (value == String("Main444.12")) return JxsProfile::Main444_12;
+        if (value == String("Main4444.12")) return JxsProfile::Main4444_12;
+        if (value == String("High444.12")) return JxsProfile::High444_12;
+        if (value == String("High4444.12")) return JxsProfile::High4444_12;
+        if (value == String("TDC422.10")) return JxsProfile::Tdc422_10;
+        return JxsProfile::Unspecified;
+}
+
+static String jxsLevelToFmtp(const JxsLevel &level) {
+        if (level == JxsLevel::Lvl1k_1) return String("1k-1");
+        if (level == JxsLevel::Lvl2k_1) return String("2k-1");
+        if (level == JxsLevel::Lvl4k_1) return String("4k-1");
+        if (level == JxsLevel::Lvl4k_2) return String("4k-2");
+        if (level == JxsLevel::Lvl4k_3) return String("4k-3");
+        if (level == JxsLevel::Lvl8k_1) return String("8k-1");
+        if (level == JxsLevel::Lvl8k_2) return String("8k-2");
+        if (level == JxsLevel::Lvl8k_3) return String("8k-3");
+        if (level == JxsLevel::Lvl10k_1) return String("10k-1");
+        return String();
+}
+
+static JxsLevel jxsLevelFromFmtp(const String &value) {
+        if (value == String("1k-1")) return JxsLevel::Lvl1k_1;
+        if (value == String("2k-1")) return JxsLevel::Lvl2k_1;
+        if (value == String("4k-1")) return JxsLevel::Lvl4k_1;
+        if (value == String("4k-2")) return JxsLevel::Lvl4k_2;
+        if (value == String("4k-3")) return JxsLevel::Lvl4k_3;
+        if (value == String("8k-1")) return JxsLevel::Lvl8k_1;
+        if (value == String("8k-2")) return JxsLevel::Lvl8k_2;
+        if (value == String("8k-3")) return JxsLevel::Lvl8k_3;
+        if (value == String("10k-1")) return JxsLevel::Lvl10k_1;
+        return JxsLevel::Unspecified;
+}
+
+static String jxsSublevelToFmtp(const JxsSublevel &sublevel) {
+        if (sublevel == JxsSublevel::Full) return String("Full");
+        if (sublevel == JxsSublevel::Sublev3bpp) return String("Sublev3bpp");
+        if (sublevel == JxsSublevel::Sublev6bpp) return String("Sublev6bpp");
+        if (sublevel == JxsSublevel::Sublev9bpp) return String("Sublev9bpp");
+        if (sublevel == JxsSublevel::Sublev12bpp) return String("Sublev12bpp");
+        return String();
+}
+
+static JxsSublevel jxsSublevelFromFmtp(const String &value) {
+        if (value == String("Full")) return JxsSublevel::Full;
+        if (value == String("Sublev3bpp")) return JxsSublevel::Sublev3bpp;
+        if (value == String("Sublev6bpp")) return JxsSublevel::Sublev6bpp;
+        if (value == String("Sublev9bpp")) return JxsSublevel::Sublev9bpp;
+        if (value == String("Sublev12bpp")) return JxsSublevel::Sublev12bpp;
+        return JxsSublevel::Unspecified;
 }
 
 static bool isH264PixelFormat(const PixelFormat &pd) {
@@ -1034,6 +1309,10 @@ Error RtpMediaIO::openStream(WriterStream &s, bool enableMulticastLoopback) {
         if (enableMulticastLoopback) s.transport->setMulticastLoopback(true);
         s.transport->setSendBufferSize(_sendBufferBytes);
         s.transport->setReceiveBufferSize(_recvBufferBytes);
+        // ST 2110-10 §6.3 — senders shall not generate fragmented IP
+        // datagrams.  Default true; configurable via @ref
+        // MediaConfig::RtpDontFragment.
+        s.transport->setDontFragment(_rtpDontFragment);
 
         Error err = s.transport->open();
         if (err.isError()) {
@@ -1042,13 +1321,84 @@ Error RtpMediaIO::openStream(WriterStream &s, bool enableMulticastLoopback) {
                 return err;
         }
 
+        // ST 2022-7 secondary leg: when a secondary destination is
+        // configured, open a parallel UdpSocketTransport pinned to
+        // the per-leg bind address / interface (or the session-wide
+        // values if the per-leg overrides are empty).  The session
+        // owns both transports' lifetime via @c start(primary,
+        // secondary); on close the writer-side resetWriterStream
+        // tears down both alongside the session.
+        if (!s.destinationSecondary.isNull() && s.destinationSecondary.isIPv4()) {
+                s.transportSecondary = new UdpSocketTransport();
+                SocketAddress legBind = s.localAddressSecondary.isNull() ? _localAddress
+                                                                          : s.localAddressSecondary;
+                s.transportSecondary->setLocalAddress(legBind);
+                s.transportSecondary->setDscp(static_cast<uint8_t>(s.dscp & 0x3F));
+                if (_multicastTTL > 0) s.transportSecondary->setMulticastTTL(_multicastTTL);
+                if (!s.interfaceSecondary.isEmpty()) {
+                        // Per-leg SO_BINDTODEVICE wins over the
+                        // session-wide multicast interface name.
+                        s.transportSecondary->setBindInterface(s.interfaceSecondary);
+                        s.transportSecondary->setMulticastInterface(s.interfaceSecondary);
+                } else if (!_multicastInterface.isEmpty()) {
+                        s.transportSecondary->setMulticastInterface(_multicastInterface);
+                }
+                if (enableMulticastLoopback) s.transportSecondary->setMulticastLoopback(true);
+                s.transportSecondary->setSendBufferSize(_sendBufferBytes);
+                s.transportSecondary->setReceiveBufferSize(_recvBufferBytes);
+                s.transportSecondary->setDontFragment(_rtpDontFragment);
+                Error err2 = s.transportSecondary->open();
+                if (err2.isError()) {
+                        promekiErr("RtpMediaIO: failed to open %s secondary transport: %s",
+                                   s.mediaType.cstr(), err2.desc().cstr());
+                        resetWriterStream(s);
+                        return err2;
+                }
+        }
+
         s.session = new RtpSession();
         s.session->setClockRate(s.clockRate);
         s.session->setPayloadType(s.payloadType);
         if (s.ssrc != 0) s.session->setSsrc(s.ssrc);
         s.session->setRemote(s.destination);
+        if (s.transportSecondary != nullptr) {
+                s.session->setRemoteSecondary(s.destinationSecondary);
+        }
 
-        err = s.session->start(s.transport);
+        // Install the per-session @ref PacketScheduler.  Audio always
+        // gets a burst scheduler because @ref RtpAudioTxThread owns
+        // its own inline Cadence and would double-pace under
+        // Userspace / TxTime modes; video and data honour the
+        // user-configured @c RtpPacingMode.  Future work: refactor
+        // audio onto a Streamwide-cadence scheduler so the inline
+        // Cadence drops away too.
+        //
+        // In ST 2022-7 dual-leg mode the secondary transport gets its
+        // own independent scheduler so back-pressure on one leg's
+        // socket cannot stall the other — both schedulers compute
+        // TPR_j from the same media clock and agree on send times
+        // without any cross-leg locking.
+        const Enum effectivePacingMode =
+                (s.mediaType == "audio") ? Enum(RtpPacingMode::None) : _pacingMode;
+        s.session->setScheduler(PacketScheduler::create(effectivePacingMode, s.transport));
+        if (s.transportSecondary != nullptr) {
+                s.session->setSchedulerSecondary(
+                        PacketScheduler::create(effectivePacingMode, s.transportSecondary));
+        }
+
+        // Initial scheduler configuration — frame interval drives
+        // both per-batch spread (video / data) and PerBatch cadence
+        // semantics.  Re-applied per-frame in the TX path when needed.
+        PacketScheduler::Spec spec;
+        if (_frameRate.isValid()) {
+                spec.frameInterval = _frameRate.frameDuration();
+        }
+        (void)s.session->configureScheduler(spec);
+        if (s.session->schedulerSecondary() != nullptr) {
+                (void)s.session->schedulerSecondary()->configure(spec);
+        }
+
+        err = s.session->start(s.transport, s.transportSecondary);
         if (err.isError()) {
                 promekiErr("RtpMediaIO: failed to start %s session: %s", s.mediaType.cstr(), err.desc().cstr());
                 resetWriterStream(s);
@@ -1079,11 +1429,48 @@ Error RtpMediaIO::openStream(WriterStream &s, bool enableMulticastLoopback) {
                         // DataTxThread's RtpPacketBatch sink is reused
                         // (the TX side is payload-agnostic — it just
                         // stamps RTP TS + marker and writes the wire).
+                        DataStream             &ds = static_cast<DataStream &>(s);
                         RtpAncPacketizerContext ctx;
                         ctx.streamIdx = 0;
                         ctx.clockRateHz = s.clockRate;
                         ctx.payload = static_cast<RtpPayloadAnc *>(s.payload);
                         ctx.txPacketQueue = &tx->packetQueue();
+                        // ST 2110-40 §6.4 LLTM TX-time deadline injection.
+                        // Engaged only when (a) the application
+                        // requested TM=LLTM, (b) a PTP-anchored media
+                        // clock is available (D2 PHC bound + D3
+                        // ptpAnchored on this stream), and (c) the
+                        // resolved TotalLines is non-zero (so the
+                        // §6.4 T_D divisor is defined).  Otherwise
+                        // @c lltmEnabled stays @c false and the ANC
+                        // path runs CTM-equivalent pacing (kernel fq
+                        // / 1 ms bound) regardless of what the SDP
+                        // advertises.
+                        ctx.mediaClock = &ds.mediaClock;
+                        ctx.trOffset = ds.ancTrOffset.isValid()
+                                               ? ds.ancTrOffset
+                                               : Duration::zero();
+                        if (ds.ancTotalLines > 0 && _frameRate.isValid()) {
+                                // T_D = 8 / (FrameRate × TotalLines)
+                                // seconds.  Compute as
+                                // 8e9 × den / (num × TotalLines)
+                                // nanoseconds for exact rational
+                                // arithmetic on the NTSC 1001-frame
+                                // family.
+                                const int64_t num =
+                                        static_cast<int64_t>(_frameRate.numerator());
+                                const int64_t den =
+                                        static_cast<int64_t>(_frameRate.denominator());
+                                if (num > 0 && den > 0) {
+                                        const int64_t tDNs =
+                                                (8LL * 1'000'000'000LL * den) /
+                                                (num * static_cast<int64_t>(ds.ancTotalLines));
+                                        ctx.tD = Duration::fromNanoseconds(tDNs);
+                                }
+                        }
+                        ctx.lltmEnabled =
+                                (ds.ancTransmissionModel == AncTransmissionModel::Lltm) &&
+                                ds.mediaClock.hasPtpAnchor() && ds.ancTotalLines > 0;
                         auto *pkt = new RtpAncPacketizerThread(std::move(ctx));
                         s.packetizer = pkt;
                         tx->start();
@@ -1173,6 +1560,62 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                 }
         }
 
+        // ST 2022-7 secondary leg (reader side).  Bind a parallel
+        // UdpSocketTransport to the secondary destination's port, join
+        // the secondary multicast group if applicable, and hand both
+        // transports to @c RtpSession::start(primary, secondary) so
+        // the per-session receive loop spawns a recv thread per leg
+        // — packets from either leg flow into the same per-stream
+        // @ref RtpSeqReorderBuffer, which dedups by extended sequence
+        // number per RFC 7104 §3.2.
+        if (!s.destinationSecondary.isNull() && s.destinationSecondary.isIPv4()) {
+                const bool    secMcast = s.destinationSecondary.isMulticast();
+                SocketAddress secBind;
+                if (secMcast) {
+                        secBind = SocketAddress::any(s.destinationSecondary.port());
+                } else if (!s.localAddressSecondary.isNull()
+                           && s.localAddressSecondary.port() != 0) {
+                        secBind = s.localAddressSecondary;
+                } else {
+                        secBind = SocketAddress::any(s.destinationSecondary.port());
+                }
+                s.transportSecondary = new UdpSocketTransport();
+                s.transportSecondary->setLocalAddress(secBind);
+                s.transportSecondary->setReuseAddress(true);
+                if (!s.interfaceSecondary.isEmpty()) {
+                        s.transportSecondary->setBindInterface(s.interfaceSecondary);
+                        s.transportSecondary->setMulticastInterface(s.interfaceSecondary);
+                } else if (!_multicastInterface.isEmpty()) {
+                        s.transportSecondary->setMulticastInterface(_multicastInterface);
+                }
+                s.transportSecondary->setReceiveBufferSize(_recvBufferBytes);
+                s.transportSecondary->setSendBufferSize(_sendBufferBytes);
+                Error err2 = s.transportSecondary->open();
+                if (err2.isError()) {
+                        promekiErr("RtpMediaIO: failed to open %s reader secondary transport: %s",
+                                   s.mediaType.cstr(), err2.desc().cstr());
+                        resetReaderStream(s);
+                        return err2;
+                }
+                if (secMcast) {
+                        UdpSocket *sock = s.transportSecondary->socket();
+                        if (sock != nullptr) {
+                                Error jerr =
+                                        s.interfaceSecondary.isEmpty()
+                                                ? sock->joinMulticastGroup(s.destinationSecondary)
+                                                : sock->joinMulticastGroup(s.destinationSecondary,
+                                                                            s.interfaceSecondary);
+                                if (jerr.isError()) {
+                                        promekiErr("RtpMediaIO: join %s on secondary %s failed: %s",
+                                                   s.destinationSecondary.toString().cstr(),
+                                                   s.mediaType.cstr(), jerr.desc().cstr());
+                                        resetReaderStream(s);
+                                        return jerr;
+                                }
+                        }
+                }
+        }
+
         s.session = new RtpSession();
         s.session->setClockRate(s.clockRate);
         s.session->setPayloadType(s.payloadType);
@@ -1180,8 +1623,11 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
         // remote is meaningless for reader sessions but we set it
         // anyway so the session object is self-consistent.
         s.session->setRemote(s.destination);
+        if (s.transportSecondary != nullptr) {
+                s.session->setRemoteSecondary(s.destinationSecondary);
+        }
 
-        err = s.session->start(s.transport);
+        err = s.session->start(s.transport, s.transportSecondary);
         if (err.isError()) {
                 promekiErr("RtpMediaIO: failed to start %s reader session: %s", s.mediaType.cstr(),
                            err.desc().cstr());
@@ -1210,6 +1656,16 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
         if (_readerJitterMs > 0) {
                 rcfg.playoutDelay = Duration::fromMilliseconds(_readerJitterMs);
         }
+        // Reorder window sized from the configured stream's
+        // packets-per-frame budget so each essence pays only the
+        // memory cost its actual traffic needs.  A 720p JPEG XS path
+        // needs ~512 slots; 4K60 4:2:2 10-bit raw needs ~32 K.
+        // @ref computeStreamPacketBudget returns the per-frame
+        // budget * 2 (one frame in flight plus the next mid-arrival)
+        // capped to a fixed ceiling so a misconfigured format can't
+        // request gigabytes of reorder buffer.
+        const size_t pktBudget = computeStreamPacketBudget(s);
+        rcfg.maxWindow = pktBudget;
         s.reorderBuffer = UniquePtr<RtpSeqReorderBuffer>::create(rcfg);
         s.reorderQueue = UniquePtr<RtpPacket::Queue>::create();
         s.resetEpoch.setValue(0);
@@ -1273,7 +1729,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                 ctx.refreshStreamClock = [this, vrs]() { refreshStreamClock(*vrs); };
                 ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
                 depkt = UniquePtr<RtpVideoDepacketizerThread>::create(
-                        std::move(ctx), String("RtpVidDepkt"), vrs->clockRate);
+                        std::move(ctx), String("RtpVidDepkt"), vrs->clockRate, pktBudget);
         } else if (s.mediaType == "audio") {
                 auto *ars = static_cast<AudioReaderStream *>(&s);
                 ars->payloadQueue = UniquePtr<Queue<RxAudioChunk>>::create();
@@ -1293,7 +1749,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                 ctx.refreshStreamClock = [this, ars]() { refreshStreamClock(*ars); };
                 ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
                 depkt = UniquePtr<RtpAudioDepacketizerThread>::create(
-                        std::move(ctx), String("RtpAudDepkt"), ars->clockRate);
+                        std::move(ctx), String("RtpAudDepkt"), ars->clockRate, pktBudget);
         } else {
                 auto *drs = static_cast<DataReaderStream *>(&s);
                 if (auto *ancPayload = dynamic_cast<RtpPayloadAnc *>(drs->payload)) {
@@ -1321,7 +1777,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                         ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
                         ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
                         depkt = UniquePtr<RtpAncDepacketizerThread>::create(
-                                std::move(ctx), String("RtpAncDepkt"), drs->clockRate);
+                                std::move(ctx), String("RtpAncDepkt"), drs->clockRate, pktBudget);
                 } else {
                         drs->payloadQueue = UniquePtr<Queue<RxDataMessage>>::create();
                         drs->payloadQueue->setMaxSize(DataPayloadQueueDepth);
@@ -1342,7 +1798,7 @@ Error RtpMediaIO::openReaderStream(ReaderStream &s, bool /*enableMulticastLoopba
                         ctx.refreshStreamClock = [this, drs]() { refreshStreamClock(*drs); };
                         ctx.ntpToSteady = [this](const NtpTime &ntp) { return ntpToSteady(ntp); };
                         depkt = UniquePtr<RtpDataDepacketizerThread>::create(
-                                std::move(ctx), String("RtpDatDepkt"), drs->clockRate);
+                                std::move(ctx), String("RtpDatDepkt"), drs->clockRate, pktBudget);
                 }
         }
         s.depacketizer = std::move(depkt);
@@ -1581,24 +2037,35 @@ Error RtpMediaIO::configureVideoStream(const MediaIO::Config &cfg, const MediaDe
                 _videoWirePixelFormat = PixelFormat();
         } else if (!pd.isCompressed()) {
                 const PixelMemLayout &pf = pd.memLayout();
-                if (pf.planeCount() > 1) {
-                        promekiErr("RtpMediaIO: planar pixel formats are not supported "
-                                   "for RFC 4175 raw video (use an interleaved format)");
-                        return Error::NotSupported;
-                }
-                size_t ppb = pf.pixelsPerBlock();
-                size_t bpb = pf.bytesPerBlock();
-                int    bpp = (ppb > 0) ? static_cast<int>((8 * bpb) / ppb) : 0;
-                if (bpp == 0) {
-                        promekiErr("RtpMediaIO: video pixel desc has zero bits-per-pixel");
-                        return Error::InvalidArgument;
-                }
-                // RFC 4175 mandates Cb-Y-Cr-Y (UYVY) component order
-                // for YCbCr 4:2:2 on the wire.  When the input uses
-                // a different component order (e.g. YUYV), store the
-                // corresponding UYVY PixelFormat so sendVideo() can call
-                // UncompressedVideoPayload::convert() before packing.
-                if (pf.id() == PixelMemLayout::I_422_3x8) {
+                // ST 2110-20 wire-format conversion (E20c-3+): pick the
+                // wire-format PixelFormat from the §6.2 bridge.  When a
+                // CSC fast path is registered for source → wire, route
+                // the producer's payload through `convert()` before
+                // packetization.  When no fast path exists, fall back
+                // to the legacy 8-bit byte-order swap behavior (no CSC,
+                // packetizer consumes source bytes directly) so the
+                // existing UYVY 8-bit / YUV8_422 path keeps working.
+                const auto bridge = St2110Video::bridgeForPixelFormat(pd);
+                const PixelFormat wirePd = bridge.sampling.isValid()
+                                                   ? St2110Video::wirePixelFormatFor(bridge.sampling, bridge.depth,
+                                                                                     bridge.colorimetry, bridge.range)
+                                                   : PixelFormat();
+                const bool wireDistinct = wirePd.isValid() && wirePd.id() != pd.id();
+#if PROMEKI_ENABLE_CSC
+                const bool fastPathRegistered =
+                        wireDistinct && (CSCRegistry::lookupFastPath(pd, wirePd) != nullptr);
+#else
+                const bool fastPathRegistered = false;
+#endif
+                if (wirePd.isValid() && (!wireDistinct || fastPathRegistered)) {
+                        // Route producer essence through the wire-format
+                        // CSC (or pass through when source == wire).
+                        _videoWirePixelFormat = wireDistinct ? wirePd : PixelFormat();
+                } else if (pf.id() == PixelMemLayout::I_422_3x8) {
+                        // Legacy 8-bit YUYV → UYVY swap path (no CSC fast
+                        // path needed; byte-identical block).  Keeps
+                        // existing 4:2:2 8-bit producers working when the
+                        // bridge falls through.
                         if (pd.id() == PixelFormat::YUV8_422_Rec709)
                                 _videoWirePixelFormat = PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709);
                         else if (pd.id() == PixelFormat::YUV8_422_Rec601)
@@ -1608,8 +2075,132 @@ Error RtpMediaIO::configureVideoStream(const MediaIO::Config &cfg, const MediaDe
                 } else {
                         _videoWirePixelFormat = PixelFormat();
                 }
+                // Validate we have packetizer-consumable bytes per
+                // pixel.  When the wire format differs from the source,
+                // use the wire format's geometry; otherwise use the
+                // source.
+                const PixelMemLayout &packetPf =
+                        _videoWirePixelFormat.isValid() ? _videoWirePixelFormat.memLayout() : pf;
+                if (packetPf.planeCount() > 1) {
+                        promekiErr("RtpMediaIO: planar pixel formats without a registered CSC "
+                                   "wire-format fast path are not supported for RFC 4175 raw video");
+                        return Error::NotSupported;
+                }
+                const size_t ppb = packetPf.pixelsPerBlock();
+                const size_t bpb = packetPf.bytesPerBlock();
+                const int    bpp = (ppb > 0) ? static_cast<int>((8 * bpb) / ppb) : 0;
+                if (bpp == 0) {
+                        promekiErr("RtpMediaIO: video pixel desc has zero bits-per-pixel");
+                        return Error::InvalidArgument;
+                }
+                // For 4:2:0 single-plane wire layouts plane 0
+                // vSubsampling=2 marks one wire row per image-row pair
+                // (§6.2.5).  RtpPayloadRawVideo treats this as
+                // rowsPerSrd=2 and stamps SRD Row Number = wire_row × 2.
+                const int rowsPerSrd =
+                        packetPf.planeCount() > 0
+                                ? std::max(static_cast<int>(packetPf.planeDesc(0).vSubsampling), 1)
+                                : 1;
                 v.payload = new RtpPayloadRawVideo(static_cast<int>(img.width()), static_cast<int>(img.height()),
-                                                   bpp, static_cast<int>(bpb));
+                                                   bpp, static_cast<int>(bpb), rowsPerSrd);
+
+                // ST 2110-20 §7 — replace the partial fmtp that
+                // ImageDesc::toSdp emitted (BT601-5 / BT709-2 legacy
+                // RFC 4175 form, missing exactframerate / PM / SSN /
+                // TCS) with the full §7.2 + §7.3 form built by
+                // @ref St2110Video.  The bridge handles the
+                // PixelFormat-derived defaults; MediaConfig keys
+                // override per-field when set to a non-Invalid value.
+                {
+                        const auto bridge = St2110Video::bridgeForPixelFormat(pd);
+                        St2110Video::Fmtp f;
+                        f.width = static_cast<uint32_t>(img.width());
+                        f.height = static_cast<uint32_t>(img.height());
+                        f.exactFrameRate = _frameRate;
+                        f.sampling = bridge.sampling;
+                        f.depth = bridge.depth;
+                        f.colorimetry = bridge.colorimetry;
+                        f.tcs = bridge.tcs;
+                        f.range = bridge.range;
+                        // MediaConfig overrides — only apply when the
+                        // caller set a non-Invalid / non-default value.
+                        const auto pickEnum = [&cfg](MediaConfig::ID id, Enum::Type type, int defaultValue) -> int {
+                                Error e;
+                                Enum  fromCfg = cfg.get(id).asEnum(type, &e);
+                                if (e.isError() || !fromCfg.hasListedValue()) return defaultValue;
+                                return fromCfg.value();
+                        };
+                        const int samplingOverride = pickEnum(MediaConfig::RtpVideoSampling,
+                                                              St2110Sampling::Type, St2110Sampling::Invalid.value());
+                        const int depthOverride = pickEnum(MediaConfig::RtpVideoDepth,
+                                                           St2110Depth::Type, St2110Depth::Invalid.value());
+                        const int colorimetryOverride = pickEnum(MediaConfig::RtpVideoColorimetry,
+                                                                 St2110Colorimetry::Type,
+                                                                 St2110Colorimetry::Invalid.value());
+                        const int tcsOverride = pickEnum(MediaConfig::RtpVideoTcs,
+                                                         St2110Tcs::Type, St2110Tcs::Invalid.value());
+                        const int rangeOverride = pickEnum(MediaConfig::RtpVideoRange,
+                                                           St2110Range::Type, St2110Range::Invalid.value());
+                        const int pmOverride = pickEnum(MediaConfig::RtpVideoPackingMode,
+                                                        St2110PackingMode::Type,
+                                                        St2110PackingMode::Gpm.value());
+                        if (samplingOverride != St2110Sampling::Invalid.value()) {
+                                f.sampling = St2110Sampling(samplingOverride);
+                        }
+                        if (depthOverride != St2110Depth::Invalid.value()) {
+                                f.depth = St2110Depth(depthOverride);
+                        }
+                        if (colorimetryOverride != St2110Colorimetry::Invalid.value()) {
+                                f.colorimetry = St2110Colorimetry(colorimetryOverride);
+                        }
+                        if (tcsOverride != St2110Tcs::Invalid.value()) {
+                                f.tcs = St2110Tcs(tcsOverride);
+                        }
+                        if (rangeOverride != St2110Range::Invalid.value()) {
+                                f.range = St2110Range(rangeOverride);
+                        }
+                        f.pm = St2110PackingMode(pmOverride);
+                        f.par = cfg.getAs<PixelAspect>(MediaConfig::RtpVideoPar, PixelAspect());
+                        f.maxUdp = static_cast<uint32_t>(cfg.getAs<int>(MediaConfig::RtpVideoMaxUdp, 0));
+
+                        // §7.3 interlace / segmented: source from the
+                        // ImageDesc's videoScanMode() when set, falling
+                        // back to the MediaConfig::VideoScanMode key.
+                        // §6.2.5: 4:2:0 sampling is progressive-only —
+                        // force Progressive in that case (the SDP
+                        // helper would clear the flags anyway, but
+                        // catch it early so the packetizer's scan mode
+                        // matches the SDP-advertised one).
+                        VideoScanMode scanMode = img.videoScanMode();
+                        if (scanMode == VideoScanMode::Unknown) {
+                                scanMode = cfg.getAs<VideoScanMode>(MediaConfig::VideoScanMode,
+                                                                    VideoScanMode::Progressive);
+                        }
+                        if (f.sampling == St2110Sampling::YCbCr420
+                            && scanMode != VideoScanMode::Progressive
+                            && scanMode != VideoScanMode::Unknown) {
+                                promekiWarnOnce("RtpMediaIO::configureVideoStream: 4:2:0 sampling is "
+                                                "progressive-only per §6.2.5 — overriding scan mode "
+                                                "Progressive");
+                                scanMode = VideoScanMode::Progressive;
+                        }
+                        St2110Video::setFmtpScanMode(f, scanMode);
+
+                        // Mirror the SDP-advertised PM + scan mode into
+                        // the packetizer so the on-wire RTP packets
+                        // honour §6.3.3 block-packing and §6.1.5
+                        // field/segment splitting (default GPM /
+                        // Progressive).
+                        if (auto *raw = dynamic_cast<RtpPayloadRawVideo *>(v.payload)) {
+                                raw->setPackingMode(f.pm);
+                                raw->setScanMode(scanMode);
+                        }
+
+                        const String fmtpBody = St2110Video::toFmtp(f);
+                        if (!fmtpBody.isEmpty()) {
+                                v.fmtp = fmtpBody;
+                        } // else leave the legacy ImageDesc::toSdp fmtp in place
+        }
         }
 
         return Error::Ok;
@@ -1644,6 +2235,22 @@ Error RtpMediaIO::configureAudioStream(const MediaIO::Config &cfg, const MediaDe
                 promekiErr("RtpMediaIO: AudioRtpDestination set but no "
                            "audio track in media descriptor (set AudioRate + "
                            "AudioChannels, or supply a MediaDesc)");
+                return Error::InvalidArgument;
+        }
+
+        // ST 2110-30 §6.2.1 mandates the Standard UDP Datagram Size
+        // Limit on every audio stream (AES67 §6.3 caps at 1440-byte
+        // RTP payload to leave headroom for v4/v6 headers within a
+        // 1500-byte Ethernet MTU).  Hard-reject any RtpAudioMaxUdp
+        // override above 1460 — Extended Size Limit / jumbo frames
+        // are forbidden on -30 streams even when the rest of the
+        // pipeline tolerates them.
+        const int audioMaxUdp = cfg.getAs<int>(MediaConfig::RtpAudioMaxUdp, 0);
+        if (audioMaxUdp > 1460) {
+                promekiErr("RtpMediaIO: RtpAudioMaxUdp=%d exceeds the ST 2110-30 §6.2.1 "
+                           "Standard UDP Datagram Size Limit (1460 bytes); audio "
+                           "streams shall not use the Extended Size Limit",
+                           audioMaxUdp);
                 return Error::InvalidArgument;
         }
 
@@ -1689,6 +2296,38 @@ Error RtpMediaIO::configureAudioStream(const MediaIO::Config &cfg, const MediaDe
                 return Error::InvalidArgument;
         }
 
+        // -- AES67 wire format resolution (E30a) --
+        //
+        // RtpAudioWireFormat picks L16 or L24 on the wire.  Auto
+        // resolves to L24 when the upstream AudioDesc carries 24-bit
+        // samples or the requested sample rate is 96 kHz (AES67 §7.1
+        // requires L24 at 96 kHz), otherwise L16.  The resolved
+        // value drives both the rtpmap encoding name and the
+        // per-sample byte count used to size every AES67 packet.
+        AudioWireFormat wireFormat = cfg.getAs<AudioWireFormat>(
+                MediaConfig::RtpAudioWireFormat, AudioWireFormat::Auto);
+        if (wireFormat == AudioWireFormat::Auto) {
+                if (sr == 96000) {
+                        wireFormat = AudioWireFormat::L24;
+                } else {
+                        const size_t srcBps = ad.format().bytesPerSample();
+                        wireFormat = (srcBps >= 3) ? AudioWireFormat::L24
+                                                   : AudioWireFormat::L16;
+                }
+        }
+        // AES67 §7.1: 96 kHz devices SHALL support L24.  We don't
+        // enforce a hard reject (L16/96k is a valid combination per
+        // RFC 3551 and works with software receivers like ffmpeg)
+        // but we warn so the operator knows the stream isn't
+        // strictly AES67-conformant.
+        if (sr == 96000 && wireFormat == AudioWireFormat::L16) {
+                promekiWarn("RtpMediaIO: 96 kHz audio with L16 wire format "
+                            "is not AES67 §7.1 conformant (96 kHz devices "
+                            "shall support L24)");
+        }
+        const size_t kStorageBytesPerSample =
+                (wireFormat == AudioWireFormat::L24) ? size_t(3) : size_t(2);
+
         // -- AES67 packet sizing --
         //
         // packetSamples = sampleRate × packetTimeUs / 1e6 samples per
@@ -1699,13 +2338,16 @@ Error RtpMediaIO::configureAudioStream(const MediaIO::Config &cfg, const MediaDe
         // the standard AES67 intervals (4ms → 1ms → 333µs → 250µs →
         // 125µs) until we find one that fits.
         //
-        // L16 storage is 2 bytes per sample per channel; channels can
-        // be anything up to 64 (AES67 allows 1-8 typically).
+        // bytes-per-sample varies by wire format (2 for L16, 3 for
+        // L24); channels can be anything up to 64 (AES67 allows 1-8
+        // typically, ST 2110-30 Level C allows up to 64).
         static constexpr size_t kMaxBytesPerPacket = 1200;
-        static constexpr size_t kStorageBytesPerSample = 2; // L16
-        const size_t maxSamplesPerPacket = kMaxBytesPerPacket / (static_cast<size_t>(ch) * kStorageBytesPerSample);
+        const size_t maxSamplesPerPacket =
+                kMaxBytesPerPacket / (static_cast<size_t>(ch) * kStorageBytesPerSample);
         if (maxSamplesPerPacket == 0) {
-                promekiErr("RtpMediaIO: %u audio channels at L16 will not fit in %zu-byte MTU", ch,
+                promekiErr("RtpMediaIO: %u audio channels at %s will not fit in %zu-byte MTU",
+                           ch,
+                           wireFormat == AudioWireFormat::L24 ? "L24" : "L16",
                            kMaxBytesPerPacket);
                 return Error::InvalidArgument;
         }
@@ -1748,6 +2390,18 @@ Error RtpMediaIO::configureAudioStream(const MediaIO::Config &cfg, const MediaDe
                 aw->packetSamples = resolvedSamples;
                 aw->packetBytes = packetBytes;
                 aw->packetTimeUs = resolvedUs;
+                aw->wireFormat = wireFormat;
+                aw->conformanceLevel = AudioConformanceLevel::compute(
+                        static_cast<int>(sr), resolvedUs, static_cast<int>(ch));
+
+                if (aw->conformanceLevel == AudioConformanceLevel::None) {
+                        promekiWarn(
+                                "RtpMediaIO: audio stream shape (%u Hz, %d us, %u ch, %s) "
+                                "is outside every ST 2110-30:2025 §7 Table 2 conformance "
+                                "level; stream remains AES67-only",
+                                sr, resolvedUs, ch,
+                                wireFormat == AudioWireFormat::L24 ? "L24" : "L16");
+                }
 
                 // Preroll: wait for this many source samples to
                 // accumulate in the FIFO before AudioTxThread starts
@@ -1766,29 +2420,61 @@ Error RtpMediaIO::configureAudioStream(const MediaIO::Config &cfg, const MediaDe
                 // (created in its onStart hook so the storage gets
                 // allocated on the packetizer thread); we just record
                 // the descriptor here so it survives across re-opens
-                // and can be inspected by tests / stats.
-                AudioDesc storageDesc(AudioFormat::PCMI_S16BE, ad.sampleRate(),
+                // and can be inspected by tests / stats.  The
+                // storage format is the big-endian PCM variant
+                // matching the chosen wire format — L16 ↔
+                // PCMI_S16BE, L24 ↔ PCMI_S24BE — so the FIFO's
+                // serialised bytes are exactly what the wire
+                // payload-pack stage expects.
+                const AudioFormat::ID storageFmt =
+                        (wireFormat == AudioWireFormat::L24) ? AudioFormat::PCMI_S24BE
+                                                             : AudioFormat::PCMI_S16BE;
+                AudioDesc storageDesc(storageFmt, ad.sampleRate(),
                                       ad.channels());
                 if (!storageDesc.isValid()) {
                         promekiErr(
-                                "RtpMediaIO: could not build L16 storage descriptor (%.1f Hz, %u ch)",
+                                "RtpMediaIO: could not build %s storage descriptor (%.1f Hz, %u ch)",
+                                wireFormat == AudioWireFormat::L24 ? "L24" : "L16",
                                 ad.sampleRate(), ad.channels());
                         return Error::InvalidArgument;
+                }
+                // Carry the upstream channel map onto the storage
+                // descriptor so the SDP builder can emit a matching
+                // ST 2110-30 §6.2.2 channel-order fmtp.  When the
+                // source has no explicit map the AudioDesc
+                // constructor's default (one Undefined entry per
+                // channel) is preserved — that's the
+                // channel-order-suppressed path.
+                if (ad.channelMap().isValid()) {
+                        storageDesc.setChannelMap(ad.channelMap());
                 }
                 aw->storageDesc = storageDesc;
         }
 
         // -- Payload handler (both modes share the wire format) --
         //
-        // L16 only for this first pass.  Clamp the payload's
-        // max-payload-size to exactly packetBytes so pack() emits one
-        // RtpPacket per AES67 packet (instead of trying to pack more
-        // into a single datagram).
-        auto *pl16 = new RtpPayloadL16(sr, static_cast<int>(ch));
-        pl16->setPayloadType(a.payloadType);
-        pl16->setMaxPayloadSize(packetBytes);
-        a.payload = pl16;
-        a.rtpmap = String("L16/") + String::number(a.clockRate) + String("/") + String::number(ch);
+        // Clamp the payload's max-payload-size to exactly packetBytes
+        // so pack() emits one RtpPacket per AES67 packet (instead of
+        // trying to pack more into a single datagram).  The wire
+        // format dictates which RtpPayload subclass owns the
+        // encoding — L24 carries 3 bytes per sample, L16 carries 2.
+        const char *encodingName = "L16";
+        if (wireFormat == AudioWireFormat::L24) {
+                auto *pl24 = new RtpPayloadL24(sr, static_cast<int>(ch));
+                pl24->setPayloadType(a.payloadType);
+                pl24->setMaxPayloadSize(packetBytes);
+                a.payload = pl24;
+                encodingName = "L24";
+        } else {
+                auto *pl16 = new RtpPayloadL16(sr, static_cast<int>(ch));
+                pl16->setPayloadType(a.payloadType);
+                pl16->setMaxPayloadSize(packetBytes);
+                a.payload = pl16;
+                encodingName = "L16";
+        }
+        a.rtpmap = String(encodingName) + String("/") +
+                   String::number(a.clockRate) + String("/") +
+                   String::number(ch);
 
         return Error::Ok;
 }
@@ -1832,11 +2518,11 @@ Error RtpMediaIO::configureDataStream(const MediaIO::Config &cfg) {
         }
         _dataFormat = fmt;
 
-        if (fmt.value() == MetadataRtpFormat::JsonMetadata.value()) {
+        if (fmt == MetadataRtpFormat::JsonMetadata) {
                 auto *p = new RtpPayloadJson(d.payloadType, d.clockRate);
                 d.payload = p;
                 d.rtpmap = String("x-promeki-metadata-json/") + String::number(d.clockRate);
-        } else if (fmt.value() == MetadataRtpFormat::St2110_40.value()) {
+        } else if (fmt == MetadataRtpFormat::St2110_40) {
                 // RFC 8331 / SMPTE ST 2110-40 ANC.  Clock rate is fixed
                 // at 90 kHz per the RFC; accept whatever the config
                 // says but log if it disagrees so the operator
@@ -1850,6 +2536,58 @@ Error RtpMediaIO::configureDataStream(const MediaIO::Config &cfg) {
                 auto *p = new RtpPayloadAnc(d.payloadType);
                 d.payload = p;
                 d.rtpmap = String("smpte291/") + String::number(d.clockRate);
+
+                // Resolve the ST 2110-40 LLTM / CTM knobs (§6).  These
+                // drive both SDP fmtp emission (TM=, TROFFSETANC,
+                // VPID_Code) and — when LLTM is selected and the
+                // application supplies a PTP anchor + TXTIME scheduler
+                // — the per-batch CLOCK_TAI deadline injection in the
+                // ANC TX path.  Resolved here so the persistent
+                // DataStream state is the single source of truth used
+                // by both @ref buildSdp (formatting) and
+                // @ref openWriterStream (RtpAncPacketizerContext
+                // construction).
+                Error tmErr;
+                Enum  tmEnum = cfg.get(MediaConfig::RtpAncTransmissionModel)
+                                       .asEnum(AncTransmissionModel::Type, &tmErr);
+                AncTransmissionModel ancTm = AncTransmissionModel::Unsignalled;
+                if (!tmErr.isError() && tmEnum.hasListedValue()) {
+                        ancTm = AncTransmissionModel(tmEnum.value());
+                }
+                const int      ancTrOffsetUs = cfg.getAs<int>(MediaConfig::RtpAncTrOffsetUs, 0);
+                const int      ancVpidCode = cfg.getAs<int>(MediaConfig::RtpAncVpidCode, 0);
+                const int      ancTotalLinesOverride = cfg.getAs<int>(MediaConfig::RtpAncTotalLines, 0);
+
+                // Auto-resolve TotalLines from the paired video stream's
+                // VideoFormat when the caller did not pin an override.
+                // The video stream is configured before this one in
+                // executeCmd(Open) so @c _videos[0].imageDesc is
+                // already populated.  Falls back to 0 (no LLTM
+                // deadline) when neither path yields a value.
+                int ancTotalLines = ancTotalLinesOverride;
+                if (ancTotalLines == 0 && !_videos.isEmpty()) {
+                        const VideoStream &vs = _videos[0];
+                        const Size2Du32    size = vs.imageDesc.size();
+                        if (size.isValid() && _frameRate.isValid()) {
+                                VideoFormat vf(size, _frameRate, vs.imageDesc.videoScanMode());
+                                VideoFormatDetails vfd(vf);
+                                if (vfd.isValid()) ancTotalLines = vfd.totalLines();
+                        }
+                }
+
+                // Stamp the resolved values onto the persistent
+                // DataStream entry so the openWriterStream + SDP paths
+                // can read them without re-parsing the config.
+                if (!_readerMode) {
+                        DataStream &ds = _datas.back();
+                        ds.ancTransmissionModel = ancTm;
+                        ds.ancTrOffset = (ancTrOffsetUs != 0)
+                                                 ? Duration::fromMicroseconds(ancTrOffsetUs)
+                                                 : Duration::zero();
+                        ds.ancTotalLines = ancTotalLines;
+                        ds.ancVpidCode = ancVpidCode;
+                }
+
                 // RFC 8331 §6.2 DID_SDID fmtp.  An empty AncDesc emits
                 // the full St291 registry — the writer side has no
                 // per-format restriction by default, so receivers
@@ -1858,8 +2596,20 @@ Error RtpMediaIO::configureDataStream(const MediaIO::Config &cfg) {
                 // a complete m=application section; we strip the
                 // payload-type prefix off the fmtp value so
                 // @ref buildSdp 's standard fmtp emit logic can prefix
-                // its own PT.
-                SdpMediaDescription ancMd = AncDesc().toSdp(d.payloadType);
+                // its own PT.  Apply the resolved LLTM / CTM knobs to
+                // the AncDesc so its SDP emission carries TM=, TROFF,
+                // and the SSN/TM coupling that @ref AncDesc::toSdp
+                // owns.
+                AncDesc desc;
+                desc.setTransmissionModel(ancTm);
+                if (ancTrOffsetUs != 0) {
+                        // TROFF is in 90 kHz ticks per ST 2110-40 §7.
+                        // Convert µs → ticks: ticks = µs × 90 / 1000.
+                        const int64_t troffTicks90k =
+                                (static_cast<int64_t>(ancTrOffsetUs) * 90LL) / 1000LL;
+                        desc.setTroff(static_cast<int32_t>(troffTicks90k));
+                }
+                SdpMediaDescription ancMd = desc.toSdp(d.payloadType);
                 const String        fmtpRaw = ancMd.attribute(String("fmtp"));
                 const size_t        sp = fmtpRaw.find(' ');
                 d.fmtp = sp != String::npos ? fmtpRaw.substr(sp + 1) : String();
@@ -1875,7 +2625,10 @@ void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
         // emission decisions once and stamp the result onto every
         // active writer Stream entry.  Reader-mode lists are left
         // alone — applySdp() owns clockDomain / ptpGrandmaster /
-        // ptpDomain on the reader side.
+        // ptpDomain on the reader side.  Also stamps the per-stream
+        // ST 2110-10 SDP fmtp inputs (MAXUDP, TSMODE, TSDELAY,
+        // ptpTraceable) and the 2022-7 secondary destination so
+        // buildSdp() is purely formatting.
         if (_readerMode) return;
 
         Error rcErr;
@@ -1889,16 +2642,167 @@ void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
         int        domainNum = cfg.getAs<int>(MediaConfig::RtpPtpDomain, 0);
         MacAddress explicitMac = cfg.getAs<MacAddress>(MediaConfig::RtpRefClockLocalMac, MacAddress());
         int32_t    offset = static_cast<int32_t>(cfg.getAs<int>(MediaConfig::RtpMediaClkOffset, 0));
+        bool       ptpTraceable = cfg.getAs<bool>(MediaConfig::RtpPtpTraceable, false);
 
-        // Auto resolves to Ptp if a grandmaster was supplied,
-        // otherwise LocalMac.  This keeps the typical default
-        // (TPG-style smoke test, no PTP) on RFC 7273 §4.4 without
-        // forcing the user to think about it; production ST 2110
-        // setups override RtpRefClock = Ptp and provide the
-        // grandmaster + domain explicitly, which the same code path
-        // honours.
+        // Phase D2 — open a PHC device when the caller pinned one.
+        // The PhcClock binds itself as the @c ClockDomain::Ptp
+        // wallclock provider; SR-anchor seeding routes through the
+        // @c setRtpAnchor(ClockDomain, ...) overload further down so
+        // the emitted NTP timestamps reflect the PTP timescale.
+        // Open failures are non-fatal — we log + fall back to the
+        // legacy @c CLOCK_REALTIME path so a misconfigured device
+        // path doesn't break the stream.
+        const String phcPath = cfg.getAs<String>(MediaConfig::RtpPtpDevicePath, String());
+        _phcAutoTraceable = false;
+        if (!phcPath.isEmpty() && !_phcClock.isValid()) {
+                auto result = PhcClock::open(phcPath);
+                if (result.second().isError()) {
+                        promekiWarn("RtpMediaIO: failed to open PHC device '%s' (%s); "
+                                    "SR anchors will use CLOCK_REALTIME",
+                                    phcPath.cstr(), result.second().name().cstr());
+                } else {
+                        _phcClock = UniquePtr<PhcClock>::create(std::move(result.first()));
+                        Error bindErr = _phcClock->bindAsDomain(ClockDomain::Ptp);
+                        if (bindErr.isError()) {
+                                promekiWarn("RtpMediaIO: PhcClock::bindAsDomain failed: %s",
+                                            bindErr.name().cstr());
+                                _phcClock.clear();
+                        } else {
+                                // Auto-resolve ts-refclk:traceable from the
+                                // PHC's lock state.  An explicit @c true
+                                // config setting still overrides; an
+                                // explicit @c false suppresses.
+                                _phcAutoTraceable = _phcClock->isLocked();
+                        }
+                }
+        }
+        if (_phcAutoTraceable && !ptpTraceable) ptpTraceable = true;
+
+        // Session-level inputs (source-filter + DF) that the SDP /
+        // transport layers consume; stash on the instance so
+        // @ref buildSdp and @ref openStream do not need a fresh
+        // Config view at emit time.
+        _rtpSourceAddress = cfg.getAs<String>(MediaConfig::RtpSourceAddress, String());
+        _rtpDontFragment = cfg.getAs<bool>(MediaConfig::RtpDontFragment, true);
+
+        const auto resolveTsMode = [&](MediaConfig::ID id) -> RtpTsMode {
+                Error e;
+                Enum  modeE = cfg.get(id).asEnum(RtpTsMode::Type, &e);
+                if (e.isError() || !modeE.hasListedValue()) return RtpTsMode::Samp;
+                return RtpTsMode(modeE.value());
+        };
+        RtpTsMode videoTsMode = resolveTsMode(MediaConfig::RtpVideoTsMode);
+        RtpTsMode audioTsMode = resolveTsMode(MediaConfig::RtpAudioTsMode);
+        RtpTsMode dataTsMode = resolveTsMode(MediaConfig::RtpDataTsMode);
+        int videoMaxUdp = cfg.getAs<int>(MediaConfig::RtpVideoMaxUdp, 0);
+        int audioMaxUdp = cfg.getAs<int>(MediaConfig::RtpAudioMaxUdp, 0);
+        int dataMaxUdp = cfg.getAs<int>(MediaConfig::RtpDataMaxUdp, 0);
+        int videoTsDelayUs = cfg.getAs<int>(MediaConfig::RtpVideoTsDelayUs, 0);
+        int audioTsDelayUs = cfg.getAs<int>(MediaConfig::RtpAudioTsDelayUs, 0);
+        int dataTsDelayUs = cfg.getAs<int>(MediaConfig::RtpDataTsDelayUs, 0);
+        SocketAddress videoSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpVideoDestinationSecondary, SocketAddress());
+        SocketAddress audioSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpAudioDestinationSecondary, SocketAddress());
+        SocketAddress dataSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpDataDestinationSecondary, SocketAddress());
+        SocketAddress videoLocalSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpVideoLocalAddressSecondary, SocketAddress());
+        SocketAddress audioLocalSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpAudioLocalAddressSecondary, SocketAddress());
+        SocketAddress dataLocalSecondary = cfg.getAs<SocketAddress>(MediaConfig::RtpDataLocalAddressSecondary, SocketAddress());
+        String        videoIfaceSecondary = cfg.getAs<String>(MediaConfig::RtpVideoInterfaceSecondary, String());
+        String        audioIfaceSecondary = cfg.getAs<String>(MediaConfig::RtpAudioInterfaceSecondary, String());
+        String        dataIfaceSecondary = cfg.getAs<String>(MediaConfig::RtpDataInterfaceSecondary, String());
+
+        // RFC 7273 mediaclk mode per stream — Auto / Direct / Sender.
+        // Auto is the default and falls through to the existing
+        // direct-or-omit logic; Sender forces `mediaclk:sender`
+        // emission for asynchronous-source paths (free-running
+        // encoders, network-fed transcoders).
+        const auto resolveMediaClkMode = [&](MediaConfig::ID id) -> RtpMediaClkMode {
+                Error e;
+                Enum  mE = cfg.get(id).asEnum(RtpMediaClkMode::Type, &e);
+                if (e.isError() || !mE.hasListedValue()) return RtpMediaClkMode::Auto;
+                return RtpMediaClkMode(mE.value());
+        };
+        RtpMediaClkMode videoMediaClkMode = resolveMediaClkMode(MediaConfig::RtpVideoMediaClkMode);
+        RtpMediaClkMode audioMediaClkMode = resolveMediaClkMode(MediaConfig::RtpAudioMediaClkMode);
+        RtpMediaClkMode dataMediaClkMode = resolveMediaClkMode(MediaConfig::RtpDataMediaClkMode);
+
+        // ST 2110-21 sender type per stream — Auto resolves
+        // against the bound @c RtpPacingMode (TxTime → TypeNL,
+        // KernelFq / Userspace → TypeW, None → Unknown).  An
+        // explicit @c TypeN / TypeNL / TypeW override is honoured
+        // verbatim — the operator is asserting authoritative
+        // knowledge that the platform can deliver that shape (e.g.
+        // a DPDK-backed deployment claiming TypeN).
+        const auto resolveSenderType = [&](MediaConfig::ID id) -> RtpSenderType {
+                Error e;
+                Enum  mE = cfg.get(id).asEnum(RtpSenderType::Type, &e);
+                if (e.isError() || !mE.hasListedValue()) return RtpSenderType::Auto;
+                RtpSenderType st(mE.value());
+                if (st == RtpSenderType::Auto) {
+                        return St2110Tx::resolveSenderType(
+                                RtpPacingMode(_pacingMode.value()));
+                }
+                return st;
+        };
+        RtpSenderType videoSenderType = resolveSenderType(MediaConfig::RtpVideoSenderType);
+        RtpSenderType audioSenderType = resolveSenderType(MediaConfig::RtpAudioSenderType);
+        RtpSenderType dataSenderType = resolveSenderType(MediaConfig::RtpDataSenderType);
+
+        const int videoTrOffsetUs = cfg.getAs<int>(MediaConfig::RtpVideoTrOffsetUs, 0);
+        const int audioTrOffsetUs = cfg.getAs<int>(MediaConfig::RtpAudioTrOffsetUs, 0);
+        const int dataTrOffsetUs = cfg.getAs<int>(MediaConfig::RtpDataTrOffsetUs, 0);
+        const int videoCmax = cfg.getAs<int>(MediaConfig::RtpVideoCmax, 0);
+        const int audioCmax = cfg.getAs<int>(MediaConfig::RtpAudioCmax, 0);
+        const int dataCmax = cfg.getAs<int>(MediaConfig::RtpDataCmax, 0);
+
+        // RFC 9134 JPEG XS knobs — video-only.  Each resolves a
+        // TypedEnum from the config and falls back to its registered
+        // default (Codestream / SequentialOnly / Unspecified) when
+        // the caller did not pin a specific value.
+        const auto resolveJxsEnum = [&](MediaConfig::ID id, Enum::Type type,
+                                        int defaultValue) -> int {
+                Error e;
+                Enum  mE = cfg.get(id).asEnum(type, &e);
+                if (e.isError() || !mE.hasListedValue()) return defaultValue;
+                return mE.value();
+        };
+        const JxsPacketMode videoJxsPacketMode = JxsPacketMode(
+                resolveJxsEnum(MediaConfig::RtpVideoJxsPacketMode, JxsPacketMode::Type,
+                               JxsPacketMode::Codestream.value()));
+        const JxsTransMode videoJxsTransMode = JxsTransMode(
+                resolveJxsEnum(MediaConfig::RtpVideoJxsTransMode, JxsTransMode::Type,
+                               JxsTransMode::SequentialOnly.value()));
+        const JxsProfile videoJxsProfile =
+                JxsProfile(resolveJxsEnum(MediaConfig::RtpVideoJxsProfile, JxsProfile::Type,
+                                          JxsProfile::Unspecified.value()));
+        const JxsLevel videoJxsLevel = JxsLevel(resolveJxsEnum(
+                MediaConfig::RtpVideoJxsLevel, JxsLevel::Type, JxsLevel::Unspecified.value()));
+        const JxsSublevel videoJxsSublevel =
+                JxsSublevel(resolveJxsEnum(MediaConfig::RtpVideoJxsSublevel, JxsSublevel::Type,
+                                           JxsSublevel::Unspecified.value()));
+
+        // Phase E10 — Auto resolution against real PTP state.
+        //
+        // Priority order (highest first):
+        //  1. PhcClock bound (open succeeded earlier in this function
+        //     against @c MediaConfig::RtpPtpDevicePath) — promote to
+        //     @c Ptp, regardless of lock state, because the caller
+        //     has expressed PTP intent by configuring the device.
+        //  2. Explicit @c RtpPtpGrandmaster supplied (non-null EUI-64)
+        //     — promote to @c Ptp.  The caller is asserting
+        //     authoritative knowledge of the grandmaster; we honour
+        //     it even without a bound PHC (the receiver still gets a
+        //     valid @c ts-refclk:ptp wire form).
+        //  3. Explicit @c RtpRefClockLocalMac supplied — @c LocalMac.
+        //  4. Fallback: @c LocalMac with autodetected interface MAC.
+        //     Preserves today's TPG smoke-test ergonomics; the
+        //     autodetect lie only kicks in when no PTP configuration
+        //     is present at all.
         if (modeValue == RtpRefClockMode::Auto.value()) {
-                modeValue = (!gm.isNull()) ? RtpRefClockMode::Ptp.value() : RtpRefClockMode::LocalMac.value();
+                if (_phcClock.isValid() || !gm.isNull()) {
+                        modeValue = RtpRefClockMode::Ptp.value();
+                } else {
+                        modeValue = RtpRefClockMode::LocalMac.value();
+                }
         }
         RtpRefClockMode resolvedMode(modeValue);
 
@@ -1908,7 +2812,7 @@ void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
         // backend covers Linux today; ST 2110 SmartNIC vendors plug
         // their own backend in via @ref NetworkInterfaceBackend.
         MacAddress localMac = explicitMac;
-        if (resolvedMode.value() == RtpRefClockMode::LocalMac.value() && localMac.isNull()) {
+        if (resolvedMode == RtpRefClockMode::LocalMac && localMac.isNull()) {
                 localMac = NetworkInterface::firstNonLoopback().macAddress();
         }
 
@@ -1917,7 +2821,7 @@ void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
         // to compare against; the actual SDP emission uses
         // ptpGrandmaster / ptpDomain directly.
         ClockDomain ptpDomainHandle;
-        if (resolvedMode.value() == RtpRefClockMode::Ptp.value()) {
+        if (resolvedMode == RtpRefClockMode::Ptp) {
                 ClockDomain::ID cdId = ClockDomain::registerDomain(
                         String("ptp.") + profile,
                         String("PTP reference clock (") + profile + String(")"),
@@ -1925,25 +2829,110 @@ void RtpMediaIO::applyClockReferenceConfig(const MediaIO::Config &cfg) {
                 ptpDomainHandle = ClockDomain(cdId);
         }
 
-        const auto stamp = [&](Stream &s) {
+        // Phase D3 — read a single PTP-anchored wallclock instant up
+        // front when a PHC is bound, so every per-stream RtpMediaClock
+        // anchors against the same @c (frame 0, wallclock T0) pair.
+        // Multi-stream sync depends on this — receivers cross-correlate
+        // the streams' RTP-TS sequences via the shared anchor.  Falls
+        // back to 0 when no PHC is bound; the per-stream constructor
+        // then degrades to @ref RtpMediaClock::frameZeroAnchored.
+        const int64_t mediaClockAnchorUtcNs =
+                (_phcClock.isValid() && ClockDomain::hasNowProvider(ClockDomain::Ptp))
+                        ? ClockDomain::nowUtcNs(ClockDomain::Ptp)
+                        : 0;
+        const auto stamp = [&](Stream &s, RtpTsMode tsMode, int maxUdp, int tsDelayUs,
+                               const SocketAddress &secondary, RtpMediaClkMode mediaClkMode,
+                               RtpSenderType senderType, int trOffsetUs, int cmax) {
                 s.tsRefClkMode = resolvedMode;
                 s.refClockLocalMac = localMac;
                 s.ptpGrandmaster = gm;
                 s.ptpDomain = static_cast<uint8_t>(domainNum & 0xFF);
                 s.mediaClkOffset = offset;
-                if (resolvedMode.value() == RtpRefClockMode::Ptp.value() && ptpDomainHandle.isValid()) {
+                s.ptpTraceable = ptpTraceable;
+                s.tsMode = tsMode;
+                s.maxUdp = maxUdp;
+                s.tsDelayUs = tsDelayUs;
+                s.destinationSecondary = secondary;
+                s.mediaClkMode = mediaClkMode;
+                s.senderType = senderType;
+                s.trOffsetUs = trOffsetUs;
+                s.cmax = cmax;
+                if (resolvedMode == RtpRefClockMode::Ptp && ptpDomainHandle.isValid()) {
                         s.clockDomain = ptpDomainHandle;
-                } else if (resolvedMode.value() == RtpRefClockMode::LocalMac.value()) {
+                } else if (resolvedMode == RtpRefClockMode::LocalMac) {
                         // The localmac case keeps the writer's clock in
                         // a Correlated (not cross-machine) domain — the
                         // RFC 7273 receiver semantic is "the sender's
                         // own clock identified by MAC".
                         s.clockDomain = ClockDomain::SystemMonotonic;
                 }
+                // Phase D3 — build the per-stream media clock.  When a
+                // PHC is bound, frame 0 anchors to the shared wallclock
+                // instant @c mediaClockAnchorUtcNs and the RTP-TS
+                // sequence carries the SMPTE Epoch grid alignment;
+                // otherwise the clock is frame-zero-anchored and
+                // behaves like the legacy @c cumulativeTicks call site.
+                // The frame rate driving the cadence is the
+                // RtpMediaIO's @c _frameRate (set by
+                // configureVideoStream etc.) — audio paths key off the
+                // same value via the @c samplesPerFrame helper since
+                // the audio TX thread carries its own
+                // @c packetSamples cadence internally and just needs
+                // the initial RTP-TS from the media clock.
+                if (mediaClockAnchorUtcNs > 0) {
+                        s.mediaClock = RtpMediaClock::ptpAnchored(
+                                s.clockRate, _frameRate, mediaClockAnchorUtcNs);
+                } else {
+                        s.mediaClock = RtpMediaClock::frameZeroAnchored(
+                                s.clockRate, _frameRate);
+                }
         };
-        for (auto &v : _videos) stamp(v);
-        for (auto &a : _audios) stamp(a);
-        for (auto &d : _datas) stamp(d);
+        for (auto &v : _videos) {
+                stamp(v, videoTsMode, videoMaxUdp, videoTsDelayUs, videoSecondary,
+                      videoMediaClkMode, videoSenderType, videoTrOffsetUs, videoCmax);
+                v.localAddressSecondary = videoLocalSecondary;
+                v.interfaceSecondary = videoIfaceSecondary;
+                // RFC 9134 JPEG XS knobs are video-only — applied
+                // here after the generic stamp.  The actual K-bit
+                // engagement happens at @c openWriterStream time
+                // (where the @ref RtpPayloadJpegXs is constructed)
+                // by reading @c v.jxsPacketMode.
+                v.jxsPacketMode = videoJxsPacketMode;
+                v.jxsTransMode = videoJxsTransMode;
+                v.jxsProfile = videoJxsProfile;
+                v.jxsLevel = videoJxsLevel;
+                v.jxsSublevel = videoJxsSublevel;
+                // Push the packetization-mode selection down to the
+                // already-constructed JPEG XS payload handler so the
+                // first @c pack() call uses the right K-bit path.
+                if (auto *jxs = dynamic_cast<RtpPayloadJpegXs *>(v.payload)) {
+                        jxs->setSliceMode(v.jxsPacketMode == JxsPacketMode::Slice);
+                }
+        }
+        for (auto &a : _audios) {
+                stamp(a, audioTsMode, audioMaxUdp, audioTsDelayUs, audioSecondary,
+                      audioMediaClkMode, audioSenderType, audioTrOffsetUs, audioCmax);
+                a.localAddressSecondary = audioLocalSecondary;
+                a.interfaceSecondary = audioIfaceSecondary;
+        }
+        for (auto &d : _datas) {
+                stamp(d, dataTsMode, dataMaxUdp, dataTsDelayUs, dataSecondary,
+                      dataMediaClkMode, dataSenderType, dataTrOffsetUs, dataCmax);
+                d.localAddressSecondary = dataLocalSecondary;
+                d.interfaceSecondary = dataIfaceSecondary;
+        }
+
+        // Auto-assign a=mid:<token> per RFC 5888 so the SDP emits
+        // group:DUP cleanly when secondaries are present.  Stable
+        // token: media type + "-primary" / "-secondary" pair.  The
+        // session-level group:DUP is emitted in @ref buildSdp.
+        auto assignMid = [&](Stream &s, const String &prefix) {
+                if (s.destinationSecondary.isNull()) return;
+                if (s.mid.isEmpty()) s.mid = prefix + String("-primary");
+        };
+        for (auto &v : _videos) assignMid(v, String("video"));
+        for (auto &a : _audios) assignMid(a, String("audio"));
+        for (auto &d : _datas) assignMid(d, String("data"));
 }
 
 // ----- SDP -----
@@ -1952,6 +2941,31 @@ void RtpMediaIO::buildSdp() {
         _sdpSession = SdpSession();
         _sdpSession.setSessionName(_sessionName);
         _sdpSession.setOrigin(_sessionOrigin, 0, 0, "IN", "IP4", "0.0.0.0");
+
+        // Build the session-level a=group:DUP value (RFC 5888 +
+        // RFC 7104) by walking the writer streams and pairing every
+        // primary @c mid with its secondary token.  Secondary tokens
+        // mirror the primary's @c mid with a "-secondary" suffix.  No
+        // streams with a secondary → no group attribute.
+        String dupGroup;
+        auto   addToGroup = [&](const Stream &s) {
+                if (s.destinationSecondary.isNull() || s.mid.isEmpty()) return;
+                String primary = s.mid;
+                String secondary = primary;
+                if (secondary.endsWith(String("-primary"))) {
+                        secondary = secondary.left(secondary.size() - 8) + String("-secondary");
+                } else {
+                        secondary += String("-secondary");
+                }
+                if (!dupGroup.isEmpty()) dupGroup += String(" ");
+                dupGroup += primary + String(" ") + secondary;
+        };
+        for (const VideoStream &vs : _videos) addToGroup(vs);
+        for (const AudioStream &as : _audios) addToGroup(as);
+        for (const DataStream &ds : _datas) addToGroup(ds);
+        if (!dupGroup.isEmpty()) {
+                _sdpSession.setSessionAttribute("group", String("DUP ") + dupGroup);
+        }
 
         auto addStream = [&](const Stream &s) {
                 if (!s.active) return;
@@ -1991,8 +3005,150 @@ void RtpMediaIO::buildSdp() {
                                 appendParam(String("sprop-pps=") + _h265SpropPps);
                         }
                 }
+                // Append ST 2110-10 fmtp parameters onto whatever the
+                // payload-specific code path already built.  These are
+                // semicolon-joined onto the existing fmtp string —
+                // ordering does not matter for SDP fmtp, so we put the
+                // ST 2110 hints last.
+                {
+                        auto appendFmtp = [&](const String &kv) {
+                                if (kv.isEmpty()) return;
+                                if (!fmtp.isEmpty()) fmtp += String(";");
+                                fmtp += kv;
+                        };
+                        if (s.maxUdp > 0) {
+                                appendFmtp(String("MAXUDP=") + String::number(s.maxUdp));
+                        }
+                        // TSDELAY autocomputation: when the user has
+                        // not pinned an explicit @c TSDELAY value, ask
+                        // the scheduler what egress delay it expects
+                        // and use that.  Burst schedulers report 0 and
+                        // the attribute is omitted; cadence / kernel-fq
+                        // / txtime backends report a non-zero
+                        // microsecond estimate.
+                        int effectiveTsDelayUs = s.tsDelayUs;
+                        if (effectiveTsDelayUs == 0 && s.session != nullptr) {
+                                const PacketScheduler *sched = s.session->scheduler();
+                                if (sched != nullptr) {
+                                        effectiveTsDelayUs = sched->predictedTxDelayUs();
+                                }
+                        }
+                        if (effectiveTsDelayUs > 0) {
+                                appendFmtp(String("TSDELAY=") + String::number(effectiveTsDelayUs));
+                        }
+                        // TSMODE has three values; emit non-default
+                        // forms only (SAMP is the default per
+                        // ST 2110-10 §7.9, omitting it implies SAMP).
+                        if (s.tsMode == RtpTsMode::New) {
+                                appendFmtp(String("TSMODE=NEW"));
+                        } else if (s.tsMode == RtpTsMode::Pres) {
+                                appendFmtp(String("TSMODE=PRES"));
+                        }
+                        // ST 2110-30:2025 §6.2.2 channel-order.
+                        // Emitted on audio streams with ≥4 channels
+                        // and a non-empty channel map; RFC 3190 §3
+                        // requires suppression for 1/2/3-channel
+                        // streams (AIFF-C ordering implicit).
+                        if (s.mediaType == "audio") {
+                                const AudioStream &as = static_cast<const AudioStream &>(s);
+                                if (as.storageDesc.isValid() &&
+                                    as.storageDesc.channels() >= 4 &&
+                                    as.storageDesc.channelMap().isValid()) {
+                                        const String body =
+                                                as.storageDesc.channelMap()
+                                                        .toSt2110ChannelOrder();
+                                        if (!body.isEmpty()) {
+                                                appendFmtp(String("channel-order=SMPTE2110.") + body);
+                                        }
+                                }
+                        }
+                        // ST 2110-21 §7.1 / §7.5 — TP / TROFF / CMAX
+                        // fmtp.  TP is suppressed for Auto / Unknown
+                        // senders (the receiver-side classification
+                        // falls back to Type A in those cases).
+                        // TROFF is in microseconds on the wire per
+                        // §7.5.  CMAX is informational; when the
+                        // caller did not pin one explicitly the
+                        // library computes the type-appropriate
+                        // value via @ref St2110Tx (which lets a
+                        // monitoring receiver cross-check the
+                        // sender's claimed bound against its actual
+                        // observed bursts).
+                        const String tpValue = St2110Tx::tpFmtpValue(s.senderType);
+                        if (!tpValue.isEmpty()) {
+                                appendFmtp(String("TP=") + tpValue);
+                        }
+                        if (s.trOffsetUs != 0) {
+                                appendFmtp(String("TROFF=") +
+                                           String::number(s.trOffsetUs));
+                        }
+                        if (s.cmax > 0) {
+                                appendFmtp(String("CMAX=") + String::number(s.cmax));
+                        }
+                        // RFC 9134 §4.3 / §7.1 — JPEG XS specific
+                        // fmtp parameters.  Emitted on every video
+                        // stream that carries JXS essence; the
+                        // existing ImageDesc::toSdp path emits
+                        // @c packetmode=0 as a hard-coded default,
+                        // so we always emit the stream's resolved
+                        // value here too — when the stream's
+                        // @c jxsPacketMode is Slice we need
+                        // @c packetmode=1 on the wire, which the
+                        // ImageDesc layer doesn't know about.
+                        // @c transmode follows the same emit rule
+                        // (default SequentialOnly = T=1 == "absent
+                        // means 1" per the RFC, so we elide it for
+                        // the default).  @c profile / @c level /
+                        // @c sublevel are suppressed when
+                        // Unspecified.
+                        if (s.mediaType == "video") {
+                                // packetmode emission via the ST 2110-21
+                                // appendFmtp path lets a JXS receiver
+                                // see K=1 / K=0 directly.  We always
+                                // emit (overrides ImageDesc::toSdp 's
+                                // hard-coded packetmode=0 — the SDP
+                                // parser uses last-write semantics
+                                // within a fmtp string for repeated
+                                // keys but appending the canonical
+                                // value is the cleanest contract).
+                                if (s.jxsPacketMode == JxsPacketMode::Slice) {
+                                        appendFmtp(String("packetmode=1"));
+                                }
+                                if (s.jxsTransMode == JxsTransMode::OutOfOrderAllowed) {
+                                        appendFmtp(String("transmode=0"));
+                                }
+                                if (s.jxsProfile != JxsProfile::Unspecified) {
+                                        appendFmtp(String("profile=") + jxsProfileToFmtp(s.jxsProfile));
+                                }
+                                if (s.jxsLevel != JxsLevel::Unspecified) {
+                                        appendFmtp(String("level=") + jxsLevelToFmtp(s.jxsLevel));
+                                }
+                                if (s.jxsSublevel != JxsSublevel::Unspecified) {
+                                        appendFmtp(String("sublevel=") +
+                                                   jxsSublevelToFmtp(s.jxsSublevel));
+                                }
+                        }
+                }
                 if (!fmtp.isEmpty()) {
                         md.setAttribute("fmtp", String::number(s.payloadType) + String(" ") + fmtp);
+                }
+                // AES67 §8.1: every audio session description SHALL
+                // include an @c a=ptime attribute carrying the packet
+                // time in milliseconds (decimal allowed).  The value
+                // we emit is computed from the per-stream
+                // @c packetSamples + sample rate so it reflects the
+                // resolved post-MTU-clamp shape, not the original
+                // requested @c AudioRtpPacketTimeUs — keeps the
+                // emitted SDP self-consistent with the bytes that
+                // will actually go on the wire.
+                if (s.mediaType == "audio") {
+                        const AudioStream &as = static_cast<const AudioStream &>(s);
+                        if (as.packetSamples > 0 && as.clockRate > 0) {
+                                md.setAttribute(
+                                        "ptime",
+                                        formatAes67Ptime(static_cast<int>(as.packetSamples),
+                                                         static_cast<int>(as.clockRate)));
+                        }
                 }
                 // Stamp frame rate on the video m= section so the RX
                 // side can recover the cadence — RFC 2435 and RFC 4175
@@ -2002,6 +3158,24 @@ void RtpMediaIO::buildSdp() {
                 // round-trip exactly.
                 if (s.mediaType == "video" && _frameRate.isValid()) {
                         md.setAttribute("framerate", _frameRate.toString());
+                }
+                // RFC 4570 source-filter on every multicast section
+                // (ST 2110-10 §8.6).  SSM-aware receivers join only
+                // this sender's distribution tree.  Skipped when the
+                // source IP is unconfigured or the destination is not
+                // multicast — the latter so unicast streams don't get
+                // a spurious filter.
+                if (!_rtpSourceAddress.isEmpty() && s.destination.address().isMulticast()) {
+                        md.setAttribute("source-filter",
+                                        String("incl IN IP4 ") + s.destination.address().toString() +
+                                                String(" ") + _rtpSourceAddress);
+                }
+                // a=mid:<token> when a 2022-7 secondary is configured
+                // so the session-level group:DUP can reference this
+                // section.  Token was assigned in
+                // applyClockReferenceConfig.
+                if (!s.mid.isEmpty()) {
+                        md.setAttribute("mid", s.mid);
                 }
                 // RFC 5761 rtcp-mux: tells receivers that RTP and
                 // RTCP share a single port for this stream, so the
@@ -2021,39 +3195,92 @@ void RtpMediaIO::buildSdp() {
                 // is resolved in @ref applyClockReferenceConfig and
                 // stamped onto every writer @c Stream — buildSdp does
                 // no policy here, only formatting.
-                if (s.tsRefClkMode.value() == RtpRefClockMode::Ptp.value()) {
-                        // RFC 7273 §4.5: ptp=<version>:<gmid>[:<domain>]
+                // RFC 7273 / SMPTE ST 2110-10 §8.2.  Pick the right
+                // structured form via @ref Rfc7273RefClk and let it
+                // format the wire value — buildSdp keeps no parser
+                // policy here.
+                // RFC 7273 §5 — mediaclk attribute resolution.
+                //
+                //  - Sender — emit bare `mediaclk:sender`.  Used when
+                //    the source's media clock is asynchronous to the
+                //    reference clock; receivers fall back to RTCP SR
+                //    pairs to recover the clock.
+                //  - Direct or Auto — emit
+                //    `mediaclk:direct=<offset>` whenever a reference
+                //    clock is advertised (Ptp or LocalMac); omit
+                //    @c mediaclk when no reference clock is being
+                //    signalled.
+                //
+                // The ts-refclk emission decision is independent and
+                // happens first.
+                if (s.tsRefClkMode == RtpRefClockMode::Ptp) {
                         String profile = s.clockDomain.isValid() && s.clockDomain.name().startsWith("ptp.")
                                                  ? s.clockDomain.name().mid(4)
-                                                 : String("IEEE1588-2008");
-                        String tsRefClk = String("ptp=") + profile;
-                        if (!s.ptpGrandmaster.isNull()) {
-                                tsRefClk += String(":") + s.ptpGrandmaster.toString();
-                                // Domain is meaningful only alongside a
-                                // grandmaster identifier; receivers that
-                                // see ":<domain>" without a gmid treat
-                                // the whole tail as malformed.
-                                tsRefClk += String(":") + String::number(static_cast<int>(s.ptpDomain));
+                                                 : String(Rfc7273RefClk::DefaultPtpProfile);
+                        Rfc7273RefClk refClk;
+                        if (s.ptpTraceable) {
+                                refClk = Rfc7273RefClk::ptpTraceable(profile);
+                        } else {
+                                refClk = Rfc7273RefClk::ptp(profile, s.ptpGrandmaster, s.ptpDomain);
                         }
-                        md.setAttribute("ts-refclk", tsRefClk);
-                        md.setAttribute("mediaclk", String("direct=") + String::number(s.mediaClkOffset));
-                } else if (s.tsRefClkMode.value() == RtpRefClockMode::LocalMac.value() &&
+                        md.setAttribute("ts-refclk", refClk.toSdpValue());
+                } else if (s.tsRefClkMode == RtpRefClockMode::LocalMac &&
                            !s.refClockLocalMac.isNull()) {
-                        // RFC 7273 §4.4: localmac=<EUI-48>.  The MAC
-                        // identifies the sender's local clock so a
-                        // receiver can correlate streams from the same
-                        // sender without trusting a shared
-                        // grandmaster.  Format with hyphens to match
-                        // the RFC examples (and ST 2110 reference
-                        // captures); receivers parse either separator.
-                        md.setAttribute("ts-refclk", String("localmac=") + s.refClockLocalMac.toString('-'));
-                        md.setAttribute("mediaclk", String("direct=") + String::number(s.mediaClkOffset));
+                        md.setAttribute("ts-refclk",
+                                        Rfc7273RefClk::localMac(s.refClockLocalMac).toSdpValue());
+                }
+
+                // mediaclk emission.  Sender wins regardless of
+                // ts-refclk (it's the receiver's hint that the media
+                // clock is async even though we advertise a reference
+                // grandmaster).  Direct / Auto only emit when a
+                // reference clock is being advertised — without a
+                // ts-refclk anchor an offset is meaningless.
+                if (s.mediaClkMode == RtpMediaClkMode::Sender) {
+                        md.setAttribute("mediaclk", String("sender"));
+                } else if (s.tsRefClkMode == RtpRefClockMode::Ptp ||
+                           (s.tsRefClkMode == RtpRefClockMode::LocalMac &&
+                            !s.refClockLocalMac.isNull())) {
+                        // Phase D3 — prefer the per-stream media
+                        // clock's RFC 7273 offset when it has a PTP
+                        // anchor (the natural anchor yields 0, matching
+                        // `mediaclk:direct=0` interop).  Fall back to
+                        // the caller-pinned @c mediaClkOffset for
+                        // legacy (frame-zero-anchored) streams.
+                        const int32_t directOffset =
+                                s.mediaClock.hasPtpAnchor()
+                                        ? static_cast<int32_t>(s.mediaClock.mediaClkDirectOffset())
+                                        : s.mediaClkOffset;
+                        md.setAttribute("mediaclk", String("direct=") + String::number(directOffset));
                 }
                 // RtpRefClockMode::None deliberately emits nothing —
                 // receivers fall back to "trust the SR pair" which is
                 // the legacy behaviour.
                 md.setConnectionAddress(s.destination.address().toString());
                 _sdpSession.addMediaDescription(md);
+
+                // ST 2022-7 secondary leg.  RFC 7104 §3.1 specifies the
+                // duplicate stream as a separate @c m= section pointing
+                // at the secondary destination, carrying its own
+                // @c a=mid token, and otherwise mirroring the primary's
+                // rtpmap / fmtp / attributes byte-for-byte (the
+                // duplicate must be bit-identical on the wire).  The
+                // pairing is signalled at the session level via
+                // @c a=group:DUP <primary-mid> <secondary-mid> which we
+                // emitted earlier.
+                if (!s.destinationSecondary.isNull() && !s.mid.isEmpty()) {
+                        SdpMediaDescription mdSec = md;
+                        mdSec.setPort(s.destinationSecondary.port());
+                        mdSec.setConnectionAddress(s.destinationSecondary.address().toString());
+                        String secMid = s.mid;
+                        if (secMid.endsWith(String("-primary"))) {
+                                secMid = secMid.left(secMid.size() - 8) + String("-secondary");
+                        } else {
+                                secMid += String("-secondary");
+                        }
+                        mdSec.setAttribute("mid", secMid);
+                        _sdpSession.addMediaDescription(mdSec);
+                }
         };
         for (const VideoStream &vs : _videos) addStream(vs);
         for (const AudioStream &as : _audios) addStream(as);
@@ -2139,6 +3366,32 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
         // override wins per RFC 4566.
         String sessionConnection = sdp.connectionAddress();
 
+        // Session-level @c a=group:DUP <mid> <mid> ... (RFC 5888 +
+        // RFC 7104) carries the 2022-7 duplication pairing.  We treat
+        // every second mid in each DUP token-pair as a secondary leg,
+        // and write its address into the matching essence's
+        // @c *RtpDestinationSecondary config key when we encounter the
+        // section below.  Multiple pairs may appear in one @c group:DUP
+        // — RFC 5888 §3 allows space-separated mid lists; this code
+        // pairs them as (mid₀, mid₁), (mid₂, mid₃), ...
+        Set<String> secondaryMids;
+        String      group = sdp.sessionAttribute("group");
+        if (!group.isEmpty() && group.startsWith("DUP")) {
+                StringList toks = group.split(" ");
+                // Drop the leading "DUP" semantic token; the rest are
+                // mid identifiers paired in primary / secondary order.
+                if (!toks.isEmpty() && toks[0] == String("DUP")) {
+                        toks.remove(static_cast<size_t>(0));
+                }
+                for (size_t i = 1; i < toks.size(); i += 2) {
+                        secondaryMids.insert(toks[i]);
+                }
+                if (!secondaryMids.isEmpty()) {
+                        promekiInfo("RtpMediaIO::applySdp: 2022-7 group:DUP carries %zu secondary leg(s)",
+                                    secondaryMids.size());
+                }
+        }
+
         // Merge the SDP's media-format view into our working
         // MediaDesc without clobbering anything the caller
         // already put there.  MediaDesc::fromSdp() walks every
@@ -2177,22 +3430,38 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
         for (size_t i = 0; i < sdp.mediaDescriptions().size(); i++) {
                 const SdpMediaDescription &md = sdp.mediaDescriptions()[i];
                 MediaConfig::ID            destKey = MediaConfig::VideoRtpDestination;
+                MediaConfig::ID            destSecondaryKey = MediaConfig::RtpVideoDestinationSecondary;
                 MediaConfig::ID            ptKey = MediaConfig::VideoRtpPayloadType;
                 MediaConfig::ID            rateKey = MediaConfig::VideoRtpClockRate;
                 if (md.mediaType() == "audio") {
                         destKey = MediaConfig::AudioRtpDestination;
+                        destSecondaryKey = MediaConfig::RtpAudioDestinationSecondary;
                         ptKey = MediaConfig::AudioRtpPayloadType;
                         rateKey = MediaConfig::AudioRtpClockRate;
                 } else if (md.mediaType() != "video") {
                         destKey = MediaConfig::DataRtpDestination;
+                        destSecondaryKey = MediaConfig::RtpDataDestinationSecondary;
                         ptKey = MediaConfig::DataRtpPayloadType;
                         rateKey = MediaConfig::DataRtpClockRate;
                         cfg.set(MediaConfig::DataEnabled, true);
                 }
 
+                // Identify whether this @c m= section is the secondary
+                // leg of a 2022-7 pair so we steer its destination into
+                // the @c *RtpDestinationSecondary config key instead of
+                // clobbering the primary's destination.
+                const String mid = md.attribute("mid");
+                const bool   isSecondary = !mid.isEmpty() && secondaryMids.contains(mid);
+                const MediaConfig::ID effectiveDestKey = isSecondary ? destSecondaryKey : destKey;
+
                 // Destination: only fill in if the caller did not
-                // already set one explicitly.
-                SocketAddress existingDest = cfg.getAs<SocketAddress>(destKey, SocketAddress());
+                // already set one explicitly.  Skip the rtpmap /
+                // payload-type / clock-rate plumbing on secondary
+                // sections — RFC 7104 §3.1 says the duplicate is
+                // bit-identical to the primary, so those fields must
+                // match by construction (and the primary section will
+                // populate them).
+                SocketAddress existingDest = cfg.getAs<SocketAddress>(effectiveDestKey, SocketAddress());
                 if (existingDest.isNull()) {
                         String connection =
                                 md.connectionAddress().isEmpty() ? sessionConnection : md.connectionAddress();
@@ -2200,10 +3469,11 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                                 Result<NetworkAddress> nr = NetworkAddress::fromString(connection);
                                 if (nr.second().isOk()) {
                                         SocketAddress derived(nr.first(), md.port());
-                                        cfg.set(destKey, derived);
+                                        cfg.set(effectiveDestKey, derived);
                                 }
                         }
                 }
+                if (isSecondary) continue; // primary section drives the rest
 
                 // Payload type, clock rate, audio channel count.
                 SdpMediaDescription::RtpMap rm = md.rtpMap();
@@ -2223,6 +3493,40 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                                 }
                                 if (cfg.getAs<int>(MediaConfig::AudioChannels, 0) <= 0) {
                                         cfg.set(MediaConfig::AudioChannels, static_cast<int>(rm.channels));
+                                }
+                                // AES67 §8.1: descriptions SHALL
+                                // carry @c a=ptime — round-trip it
+                                // through @ref MediaConfig so
+                                // configureAudioStream picks the
+                                // matching packet shape.  Caller
+                                // override (when explicitly set)
+                                // wins so live config retunes do
+                                // not get clobbered by a stale SDP.
+                                if (cfg.getAs<int>(MediaConfig::AudioRtpPacketTimeUs, 0) <= 0) {
+                                        const String ptimeAttr = md.attribute("ptime");
+                                        const int ptUs = parseAes67PtimeUs(ptimeAttr);
+                                        if (ptUs > 0) {
+                                                cfg.set(MediaConfig::AudioRtpPacketTimeUs, ptUs);
+                                        }
+                                }
+                                // RFC 3551 / RFC 3190: rtpmap encoding
+                                // name (@c L16 / @c L24) implies the
+                                // wire format.  Seed
+                                // RtpAudioWireFormat from the
+                                // encoding so the writer-side
+                                // descriptor matches the sender's
+                                // intent.  Caller override wins (same
+                                // reasoning as ptime).
+                                if (cfg.getAs<AudioWireFormat>(MediaConfig::RtpAudioWireFormat,
+                                                               AudioWireFormat::Auto) ==
+                                    AudioWireFormat::Auto) {
+                                        if (rm.encoding == "L24") {
+                                                cfg.set(MediaConfig::RtpAudioWireFormat,
+                                                        AudioWireFormat::L24);
+                                        } else if (rm.encoding == "L16") {
+                                                cfg.set(MediaConfig::RtpAudioWireFormat,
+                                                        AudioWireFormat::L16);
+                                        }
                                 }
                         } else if (md.mediaType() == "application") {
                                 // RFC 8331 / ST 2110-40 announces itself
@@ -2297,64 +3601,141 @@ Error RtpMediaIO::applySdp(const SdpSession &sdp, MediaIO::Config &cfg, MediaDes
                                 }
                         }
                         String tsRefClk = md.attribute("ts-refclk");
-                        if (!tsRefClk.isEmpty() && tsRefClk.startsWith("ptp=")) {
-                                // RFC 7273 §4.5: ptp=<version>[:<gmid>[:<domain>]].
-                                // SMPTE ST 2110-10 always carries all three
-                                // fields; older RFC 7273 senders may emit
-                                // only the version, or version+gmid.
-                                String     ptpValue = tsRefClk.split("=")[1];
-                                String     profile = ptpValue;
-                                StringList parts = ptpValue.split(":");
-                                if (parts.size() >= 2) {
-                                        profile = parts[0];
-                                        auto [gm, gmErr] = EUI64::fromString(parts[1]);
-                                        if (gmErr.isOk()) {
-                                                stream->ptpGrandmaster = gm;
-                                        }
-                                }
-                                if (parts.size() >= 3) {
-                                        Error dErr;
-                                        int   domainNum = parts[2].toInt(&dErr);
-                                        if (dErr.isOk() && domainNum >= 0 && domainNum <= 255) {
-                                                stream->ptpDomain = static_cast<uint8_t>(domainNum);
-                                        }
-                                }
-                                ClockDomain::ID cdId = ClockDomain::registerDomain(
-                                        String("ptp.") + profile, String("PTP reference clock (") + tsRefClk + ")",
-                                        ClockEpoch::Absolute);
-                                stream->clockDomain = ClockDomain(cdId);
-                                stream->tsRefClkMode = RtpRefClockMode::Ptp;
-                        } else if (!tsRefClk.isEmpty() && tsRefClk.startsWith("localmac=")) {
-                                // RFC 7273 §4.4: identifies the sender's
-                                // local clock by its EUI-48.  Stash the
-                                // MAC so any future receiver-side cross-
-                                // sender correlation has it.  The clock
-                                // domain stays Correlated (per-sender)
-                                // because localmac is explicitly not
-                                // cross-machine-traceable.
-                                String macStr = tsRefClk.mid(9);
-                                auto [mac, mErr] = MacAddress::fromString(macStr);
-                                if (mErr.isOk()) stream->refClockLocalMac = mac;
-                                stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
-                                        "local", "SDP ts-refclk:localmac", ClockEpoch::Correlated));
-                                stream->tsRefClkMode = RtpRefClockMode::LocalMac;
-                        } else if (!tsRefClk.isEmpty() && tsRefClk.startsWith("local")) {
-                                stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
-                                        "local", "SDP ts-refclk:local", ClockEpoch::Correlated));
-                                stream->tsRefClkMode = RtpRefClockMode::LocalMac;
-                        } else {
+                        if (tsRefClk.isEmpty()) {
                                 stream->clockDomain = ClockDomain::SystemMonotonic;
                                 stream->tsRefClkMode = RtpRefClockMode::None;
+                        } else {
+                                auto [refClk, parseErr] = Rfc7273RefClk::fromSdpValue(tsRefClk);
+                                if (parseErr.isError()) {
+                                        promekiWarn(
+                                                "RtpMediaIO::applySdp: malformed ts-refclk '%s' — defaulting to None",
+                                                tsRefClk.cstr());
+                                        stream->clockDomain = ClockDomain::SystemMonotonic;
+                                        stream->tsRefClkMode = RtpRefClockMode::None;
+                                } else if (refClk.kind() == Rfc7273RefClk::Kind::Ptp) {
+                                        stream->ptpGrandmaster = refClk.grandmasterId();
+                                        stream->ptpDomain = refClk.domain();
+                                        stream->ptpTraceable = refClk.isTraceable();
+                                        ClockDomain::ID cdId = ClockDomain::registerDomain(
+                                                String("ptp.") + refClk.profile(),
+                                                String("PTP reference clock (") + tsRefClk + ")",
+                                                ClockEpoch::Absolute);
+                                        stream->clockDomain = ClockDomain(cdId);
+                                        stream->tsRefClkMode = RtpRefClockMode::Ptp;
+                                } else {
+                                        // LocalMac, with or without an
+                                        // explicit MAC.  The clock
+                                        // domain stays Correlated
+                                        // (per-sender) because the
+                                        // sender's local clock is
+                                        // explicitly not
+                                        // cross-machine-traceable.
+                                        stream->refClockLocalMac = refClk.localMacAddress();
+                                        stream->clockDomain = ClockDomain(ClockDomain::registerDomain(
+                                                "local", String("SDP ts-refclk:") + tsRefClk,
+                                                ClockEpoch::Correlated));
+                                        stream->tsRefClkMode = RtpRefClockMode::LocalMac;
+                                }
                         }
-                        // Parse the optional mediaclk:direct=<offset> so
-                        // a receiver-side consumer can recover the
-                        // sender's RTP-TS origin.  Default 0 covers the
-                        // ST 2110 baseline.
+                        // RFC 7273 §5 — parse the optional mediaclk
+                        // attribute and stamp the receiver-side
+                        // @c mediaClkMode + @c mediaClkOffset so
+                        // downstream consumers can choose the right
+                        // clock-recovery strategy without re-reading
+                        // the SDP.  `direct=<offset>` → @c Direct,
+                        // `sender` (no params) → @c Sender, absent →
+                        // @c Auto (preserves the existing default).
                         String mediaClk = md.attribute("mediaclk");
-                        if (!mediaClk.isEmpty() && mediaClk.startsWith("direct=")) {
-                                Error oErr;
-                                int   off = mediaClk.mid(7).toInt(&oErr);
-                                if (oErr.isOk()) stream->mediaClkOffset = static_cast<int32_t>(off);
+                        if (!mediaClk.isEmpty()) {
+                                if (mediaClk.startsWith("direct=")) {
+                                        Error oErr;
+                                        int   off = mediaClk.mid(7).toInt(&oErr);
+                                        if (oErr.isOk()) {
+                                                stream->mediaClkOffset =
+                                                        static_cast<int32_t>(off);
+                                        }
+                                        stream->mediaClkMode = RtpMediaClkMode::Direct;
+                                } else if (mediaClk == String("sender")) {
+                                        stream->mediaClkMode = RtpMediaClkMode::Sender;
+                                }
+                                // Anything else (unknown form) leaves
+                                // mediaClkMode at its default — the
+                                // receiver falls back to legacy SR-
+                                // pair tracking.
+                        }
+                        // RFC 5888 a=mid:<token>; carries through so a
+                        // 2022-7 receiver can pair sections with the
+                        // session-level @c group:DUP.
+                        stream->mid = md.attribute("mid");
+
+                        // ST 2110-10 §7.9 / §8.7 — TSMODE / TSDELAY /
+                        // MAXUDP live in fmtp.  Round-trip through the
+                        // Stream fields so configure helpers downstream
+                        // can act on them without re-parsing the fmtp.
+                        auto fmtp = md.fmtpParameters();
+                        auto fmtpInt = [&](const char *key, int &dst) {
+                                auto it = fmtp.find(String(key));
+                                if (it == fmtp.end()) return;
+                                Error e;
+                                int   v = it->second.toInt(&e);
+                                if (e.isOk()) dst = v;
+                        };
+                        fmtpInt("MAXUDP", stream->maxUdp);
+                        fmtpInt("TSDELAY", stream->tsDelayUs);
+                        auto tsModeIt = fmtp.find(String("TSMODE"));
+                        if (tsModeIt != fmtp.end()) {
+                                if (tsModeIt->second == String("NEW")) stream->tsMode = RtpTsMode::New;
+                                else if (tsModeIt->second == String("PRES")) stream->tsMode = RtpTsMode::Pres;
+                                else stream->tsMode = RtpTsMode::Samp;
+                        }
+                        // ST 2110-21 §7.5 — TP / TROFF / CMAX fmtp.
+                        // TP unrecognised values (or absent) land on
+                        // @c Unknown which suppresses re-emission of
+                        // a bogus value on the writer side; TROFF is
+                        // in microseconds on the wire; CMAX is
+                        // informational and stored verbatim.
+                        auto tpIt = fmtp.find(String("TP"));
+                        if (tpIt != fmtp.end()) {
+                                stream->senderType = St2110Tx::senderTypeFromTp(tpIt->second);
+                        }
+                        fmtpInt("TROFF", stream->trOffsetUs);
+                        fmtpInt("CMAX", stream->cmax);
+
+                        // RFC 9134 JPEG XS fmtp parameters.  Each
+                        // unrecognised / absent param leaves its
+                        // stream field at the default (Codestream /
+                        // SequentialOnly / Unspecified).
+                        auto packetmodeIt = fmtp.find(String("packetmode"));
+                        if (packetmodeIt != fmtp.end()) {
+                                Error e;
+                                int   v = packetmodeIt->second.toInt(&e);
+                                if (e.isOk()) {
+                                        stream->jxsPacketMode = (v == 1)
+                                                                        ? JxsPacketMode::Slice
+                                                                        : JxsPacketMode::Codestream;
+                                }
+                        }
+                        auto transmodeIt = fmtp.find(String("transmode"));
+                        if (transmodeIt != fmtp.end()) {
+                                Error e;
+                                int   v = transmodeIt->second.toInt(&e);
+                                if (e.isOk()) {
+                                        stream->jxsTransMode =
+                                                (v == 0) ? JxsTransMode::OutOfOrderAllowed
+                                                         : JxsTransMode::SequentialOnly;
+                                }
+                        }
+                        auto profileIt = fmtp.find(String("profile"));
+                        if (profileIt != fmtp.end()) {
+                                stream->jxsProfile = jxsProfileFromFmtp(profileIt->second);
+                        }
+                        auto levelIt = fmtp.find(String("level"));
+                        if (levelIt != fmtp.end()) {
+                                stream->jxsLevel = jxsLevelFromFmtp(levelIt->second);
+                        }
+                        auto sublevelIt = fmtp.find(String("sublevel"));
+                        if (sublevelIt != fmtp.end()) {
+                                stream->jxsSublevel = jxsSublevelFromFmtp(sublevelIt->second);
                         }
                 }
 
@@ -2455,7 +3836,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // Default (Read) means reader (source); Write means writer
         // (sink).  RTP supports both in the same backend.
         Enum modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _readerMode = !isWrite;
         _readCancelled.store(false, MemoryOrder::Release);
         _openedAt = TimeStamp::now();
@@ -2494,7 +3875,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // who want a specific behaviour (None for loopback tests,
         // TxTime for ST 2110-21 deployments) still set the key
         // explicitly.
-        if (_pacingMode.value() == RtpPacingMode::Auto.value()) {
+        if (_pacingMode == RtpPacingMode::Auto) {
 #if defined(PROMEKI_PLATFORM_LINUX)
                 _pacingMode = RtpPacingMode::KernelFq;
 #else
@@ -2717,6 +4098,16 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                                 txCtx.senderOctets = &as.senderOctets;
                                 txCtx.silencePacketsEmitted = &as.silencePacketsEmitted;
                                 txCtx.silenceSamplesEmitted = &as.silenceSamplesEmitted;
+                                // Phase D3 — seed the audio RTP-TS
+                                // cursor from the per-stream media
+                                // clock's anchor.  PTP-anchored audio
+                                // writers ride the SMPTE Epoch grid
+                                // (`mediaclk:direct=0`); the
+                                // frame-zero-anchored fallback yields
+                                // @c 0, matching today's behaviour.
+                                txCtx.initialRtpTs = as.mediaClock.isValid()
+                                                             ? as.mediaClock.rtpTsForFrame(0)
+                                                             : 0;
                                 auto *tx = new RtpAudioTxThread(
                                         std::move(txCtx),
                                         String("RtpAudTx/") + String::number(i));
@@ -2896,12 +4287,35 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 // the source-capture wallclock rather than open-time
                 // wallclock, which is what cross-stream lip-sync
                 // depends on.
+                // Phase D2: when a PhcClock is bound, prefer the
+                // ClockDomain::Ptp anchor so the open-time SR
+                // reflects the PTP timescale.  Fall back to
+                // CLOCK_REALTIME otherwise — every existing call site
+                // that pinned a manual anchor continues to work
+                // unchanged.
+                const bool          usePhcAnchor = _phcClock.isValid() &&
+                                                   ClockDomain::hasNowProvider(ClockDomain::Ptp);
                 const NtpTime defaultAnchorNtp = NtpTime::now();
                 _anchorSeeded.setValue(false);
-                auto setupSession = [this, &defaultAnchorNtp](Stream &s) {
+                // Phase D3 — pair the SR anchor's RTP-TS with the
+                // media clock's frame-0 RTP-TS so a receiver computing
+                // @c (rtpTs - anchorRtpTs) / clockRate against any
+                // emitted RTP-TS lands back on the open-time
+                // wallclock.  Without this pairing the SR's NTP
+                // anchored to "now" would carry RTP-TS=0 while the
+                // wire's RTP-TS sequence starts at the media clock's
+                // anchor — receivers would compute a wallclock offset
+                // by exactly @c anchorRtpTs / clockRate seconds.
+                auto setupSession = [this, &defaultAnchorNtp, usePhcAnchor](Stream &s) {
                         if (!s.active || s.session == nullptr) return;
                         s.session->setCname(_rtcpCname);
-                        s.session->setRtpAnchor(defaultAnchorNtp, 0);
+                        const uint32_t anchorRtpTs =
+                                s.mediaClock.isValid() ? s.mediaClock.rtpTsForFrame(0) : 0;
+                        if (usePhcAnchor) {
+                                s.session->setRtpAnchor(ClockDomain(ClockDomain::Ptp), anchorRtpTs);
+                        } else {
+                                s.session->setRtpAnchor(defaultAnchorNtp, anchorRtpTs);
+                        }
                 };
                 for (VideoStream &vs : _videos) setupSession(vs);
                 for (AudioStream &as : _audios) setupSession(as);
@@ -2955,7 +4369,7 @@ Error RtpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // timing.  That's the deferred @c RtpPacingMode::TxTime
         // path; until it lands, the rate-cap approach below is the
         // best we can do with @c SO_MAX_PACING_RATE alone.
-        if (!_readerMode && _pacingMode.value() == RtpPacingMode::KernelFq.value()) {
+        if (!_readerMode && _pacingMode == RtpPacingMode::KernelFq) {
                 auto applyRate = [](Stream &s, uint64_t bitsPerSec) {
                         if (!s.active || bitsPerSec == 0) return;
                         uint64_t bytesPerSec = bitsPerSec / 8;
@@ -3403,16 +4817,57 @@ Error RtpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // ever takes the Write path off the single-threaded strand.
         bool expected = false;
         if (frame.captureTime().isValid() && _anchorSeeded.compareAndSwap(expected, true)) {
-                // Pin a single observed (steady, wall) reference
-                // instant and use it to convert the captureTime's
-                // steady_clock-based @c TimeStamp to NTP wallclock.
-                const TimeStamp steadyNow = TimeStamp::now();
-                const NtpTime   wallNow   = NtpTime::now();
-                const Duration  delta     = frame.captureTime().timeStamp() - steadyNow;
-                const NtpTime   captureNtp = wallNow + delta + frame.captureTime().offset();
+                // Phase D2 fast path — when the capture-card backend
+                // has stamped the Frame's captureTime directly in
+                // @ref ClockDomain::Ptp (the PHC-locked SDI / NTV2
+                // case), the timestamp's nanoseconds are already
+                // Unix-epoch UTC against the PTP grandmaster and the
+                // steady→wall delta math is both unnecessary and
+                // wrong.  Convert UTC ns → NTP directly.
+                NtpTime captureNtp;
+                if (frame.captureTime().domain() == ClockDomain(ClockDomain::Ptp)) {
+                        const int64_t utcNs = frame.captureTime().nanoseconds();
+                        if (utcNs > 0) {
+                                using clock_t = std::chrono::system_clock;
+                                const auto tp = clock_t::time_point(std::chrono::nanoseconds(utcNs));
+                                captureNtp = NtpTime::fromSystemClock(tp);
+                        }
+                }
+                if (!captureNtp.isValid()) {
+                        // Default path — captureTime is in a
+                        // steady-clock domain; convert via a single
+                        // observed (steady, wall) reference instant.
+                        // When a PhcClock is bound we prefer the PHC
+                        // wallclock over CLOCK_REALTIME so the
+                        // derived NTP carries the PTP timescale.
+                        const TimeStamp steadyNow = TimeStamp::now();
+                        const int64_t   phcUtcNs = _phcClock.isValid()
+                                                         ? ClockDomain::nowUtcNs(ClockDomain::Ptp)
+                                                         : 0;
+                        NtpTime wallNow;
+                        if (phcUtcNs > 0) {
+                                using clock_t = std::chrono::system_clock;
+                                const auto tp = clock_t::time_point(
+                                        std::chrono::nanoseconds(phcUtcNs));
+                                wallNow = NtpTime::fromSystemClock(tp);
+                        } else {
+                                wallNow = NtpTime::now();
+                        }
+                        const Duration delta = frame.captureTime().timeStamp() - steadyNow;
+                        captureNtp = wallNow + delta + frame.captureTime().offset();
+                }
+                // Phase D3 — pair captureNtp with the per-stream
+                // media clock's frame-0 RTP-TS so a receiver computing
+                // wallclock from any later RTP-TS lands on the actual
+                // capture instant of the corresponding frame.  When
+                // the media clock is invalid (no PHC, no anchor),
+                // @c rtpTsForFrame(0) returns 0 and this matches the
+                // pre-D3 behaviour exactly.
                 auto refine = [&captureNtp](Stream &s) {
                         if (!s.active || s.session == nullptr) return;
-                        s.session->setRtpAnchor(captureNtp, 0);
+                        const uint32_t anchorRtpTs =
+                                s.mediaClock.isValid() ? s.mediaClock.rtpTsForFrame(0) : 0;
+                        s.session->setRtpAnchor(captureNtp, anchorRtpTs);
                 };
                 for (VideoStream &vs : _videos) refine(vs);
                 for (AudioStream &as : _audios) refine(as);
@@ -3740,6 +5195,19 @@ Error RtpMediaIO::executeCmd(MediaIOCommandStats &cmd) {
                 cmd.stats.set(StatsBytesSent, videoBytesTx + audioBytesTx + dataBytesTx);
                 cmd.stats.set(StatsAudioSilencePacketsEmitted, audioSilencePackets);
                 cmd.stats.set(StatsAudioSilenceSamplesEmitted, audioSilenceSamples);
+                // ST 2110-30 §7 conformance level and resolved
+                // AES67 wire format for the first audio writer
+                // stream.  Multi-stream senders (atypical for the
+                // current backend) surface only the first stream's
+                // level — operators that need per-stream telemetry
+                // can read the underlying AudioStream::conformanceLevel
+                // directly.
+                if (!_audios.isEmpty()) {
+                        cmd.stats.set(StatsAudioConformanceLevel,
+                                      _audios[0].conformanceLevel.valueName());
+                        cmd.stats.set(StatsAudioWireFormat,
+                                      _audios[0].wireFormat.valueName());
+                }
                 // Diagnostic histograms (TX side) — first stream
                 // only today.
                 if (!_videos.isEmpty()) {

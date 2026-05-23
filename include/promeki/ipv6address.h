@@ -12,6 +12,7 @@
 #if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
+#include <promeki/datatype.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/result.h>
@@ -32,6 +33,7 @@ class Ipv4Address;
 class Ipv6Address;
 class MacAddress;
 class TextStream;
+class DataStream;
 
 /**
  * @brief IPv6 network address.
@@ -58,6 +60,13 @@ class TextStream;
  */
 class Ipv6Address {
         public:
+                PROMEKI_DATATYPE(Ipv6Address, DataTypeIpv6Address, 1)
+
+                /** @brief Writes the canonical RFC 5952 String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical RFC 5952 String. */
+                template <uint32_t V> static Result<Ipv6Address> readFromStream(DataStream &s);
+
                 /** @brief Raw 16-byte storage format for an IPv6 address. */
                 using DataFormat = Array<uint8_t, 16>;
 

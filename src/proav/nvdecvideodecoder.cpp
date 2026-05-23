@@ -566,10 +566,10 @@ class NvdecVideoDecoder::Impl {
                         }
                         const TransferCharacteristics t = TransferCharacteristics(
                                 static_cast<int>(fmt->video_signal_description.transfer_characteristics));
-                        if (t.value() == TransferCharacteristics::SMPTE2084.value()) {
+                        if (t == TransferCharacteristics::SMPTE2084) {
                                 return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_PQ);
                         }
-                        if (t.value() == TransferCharacteristics::ARIB_STD_B67.value()) {
+                        if (t == TransferCharacteristics::ARIB_STD_B67) {
                                 return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec2020_HLG);
                         }
                         return PixelFormat(PixelFormat::YUV10_420_SemiPlanar_LE_Rec709);

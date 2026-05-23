@@ -118,6 +118,18 @@ struct RtpAudioTxContext {
                 ///        (counts per silence packet ×
                 ///        @c packetSamples).  @c nullptr disables.
                 Atomic<int64_t> *silenceSamplesEmitted = nullptr;
+
+                /// @brief Initial RTP-TS for the very first emitted
+                ///        packet (Phase D3).  Sourced from the
+                ///        per-stream @ref RtpMediaClock so a
+                ///        PTP-anchored audio writer rides the SMPTE
+                ///        Epoch grid (`mediaclk:direct=0` interop)
+                ///        instead of starting at zero.  The TX
+                ///        thread copies this into its internal cursor
+                ///        at construction time; subsequent advances
+                ///        add @c packetSamples per emission.  Default
+                ///        @c 0 preserves the pre-D3 behaviour.
+                uint32_t initialRtpTs = 0;
 };
 
 /**

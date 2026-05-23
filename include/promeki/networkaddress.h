@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
 #include <variant>
+#include <promeki/datatype.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/result.h>
@@ -29,6 +30,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class TextStream;
+class DataStream;
 
 /**
  * @brief High-level network address that can represent IPv4, IPv6, or an unresolved hostname.
@@ -68,6 +70,13 @@ class TextStream;
  */
 class NetworkAddress {
         public:
+                PROMEKI_DATATYPE(NetworkAddress, DataTypeNetworkAddress, 1)
+
+                /** @brief Writes the canonical String form (IPv4/IPv6 literal or hostname). */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical String form. */
+                template <uint32_t V> static Result<NetworkAddress> readFromStream(DataStream &s);
+
                 /** @brief The kind of address stored. */
                 enum Type {
                         None = 0, ///< No address set.

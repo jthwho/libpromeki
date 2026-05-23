@@ -211,6 +211,36 @@ TEST_CASE("UdpSocket") {
                 CHECK(err.isOk());
         }
 
+        SUBCASE("setDontFragment IPv4") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                Error err = sock.setDontFragment(true);
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+                // Disable round-trips through the same code path.
+                CHECK(sock.setDontFragment(false).isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
+
+        SUBCASE("setDontFragment IPv6") {
+                UdpSocket sock;
+                Error openErr = sock.openIpv6(IODevice::ReadWrite);
+                REQUIRE(openErr.isOk());
+                Error err = sock.setDontFragment(true);
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
+
+        SUBCASE("setDontFragment on closed socket fails") {
+                UdpSocket sock;
+                CHECK(sock.setDontFragment(true) == Error::NotOpen);
+        }
+
         SUBCASE("bytesAvailable before any data") {
                 UdpSocket sock;
                 sock.open(IODevice::ReadWrite);

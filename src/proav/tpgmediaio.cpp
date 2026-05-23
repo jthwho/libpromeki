@@ -586,12 +586,12 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         // 608-pair then 708-triples on the wire, matching
                         // real broadcast captioner output.
                         List<CaptionCodec> wanted;
-                        if (_ancCaptionsCodec.value() == CaptionCodec::Cea608.value() ||
-                            _ancCaptionsCodec.value() == CaptionCodec::Both.value()) {
+                        if (_ancCaptionsCodec == CaptionCodec::Cea608 ||
+                            _ancCaptionsCodec == CaptionCodec::Both) {
                                 wanted.pushToBack(CaptionCodec(CaptionCodec::Cea608));
                         }
-                        if (_ancCaptionsCodec.value() == CaptionCodec::Cea708.value() ||
-                            _ancCaptionsCodec.value() == CaptionCodec::Both.value()) {
+                        if (_ancCaptionsCodec == CaptionCodec::Cea708 ||
+                            _ancCaptionsCodec == CaptionCodec::Both) {
                                 wanted.pushToBack(CaptionCodec(CaptionCodec::Cea708));
                         }
                         CaptionEncoder::Config cfgEnc;

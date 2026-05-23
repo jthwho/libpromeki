@@ -10,6 +10,7 @@ add_executable(promeki-test
     cases/ndi.cpp
     cases/roundtrip.cpp
     cases/rtp.cpp
+    cases/rtp_ffmpeg.cpp
     cases/rtpchaos.cpp
     cases/rtpchaosshim.cpp
     cases/videocarrier.cpp

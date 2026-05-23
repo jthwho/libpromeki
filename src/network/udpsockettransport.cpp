@@ -84,11 +84,33 @@ Error UdpSocketTransport::open() {
                 }
         }
 
+        // SO_BINDTODEVICE pinning, used by ST 2022-7 deployments where
+        // both legs share a subnet.  NotSupported is tolerated on non-
+        // Linux so a portable MediaConfig that names a bind interface
+        // doesn't break on macOS / Windows.
+        if (!_bindInterface.isEmpty()) {
+                Error biErr = _socket->setBindInterface(_bindInterface);
+                if (biErr.isError() && biErr != Error::NotSupported) {
+                        close();
+                        return biErr;
+                }
+        }
+
         if (_multicastLoopback) {
                 Error loopErr = _socket->setMulticastLoopback(true);
                 if (loopErr.isError()) {
                         close();
                         return loopErr;
+                }
+        }
+
+        if (_dontFragment) {
+                Error dfErr = _socket->setDontFragment(true);
+                // NotSupported is tolerated on non-Linux so the caller
+                // can keep the same MediaConfig across platforms.
+                if (dfErr.isError() && dfErr != Error::NotSupported) {
+                        close();
+                        return dfErr;
                 }
         }
 

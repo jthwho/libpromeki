@@ -12,6 +12,7 @@
 #include <promeki/audiostreamdesc.h>
 #include <promeki/datastream.h>
 #include <promeki/bufferiodevice.h>
+#include <promeki/result.h>
 #include <promeki/variant.h>
 
 using namespace promeki;
@@ -480,3 +481,191 @@ TEST_CASE("AudioChannelMap: hashable, equal maps share a hash") {
         set.insert(c);
         CHECK(set.size() == 2);
 }
+
+// ============================================================================
+// SMPTE ST 2110-30:2025 §6.2.2 channel-order bridge
+// ============================================================================
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: empty map returns empty") {
+        AudioChannelMap m;
+        CHECK(m.toSt2110ChannelOrder().isEmpty());
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: single Mono channel") {
+        AudioChannelMap m{ChannelRole::Mono};
+        CHECK(m.toSt2110ChannelOrder() == "(M)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: Stereo pattern") {
+        AudioChannelMap m{ChannelRole::FrontLeft, ChannelRole::FrontRight};
+        CHECK(m.toSt2110ChannelOrder() == "(ST)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: LtRt matrix stereo") {
+        AudioChannelMap m{ChannelRole::LeftTotal, ChannelRole::RightTotal};
+        CHECK(m.toSt2110ChannelOrder() == "(LtRt)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: 5.1 matches §6.2.2 51") {
+        // Library 5.1 well-known layout (FL, FR, FC, LFE, BL, BR)
+        // matches ST 2110-30 Table 1's `51` sequence (L, R, C, LFE,
+        // Ls, Rs) — the Ls/Rs labels map to the library's BackLeft /
+        // BackRight per the convention footnote in §6.2.2.
+        AudioChannelMap m{ChannelRole::FrontLeft, ChannelRole::FrontRight, ChannelRole::FrontCenter,
+                          ChannelRole::LFE,       ChannelRole::BackLeft,   ChannelRole::BackRight};
+        CHECK(m.toSt2110ChannelOrder() == "(51)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: library 7.1 splits to 51 + U02") {
+        // Library 7.1 well-known layout puts BackLeft/BackRight
+        // before SideLeft/SideRight; ST 2110-30 `71` requires the
+        // opposite order.  Detection must NOT misclassify the
+        // full 8-channel sequence as `71` — but the first 6
+        // channels do form a valid `51` group, so the greedy
+        // matcher correctly emits "(51,U02)" with the trailing
+        // SideL/SideR pair as undefined.  Receivers that
+        // recognise `51` still benefit from the front-six
+        // labelling; the unmatched pair is honest.
+        AudioChannelMap m{ChannelRole::FrontLeft, ChannelRole::FrontRight, ChannelRole::FrontCenter,
+                          ChannelRole::LFE,       ChannelRole::BackLeft,   ChannelRole::BackRight,
+                          ChannelRole::SideLeft,  ChannelRole::SideRight};
+        CHECK(m.toSt2110ChannelOrder() == "(51,U02)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: ST 2110 canonical 7.1 emits 71") {
+        // ST 2110-30 §6.2.2 ordering: L, R, C, LFE, Lss, Rss, Lrs,
+        // Rrs.  Side surrounds come before back surrounds — this
+        // ordering does match `71`.
+        AudioChannelMap m{ChannelRole::FrontLeft, ChannelRole::FrontRight, ChannelRole::FrontCenter,
+                          ChannelRole::LFE,       ChannelRole::SideLeft,   ChannelRole::SideRight,
+                          ChannelRole::BackLeft,  ChannelRole::BackRight};
+        CHECK(m.toSt2110ChannelOrder() == "(71)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: mixed 5.1+Stereo example") {
+        // EXAMPLE 1 in ST 2110-30 §6.2.2: a 5.1 surround group
+        // followed by a stereo pair = 6+2=8 channels emitted as
+        // "(51,ST)".
+        AudioChannelMap m{ChannelRole::FrontLeft, ChannelRole::FrontRight, ChannelRole::FrontCenter,
+                          ChannelRole::LFE,       ChannelRole::BackLeft,   ChannelRole::BackRight,
+                          ChannelRole::FrontLeft, ChannelRole::FrontRight};
+        CHECK(m.toSt2110ChannelOrder() == "(51,ST)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: 4 monos + stereo + 2 undefined") {
+        // EXAMPLE 2 in §6.2.2: four mono channels, one stereo pair,
+        // and a 2-channel undefined group.  The detector should
+        // emit `(M,M,M,M,ST,U02)`.  DM is never produced by
+        // detection (two consecutive Monos emit as `M,M`).
+        AudioChannelMap m{ChannelRole::Mono,       ChannelRole::Mono,       ChannelRole::Mono,
+                          ChannelRole::Mono,       ChannelRole::FrontLeft,  ChannelRole::FrontRight,
+                          ChannelRole::Unused,     ChannelRole::Unused};
+        CHECK(m.toSt2110ChannelOrder() == "(M,M,M,M,ST,U02)");
+}
+
+TEST_CASE("AudioChannelMap::toSt2110ChannelOrder: 64-channel Undefined cap") {
+        // U-symbol family is U01..U64; runs longer than 64 channels
+        // emit as multiple back-to-back U-groups.
+        AudioChannelMap m;
+        for (int i = 0; i < 70; ++i) m.setRole(i, ChannelRole::Unused);
+        CHECK(m.toSt2110ChannelOrder() == "(U64,U06)");
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: round-trip Table 1 symbols") {
+        struct Case { const char *value; size_t expectedChannels; ChannelRole firstRole; };
+        const Case cases[] = {
+                {"SMPTE2110.(M)",    1, ChannelRole::Mono},
+                {"SMPTE2110.(ST)",   2, ChannelRole::FrontLeft},
+                {"SMPTE2110.(LtRt)", 2, ChannelRole::LeftTotal},
+                {"SMPTE2110.(51)",   6, ChannelRole::FrontLeft},
+                {"SMPTE2110.(71)",   8, ChannelRole::FrontLeft},
+                {"SMPTE2110.(SGRP)", 4, ChannelRole::Unused},
+                {"SMPTE2110.(U05)",  5, ChannelRole::Unused},
+        };
+        for (const Case &c : cases) {
+                CAPTURE(c.value);
+                auto r = AudioChannelMap::fromSt2110ChannelOrder(c.value);
+                REQUIRE(isOk(r));
+                AudioChannelMap m = value(r);
+                CHECK(m.channels() == c.expectedChannels);
+                CHECK(m.role(0) == c.firstRole);
+        }
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: DM expands to two Monos") {
+        auto r = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(DM)");
+        REQUIRE(isOk(r));
+        AudioChannelMap m = value(r);
+        CHECK(m.channels() == 2);
+        CHECK(m.role(0) == ChannelRole::Mono);
+        CHECK(m.role(1) == ChannelRole::Mono);
+        // Detection collapses Mono,Mono to (M,M) on emission — DM
+        // is lossy through one round-trip, by design (the wire-
+        // channel sequence is identical).
+        CHECK(m.toSt2110ChannelOrder() == "(M,M)");
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: 51 + ST mixed grouping") {
+        auto r = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(51,ST)");
+        REQUIRE(isOk(r));
+        AudioChannelMap m = value(r);
+        CHECK(m.channels() == 8);
+        CHECK(m.role(0) == ChannelRole::FrontLeft);
+        CHECK(m.role(5) == ChannelRole::BackRight);
+        CHECK(m.role(6) == ChannelRole::FrontLeft);
+        CHECK(m.role(7) == ChannelRole::FrontRight);
+        // Round-trip preserves the emission form exactly.
+        CHECK(m.toSt2110ChannelOrder() == "(51,ST)");
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: 222 produces 24 Unused (ST 2036-2 deferred)") {
+        auto r = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(222)");
+        REQUIRE(isOk(r));
+        AudioChannelMap m = value(r);
+        CHECK(m.channels() == 24);
+        for (size_t i = 0; i < 24; ++i) CHECK(m.role(i) == ChannelRole::Unused);
+        // 222 emission is not produced by detection; the round-trip
+        // becomes U24.
+        CHECK(m.toSt2110ChannelOrder() == "(U24)");
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: tolerates whitespace and dot-less form") {
+        // Whitespace around symbols, both with and without the dot
+        // after the convention name.
+        auto r1 = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.( 51 , ST )");
+        REQUIRE(isOk(r1));
+        CHECK(value(r1).channels() == 8);
+        auto r2 = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110(51,ST)");
+        REQUIRE(isOk(r2));
+        CHECK(value(r2).channels() == 8);
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: body-only form") {
+        // The convention prefix is optional — bare body form is
+        // accepted so callers can hand off the trimmed fmtp value
+        // directly.
+        auto r = AudioChannelMap::fromSt2110ChannelOrder("(M,ST)");
+        REQUIRE(isOk(r));
+        CHECK(value(r).channels() == 3);
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: rejects malformed input") {
+        // Missing parens.
+        CHECK(error(AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.M,ST")) == Error::Invalid);
+        // Unknown symbol.
+        CHECK(error(AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(XYZ)")) == Error::Invalid);
+        // U-symbol out of range.
+        CHECK(error(AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(U99)")) == Error::Invalid);
+        // U-symbol with single digit (RFC requires two digits).
+        CHECK(error(AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(U5)")) == Error::Invalid);
+        // Empty group inside parens (trailing comma).
+        CHECK(error(AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.(M,)")) == Error::Invalid);
+}
+
+TEST_CASE("AudioChannelMap::fromSt2110ChannelOrder: empty body is empty map") {
+        // SMPTE2110.() — pathological but parseable.
+        auto r = AudioChannelMap::fromSt2110ChannelOrder("SMPTE2110.()");
+        REQUIRE(isOk(r));
+        CHECK(value(r).channels() == 0);
+}
+

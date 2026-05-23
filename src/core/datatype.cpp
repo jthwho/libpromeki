@@ -73,6 +73,9 @@
 #include <promeki/hdrdynamic2094_40.h>
 #endif
 #if PROMEKI_ENABLE_NETWORK
+#include <promeki/ipv4address.h>
+#include <promeki/ipv6address.h>
+#include <promeki/networkaddress.h>
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
 #include <promeki/macaddress.h>
@@ -336,6 +339,9 @@ void registerBuiltinDataTypes() {
                 registerDataType<HdrDynamic2094_40>();
 #endif
 #if PROMEKI_ENABLE_NETWORK
+                registerDataType<Ipv4Address>();
+                registerDataType<Ipv6Address>();
+                registerDataType<NetworkAddress>();
                 registerDataType<SocketAddress>();
                 registerDataType<SdpSession>();
                 registerDataType<MacAddress>();

@@ -29,15 +29,15 @@ TEST_CASE("AncTranslateConfig: defaults via spec lookup") {
         // their own).
         const VariantSpec *fid = AncTranslateConfig::spec(AncTranslateConfig::Fidelity);
         REQUIRE(fid != nullptr);
-        CHECK(fid->defaultValue().get<Enum>().value() == AncFidelity::Default.value());
+        CHECK(fid->defaultValue().get<Enum>() == AncFidelity::Default);
 
         const VariantSpec *cks = AncTranslateConfig::spec(AncTranslateConfig::Checksum);
         REQUIRE(cks != nullptr);
-        CHECK(cks->defaultValue().get<Enum>().value() == AncChecksumPolicy::PreserveOrRecompute.value());
+        CHECK(cks->defaultValue().get<Enum>() == AncChecksumPolicy::PreserveOrRecompute);
 
         const VariantSpec *onu = AncTranslateConfig::spec(AncTranslateConfig::OnUnsupported);
         REQUIRE(onu != nullptr);
-        CHECK(onu->defaultValue().get<Enum>().value() == AncOnUnsupported::BestEffort.value());
+        CHECK(onu->defaultValue().get<Enum>() == AncOnUnsupported::BestEffort);
 
         const VariantSpec *lossy = AncTranslateConfig::spec(AncTranslateConfig::AllowLossy);
         REQUIRE(lossy != nullptr);
@@ -55,11 +55,9 @@ TEST_CASE("AncTranslateConfig: set/get round-trip for universal knobs") {
         cfg.set(AncTranslateConfig::OnUnsupported, AncOnUnsupported(AncOnUnsupported::Fail));
         cfg.set(AncTranslateConfig::AllowLossy, true);
 
-        CHECK(cfg.get(AncTranslateConfig::Fidelity).asEnum(AncFidelity::Type).value() == AncFidelity::Full.value());
-        CHECK(cfg.get(AncTranslateConfig::Checksum).asEnum(AncChecksumPolicy::Type).value() ==
-              AncChecksumPolicy::AlwaysRecompute.value());
-        CHECK(cfg.get(AncTranslateConfig::OnUnsupported).asEnum(AncOnUnsupported::Type).value() ==
-              AncOnUnsupported::Fail.value());
+        CHECK(cfg.get(AncTranslateConfig::Fidelity).asEnum(AncFidelity::Type) == AncFidelity::Full);
+        CHECK(cfg.get(AncTranslateConfig::Checksum).asEnum(AncChecksumPolicy::Type) == AncChecksumPolicy::AlwaysRecompute);
+        CHECK(cfg.get(AncTranslateConfig::OnUnsupported).asEnum(AncOnUnsupported::Type) == AncOnUnsupported::Fail);
         CHECK(cfg.getAs<bool>(AncTranslateConfig::AllowLossy) == true);
 
         CHECK(cfg.contains(AncTranslateConfig::Fidelity));
@@ -108,10 +106,9 @@ TEST_CASE("AncTranslateConfig: merge overlays — later wins, untouched preserve
         base.merge(overlay);
 
         // Overridden by overlay.
-        CHECK(base.get(AncTranslateConfig::Fidelity).asEnum(AncFidelity::Type).value() == AncFidelity::Full.value());
+        CHECK(base.get(AncTranslateConfig::Fidelity).asEnum(AncFidelity::Type) == AncFidelity::Full);
         // Added by overlay.
-        CHECK(base.get(AncTranslateConfig::OnUnsupported).asEnum(AncOnUnsupported::Type).value() ==
-              AncOnUnsupported::Skip.value());
+        CHECK(base.get(AncTranslateConfig::OnUnsupported).asEnum(AncOnUnsupported::Type) == AncOnUnsupported::Skip);
         // Untouched by overlay.
         CHECK(base.getAs<bool>(AncTranslateConfig::AllowLossy) == false);
         CHECK(base.getAs<uint16_t>(AncTranslateConfig::St291BuildLine) == 9);

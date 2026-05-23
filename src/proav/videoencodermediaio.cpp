@@ -211,15 +211,30 @@ Error VideoEncoderMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         MediaDesc outDesc;
         outDesc.setFrameRate(cmd.pendingMediaDesc.frameRate());
 
-        // Derive the encoder's output PixelFormat from the codec
-        // metadata — the first entry in the codec's compressed
-        // PixelFormat list is the canonical bitstream variant.  Any
-        // per-frame variation (JPEG's per-image subsampling choice,
-        // for example) is reflected on the emitted CompressedVideoPayload itself.
+        // Derive the encoder's output PixelFormat.  Prefer the
+        // user's explicitly configured @c VideoPixelFormat when it is
+        // a compressed PD for this codec — that's how callers pin a
+        // specific bitstream variant (e.g. JPEG XS 10-bit 4:2:2 vs.
+        // 8-bit 4:2:0).  Without this, the SDP writer downstream
+        // reads the wrong PD off the encoder's output MediaDesc and
+        // advertises an 8-bit (or otherwise-mismatched) wire format
+        // while the encoder actually produces the configured 10-bit
+        // bitstream — receiver-side decode then fails the
+        // bit_depth / colour_format check.  Per-frame variation
+        // (JPEG's per-image subsampling, for example) is reflected
+        // on the emitted CompressedVideoPayload itself.
         PixelFormat encOutPd;
-        const auto  compressedList = _codec.compressedPixelFormats();
-        if (!compressedList.isEmpty()) {
-                encOutPd = compressedList[0];
+        {
+                const PixelFormat configuredPd = cfg.getAs<PixelFormat>(MediaConfig::VideoPixelFormat);
+                if (configuredPd.isValid() && configuredPd.isCompressed() &&
+                    configuredPd.videoCodec() == _codec) {
+                        encOutPd = configuredPd;
+                } else {
+                        const auto compressedList = _codec.compressedPixelFormats();
+                        if (!compressedList.isEmpty()) {
+                                encOutPd = compressedList[0];
+                        }
+                }
         }
         for (const auto &srcImg : cmd.pendingMediaDesc.imageList()) {
                 outDesc.imageList().pushToBack(ImageDesc(srcImg.size(), encOutPd));
@@ -402,6 +417,15 @@ Error VideoEncoderMediaIO::describe(MediaIODescription *out) const {
         // When a codec has been pinned via config, advertise it as
         // the producible compressed shape.  The acceptable side
         // stays empty as a "any uncompressed video" signal.
+        //
+        // Preferred format: if @c VideoPixelFormat is configured to a
+        // compressed PD for this codec (e.g. the user pinned
+        // @c JPEG_XS_YUV10_422_Rec709), honour it.  Otherwise fall
+        // back to the registry's first compressed PD — sufficient for
+        // codecs whose output PD is chroma-/depth-agnostic
+        // (@c H264, @c HEVC) but wrong for chroma-/depth-specific
+        // families (@c JPEG_XS_*) where the first-in-registry pick
+        // silently disagrees with the user's configured output.
         if (_codec.isValid()) {
                 for (const PixelFormat &pf : _codec.compressedPixelFormats()) {
                         MediaDesc produced;
@@ -409,7 +433,21 @@ Error VideoEncoderMediaIO::describe(MediaIODescription *out) const {
                         out->producibleFormats().pushToBack(produced);
                 }
                 if (!out->producibleFormats().isEmpty()) {
-                        out->setPreferredFormat(out->producibleFormats()[0]);
+                        const PixelFormat configuredPd =
+                                config().getAs<PixelFormat>(MediaConfig::VideoPixelFormat);
+                        size_t preferIdx = 0;
+                        if (configuredPd.isValid() && configuredPd.isCompressed() &&
+                            configuredPd.videoCodec() == _codec) {
+                                for (size_t i = 0; i < out->producibleFormats().size(); ++i) {
+                                        const MediaDesc &md = out->producibleFormats()[i];
+                                        if (md.imageList().isEmpty()) continue;
+                                        if (md.imageList()[0].pixelFormat() == configuredPd) {
+                                                preferIdx = i;
+                                                break;
+                                        }
+                                }
+                        }
+                        out->setPreferredFormat(out->producibleFormats()[preferIdx]);
                 }
         }
         return Error::Ok;
@@ -462,12 +500,49 @@ Error VideoEncoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
                 return Error::Ok;
         }
 
+        // Short-circuit: if the upstream offered a @ref PixelFormat the
+        // encoder accepts directly, use it — don't second-guess the
+        // caller's chroma choice against a generic spec default.  This
+        // matters specifically when the configured output PD encodes
+        // chroma (e.g. @c JPEG_XS_YUV10_422_Rec709 with memLayout
+        // @c P_422_3x10_LE) and the upstream is the matching planar
+        // source.  Without this short-circuit, the @c VideoChromaSubsampling
+        // 4:2:0 spec default would force the planner to swap the
+        // upstream to whatever variant matches 4:2:0 and the encoder
+        // would then reject the wrong chroma at @c encodeFrame time.
+        for (const PixelFormat &cand : supported) {
+                if (cand == pd) {
+                        *preferred = offered;
+                        return Error::Ok;
+                }
+        }
+
         // Which chroma does the caller want the CSC to land on?  The
         // config default is 4:2:0 so an RGB or 4:4:4 source routed into
         // an encoder picks the universally-decodable format unless the
         // user opts in to higher-quality chroma with VideoChromaSubsampling.
+        //
+        // Refinement: when the encoder's configured output
+        // @ref VideoPixelFormat is a compressed format whose memory
+        // layout encodes the chroma (e.g. @c JPEG_XS_YUV10_422_Rec709
+        // uses @c P_422_3x10_LE), prefer that as the bridge target.
+        // Codecs that don't encode chroma in their wire
+        // @ref PixelFormat (@c H264 / @c HEVC) yield the same YUV420
+        // default — callers opt into a different chroma via
+        // @c VideoChromaSubsampling, which overrides the PD-derived
+        // value because the user's explicit choice always wins.
         ChromaSubsampling wantChroma = ChromaSubsampling::YUV420;
-        if (true) {
+        {
+                const PixelFormat outPd = config().getAs<PixelFormat>(MediaConfig::VideoPixelFormat);
+                if (outPd.isValid() && outPd.isCompressed()) {
+                        const PixelMemLayout::Sampling s = outPd.memLayout().sampling();
+                        if (s == PixelMemLayout::Sampling444)
+                                wantChroma = ChromaSubsampling::YUV444;
+                        else if (s == PixelMemLayout::Sampling422)
+                                wantChroma = ChromaSubsampling::YUV422;
+                        else if (s == PixelMemLayout::Sampling420)
+                                wantChroma = ChromaSubsampling::YUV420;
+                }
                 const Enum raw = config().getAs<Enum>(MediaConfig::VideoChromaSubsampling);
                 if (raw.type() == ChromaSubsampling::Type) {
                         wantChroma = ChromaSubsampling(raw.value());
@@ -482,17 +557,6 @@ Error VideoEncoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
         const PixelMemLayout::Sampling wantSampling = chromaToSampling(wantChroma);
 
         const int offeredBits = pd.memLayout().compCount() > 0 ? static_cast<int>(pd.memLayout().compDesc(0).bits) : 0;
-
-        // Offered format already satisfies the requested chroma and is
-        // on the supported list — no negotiation needed.
-        if (pd.memLayout().sampling() == wantSampling) {
-                for (const PixelFormat &cand : supported) {
-                        if (cand == pd) {
-                                *preferred = offered;
-                                return Error::Ok;
-                        }
-                }
-        }
 
         // Pick the best-matching supported format to advertise so the
         // planner splices in a CSC.  Preference order:
@@ -556,13 +620,25 @@ Error VideoEncoderMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *
         }
 
         // The encoder produces a compressed PixelFormat whose codec
-        // matches the configured VideoCodec.  Start from the
-        // requested input shape (raster + frame rate flow through),
-        // then replace the pixel desc with the codec's compressed
-        // form.
+        // matches the configured VideoCodec.  Prefer the user's
+        // explicitly configured @c VideoPixelFormat when it's a
+        // compressed PD for this codec — that's how the JXS / JPEG
+        // matrix entries (whose output PD encodes depth / chroma)
+        // pin which specific variant to produce.  Without this, the
+        // planner-time advertisement falls back to
+        // @c compressedPixelFormats()[0] and the SDP writer emits
+        // whatever sits first in the registry (e.g. 8-bit JPEG XS)
+        // instead of the configured 10-bit variant.
         MediaDesc         out = requested;
-        const PixelFormat compressed = codec.compressedPixelFormats()[0];
-        ImageDesc::List  &imgs = out.imageList();
+        PixelFormat       compressed = codec.compressedPixelFormats()[0];
+        {
+                const PixelFormat configuredPd = config().getAs<PixelFormat>(MediaConfig::VideoPixelFormat);
+                if (configuredPd.isValid() && configuredPd.isCompressed() &&
+                    configuredPd.videoCodec() == codec) {
+                        compressed = configuredPd;
+                }
+        }
+        ImageDesc::List &imgs = out.imageList();
         for (size_t i = 0; i < imgs.size(); ++i) {
                 imgs[i].setPixelFormat(compressed);
         }

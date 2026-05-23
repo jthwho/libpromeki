@@ -352,7 +352,7 @@ namespace {
                         ws.hasBg = true;
                         ws.bgColor = quantiseColor(span.backgroundColor());
                         ws.bgSemiTransparent =
-                                span.backgroundOpacity().value() == SubtitleOpacity::Translucent.value();
+                                span.backgroundOpacity() == SubtitleOpacity::Translucent;
                 }
                 return ws;
         }

@@ -18,6 +18,7 @@
 #include <promeki/queue.h>
 #include <promeki/rtppacket.h>
 #include <promeki/rtppayload.h>
+#include <promeki/rtppayloadrawvideo.h>
 #include <promeki/rtpvideodepacketizerthread.h>
 #include <promeki/timestamp.h>
 

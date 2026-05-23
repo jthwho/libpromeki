@@ -8,7 +8,13 @@
 
 General-purpose primitives for building AV-over-IP implementations (ST 2110, AES67, custom protocols). Higher-level standard-specific implementations (NDI, Dante) will wrap vendor libraries through our API.
 
-**Completed:** PrioritySocket, RtpSession (including `sendPacketsPaced()` for ST 2110-21 pacing with a 100 µs sleep-skip threshold to avoid syscall overhead on high-packet-rate streams, plus `startReceiving()` / `stopReceiving()` receive loop with `PacketCallback`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing and **dynamic 4:2:0/4:2:2 detection via SOF0 sampling factor** for the RTP Type byte, **JPEG XS via `RtpPayloadJpegXs` RFC 9134 codestream-mode pack/unpack**), RtpPayloadJson, SdpSession (insertion-order-preserving attributes, `fromFile()` / `toFile()`, structured `RtpMap` / `FmtpParameters` accessors, equality operators), MulticastManager, **MulticastReceiver** (standalone datagram receiver with owned worker thread, ASM/SSM group join, per-callback delivery).
+> The SMPTE ST 2110 conformance roadmap (system timing,
+> uncompressed video, traffic shaping, PCM/AES3 audio, ANC, 2022-7
+> redundancy, and the PacketScheduler / PtpClock / RtpMediaClock
+> decoupling work) is tracked in [2110.md](2110.md). This document
+> retains the general AV-over-IP building blocks.
+
+**Completed:** PrioritySocket, RtpSession (including `sendPacketsPaced()` for ST 2110-21 pacing with a 100 µs sleep-skip threshold to avoid syscall overhead on high-packet-rate streams, plus `startReceiving()` / `stopReceiving()` receive loop with `PacketCallback`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing and **dynamic 4:2:0/4:2:2 detection via SOF0 sampling factor** for the RTP Type byte, **RFC 2435 §3.1.5 W/8 + H/8 8-bit limit guard** — `pack()` emits `promekiWarnThrottled` when configured dimensions exceed 2040 px so UHD misconfigurations surface as a clear warning instead of silent SOF0 truncation at the receiver; callers should use JPEG XS (ST 2110-22) or uncompressed (ST 2110-20) for UHD, **JPEG XS via `RtpPayloadJpegXs` RFC 9134 codestream-mode pack/unpack**), RtpPayloadJson, SdpSession (insertion-order-preserving attributes, `fromFile()` / `toFile()`, structured `RtpMap` / `FmtpParameters` accessors, equality operators), MulticastManager, **MulticastReceiver** (standalone datagram receiver with owned worker thread, ASM/SSM group join, per-callback delivery).
 
 **UdpSocket / UdpSocketTransport additions:** `setReceiveBufferSize(int bytes)` / `setSendBufferSize(int bytes)` (set `SO_RCVBUF` / `SO_SNDBUF`; pass 0 to leave kernel default). `UdpSocketTransport` exposes matching `setReceiveBufferSize` / `setSendBufferSize` setters and `receiveBufferSize()` / `sendBufferSize()` accessors; buffer sizing applied before `bind()` at `open()` time.
 

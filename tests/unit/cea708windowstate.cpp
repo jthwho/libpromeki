@@ -361,7 +361,7 @@ TEST_CASE("Cea708WindowState: SWA fill_color decodes from a max-red opaque paylo
         CHECK(a.fillColor.r8() == 255);
         CHECK(a.fillColor.g8() == 0);
         CHECK(a.fillColor.b8() == 0);
-        CHECK(a.fillOpacity.value() == SubtitleOpacity::Solid.value());
+        CHECK(a.fillOpacity == SubtitleOpacity::Solid);
 }
 
 TEST_CASE("Cea708WindowState: SWA fill_opacity=Transparent clears fillColor") {
@@ -375,7 +375,7 @@ TEST_CASE("Cea708WindowState: SWA fill_opacity=Transparent clears fillColor") {
         cmds.push_back(0x00);
         st.processBytes(cmds.data(), cmds.size());
         CHECK_FALSE(st.window(0).attrs.fillColor.isValid());
-        CHECK(st.window(0).attrs.fillOpacity.value() == SubtitleOpacity::Transparent.value());
+        CHECK(st.window(0).attrs.fillOpacity == SubtitleOpacity::Transparent);
 }
 
 TEST_CASE("Cea708WindowState: SWA byte3 carries justify / wordwrap / scroll / print direction") {

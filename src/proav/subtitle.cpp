@@ -363,11 +363,11 @@ const SubtitleOpacity   &SubtitleSpan::edgeOpacity() const { return _d->edgeOpac
 bool SubtitleSpan::hasStyle() const {
         return _d->bold || _d->italic || _d->underline || _d->color.isValid()
                 || _d->backgroundColor.isValid() || _d->edgeColor.isValid()
-                || _d->edgeStyle.value() != SubtitleEdgeStyle::None.value()
-                || _d->fontFace.value() != SubtitleFontFace::Default.value()
-                || _d->foregroundOpacity.value() != SubtitleOpacity::Solid.value()
-                || _d->backgroundOpacity.value() != SubtitleOpacity::Solid.value()
-                || _d->edgeOpacity.value() != SubtitleOpacity::Solid.value();
+                || _d->edgeStyle != SubtitleEdgeStyle::None
+                || _d->fontFace != SubtitleFontFace::Default
+                || _d->foregroundOpacity != SubtitleOpacity::Solid
+                || _d->backgroundOpacity != SubtitleOpacity::Solid
+                || _d->edgeOpacity != SubtitleOpacity::Solid;
 }
 bool SubtitleSpan::isEmpty() const { return _d->text.isEmpty(); }
 
@@ -408,19 +408,19 @@ JsonObject SubtitleSpan::toJson() const {
         if (_d->color.isValid()) obj.set("color", _d->color.toString());
         if (_d->backgroundColor.isValid()) obj.set("backgroundColor", _d->backgroundColor.toString());
         if (_d->edgeColor.isValid()) obj.set("edgeColor", _d->edgeColor.toString());
-        if (_d->edgeStyle.value() != SubtitleEdgeStyle::None.value()) {
+        if (_d->edgeStyle != SubtitleEdgeStyle::None) {
                 obj.set("edgeStyle", _d->edgeStyle.valueName());
         }
-        if (_d->fontFace.value() != SubtitleFontFace::Default.value()) {
+        if (_d->fontFace != SubtitleFontFace::Default) {
                 obj.set("fontFace", _d->fontFace.valueName());
         }
-        if (_d->foregroundOpacity.value() != SubtitleOpacity::Solid.value()) {
+        if (_d->foregroundOpacity != SubtitleOpacity::Solid) {
                 obj.set("foregroundOpacity", _d->foregroundOpacity.valueName());
         }
-        if (_d->backgroundOpacity.value() != SubtitleOpacity::Solid.value()) {
+        if (_d->backgroundOpacity != SubtitleOpacity::Solid) {
                 obj.set("backgroundOpacity", _d->backgroundOpacity.valueName());
         }
-        if (_d->edgeOpacity.value() != SubtitleOpacity::Solid.value()) {
+        if (_d->edgeOpacity != SubtitleOpacity::Solid) {
                 obj.set("edgeOpacity", _d->edgeOpacity.valueName());
         }
         return obj;
@@ -663,10 +663,10 @@ JsonObject Subtitle::toJson() const {
                 for (size_t i = 0; i < _d->spans.size(); ++i) spansArr.add(_d->spans[i].toJson());
                 obj.set("spans", spansArr);
         }
-        if (_d->anchor.value() != SubtitleAnchor::Default.value()) {
+        if (_d->anchor != SubtitleAnchor::Default) {
                 obj.set("anchor", _d->anchor.valueName());
         }
-        if (_d->mode.value() != CaptionMode::Default.value()) {
+        if (_d->mode != CaptionMode::Default) {
                 obj.set("mode", _d->mode.valueName());
         }
         if (_d->rollUpRows != 0) {
@@ -704,7 +704,7 @@ String Subtitle::toString() const {
                 s += _d->flatText.substr(0, kMaxTextChars);
                 s += "...";
         }
-        if (_d->anchor.value() != SubtitleAnchor::Default.value()) {
+        if (_d->anchor != SubtitleAnchor::Default) {
                 s += " anchor=";
                 s += _d->anchor.valueName();
         }

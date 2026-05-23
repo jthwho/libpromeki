@@ -14,12 +14,12 @@
 PROMEKI_NAMESPACE_BEGIN
 
 UniquePtr<CaptionEncoder> CaptionEncoder::create(CaptionCodec codec, const Config &cfg) {
-        if (codec.value() == CaptionCodec::Cea608.value()) {
+        if (codec == CaptionCodec::Cea608) {
                 Cea608Encoder::Config c608;
                 c608.frameRate = cfg.frameRate;
                 return UniquePtr<CaptionEncoder>::takeOwnership(new Cea608Encoder(c608));
         }
-        if (codec.value() == CaptionCodec::Cea708.value()) {
+        if (codec == CaptionCodec::Cea708) {
                 Cea708Encoder::Config c708;
                 c708.frameRate = cfg.frameRate;
                 c708.serviceNumber = cfg.serviceNumber;

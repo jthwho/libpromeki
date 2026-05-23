@@ -31,15 +31,19 @@
  * today:
  *   - MJPEG (RFC 2435) — 4:2:2 and 4:2:0 sub-format variants;
  *   - 8-bit interleaved uncompressed (RFC 4175) — RGB and YUV;
+ *   - 10 / 12-bit uncompressed (RFC 4175 / ST 2110-20) — UYVY BE,
+ *     v210, and DPX-B source layouts driving the 4:2:2 and 4:4:4
+ *     ST 2110-20 wire pgroups via the c-3 scalar CSC kernels;
  *   - H.264 (RFC 6184) — 4:2:0 and 4:2:2 input subsampling;
- *   - H.265 / HEVC (RFC 7798) — 4:2:0 and 4:2:2 input subsampling.
+ *   - H.265 / HEVC (RFC 7798) — 4:2:0 and 4:2:2 input subsampling;
+ *   - JPEG XS (RFC 9134) — 10-bit 4:2:2 codestream-mode round-trip.
  *
- * The H.264 / H.265 cases register only when both an encoder and a
- * decoder backend are available for the codec; otherwise the
- * matrix entry is omitted (no Skip noise on machines without the
- * codec backend).  10/12-bit uncompressed is still excluded
- * pending the ST 2110-20 pgroup work the backend's docstring calls
- * out as deferred.  Audio is L16 (RFC 3551 / AES67) on every case.
+ * The H.264 / H.265 / JPEG XS cases register only when both an
+ * encoder and a decoder backend are available for the codec;
+ * otherwise the matrix entry is omitted (no Skip noise on machines
+ * without the codec backend).  Audio is L16 / 48 kHz (RFC 3551 /
+ * AES67) on every base case; one additional case exercises the
+ * AES67 L24 / 96 kHz wire path (Phase E30).
  *
  * Skip vs. fail policy:
  *
@@ -90,17 +94,39 @@ namespace promekitest {
 
                 struct Case {
                                 String      name;        // dotted identifier registered with TestRunner
-                                String      family;      // "jpeg" / "raw" / "h264" / "h265" — used to label the case sub-group
+                                String      family;      // "jpeg" / "raw" / "h264" / "h265" / "jxs" — used to label the case sub-group
                                 PixelFormat pixelFormat; // wire format on the RTP path (compressed for codec cases, uncompressed for raw)
                                 PixelFormat tpgPixelFormat; // optional: pixel format the TPG should emit before the
                                                          // encoder (drives 4:2:0 vs 4:2:2 subsampling for codecs whose
                                                          // wire @ref PixelFormat does not encode subsampling, e.g.
-                                                         // @c PixelFormat::H264 / @c PixelFormat::HEVC).  Empty for
-                                                         // JPEG (subsampling already lives in the JPEG_* wire format)
-                                                         // and for raw (TPG emits the wire format directly).
+                                                         // @c PixelFormat::H264 / @c PixelFormat::HEVC).  Also used for
+                                                         // 10/12-bit raw cases where the TPG paints into a CSC-source
+                                                         // layout (UYVY BE / v210 / DPX-B) and the planner inserts a
+                                                         // CSC stage to convert to the @c pixelFormat ST 2110-20 wire
+                                                         // pgroup format.  Empty for JPEG (subsampling already lives
+                                                         // in the JPEG_* wire format) and for 8-bit raw (TPG emits
+                                                         // the wire format directly).
                                 VideoCodec  codec;       // valid for compressed paths only — drives an encoder stage on TX and a decoder stage on RX
                                 bool        audio = true;
-                };
+                                // Audio sample rate in Hz.  0 = backend default (48 kHz).
+                                // Used by the AES67 / ST 2110-30 96 kHz path test.
+                                float       audioRate = 0.0f;
+                                // AES67 / ST 2110-30 on-wire PCM format.  Auto = backend default
+                                // (L16 for 48 kHz, L24 for 96 kHz per Phase E30b §6.2.1).
+                                AudioWireFormat audioWireFormat = AudioWireFormat::Auto;
+                                // SMPTE ST 2022-7 dual-leg fan-out (Phase E2022).  When
+                                // true, the TX sink is configured with secondary
+                                // video / audio destinations on a distinct port pair
+                                // (allocated from @ref PortQuad) and the SDP emits
+                                // @c a=group:DUP plus the per-section @c a=mid:
+                                // tokens.  The RX side parses the dual-mid SDP and
+                                // spins up a secondary @c ReceiveThread that merges
+                                // into the same @c StreamReceiver as the primary
+                                // leg; the @c RtpSeqReorderBuffer's silent
+                                // duplicate-by-extended-seq discard satisfies
+                                // RFC 7104 §6 dedup automatically.
+                                bool        dualLeg = false;
+};
 
                 // Hand-curated matrix.  Each entry maps to a real wire
                 // format the RTP backend ships today.  The JPEG cases
@@ -115,6 +141,7 @@ namespace promekitest {
                         const VideoCodec jpeg(VideoCodec::JPEG);
                         const VideoCodec h264(VideoCodec::H264);
                         const VideoCodec hevc(VideoCodec::HEVC);
+                        const VideoCodec jxs(VideoCodec::JPEG_XS);
 
                         // JPEG (RFC 2435).  Two YUV422 variants exercise the two
                         // matrices the JPEG family commonly carries; the
@@ -128,15 +155,36 @@ namespace promekitest {
                                            PixelFormat(PixelFormat::JPEG_YUV8_422_Rec601_Full), PixelFormat(), jpeg,
                                            true});
 
-                        // RFC 4175 uncompressed.  8-bit interleaved is
-                        // what the backend currently supports — see the
-                        // @ref RtpMediaIO docstring for why 10/12-bit
-                        // is gated on ST 2110-20 pgroup support.
+                        // RFC 4175 uncompressed — 8-bit interleaved.  TPG
+                        // emits the wire format directly; no CSC stage
+                        // inserted by the planner.
                         matrix.pushToBack({String("rtp.raw.rgb8_srgb"), String("raw"),
                                            PixelFormat(PixelFormat::RGB8_sRGB), PixelFormat(), VideoCodec(), true});
                         matrix.pushToBack({String("rtp.raw.yuv8_422_rec709"), String("raw"),
                                            PixelFormat(PixelFormat::YUV8_422_Rec709), PixelFormat(), VideoCodec(),
                                            true});
+
+                        // RFC 4175 / ST 2110-20 — 10 / 12-bit pgroup.
+                        // The wire @ref PixelFormat is the ST 2110-20
+                        // pgroup format (`*_2110_*`); the TPG paints into
+                        // a CSC-source layout (`UYVY_BE`, `v210`, `DPX_B`)
+                        // and the planner inserts the c-3 scalar CSC
+                        // kernel landed in Phase E20c-3 parts A/B.  These
+                        // exercise the broadcast lingua franca: SDI input
+                        // (UYVY10/12 BE, v210) and DPX-B colour-grading
+                        // hand-off (4:4:4 10-bit).
+                        matrix.pushToBack({String("rtp.raw.yuv10_422_uyvy_be_rec709"), String("raw"),
+                                           PixelFormat(PixelFormat::YUV10_422_2110_Rec709),
+                                           PixelFormat(PixelFormat::YUV10_422_UYVY_BE_Rec709), VideoCodec(), true});
+                        matrix.pushToBack({String("rtp.raw.yuv12_422_uyvy_be_rec709"), String("raw"),
+                                           PixelFormat(PixelFormat::YUV12_422_2110_Rec709),
+                                           PixelFormat(PixelFormat::YUV12_422_UYVY_BE_Rec709), VideoCodec(), true});
+                        matrix.pushToBack({String("rtp.raw.yuv10_422_v210_rec709"), String("raw"),
+                                           PixelFormat(PixelFormat::YUV10_422_2110_Rec709),
+                                           PixelFormat(PixelFormat::YUV10_422_v210_Rec709), VideoCodec(), true});
+                        matrix.pushToBack({String("rtp.raw.yuv10_dpx_b_rec709"), String("raw"),
+                                           PixelFormat(PixelFormat::YUV10_2110_Rec709),
+                                           PixelFormat(PixelFormat::YUV10_DPX_B_Rec709), VideoCodec(), true});
 
                         // RFC 6184 H.264.  Wire format is @c PixelFormat::H264 —
                         // codec-only, no subsampling.  The TPG output
@@ -166,6 +214,47 @@ namespace promekitest {
                                                    PixelFormat(PixelFormat::HEVC),
                                                    PixelFormat(PixelFormat::YUV8_422_Rec709), hevc, true});
                         }
+
+                        // RFC 9134 JPEG XS — ST 2110-22 Phase E22.
+                        if (jxs.canEncode() && jxs.canDecode()) {
+                                matrix.pushToBack({String("rtp.jxs.yuv10_422_rec709"), String("jxs"),
+                                                   PixelFormat(PixelFormat::JPEG_XS_YUV10_422_Rec709),
+                                                   PixelFormat(PixelFormat::YUV10_422_Planar_LE_Rec709), jxs, true});
+                        }
+
+                        // AES67 / ST 2110-30 — L24 / 96 kHz wire format
+                        // (Phase E30b).  Reuses the 8-bit YUV422 video
+                        // path to keep the matrix focused on the audio
+                        // wire format change; the audio worker stamps
+                        // @c L24 + 96000 Hz clock rate into the SDP and
+                        // the receiver round-trips them.
+                        {
+                                Case c{String("rtp.audio.l24_96k"), String("audio"),
+                                       PixelFormat(PixelFormat::YUV8_422_Rec709), PixelFormat(), VideoCodec(), true};
+                                c.audioRate = 96000.0f;
+                                c.audioWireFormat = AudioWireFormat(AudioWireFormat::L24);
+                                matrix.pushToBack(c);
+                        }
+
+                        // SMPTE ST 2022-7 — dual-leg redundancy (Phase E2022).
+                        // Reuses the 8-bit YUV422 video path so the case
+                        // focuses on the wire-level fan-out + merge path:
+                        // the TX emits identical RTP packets to both
+                        // primary and secondary loopback ports, the SDP
+                        // carries @c a=group:DUP plus per-section
+                        // @c a=mid: tokens, and the RX spawns a parallel
+                        // @c ReceiveThread for the secondary leg whose
+                        // packets merge through @c RtpSeqReorderBuffer's
+                        // silent duplicate-discard.  A clean round-trip
+                        // (frameNumberJumps == 0, streamIdChanges == 0)
+                        // proves the dual-leg dedup math holds against
+                        // real packet flow, not just unit-test stand-ins.
+                        {
+                                Case c{String("rtp.dup.yuv8_422_rec709"), String("dup"),
+                                       PixelFormat(PixelFormat::YUV8_422_Rec709), PixelFormat(), VideoCodec(), true};
+                                c.dualLeg = true;
+                                matrix.pushToBack(c);
+                        }
                         return matrix;
                 }
 
@@ -181,18 +270,32 @@ namespace promekitest {
                 // the next stream's RTP port (a classic gotcha covered
                 // in @ref RtpMediaIO 's port docstring).  We start at
                 // 51000 to stay well clear of any well-known service.
+                //
+                // Dual-leg (ST 2022-7) cases additionally need a
+                // secondary (video, audio) pair on a different port
+                // range so the second leg doesn't collide with its own
+                // primary.  We reserve a 16-port stride per case
+                // unconditionally — wastes 8 ports per single-leg case
+                // but keeps allocation arithmetic boring and lets a
+                // case flip to dual-leg without re-numbering its
+                // neighbours.  Primary lives in @c (base+0, base+4);
+                // secondary lives in @c (base+8, base+12).
                 struct PortPair {
-                                int video;
-                                int audio;
+                                int video = 0;
+                                int audio = 0;
                 };
-                PortPair allocatePorts(size_t caseIndex) {
-                        // Stride of 8 leaves room for video RTP/RTCP + audio
-                        // RTP/RTCP + a 4-port gap before the next case.
-                        const int basePort = 51000 + static_cast<int>(caseIndex) * 8;
-                        PortPair  p;
-                        p.video = basePort;
-                        p.audio = basePort + 4;
-                        return p;
+                struct PortQuad {
+                                PortPair primary;
+                                PortPair secondary;
+                };
+                PortQuad allocatePorts(size_t caseIndex) {
+                        const int basePort = 51000 + static_cast<int>(caseIndex) * 16;
+                        PortQuad  q;
+                        q.primary.video = basePort;
+                        q.primary.audio = basePort + 4;
+                        q.secondary.video = basePort + 8;
+                        q.secondary.audio = basePort + 12;
+                        return q;
                 }
 
                 // -------------------------------------------------------------------
@@ -206,7 +309,7 @@ namespace promekitest {
                 // when the stage carries an explicit @c type, so we have
                 // to stamp it ourselves here.
 
-                MediaPipelineConfig::Stage makeRtpSinkStage(const PortPair &ports, const PixelFormat &pd,
+                MediaPipelineConfig::Stage makeRtpSinkStage(const Case &c, const PortQuad &ports,
                                                             const String &sdpPath) {
                         MediaPipelineConfig::Stage s;
                         s.name = String("rtpout");
@@ -221,23 +324,61 @@ namespace promekitest {
                         // any explicit mirroring on its end — that's the
                         // test's whole point.
                         auto vAddr = SocketAddress::fromString(String("127.0.0.1:") +
-                                                               String::number(ports.video));
+                                                               String::number(ports.primary.video));
                         auto aAddr = SocketAddress::fromString(String("127.0.0.1:") +
-                                                               String::number(ports.audio));
+                                                               String::number(ports.primary.audio));
                         s.config.set(MediaConfig::VideoRtpDestination, vAddr.first());
                         s.config.set(MediaConfig::AudioRtpDestination, aAddr.first());
+                        // ST 2022-7 secondary leg (Phase E2022).  When
+                        // dual-leg is requested the sink stamps the
+                        // secondary destinations and @c RtpSession spawns
+                        // a parallel @c PacketScheduler thread + transport
+                        // pair; the SDP writer emits @c a=group:DUP plus
+                        // the per-section @c a=mid: tokens for RFC 7104
+                        // discovery on the RX side.
+                        if (c.dualLeg) {
+                                auto vSec = SocketAddress::fromString(
+                                        String("127.0.0.1:") + String::number(ports.secondary.video));
+                                auto aSec = SocketAddress::fromString(
+                                        String("127.0.0.1:") + String::number(ports.secondary.audio));
+                                s.config.set(MediaConfig::RtpVideoDestinationSecondary, vSec.first());
+                                s.config.set(MediaConfig::RtpAudioDestinationSecondary, aSec.first());
+                        }
                         // Pin the encoded video format so the
                         // RFC 2435 / RFC 4175 dispatch matches the matrix
                         // entry exactly.  The planner inserts a CSC stage
                         // ahead of the sink if TPG's output doesn't
                         // already match.
-                        if (pd.isValid()) {
-                                s.config.set(MediaConfig::VideoPixelFormat, pd);
+                        if (c.pixelFormat.isValid()) {
+                                s.config.set(MediaConfig::VideoPixelFormat, c.pixelFormat);
+                        }
+                        // High-packet-rate compressed video (JPEG XS at
+                        // 4K / 60 fps emits ~2,600 packets per frame)
+                        // forces a real test of the userspace pacing
+                        // path — on loopback the kernel uses the
+                        // @c noqueue qdisc, which makes the default
+                        // @c KernelFq scheduler a no-op and degenerates
+                        // to a single ~3 MB burst that overruns the
+                        // kernel UDP recv buffer.  Pinning Userspace
+                        // pacing keeps the per-packet sendmmsg cadence
+                        // smooth enough for loopback to absorb.
+                        if (c.family == String("jxs")) {
+                                s.config.set(MediaConfig::RtpPacingMode, RtpPacingMode(RtpPacingMode::Userspace));
+                        }
+                        // Override the AES67 / ST 2110-30 wire format when
+                        // the matrix entry asks for a non-default audio
+                        // path (the L24 / 96 kHz case).  Auto resolves to
+                        // L16 at 48 kHz and L24 at 96 kHz per Phase E30b,
+                        // so leaving the value at Auto is also valid; an
+                        // explicit override makes the case's intent
+                        // legible.
+                        if (c.audioWireFormat != AudioWireFormat(AudioWireFormat::Auto)) {
+                                s.config.set(MediaConfig::RtpAudioWireFormat, c.audioWireFormat);
                         }
                         return s;
                 }
 
-                MediaPipelineConfig::Stage makeRtpSourceStage(const String &sdpPath) {
+                MediaPipelineConfig::Stage makeRtpSourceStage(const Case &c, const String &sdpPath) {
                         MediaPipelineConfig::Stage s;
                         s.name = String("rtpin");
                         s.type = String("Rtp");
@@ -253,6 +394,19 @@ namespace promekitest {
                         // override the SDP-discovered values and
                         // bypass the SDP parsing path.
                         s.config.set(MediaConfig::RtpSdp, sdpPath);
+                        // High-packet-rate compressed video paths
+                        // (JPEG XS at 720p produces ~250 packets per
+                        // frame at 60 fps) need a deeper reorder
+                        // buffer than the 50 ms default — the
+                        // userspace TX bursts a full frame's worth of
+                        // packets in <2 ms and a startup-window UDP
+                        // loopback loss otherwise wipes a whole frame
+                        // before the depacketizer drains.  200 ms
+                        // covers ~12 frames at 60 fps which is more
+                        // than the testbed needs.
+                        if (c.family == String("jxs")) {
+                                s.config.set(MediaConfig::RtpJitterMs, int32_t(200));
+                        }
                         return s;
                 }
 
@@ -260,20 +414,26 @@ namespace promekitest {
                 // Pipeline assembly
                 // -------------------------------------------------------------------
 
-                MediaPipelineConfig buildTxConfig(const Case &c, const PortPair &ports, const String &sdpPath,
+                MediaPipelineConfig buildTxConfig(const Case &c, const PortQuad &ports, const String &sdpPath,
                                                   int frames, uint32_t streamId) {
                         MediaPipelineConfig cfg;
 
                         // TPG output policy:
-                        //  - raw cases: TPG emits the matrix's pixel
-                        //    format directly so the RTP sink dispatches
-                        //    RFC 4175 raw on its own.
+                        //  - 8-bit raw cases: TPG emits the matrix's
+                        //    pixel format directly so the RTP sink
+                        //    dispatches RFC 4175 raw on its own.
+                        //  - 10/12-bit raw cases: TPG emits the
+                        //    @ref Case::tpgPixelFormat (UYVY BE, v210,
+                        //    or DPX-B) and the planner inserts a CSC
+                        //    stage to the @ref Case::pixelFormat
+                        //    ST 2110-20 wire pgroup using the c-3
+                        //    scalar kernels.  Phase E20c-3.
                         //  - JPEG cases: TPG stays on the backend default
                         //    and the encoder converts to the matrix's
                         //    JPEG-family @ref PixelFormat — RFC 2435
                         //    dispatch follows from the encoder's output
                         //    pixel format.
-                        //  - H.264 / H.265 cases: TPG emits the
+                        //  - H.264 / H.265 / JPEG XS cases: TPG emits the
                         //    @ref Case::tpgPixelFormat (uncompressed
                         //    YUV422 or YUV420) so the encoder's input
                         //    subsampling matches what the matrix entry
@@ -285,14 +445,40 @@ namespace promekitest {
                         if (c.tpgPixelFormat.isValid()) tpgPd = c.tpgPixelFormat;
                         else if (!c.codec.isValid())
                                 tpgPd = c.pixelFormat;
-                        cfg.addStage(makeTpgStage(streamId, tpgPd));
+                        MediaPipelineConfig::Stage tpgStage = makeTpgStage(streamId, tpgPd);
+                        // RFC 2435 §3.1.5 caps the in-band W/H fields at
+                        // 255×8 = 2040 pixels, so JPEG-over-RTP cannot
+                        // represent any common UHD raster.  Pin the JPEG
+                        // matrix entries to 1080p59.94 — the largest
+                        // standard broadcast raster that fits — so the
+                        // case exercises the worst case JPEG-over-RTP
+                        // can actually carry without silently truncating
+                        // the SOF0 to 2040×2040 and corrupting the
+                        // round-trip.  Other matrix entries stay on
+                        // @ref kDefaultVideoFormat (2160p59.94) per the
+                        // 4K60 hardening pass.
+                        if (c.family == String("jpeg")) {
+                                tpgStage.config.set(MediaConfig::VideoFormat,
+                                                    VideoFormat(VideoFormat::Smpte1080p59_94));
+                        }
+                        // Override the TPG audio defaults for cases that
+                        // want a non-48 kHz / non-L16 wire path (Phase
+                        // E30b L24 / 96 kHz round-trip).  AudioRate
+                        // is a float; AES67 also requires the RTP audio
+                        // clock rate to match the sample rate, so stamp
+                        // both even though @c TpgMediaIO only reads the
+                        // former.
+                        if (c.audioRate > 0.0f) {
+                                tpgStage.config.set(MediaConfig::AudioRate, c.audioRate);
+                        }
+                        cfg.addStage(tpgStage);
                         String prev = String("tpg");
                         if (c.codec.isValid()) {
                                 cfg.addStage(makeEncoderStage(c.codec, c.pixelFormat));
                                 cfg.addRoute(prev, String("enc"));
                                 prev = String("enc");
                         }
-                        cfg.addStage(makeRtpSinkStage(ports, c.pixelFormat, sdpPath));
+                        cfg.addStage(makeRtpSinkStage(c, ports, sdpPath));
                         cfg.addRoute(prev, String("rtpout"));
                         cfg.setFrameCount(FrameCount(frames));
                         return cfg;
@@ -300,7 +486,7 @@ namespace promekitest {
 
                 MediaPipelineConfig buildRxConfig(const Case &c, const String &sdpPath, int frames) {
                         MediaPipelineConfig cfg;
-                        cfg.addStage(makeRtpSourceStage(sdpPath));
+                        cfg.addStage(makeRtpSourceStage(c, sdpPath));
                         String prev = String("rtpin");
                         if (c.codec.isValid()) {
                                 cfg.addStage(makeDecoderStage(c.codec));
@@ -327,13 +513,17 @@ namespace promekitest {
                         const int32_t  frames = ctx.params().getAs<int32_t>(TestParams::Frames, 30);
                         const int32_t  timeoutMs =
                                 ctx.params().getAs<int32_t>(TestParams::PhaseTimeoutMs, 10000);
-                        const PortPair ports = allocatePorts(caseIndex);
+                        const PortQuad ports = allocatePorts(caseIndex);
                         const String   sdpPath = (ctx.testFolder() / String("session.sdp")).toString();
 
                         ctx.setDetail(String("family"), c.family);
                         ctx.setDetail(String("pixelFormat"), c.pixelFormat.name());
-                        ctx.setDetail(String("videoPort"), int64_t(ports.video));
-                        ctx.setDetail(String("audioPort"), int64_t(ports.audio));
+                        ctx.setDetail(String("videoPort"), int64_t(ports.primary.video));
+                        ctx.setDetail(String("audioPort"), int64_t(ports.primary.audio));
+                        if (c.dualLeg) {
+                                ctx.setDetail(String("videoPortSecondary"), int64_t(ports.secondary.video));
+                                ctx.setDetail(String("audioPortSecondary"), int64_t(ports.secondary.audio));
+                        }
                         ctx.setDetail(String("sdpPath"), sdpPath);
 
                         // Stream IDs unique per case so any cross-case

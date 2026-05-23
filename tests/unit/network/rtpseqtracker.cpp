@@ -137,18 +137,22 @@ TEST_CASE("RtpSeqTracker: large forward jump tagged duplicate until bad_seq matc
         RtpSeqTracker t;
         t.observe(100, 0, at(0));
         t.observe(101, 0, at(1000));
-        // Jump to seq = 30000 — within MaxDropout (3000) of 101?  No,
-        // udelta = 29899 which exceeds MaxDropout, but is < SeqMod -
-        // MaxMisorder (65436), so this is the "very large jump" branch.
-        auto r1 = t.observe(30000, 0, at(2000));
+        // Jump to seq = 50000 — udelta = 49899, which exceeds the
+        // current @c MaxDropout (32,768; sized for the worst-case
+        // ST 2110-20 / JPEG XS burst per-frame seq-gap) but is still
+        // < @c SeqMod - MaxMisorder (64,536).  Lands in the "very
+        // large jump" branch where the tracker tags the first
+        // occurrence as @c duplicate and stashes it as the candidate
+        // restart seq.
+        auto r1 = t.observe(50000, 0, at(2000));
         CHECK(r1.duplicate);
         // Second sequential packet at the new bad_seq matches → restart.
-        auto r2 = t.observe(30001, 0, at(3000));
+        auto r2 = t.observe(50001, 0, at(3000));
         CHECK_FALSE(r2.duplicate);
         CHECK(r2.ssrcInit);
         auto s = t.snapshot();
         CHECK(s.receivedPackets == 1u); // post-restart init zeroed counters
-        CHECK(s.extendedHighestSeq == 30001u);
+        CHECK(s.extendedHighestSeq == 50001u);
 }
 
 TEST_CASE("RtpSeqTracker: same-seq replay does not bump reorder counter") {

@@ -76,7 +76,7 @@ Error Ntv2MediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         Enum modeEnum      = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _sinkMode          = isWrite;
 
         Error err = isWrite ? openSink(cfg, cmd.pendingMediaDesc)

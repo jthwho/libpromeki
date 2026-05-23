@@ -1656,7 +1656,7 @@ namespace {
                                                 fail(label, "decoded metadata missing VideoScanMode");
                                         } else {
                                                 VideoScanMode scan(meta.getAs<Enum>(Metadata::VideoScanMode).value());
-                                                if (scan.value() != VideoScanMode::InterlacedEvenFirst.value()) {
+                                                if (scan != VideoScanMode::InterlacedEvenFirst) {
                                                         fail(label,
                                                              String::sprintf(
                                                                      "expected InterlacedEvenFirst (3), got %s (%d)",
@@ -1712,7 +1712,7 @@ namespace {
                                                 fail(label, "decoded metadata missing VideoScanMode");
                                         } else {
                                                 VideoScanMode scan(meta.getAs<Enum>(Metadata::VideoScanMode).value());
-                                                if (scan.value() != VideoScanMode::InterlacedOddFirst.value()) {
+                                                if (scan != VideoScanMode::InterlacedOddFirst) {
                                                         fail(label,
                                                              String::sprintf(
                                                                      "expected InterlacedOddFirst (4), got %s (%d)",

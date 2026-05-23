@@ -20,8 +20,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 RtpAudioDepacketizerThread::RtpAudioDepacketizerThread(
         RtpAudioDepacketizerContext ctx, const String &name,
-        uint32_t clockRateHz)
-    : RtpDepacketizerThread(name, clockRateHz), _ctx(std::move(ctx)) {}
+        uint32_t clockRateHz, size_t queueDepth)
+    : RtpDepacketizerThread(name, clockRateHz, queueDepth), _ctx(std::move(ctx)) {}
 
 RtpAudioDepacketizerThread::~RtpAudioDepacketizerThread() {
         requestStop();

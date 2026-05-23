@@ -315,6 +315,29 @@ class UdpSocket : public AbstractSocket {
                 Error setMulticastInterface(const String &iface);
 
                 /**
+                 * @brief Pins the socket to a specific network interface
+                 *        via @c SO_BINDTODEVICE.
+                 *
+                 * Forces both egress and ingress through @p iface
+                 * regardless of routing-table state or bind address.
+                 * Useful for the ST 2022-7 same-subnet-two-NIC edge
+                 * case where @c bind() to a source IP cannot
+                 * disambiguate.  Empty @p iface is a no-op.
+                 *
+                 * @par Platform support
+                 *  - Linux: supported; requires @c CAP_NET_RAW (the
+                 *    setsockopt fails with EPERM otherwise).
+                 *  - Other platforms: returns @c Error::NotSupported
+                 *    with a one-shot warning.
+                 *
+                 * @param iface The network interface name (e.g.
+                 *              @c "eth1").  Empty = no-op.
+                 * @return @c Error::Ok on success / no-op, an error
+                 *         on failure.
+                 */
+                Error setBindInterface(const String &iface);
+
+                /**
                  * @brief Enables or disables SO_REUSEADDR.
                  *
                  * Must be called before bind(). Required for multiple
@@ -336,6 +359,30 @@ class UdpSocket : public AbstractSocket {
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error setDscp(uint8_t dscp);
+
+                /**
+                 * @brief Sets the IP "Don't Fragment" bit on outgoing datagrams.
+                 *
+                 * Enables @c IP_PMTUDISC_DO (IPv4) or
+                 * @c IPV6_PMTUDISC_DO (IPv6) via @c IP_MTU_DISCOVER /
+                 * @c IPV6_MTU_DISCOVER.  With DF asserted the kernel
+                 * refuses to fragment outbound packets locally, and an
+                 * intermediate router that hits its MTU will drop the
+                 * packet and reply with ICMP "fragmentation needed"
+                 * (or ICMPv6 "packet too big").  Required by
+                 * SMPTE ST 2110-10 §6.3 — senders shall not generate
+                 * fragmented IP packets.
+                 *
+                 * Disabling falls back to @c IP_PMTUDISC_WANT
+                 * (per-route MTU discovery) which is the kernel default
+                 * for connected sockets.
+                 *
+                 * @param enable True to assert DF on every outbound packet.
+                 * @return Error::Ok on success, Error::NotSupported on
+                 *         platforms without @c IP_MTU_DISCOVER, or
+                 *         another error on failure.
+                 */
+                Error setDontFragment(bool enable);
 
                 /**
                  * @brief Requests a kernel receive buffer size.

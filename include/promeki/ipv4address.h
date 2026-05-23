@@ -12,6 +12,7 @@
 #if PROMEKI_ENABLE_CORE
 #include <cstdint>
 #include <cstring>
+#include <promeki/datatype.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/result.h>
@@ -55,8 +56,17 @@ class TextStream;
  * String str = addr.toString();  // "192.168.1.1"
  * @endcode
  */
+class DataStream;
+
 class Ipv4Address {
         public:
+                PROMEKI_DATATYPE(Ipv4Address, DataTypeIpv4Address, 1)
+
+                /** @brief Writes the canonical dotted-quad String. */
+                Error writeToStream(DataStream &s) const;
+                /** @brief Reads the canonical dotted-quad String. */
+                template <uint32_t V> static Result<Ipv4Address> readFromStream(DataStream &s);
+
                 /** @brief List of IPv4 addresses. */
                 using List = ::promeki::List<Ipv4Address>;
 

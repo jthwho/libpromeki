@@ -161,7 +161,7 @@ namespace {
                                         if (group == nullptr) return Error::Invalid;
                                         Enum modeEnum =
                                                 cmd.config.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-                                        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+                                        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
                                         if (isWrite) {
                                                 if (addSink(group, MediaDesc()) == nullptr) return Error::Invalid;
                                         } else {

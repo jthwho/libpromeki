@@ -481,6 +481,40 @@ class PixelFormat {
                         YUV8_444_Planar_Rec709 = 162,     ///< 8-bit YCbCr 4:4:4 planar, Rec.709, limited range.
                         YUV10_444_Planar_LE_Rec709 = 163, ///< 10-bit YCbCr 4:4:4 planar LE, Rec.709.
 
+                        // -- ST 2110-20 wire-format pixel descriptions --
+                        //
+                        // First-class PixelFormats matching the §6.2 wire
+                        // pgroup catalog.  CSC pairs these against the
+                        // common in-memory formats so the
+                        // _videoWirePixelFormat seam at
+                        // rtpmediaio.cpp:1585-1594 routes ST 2110-20
+                        // sender / receiver paths through the existing
+                        // UncompressedVideoPayload::convert pipeline
+                        // rather than through bespoke bit-packing inside
+                        // the packetizer.  Initial set covers Rec.709
+                        // (the broadcast lingua franca); HDR Rec.2020 /
+                        // BT.2100 + PQ / HLG and full-range YCbCr
+                        // variants land alongside their CSC kernels in
+                        // E20c-3/c-4.
+                        //
+                        // 8-bit and 16/16f wire formats reuse existing
+                        // PixelFormats where byte-identical (RGB8_sRGB,
+                        // YUV8_422_UYVY_Rec709, YUV16_422_UYVY_BE_Rec709,
+                        // etc.); the bridge declares them directly.
+                        RGB10_BE_2110_sRGB = 219,   ///< 10-bit RGB ST 2110-20 wire (15 octets / 4 pixels BE), sRGB, full range.
+                        RGB12_BE_2110_sRGB = 220,   ///< 12-bit RGB ST 2110-20 wire (9 octets / 2 pixels BE), sRGB, full range.
+                        YUV10_2110_Rec709 = 221,    ///< 10-bit YCbCr 4:4:4 ST 2110-20 wire BE, Rec.709, limited range.
+                        YUV12_2110_Rec709 = 222,    ///< 12-bit YCbCr 4:4:4 ST 2110-20 wire BE, Rec.709, limited range.
+                        YUV10_422_2110_Rec709 = 223,///< 10-bit YCbCr 4:2:2 ST 2110-20 wire BE (5 octets / 2 pixels), Rec.709, limited range.
+                        YUV12_422_2110_Rec709 = 224,///< 12-bit YCbCr 4:2:2 ST 2110-20 wire BE (6 octets / 2 pixels), Rec.709, limited range.
+                        YUV10_420_2110_Rec709 = 225,///< 10-bit YCbCr 4:2:0 ST 2110-20 wire BE (single-plane pgroup-interleaved, vSub=2), Rec.709, limited range.
+                        YUV12_420_2110_Rec709 = 226,///< 12-bit YCbCr 4:2:0 ST 2110-20 wire BE (single-plane pgroup-interleaved, vSub=2), Rec.709, limited range.
+                        Mono10_BE_2110_sRGB = 227,  ///< 10-bit Key ST 2110-20 wire BE (5 octets / 4 pixels), sRGB.
+                        Mono12_BE_2110_sRGB = 228,  ///< 12-bit Key ST 2110-20 wire BE (3 octets / 2 pixels), sRGB.
+                        XYZ12_BE_2110 = 229,        ///< 12-bit XYZ cinema ST 2110-20 wire BE (9 octets / 2 pixels).
+                        XYZ16_BE_2110 = 230,        ///< 16-bit XYZ cinema ST 2110-20 wire BE (6 octets / 1 pixel).
+                        YUV8_420_2110_Rec709 = 231, ///< 8-bit YCbCr 4:2:0 ST 2110-20 wire (single-plane pgroup-interleaved, vSub=2), Rec.709, limited range.
+
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 

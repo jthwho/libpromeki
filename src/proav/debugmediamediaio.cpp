@@ -87,7 +87,7 @@ Error DebugMediaMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // Direction is config-driven via MediaConfig::OpenMode.  Default
         // (Read) means open as a source; Write opens as a sink.
         Enum       modeEnum = cmd.config.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
 
         _file = DebugMediaFile::UPtr::create();
 

@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/datastream.h>
 #include <promeki/ipv6address.h>
 #include <promeki/ipv4address.h>
 #include <promeki/macaddress.h>
@@ -248,6 +249,32 @@ Error Ipv6Address::toSockAddr(struct sockaddr_in6 *sa) const {
 TextStream &operator<<(TextStream &stream, const Ipv6Address &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: 16 raw bytes (network byte order) + 4-byte scope ID).
+//
+// Frame body is fixed at exactly 20 bytes; the scope ID rides as a
+// big-endian @c uint32_t so it survives a cross-endian stream just
+// like the integer ops everywhere else.
+// ============================================================================
+
+Error Ipv6Address::writeToStream(DataStream &s) const {
+        s.writeRawData(_addr.data(), 16);
+        s << _scopeId;
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <> Result<Ipv6Address> Ipv6Address::readFromStream<1>(DataStream &s) {
+        Ipv6Address::DataFormat bytes;
+        ssize_t                 n = s.readRawData(bytes.data(), 16);
+        if (n != 16) return makeError<Ipv6Address>(s.toError());
+        uint32_t scope = 0;
+        s >> scope;
+        if (s.status() != DataStream::Ok) return makeError<Ipv6Address>(s.toError());
+        Ipv6Address addr(bytes);
+        addr.setScopeId(scope);
+        return makeResult(addr);
 }
 
 PROMEKI_NAMESPACE_END

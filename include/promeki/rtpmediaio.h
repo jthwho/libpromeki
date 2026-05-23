@@ -15,6 +15,8 @@
 #include <promeki/audiodesc.h>
 #include <promeki/clockdomain.h>
 #include <promeki/dedicatedthreadmediaio.h>
+#include <promeki/duration.h>
+#include <promeki/enums.h>
 #include <promeki/eui64.h>
 #include <promeki/macaddress.h>
 #include <promeki/frame.h>
@@ -26,6 +28,9 @@
 #include <promeki/ntptime.h>
 #include <promeki/pacinggate.h>
 #include <promeki/pcmaudiopayload.h>
+#include <promeki/phcclock.h>
+#include <promeki/rtpmediaclock.h>
+#include <promeki/st2110tx.h>
 #include <promeki/pixelformat.h>
 #include <promeki/queue.h>
 #include <promeki/rtcpscheduler.h>
@@ -422,6 +427,28 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  *        @c AudioTxThread.
                  */
                 static inline const MediaIOStats::ID StatsAudioSilenceSamplesEmitted{"AudioSilenceSamplesEmitted"};
+                /**
+                 * @brief String — the first audio writer stream's
+                 *        ST 2110-30:2025 §7 Table 2 conformance
+                 *        level, computed at @c configureAudioStream
+                 *        time from its (sample rate, packet time,
+                 *        channel count) tuple.  Values are the
+                 *        @ref AudioConformanceLevel string forms:
+                 *        @c "A", @c "AX", @c "B", @c "BX", @c "C",
+                 *        @c "CX", or @c "None" when no Table 2 row
+                 *        matches the configured shape.  Reader-mode
+                 *        and reader-only streams report empty.
+                 */
+                static inline const MediaIOStats::ID StatsAudioConformanceLevel{"AudioConformanceLevel"};
+                /**
+                 * @brief String — the on-wire AES67 / ST 2110-30
+                 *        PCM encoding actually selected by
+                 *        @c configureAudioStream after resolving
+                 *        @ref MediaConfig::RtpAudioWireFormat
+                 *        (typically @c "L16" or @c "L24").  Empty
+                 *        on reader-only streams.
+                 */
+                static inline const MediaIOStats::ID StatsAudioWireFormat{"AudioWireFormat"};
 
                 // ----------------------------------------------------------
                 // Reader-side per-stream RFC 3550 §A counters,
@@ -564,6 +591,63 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  */
                 static String pickEgressHostForCname(const SocketAddress &destination);
 
+                /**
+                 * @brief Formats an AES67 §8.1 @c ptime SDP attribute value.
+                 *
+                 * Pure formatting helper, exposed for testability.
+                 * Computes the packet duration as
+                 * <tt>packetSamples × 1000 ÷ sampleRateHz</tt> in
+                 * milliseconds and renders it as a string suitable
+                 * for direct emission into an
+                 * <tt>a=ptime:&lt;value&gt;</tt> SDP attribute.
+                 *
+                 * Output rules:
+                 *  - Whole-millisecond cases (1 ms, 4 ms) emit the
+                 *    plain integer (@c "1" / @c "4") so the result
+                 *    matches the AES67 §8.1 Table 4 example
+                 *    canonical forms.
+                 *  - Sub-millisecond cases (125 µs / 250 µs / 333 µs)
+                 *    emit a fixed-point form with up to three
+                 *    decimal digits, trailing zeros stripped
+                 *    (@c "0.125" / @c "0.25" / @c "0.333").  The
+                 *    AES67 examples use two-decimal forms
+                 *    (@c "0.12" / @c "0.33") but §8.1 only requires
+                 *    that the value's error stays below half a
+                 *    sample period — three decimals satisfy that for
+                 *    every Table 4 packet time at every supported
+                 *    sample rate.
+                 *  - Invalid input (non-positive sample rate or
+                 *    non-positive packet samples) returns @c "0".
+                 *
+                 * @param packetSamples  Samples per packet per channel
+                 *                       (the resolved AES67 sample
+                 *                       count after MTU clamping).
+                 * @param sampleRateHz   Sample rate in Hz.
+                 * @return The @c ptime value as a String.
+                 */
+                static String formatAes67Ptime(int packetSamples, int sampleRateHz);
+
+                /**
+                 * @brief Parses an AES67 §8.1 @c ptime SDP attribute
+                 *        value into microseconds.
+                 *
+                 * Inverse of @ref formatAes67Ptime.  Accepts either
+                 * integer (@c "1" / @c "4") or decimal
+                 * (@c "0.125" / @c "0.33" / @c "0.36") milliseconds
+                 * values; returns the equivalent microseconds count
+                 * rounded to the nearest integer.  Whitespace around
+                 * the value is tolerated.
+                 *
+                 * @param ptimeMs   The @c ptime value as it appears
+                 *                  in the SDP attribute (the
+                 *                  millisecond field, without the
+                 *                  @c "a=ptime:" prefix).
+                 * @return The packet time in microseconds, or @c 0
+                 *         on parse failure (so callers can keep the
+                 *         configured default).
+                 */
+                static int parseAes67PtimeUs(const String &ptimeMs);
+
         protected:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
@@ -675,27 +759,47 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 Stream() = default;
                                 Stream(Stream &&o) noexcept
                                     : transport(o.transport),
+                                      transportSecondary(o.transportSecondary),
                                       session(o.session),
                                       payload(o.payload),
                                       destination(std::move(o.destination)),
+                                      destinationSecondary(std::move(o.destinationSecondary)),
+                                      localAddressSecondary(std::move(o.localAddressSecondary)),
+                                      interfaceSecondary(std::move(o.interfaceSecondary)),
                                       payloadType(o.payloadType),
                                       clockRate(o.clockRate),
                                       dscp(o.dscp),
                                       ssrc(o.ssrc),
+                                      maxUdp(o.maxUdp),
+                                      tsDelayUs(o.tsDelayUs),
+                                      ptpTraceable(o.ptpTraceable),
+                                      tsMode(o.tsMode),
                                       mediaType(std::move(o.mediaType)),
                                       rtpmap(std::move(o.rtpmap)),
                                       fmtp(std::move(o.fmtp)),
+                                      mid(std::move(o.mid)),
                                       active(o.active),
                                       clockDomain(o.clockDomain),
                                       tsRefClkMode(o.tsRefClkMode),
                                       ptpGrandmaster(o.ptpGrandmaster),
                                       ptpDomain(o.ptpDomain),
                                       refClockLocalMac(std::move(o.refClockLocalMac)),
-                                      mediaClkOffset(o.mediaClkOffset) {
+                                      mediaClkOffset(o.mediaClkOffset),
+                                      mediaClkMode(o.mediaClkMode),
+                                      senderType(o.senderType),
+                                      trOffsetUs(o.trOffsetUs),
+                                      cmax(o.cmax),
+                                      jxsPacketMode(o.jxsPacketMode),
+                                      jxsTransMode(o.jxsTransMode),
+                                      jxsProfile(o.jxsProfile),
+                                      jxsLevel(o.jxsLevel),
+                                      jxsSublevel(o.jxsSublevel),
+                                      mediaClock(std::move(o.mediaClock)) {
                                         // Null pointers on the moved-
                                         // from instance so a stray
                                         // reset can't double-delete.
                                         o.transport = nullptr;
+                                        o.transportSecondary = nullptr;
                                         o.session = nullptr;
                                         o.payload = nullptr;
                                 }
@@ -703,16 +807,25 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 Stream &operator=(const Stream &) = delete;
                                 Stream &operator=(Stream &&) = delete;
                                 UdpSocketTransport *transport = nullptr;
+                                UdpSocketTransport *transportSecondary = nullptr; ///< @brief ST 2022-7 secondary leg's transport; null = single-leg.
                                 RtpSession         *session = nullptr;
                                 RtpPayload         *payload = nullptr;
                                 SocketAddress       destination;
+                                SocketAddress       destinationSecondary; ///< @brief ST 2022-7 redundancy leg; empty = none.
+                                SocketAddress       localAddressSecondary; ///< @brief ST 2022-7 secondary-leg local bind override; null = reuse session @c RtpLocalAddress.
+                                String              interfaceSecondary;    ///< @brief ST 2022-7 secondary-leg @c SO_BINDTODEVICE interface name; empty = no pinning.
                                 uint8_t             payloadType = 0;
                                 uint32_t            clockRate = 90000;
                                 int                 dscp = 0;
                                 uint32_t            ssrc = 0;
+                                int                 maxUdp = 0;    ///< @brief ST 2110-10 @c MAXUDP fmtp (0 = standard 1460).
+                                int                 tsDelayUs = 0; ///< @brief ST 2110-10 @c TSDELAY fmtp (0 = omit).
+                                bool                ptpTraceable = false; ///< @brief Emit @c ts-refclk:ptp=...:traceable form.
+                                RtpTsMode           tsMode = RtpTsMode::Samp; ///< @brief ST 2110-10 @c TSMODE fmtp.
                                 String              mediaType; ///< @brief "video", "audio", "data"
                                 String              rtpmap;    ///< @brief SDP a=rtpmap:... value
                                 String              fmtp;      ///< @brief SDP a=fmtp:... value, optional
+                                String              mid;       ///< @brief SDP @c a=mid: token (RFC 5888); empty = omit.
                                 bool                active = false;
                                 ClockDomain         clockDomain;    ///< @brief Clock domain derived from SDP ts-refclk.
                                 RtpRefClockMode     tsRefClkMode = RtpRefClockMode::None; ///< @brief Drives buildSdp ts-refclk emission.
@@ -720,6 +833,108 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 uint8_t             ptpDomain = 0;  ///< @brief PTP domain number for SDP ts-refclk:ptp.
                                 MacAddress          refClockLocalMac; ///< @brief MAC for SDP ts-refclk:localmac.
                                 int32_t             mediaClkOffset = 0; ///< @brief SDP mediaclk:direct=&lt;offset&gt;.
+                                /// @brief RFC 7273 @c mediaclk attribute mode.
+                                ///
+                                ///        @c Auto (default): emit
+                                ///        @c mediaclk:direct=&lt;offset&gt;
+                                ///        whenever a reference clock is
+                                ///        advertised (@c tsRefClkMode !=
+                                ///        @c None), omit otherwise.
+                                ///        @c Direct: force @c
+                                ///        mediaclk:direct=&lt;offset&gt;
+                                ///        emission regardless of
+                                ///        @c tsRefClkMode.  @c Sender:
+                                ///        emit bare @c mediaclk:sender
+                                ///        for sources whose media clock
+                                ///        is asynchronous to the
+                                ///        reference clock.  Driven by
+                                ///        @c MediaConfig::Rtp{Video,
+                                ///        Audio,Data}MediaClkMode.
+                                RtpMediaClkMode     mediaClkMode = RtpMediaClkMode::Auto;
+
+                                /// @brief ST 2110-21 sender type
+                                ///        (drives @c TP fmtp emission).
+                                ///
+                                ///        @c Auto (default) is
+                                ///        resolved at configure time
+                                ///        from the bound pacing mode
+                                ///        via
+                                ///        @ref St2110Tx::resolveSenderType.
+                                ///        @c Unknown suppresses the
+                                ///        @c TP fmtp entirely.
+                                RtpSenderType senderType = RtpSenderType::Auto;
+
+                                /// @brief ST 2110-21 TR_OFFSET in
+                                ///        microseconds (drives @c TROFF
+                                ///        fmtp).  0 = omit (or use the
+                                ///        TRO_DEFAULT formula in the
+                                ///        scheduler / TPR_j path).
+                                int trOffsetUs = 0;
+
+                                /// @brief ST 2110-21 CMAX informational
+                                ///        burst limit in packets.  0 =
+                                ///        omit / compute from the
+                                ///        resolved sender type when
+                                ///        emitting SDP.
+                                int cmax = 0;
+
+                                /// @brief RFC 9134 §4.3 K bit /
+                                ///        @c packetmode fmtp.  Drives
+                                ///        @c RtpPayloadJpegXs::pack
+                                ///        between codestream-mode
+                                ///        (K=0, MTU-fragmenting) and
+                                ///        slice-mode (K=1,
+                                ///        one-or-more-slices-per-packet)
+                                ///        emission.  Default
+                                ///        @c Codestream (today's
+                                ///        behaviour).
+                                JxsPacketMode jxsPacketMode = JxsPacketMode::Codestream;
+
+                                /// @brief RFC 9134 §4.3 T bit /
+                                ///        @c transmode fmtp.  Default
+                                ///        @c SequentialOnly per the
+                                ///        RFC's "absent ⇒ T=1"
+                                ///        rule.  Receivers that
+                                ///        tolerate reorder may
+                                ///        advertise
+                                ///        @c OutOfOrderAllowed.
+                                JxsTransMode jxsTransMode = JxsTransMode::SequentialOnly;
+
+                                /// @brief RFC 9134 §7.1 @c profile
+                                ///        fmtp.  @c Unspecified
+                                ///        suppresses emission.
+                                JxsProfile jxsProfile = JxsProfile::Unspecified;
+
+                                /// @brief RFC 9134 §7.1 @c level
+                                ///        fmtp.  @c Unspecified
+                                ///        suppresses emission.
+                                JxsLevel jxsLevel = JxsLevel::Unspecified;
+
+                                /// @brief RFC 9134 §7.1 @c sublevel
+                                ///        fmtp.  @c Unspecified
+                                ///        suppresses emission.
+                                JxsSublevel jxsSublevel = JxsSublevel::Unspecified;
+                                /**
+                                 * @brief Phase D3 per-stream media clock.
+                                 *
+                                 * Drives per-frame / per-packet RTP-TS
+                                 * generation via @ref RtpMediaClock::rtpTsForFrame.
+                                 * Bound at @c openStream time by
+                                 * @ref applyClockReferenceConfig:
+                                 *
+                                 *  - PTP-anchored when @c _phcClock is
+                                 *    bound and @c ClockDomain::Ptp has
+                                 *    a provider (the open-time
+                                 *    wallclock anchors frame 0).
+                                 *  - Frame-zero-anchored otherwise —
+                                 *    matches the legacy
+                                 *    @c cumulativeTicks(clockRate,
+                                 *    frameIndex) behaviour exactly.
+                                 *
+                                 * Writer-only; reader streams leave
+                                 * this default-constructed.
+                                 */
+                                RtpMediaClock       mediaClock;
                 };
 
                 /**
@@ -1039,12 +1254,12 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 /**
                  * @brief Writer-mode data stream state.
                  *
-                 * Inherits @ref WriterStream with no kind-specific
-                 * fields today.  Exists to symmetrize the per-kind
-                 * type hierarchy with @ref VideoStream and
-                 * @ref AudioStream so callers can write
-                 * @c DataStream &ds parameters that document what the
-                 * helper expects.
+                 * Inherits @ref WriterStream and adds the ST 2110-40
+                 * ANC-specific knobs (LLTM/CTM transmission model,
+                 * @c T_EPO offset, resolved TotalLines, VPID_Code).
+                 * The JsonMetadata data path leaves the ANC fields at
+                 * their defaults — they only affect the
+                 * @ref RtpAncPacketizerThread / SDP emission paths.
                  */
                 struct DataStream : WriterStream {
                                 DataStream() = default;
@@ -1052,6 +1267,32 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 DataStream(const DataStream &) = delete;
                                 DataStream &operator=(const DataStream &) = delete;
                                 DataStream &operator=(DataStream &&) = delete;
+
+                                /// @brief ST 2110-40 §6 transmission
+                                ///        model — drives the
+                                ///        @c TM= fmtp emission and
+                                ///        the LLTM TX-time deadline
+                                ///        injection.
+                                AncTransmissionModel ancTransmissionModel =
+                                        AncTransmissionModel::Unsignalled;
+
+                                /// @brief ST 2110-40 §6.4 @c T_EPO
+                                ///        (Epoch Offset).  Added to
+                                ///        @c T_FST before the LLTM
+                                ///        @c T_D slack window.
+                                Duration ancTrOffset;
+
+                                /// @brief Resolved SDI TotalLines for
+                                ///        this stream's LLTM @c T_D
+                                ///        math.  0 = no LLTM deadline
+                                ///        (Auto resolution failed and
+                                ///        no explicit override was
+                                ///        provided).
+                                int ancTotalLines = 0;
+
+                                /// @brief SMPTE 352M VPID_Code emitted
+                                ///        in the SDP fmtp.  0 = omit.
+                                int ancVpidCode = 0;
                 };
 
                 /**
@@ -1081,6 +1322,8 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                       packetBytes(o.packetBytes),
                                       packetTimeUs(o.packetTimeUs),
                                       prerollSamples(o.prerollSamples),
+                                      wireFormat(o.wireFormat),
+                                      conformanceLevel(o.conformanceLevel),
                                       silencePacketsEmitted(
                                               o.silencePacketsEmitted.value()),
                                       silenceSamplesEmitted(
@@ -1093,12 +1336,19 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 ///        the AudioTxThread's silence filler.
                                 ///        Resolved at configure time
                                 ///        from the upstream AudioDesc; the
-                                ///        wire format is always
-                                ///        @c PCMI_S16BE for L16.
+                                ///        wire format is @c PCMI_S16BE
+                                ///        for L16 streams or
+                                ///        @c PCMI_S24BE for L24 streams,
+                                ///        chosen by @ref wireFormat.
                                 AudioDesc storageDesc;
                                 /// @brief Samples per AES67 packet, after MTU clamping.
                                 size_t packetSamples = 0;
-                                /// @brief Bytes per AES67 packet (samples × channels × 2).
+                                /// @brief Bytes per AES67 packet
+                                ///        (samples × channels ×
+                                ///        bytes-per-sample).  Bytes
+                                ///        per sample is 2 for L16
+                                ///        and 3 for L24; see
+                                ///        @ref wireFormat.
                                 size_t packetBytes = 0;
                                 /// @brief Resolved packet time in microseconds.
                                 int packetTimeUs = 0;
@@ -1111,6 +1361,30 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                                 ///        preroll (begin emitting on first
                                 ///        source push).
                                 size_t prerollSamples = 0;
+                                /// @brief Resolved on-wire AES67 / ST 2110-30
+                                ///        PCM encoding for this stream
+                                ///        (@c L16 or @c L24; never @c Auto
+                                ///        — @c configureAudioStream
+                                ///        resolves @c Auto into the
+                                ///        concrete choice based on the
+                                ///        upstream @c AudioDesc and the
+                                ///        configured sample rate).
+                                ///        Drives the @c rtpmap encoding
+                                ///        name and the per-stream
+                                ///        bytes-per-sample value used to
+                                ///        size @c packetBytes.
+                                AudioWireFormat wireFormat = AudioWireFormat::L16;
+                                /// @brief ST 2110-30:2025 §7 Table 2
+                                ///        conformance level computed at
+                                ///        configure time from
+                                ///        @c (sampleRate, packetTimeUs,
+                                ///        channels).  @c None when the
+                                ///        configured shape sits outside
+                                ///        every Table 2 row.  Read by
+                                ///        @c executeCmd(Stats) and
+                                ///        surfaced through
+                                ///        @ref StatsAudioConformanceLevel.
+                                AudioConformanceLevel conformanceLevel = AudioConformanceLevel::None;
                                 /// @brief Cumulative AES67 packets the
                                 ///        @c AudioTxThread emitted as
                                 ///        silence when its @c PacketQueue
@@ -1260,6 +1534,42 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
 
                 Error openStream(WriterStream &s, bool enableMulticastLoopback);
                 Error openReaderStream(ReaderStream &s, bool enableMulticastLoopback);
+
+                /**
+                 * @brief Computes the expected per-frame packet budget
+                 *        for a reader stream.
+                 *
+                 * Drives the size of the per-stream
+                 * @ref RtpSeqReorderBuffer @c maxWindow and the
+                 * post-reorder @c RtpDepacketizerThread input queue
+                 * depth.  Sized so that exactly one full frame's
+                 * burst fits in each (with a 2× safety factor for
+                 * back-to-back arrivals while the depacketizer is
+                 * mid-reassembly).
+                 *
+                 * - **Video** uses
+                 *   @c readerImageDesc.bytesPerFrame ÷ MTU-payload, so
+                 *   raw 4K60 4:2:2 10-bit lands at ~18,000 pkt/frame
+                 *   while 720p RFC 2435 JPEG is closer to 100.
+                 *   Compressed streams without dimensions (the
+                 *   pre-IDR placeholder @c H264 / @c HEVC / @c JPEG XS
+                 *   reader desc) fall back to a per-codec heuristic
+                 *   keyed on @c VideoRtpTargetBitrate.
+                 * - **Audio** uses one packet per configured
+                 *   @c AudioRtpPacketTimeUs.
+                 * - **Data / ANC** uses a fixed small budget.
+                 *
+                 * Capped between 64 (smallest sensible queue) and
+                 * 65,536 (half the 16-bit RTP seq space) so a
+                 * misconfigured format can't request gigabytes of
+                 * buffering.  The returned value is the @em window
+                 * size — peak memory transient is window × ~2 KiB
+                 * (one @c Buffer alloc per packet).
+                 *
+                 * @param s Reader stream the buffers belong to.
+                 * @return Packet-count budget in [64, 65,536].
+                 */
+                size_t computeStreamPacketBudget(const ReaderStream &s) const;
 
                 /**
                  * @brief Self-healing parameter-set injector for
@@ -1435,6 +1745,10 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 Enum          _pacingMode;
                 Enum          _dataFormat;
 
+                // ST 2110-10 / RFC 4570 / RFC 5888 session-level state.
+                String        _rtpSourceAddress; ///< @brief Source IP for SDP @c source-filter (RFC 4570).
+                bool          _rtpDontFragment = true; ///< @brief Assert IP DF on egress sockets (ST 2110-10 §6.3).
+
                 // Runtime
                 FrameRate  _frameRate;
                 FrameCount _frameCount{0};
@@ -1548,6 +1862,25 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // single-threaded strand still seed exactly once
                 // per opening.
                 Atomic<bool> _anchorSeeded;
+
+                // PHC-backed wallclock source (Phase D2).  When
+                // @ref MediaConfig::RtpPtpDevicePath is non-empty,
+                // @c executeCmd(Open) opens a @ref PhcClock at that
+                // path, binds it as the @ref ClockDomain::Ptp
+                // wallclock provider, and routes SR-anchor seeding
+                // through the @c setRtpAnchor(ClockDomain, ...)
+                // overload so the emitted NTP timestamps reflect the
+                // PTP timescale instead of @c CLOCK_REALTIME.  Null
+                // otherwise; the legacy @c NtpTime::now() path stays
+                // in effect.  Lifetime tied to the open/close cycle
+                // of this @c RtpMediaIO — destructor calls
+                // @c unbindDomain before @c PhcClock destructs.
+                UniquePtr<PhcClock> _phcClock;
+                // Auto-resolved @c ts-refclk:traceable signal when
+                // @c _phcClock reports a sub-microsecond
+                // @c sysOffsetPrecise sample.  Combined with
+                // @c MediaConfig::RtpPtpTraceable in the SDP builder.
+                bool                _phcAutoTraceable = false;
 
                 // External writer-mode video pacing — null clock means
                 // the upstream pump's natural cadence is the only

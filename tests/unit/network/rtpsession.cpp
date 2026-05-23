@@ -354,6 +354,159 @@ TEST_CASE("RtpSession") {
                 CHECK(err == Error::NotOpen);
         }
 
+        SUBCASE("sendPackets propagates batch.deadlineTaiNs onto datagram txTimeNs") {
+                // Tiny in-memory transport that captures every
+                // datagram's @c txTimeNs.  Drops everything else so
+                // the test only depends on the field we care about.
+                struct CaptureTransport : public PacketTransport {
+                                List<uint64_t> txTimes;
+                                bool           opened = false;
+                                Error          open() override {
+                                        opened = true;
+                                        return Error::Ok;
+                                }
+                                void    close() override { opened = false; }
+                                bool    isOpen() const override { return opened; }
+                                ssize_t sendPacket(const void *, size_t size,
+                                                   const SocketAddress &) override {
+                                        return static_cast<ssize_t>(size);
+                                }
+                                int sendPackets(const DatagramList &dgs) override {
+                                        for (size_t i = 0; i < dgs.size(); i++) {
+                                                txTimes.pushToBack(dgs[i].txTimeNs);
+                                        }
+                                        return static_cast<int>(dgs.size());
+                                }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+
+                CaptureTransport transport;
+                transport.open();
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
+                session.setSsrc(0x12345678);
+                session.setPayloadType(97);
+                REQUIRE(session.start(&transport).isOk());
+
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(3, 100);
+                for (size_t i = 0; i < batch.packets.size(); i++) {
+                        batch.packets[i].setTimestamp(0xDEADBEEF);
+                }
+                const uint64_t lltmDeadline = 1'700'000'000'000'000'000ULL;
+                batch.deadlineTaiNs = lltmDeadline;
+                CHECK(session.sendPackets(batch).isOk());
+                // Every datagram carries the LLTM deadline verbatim.
+                REQUIRE(transport.txTimes.size() == 3u);
+                for (size_t i = 0; i < transport.txTimes.size(); i++) {
+                        CHECK(transport.txTimes[i] == lltmDeadline);
+                }
+
+                session.stop();
+        }
+
+        SUBCASE("sendPackets stamps per-packet TPR_j when deadlineStrideNs is non-zero") {
+                // ST 2110-21 narrow timing: each packet j gets
+                // @c TPR_j = T_VD + j × T_RS.  The session stamps
+                // the stride on the per-datagram txTimeNs so the
+                // ETF qdisc honours per-packet deadlines.
+                struct CaptureTransport : public PacketTransport {
+                                List<uint64_t> txTimes;
+                                bool           opened = false;
+                                Error          open() override {
+                                        opened = true;
+                                        return Error::Ok;
+                                }
+                                void    close() override { opened = false; }
+                                bool    isOpen() const override { return opened; }
+                                ssize_t sendPacket(const void *, size_t s,
+                                                   const SocketAddress &) override {
+                                        return static_cast<ssize_t>(s);
+                                }
+                                int sendPackets(const DatagramList &dgs) override {
+                                        for (size_t i = 0; i < dgs.size(); i++) {
+                                                txTimes.pushToBack(dgs[i].txTimeNs);
+                                        }
+                                        return static_cast<int>(dgs.size());
+                                }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+
+                CaptureTransport transport;
+                transport.open();
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
+                session.setPayloadType(96);
+                REQUIRE(session.start(&transport).isOk());
+
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(5, 100);
+                for (size_t i = 0; i < batch.packets.size(); i++) {
+                        batch.packets[i].setTimestamp(0xBADCAFEU);
+                }
+                const uint64_t tvdTai = 1'700'000'000'000'000'000ULL;
+                const uint64_t tRs = 3700; // ~ T_RS_l at 1080p60 / 4500 packets
+                batch.deadlineTaiNs = tvdTai;
+                batch.deadlineStrideNs = tRs;
+                CHECK(session.sendPackets(batch).isOk());
+
+                REQUIRE(transport.txTimes.size() == 5u);
+                for (size_t i = 0; i < transport.txTimes.size(); i++) {
+                        CAPTURE(i);
+                        CHECK(transport.txTimes[i] == tvdTai + i * tRs);
+                }
+
+                session.stop();
+        }
+
+        SUBCASE("sendPackets with zero deadlineTaiNs leaves txTimeNs unset") {
+                struct CaptureTransport : public PacketTransport {
+                                List<uint64_t> txTimes;
+                                Error open() override { return Error::Ok; }
+                                void  close() override {}
+                                bool  isOpen() const override { return true; }
+                                ssize_t sendPacket(const void *, size_t s,
+                                                   const SocketAddress &) override {
+                                        return static_cast<ssize_t>(s);
+                                }
+                                int sendPackets(const DatagramList &dgs) override {
+                                        for (size_t i = 0; i < dgs.size(); i++) {
+                                                txTimes.pushToBack(dgs[i].txTimeNs);
+                                        }
+                                        return static_cast<int>(dgs.size());
+                                }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+
+                CaptureTransport transport;
+                RtpSession       session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
+                REQUIRE(session.start(&transport).isOk());
+
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(2, 100);
+                for (size_t i = 0; i < batch.packets.size(); i++) {
+                        batch.packets[i].setTimestamp(0xCAFEBABE);
+                }
+                // deadlineTaiNs stays at default 0; the session
+                // propagates that 0 onto each datagram (the TxTime
+                // scheduler will then take over).
+                CHECK(session.sendPackets(batch).isOk());
+                REQUIRE(transport.txTimes.size() == 2u);
+                CHECK(transport.txTimes[0] == 0u);
+                CHECK(transport.txTimes[1] == 0u);
+                session.stop();
+        }
+
         SUBCASE("sendPackets via LoopbackTransport") {
                 LoopbackTransport txPort, rxPort;
                 LoopbackTransport::pair(&txPort, &rxPort);
@@ -583,6 +736,60 @@ TEST_CASE("RtpSession") {
                 session.setRtpAnchor(anchor, 1000);
                 CHECK(session.anchorNtp() == anchor);
                 CHECK(session.anchorRtpTs() == 1000u);
+        }
+
+        // ====================================================================
+        // Phase D2 — setRtpAnchor(ClockDomain, rtpTs) overload
+        // ====================================================================
+        SUBCASE("D2: setRtpAnchor(ClockDomain) reads the bound provider") {
+                // Bind a deterministic provider to a freshly-registered
+                // domain so this test doesn't depend on the well-known
+                // Ptp domain's state (which other tests might mutate).
+                ClockDomain::ID id = ClockDomain::registerDomain(
+                        "test.session.d2.bound", "Bound test domain",
+                        ClockEpoch::Absolute);
+                // 2026-05-21T00:00:00Z in Unix nanoseconds.
+                const int64_t expectedUtcNs = 1779494400'000'000'000LL;
+                ClockDomain::setNowProvider(
+                        id, ClockDomain::WallClockProvider(
+                                [expectedUtcNs]() { return expectedUtcNs; }));
+
+                RtpSession session;
+                session.setRtpAnchor(ClockDomain(id), 4242u);
+                // Anchor NTP must reflect the bound provider, not
+                // CLOCK_REALTIME at the call site.
+                const NtpTime expected = NtpTime::fromSystemClock(
+                        std::chrono::system_clock::time_point(
+                                std::chrono::nanoseconds(expectedUtcNs)));
+                CHECK(session.anchorNtp() == expected);
+                CHECK(session.anchorRtpTs() == 4242u);
+                ClockDomain::setNowProvider(id, ClockDomain::WallClockProvider());
+        }
+
+        SUBCASE("D2: setRtpAnchor(ClockDomain) falls back to NtpTime::now when unbound") {
+                // Freshly-registered domain with no provider — the
+                // overload must NOT crash and must produce a
+                // recognisable wallclock anchor (within a generous
+                // window of NtpTime::now).
+                ClockDomain::ID id = ClockDomain::registerDomain(
+                        "test.session.d2.unbound", "Unbound test domain",
+                        ClockEpoch::Absolute);
+                const NtpTime before = NtpTime::now();
+                RtpSession    session;
+                session.setRtpAnchor(ClockDomain(id), 0u);
+                const NtpTime after = NtpTime::now();
+                // Anchor must lie within [before, after] (in NTP-seconds terms),
+                // confirming the fallback used system_clock rather than 0.
+                CHECK(session.anchorNtp().seconds() >= before.seconds());
+                CHECK(session.anchorNtp().seconds() <= after.seconds() + 1u);
+        }
+
+        SUBCASE("D2: setRtpAnchor with an invalid ClockDomain still falls back") {
+                RtpSession session;
+                session.setRtpAnchor(ClockDomain(), 99u);
+                // Anchor must be non-zero (i.e. NtpTime::now used).
+                CHECK(session.anchorNtp().isValid());
+                CHECK(session.anchorRtpTs() == 99u);
         }
 
         SUBCASE("currentSrNtp returns anchor when no emission yet") {
@@ -912,6 +1119,156 @@ TEST_CASE("RtpSession") {
                 CHECK(session.receivedSr().valid == false);
 
                 session.stopReceiving();
+                session.stop();
+        }
+
+        SUBCASE("ST 2022-7 dual-leg fan-out — same seq / ssrc on both transports, leg-specific dests") {
+                // Two capture transports stand in for the two redundancy
+                // legs.  After @c sendPackets we expect:
+                //  - identical packet count on both legs;
+                //  - identical RTP sequence numbers across legs at
+                //    matching indices (RFC 7104 §3.1 requires bit-
+                //    identical packets);
+                //  - identical SSRC across legs;
+                //  - leg-specific destination addresses.
+                struct CaptureTransport : public PacketTransport {
+                                List<uint16_t>      seqs;
+                                List<uint32_t>      ssrcs;
+                                List<SocketAddress> dests;
+                                bool                opened = false;
+                                Error               open() override {
+                                        opened = true;
+                                        return Error::Ok;
+                                }
+                                void    close() override { opened = false; }
+                                bool    isOpen() const override { return opened; }
+                                ssize_t sendPacket(const void *, size_t s,
+                                                   const SocketAddress &) override {
+                                        return static_cast<ssize_t>(s);
+                                }
+                                int sendPackets(const DatagramList &dgs) override {
+                                        for (size_t i = 0; i < dgs.size(); i++) {
+                                                const uint8_t *b = static_cast<const uint8_t *>(dgs[i].data);
+                                                if (dgs[i].size >= RtpPacket::HeaderSize) {
+                                                        seqs.pushToBack(static_cast<uint16_t>(
+                                                                (static_cast<uint16_t>(b[2]) << 8) | b[3]));
+                                                        uint32_t ssrc =
+                                                                (static_cast<uint32_t>(b[8]) << 24) |
+                                                                (static_cast<uint32_t>(b[9]) << 16) |
+                                                                (static_cast<uint32_t>(b[10]) << 8) |
+                                                                static_cast<uint32_t>(b[11]);
+                                                        ssrcs.pushToBack(ssrc);
+                                                }
+                                                dests.pushToBack(dgs[i].dest);
+                                        }
+                                        return static_cast<int>(dgs.size());
+                                }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+
+                CaptureTransport primary;
+                CaptureTransport secondary;
+                primary.open();
+                secondary.open();
+
+                RtpSession session;
+                const SocketAddress destPrimary(Ipv4Address::loopback(), 5004);
+                const SocketAddress destSecondary(Ipv4Address::loopback(), 5006);
+                session.setRemote(destPrimary);
+                session.setRemoteSecondary(destSecondary);
+                session.setSsrc(0xDEADBEEFu);
+                session.setPayloadType(96);
+                REQUIRE(session.start(&primary, &secondary).isOk());
+                REQUIRE(session.hasSecondaryLeg());
+
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(5, 100);
+                for (size_t i = 0; i < batch.packets.size(); i++) {
+                        batch.packets[i].setTimestamp(0x11223344u);
+                }
+                CHECK(session.sendPackets(batch).isOk());
+
+                REQUIRE(primary.seqs.size() == 5u);
+                REQUIRE(secondary.seqs.size() == 5u);
+                for (size_t i = 0; i < primary.seqs.size(); i++) {
+                        CAPTURE(i);
+                        // RFC 7104 §3.1: duplicate packets must carry
+                        // identical RTP headers.  Sequence + SSRC are
+                        // the critical fields for receiver dedup.
+                        CHECK(primary.seqs[i] == secondary.seqs[i]);
+                        CHECK(primary.ssrcs[i] == secondary.ssrcs[i]);
+                        CHECK(primary.ssrcs[i] == 0xDEADBEEFu);
+                        // Destinations differ by leg.
+                        CHECK(primary.dests[i] == destPrimary);
+                        CHECK(secondary.dests[i] == destSecondary);
+                }
+
+                session.stop();
+        }
+
+        SUBCASE("ST 2022-7 dual-leg: secondary transport failure does not break primary") {
+                // RFC 7104's point — one network down does not break
+                // the stream.  Primary leg always wins; a transport
+                // error on the secondary is logged but the session
+                // does not surface IOError to the caller (the bytes
+                // already left on the primary).
+                struct OkTransport : public PacketTransport {
+                                bool    opened = false;
+                                int     sent = 0;
+                                Error   open() override { opened = true; return Error::Ok; }
+                                void    close() override { opened = false; }
+                                bool    isOpen() const override { return opened; }
+                                ssize_t sendPacket(const void *, size_t s,
+                                                   const SocketAddress &) override {
+                                        return static_cast<ssize_t>(s);
+                                }
+                                int sendPackets(const DatagramList &dgs) override {
+                                        sent += static_cast<int>(dgs.size());
+                                        return static_cast<int>(dgs.size());
+                                }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+                struct FailTransport : public PacketTransport {
+                                bool    opened = false;
+                                Error   open() override { opened = true; return Error::Ok; }
+                                void    close() override { opened = false; }
+                                bool    isOpen() const override { return opened; }
+                                ssize_t sendPacket(const void *, size_t,
+                                                   const SocketAddress &) override {
+                                        return -1;
+                                }
+                                int sendPackets(const DatagramList &) override { return -1; }
+                                ssize_t receivePacket(void *, size_t,
+                                                      SocketAddress *) override {
+                                        return -1;
+                                }
+                };
+
+                OkTransport   primary;
+                FailTransport secondary;
+                primary.open();
+                secondary.open();
+
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5008));
+                session.setRemoteSecondary(SocketAddress(Ipv4Address::loopback(), 5010));
+                session.setSsrc(1u);
+                REQUIRE(session.start(&primary, &secondary).isOk());
+
+                RtpPacketBatch batch;
+                batch.packets = RtpPacket::createList(2, 64);
+                // Primary succeeds; sendPackets returns Ok even though
+                // the secondary failed.  The primary leg's bytes left
+                // the building successfully.
+                CHECK(session.sendPackets(batch).isOk());
+                CHECK(primary.sent == 2);
+
                 session.stop();
         }
 }

@@ -115,20 +115,24 @@ TextStream &operator<<(TextStream &stream, const SocketAddress &addr) {
 }
 
 // ============================================================================
-// DataStream wire format (v1: canonical "host:port" String).
+// DataStream wire format (v1: embedded NetworkAddress + 2-byte port).
 // ============================================================================
 
 Error SocketAddress::writeToStream(DataStream &s) const {
-        s << toString();
+        Error err = _address.writeToStream(s);
+        if (err.isError()) return err;
+        s << _port;
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
 }
 
 template <>
 Result<SocketAddress> SocketAddress::readFromStream<1>(DataStream &s) {
-        String str;
-        s >> str;
+        auto [addr, addrErr] = NetworkAddress::readFromStream<1>(s);
+        if (addrErr.isError()) return makeError<SocketAddress>(addrErr);
+        uint16_t port = 0;
+        s >> port;
         if (s.status() != DataStream::Ok) return makeError<SocketAddress>(s.toError());
-        return SocketAddress::fromString(str);
+        return makeResult(SocketAddress(addr, port));
 }
 
 PROMEKI_NAMESPACE_END

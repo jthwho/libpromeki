@@ -298,6 +298,49 @@ class SdpSession {
                 void addMediaDescription(const SdpMediaDescription &md) { _mediaDescriptions.pushToBack(md); }
 
                 /**
+                 * @brief Returns the value of a session-level @c a= attribute.
+                 *
+                 * RFC 4566 § 5.13: @c a= lines that appear before any
+                 * @c m= section apply to the whole session.  ST 2110
+                 * uses @c a=group:DUP (RFC 5888 + RFC 7104) at this
+                 * scope to declare a 2022-7 redundancy group.
+                 *
+                 * @param name The attribute name (without the @c a=
+                 *             prefix and without the trailing @c ':').
+                 * @return The attribute value, or an empty string when
+                 *         the attribute is absent or value-less.
+                 */
+                String sessionAttribute(const String &name) const {
+                        for (size_t i = 0; i < _sessionAttributes.size(); i++) {
+                                if (_sessionAttributes[i].first() == name) return _sessionAttributes[i].second();
+                        }
+                        return String();
+                }
+
+                /**
+                 * @brief Sets a session-level @c a= attribute.
+                 *
+                 * Updates an existing entry in place; otherwise appends
+                 * a new one, preserving insertion order.
+                 *
+                 * @param name  Attribute name.
+                 * @param value Attribute value; an empty string emits
+                 *              the bare @c "a=<name>" form.
+                 */
+                void setSessionAttribute(const String &name, const String &value) {
+                        for (size_t i = 0; i < _sessionAttributes.size(); i++) {
+                                if (_sessionAttributes[i].first() == name) {
+                                        _sessionAttributes[i].setSecond(value);
+                                        return;
+                                }
+                        }
+                        _sessionAttributes.pushToBack(SdpMediaDescription::Attribute(name, value));
+                }
+
+                /** @brief Returns all session-level attributes in insertion order. */
+                const SdpMediaDescription::AttributeList &sessionAttributes() const { return _sessionAttributes; }
+
+                /**
                  * @brief Generates the SDP text representation.
                  * @return The complete SDP document as a string.
                  */
@@ -323,6 +366,7 @@ class SdpSession {
                                _originNetType == other._originNetType && _originAddrType == other._originAddrType &&
                                _originAddress == other._originAddress &&
                                _connectionAddress == other._connectionAddress &&
+                               _sessionAttributes == other._sessionAttributes &&
                                _mediaDescriptions == other._mediaDescriptions;
                 }
 
@@ -338,6 +382,7 @@ class SdpSession {
                 String                             _originAddrType = "IP4";
                 String                             _originAddress = "0.0.0.0";
                 String                             _connectionAddress;
+                SdpMediaDescription::AttributeList _sessionAttributes;
                 MediaDescriptionList               _mediaDescriptions;
 };
 

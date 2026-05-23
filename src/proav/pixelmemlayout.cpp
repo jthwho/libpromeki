@@ -1291,6 +1291,211 @@ static PixelMemLayout::Data makeInterleavedUYVY3x16BE() {
 }
 
 // ---------------------------------------------------------------------------
+// ST 2110-20 wire-format pgroup helpers
+//
+// Pgroup-ceiling line stride: one row's worth of pgroups, rounded up
+// to cover the trailing partial pgroup if any (matches the v210
+// stride model).  Used by every interleaved §6.2 wire layout
+// (4:4:4 / 4:2:2 / Key / XYZ at depths 10 and 12).
+// ---------------------------------------------------------------------------
+
+static size_t st2110_pgroupLineStride(const PixelMemLayout::Data *d, size_t /*planeIdx*/, size_t width, size_t linePad,
+                                      size_t lineAlign) {
+        const size_t pixPerBlock = d->pixelsPerBlock > 0 ? d->pixelsPerBlock : 1;
+        const size_t pgroups = (width + pixPerBlock - 1) / pixPerBlock;
+        const size_t lineBytes = pgroups * d->bytesPerBlock + linePad;
+        return PROMEKI_ALIGN_UP(lineBytes, lineAlign);
+}
+
+static size_t st2110_pgroupPlaneSize(const PixelMemLayout::Data *d, size_t planeIdx, size_t width, size_t height,
+                                     size_t linePad, size_t lineAlign) {
+        // vSubsampling > 1 marks the 4:2:0 single-plane wire form,
+        // where each wire row covers @c vSubsampling image rows of
+        // pixel data (per §6.2.5).  Round up so a partial trailing
+        // image row still gets a full wire row allocated.
+        const auto  &p = d->planes[planeIdx];
+        const size_t vSub = p.vSubsampling > 0 ? p.vSubsampling : 1;
+        const size_t wireRows = (height + vSub - 1) / vSub;
+        return st2110_pgroupLineStride(d, planeIdx, width, linePad, lineAlign) * wireRows;
+}
+
+// ---------------------------------------------------------------------------
+// ST 2110-20 wire-format pgroup factory functions
+// ---------------------------------------------------------------------------
+
+static PixelMemLayout::Data makeSt2110_3x10BE() {
+        PixelMemLayout::Data d;
+        d.id = PixelMemLayout::I_3x10_BE_2110;
+        d.name = "3x10_BE_2110";
+        d.desc = "3 components, 10 bits BE pgroup-packed (ST 2110-20 §6.2): 4 pixels in 15 octets";
+        d.sampling = PixelMemLayout::Sampling444;
+        d.pixelsPerBlock = 4;
+        d.bytesPerBlock = 15;
+        d.compCount = 3;
+        // Per-sample bit width; byte offsets are placeholders (the
+        // sample bits straddle byte boundaries — actual positions
+        // live in the pack / unpack kernels).
+        d.comps[0] = {0, 10, 0};
+        d.comps[1] = {0, 10, 0};
+        d.comps[2] = {0, 10, 0};
+        d.planeCount = 1;
+        d.planes[0] = {""};
+        d.lineStrideFunc = st2110_pgroupLineStride;
+        d.planeSizeFunc = st2110_pgroupPlaneSize;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_3x12BE() {
+        PixelMemLayout::Data d = makeSt2110_3x10BE();
+        d.id = PixelMemLayout::I_3x12_BE_2110;
+        d.name = "3x12_BE_2110";
+        d.desc = "3 components, 12 bits BE pgroup-packed (ST 2110-20 §6.2): 2 pixels in 9 octets";
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 9;
+        d.comps[0].bits = 12;
+        d.comps[1].bits = 12;
+        d.comps[2].bits = 12;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_422UYVY3x10BE() {
+        PixelMemLayout::Data d;
+        d.id = PixelMemLayout::I_422_UYVY_3x10_BE_2110;
+        d.name = "422_UYVY_3x10_BE_2110";
+        d.desc = "3 components, 10 bits BE pgroup-packed (ST 2110-20 §6.2): 2 pixels in 5 octets (Cb Y Cr Y order)";
+        d.sampling = PixelMemLayout::Sampling422;
+        d.chromaSitingH = PixelMemLayout::ChromaHLeft;
+        d.chromaSitingV = PixelMemLayout::ChromaVTop;
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 5;
+        d.compCount = 3;
+        d.comps[0] = {0, 10, 0}; // Y  — placeholder offset
+        d.comps[1] = {0, 10, 0}; // Cb — placeholder offset
+        d.comps[2] = {0, 10, 0}; // Cr — placeholder offset
+        d.planeCount = 1;
+        d.planes[0] = {""};
+        d.lineStrideFunc = st2110_pgroupLineStride;
+        d.planeSizeFunc = st2110_pgroupPlaneSize;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_422UYVY3x12BE() {
+        PixelMemLayout::Data d = makeSt2110_422UYVY3x10BE();
+        d.id = PixelMemLayout::I_422_UYVY_3x12_BE_2110;
+        d.name = "422_UYVY_3x12_BE_2110";
+        d.desc = "3 components, 12 bits BE pgroup-packed (ST 2110-20 §6.2): 2 pixels in 6 octets (Cb Y Cr Y order)";
+        d.bytesPerBlock = 6;
+        d.comps[0].bits = 12;
+        d.comps[1].bits = 12;
+        d.comps[2].bits = 12;
+        return d;
+}
+
+static PixelMemLayout::Data makeUYVY3xF16BE() {
+        PixelMemLayout::Data d;
+        d.id = PixelMemLayout::I_422_UYVY_3xF16_BE;
+        d.name = "422_UYVY_3xF16_BE";
+        d.desc = "3 components, half-float BE, 4:2:2 UYVY (2 pixels in 8 octets, Cb Y Cr Y order)";
+        d.sampling = PixelMemLayout::Sampling422;
+        d.chromaSitingH = PixelMemLayout::ChromaHLeft;
+        d.chromaSitingV = PixelMemLayout::ChromaVTop;
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 8;
+        d.compCount = 3;
+        d.comps[0] = {0, 16, 2}; // Y at byte 2
+        d.comps[1] = {0, 16, 0}; // Cb at byte 0
+        d.comps[2] = {0, 16, 4}; // Cr at byte 4
+        d.planeCount = 1;
+        d.planes[0] = {""};
+        d.lineStrideFunc = interleavedLineStride;
+        d.planeSizeFunc = interleavedPlaneSize;
+        return d;
+}
+
+// 4:2:0 wire layouts are single-plane pgroup-interleaved per §6.2.5:
+// each wire byte stream "row" carries pgroups that span 2 image
+// rows.  Modelled via @c vSubsampling=2 on plane 0 — the CSC
+// pipeline detects this and iterates by row pairs (one kernel call
+// produces one wire row from two source image rows).  The
+// packetizer (RtpPayloadRawVideo) reads from the flat byte stream
+// with SRD Row Number = wire_row × 2 (= first luma row of the pair
+// per §6.2.5).
+static PixelMemLayout::Data makeSt2110_420_8() {
+        PixelMemLayout::Data d;
+        d.id = PixelMemLayout::I_420_BE_2110_8;
+        d.name = "420_BE_2110_8";
+        d.desc = "1 plane, 8-bit pgroup-interleaved, 4:2:0 (ST 2110-20 §6.2.5): 4 pixels (2×2 block) in 6 octets, vSub=2";
+        d.sampling = PixelMemLayout::Sampling420;
+        d.chromaSitingH = PixelMemLayout::ChromaHLeft;
+        d.chromaSitingV = PixelMemLayout::ChromaVCenter;
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 6;
+        d.compCount = 3;
+        d.comps[0] = {0, 8, 0}; // Y
+        d.comps[1] = {0, 8, 0}; // Cb
+        d.comps[2] = {0, 8, 0}; // Cr
+        d.planeCount = 1;
+        d.planes[0] = {"", 1, 2, 0}; // vSub=2: each wire row spans 2 image rows.
+        d.lineStrideFunc = st2110_pgroupLineStride;
+        d.planeSizeFunc = st2110_pgroupPlaneSize;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_420_10() {
+        PixelMemLayout::Data d = makeSt2110_420_8();
+        d.id = PixelMemLayout::I_420_BE_2110_10;
+        d.name = "420_BE_2110_10";
+        d.desc = "1 plane, 10-bit BE pgroup-interleaved, 4:2:0 (ST 2110-20 §6.2.5): 8 pixels (4×2 block) in 15 octets, vSub=2";
+        d.pixelsPerBlock = 4;
+        d.bytesPerBlock = 15;
+        d.comps[0].bits = 10;
+        d.comps[1].bits = 10;
+        d.comps[2].bits = 10;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_420_12() {
+        PixelMemLayout::Data d = makeSt2110_420_8();
+        d.id = PixelMemLayout::I_420_BE_2110_12;
+        d.name = "420_BE_2110_12";
+        d.desc = "1 plane, 12-bit BE pgroup-interleaved, 4:2:0 (ST 2110-20 §6.2.5): 4 pixels (2×2 block) in 9 octets, vSub=2";
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 9;
+        d.comps[0].bits = 12;
+        d.comps[1].bits = 12;
+        d.comps[2].bits = 12;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_1x10BE() {
+        PixelMemLayout::Data d;
+        d.id = PixelMemLayout::I_1x10_BE_2110;
+        d.name = "1x10_BE_2110";
+        d.desc = "1 component, 10 bits BE pgroup-packed (ST 2110-20 §6.2 Key): 4 pixels in 5 octets";
+        d.sampling = PixelMemLayout::Sampling444;
+        d.pixelsPerBlock = 4;
+        d.bytesPerBlock = 5;
+        d.compCount = 1;
+        d.comps[0] = {0, 10, 0};
+        d.planeCount = 1;
+        d.planes[0] = {""};
+        d.lineStrideFunc = st2110_pgroupLineStride;
+        d.planeSizeFunc = st2110_pgroupPlaneSize;
+        return d;
+}
+
+static PixelMemLayout::Data makeSt2110_1x12BE() {
+        PixelMemLayout::Data d = makeSt2110_1x10BE();
+        d.id = PixelMemLayout::I_1x12_BE_2110;
+        d.name = "1x12_BE_2110";
+        d.desc = "1 component, 12 bits BE pgroup-packed (ST 2110-20 §6.2 Key): 2 pixels in 3 octets";
+        d.pixelsPerBlock = 2;
+        d.bytesPerBlock = 3;
+        d.comps[0].bits = 12;
+        return d;
+}
+
+// ---------------------------------------------------------------------------
 // Construct-on-first-use registry
 // ---------------------------------------------------------------------------
 
@@ -1383,6 +1588,16 @@ struct PixelMemLayoutRegistry {
                         add(makeInterleavedUYVY3x16BE());
                         add(makePlanar444_3x8());
                         add(makePlanar444_3x10LE());
+                        add(makeSt2110_3x10BE());
+                        add(makeSt2110_3x12BE());
+                        add(makeSt2110_422UYVY3x10BE());
+                        add(makeSt2110_422UYVY3x12BE());
+                        add(makeUYVY3xF16BE());
+                        add(makeSt2110_420_8());
+                        add(makeSt2110_420_10());
+                        add(makeSt2110_420_12());
+                        add(makeSt2110_1x10BE());
+                        add(makeSt2110_1x12BE());
                 }
 
                 void add(PixelMemLayout::Data d) {

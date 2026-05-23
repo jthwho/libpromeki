@@ -255,6 +255,35 @@ class PixelMemLayout {
                         SP_422_16_LE = 82, ///< 2 planes, 16-bit LE, 4:2:2 NV16 (NDI P216 wire format).
                         SP_422_16_BE = 83, ///< 2 planes, 16-bit BE, 4:2:2 NV16.
 
+                        // -- ST 2110-20 wire-format pgroups (big-endian sample-packed) --
+                        //
+                        // These layouts describe the on-the-wire byte stream
+                        // emitted by an ST 2110-20 sender as the RFC 4175
+                        // SRD payload.  Samples are MSB-first big-endian and
+                        // packed tightly across byte boundaries inside each
+                        // pgroup (§6.1.1 / §6.2).  The CompDesc::byteOffset
+                        // and bits fields are descriptive of the per-sample
+                        // bit width only — the actual bit positions live in
+                        // the dedicated pack / unpack kernels (mirroring how
+                        // I_3x10_DPX_B and I_422_v210 are modelled).
+                        //
+                        // 8-bit and 16/16f cases collapse to existing
+                        // layouts (I_3x8, I_3x16_BE, I_3xF16_BE,
+                        // I_422_UYVY_3x8, I_422_UYVY_3x16_BE, I_1x8,
+                        // I_1x16_BE, I_1xF16_BE, SP_420_8) and are not
+                        // re-registered; the bridge declares the existing
+                        // layout as the wire layout for those depths.
+                        I_3x10_BE_2110 = 84,         ///< 4:4:4 10-bit BE, 4 pixels in 15 octets (ST 2110-20 §6.2).
+                        I_3x12_BE_2110 = 85,         ///< 4:4:4 / XYZ 12-bit BE, 2 pixels in 9 octets.
+                        I_422_UYVY_3x10_BE_2110 = 86,///< 4:2:2 10-bit BE, 2 pixels in 5 octets.
+                        I_422_UYVY_3x12_BE_2110 = 87,///< 4:2:2 12-bit BE, 2 pixels in 6 octets.
+                        I_422_UYVY_3xF16_BE = 88,    ///< 4:2:2 half-float BE, 2 pixels in 8 octets (UYVY-order, paired with 16-bit wire).
+                        I_420_BE_2110_10 = 89,       ///< 4:2:0 10-bit BE, single-plane pgroup-interleaved (8 pixels in 15 octets per 2 image rows; @c vSubsampling=2).
+                        I_420_BE_2110_12 = 90,       ///< 4:2:0 12-bit BE, single-plane pgroup-interleaved (4 pixels in 9 octets per 2 image rows; @c vSubsampling=2).
+                        I_1x10_BE_2110 = 91,         ///< Key 10-bit BE, 4 pixels in 5 octets.
+                        I_1x12_BE_2110 = 92,         ///< Key 12-bit BE, 2 pixels in 3 octets.
+                        I_420_BE_2110_8 = 93,        ///< 4:2:0 8-bit BE, single-plane pgroup-interleaved (4 pixels in 6 octets per 2 image rows; @c vSubsampling=2).
+
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };
 

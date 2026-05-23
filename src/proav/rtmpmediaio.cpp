@@ -996,7 +996,7 @@ Error RtmpMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) 
         // class behaviour (transparent passthrough) so we don't fight
         // the planner with a fabricated shape.
         const Enum modeEnum = config().get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         if (!isWrite) {
                 *preferred = offered;
                 return Error::Ok;
@@ -1068,7 +1068,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         Enum modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _readerMode = !isWrite;
         _readCancelled.setValue(false);
 
@@ -1372,7 +1372,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
                 // a fresh wall clock so pacing continues uninterrupted;
                 // for External / None modes the gate stays unbound.
                 _paceClockIsExternal = false;
-                if (_videoPacingMode.value() == RtmpVideoPacing::Internal.value()) {
+                if (_videoPacingMode == RtmpVideoPacing::Internal) {
                         armVideoPaceGate();
                 } else {
                         _videoPaceGate.setClock(Clock::Ptr());
@@ -1383,7 +1383,7 @@ Error RtmpMediaIO::executeCmd(MediaIOCommandSetClock &cmd) {
 
 void RtmpMediaIO::armVideoPaceGate() {
         _paceClockIsExternal = false;
-        if (_videoPacingMode.value() == RtmpVideoPacing::Internal.value()) {
+        if (_videoPacingMode == RtmpVideoPacing::Internal) {
                 _videoPaceGate.setClock(Clock::Ptr::takeOwnership(new WallClock()));
         } else {
                 _videoPaceGate.setClock(Clock::Ptr());

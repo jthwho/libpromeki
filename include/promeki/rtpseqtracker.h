@@ -73,16 +73,32 @@ class RtpSeqTracker {
                 /// @brief RFC 3550 §A.1 — probation length.
                 static constexpr unsigned int MinSequential = 2;
 
-                /// @brief RFC 3550 §A.1 — sequential reorder
-                ///        threshold (packets within this distance
-                ///        of @c max_seq are treated as in-order).
-                static constexpr uint32_t MaxDropout = 3000;
+                /// @brief Sequential reorder threshold (packets within
+                ///        this distance of @c max_seq are treated as
+                ///        in-order).  RFC 3550 §A.1 suggests 3000 but
+                ///        sized that for kbps streams; ST 2110 / JPEG
+                ///        XS bursts at 4K60 push ~18,000-26,000 packets
+                ///        per frame and the receiver routinely falls
+                ///        behind by a sub-frame's worth of seq before
+                ///        catching up.  32,768 covers a full frame
+                ///        burst (with headroom) and sits at half the
+                ///        16-bit seq space — large enough that any
+                ///        true sender restart still has space on the
+                ///        far side to register as a backwards-jump
+                ///        rather than a forward gap.
+                static constexpr uint32_t MaxDropout = 32768;
 
-                /// @brief RFC 3550 §A.1 — backwards-jump threshold.
-                ///        Packets that fall outside
+                /// @brief Backwards-jump threshold (RFC 3550 §A.1's
+                ///        @c MAX_MISORDER, generalised for ST 2110-
+                ///        scale rates).  Packets that fall outside
                 ///        @c [-MaxMisorder, +MaxDropout) of
-                ///        @c max_seq are candidate restarts.
-                static constexpr uint32_t MaxMisorder = 100;
+                ///        @c max_seq are candidate sender restarts.
+                ///        The RFC's 100 is too tight for high-rate
+                ///        streams where late arrivals from the
+                ///        reorder buffer's deadline-fill can easily
+                ///        appear thousands of seq behind the current
+                ///        @c max_seq cursor.
+                static constexpr uint32_t MaxMisorder = 1000;
 
                 /// @brief 16-bit RTP sequence space modulus.
                 static constexpr uint32_t SeqMod = 1u << 16;

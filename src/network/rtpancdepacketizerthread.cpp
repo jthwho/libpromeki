@@ -17,8 +17,8 @@
 PROMEKI_NAMESPACE_BEGIN
 
 RtpAncDepacketizerThread::RtpAncDepacketizerThread(
-        RtpAncDepacketizerContext ctx, const String &name, uint32_t clockRateHz)
-    : RtpDepacketizerThread(name, clockRateHz), _ctx(std::move(ctx)) {}
+        RtpAncDepacketizerContext ctx, const String &name, uint32_t clockRateHz, size_t queueDepth)
+    : RtpDepacketizerThread(name, clockRateHz, queueDepth), _ctx(std::move(ctx)) {}
 
 RtpAncDepacketizerThread::~RtpAncDepacketizerThread() {
         requestStop();

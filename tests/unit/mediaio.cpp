@@ -228,7 +228,7 @@ TEST_CASE("MediaIO::createForFileRead stamps OpenMode = Read for file-extension 
         REQUIRE(io != nullptr);
         const MediaIO::Config &cfg = io->config();
         Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        CHECK(mode.value() == MediaIOOpenMode::Read.value());
+        CHECK(mode == MediaIOOpenMode::Read);
         delete io;
 }
 
@@ -237,6 +237,6 @@ TEST_CASE("MediaIO::createForFileWrite stamps OpenMode = Write for file-extensio
         REQUIRE(io != nullptr);
         const MediaIO::Config &cfg = io->config();
         Enum mode = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        CHECK(mode.value() == MediaIOOpenMode::Write.value());
+        CHECK(mode == MediaIOOpenMode::Write);
         delete io;
 }

@@ -40,10 +40,17 @@ PROMEKI_NAMESPACE_BEGIN
 namespace promekitest {
 
         /// @brief Default raster + frame rate every pipeline-driven
-        ///        test uses unless the suite overrides it.  720p59.94
-        ///        stays in every codec's happy path and keeps disk
-        ///        I/O bounded for file-based suites.
-        inline constexpr VideoFormat::WellKnownFormat kDefaultVideoFormat = VideoFormat::Smpte720p59_94;
+        ///        test uses unless the suite overrides it.
+        ///        2160p59.94 (4K UHD at 59.94 Hz) is the worst-case
+        ///        ST 2110-20 / SMPTE 2110-22 workload: ~18,000 packets
+        ///        per RFC 4175 4:2:2 10-bit frame, ~26,000 per
+        ///        4:4:4 10-bit, ~2,600 per JPEG XS @ 3 bpp.  Sizing
+        ///        the matrix here makes sure every code path
+        ///        (reorder buffer, depacketizer input queue, kernel
+        ///        UDP receive buffer, planner CSC, codec packetizer)
+        ///        carries enough budget for the worst case rather
+        ///        than just the happy path.
+        inline constexpr VideoFormat::WellKnownFormat kDefaultVideoFormat = VideoFormat::Smpte2160p59_94;
 
         /**
          * @brief Builds the TPG source stage every test starts from.

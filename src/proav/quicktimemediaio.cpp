@@ -175,7 +175,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         Enum       modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _isOpen = true;
         _isWrite = isWrite;
 

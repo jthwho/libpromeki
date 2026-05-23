@@ -32,6 +32,11 @@ size_t computeQueueDepth(int packetTimeUs) {
 RtpAudioTxThread::RtpAudioTxThread(RtpAudioTxContext ctx, const String &name)
     : RtpTxThread(name), _ctx(std::move(ctx)) {
         _packetQueue.setMaxSize(computeQueueDepth(_ctx.packetTimeUs));
+        // Phase D3 — seed the RTP-TS cursor from the per-stream
+        // RtpMediaClock anchor.  Default 0 preserves the pre-D3
+        // "start at zero" behaviour; a PTP-anchored writer hands in
+        // the SMPTE-Epoch-grid projection of the open-time wallclock.
+        _rtpTs = _ctx.initialRtpTs;
 }
 
 RtpAudioTxThread::~RtpAudioTxThread() {

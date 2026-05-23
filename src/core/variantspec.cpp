@@ -13,6 +13,7 @@
 #include <promeki/duration.h>
 #include <promeki/enumlist.h>
 #include <promeki/framerate.h>
+#include <promeki/pixelaspect.h>
 #include <promeki/audiocodec.h>
 #include <promeki/logger.h>
 #include <promeki/pixelformat.h>
@@ -143,6 +144,7 @@ namespace {
                         case DataTypeDuration: return "Duration";
                         case DataTypeRational: return "Rational";
                         case DataTypeFrameRate: return "FrameRate";
+                        case DataTypePixelAspect: return "PixelAspect";
                         case DataTypeVideoFormat: return "VideoFormat";
                         case DataTypeStringList: return "StringList";
                         case DataTypeColor: return "Color";
@@ -263,6 +265,11 @@ namespace {
                                 // FrameRate() or 0/0.  Don't conflate parse
                                 // success with semantic validity.
                                 auto r = FrameRate::fromString(str);
+                                if (r.second().isError()) break;
+                                return Variant(r.first());
+                        }
+                        case DataTypePixelAspect: {
+                                auto r = PixelAspect::fromString(str);
                                 if (r.second().isError()) break;
                                 return Variant(r.first());
                         }

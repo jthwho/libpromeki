@@ -448,8 +448,26 @@ namespace promekitest {
                         }
 
                         const int32_t      frames = ctx.params().getAs<int32_t>(TestParams::Frames, 30);
-                        const int32_t      timeoutMs =
+                        int32_t            timeoutMs =
                                 ctx.params().getAs<int32_t>(TestParams::PhaseTimeoutMs, 10000);
+                        // PNG image-sequence write/read at the 2160p59.94
+                        // matrix raster routinely spends ~15s per phase —
+                        // libspng's deflate pass on a 24 MB uncompressed
+                        // surface is dramatically more CPU-intensive than
+                        // every other sequence backend in the matrix
+                        // (DPX/Cineon are uncompressed, JPEG/JPEG-XS are
+                        // chunked-DCT, TIFF defaults to LZW which is
+                        // ~3× cheaper).  Floor the per-phase watchdog at
+                        // 30s for the PNG sequence backend so the test
+                        // doesn't TIME on a normally-loaded host while
+                        // still failing fast on a real deadlock.  An
+                        // explicit @ref TestParams::PhaseTimeoutMs HIGHER
+                        // than the floor still wins (so CI can dial it
+                        // further up), but a lower one gets promoted so
+                        // the test doesn't false-flag.
+                        if (c.backendName == String("ImgSeqPNG") && timeoutMs < 30000) {
+                                timeoutMs = 30000;
+                        }
                         const FilePath     testFolder = ctx.testFolder();
                         const String       path = pathForCase(c, testFolder);
                         // Stream IDs are arbitrary but must be unique across cases that

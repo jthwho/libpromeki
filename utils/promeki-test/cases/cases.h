@@ -88,6 +88,20 @@ namespace promekitest {
         void registerRtpCases();
 
         /**
+         * @brief Registers the ffmpeg-rawvideo RTP interop case.
+         *
+         * Spins up an in-process TPG → @ref RtpMediaIO RFC 4175 sender
+         * on a loopback UDP port and exercises the on-disk SDP through
+         * an out-of-process @c ffmpeg subprocess pointed at @c rawvideo.
+         * The case Skips cleanly when @c ffmpeg is not on @c PATH; on a
+         * machine that has it, the case verifies that ffmpeg's RFC
+         * 4175 demuxer accepts our SDP and produces a non-zero output
+         * file.  Proves out the third-party-receiver path that an
+         * in-process round-trip cannot.
+         */
+        void registerRtpFfmpegCases();
+
+        /**
          * @brief Registers RTP receiver-correctness chaos cases.
          *
          * Each case spins up a TPG → RFC 2435 JPEG RTP loopback round-trip

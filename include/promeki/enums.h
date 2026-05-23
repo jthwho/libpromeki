@@ -661,6 +661,701 @@ inline const RtpRefClockMode RtpRefClockMode::Ptp{2};
 inline const RtpRefClockMode RtpRefClockMode::None{3};
 
 /**
+ * @brief Well-known Enum type for the RFC 7273 @c mediaclk SDP attribute.
+ *
+ * RFC 7273 §5 distinguishes two ways a sender signals how its media
+ * clock relates to the reference clock identified by @c ts-refclk:
+ *
+ * - @c mediaclk:direct=&lt;offset&gt; — the media clock is locked to
+ *   the reference clock with a fixed RTP-timestamp offset.  A
+ *   receiver can compute the wallclock instant of every sample from
+ *   the on-wire RTP-TS and the SDP offset alone.  This is the
+ *   default for synchronous capture paths (SDI ingest, AES67 audio
+ *   capture, anywhere the wire format is sample-locked to the
+ *   reference grid).
+ *
+ * - @c mediaclk:sender — the media clock is asynchronous to the
+ *   reference clock.  The receiver must use RTCP Sender Reports to
+ *   recover the sender's clock; the @c ts-refclk identifies the
+ *   sender's reference frame but does not anchor the media clock to
+ *   it.  Right for sources whose framing rate floats relative to
+ *   PTP (free-running encoders, network-fed transcoders, anything
+ *   where the source clock is not disciplined to the same PTP grid
+ *   the wire-side advertises).
+ *
+ * Drives the @ref MediaConfig::RtpVideoMediaClkMode /
+ * @ref MediaConfig::RtpAudioMediaClkMode /
+ * @ref MediaConfig::RtpDataMediaClkMode config keys and the
+ * @c RtpMediaIO::buildSdp emission path.
+ *
+ * @par Modes
+ *  - @c Auto — pick based on the stream's ts-refclk decision.  When
+ *               a reference clock is advertised (Ptp or LocalMac),
+ *               emit @c mediaclk:direct=&lt;offset&gt;; with @c None
+ *               omit the @c mediaclk attribute entirely.  This is
+ *               the default and matches today's behaviour.
+ *  - @c Direct — force @c mediaclk:direct=&lt;offset&gt; emission.
+ *                Offset comes from the per-stream
+ *                @ref RtpMediaClock::mediaClkDirectOffset (0 for a
+ *                natural PTP anchor) with the @c
+ *                MediaConfig::RtpMediaClkOffset legacy override.
+ *  - @c Sender — emit bare @c mediaclk:sender (no parameters).  Use
+ *                for sources whose media clock is asynchronous to
+ *                the reference clock.
+ */
+class RtpMediaClkMode : public TypedEnum<RtpMediaClkMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("RtpMediaClkMode", 0, {"Auto", 0}, {"Direct", 1},
+                                           {"Sender", 2}); // default: Auto
+
+                using TypedEnum<RtpMediaClkMode>::TypedEnum;
+
+                static const RtpMediaClkMode Auto;
+                static const RtpMediaClkMode Direct;
+                static const RtpMediaClkMode Sender;
+};
+
+inline const RtpMediaClkMode RtpMediaClkMode::Auto{0};
+inline const RtpMediaClkMode RtpMediaClkMode::Direct{1};
+inline const RtpMediaClkMode RtpMediaClkMode::Sender{2};
+
+/**
+ * @brief Well-known Enum type for the SMPTE ST 2110-21 sender type.
+ *
+ * ST 2110-21:2022 §7.1 defines three sender shapes that differ in
+ * how aggressively packets are spread across the active portion of
+ * the frame interval:
+ *
+ * - @c TypeN — Narrow, gapped.  Packets land only inside the
+ *   active line interval (R_ACTIVE × T_FRAME); inter-packet gap
+ *   carries no traffic.  Tightest VRX bound (worst-case
+ *   1500×8 / MAXUDP bytes) and lowest receiver-side jitter
+ *   budget.  Requires hardware-grade pacing (NIC TXTIME with
+ *   sub-µs precision).
+ * - @c TypeNL — Narrow, linear.  Same VRX_FULL / CMAX bounds as
+ *   Type N but packets are spread linearly across the entire
+ *   frame interval (T_RS_l = T_FRAME / N_PACKETS).  Achievable
+ *   on stock Linux with SO_TXTIME + a real-time-scheduled
+ *   userspace TX thread.
+ * - @c TypeW — Wide, linear.  Looser VRX bound
+ *   (1500×720 / MAXUDP) and CMAX floor of 16 — accommodates
+ *   stock kernel fair-queue pacing without TXTIME.  Default for
+ *   any sender that doesn't claim narrow.
+ *
+ * Plus two policy values:
+ *
+ * - @c Auto — derive from the bound scheduler / pacing mode at
+ *   open time.  @c RtpPacingMode::KernelFq / @c Userspace map
+ *   to @c TypeW; @c TxTime maps to @c TypeNL; @c None maps to
+ *   @c Unknown.
+ * - @c Unknown — the sender cannot honestly claim a type.
+ *   Suppresses the @c TP fmtp emission so receivers fall back to
+ *   "treat as Type A" (RFC 4175 §B / ST 2110-21 §7.2).
+ *
+ * Drives @ref MediaConfig::RtpVideoSenderType /
+ * @ref MediaConfig::RtpAudioSenderType /
+ * @ref MediaConfig::RtpDataSenderType and the @c TP fmtp emission
+ * in @c RtpMediaIO::buildSdp.
+ */
+class RtpSenderType : public TypedEnum<RtpSenderType> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("RtpSenderType", 0, {"Auto", 0}, {"Unknown", 1},
+                                           {"TypeN", 2}, {"TypeNL", 3},
+                                           {"TypeW", 4}); // default: Auto
+
+                using TypedEnum<RtpSenderType>::TypedEnum;
+
+                static const RtpSenderType Auto;
+                static const RtpSenderType Unknown;
+                static const RtpSenderType TypeN;
+                static const RtpSenderType TypeNL;
+                static const RtpSenderType TypeW;
+};
+
+inline const RtpSenderType RtpSenderType::Auto{0};
+inline const RtpSenderType RtpSenderType::Unknown{1};
+inline const RtpSenderType RtpSenderType::TypeN{2};
+inline const RtpSenderType RtpSenderType::TypeNL{3};
+inline const RtpSenderType RtpSenderType::TypeW{4};
+
+/**
+ * @brief Well-known Enum type for RFC 9134 @c packetmode (K bit).
+ *
+ * RFC 9134 §4.3 packet-header K bit:
+ *  - @c Codestream (K=0) — the codestream is split into MTU-sized
+ *    fragments without regard to slice / header boundaries.
+ *    Simplest sender; receivers must reassemble before decode.
+ *    The library's default.
+ *  - @c Slice (K=1) — each RTP packet carries one or more
+ *    @em complete JPEG XS slices, never crossing a slice
+ *    boundary.  Enables ultra-low-latency receivers to start
+ *    decoding before the entire frame has arrived; requires the
+ *    sender to walk the codestream's SLH markers and group
+ *    slices into MTU-sized packets.
+ */
+class JxsPacketMode : public TypedEnum<JxsPacketMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("JxsPacketMode", 0, {"Codestream", 0},
+                                           {"Slice", 1}); // default: Codestream
+
+                using TypedEnum<JxsPacketMode>::TypedEnum;
+
+                static const JxsPacketMode Codestream;
+                static const JxsPacketMode Slice;
+};
+
+inline const JxsPacketMode JxsPacketMode::Codestream{0};
+inline const JxsPacketMode JxsPacketMode::Slice{1};
+
+/**
+ * @brief Well-known Enum type for RFC 9134 @c transmode (T bit).
+ *
+ * RFC 9134 §4.3 packet-header T bit:
+ *  - @c OutOfOrderAllowed (T=0) — the sender emits packets in
+ *    codestream order but receivers may reorder before decode.
+ *    Useful with reorder buffers that can absorb network
+ *    permutations.
+ *  - @c SequentialOnly (T=1) — packets MUST arrive in sequence
+ *    for decode to succeed.  The default the RFC mandates when
+ *    the parameter is absent from the fmtp.
+ */
+class JxsTransMode : public TypedEnum<JxsTransMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("JxsTransMode", 1, {"OutOfOrderAllowed", 0},
+                                           {"SequentialOnly", 1}); // default: SequentialOnly
+
+                using TypedEnum<JxsTransMode>::TypedEnum;
+
+                static const JxsTransMode OutOfOrderAllowed;
+                static const JxsTransMode SequentialOnly;
+};
+
+inline const JxsTransMode JxsTransMode::OutOfOrderAllowed{0};
+inline const JxsTransMode JxsTransMode::SequentialOnly{1};
+
+/**
+ * @brief Well-known Enum type for the JPEG XS profile (ISO 21122-2).
+ *
+ * Each value's CamelCase identifier maps to a canonical SDP
+ * @c profile= wire token after RFC 9134 §7.1's "any white space
+ * Unicode character in the profile name SHALL be omitted" rule;
+ * the wire mapping lives in @c imagedesc.cpp 's
+ * @c jxsProfileToFmtp / @c jxsProfileFromFmtp helpers.  Example:
+ * @c Main422_10 → @c "Main422.10".
+ *
+ * @c Unspecified (the default) suppresses @c profile= emission.
+ */
+class JxsProfile : public TypedEnum<JxsProfile> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("JxsProfile", 0, {"Unspecified", 0},
+                                           {"Light422_10", 1}, {"Light444_12", 2},
+                                           {"LightSubline422_10", 3}, {"Main422_10", 4},
+                                           {"Main444_12", 5}, {"Main4444_12", 6},
+                                           {"High444_12", 7}, {"High4444_12", 8},
+                                           {"Tdc422_10", 9});
+
+                using TypedEnum<JxsProfile>::TypedEnum;
+
+                static const JxsProfile Unspecified;
+                static const JxsProfile Light422_10;
+                static const JxsProfile Light444_12;
+                static const JxsProfile LightSubline422_10;
+                static const JxsProfile Main422_10;
+                static const JxsProfile Main444_12;
+                static const JxsProfile Main4444_12;
+                static const JxsProfile High444_12;
+                static const JxsProfile High4444_12;
+                static const JxsProfile Tdc422_10;
+};
+
+inline const JxsProfile JxsProfile::Unspecified{0};
+inline const JxsProfile JxsProfile::Light422_10{1};
+inline const JxsProfile JxsProfile::Light444_12{2};
+inline const JxsProfile JxsProfile::LightSubline422_10{3};
+inline const JxsProfile JxsProfile::Main422_10{4};
+inline const JxsProfile JxsProfile::Main444_12{5};
+inline const JxsProfile JxsProfile::Main4444_12{6};
+inline const JxsProfile JxsProfile::High444_12{7};
+inline const JxsProfile JxsProfile::High4444_12{8};
+inline const JxsProfile JxsProfile::Tdc422_10{9};
+
+/**
+ * @brief Well-known Enum type for the JPEG XS level (ISO 21122-2).
+ *
+ * Each value's identifier maps to a canonical SDP @c level=
+ * wire token (e.g. @c Lvl4k_2 → @c "4k-2") in @c imagedesc.cpp.
+ * @c Unspecified suppresses @c level= emission.
+ */
+class JxsLevel : public TypedEnum<JxsLevel> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("JxsLevel", 0, {"Unspecified", 0}, {"Lvl1k_1", 1},
+                                           {"Lvl2k_1", 2}, {"Lvl4k_1", 3}, {"Lvl4k_2", 4},
+                                           {"Lvl4k_3", 5}, {"Lvl8k_1", 6}, {"Lvl8k_2", 7},
+                                           {"Lvl8k_3", 8}, {"Lvl10k_1", 9});
+
+                using TypedEnum<JxsLevel>::TypedEnum;
+
+                static const JxsLevel Unspecified;
+                static const JxsLevel Lvl1k_1;
+                static const JxsLevel Lvl2k_1;
+                static const JxsLevel Lvl4k_1;
+                static const JxsLevel Lvl4k_2;
+                static const JxsLevel Lvl4k_3;
+                static const JxsLevel Lvl8k_1;
+                static const JxsLevel Lvl8k_2;
+                static const JxsLevel Lvl8k_3;
+                static const JxsLevel Lvl10k_1;
+};
+
+inline const JxsLevel JxsLevel::Unspecified{0};
+inline const JxsLevel JxsLevel::Lvl1k_1{1};
+inline const JxsLevel JxsLevel::Lvl2k_1{2};
+inline const JxsLevel JxsLevel::Lvl4k_1{3};
+inline const JxsLevel JxsLevel::Lvl4k_2{4};
+inline const JxsLevel JxsLevel::Lvl4k_3{5};
+inline const JxsLevel JxsLevel::Lvl8k_1{6};
+inline const JxsLevel JxsLevel::Lvl8k_2{7};
+inline const JxsLevel JxsLevel::Lvl8k_3{8};
+inline const JxsLevel JxsLevel::Lvl10k_1{9};
+
+/**
+ * @brief Well-known Enum type for the JPEG XS sublevel (ISO 21122-2).
+ *
+ * Each value's identifier maps to a canonical SDP @c sublevel=
+ * wire token (e.g. @c Sublev3bpp → @c "Sublev3bpp") in
+ * @c imagedesc.cpp.  @c Unspecified suppresses @c sublevel=
+ * emission.
+ */
+class JxsSublevel : public TypedEnum<JxsSublevel> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("JxsSublevel", 0, {"Unspecified", 0}, {"Full", 1},
+                                           {"Sublev3bpp", 2}, {"Sublev6bpp", 3},
+                                           {"Sublev9bpp", 4}, {"Sublev12bpp", 5});
+
+                using TypedEnum<JxsSublevel>::TypedEnum;
+
+                static const JxsSublevel Unspecified;
+                static const JxsSublevel Full;
+                static const JxsSublevel Sublev3bpp;
+                static const JxsSublevel Sublev6bpp;
+                static const JxsSublevel Sublev9bpp;
+                static const JxsSublevel Sublev12bpp;
+};
+
+inline const JxsSublevel JxsSublevel::Unspecified{0};
+inline const JxsSublevel JxsSublevel::Full{1};
+inline const JxsSublevel JxsSublevel::Sublev3bpp{2};
+inline const JxsSublevel JxsSublevel::Sublev6bpp{3};
+inline const JxsSublevel JxsSublevel::Sublev9bpp{4};
+inline const JxsSublevel JxsSublevel::Sublev12bpp{5};
+
+/**
+ * @brief Well-known Enum type for the SMPTE ST 2110-10 @c TSMODE SDP fmtp parameter.
+ *
+ * ST 2110-10 §7.9 / §8.7 describe how a sender labels its RTP
+ * timestamps so a downstream receiver knows whether to align essences
+ * by @c (NTP, RTP-TS) anchor pairs, by sample instant, or to treat the
+ * stamp as freshly minted.
+ *
+ * - @c Samp — RTP-TS reflects the original sample instant; the
+ *             sender passed @ref Frame::captureTime through unmodified.
+ * - @c New  — RTP-TS was created anew at egress (synthetic generators
+ *             such as TPG, videogen).
+ * - @c Pres — RTP-TS was preserved from input that did not signal
+ *             @c SAMP (CSC / mixer / receive-process-send devices).
+ */
+class RtpTsMode : public TypedEnum<RtpTsMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("RtpTsMode", 0, {"Samp", 0}, {"New", 1},
+                                           {"Pres", 2}); // default: Samp
+
+                using TypedEnum<RtpTsMode>::TypedEnum;
+
+                static const RtpTsMode Samp;
+                static const RtpTsMode New;
+                static const RtpTsMode Pres;
+};
+
+inline const RtpTsMode RtpTsMode::Samp{0};
+inline const RtpTsMode RtpTsMode::New{1};
+inline const RtpTsMode RtpTsMode::Pres{2};
+
+/**
+ * @brief Well-known Enum type for the AES67 / ST 2110-30 PCM wire format.
+ *
+ * Selects the on-wire RTP encoding for audio streams emitted by
+ * @ref MediaConfig::AudioRtpDestination.  Drives the @ref MediaConfig::
+ * RtpAudioWireFormat key.  The on-wire encoding name (@c L16 / @c L24)
+ * is what flows into the SDP @c rtpmap attribute (RFC 3551 §4.5.11 /
+ * RFC 3190 §4); the storage format used by the per-stream packetizer
+ * FIFO is the matching big-endian PCM format
+ * (@c PCMI_S16BE / @c PCMI_S24BE).
+ *
+ * - @c Auto — pick L24 when the upstream @c AudioDesc carries
+ *             24-bit samples, otherwise L16.  Matches the AES67 §7.1
+ *             "L16 for 44.1 / 48 kHz, L24 for 96 kHz" guidance for
+ *             pipelines that do not pin the wire format explicitly.
+ * - @c L16  — 16-bit linear, big-endian (RFC 3551 §4.5.11).
+ *             Required by AES67 §7.1 at 44.1 kHz; the only choice for
+ *             ST 2110-30 Level A senders.
+ * - @c L24  — 24-bit linear, big-endian (RFC 3190 §4).  Required by
+ *             AES67 §7.1 at 96 kHz; the canonical choice for
+ *             ST 2110-30 Level AX / BX / CX senders.
+ */
+class AudioWireFormat : public TypedEnum<AudioWireFormat> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AudioWireFormat", 0,
+                                           {"Auto", 0}, {"L16", 1},
+                                           {"L24", 2}); // default: Auto
+
+                using TypedEnum<AudioWireFormat>::TypedEnum;
+
+                static const AudioWireFormat Auto;
+                static const AudioWireFormat L16;
+                static const AudioWireFormat L24;
+};
+
+inline const AudioWireFormat AudioWireFormat::Auto{0};
+inline const AudioWireFormat AudioWireFormat::L16{1};
+inline const AudioWireFormat AudioWireFormat::L24{2};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-30 §7 conformance levels.
+ *
+ * ST 2110-30:2025 §7 (Tables 2 and 3) define six sender conformance
+ * levels by (sample rate, packet time, channel count) tuples.  A
+ * sender's claimed level is computed from its configured stream
+ * shape and surfaced via @ref RtpMediaIO::StatsAudioConformanceLevel
+ * so monitoring code can verify that an interconnected receiver's
+ * declared level is compatible.
+ *
+ * - @c None — the configured (rate, ptime, channels) combination is
+ *             outside every Table 2 row.  The stream still functions
+ *             but cannot be advertised as ST 2110-30 conformant.
+ * - @c A    — 48 kHz / 1 ms / 1-8 channels.  Mandatory baseline for
+ *             every ST 2110-30 sender and receiver.
+ * - @c AX   — 96 kHz / 1 ms / 1-4 channels.
+ * - @c B    — 48 kHz / 125 µs / 1-8 channels.
+ * - @c BX   — 96 kHz / 125 µs / 1-8 channels.
+ * - @c C    — 48 kHz / 125 µs / 9-64 channels (high channel count).
+ * - @c CX   — 96 kHz / 125 µs / 9-32 channels.
+ */
+class AudioConformanceLevel : public TypedEnum<AudioConformanceLevel> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AudioConformanceLevel", 0,
+                                           {"None", 0}, {"A", 1}, {"AX", 2},
+                                           {"B", 3}, {"BX", 4}, {"C", 5},
+                                           {"CX", 6}); // default: None
+
+                using TypedEnum<AudioConformanceLevel>::TypedEnum;
+
+                static const AudioConformanceLevel None;
+                static const AudioConformanceLevel A;
+                static const AudioConformanceLevel AX;
+                static const AudioConformanceLevel B;
+                static const AudioConformanceLevel BX;
+                static const AudioConformanceLevel C;
+                static const AudioConformanceLevel CX;
+
+                /**
+                 * @brief Computes the ST 2110-30:2025 §7 Table 2 sender
+                 *        conformance level for a stream shape.
+                 *
+                 * Returns the lowest matching level (@c A before
+                 * @c AX, @c B before @c BX, @c C before @c CX) when
+                 * the (rate, packet time, channels) tuple matches a
+                 * Table 2 row; returns @c None when the combination
+                 * is outside every conformance row (caller should
+                 * warn but not reject — AES67 still permits the
+                 * combination, just not as a ST 2110-30 level).
+                 *
+                 * @param sampleRateHz   The stream's digital audio
+                 *                       sample rate in Hz.
+                 * @param packetTimeUs   The AES67 packet time in
+                 *                       microseconds (1000 for Level
+                 *                       A / AX; 125 for B / BX / C /
+                 *                       CX).
+                 * @param channels       The number of audio channels
+                 *                       in the stream.
+                 *
+                 * @return The matching @ref AudioConformanceLevel,
+                 *         or @c None when no row in Table 2 matches.
+                 */
+                static AudioConformanceLevel compute(int sampleRateHz,
+                                                    int packetTimeUs,
+                                                    int channels);
+};
+
+inline const AudioConformanceLevel AudioConformanceLevel::None{0};
+inline const AudioConformanceLevel AudioConformanceLevel::A{1};
+inline const AudioConformanceLevel AudioConformanceLevel::AX{2};
+inline const AudioConformanceLevel AudioConformanceLevel::B{3};
+inline const AudioConformanceLevel AudioConformanceLevel::BX{4};
+inline const AudioConformanceLevel AudioConformanceLevel::C{5};
+inline const AudioConformanceLevel AudioConformanceLevel::CX{6};
+
+inline AudioConformanceLevel AudioConformanceLevel::compute(int sampleRateHz,
+                                                            int packetTimeUs,
+                                                            int channels) {
+        // Table 2 (Senders): a stream qualifies for a level when its
+        // (rate, ptime, channels) tuple falls within that row.  Walk
+        // from lowest level to highest so the lowest matching level
+        // wins (Level A is preferred over AX for the same 48k/1ms
+        // case so single-receiver Level A boxes interoperate).
+        if (channels < 1) return None;
+        if (sampleRateHz == 48000 && packetTimeUs == 1000 && channels >= 1 && channels <= 8) {
+                return A;
+        }
+        if (sampleRateHz == 96000 && packetTimeUs == 1000 && channels >= 1 && channels <= 4) {
+                return AX;
+        }
+        if (sampleRateHz == 48000 && packetTimeUs == 125 && channels >= 1 && channels <= 8) {
+                return B;
+        }
+        if (sampleRateHz == 96000 && packetTimeUs == 125 && channels >= 1 && channels <= 8) {
+                return BX;
+        }
+        if (sampleRateHz == 48000 && packetTimeUs == 125 && channels >= 9 && channels <= 64) {
+                return C;
+        }
+        if (sampleRateHz == 96000 && packetTimeUs == 125 && channels >= 9 && channels <= 32) {
+                return CX;
+        }
+        return None;
+}
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c sampling SDP fmtp parameter.
+ *
+ * Lists the colour-difference sub-sampling structures defined by
+ * SMPTE ST 2110-20:2022 §7.4.1.  Identifiers and value names follow
+ * the project's CamelCase convention; the @c YCbCr / @c CLYCbCr /
+ * @c ICtCp letter casing already matches the spec's own mixed-case
+ * spelling.  The wire form (e.g. @c YCbCr-4:2:2) lives one layer up
+ * in the SDP fmtp builder / parser — same pattern used by
+ * @ref RtpTsMode (@c Samp / @c New / @c Pres → wire @c SAMP / @c NEW /
+ * @c PRES).
+ */
+class St2110Sampling : public TypedEnum<St2110Sampling> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110Sampling", 0,
+                                           {"Invalid", 0},
+                                           {"YCbCr444", 1}, {"YCbCr422", 2}, {"YCbCr420", 3},
+                                           {"CLYCbCr444", 4}, {"CLYCbCr422", 5}, {"CLYCbCr420", 6},
+                                           {"ICtCp444", 7}, {"ICtCp422", 8}, {"ICtCp420", 9},
+                                           {"Rgb", 10}, {"Xyz", 11},
+                                           {"Key", 12}); // default: Invalid
+
+                using TypedEnum<St2110Sampling>::TypedEnum;
+
+                static const St2110Sampling Invalid;
+                static const St2110Sampling YCbCr444;
+                static const St2110Sampling YCbCr422;
+                static const St2110Sampling YCbCr420;
+                static const St2110Sampling CLYCbCr444;
+                static const St2110Sampling CLYCbCr422;
+                static const St2110Sampling CLYCbCr420;
+                static const St2110Sampling ICtCp444;
+                static const St2110Sampling ICtCp422;
+                static const St2110Sampling ICtCp420;
+                static const St2110Sampling Rgb;
+                static const St2110Sampling Xyz;
+                static const St2110Sampling Key;
+};
+
+inline const St2110Sampling St2110Sampling::Invalid{0};
+inline const St2110Sampling St2110Sampling::YCbCr444{1};
+inline const St2110Sampling St2110Sampling::YCbCr422{2};
+inline const St2110Sampling St2110Sampling::YCbCr420{3};
+inline const St2110Sampling St2110Sampling::CLYCbCr444{4};
+inline const St2110Sampling St2110Sampling::CLYCbCr422{5};
+inline const St2110Sampling St2110Sampling::CLYCbCr420{6};
+inline const St2110Sampling St2110Sampling::ICtCp444{7};
+inline const St2110Sampling St2110Sampling::ICtCp422{8};
+inline const St2110Sampling St2110Sampling::ICtCp420{9};
+inline const St2110Sampling St2110Sampling::Rgb{10};
+inline const St2110Sampling St2110Sampling::Xyz{11};
+inline const St2110Sampling St2110Sampling::Key{12};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c depth SDP fmtp parameter.
+ *
+ * Lists the per-sample bit depths defined by SMPTE ST 2110-20:2022
+ * §7.4.2.  Wire form is @c "8" / @c "10" / @c "12" / @c "16" /
+ * @c "16f" — emitted by the SDP layer.  The project-side
+ * identifiers @c Bits8 / @c Bits10 / etc. avoid the leading-digit
+ * problem.
+ */
+class St2110Depth : public TypedEnum<St2110Depth> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110Depth", 0,
+                                           {"Invalid", 0},
+                                           {"Bits8", 1}, {"Bits10", 2}, {"Bits12", 3}, {"Bits16", 4},
+                                           {"Bits16f", 5}); // default: Invalid
+
+                using TypedEnum<St2110Depth>::TypedEnum;
+
+                static const St2110Depth Invalid;
+                static const St2110Depth Bits8;
+                static const St2110Depth Bits10;
+                static const St2110Depth Bits12;
+                static const St2110Depth Bits16;
+                static const St2110Depth Bits16f;
+};
+
+inline const St2110Depth St2110Depth::Invalid{0};
+inline const St2110Depth St2110Depth::Bits8{1};
+inline const St2110Depth St2110Depth::Bits10{2};
+inline const St2110Depth St2110Depth::Bits12{3};
+inline const St2110Depth St2110Depth::Bits16{4};
+inline const St2110Depth St2110Depth::Bits16f{5};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c colorimetry SDP fmtp parameter.
+ *
+ * Lists the colorimetric specifications defined by SMPTE ST 2110-20:2022
+ * §7.5.  Wire form is all-uppercase (@c BT601, @c BT709, @c ST2065-1,
+ * etc.) — emitted by the SDP layer.
+ */
+class St2110Colorimetry : public TypedEnum<St2110Colorimetry> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110Colorimetry", 0,
+                                           {"Invalid", 0},
+                                           {"Bt601", 1}, {"Bt709", 2}, {"Bt2020", 3}, {"Bt2100", 4},
+                                           {"St2065_1", 5}, {"St2065_3", 6}, {"Unspecified", 7},
+                                           {"Xyz", 8}, {"Alpha", 9}); // default: Invalid
+
+                using TypedEnum<St2110Colorimetry>::TypedEnum;
+
+                static const St2110Colorimetry Invalid;
+                static const St2110Colorimetry Bt601;
+                static const St2110Colorimetry Bt709;
+                static const St2110Colorimetry Bt2020;
+                static const St2110Colorimetry Bt2100;
+                static const St2110Colorimetry St2065_1;
+                static const St2110Colorimetry St2065_3;
+                static const St2110Colorimetry Unspecified;
+                static const St2110Colorimetry Xyz;
+                static const St2110Colorimetry Alpha;
+};
+
+inline const St2110Colorimetry St2110Colorimetry::Invalid{0};
+inline const St2110Colorimetry St2110Colorimetry::Bt601{1};
+inline const St2110Colorimetry St2110Colorimetry::Bt709{2};
+inline const St2110Colorimetry St2110Colorimetry::Bt2020{3};
+inline const St2110Colorimetry St2110Colorimetry::Bt2100{4};
+inline const St2110Colorimetry St2110Colorimetry::St2065_1{5};
+inline const St2110Colorimetry St2110Colorimetry::St2065_3{6};
+inline const St2110Colorimetry St2110Colorimetry::Unspecified{7};
+inline const St2110Colorimetry St2110Colorimetry::Xyz{8};
+inline const St2110Colorimetry St2110Colorimetry::Alpha{9};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c TCS SDP fmtp parameter.
+ *
+ * Lists the Transfer Characteristic System values defined by SMPTE
+ * ST 2110-20:2022 §7.6.  Default value on the wire is @c SDR
+ * (§7.6: "If the @c TCS value is not specified, receivers shall
+ * assume the value @c SDR").  Wire form is all-uppercase
+ * (@c SDR, @c BT2100LINPQ, @c ST2115LOGS3, etc.) — emitted by the
+ * SDP layer.
+ */
+class St2110Tcs : public TypedEnum<St2110Tcs> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110Tcs", 1,
+                                           {"Invalid", 0},
+                                           {"Sdr", 1}, {"Pq", 2}, {"Hlg", 3}, {"Linear", 4},
+                                           {"Bt2100LinPq", 5}, {"Bt2100LinHlg", 6},
+                                           {"St2065_1", 7}, {"St428_1", 8},
+                                           {"Density", 9}, {"St2115LogS3", 10},
+                                           {"Unspecified", 11}); // default: Sdr
+
+                using TypedEnum<St2110Tcs>::TypedEnum;
+
+                static const St2110Tcs Invalid;
+                static const St2110Tcs Sdr;
+                static const St2110Tcs Pq;
+                static const St2110Tcs Hlg;
+                static const St2110Tcs Linear;
+                static const St2110Tcs Bt2100LinPq;
+                static const St2110Tcs Bt2100LinHlg;
+                static const St2110Tcs St2065_1;
+                static const St2110Tcs St428_1;
+                static const St2110Tcs Density;
+                static const St2110Tcs St2115LogS3;
+                static const St2110Tcs Unspecified;
+};
+
+inline const St2110Tcs St2110Tcs::Invalid{0};
+inline const St2110Tcs St2110Tcs::Sdr{1};
+inline const St2110Tcs St2110Tcs::Pq{2};
+inline const St2110Tcs St2110Tcs::Hlg{3};
+inline const St2110Tcs St2110Tcs::Linear{4};
+inline const St2110Tcs St2110Tcs::Bt2100LinPq{5};
+inline const St2110Tcs St2110Tcs::Bt2100LinHlg{6};
+inline const St2110Tcs St2110Tcs::St2065_1{7};
+inline const St2110Tcs St2110Tcs::St428_1{8};
+inline const St2110Tcs St2110Tcs::Density{9};
+inline const St2110Tcs St2110Tcs::St2115LogS3{10};
+inline const St2110Tcs St2110Tcs::Unspecified{11};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c RANGE SDP fmtp parameter.
+ *
+ * §7.3: @c NARROW or @c FULL when paired with BT.2100 colorimetry;
+ * @c NARROW, @c FULL, or @c FULLPROTECT in any other context.
+ * Default @c NARROW (§7.3: "In the absence of this parameter,
+ * @c NARROW shall be the assumed value in either case").  Wire form
+ * is all-uppercase — emitted by the SDP layer.
+ */
+class St2110Range : public TypedEnum<St2110Range> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110Range", 1,
+                                           {"Invalid", 0},
+                                           {"Narrow", 1}, {"Full", 2},
+                                           {"FullProtect", 3}); // default: Narrow
+
+                using TypedEnum<St2110Range>::TypedEnum;
+
+                static const St2110Range Invalid;
+                static const St2110Range Narrow;
+                static const St2110Range Full;
+                static const St2110Range FullProtect;
+};
+
+inline const St2110Range St2110Range::Invalid{0};
+inline const St2110Range St2110Range::Narrow{1};
+inline const St2110Range St2110Range::Full{2};
+inline const St2110Range St2110Range::FullProtect{3};
+
+/**
+ * @brief Well-known Enum type for the ST 2110-20 @c PM (Packing Mode) SDP fmtp parameter.
+ *
+ * §6.3: General Packing Mode (wire @c 2110GPM) is the default and
+ * allows any pgroup-aligned packetization; Block Packing Mode
+ * (wire @c 2110BPM) constrains every packet to a multiple-of-180-
+ * octet payload.  The wire form starts with a leading digit, so the
+ * project-side identifiers are @c Gpm / @c Bpm.
+ */
+class St2110PackingMode : public TypedEnum<St2110PackingMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("St2110PackingMode", 1,
+                                           {"Invalid", 0},
+                                           {"Gpm", 1},
+                                           {"Bpm", 2}); // default: Gpm
+
+                using TypedEnum<St2110PackingMode>::TypedEnum;
+
+                static const St2110PackingMode Invalid;
+                static const St2110PackingMode Gpm;
+                static const St2110PackingMode Bpm;
+};
+
+inline const St2110PackingMode St2110PackingMode::Invalid{0};
+inline const St2110PackingMode St2110PackingMode::Gpm{1};
+inline const St2110PackingMode St2110PackingMode::Bpm{2};
+
+/**
  * @brief Well-known Enum type for the metadata-stream wire format over RTP.
  *
  * Selects how the @c RtpMediaIO metadata stream serializes
@@ -1658,7 +2353,8 @@ class ChannelRole : public TypedEnum<ChannelRole> {
                                            {"TopBackCenter", 17}, {"TopBackRight", 18}, {"TopCenter", 19},
                                            {"AmbisonicW", 20}, {"AmbisonicX", 21}, {"AmbisonicY", 22},
                                            {"AmbisonicZ", 23}, {"Aux0", 24}, {"Aux1", 25}, {"Aux2", 26}, {"Aux3", 27},
-                                           {"Aux4", 28}, {"Aux5", 29}, {"Aux6", 30}, {"Aux7", 31});
+                                           {"Aux4", 28}, {"Aux5", 29}, {"Aux6", 30}, {"Aux7", 31},
+                                           {"LeftTotal", 32}, {"RightTotal", 33});
 
                 using TypedEnum<ChannelRole>::TypedEnum;
 
@@ -1694,6 +2390,16 @@ class ChannelRole : public TypedEnum<ChannelRole> {
                 static const ChannelRole Aux5;
                 static const ChannelRole Aux6;
                 static const ChannelRole Aux7;
+                /// @brief Matrix-stereo left-total channel (Lt of
+                ///        LtRt, Dolby-Pro-Logic-style matrix-encoded
+                ///        stereo).  Distinct from @c FrontLeft so a
+                ///        ST 2110-30 @c LtRt grouping round-trips
+                ///        losslessly through the SDP @c channel-order
+                ///        attribute.
+                static const ChannelRole LeftTotal;
+                /// @brief Matrix-stereo right-total channel (Rt of
+                ///        LtRt).
+                static const ChannelRole RightTotal;
 };
 
 inline const ChannelRole ChannelRole::Unused{0};
@@ -1728,6 +2434,8 @@ inline const ChannelRole ChannelRole::Aux4{28};
 inline const ChannelRole ChannelRole::Aux5{29};
 inline const ChannelRole ChannelRole::Aux6{30};
 inline const ChannelRole ChannelRole::Aux7{31};
+inline const ChannelRole ChannelRole::LeftTotal{32};
+inline const ChannelRole ChannelRole::RightTotal{33};
 
 /**
  * @brief Well-known Enum type for the NDI receiver bandwidth tier.
@@ -2132,6 +2840,49 @@ inline const AncTransport AncTransport::RtmpAmf{3};
 inline const AncTransport AncTransport::HdmiInfoFrame{4};
 inline const AncTransport AncTransport::MpegTsPrivate{5};
 inline const AncTransport AncTransport::HlsSei{6};
+
+/**
+ * @brief Well-known Enum naming the ST 2110-40 transmission model
+ *        a sender advertises in SDP @c TM= fmtp.
+ *
+ * Per ST 2110-40:2023 §6 the receiver-side timing model is one of:
+ *
+ *  - @c Unsignalled — Sender omits the @c TM fmtp parameter
+ *    entirely.  SSN remains pinned at @c ST2110-40:2018 because the
+ *    :2023 revision §7 SSN/TM coupling rule (TM SHALL pair with
+ *    @c SSN=:2023) does not allow @c TM= to be signalled under the
+ *    :2018 form.  This is the default and matches a -10 sender that
+ *    doesn't care which timing model receivers assume.
+ *  - @c Lltm        — Low-Latency Transmission Model (§6.4).  Sender
+ *    SHALL transmit each RTP packet no later than
+ *    @c T_FST + T_EPO + T_D with
+ *    <tt>T_D = 8 / (FrameRate * TotalLines)</tt>.  Requires
+ *    PacketScheduler per-packet deadlines (SO_TXTIME) — the SDP
+ *    signalling lands here so receivers can opt into the
+ *    LLTM-conformant behaviour; the actual deadline injection is
+ *    gated on @c RtpPacingMode::TxTime being available.
+ *  - @c Ctm         — Compatible Transmission Model (§6.5).
+ *    @c T_D = 1 ms; trivially achievable with kernel pacing.  A
+ *    sender signals @c Ctm when it can guarantee the looser bound
+ *    but does not have the LLTM hardware path.
+ *
+ * @see AncDesc::transmissionModel
+ */
+class AncTransmissionModel : public TypedEnum<AncTransmissionModel> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("AncTransmissionModel", 0, {"Unsignalled", 0}, {"Lltm", 1},
+                                           {"Ctm", 2}); // default: Unsignalled
+
+                using TypedEnum<AncTransmissionModel>::TypedEnum;
+
+                static const AncTransmissionModel Unsignalled;
+                static const AncTransmissionModel Lltm;
+                static const AncTransmissionModel Ctm;
+};
+
+inline const AncTransmissionModel AncTransmissionModel::Unsignalled{0};
+inline const AncTransmissionModel AncTransmissionModel::Lltm{1};
+inline const AncTransmissionModel AncTransmissionModel::Ctm{2};
 
 /**
  * @brief Well-known Enum controlling ANC translator output verbosity.

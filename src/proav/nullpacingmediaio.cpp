@@ -95,7 +95,7 @@ Error NullPacingMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         Rational<int> configuredFps = cfg.get(MediaConfig::NullPacingTargetFps).get<Rational<int>>();
         _targetRate = resolveTargetRate(configuredFps, cmd.pendingMediaDesc.frameRate());
 
-        if (_mode.value() == NullPacingMode::Wallclock.value()) {
+        if (_mode == NullPacingMode::Wallclock) {
                 if (!_targetRate.isValid()) {
                         promekiErr("NullPacingMediaIO: Wallclock mode "
                                    "requires NullPacingTargetFps > 0/1 or "

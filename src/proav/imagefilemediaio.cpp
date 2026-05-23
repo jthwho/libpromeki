@@ -298,7 +298,7 @@ Error ImageFileMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
         // Direction is config-driven via MediaConfig::OpenMode.  Default
         // (Read) opens as a source; Write opens as a sink.
         Enum       modeEnum = cfg.get(MediaConfig::OpenMode).asEnum(MediaIOOpenMode::Type);
-        const bool isWrite = modeEnum.value() == MediaIOOpenMode::Write.value();
+        const bool isWrite = modeEnum == MediaIOOpenMode::Write;
         _isOpen = true;
         _isWrite = isWrite;
 

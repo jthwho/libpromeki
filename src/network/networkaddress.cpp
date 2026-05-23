@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <promeki/datastream.h>
 #include <promeki/networkaddress.h>
 #include <promeki/textstream.h>
 
@@ -114,6 +115,64 @@ size_t NetworkAddress::toSockAddr(struct sockaddr_storage *storage) const {
 TextStream &operator<<(TextStream &stream, const NetworkAddress &addr) {
         stream << addr.toString();
         return stream;
+}
+
+// ============================================================================
+// DataStream wire format (v1: 1-byte type tag + per-type body).
+//
+// Tag values match @ref NetworkAddress::Type:
+//   0 = None  → no body
+//   1 = IPv4  → 4 bytes (network byte order)
+//   2 = IPv6  → 16 raw bytes + 4-byte scope ID
+//   3 = Hostname → length-prefixed String
+// ============================================================================
+
+Error NetworkAddress::writeToStream(DataStream &s) const {
+        const uint8_t tag = static_cast<uint8_t>(type());
+        s << tag;
+        switch (type()) {
+                case None: break;
+                case IPv4: {
+                        Error err = toIpv4().writeToStream(s);
+                        if (err.isError()) return err;
+                        break;
+                }
+                case IPv6: {
+                        Error err = toIpv6().writeToStream(s);
+                        if (err.isError()) return err;
+                        break;
+                }
+                case Hostname: s << hostname(); break;
+        }
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <> Result<NetworkAddress> NetworkAddress::readFromStream<1>(DataStream &s) {
+        uint8_t tag = 0;
+        s >> tag;
+        if (s.status() != DataStream::Ok) return makeError<NetworkAddress>(s.toError());
+        switch (static_cast<Type>(tag)) {
+                case None: return makeResult(NetworkAddress());
+                case IPv4: {
+                        auto [v4, err] = Ipv4Address::readFromStream<1>(s);
+                        if (err.isError()) return makeError<NetworkAddress>(err);
+                        return makeResult(NetworkAddress(v4));
+                }
+                case IPv6: {
+                        auto [v6, err] = Ipv6Address::readFromStream<1>(s);
+                        if (err.isError()) return makeError<NetworkAddress>(err);
+                        return makeResult(NetworkAddress(v6));
+                }
+                case Hostname: {
+                        String host;
+                        s >> host;
+                        if (s.status() != DataStream::Ok) {
+                                return makeError<NetworkAddress>(s.toError());
+                        }
+                        return makeResult(NetworkAddress(host));
+                }
+        }
+        return makeError<NetworkAddress>(Error::Invalid);
 }
 
 PROMEKI_NAMESPACE_END

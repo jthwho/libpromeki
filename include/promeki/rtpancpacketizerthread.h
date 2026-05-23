@@ -13,8 +13,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <promeki/ancpacket.h>
+#include <promeki/duration.h>
 #include <promeki/namespace.h>
 #include <promeki/queue.h>
+#include <promeki/rtpmediaclock.h>
 #include <promeki/rtppacketbatch.h>
 #include <promeki/rtppacketizerthread.h>
 #include <promeki/rtppayloadanc.h>
@@ -81,6 +83,53 @@ struct RtpAncPacketizerContext {
                 ///        sites stay valid.
                 RtpPayloadAnc::FieldIndication keepAliveField =
                         RtpPayloadAnc::FieldIndication::Progressive;
+
+                /// @brief @c true when ST 2110-40 §6.4 LLTM TX-time
+                ///        deadlines should be stamped on each batch.
+                ///
+                ///        When set, the packetizer computes
+                ///        @c T_FST + T_EPO + T_D and stamps the
+                ///        resulting @c CLOCK_TAI nanosecond deadline
+                ///        onto @ref RtpPacketBatch::deadlineTaiNs so
+                ///        the kernel's ETF qdisc releases the whole
+                ///        frame's worth of ANC by that instant.
+                ///        Requires @ref mediaClock to be valid and
+                ///        PTP-anchored; @em silently degrades to
+                ///        Compatible-mode pacing (no per-batch
+                ///        deadline) when the anchor is missing.
+                bool lltmEnabled = false;
+
+                /// @brief Per-stream @ref RtpMediaClock providing
+                ///        @c T_FST = @c tvdUtcNs(frameIndex) — the
+                ///        UTC wallclock of frame @c N's first sample
+                ///        on the SMPTE Epoch grid.
+                ///
+                ///        Borrowed pointer; must outlive the
+                ///        packetizer thread.  @c nullptr disables LLTM
+                ///        deadline emission regardless of
+                ///        @ref lltmEnabled.
+                const RtpMediaClock *mediaClock = nullptr;
+
+                /// @brief ST 2110-40 §6.4 @c T_EPO (Epoch Offset).
+                ///
+                ///        Same semantics as ST 2110-10 §7.4 TR_OFFSET
+                ///        but namespaced to ANC's per-stream
+                ///        adjustment.  Added to the @c T_FST instant
+                ///        before the §6.4 @c T_D slack window.
+                ///        Default @c Duration::zero — no offset.
+                Duration trOffset = Duration::zero();
+
+                /// @brief ST 2110-40 §6.4 @c T_D = 8 / (FrameRate ×
+                ///        TotalLines).
+                ///
+                ///        Length of the LLTM egress slack window
+                ///        relative to @c T_FST + @c T_EPO.  At 30 fps
+                ///        × 1125 lines this is ≈ 237 µs; at 60 fps ×
+                ///        2250 lines (UHD) it is ≈ 59 µs.  Default
+                ///        @c Duration::zero — disables the LLTM
+                ///        margin (deadline collapses to
+                ///        @c T_FST + @c T_EPO).
+                Duration tD = Duration::zero();
 };
 
 /**

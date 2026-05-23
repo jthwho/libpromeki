@@ -329,9 +329,9 @@ TEST_CASE("Cea608: round-trip recovers anchor from PAC row") {
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 2);
         CHECK(out[0].text() == "TOPX");
-        CHECK(out[0].anchor().value() == SubtitleAnchor::TopCenter.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::TopCenter);
         CHECK(out[1].text() == "MIDX");
-        CHECK(out[1].anchor().value() == SubtitleAnchor::MiddleCenter.value());
+        CHECK(out[1].anchor() == SubtitleAnchor::MiddleCenter);
 }
 
 TEST_CASE("Cea608: round-trip preserves italic + underline + colour on a single span") {
@@ -823,7 +823,7 @@ TEST_CASE("Cea608Decoder: span background colour round-trips via EIA-608-B BG co
         CHECK(gotSpan.backgroundColor().r8() == 255);
         CHECK(gotSpan.backgroundColor().g8() == 0);
         CHECK(gotSpan.backgroundColor().b8() == 0);
-        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Solid.value());
+        CHECK(gotSpan.backgroundOpacity() == SubtitleOpacity::Solid);
 }
 
 TEST_CASE("Cea608Decoder: Black background colour round-trips via wire index 7") {
@@ -859,7 +859,7 @@ TEST_CASE("Cea608Decoder: Black background colour round-trips via wire index 7")
         CHECK(gotSpan.backgroundColor().r8() == 0);
         CHECK(gotSpan.backgroundColor().g8() == 0);
         CHECK(gotSpan.backgroundColor().b8() == 0);
-        CHECK(gotSpan.backgroundOpacity().value() == SubtitleOpacity::Solid.value());
+        CHECK(gotSpan.backgroundOpacity() == SubtitleOpacity::Solid);
 }
 
 TEST_CASE("Cea608: encode/decode Black fg silently round-trips through White on the wire") {
@@ -900,7 +900,7 @@ TEST_CASE("Cea608: encode/decode Black fg silently round-trips through White on 
         // Anchor preserved (Black fg doesn't trigger position
         // degradation because Black is wire-indistinguishable from
         // White at the fg level).
-        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomCenter.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomCenter);
 }
 
 // ============================================================================
@@ -1151,7 +1151,7 @@ TEST_CASE("Cea608Decoder: FON sets foregroundOpacity to Flash on subsequent char
         REQUIRE(out[0].spans().size() >= 1);
         const SubtitleSpan &span = out[0].spans()[0];
         CHECK(span.text() == "OK");
-        CHECK(span.foregroundOpacity().value() == SubtitleOpacity::Flash.value());
+        CHECK(span.foregroundOpacity() == SubtitleOpacity::Flash);
 }
 
 // ============================================================================
@@ -1281,7 +1281,7 @@ TEST_CASE("Cea608Decoder: multi-row cue's second-row Tab Offset doesn't shift an
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         // Anchor recovered off the first row's row+column.
-        CHECK(out[0].anchor().value() == SubtitleAnchor::BottomLeft.value());
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomLeft);
         // Cue text spans both rows separated by "\n".
         CHECK(out[0].text() == "AB\nCD");
 }

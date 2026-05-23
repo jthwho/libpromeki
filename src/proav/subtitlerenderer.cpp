@@ -65,8 +65,8 @@ SubtitleAnchor SubtitleRenderer::effectiveAnchor(const SubtitleAnchor &cueAnchor
         //  1. Renderer-side override, when not Default.
         //  2. Cue's own anchor, when not Default.
         //  3. BottomCenter (SubRip's de facto convention for captions).
-        if (_anchorOverride.value() != SubtitleAnchor::Default.value()) return _anchorOverride;
-        if (cueAnchor.value() != SubtitleAnchor::Default.value()) return cueAnchor;
+        if (_anchorOverride != SubtitleAnchor::Default) return _anchorOverride;
+        if (cueAnchor != SubtitleAnchor::Default) return cueAnchor;
         return SubtitleAnchor::BottomCenter;
 }
 
@@ -338,9 +338,9 @@ Error SubtitleRenderer::render(const Subtitle &subtitle, UncompressedVideoPayloa
                         // paint as opaque for now — full alpha-blend
                         // support is a paint-engine enhancement.
                         const bool bgTransparent =
-                                run.span.backgroundOpacity().value() == SubtitleOpacity::Transparent.value();
+                                run.span.backgroundOpacity() == SubtitleOpacity::Transparent;
                         const bool fgTransparent =
-                                run.span.foregroundOpacity().value() == SubtitleOpacity::Transparent.value();
+                                run.span.foregroundOpacity() == SubtitleOpacity::Transparent;
                         if (run.span.backgroundColor().isValid() && !bgTransparent) {
                                 const PaintEngine::Pixel spanBg =
                                         pe.createPixel(run.span.backgroundColor());

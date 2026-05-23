@@ -23,6 +23,7 @@ devplan/
 ├── network/             Network library work
 │   ├── sockets.md       Phase 3A — complete; deferred items
 │   ├── avoverip.md      Phase 3C — PtpClock + RTP follow-ups
+│   ├── 2110.md          SMPTE ST 2110 conformance plan (-10/-20/-21/-30/-31/-40)
 │   ├── srt.md           Phase 3D — SRT shipped; MediaIO backend + bonded listener deferred
 │   └── rtmp.md          Phase 3F/5 — RTMP / RTMPS publisher + subscriber (Phases 0-5 shipped; Phase 6 docs/CMake next)
 ├── proav/               ProAV / MediaIO subsystem
