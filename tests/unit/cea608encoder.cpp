@@ -221,10 +221,19 @@ TEST_CASE("Cea608Encoder: emitted bytes carry odd parity") {
         }
 }
 
-TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with space") {
-        // "ABC" is 3 chars → 2 char pairs (AB then C+space).
+TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with NUL") {
+        // "ABC" is 3 chars → 2 char pairs (AB then C+NUL).
         // Pre-roll: 2 (RCL) + 2 (ENM) + 2 (PAC) + 2 (chars) = 8 frames.
         // firstFrame = 30 - 8 = 22.  First EOC at frame 30.
+        //
+        // The pad byte is NUL (0x00), not SPACE (0x20): the decoder's
+        // char-pair handler treats b2 < 0x20 as filler and skips it,
+        // so NUL keeps the wire's pair cadence without writing an
+        // extra visible cell after the last text char.  Padding with
+        // SPACE would land that space in the next cell and — at the
+        // §C.13 col-32 boundary — overwrite the last text character
+        // in place (cursor clamps at col 31, further chars overwrite
+        // that cell).
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -243,8 +252,8 @@ TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with space") 
         CHECK(tripleHasBytes(oneTriple(enc, 27), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
         // Frame 28: "AB".
         CHECK(tripleHasBytes(oneTriple(enc, 28), 0x41, 0x42));
-        // Frame 29: "C" + space.
-        CHECK(tripleHasBytes(oneTriple(enc, 29), 0x43, 0x20));
+        // Frame 29: "C" + NUL.
+        CHECK(tripleHasBytes(oneTriple(enc, 29), 0x43, Cea608::NullB2));
         // Frame 30..31: EOC doubled (first at startFrame).
         CHECK(tripleHasBytes(oneTriple(enc, 30), Cea608::EocB1, Cea608::EocB2));
         CHECK(tripleHasBytes(oneTriple(enc, 31), Cea608::EocB1, Cea608::EocB2));
@@ -264,6 +273,58 @@ TEST_CASE("Cea608Encoder: cue start too close to t=0 -> Error::OutOfRange") {
         SubtitleList  subs;
         subs.append(Subtitle(tsFromMs(100), tsFromMs(1000), "AB")); // ~frame 3 at 30fps
         CHECK(enc.setSubtitles(subs).code() == Error::OutOfRange);
+}
+
+TEST_CASE("Cea608Encoder: centered cue too close to t=0 falls back to flush-left") {
+        // A 28-char BottomCenter cue centers at col 2 (PAC indent 0 +
+        // Tab Offset T2 doubled = +2 frames over the flush-left
+        // shape).  Flush-left pre-roll = 2 RCL + 2 ENM + 2 PAC + 14
+        // char pairs = 20 frames; centered pre-roll = 22 frames.  A
+        // cue starting at frame 20 fits flush-left exactly (firstFrame
+        // = 0) but the centered layout's firstFrame would land at -2.
+        //
+        // The encoder's flush-left fallback re-places the chunk at
+        // col 0 so the Tab Offset pair drops off the body and the
+        // cue survives.  We assert:
+        //   - setSubtitles returns Ok (no OutOfRange drop).
+        //   - encodableSubset keeps the cue (same fallback at the
+        //     filter gate, so TpgMediaIO's drop-warn path stays
+        //     quiet for centered cues that would otherwise be lost).
+        //   - The decoder round-trips it as BottomLeft (flush-left
+        //     col 0 + bottom row + 28-char width gives leftGap=0,
+        //     rightGap=4, so the symmetric-gap rule resolves Left).
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(cfg);
+
+        const String wide28 = "Centered text twenty-eight..";
+        REQUIRE(wide28.length() == 28);
+        SubtitleList subs;
+        subs.append(Subtitle(tsAt30fps(20), tsAt30fps(80), wide28,
+                             SubtitleAnchor::BottomCenter));
+
+        // encodableSubset must NOT drop the cue — the filter mirrors
+        // the in-encoder fallback so the cue survives the headroom
+        // constraint via flush-left placement.
+        SubtitleList dropped;
+        SubtitleList kept = enc.encodableSubset(subs, &dropped);
+        CHECK(kept.size() == 1);
+        CHECK(dropped.size() == 0);
+
+        // setSubtitles must also accept the cue without OutOfRange —
+        // the same fallback runs inside encodePopOnCue.
+        REQUIRE(enc.setSubtitles(kept).isOk());
+
+        // Round-trip through the decoder; the recovered anchor is
+        // BottomLeft because the fallback emitted the cue at col 0.
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 100; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f),
+                              enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].anchor() == SubtitleAnchor::BottomLeft);
 }
 
 TEST_CASE("Cea608Encoder: back-to-back cues colliding with prior EDM elide that EDM") {

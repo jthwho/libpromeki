@@ -140,11 +140,21 @@ namespace {
         /// @brief Strips an ASS-style `{\anN}` prefix from @p text,
         ///        writing the recognised anchor value (1..9) to
         ///        @p outAnchor.  Returns the residual text.  When no
-        ///        prefix is present @p outAnchor stays
-        ///        @c SubtitleAnchor::Default and @p text is returned
-        ///        unchanged.
+        ///        prefix is present @p outAnchor is set to
+        ///        @c SubtitleAnchor::BottomCenter (the SubRip / broadcast
+        ///        default for cues that don't carry an explicit
+        ///        positioning override) and @p text is returned
+        ///        unchanged.  Defaulting to BottomCenter — rather than
+        ///        @c Default — preserves the source intent through
+        ///        @ref Cea608Encoder, which has no "no-hint" wire
+        ///        representation and would otherwise drop un-prefixed
+        ///        cues at flush-left col 0; the receiver-side decoder
+        ///        then recovers them as BottomLeft, leaving
+        ///        @c SubtitleBurnMediaIO to render them flush-left
+        ///        instead of the centered position the source SRT
+        ///        implied.
         String stripAnchorPrefix(const String &text, SubtitleAnchor &outAnchor) {
-                outAnchor = SubtitleAnchor::Default;
+                outAnchor = SubtitleAnchor::BottomCenter;
                 const char *s = text.cstr();
                 if (s == nullptr) return text;
                 if (text.byteCount() < 6) return text;
@@ -157,9 +167,18 @@ namespace {
                 return text.substr(6);
         }
 
+        /// @brief Adds an ASS-style @c {\anN} prefix for non-default
+        ///        anchors.  Skips the prefix for BottomCenter — that's
+        ///        the SubRip convention for un-marked cues, so emitting
+        ///        @c {\an2} would be redundant noise and break the
+        ///        parse-then-emit round-trip for sources that opted
+        ///        out of explicit positioning.  Also skips
+        ///        @c SubtitleAnchor::Default for callers that
+        ///        constructed cues outside the SubRip-parse path.
         String addAnchorPrefix(const String &text, const SubtitleAnchor &anchor) {
                 const int v = anchor.value();
                 if (v < 1 || v > 9) return text;
+                if (v == SubtitleAnchor::BottomCenter.value()) return text;
                 String prefix = String::sprintf("{\\an%d}", v);
                 return prefix + text;
         }

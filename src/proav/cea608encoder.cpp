@@ -174,8 +174,16 @@ namespace {
                 }
                 if (half) {
                         // Odd character count: pad the last pair with
-                        // space so the byte cadence stays even.
-                        pending.b2 = 0x20;
+                        // NUL so the byte cadence stays even.  NUL is
+                        // the CEA-608 wire filler (decoder's char-pair
+                        // handler skips @c b2 < 0x20) — padding with
+                        // a visible 0x20 SPACE would land that space
+                        // in the next cell on the receiver's grid,
+                        // and for a 32-cell row that overwrites the
+                        // last text character per §C.13 column-32
+                        // overflow (the cursor stops at col 31 and
+                        // further chars overwrite that cell in place).
+                        pending.b2 = Cea608::NullB2;
                         out.pushToBack(pending);
                 }
                 return out;
@@ -478,7 +486,9 @@ namespace {
         /// @c SubtitleAnchor::Default is treated as a no-hint anchor
         /// (the encoder leaves the row at flush-left column 0); a
         /// caller that actually wants the broadcast "centered"
-        /// convention picks @c BottomCenter explicitly.
+        /// convention picks @c BottomCenter explicitly.  The SubRip
+        /// parser does this — cues without an explicit @c {\an…}
+        /// prefix arrive at the encoder as BottomCenter, not Default.
         bool isCenterAnchor(const SubtitleAnchor &a) {
                 const int v = a.value();
                 return v == SubtitleAnchor::TopCenter.value()
@@ -1193,10 +1203,55 @@ namespace {
                         // it, stale loading memory from the previous
                         // pop-on cue carries over and contaminates this
                         // cue's swap target.
-                        const size_t  ctlReps = d->cfg.doubleControls ? 2 : 1;
-                        const size_t  preRollFrames = 2 * ctlReps + body.bytes.size();
-                        const int64_t firstFrame =
+                        const size_t ctlReps = d->cfg.doubleControls ? 2 : 1;
+                        size_t        preRollFrames = 2 * ctlReps + body.bytes.size();
+                        int64_t       firstFrame =
                                 subStart - static_cast<int64_t>(preRollFrames);
+                        // Centered (and right-aligned) rows add doubled
+                        // Tab Offset pairs to the body for the off-grid
+                        // column residual.  At cues with little headroom
+                        // (those starting close to media t=0, or hot on
+                        // the heels of a prior cue's EOC) that extra
+                        // pre-roll can push @c firstFrame below frame 0
+                        // or into the prior cue's wire stream.  Rather
+                        // than drop the cue outright — which is what the
+                        // pre-fallback encoder did — we re-place the
+                        // chunk at flush-left col 0 so the Tab Offset
+                        // pairs vanish from the body.  The recovered
+                        // anchor on the receiver becomes BottomLeft / etc.
+                        // (a horizontal-only degradation) instead of the
+                        // cue disappearing entirely.  The dispatcher logs
+                        // the fallback once per offending cue.
+                        if (firstFrame < 0) {
+                                List<LaidOutRow> fallback = laidOut;
+                                bool             needsFallback = false;
+                                for (size_t r = 0; r < fallback.size(); ++r) {
+                                        if (fallback[r].targetColumn != 0) {
+                                                fallback[r].targetColumn = 0;
+                                                needsFallback = true;
+                                        }
+                                }
+                                if (needsFallback) {
+                                        CueBody fbBody =
+                                                buildCueBody(fallback, d->cfg.doubleControls);
+                                        const size_t  fbPreRoll = 2 * ctlReps + fbBody.bytes.size();
+                                        const int64_t fbFirst =
+                                                subStart - static_cast<int64_t>(fbPreRoll);
+                                        if (fbFirst >= 0) {
+                                                promekiWarn(
+                                                        "Cea608Encoder::setSubtitles: cue %zu sub-%zu "
+                                                        "centered pre-roll starts at frame %lld "
+                                                        "(before frame 0); falling back to flush-left "
+                                                        "placement so the cue isn't dropped",
+                                                        cueIndex, c,
+                                                        static_cast<long long>(firstFrame));
+                                                laidOut = std::move(fallback);
+                                                body = std::move(fbBody);
+                                                preRollFrames = fbPreRoll;
+                                                firstFrame = fbFirst;
+                                        }
+                                }
+                        }
                         if (firstFrame < 0) {
                                 promekiWarn("Cea608Encoder::setSubtitles: cue %zu sub-%zu "
                                             "pre-roll starts at frame %lld (before frame 0); "
@@ -1213,6 +1268,42 @@ namespace {
                         // builder wrote earlier.
                         const int64_t overlapBoundary =
                                 std::max(state.lastEocFrame, state.lastByteFrame);
+                        if (firstFrame <= overlapBoundary) {
+                                // Same fallback as the firstFrame < 0
+                                // branch — try a flush-left re-layout so
+                                // the cue isn't dropped just because the
+                                // centered Tab Offset pre-roll bumps into
+                                // the prior cue's wire stream.
+                                List<LaidOutRow> fallback = laidOut;
+                                bool             needsFallback = false;
+                                for (size_t r = 0; r < fallback.size(); ++r) {
+                                        if (fallback[r].targetColumn != 0) {
+                                                fallback[r].targetColumn = 0;
+                                                needsFallback = true;
+                                        }
+                                }
+                                if (needsFallback) {
+                                        CueBody fbBody =
+                                                buildCueBody(fallback, d->cfg.doubleControls);
+                                        const size_t  fbPreRoll = 2 * ctlReps + fbBody.bytes.size();
+                                        const int64_t fbFirst =
+                                                subStart - static_cast<int64_t>(fbPreRoll);
+                                        if (fbFirst > overlapBoundary && fbFirst >= 0) {
+                                                promekiWarn(
+                                                        "Cea608Encoder::setSubtitles: cue %zu sub-%zu "
+                                                        "centered pre-roll (first frame %lld) overlaps "
+                                                        "prior cue's wire stream (last byte frame %lld); "
+                                                        "falling back to flush-left placement",
+                                                        cueIndex, c,
+                                                        static_cast<long long>(firstFrame),
+                                                        static_cast<long long>(overlapBoundary));
+                                                laidOut = std::move(fallback);
+                                                body = std::move(fbBody);
+                                                preRollFrames = fbPreRoll;
+                                                firstFrame = fbFirst;
+                                        }
+                                }
+                        }
                         if (firstFrame <= overlapBoundary) {
                                 promekiWarn("Cea608Encoder::setSubtitles: cue %zu sub-%zu "
                                             "pre-roll (first frame %lld) overlaps prior "
@@ -1899,37 +1990,83 @@ SubtitleList Cea608Encoder::encodableSubset(const SubtitleList &in, SubtitleList
                 const size_t firstChunkHi = std::min(chunkSize, wrap.size());
                 const size_t chunkCount = (wrap.size() + chunkSize - 1) / chunkSize;
                 List<LaidOutRow> firstChunk = placeChunk(wrap, 0, firstChunkHi, cue.anchor());
-                const CueBody    body = buildCueBody(firstChunk, _d->cfg.doubleControls);
+                CueBody          body = buildCueBody(firstChunk, _d->cfg.doubleControls);
                 const size_t     ctlReps = _d->cfg.doubleControls ? 2 : 1;
-                size_t           preRoll = 0;
-                int64_t          lastCharFrame = INT64_MIN;
-                bool             charsOverrun = false;
-                size_t           charCount = 0;
-                if (body.bytes.size() >= ctlReps) charCount = body.bytes.size() - ctlReps;
-                switch (_d->cfg.mode) {
-                        case Mode::PopOn:
-                                preRoll = 2 * ctlReps + body.bytes.size();
-                                // For multi-sub-cue pop-on the *last* wire
-                                // byte is the final sub-cue's EOC pair at
-                                // frame @c endFrame + (ctlReps - 1).
-                                lastCharFrame = (chunkCount > 1)
-                                                        ? endFrame
-                                                          + static_cast<int64_t>(ctlReps) - 1
-                                                        : startFrame
-                                                          + static_cast<int64_t>(ctlReps) - 1;
-                                break;
-                        case Mode::PaintOn:
-                                preRoll = 2 * ctlReps;
-                                lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
-                                if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
-                                break;
-                        case Mode::RollUp:
-                                preRoll = (rollUpInitialised ? 2 : 3) * ctlReps;
-                                lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
-                                if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
-                                break;
+                auto             computePreRoll =
+                        [&](const CueBody &b, size_t &preRoll, size_t &charCount,
+                            int64_t &lastCharFrame, bool &charsOverrun) {
+                                charCount = (b.bytes.size() >= ctlReps)
+                                                    ? (b.bytes.size() - ctlReps)
+                                                    : size_t(0);
+                                charsOverrun = false;
+                                switch (_d->cfg.mode) {
+                                        case Mode::PopOn:
+                                                preRoll = 2 * ctlReps + b.bytes.size();
+                                                lastCharFrame = (chunkCount > 1)
+                                                                        ? endFrame
+                                                                          + static_cast<int64_t>(ctlReps) - 1
+                                                                        : startFrame
+                                                                          + static_cast<int64_t>(ctlReps) - 1;
+                                                break;
+                                        case Mode::PaintOn:
+                                                preRoll = 2 * ctlReps;
+                                                lastCharFrame =
+                                                        startFrame + static_cast<int64_t>(charCount) - 1;
+                                                if (charCount > 0 && lastCharFrame >= endFrame)
+                                                        charsOverrun = true;
+                                                break;
+                                        case Mode::RollUp:
+                                                preRoll =
+                                                        (rollUpInitialised ? 2 : 3) * ctlReps;
+                                                lastCharFrame =
+                                                        startFrame + static_cast<int64_t>(charCount) - 1;
+                                                if (charCount > 0 && lastCharFrame >= endFrame)
+                                                        charsOverrun = true;
+                                                break;
+                                }
+                        };
+                size_t  preRoll = 0;
+                size_t  charCount = 0;
+                int64_t lastCharFrame = INT64_MIN;
+                bool    charsOverrun = false;
+                computePreRoll(body, preRoll, charCount, lastCharFrame, charsOverrun);
+                int64_t firstFrame = startFrame - static_cast<int64_t>(preRoll);
+                // Mirror @ref encodePopOnCue's flush-left fallback: when
+                // a centered cue's pre-roll bumps before frame 0 or
+                // overlaps the prior cue's wire stream, retry the layout
+                // with every row at col 0 so the Tab Offset pairs drop
+                // off the body.  Keeps the cue rather than dropping it
+                // at the encodableSubset gate.
+                if (!charsOverrun && (firstFrame < 0 || firstFrame <= lastByteFrame)) {
+                        List<LaidOutRow> fallback = firstChunk;
+                        bool             needsFallback = false;
+                        for (size_t r = 0; r < fallback.size(); ++r) {
+                                if (fallback[r].targetColumn != 0) {
+                                        fallback[r].targetColumn = 0;
+                                        needsFallback = true;
+                                }
+                        }
+                        if (needsFallback) {
+                                CueBody fbBody = buildCueBody(fallback, _d->cfg.doubleControls);
+                                size_t  fbPreRoll = 0;
+                                size_t  fbCharCount = 0;
+                                int64_t fbLastChar = INT64_MIN;
+                                bool    fbCharsOverrun = false;
+                                computePreRoll(fbBody, fbPreRoll, fbCharCount, fbLastChar,
+                                                fbCharsOverrun);
+                                const int64_t fbFirst =
+                                        startFrame - static_cast<int64_t>(fbPreRoll);
+                                if (!fbCharsOverrun && fbFirst >= 0
+                                    && fbFirst > lastByteFrame) {
+                                        body = std::move(fbBody);
+                                        preRoll = fbPreRoll;
+                                        charCount = fbCharCount;
+                                        lastCharFrame = fbLastChar;
+                                        charsOverrun = fbCharsOverrun;
+                                        firstFrame = fbFirst;
+                                }
+                        }
                 }
-                const int64_t firstFrame = startFrame - static_cast<int64_t>(preRoll);
                 if (firstFrame < 0 || firstFrame <= lastByteFrame || charsOverrun) {
                         if (outDropped != nullptr) outDropped->append(cue);
                         continue;

@@ -131,12 +131,12 @@ TEST_CASE("TPG: ANC captions enabled with no file emits null-pair CDPs") {
 
 TEST_CASE("TPG: SubRip-driven captions schedule per-frame CcData from the encoder") {
         // SubRip cue: "AB" at 00:00:01,000 --> 00:00:02,000.
-        // At 30 fps that's frame 30..60.  The encoder pre-rolls 7
-        // frames (RCL,RCL,ENM,ENM,PAC,PAC,chars) so first RCL lands at
-        // frame 23, EOC at frame 30 / 31, EDM at frame 60 / 61.  The
-        // doubled ENM pair (frames 25, 26) was added by the E1 audit
-        // fix per §B.8.3 so the upcoming pop-on cue's PAC + chars
-        // load onto a clean non-displayed memory canvas.
+        // At 30 fps that's frame 30..60.  The SubRip parser defaults
+        // un-prefixed cues to BottomCenter (broadcast convention), so
+        // the encoder centers "AB" (2 chars) at col 15 → PAC indent
+        // 12 + doubled Tab Offset T3.  Pre-roll is now 9 frames:
+        // RCL,RCL,ENM,ENM,PAC,PAC,Tab,Tab,chars.  First RCL lands at
+        // frame 21, EOC at frame 30 / 31, EDM at frame 60 / 61.
         const String srtPath = writeSrtFixture(
                 "1\r\n00:00:01,000 --> 00:00:02,000\r\nAB\r\n\r\n");
 
@@ -150,7 +150,7 @@ TEST_CASE("TPG: SubRip-driven captions schedule per-frame CcData from the encode
         AncTranslator t;
         // Read 70 frames so we span the full pre-roll + cue body + EDM.
         // Pull the cc_data pair for each frame and check key offsets.
-        bool sawRclAt23 = false;
+        bool sawRclAt21 = false;
         bool sawEocAt30 = false;
         bool sawCharsAt29 = false;
         bool sawEdmAt60 = false;
@@ -161,12 +161,12 @@ TEST_CASE("TPG: SubRip-driven captions schedule per-frame CcData from the encode
                 AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
-                if (f == 23 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt23 = true;
+                if (f == 21 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt21 = true;
                 if (f == 29 && tripleMatches(cdp.ccData, 0x41, 0x42)) sawCharsAt29 = true;
                 if (f == 30 && tripleMatches(cdp.ccData, Cea608::EocB1, Cea608::EocB2)) sawEocAt30 = true;
                 if (f == 60 && tripleMatches(cdp.ccData, Cea608::EdmB1, Cea608::EdmB2)) sawEdmAt60 = true;
         }
-        CHECK(sawRclAt23);
+        CHECK(sawRclAt21);
         CHECK(sawCharsAt29);
         CHECK(sawEocAt30);
         CHECK(sawEdmAt60);
@@ -177,8 +177,11 @@ TEST_CASE("TPG: SubRip-driven captions schedule per-frame CcData from the encode
 
 TEST_CASE("TPG: offset shifts SubRip cues forward in time") {
         // SubRip cue at t=0.5s.  Offset = +1s.  Expected effective
-        // cue start = 1.5s → frame 45 at 30 fps.  Pre-roll is now 7
-        // frames after E1's ENM addition, so first RCL lands at 38.
+        // cue start = 1.5s → frame 45 at 30 fps.  Pre-roll is 9
+        // frames (RCL,RCL,ENM,ENM,PAC,PAC,Tab,Tab,chars — the SubRip
+        // parser defaults un-prefixed cues to BottomCenter so the
+        // encoder centers "AB" via doubled PAC indent + Tab Offset
+        // T3), so first RCL lands at 36.
         const String srtPath = writeSrtFixture(
                 "1\r\n00:00:00,500 --> 00:00:01,500\r\nAB\r\n\r\n");
 
@@ -191,7 +194,7 @@ TEST_CASE("TPG: offset shifts SubRip cues forward in time") {
         REQUIRE(io->open().wait().isOk());
 
         AncTranslator t;
-        bool          sawRclAt38 = false;
+        bool          sawRclAt36 = false;
         bool          sawEocAt45 = false;
         for (int64_t f = 0; f < 70; ++f) {
                 Frame              frame = readOneFrame(io);
@@ -200,10 +203,10 @@ TEST_CASE("TPG: offset shifts SubRip cues forward in time") {
                 AncTranslator::ParseResult parsed = t.parse(ancs[0]->packets()[0]);
                 REQUIRE(parsed.second().isOk());
                 Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
-                if (f == 38 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt38 = true;
+                if (f == 36 && tripleMatches(cdp.ccData, Cea608::RclB1, Cea608::RclB2)) sawRclAt36 = true;
                 if (f == 45 && tripleMatches(cdp.ccData, Cea608::EocB1, Cea608::EocB2)) sawEocAt45 = true;
         }
-        CHECK(sawRclAt38);
+        CHECK(sawRclAt36);
         CHECK(sawEocAt45);
 
         io->close().wait();

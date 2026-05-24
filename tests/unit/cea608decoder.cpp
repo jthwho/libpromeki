@@ -381,9 +381,11 @@ TEST_CASE("Cea608Decoder: round-trips a single cue produced by Cea608Encoder") {
         }
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
-        // The encoder pads odd-length text with space — "Hello" is 5 chars,
-        // so the decoder reconstructs "Hello " (trailing space).
-        CHECK(out[0].text() == "Hello ");
+        // The encoder pads odd-length text with NUL (b2 < 0x20 is wire
+        // filler that the decoder skips) — "Hello" is 5 chars, the
+        // trailing pad is NUL, so the decoder reconstructs "Hello"
+        // with no trailing pad-space leaking into the cell grid.
+        CHECK(out[0].text() == "Hello");
         CHECK(out[0].start() == tsAt30fps(30));
         CHECK(out[0].end() == tsAt30fps(60));
 }
@@ -431,10 +433,10 @@ TEST_CASE("Cea608Decoder: round-trips a longer-text cue") {
         }
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
-        // 13 chars → 7 char pairs → "Hello, world." + space pad on
-        // odd char → "Hello, world. ".  But "Hello, world." is 13
-        // chars (odd), so the encoder appends a trailing space.
-        CHECK(out[0].text() == "Hello, world. ");
+        // 13 chars → 7 char pairs.  The encoder pads odd-length
+        // text with NUL (wire filler the decoder skips), not SPACE,
+        // so the trailing pad doesn't leak a space into the grid.
+        CHECK(out[0].text() == "Hello, world.");
 }
 
 // ============================================================================
@@ -541,6 +543,43 @@ TEST_CASE("Cea608: round-trip recovers anchor from PAC row") {
         CHECK(out[0].anchor() == SubtitleAnchor::TopCenter);
         CHECK(out[1].text() == "MIDX");
         CHECK(out[1].anchor() == SubtitleAnchor::MiddleCenter);
+}
+
+TEST_CASE("Cea608: wide centered cue round-trips with Center horizontal anchor") {
+        // Regression for the rowToAnchor symmetric-gap fix: a 28-char
+        // BottomCenter cue lands at firstCol = (32-28)/2 = 2 on the
+        // wire, which the pre-fix decoder's `col<4 → Left` threshold
+        // collapsed to BottomLeft.  The fix compares the leftGap
+        // (firstCol) and rightGap (31-lastCol) — both ≈ 2 here — and
+        // resolves to Center.  Same for Middle / Top to confirm the
+        // vertical band is preserved alongside the corrected
+        // horizontal recovery.
+        Cea608Encoder::Config eCfg;
+        eCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(eCfg);
+        Cea608Decoder dec;
+
+        const String wide28 = "Twenty-eight chars centered.";
+        REQUIRE(wide28.length() == 28);
+        SubtitleList subs;
+        // Stagger the cue starts well past frame 0 so the centered
+        // pre-roll never trips the flush-left fallback in the
+        // encoder — we want to exercise the decoder's wide-cue
+        // anchor recovery, not the fallback path.
+        subs.append(Subtitle(tsAt30fps(120), tsAt30fps(180), wide28,
+                             SubtitleAnchor::TopCenter));
+        subs.append(Subtitle(tsAt30fps(240), tsAt30fps(300), wide28,
+                             SubtitleAnchor::MiddleCenter));
+        subs.append(Subtitle(tsAt30fps(360), tsAt30fps(420), wide28,
+                             SubtitleAnchor::BottomCenter));
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        runEncoderToDecoder(enc, dec, 460);
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 3);
+        CHECK(out[0].anchor() == SubtitleAnchor::TopCenter);
+        CHECK(out[1].anchor() == SubtitleAnchor::MiddleCenter);
+        CHECK(out[2].anchor() == SubtitleAnchor::BottomCenter);
 }
 
 TEST_CASE("Cea608: round-trip preserves italic + underline + colour on a single span") {
@@ -839,21 +878,17 @@ TEST_CASE("Cea608: underline span round-trips with no leading or trailing bleed"
         }
         CHECK(foundUnderlined);
         // Flat text reads as the original sentence with single
-        // spaces between words.  Two kinds of inter-run space
-        // appear:
-        //   - "and " has a trailing pad-space (the encoder padded
-        //     an odd-length 3-char run to 4 bytes for the wire's
-        //     byte-pair cadence); the decoder absorbs the MR-cell
-        //     into that existing space, so no second separator is
-        //     synthesised here.
-        //   - "underlined" is even-length and has no trailing
-        //     pad; the decoder synthesises a neutral " " separator
-        //     for the MR cell before "mixed".
-        //
-        // The cue ends with a single pad-space from the encoder
-        // having had to round "mixed" (5 chars) up to a 6-char
-        // byte-pair count.
-        CHECK(out[0].text() == "and underlined mixed ");
+        // spaces between words.  The wrap tokenizer strips trailing
+        // whitespace from each source span, so the per-span runs are
+        // "and" (3, odd), "underlined" (10, even), and "mixed" (5,
+        // odd).  Both odd runs get their pair-cadence tail padded
+        // with NUL (the decoder skips b2 < 0x20), so no pad-space
+        // leaks into the grid.  Both MR transitions land with the
+        // prior cell holding a real char (not a space), so the
+        // decoder synthesises a neutral styled-space separator cell
+        // for each MR — giving us "and" + sep + "underlined" + sep +
+        // "mixed" with no trailing pad-space.
+        CHECK(out[0].text() == "and underlined mixed");
 }
 
 TEST_CASE("Cea608: bold span emits a warning but encodes the non-bold attributes") {
@@ -931,13 +966,17 @@ TEST_CASE("Cea608Decoder[paint-on]: round-trips with Cea608Encoder") {
         Cea608Decoder dec;
 
         SubtitleList in;
-        in.append(Subtitle(tsAt30fps(30), tsAt30fps(90), "HELLO "));
+        // Wrap strips trailing whitespace from the source span, so
+        // "HELLO" (5 chars) is what the encoder actually emits.  Odd
+        // count → NUL pad on the final pair (decoder skips it), so
+        // the decoded text is "HELLO" with no trailing pad-space.
+        in.append(Subtitle(tsAt30fps(30), tsAt30fps(90), "HELLO"));
         REQUIRE(enc.setSubtitles(in).isOk());
 
         runEncoderToDecoder(enc, dec, 110);
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
-        CHECK(out[0].text() == "HELLO ");
+        CHECK(out[0].text() == "HELLO");
         // End is the EDM frame timestamp (frame 90).
         CHECK(out[0].end() == tsAt30fps(90));
 }

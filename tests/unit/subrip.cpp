@@ -80,7 +80,9 @@ TEST_CASE("SubRip: parses three sequential cues with CRLF endings") {
         CHECK(sl[0].start() == tsFromMs(1000));
         CHECK(sl[0].end() == tsFromMs(2500));
         CHECK(sl[0].text() == "Hello, world.");
-        CHECK(sl[0].anchor() == SubtitleAnchor::Default);
+        // Cues with no explicit {\an…} prefix default to BottomCenter
+        // — the SubRip / broadcast convention.  See stripAnchorPrefix.
+        CHECK(sl[0].anchor() == SubtitleAnchor::BottomCenter);
 
         CHECK(sl[1].start() == tsFromMs(3000));
         CHECK(sl[1].end() == tsFromMs(5000));
@@ -539,7 +541,9 @@ TEST_CASE("SubRip: etc/substest.srt parses cleanly and exercises every parser br
         CHECK(sl[0].text() == "Welcome to the libpromeki SubRip test file!");
         CHECK(sl[0].start() == tsFromMs(1000));
         CHECK(sl[0].end() == tsFromMs(4000));
-        CHECK(sl[0].anchor() == SubtitleAnchor::Default);
+        // Cues with no explicit {\an…} prefix default to BottomCenter
+        // (SubRip / broadcast convention; see stripAnchorPrefix).
+        CHECK(sl[0].anchor() == SubtitleAnchor::BottomCenter);
         CHECK_FALSE(sl[0].region().isValid());
 
         // -- Branch 2: multi-line cue text (literal '\n' in Subtitle).

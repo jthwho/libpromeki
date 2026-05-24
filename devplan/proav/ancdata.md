@@ -16,7 +16,7 @@ parsers/builders on top so application code (closed-caption
 overlay, SCTE-104 driven splicers, AFD-aware scalers, ATC
 round-trip, HDR pass-through) does not have to touch raw bytes.
 
-## Status at a glance (2026-05-23)
+## Status at a glance (2026-05-24)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -28,7 +28,7 @@ round-trip, HDR pass-through) does not have to touch raw bytes.
 | P2    | Second-pass conformance audit (Phases A/B/C wire bugs, per-codec deep audits, registry / docs) — `devplan/proav/ancaudit.md` | **Complete — all F1–F10 findings landed; audit file retired 2026-05-20** |
 | 3     | Remaining typed parsers (full AFD value type, Atc helpers, Scte104, HdrStatic2086 St291, HDR dynamic, KLV) | **Partial** — HdrStatic2086 HdmiInfoFrame + St291 (ST 2108-1) codecs landed 2026-05-15; HdrDynamic2094_40 value type + HdmiInfoFrame + St291 (ST 2108-2 KLV, multi-packet) codecs landed 2026-05-15; AncOp47Sdp value type + OP-47 SDP codec (RDD 8, DID 0x43/SDID 0x02) landed 2026-05-20; AncSt2020Audio value type + ST 2020-2 Method A codec (DID 0x45, SDIDs 0x01–0x09) landed 2026-05-20; VPID codec (SdiVpid ← → AncTranslator, DID 0x41/SDID 0x01) landed 2026-05-20; Scte104 codec still pending |
 | 3.5   | Subtitle file I/O + CEA-608 codec (Subtitle/SubtitleList/SubRip, Scc, Cea608Encoder/Decoder all three modes, TPG injection, round-trip func test) | **Landed** |
-| P3    | CEA-608 conformance audit — ANSI/CTA-608-E S-2019 (60+ findings across XDS, wire/charset, decoder, encoder) | **Complete — all findings landed 2026-05-23** |
+| P3    | CEA-608 conformance audit — ANSI/CTA-608-E S-2019 (60+ findings across XDS, wire/charset, decoder, encoder) | **Complete — all findings landed 2026-05-23; 3 post-audit follow-ons landed 2026-05-24** |
 | 4     | MediaIO backend integration (codec API Frame-shaped refactor + ANC pairing, Cea708 ← / → HlsSei + NVENC SEI injection) | **Partial** — YouTube delivery path landed 2026-05-12; NdiMediaIO ANC + RtmpMediaIO ANC + AncMetadataStamper pending |
 | 4.5   | Frame-sync ANC policy (FrameSyncDisposition + AncSyncPolicy registry + AncFrameSync class with stash + per-codec Play/Drop/Repeat policies for ATC, Cea708, Afd, Hdr*) | **Mostly landed** — registry + AncFrameSync (stash included) + per-codec policies for ATC/Cea708/Afd/Hdr static/Hdr dynamic landed; VPID (Play+Repeat pass-through, Drop discards) + Op47Sdp (Play only, Repeat+Drop both drop — FSC collision avoidance) + St2020Audio (Play+Repeat pass-through, Drop discards) sync policies landed 2026-05-20; SCTE-104 policy still waits on the Scte104 codec; functional 23.976→60 3:2-pulldown test pending |
 | 5     | AJA NTV2 SDI ingest contract (documentation only) + build scaffolding (`thirdparty/libajantv2`, `PROMEKI_ENABLE_NTV2`) | **Scaffolding landed 2026-05-16; MediaIO backend pending** |
@@ -400,6 +400,40 @@ New files: `include/promeki/cea608xds.h`, `include/promeki/cea608xdsinjector.h`,
 - [x] **Channel-shift post-pass via `applyChannel`** — the encoder now builds
   every control pair CC1-shaped and shifts to the target channel in a single
   post-pass instead of duplicating the inline remap logic.
+
+### Phase P3 follow-ons (landed 2026-05-24)
+
+Three bugs found during integration testing after P3 closed.
+
+- [x] **Decoder: symmetric-gap anchor recovery** — `rowToAnchor` previously used
+  a fixed first-column threshold (`col < 4 → Left`, `col < 24 → Center`) which
+  silently collapsed any centered cue wider than ~24 chars to Left (e.g. a
+  28-char centered cue lands at `firstCol = 2`, below the old threshold).
+  Replaced with a symmetric-gap rule: `leftGap = firstCol`, `rightGap = 31 −
+  lastCol`; Center when `|leftGap − rightGap| ≤ 1`, Left when `leftGap <
+  rightGap`, Right when `leftGap > rightGap`.  The cell-grid's last-occupied
+  column substitutes for the cue width that is absent from the PAC byte.
+  2 new TEST_CASEs: wide centered cue round-trip × 3 anchor rows.
+
+- [x] **Encoder: centered pre-roll flush-left fallback** — centered (and
+  right-aligned) rows emit Tab Offset pairs in the pre-roll, adding frames
+  before the cue's wire stream begins.  Cues starting close to media t=0 (or
+  hot on the heels of a prior cue's EDM) could push `firstFrame` below zero or
+  into the overlap boundary, causing the cue to be silently dropped.  The encoder
+  now attempts a flush-left re-layout when either condition is detected: if the
+  re-laid-out body fits the window the cue is kept at BottomLeft / etc. and a
+  `promekiWarn` is emitted; only if even flush-left doesn't fit is the cue
+  dropped.  1 new TEST_CASE: 28-char BottomCenter cue at frame 20 (centered
+  pre-roll = 22 frames, flush-left = 20 frames) — asserts kept, anchor = BottomLeft.
+
+- [x] **SubRip: BottomCenter default for un-marked cues** — `parseAnchorPrefix`
+  previously set `outAnchor = SubtitleAnchor::Default` when no `{\anN}` prefix
+  was found.  `Cea608Encoder` has no "no-hint" wire representation and treated
+  Default as BottomLeft col 0, so SRT cues without explicit positioning were
+  encoded flush-left and decoded back as BottomLeft instead of the broadcast
+  convention (centered at the bottom).  `parseAnchorPrefix` now defaults to
+  `BottomCenter`; `addAnchorPrefix` skips the `{\an2}` emission for BottomCenter
+  to preserve the SRT round-trip for un-marked cues.
 
 ---
 

@@ -84,30 +84,55 @@ namespace {
                 return ch == Cea608Decoder::Channel::CC1 || ch == Cea608Decoder::Channel::CC3;
         }
 
-        /// @brief Maps a CEA-608 row (1..15) plus the row's start
-        ///        column (0..31) to the renderer-side
+        /// @brief Maps a CEA-608 row (1..15) plus the row's first and
+        ///        last occupied columns (0..31) to the renderer-side
         ///        @ref SubtitleAnchor.
         ///
         /// Row group → vertical: 1..4 = Top, 5..10 = Middle,
-        /// 11..15 = Bottom.  Column → horizontal: column 0..3 = Left,
-        /// 4..23 = Center, 24..31 = Right.  The thresholds are
-        /// pragmatic: a real broadcast captioner emits column 0 for
-        /// flush-left, somewhere near the row's centre for centered,
-        /// and column ≈ @c (32 - rowWidth) for flush-right; without
-        /// the cue width at PAC time the decoder uses the start
-        /// column alone as the horizontal-half discriminator.
-        SubtitleAnchor rowToAnchor(int row, int column) {
+        /// 11..15 = Bottom.
+        ///
+        /// Horizontal recovery uses the *symmetric gap* between the
+        /// row's left edge and its first cell vs. the right edge and
+        /// its last cell.  A real broadcast captioner emits the row at:
+        ///
+        ///   Left   → first col = 0,                     last col = width-1
+        ///   Center → first col = (32 - width) / 2,      last col = first + width - 1
+        ///   Right  → first col = 32 - width,            last col = 31
+        ///
+        /// so @c leftGap = @c firstCol and @c rightGap = @c 31-lastCol
+        /// encode the placement directly: Left has rightGap > leftGap,
+        /// Right has leftGap > rightGap, Center has the two gaps
+        /// (nearly) equal.  Using only @c firstCol — as the previous
+        /// fixed-threshold version did — silently collapses every
+        /// centered cue wider than ~24 chars to Left, because
+        /// @c (32 - 25) / 2 = 3 falls below the old col<4 Left
+        /// threshold.  The cue width at PAC time isn't carried on the
+        /// wire; the cell-grid's last-occupied column substitutes for
+        /// it.  Centered cues that exactly fill the row (width 32)
+        /// land at @c (0, 31) which is still symmetric so we resolve
+        /// them as Center — a tossup with Left, but Center matches
+        /// how the encoder placed them.
+        SubtitleAnchor rowToAnchor(int row, int firstCol, int lastCol) {
                 const bool isTop = (row >= 1 && row <= 4);
                 const bool isMid = (row >= 5 && row <= 10);
-                if (column < 4) {
-                        if (isTop) return SubtitleAnchor::TopLeft;
-                        if (isMid) return SubtitleAnchor::MiddleLeft;
-                        return SubtitleAnchor::BottomLeft;
-                }
-                if (column < 24) {
+                const int  leftGap = firstCol;
+                const int  rightGap = 31 - lastCol;
+                const int  delta = leftGap - rightGap;
+                // Center when the two gaps are within 1 cell of each
+                // other.  A 1-cell tolerance covers odd cue widths (a
+                // 31-cell centered cue lands at first=0, last=30 →
+                // delta = 0 - 1 = -1) without claiming Center for
+                // genuinely flush-left cues.
+                const bool isCenter = (delta >= -1 && delta <= 1);
+                if (isCenter) {
                         if (isTop) return SubtitleAnchor::TopCenter;
                         if (isMid) return SubtitleAnchor::MiddleCenter;
                         return SubtitleAnchor::BottomCenter;
+                }
+                if (leftGap < rightGap) {
+                        if (isTop) return SubtitleAnchor::TopLeft;
+                        if (isMid) return SubtitleAnchor::MiddleLeft;
+                        return SubtitleAnchor::BottomLeft;
                 }
                 if (isTop) return SubtitleAnchor::TopRight;
                 if (isMid) return SubtitleAnchor::MiddleRight;
@@ -401,7 +426,8 @@ namespace {
                 const int r = g.firstOccupiedRow();
                 if (r < 0) return SubtitleAnchor::Default;
                 const int firstCol = g.rowFirstCol(r);
-                return rowToAnchor(r, firstCol);
+                const int lastCol = g.rowLastCol(r);
+                return rowToAnchor(r, firstCol, lastCol);
         }
 
         /// @brief Concatenated flat-text representation of the grid
