@@ -439,18 +439,18 @@ TEST_CASE("Cea708Cdp: DataStream operators round-trip") {
 // Opaque extra bytes round-trip
 // ============================================================================
 
-TEST_CASE("Cea708Cdp: extra opaque bytes between cc_data and footer round-trip") {
+TEST_CASE("Cea708Cdp: future_section bytes between cc_data and footer round-trip") {
         Cea708Cdp cdp;
         cdp.frameRateCode = 4;
-        cdp.svcInfoPresent = true; // signal that opaque section was present
-        cdp.svcInfoStart = true;
-        // Synthesise a fake svcinfo body the parser will treat as opaque
-        // (this codec doesn't model svcinfo internals; it preserves bytes
-        // verbatim so captured packets round-trip without losing fidelity).
+        // SMPTE 334-2 §5.7: future sections use IDs in 0x75..0xEF and
+        // must be passed through by receivers that don't understand
+        // them.  This codec preserves the bytes verbatim via extraBytes
+        // so captured packets round-trip without losing fidelity, even
+        // when the section ID is unknown to the library.
         Buffer  extras(8);
         extras.setSize(8);
-        uint8_t bytes[8] = {Cea708Cdp::CcSvcInfoSectionId, 0x01, 0x02, 0x03,
-                            0x04, 0x05, 0x06, 0x07};
+        uint8_t bytes[8] = {0x80 /* future_section_id */, 0x06 /* length */, 0xAA, 0xBB,
+                            0xCC, 0xDD, 0xEE, 0xFF};
         extras.copyFrom(bytes, sizeof(bytes), 0);
         cdp.extraBytes = extras;
         cdp.sequenceCounter = 0x99;
@@ -459,8 +459,138 @@ TEST_CASE("Cea708Cdp: extra opaque bytes between cc_data and footer round-trip")
         Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
         REQUIRE(r.second().isOk());
         const Cea708Cdp &out = r.first();
-        CHECK(out.svcInfoPresent);
         CHECK(out.extraBytes.size() == 8);
         const uint8_t *p = static_cast<const uint8_t *>(out.extraBytes.data());
         for (size_t i = 0; i < 8; ++i) CHECK(p[i] == bytes[i]);
+}
+
+TEST_CASE("Cea708Cdp: ccsvcinfo_section structured round-trip (SMPTE 334-2 §5.5)") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 4;
+        cdp.svcInfoPresent = true;
+        cdp.svcInfoStart = true;
+        cdp.svcInfoComplete = true;
+        // Two services: one CEA-608 line-21 (field 1), one CEA-708 DTVCC.
+        Cea708Cdp::CcSvcInfoEntry s1;
+        s1.csnSize5Bit = false;     // 6-bit csn → '0'
+        s1.captionServiceNumber = 0; // line-21 has csn=0 per §5.5
+        s1.languageCode[0] = 'e';
+        s1.languageCode[1] = 'n';
+        s1.languageCode[2] = 'g';
+        s1.digitalCc = false;
+        s1.line21Field = false;
+        s1.easyReader = false;
+        s1.wideAspect = true;
+        Cea708Cdp::CcSvcInfoEntry s2;
+        s2.csnSize5Bit = true;       // 5-bit csn → '1'
+        s2.captionServiceNumber = 3; // DTVCC service 3
+        s2.languageCode[0] = 's';
+        s2.languageCode[1] = 'p';
+        s2.languageCode[2] = 'a';
+        s2.digitalCc = true;
+        s2.line21Field = false;      // ignored for DTVCC services
+        s2.easyReader = true;
+        s2.wideAspect = true;
+        cdp.ccSvcInfo.pushToBack(s1);
+        cdp.ccSvcInfo.pushToBack(s2);
+        cdp.sequenceCounter = 0xABCD;
+
+        Buffer            wire = cdp.toBuffer();
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        const Cea708Cdp &out = r.first();
+        REQUIRE(out.svcInfoPresent);
+        CHECK(out.svcInfoStart);
+        CHECK(out.svcInfoComplete);
+        CHECK_FALSE(out.svcInfoChange);
+        REQUIRE(out.ccSvcInfo.size() == 2);
+        CHECK(out.ccSvcInfo[0] == s1);
+        CHECK(out.ccSvcInfo[1] == s2);
+        // No future_section bytes left over.
+        CHECK(out.extraBytes.size() == 0);
+}
+
+TEST_CASE("Cea708Cdp: ccsvcinfo + future_section coexist in same CDP") {
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 5;
+        cdp.svcInfoPresent = true;
+        cdp.svcInfoComplete = true;
+        Cea708Cdp::CcSvcInfoEntry e;
+        e.csnSize5Bit = true;
+        e.captionServiceNumber = 1;
+        e.languageCode[0] = 'e';
+        e.languageCode[1] = 'n';
+        e.languageCode[2] = 'g';
+        e.digitalCc = true;
+        e.easyReader = false;
+        e.wideAspect = false;
+        cdp.ccSvcInfo.pushToBack(e);
+        // Add a future_section with a private ID 0x90 + 3 bytes.
+        Buffer  fut(5);
+        fut.setSize(5);
+        uint8_t bytes[5] = {0x90 /* future_section_id */, 0x03 /* length */, 0x11, 0x22, 0x33};
+        fut.copyFrom(bytes, sizeof(bytes), 0);
+        cdp.extraBytes = fut;
+        cdp.sequenceCounter = 1;
+
+        Buffer            wire = cdp.toBuffer();
+        Result<Cea708Cdp> r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        const Cea708Cdp &out = r.first();
+        REQUIRE(out.ccSvcInfo.size() == 1);
+        CHECK(out.ccSvcInfo[0].languageCode[0] == 'e');
+        CHECK(out.ccSvcInfo[0].digitalCc);
+        REQUIRE(out.extraBytes.size() == 5);
+        const uint8_t *p = static_cast<const uint8_t *>(out.extraBytes.data());
+        for (size_t i = 0; i < 5; ++i) CHECK(p[i] == bytes[i]);
+}
+
+TEST_CASE("Cea708Cdp: svcInfoMismatches counts entry-flag vs svc_data_byte_4 disagreement") {
+        // Build a CDP whose svcinfo entry's entry-flag says service 3
+        // but whose svc_data_byte_4 says service 5 — a non-compliant
+        // encoder that our parser must tolerate but tally.  We assemble
+        // the bytes manually to bypass our own encoder (which always
+        // writes both fields from the same source).
+        Cea708Cdp cdp;
+        cdp.frameRateCode = 4;     // 29.97
+        cdp.sequenceCounter = 0;
+        cdp.svcInfoPresent = true;
+        cdp.svcInfoStart = true;
+        cdp.svcInfoComplete = true;
+        Cea708Cdp::CcSvcInfoEntry e;
+        e.csnSize5Bit = false;
+        e.captionServiceNumber = 3; // claimed in entry-flag
+        e.languageCode[0] = 'e';
+        e.languageCode[1] = 'n';
+        e.languageCode[2] = 'g';
+        e.digitalCc = true;
+        cdp.ccSvcInfo.pushToBack(e);
+        // Serialize the compliant form first…
+        Buffer wire = cdp.toBuffer();
+        // …then patch svc_data_byte_4 to disagree.  Locate it via
+        // structure: svc info section starts at offset = header (7) +
+        // ccData section (if present — not in this CDP) + 2 (svcinfo
+        // header), then svcPos+4 is byte 4 of entry 0.
+        uint8_t *bytes = static_cast<uint8_t *>(wire.data());
+        // Walk to find the svcinfo section (id 0x73).
+        size_t svcOffset = 0;
+        for (size_t i = 7; i + 2 < wire.size(); ++i) {
+                if (bytes[i] == 0x73) { svcOffset = i; break; }
+        }
+        REQUIRE(svcOffset != 0);
+        const size_t svcDataByte4 = svcOffset + 2 + 4; // section hdr + entry byte 4
+        // svc_data_byte_4 layout when digital_cc=1: 0x80 | 0x40 | (svc & 0x3F)
+        bytes[svcDataByte4] = static_cast<uint8_t>(0x80 | 0x40 | 5); // claim svc=5
+        // Re-stamp checksum since we mutated a byte.
+        uint8_t sum = 0;
+        for (size_t i = 0; i < wire.size() - 1; ++i) sum += bytes[i];
+        bytes[wire.size() - 1] = static_cast<uint8_t>(0x100 - sum);
+
+        auto r = Cea708Cdp::fromBuffer(wire);
+        REQUIRE(r.second().isOk());
+        const Cea708Cdp &parsed = r.first();
+        CHECK(parsed.svcInfoMismatches == 1);
+        // The entry-flag value (3) wins, per §5.5 / parser policy.
+        REQUIRE(parsed.ccSvcInfo.size() == 1);
+        CHECK(parsed.ccSvcInfo[0].captionServiceNumber == 3);
 }

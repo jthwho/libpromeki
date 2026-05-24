@@ -215,11 +215,16 @@ class Cea708Service {
  *
  * @par Spec note: @c packet_size_code semantics
  *
- * The wire @c packet_size_code field encodes "packet size in bytes
- * minus 1" except for the special value 0 which means 128.  This
- * lets the 6-bit field cover the full 1..128 byte range without
- * a separate "is empty" sentinel.  For round-trip, callers should
- * use @c payloadByteCount() to query the actual payload length.
+ * Per CEA-708-E §5.1, the wire @c packet_size_code field encodes
+ * the number of byte PAIRS in the CCP (including the header byte).
+ * @c packet_data_size (data bytes after the header) is computed as:
+ *   @c packet_data_size = (packet_size_code * 2) - 1, or
+ *   @c packet_data_size = 127 when @c packet_size_code == 0.
+ * Total wire bytes are always even: @c packet_size_code * 2 (or 128
+ * for the special @c psc=0 case).  Payloads not filling the last
+ * byte pair are 0xFF-padded so the wire form remains even-aligned.
+ * Callers should use @c payloadByteCount() to query the actual
+ * payload length.
  *
  * @par Storage and copy semantics
  *

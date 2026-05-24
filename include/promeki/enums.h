@@ -3213,6 +3213,146 @@ inline const SubtitleFontFace SubtitleFontFace::Cursive{6};
 inline const SubtitleFontFace SubtitleFontFace::SmallCaps{7};
 
 /**
+ * @brief Pen-size attribute for a styled subtitle / caption span.
+ * @ingroup proav
+ *
+ * Mirrors the @c pen_size field of the CEA-708-E @c SetPenAttributes
+ * command (§8.10.5.9 / §8.5.1): three discrete sizes the caption
+ * author can request, with the receiver free to substitute its own
+ * sizing.  CEA-608 has no concept of pen size — 608 encoders ignore
+ * the field.
+ *
+ *  - @c Standard — the receiver's default size (the only size 708
+ *    receivers are required to implement).
+ *  - @c Small / @c Large — author hints; receivers may honour or
+ *    fall back to Standard.
+ */
+class SubtitlePenSize : public TypedEnum<SubtitlePenSize> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitlePenSize", 1, {"Small", 0}, {"Standard", 1},
+                                           {"Large", 2}); // default: Standard
+
+                using TypedEnum<SubtitlePenSize>::TypedEnum;
+
+                static const SubtitlePenSize Small;
+                static const SubtitlePenSize Standard;
+                static const SubtitlePenSize Large;
+};
+
+inline const SubtitlePenSize SubtitlePenSize::Small{0};
+inline const SubtitlePenSize SubtitlePenSize::Standard{1};
+inline const SubtitlePenSize SubtitlePenSize::Large{2};
+
+/**
+ * @brief Pen-offset (subscript / normal / superscript) attribute.
+ * @ingroup proav
+ *
+ * Mirrors the @c offset field of the CEA-708-E @c SetPenAttributes
+ * command (§8.10.5.9 / §8.5.4): three discrete positions for the
+ * character cell relative to the row baseline.  CEA-608 has no
+ * concept of subscript / superscript — 608 encoders ignore the
+ * field.
+ *
+ *  - @c Subscript — text offset downward from the baseline.
+ *  - @c Normal — default, no offset.
+ *  - @c Superscript — text offset upward from the baseline.
+ */
+class SubtitlePenOffset : public TypedEnum<SubtitlePenOffset> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitlePenOffset", 1, {"Subscript", 0}, {"Normal", 1},
+                                           {"Superscript", 2}); // default: Normal
+
+                using TypedEnum<SubtitlePenOffset>::TypedEnum;
+
+                static const SubtitlePenOffset Subscript;
+                static const SubtitlePenOffset Normal;
+                static const SubtitlePenOffset Superscript;
+};
+
+inline const SubtitlePenOffset SubtitlePenOffset::Subscript{0};
+inline const SubtitlePenOffset SubtitlePenOffset::Normal{1};
+inline const SubtitlePenOffset SubtitlePenOffset::Superscript{2};
+
+/**
+ * @brief Semantic role tag for a styled subtitle / caption span.
+ * @ingroup proav
+ *
+ * Mirrors the @c text_tag field of the CEA-708-E @c SetPenAttributes
+ * command (§8.10.5.9 / §8.5.9): a 4-bit hint describing what the
+ * upcoming text *represents*, independent of its visual styling.
+ * Renderers and accessibility tools can use the tag to (e.g.) speak
+ * source-ID prefixes in a different voice, hide lyrics from a captions
+ * filter, or suppress invisible metadata.  Receivers that ignore the
+ * field still display the text correctly — this is a hint, not a
+ * format directive.
+ *
+ *  - @c Dialog — default; ordinary spoken dialog.
+ *  - @c SourceId — speaker identification (e.g. "JOHN:").
+ *  - @c ElectronicallyReproduced — phone, robot, PA system, etc.
+ *  - @c DialogOtherLanguage — speech in a non-program language.
+ *  - @c Voiceover — narration over scene audio.
+ *  - @c AudibleTranslation — voiceover of foreign dialog.
+ *  - @c SubtitleTranslation — written translation of foreign dialog.
+ *  - @c VoiceDescription — descriptive video service (DVS).
+ *  - @c Lyrics — song lyrics.
+ *  - @c EffectDescription — sound effect description (e.g. "[barking]").
+ *  - @c ScoreDescription — music description (e.g. "[ominous music]").
+ *  - @c Expletive — bleeped or censored word.
+ *  - @c Reserved12 / @c Reserved13 / @c Reserved14 — undefined by the spec.
+ *  - @c NotDisplayed — metadata payload; receivers should not render it
+ *    (used for hidden control / search-index data).
+ *
+ * CEA-608 has no text-tag concept; 608 encoders drop the field.
+ */
+class SubtitleTextTag : public TypedEnum<SubtitleTextTag> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE("SubtitleTextTag", 0, {"Dialog", 0}, {"SourceId", 1},
+                                           {"ElectronicallyReproduced", 2}, {"DialogOtherLanguage", 3},
+                                           {"Voiceover", 4}, {"AudibleTranslation", 5},
+                                           {"SubtitleTranslation", 6}, {"VoiceDescription", 7},
+                                           {"Lyrics", 8}, {"EffectDescription", 9},
+                                           {"ScoreDescription", 10}, {"Expletive", 11},
+                                           {"Reserved12", 12}, {"Reserved13", 13}, {"Reserved14", 14},
+                                           {"NotDisplayed", 15}); // default: Dialog
+
+                using TypedEnum<SubtitleTextTag>::TypedEnum;
+
+                static const SubtitleTextTag Dialog;
+                static const SubtitleTextTag SourceId;
+                static const SubtitleTextTag ElectronicallyReproduced;
+                static const SubtitleTextTag DialogOtherLanguage;
+                static const SubtitleTextTag Voiceover;
+                static const SubtitleTextTag AudibleTranslation;
+                static const SubtitleTextTag SubtitleTranslation;
+                static const SubtitleTextTag VoiceDescription;
+                static const SubtitleTextTag Lyrics;
+                static const SubtitleTextTag EffectDescription;
+                static const SubtitleTextTag ScoreDescription;
+                static const SubtitleTextTag Expletive;
+                static const SubtitleTextTag Reserved12;
+                static const SubtitleTextTag Reserved13;
+                static const SubtitleTextTag Reserved14;
+                static const SubtitleTextTag NotDisplayed;
+};
+
+inline const SubtitleTextTag SubtitleTextTag::Dialog{0};
+inline const SubtitleTextTag SubtitleTextTag::SourceId{1};
+inline const SubtitleTextTag SubtitleTextTag::ElectronicallyReproduced{2};
+inline const SubtitleTextTag SubtitleTextTag::DialogOtherLanguage{3};
+inline const SubtitleTextTag SubtitleTextTag::Voiceover{4};
+inline const SubtitleTextTag SubtitleTextTag::AudibleTranslation{5};
+inline const SubtitleTextTag SubtitleTextTag::SubtitleTranslation{6};
+inline const SubtitleTextTag SubtitleTextTag::VoiceDescription{7};
+inline const SubtitleTextTag SubtitleTextTag::Lyrics{8};
+inline const SubtitleTextTag SubtitleTextTag::EffectDescription{9};
+inline const SubtitleTextTag SubtitleTextTag::ScoreDescription{10};
+inline const SubtitleTextTag SubtitleTextTag::Expletive{11};
+inline const SubtitleTextTag SubtitleTextTag::Reserved12{12};
+inline const SubtitleTextTag SubtitleTextTag::Reserved13{13};
+inline const SubtitleTextTag SubtitleTextTag::Reserved14{14};
+inline const SubtitleTextTag SubtitleTextTag::NotDisplayed{15};
+
+/**
  * @brief Closed-caption codec selector for ANC emission paths.
  * @ingroup proav
  *

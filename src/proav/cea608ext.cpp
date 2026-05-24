@@ -58,7 +58,24 @@ namespace {
                 /* 0x36 */ {0x00A3, 'L'}, // £
                 /* 0x37 */ {0x266A, '!'}, // ♪
                 /* 0x38 */ {0x00E0, 'a'}, // à
-                /* 0x39 */ {0x00A0, ' '}, // non-breaking space
+                /* 0x39 */ {0x00A0, ' '}, // Transparent space (CEA-608-E
+                                         // Annex F Table 49).  Spec
+                                         // semantic: a space-width cell
+                                         // that paints nothing (showing
+                                         // underlying video through).
+                                         // U+00A0 NBSP is the de facto
+                                         // convention used by every
+                                         // major 608 implementation
+                                         // (ffmpeg, libcaption) — Unicode
+                                         // has no dedicated codepoint
+                                         // for "transparent space", and
+                                         // U+00A0 communicates the "this
+                                         // is a special non-breaking
+                                         // space" intent.  Downstream
+                                         // renderers that care about
+                                         // true transparency can detect
+                                         // U+00A0 originating from a
+                                         // 608 source via metadata.
                 /* 0x3A */ {0x00E8, 'e'}, // è
                 /* 0x3B */ {0x00E2, 'a'}, // â
                 /* 0x3C */ {0x00EA, 'e'}, // ê
@@ -116,7 +133,7 @@ namespace {
         // EIA-608-B §A.6 second pair.  Includes some box-drawing
         // glyphs at the tail.
 
-        constexpr SpecialEntry kExtFrench[32] = {
+        constexpr SpecialEntry kExtPortugueseGerman[32] = {
                 /* 0x20 */ {0x00C3, 'A'}, // Ã
                 /* 0x21 */ {0x00E3, 'a'}, // ã
                 /* 0x22 */ {0x00CD, 'I'}, // Í
@@ -229,21 +246,21 @@ uint8_t Cea608Ext::extSpanishPlaceholder(uint8_t idx) {
 // Extended French / German / Portuguese
 // ============================================================================
 
-uint32_t Cea608Ext::decodeExtFrench(uint8_t idx) {
+uint32_t Cea608Ext::decodeExtPortugueseGerman(uint8_t idx) {
         if (idx < 0x20 || idx > 0x3F) return NoCodepoint;
-        return kExtFrench[idx - 0x20].cp;
+        return kExtPortugueseGerman[idx - 0x20].cp;
 }
 
-uint8_t Cea608Ext::encodeExtFrench(uint32_t cp) {
+uint8_t Cea608Ext::encodeExtPortugueseGerman(uint32_t cp) {
         for (uint8_t i = 0; i < 32; ++i) {
-                if (kExtFrench[i].cp == cp) return static_cast<uint8_t>(0x20 + i);
+                if (kExtPortugueseGerman[i].cp == cp) return static_cast<uint8_t>(0x20 + i);
         }
         return NoMapping;
 }
 
-uint8_t Cea608Ext::extFrenchPlaceholder(uint8_t idx) {
+uint8_t Cea608Ext::extPortugueseGermanPlaceholder(uint8_t idx) {
         if (idx < 0x20 || idx > 0x3F) return ' ';
-        return kExtFrench[idx - 0x20].placeholder;
+        return kExtPortugueseGerman[idx - 0x20].placeholder;
 }
 
 // ============================================================================
@@ -277,10 +294,10 @@ Cea608Ext::EncodedChar Cea608Ext::encode(uint32_t cp) {
                 return out;
         }
         // 4. Extended Portuguese / German.
-        const uint8_t ef = encodeExtFrench(cp);
+        const uint8_t ef = encodeExtPortugueseGerman(cp);
         if (ef != NoMapping) {
-                out.kind = Kind::ExtFrench;
-                out.placeholder = extFrenchPlaceholder(ef);
+                out.kind = Kind::ExtPortugueseGerman;
+                out.placeholder = extPortugueseGermanPlaceholder(ef);
                 out.code = ef;
                 return out;
         }

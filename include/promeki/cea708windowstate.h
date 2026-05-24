@@ -40,6 +40,26 @@ struct Cea708PenAttr {
                 bool              underline = false;
                 SubtitleEdgeStyle edgeStyle = SubtitleEdgeStyle::None;
                 SubtitleFontFace  fontFace = SubtitleFontFace::Default;
+                /// @brief Pen size from @c SetPenAttributes (SPA) byte 1
+                ///        bits 0..1, per CEA-708-E §8.5.1 + §8.10.5.9.
+                ///        Wire encoding: 00=Small, 01=Standard, 10=Large.
+                ///        Default @c Standard (the only size 708
+                ///        receivers must implement; §9.10 makes Small
+                ///        and Large optional).
+                SubtitlePenSize   penSize = SubtitlePenSize::Standard;
+                /// @brief Pen offset from @c SetPenAttributes byte 1
+                ///        bits 2..3, per §8.5.4.  Wire encoding:
+                ///        00=Subscript, 01=Normal, 10=Superscript.
+                ///        Default @c Normal.
+                SubtitlePenOffset penOffset = SubtitlePenOffset::Normal;
+                /// @brief Semantic role tag from @c SetPenAttributes byte 1
+                ///        bits 4..7, per CEA-708-E §8.5.9 / §8.10.5.9.
+                ///        A 4-bit hint describing what the upcoming text
+                ///        represents (Dialog, SourceId, Lyrics, etc.);
+                ///        renderers and accessibility tools can use it but
+                ///        receivers that ignore it still display correctly.
+                ///        Default @c Dialog.
+                SubtitleTextTag   textTag = SubtitleTextTag::Dialog;
                 Color             foregroundColor;
                 Color             backgroundColor;
                 Color             edgeColor;
@@ -54,6 +74,9 @@ struct Cea708PenAttr {
                         return italic || underline
                                 || edgeStyle != SubtitleEdgeStyle::None
                                 || fontFace != SubtitleFontFace::Default
+                                || penSize != SubtitlePenSize::Standard
+                                || penOffset != SubtitlePenOffset::Normal
+                                || textTag != SubtitleTextTag::Dialog
                                 || foregroundColor.isValid() || backgroundColor.isValid()
                                 || edgeColor.isValid()
                                 || foregroundOpacity != SubtitleOpacity::Solid
@@ -65,6 +88,9 @@ struct Cea708PenAttr {
                         return italic == o.italic && underline == o.underline
                                && edgeStyle.value() == o.edgeStyle.value()
                                && fontFace.value() == o.fontFace.value()
+                               && penSize.value() == o.penSize.value()
+                               && penOffset.value() == o.penOffset.value()
+                               && textTag.value() == o.textTag.value()
                                && foregroundColor == o.foregroundColor
                                && backgroundColor == o.backgroundColor
                                && edgeColor == o.edgeColor
@@ -192,7 +218,7 @@ struct Cea708Cell {
  * @par State tracked here
  *
  *  - @c defined / @c visible flags.
- *  - @c anchorPoint (1..9) + @c anchorV / @c anchorH coordinates +
+ *  - @c anchorPoint (0..8 per §8.4.4) + @c anchorV / @c anchorH coordinates +
  *    @c relativePos flag (per the DefineWindow command).
  *  - @c rowCount × @c colCount character grid.
  *  - @c penRow / @c penCol cursor position.
@@ -221,16 +247,44 @@ struct Cea708Window {
                 bool visible = false;       ///< Currently on-screen.
                 bool defined = false;       ///< @c DefineWindow has been issued.
                 int  priority = 0;          ///< Z-order priority (0=top, 7=bottom).
-                int  anchorPoint = 1;       ///< Anchor numpad position (1..9).
+                int  anchorPoint = 0;       ///< Anchor ID per CEA-708-E §8.4.4 (0..8; 0=TopLeft, 4=Center, 8=BottomRight).
                 int  anchorV = 0;           ///< Anchor vertical coordinate.
                 int  anchorH = 0;           ///< Anchor horizontal coordinate.
                 bool relativePos = true;    ///< @c true → anchorV/H are percentage; @c false → absolute cell.
                 int  rowCount = 15;         ///< Visible rows (1..15).
                 int  colCount = 32;         ///< Visible columns (1..42).
-                bool rowLock = true;        ///< Disallows row count change after DefineWindow.
-                bool colLock = true;        ///< Disallows col count change.
+                /// @brief Row-count lock (CEA-708-E §8.4.7).  When
+                ///        @c true the receiver is forbidden from
+                ///        shrinking the window's row count to fit a
+                ///        user-selected larger pen size; when @c false
+                ///        it may reduce row_count to keep the visible
+                ///        bottom of the window on-screen.  This library
+                ///        stores the flag for wire round-trip but does
+                ///        not act on it — the @ref Cea708WindowState
+                ///        model uses the author-specified grid as-is
+                ///        and has no notion of receiver-driven pen-
+                ///        size scaling.  Renderers that resize windows
+                ///        to fit user-selected pen sizes should
+                ///        consult this flag themselves.
+                bool rowLock = true;
+                /// @brief Column-count lock (CEA-708-E §8.4.7).
+                ///        Same semantics as @ref rowLock applied to
+                ///        the column count.  Stored for round-trip
+                ///        fidelity; not consulted by the parser.
+                bool colLock = true;
                 int  penRow = 0;            ///< Cursor row (0-based).
                 int  penCol = 0;            ///< Cursor column (0-based).
+                /// @brief Most recent window style ID (Table 26) preloaded
+                ///        via DefineWindow.  0 means "no preload requested"
+                ///        on the most recent DefineWindow.  Kept on the
+                ///        window so subsequent DefineWindow re-issues can
+                ///        detect unchanged-parameter cases per
+                ///        CEA-708-E §8.10.5.2 ("the command is to be
+                ///        ignored if the command parameters are unchanged").
+                uint8_t lastWindowStyleId = 0;
+                /// @brief Most recent pen style ID (Table 27) preloaded
+                ///        via DefineWindow.  See @ref lastWindowStyleId.
+                uint8_t lastPenStyleId = 0;
 
                 /// @brief Window-level attributes from @c SetWindowAttributes
                 ///        (SWA, 0x97).  Updated every time an SWA
@@ -238,6 +292,23 @@ struct Cea708Window {
                 ///        block; default-constructed before the first
                 ///        SWA arrives.  See @ref Cea708WindowAttr.
                 Cea708WindowAttr attrs;
+
+                /// @brief Most recently asserted pen state for this
+                ///        window — updated by @c SetPenAttributes
+                ///        (SPA, 0x90) and @c SetPenColor (SPC, 0x91)
+                ///        commands while this window is current, and
+                ///        preloaded from the Pen Style ID field of the
+                ///        DefineWindow command on create (CEA-708-E
+                ///        §8.10.5.2 + Table 27).
+                ///
+                /// Per spec §8.5.10 / §8.10.5.9, "pen attributes will
+                /// remain in effect for the window during its entire
+                /// existence."  This means SPA/SPC target the current
+                /// window's pen, and switching the current window via
+                /// @c CW0..CW7 picks up that window's previously-
+                /// asserted pen — so a service can multi-style two
+                /// windows independently.
+                Cea708PenAttr pen;
 
                 /// @brief Character grid.  Outer index = row (0..rowCount-1);
                 ///        inner index = column (0..colCount-1).  Each
@@ -334,9 +405,11 @@ struct Cea708Window {
  *    bitmap updates.
  *  - SetPenLocation (SPL) — repositions the cursor.
  *  - SetPenAttributes / SetPenColor (SPA / SPC) — fully decoded
- *    into @ref currentPen and stamped onto every character cell
- *    so multi-style cues recover with span boundaries via
- *    @ref Cea708Window::visibleSpans.
+ *    into the current window's @ref Cea708Window::pen and stamped
+ *    onto every character cell so multi-style cues recover with
+ *    span boundaries via @ref Cea708Window::visibleSpans.  Each
+ *    window owns its pen independently (CEA-708-E §8.5.10), so a
+ *    multi-window service can carry distinct styling per window.
  *  - SetWindowAttributes (SWA) — fully decoded into the current
  *    window's @ref Cea708Window::attrs (fill colour / opacity,
  *    border, justify, scroll / print direction, word-wrap,
@@ -344,6 +417,13 @@ struct Cea708Window {
  *    inherited by every span emitted from that window's grid
  *    that doesn't carry an explicit per-cell SPC bg colour.
  *  - Delay (DLY), DelayCancel (DLC), Reset (RST) — recognised.
+ *    DLY's spec-mandated N/10-second suspension is **not enforced** —
+ *    the parser has no scheduler and processes service bytes
+ *    synchronously inside @ref processBytes.  Real delay semantics
+ *    would need an external pacing layer that calls @ref processBytes
+ *    in time-aligned chunks.  In practice DLY is rare on captioning
+ *    streams (the carrying CDP / SDI / SEI transport already pins
+ *    each packet to a frame timestamp).
  *  - C0: ETX terminates a row, CR moves cursor to next row, FF
  *    clears the current window, BS moves cursor back one column.
  *  - EXT1 + EXT1-prefixed C2 / G2 / C3 / G3 commands consume
@@ -359,6 +439,30 @@ class Cea708WindowState {
         public:
                 /// @brief CEA-708 caps services at 8 windows each.
                 static constexpr int WindowCount = 8;
+
+                /// @brief Display-aspect modes for safe-title bounds
+                ///        enforcement per CEA-708-E §9.4 Table 29.
+                ///
+                /// CEA-708 sizes the on-screen coordinate grid + the
+                /// per-cell character dimensions to the receiver's
+                /// display aspect ratio.  At STANDARD pen size:
+                ///
+                ///  - 4:3 displays: 15 rows × 32 columns of cells,
+                ///    anchor coordinate ranges 0..74 vertical × 0..159
+                ///    horizontal (absolute) or 0..99 × 0..99
+                ///    (relative).
+                ///  - 16:9 displays: 15 rows × 42 columns of cells,
+                ///    anchor coordinate ranges 0..74 × 0..209 (absolute)
+                ///    or 0..99 × 0..99 (relative).
+                ///
+                /// Default is 16:9 — modern broadcasting and HDMI/SDI
+                /// pipelines are essentially all 16:9 since the early
+                /// 2010s.  Set the field via @ref setDisplayAspect
+                /// for legacy 4:3 sources.
+                enum class DisplayAspect {
+                        WideScreen, ///< 16:9 — up to 42 chars per row, anchor_h 0..209.
+                        Standard,   ///< 4:3 — up to 32 chars per row, anchor_h 0..159.
+                };
 
                 Cea708WindowState();
 
@@ -388,11 +492,32 @@ class Cea708WindowState {
                 const Cea708Window &currentWindow() const { return _windows[_currentWindow]; }
                 Cea708Window       &currentWindow() { return _windows[_currentWindow]; }
 
-                /// @brief Most recently asserted pen attributes (from
-                ///        @c SPA / @c SPC).  Service-wide, not per-cell —
-                ///        see @ref Cea708PenAttr for the limitation.
-                const Cea708PenAttr &currentPen() const { return _pen; }
-                Cea708PenAttr       &currentPen() { return _pen; }
+                /// @brief Returns the configured display aspect for
+                ///        safe-title enforcement (CEA-708-E §9.4 / §9.7).
+                DisplayAspect displayAspect() const { return _displayAspect; }
+
+                /// @brief Sets the display aspect.  Affects DefineWindow
+                ///        bounds checking — windows whose computed
+                ///        extents would exceed the safe-title area for
+                ///        @p a are disregarded per §9.7.  Calling this
+                ///        does not retroactively re-evaluate already-
+                ///        defined windows; it only affects subsequent
+                ///        DefineWindow commands.
+                void setDisplayAspect(DisplayAspect a) { _displayAspect = a; }
+
+                /// @brief Most recently asserted pen attributes for
+                ///        the currently-active window, mirroring
+                ///        @ref Cea708Window::pen.  Per CEA-708-E §8.5.10
+                ///        each window carries its own pen — switching
+                ///        the current window via @c CW0..CW7 picks up
+                ///        that window's previously-asserted pen, so
+                ///        multi-window cues can carry independent
+                ///        styling.  @ref SetPenAttributes (SPA) and
+                ///        @ref SetPenColor (SPC) commands mutate
+                ///        this — the pen of the window in
+                ///        @ref currentWindow().
+                const Cea708PenAttr &currentPen() const { return _windows[_currentWindow].pen; }
+                Cea708PenAttr       &currentPen() { return _windows[_currentWindow].pen; }
 
                 /// @brief @c true when at least one window has
                 ///        @ref Cea708Window::visible set.
@@ -435,7 +560,7 @@ class Cea708WindowState {
 
                 WindowArray   _windows;
                 int           _currentWindow = 0;
-                Cea708PenAttr _pen;
+                DisplayAspect _displayAspect = DisplayAspect::WideScreen;
 
                 /// @brief UTF-16 high surrogate held over from the most
                 ///        recent @c P16 — combined with the next @c P16

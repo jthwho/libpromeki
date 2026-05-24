@@ -159,7 +159,9 @@ TEST_CASE("Cea708DtvccPacket: parsePayloadBytes round-trips extended service blo
 }
 
 TEST_CASE("Cea708DtvccPacket: parsePayloadBytes stops at null block terminator") {
-        // Two blocks then a null terminator.
+        // Two blocks then a null terminator.  Per §6.2.5 the null block
+        // is a terminator marker, not a payload block; parsePayloadBytes
+        // stops on it and does not surface it in the result list.
         Cea708DtvccPacket orig;
         orig.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A'})));
         orig.serviceBlocks().pushToBack(Cea708Service(2, bytesBuf({'B'})));
@@ -167,10 +169,9 @@ TEST_CASE("Cea708DtvccPacket: parsePayloadBytes stops at null block terminator")
         Buffer payload = orig.toPayloadBytes();
         auto [blocks, err] = Cea708DtvccPacket::parsePayloadBytes(payload.data(), payload.size());
         REQUIRE(err.isOk());
-        REQUIRE(blocks.size() == 3);
+        REQUIRE(blocks.size() == 2);
         CHECK(blocks[0].serviceNumber() == 1);
         CHECK(blocks[1].serviceNumber() == 2);
-        CHECK(blocks[2].isNull());
 }
 
 // ============================================================================
@@ -191,12 +192,14 @@ TEST_CASE("Cea708DtvccPacket::toCcData: first triple has cc_type=2, rest cc_type
 TEST_CASE("Cea708DtvccPacket::toCcData header byte carries sequence + packet_size_code") {
         Cea708DtvccPacket pkt(2, {});
         pkt.serviceBlocks().pushToBack(Cea708Service(1, bytesBuf({'A'})));
-        // Payload bytes: header (0x21) + 'A' = 2 bytes.
-        // packet_size_code = payloadSize + 1 = 3.
-        // header byte = (2 << 6) | 3 = 0x83.
+        // Payload bytes: service block header (0x21) + 'A' = 2 bytes.
+        // Per CEA-708-E §5.1, packet_size_code is in byte PAIRS
+        // including the header byte: total wire bytes = 1 (CCP header)
+        // + 2 (payload) = 3 → rounded up to 4 → psc = 4/2 = 2.
+        // header byte = (sequence << 6) | psc = (2 << 6) | 2 = 0x82.
         Cea708Cdp::CcDataList triples = pkt.toCcData();
         REQUIRE(triples.size() >= 1);
-        CHECK(triples[0].b1 == 0x83);
+        CHECK(triples[0].b1 == 0x82);
 }
 
 TEST_CASE("Cea708DtvccPacket: full round-trip via cc_data") {

@@ -106,6 +106,16 @@ class DataStream;
  * be used concurrently; concurrent access to a single instance is
  * not internally synchronised.
  *
+ * @par CTA-708.1 (3D Closed Captioning Extensions) — not implemented
+ * The 3D extensions defined by ANSI/CTA-708.1 R-2017 add per-window
+ * 3D depth metadata to the DTVCC stream via new C3 commands and an
+ * extended @c cc_data triple variant.  This class does not currently
+ * produce or recognise the 3D-specific bytes; encoded CDPs emit
+ * only the 2D coding layer.  3D streams that arrive on the wire are
+ * still parsed correctly — the 3D-only bytes flow through as opaque
+ * data in @ref extraBytes — but typed accessors for the 3D fields
+ * are absent.
+ *
  * @see AncTranslator, AncFormat::Cea708, St291Packet
  */
 class Cea708Cdp {
@@ -149,6 +159,79 @@ class Cea708Cdp {
 
                 /** @brief List of cc_data triples. */
                 using CcDataList = ::promeki::List<CcData>;
+
+                /**
+                 * @brief One caption-service entry in the
+                 *        @c ccsvcinfo_section.
+                 *
+                 * Per SMPTE ST 334-2 §5.5 Table 6, each service block
+                 * is 7 bytes on the wire: a 1-byte flag (reserved bit +
+                 * @c csn_size + caption_service_number) followed by 6
+                 * @c svc_data bytes encoded per ATSC A/65 §6.9.2 Table
+                 * 6.26 (caption_service_descriptor loop entry).
+                 *
+                 * The fields below decode the descriptor:
+                 *
+                 *  - @c csnSize5Bit selects how the service number is
+                 *    interpreted: @c true (csn_size = '1') → 5-bit
+                 *    service number 1..31; @c false (csn_size = '0') →
+                 *    6-bit service number 0..63 (with 0 reserved for
+                 *    CEA-608 line-21).
+                 *  - @c captionServiceNumber: the wire service number.
+                 *    For @c digitalCc == false, this is 0 (line-21);
+                 *    for @c digitalCc == true, it matches the
+                 *    @c caption_service_number embedded in
+                 *    @c svc_data_byte_4.
+                 *  - @c languageCode: ISO-639.2 (B/T) three-character
+                 *    language code (e.g. "eng", "spa", "fra").
+                 *  - @c digitalCc: @c true when the service is DTVCC
+                 *    (CEA-708); @c false when it's NTSC line-21
+                 *    (CEA-608).
+                 *  - @c line21Field: when @c digitalCc == false, @c true
+                 *    indicates analog field 2 (= CC3 / CC4 / T3 / T4
+                 *    in CEA-608 nomenclature) and @c false indicates
+                 *    field 1 (= CC1 / CC2 / T1 / T2).  Ignored for
+                 *    DTVCC services.
+                 *  - @c easyReader: signals that the service text has
+                 *    been authored for the FCC Easy Reader convention
+                 *    (simplified vocabulary / phrasing).
+                 *  - @c wideAspect: @c true when the service was
+                 *    authored for a 16:9 display; @c false for 4:3.
+                 *
+                 * Service entries that the library doesn't yet decode
+                 * structurally — none today, but reserved for future
+                 * spec revisions — are preserved as @c extraBytes per
+                 * the section's spec-mandated forward-compatible
+                 * skipping behaviour (§5.7).
+                 */
+                struct CcSvcInfoEntry {
+                                bool    csnSize5Bit = false;
+                                uint8_t captionServiceNumber = 0;
+                                /// @brief Three ASCII characters carrying
+                                ///        the ISO-639.2 language code
+                                ///        (e.g. {'e', 'n', 'g'}).
+                                uint8_t languageCode[3] = {0, 0, 0};
+                                bool    digitalCc = false;
+                                bool    line21Field = false;
+                                bool    easyReader = false;
+                                bool    wideAspect = false;
+
+                                bool operator==(const CcSvcInfoEntry &o) const {
+                                        return csnSize5Bit == o.csnSize5Bit
+                                               && captionServiceNumber == o.captionServiceNumber
+                                               && languageCode[0] == o.languageCode[0]
+                                               && languageCode[1] == o.languageCode[1]
+                                               && languageCode[2] == o.languageCode[2]
+                                               && digitalCc == o.digitalCc
+                                               && line21Field == o.line21Field
+                                               && easyReader == o.easyReader
+                                               && wideAspect == o.wideAspect;
+                                }
+                                bool operator!=(const CcSvcInfoEntry &o) const { return !(*this == o); }
+                };
+
+                /** @brief List of caption-service info entries. */
+                using CcSvcInfoEntryList = ::promeki::List<CcSvcInfoEntry>;
 
                 // -- Header fields ----------------------------------------
 
@@ -208,13 +291,43 @@ class Cea708Cdp {
                 /// length determines the cc_count field on emit.
                 CcDataList ccData;
 
+                /// @brief Structured caption-service-info entries from
+                ///        the @c ccsvcinfo_section (SMPTE 334-2 §5.5).
+                ///
+                /// When @ref svcInfoPresent is true, the section is
+                /// parsed into these entries on @ref fromBuffer and
+                /// re-emitted by @ref toBuffer.  Per spec §4.4 a CDP
+                /// stream may distribute service information across
+                /// multiple packets via the @ref svcInfoStart /
+                /// @ref svcInfoChange / @ref svcInfoComplete flags;
+                /// receivers accumulate entries across CDPs until they
+                /// see a complete set.
+                CcSvcInfoEntryList ccSvcInfo;
+
                 /// @brief Opaque bytes for sections this class does not
-                /// model (ccsvcinfo and future_section).  Captured packets
-                /// round-trip exactly: the parser stuffs every byte
-                /// between the cc_data section and the footer here, and
-                /// the builder emits them verbatim before stamping the
-                /// footer.
+                /// model (future_section per §5.7 — any section ID in
+                /// 0x75..0xEF).  Captured packets round-trip exactly:
+                /// the parser stuffs every unrecognised section's
+                /// bytes here, and the builder emits them verbatim
+                /// before stamping the footer.  Recognised sections
+                /// (@c time_code_section 0x71, @c ccdata_section
+                /// 0x72, @c ccsvcinfo_section 0x73) are parsed into
+                /// their typed fields and do not contribute to
+                /// @c extraBytes.
                 Buffer extraBytes;
+
+                /// @brief Count of svcinfo entries whose entry-flag
+                /// service number disagreed with @c svc_data_byte_4
+                /// during the most recent @ref fromBuffer.
+                ///
+                /// Per SMPTE 334-2 §5.5 / ATSC A/65 §6.9.2 the two
+                /// fields must agree when @c digital_cc=1; the parser
+                /// keeps the entry-flag value as authoritative but
+                /// tallies mismatches here so callers can detect
+                /// non-compliant encoders.  Reset to 0 on each parse;
+                /// not used by @ref toBuffer (the encoder always
+                /// writes both fields from the same source).
+                uint32_t svcInfoMismatches = 0;
 
                 // -- Construction -----------------------------------------
 

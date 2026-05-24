@@ -106,11 +106,14 @@ Buffer Cea708Cdp::toBuffer() const {
         const size_t timecodeSize = timeCodePresent ? 5 : 0;
         const size_t ccDataSize =
                 ccDataPresent ? (2 + 3 * ccData.size()) : 0;
+        // SMPTE ST 334-2 §5.5: ccsvcinfo_section is 2 bytes of header
+        // (section_id + flag byte) plus 7 bytes per service.
+        const size_t svcInfoSize = svcInfoPresent ? (2 + 7 * ccSvcInfo.size()) : 0;
         const size_t extraSize = extraBytes.size();
         const size_t footerSize = 4;
         const size_t headerSize = 7;
-        const size_t total =
-                headerSize + timecodeSize + ccDataSize + extraSize + footerSize;
+        const size_t total = headerSize + timecodeSize + ccDataSize + svcInfoSize + extraSize
+                             + footerSize;
 
         Buffer buf(total);
         buf.setSize(total);
@@ -186,6 +189,65 @@ Buffer Cea708Cdp::toBuffer() const {
                         triplePos += 3;
                 }
                 pos += ccDataSize;
+        }
+
+        // Optional ccsvcinfo_section (SMPTE 334-2 §5.5 Table 6).
+        if (svcInfoPresent) {
+                // Section header: id byte + flag byte carrying the
+                // svc_info_start / change / complete bits + 4-bit
+                // svc_count.  Reserved bit 7 of the flag byte is '1'.
+                const uint8_t svcCountWire = static_cast<uint8_t>(ccSvcInfo.size() & 0x0F);
+                out[pos + 0] = CcSvcInfoSectionId;
+                out[pos + 1] = static_cast<uint8_t>(0x80                                    // reserved '1'
+                                                    | (svcInfoStart ? 0x40 : 0x00)
+                                                    | (svcInfoChange ? 0x20 : 0x00)
+                                                    | (svcInfoComplete ? 0x10 : 0x00)
+                                                    | svcCountWire);
+                size_t svcPos = pos + 2;
+                for (size_t i = 0; i < ccSvcInfo.size(); ++i) {
+                        const CcSvcInfoEntry &e = ccSvcInfo[i];
+                        // Service-entry flag byte:
+                        //   bit 7 reserved '1'
+                        //   bit 6 csn_size (1 = 5-bit csn, 0 = 6-bit csn)
+                        //   if csn_size == 1:
+                        //     bit 5 reserved '1'
+                        //     bits 4..0 caption_service_number (5 bits)
+                        //   else:
+                        //     bits 5..0 caption_service_number (6 bits)
+                        uint8_t flag = static_cast<uint8_t>(0x80);
+                        if (e.csnSize5Bit) {
+                                flag = static_cast<uint8_t>(flag | 0x40 | 0x20
+                                                            | (e.captionServiceNumber & 0x1F));
+                        } else {
+                                flag = static_cast<uint8_t>(flag | (e.captionServiceNumber & 0x3F));
+                        }
+                        out[svcPos + 0] = flag;
+                        // ATSC A/65 §6.9.2 caption_service_descriptor loop entry:
+                        //   bytes 1..3: ISO-639.2 language code
+                        //   byte 4: digital_cc (bit 7) | reserved (bit 6) |
+                        //           (line21_field at bit 0 OR caption_service_number
+                        //            in bits 5..0)
+                        //   byte 5: easy_reader (bit 7) | wide_aspect_ratio
+                        //           (bit 6) | reserved (bits 5..0)
+                        //   byte 6: reserved
+                        out[svcPos + 1] = e.languageCode[0];
+                        out[svcPos + 2] = e.languageCode[1];
+                        out[svcPos + 3] = e.languageCode[2];
+                        if (e.digitalCc) {
+                                out[svcPos + 4] = static_cast<uint8_t>(
+                                        0x80 | 0x40 | (e.captionServiceNumber & 0x3F));
+                        } else {
+                                // CEA-608 line-21: reserved bits + line21_field.
+                                out[svcPos + 4] = static_cast<uint8_t>(
+                                        0x40 | (e.line21Field ? 0x01 : 0x00));
+                        }
+                        out[svcPos + 5] = static_cast<uint8_t>(
+                                (e.easyReader ? 0x80 : 0x00) | (e.wideAspect ? 0x40 : 0x00)
+                                | 0x3F /* reserved bits 5..0 = '111111' per ATSC A/65 */);
+                        out[svcPos + 6] = 0xFF; // reserved byte
+                        svcPos += 7;
+                }
+                pos += svcInfoSize;
         }
 
         // Extra opaque sections, copied verbatim.
@@ -299,9 +361,74 @@ Result<Cea708Cdp> Cea708Cdp::fromBuffer(const void *data, size_t size) {
                 pos += 3 * static_cast<size_t>(cnt);
         }
 
-        // Any bytes between here and the footer are opaque sections
-        // (ccsvcinfo / future_section).  Preserve them verbatim so the
-        // built form round-trips byte-exact.
+        // Optional ccsvcinfo_section (SMPTE 334-2 §5.5 Table 6).
+        // Recognised by section_id 0x73 at the current position; not
+        // gated on @c svcInfoPresent (parsers must skip any section
+        // they don't understand per §5.7, and trust the flag bits
+        // less than the wire structure).
+        if (pos + 2 <= footerStart && in[pos] == CcSvcInfoSectionId) {
+                const uint8_t flagByte = in[pos + 1];
+                // Mirror the section's start/change/complete bits onto
+                // the CDP struct — spec §5.5 mandates these match the
+                // CDP header's matching flags, but a malformed encoder
+                // could disagree.  The section is authoritative.
+                cdp.svcInfoStart = (flagByte & 0x40) != 0;
+                cdp.svcInfoChange = (flagByte & 0x20) != 0;
+                cdp.svcInfoComplete = (flagByte & 0x10) != 0;
+                const uint8_t svcCount = static_cast<uint8_t>(flagByte & 0x0F);
+                const size_t  svcSize = 2 + 7 * static_cast<size_t>(svcCount);
+                if (pos + svcSize > footerStart) {
+                        return makeError<Cea708Cdp>(Error::CorruptData);
+                }
+                cdp.ccSvcInfo.resize(svcCount);
+                size_t svcPos = pos + 2;
+                for (uint8_t i = 0; i < svcCount; ++i) {
+                        const uint8_t entryFlag = in[svcPos + 0];
+                        CcSvcInfoEntry e;
+                        // csn_size: bit 6.  '1' → 5-bit csn (bits 4..0
+                        // after a reserved bit 5); '0' → 6-bit csn.
+                        e.csnSize5Bit = (entryFlag & 0x40) != 0;
+                        if (e.csnSize5Bit) {
+                                e.captionServiceNumber = static_cast<uint8_t>(entryFlag & 0x1F);
+                        } else {
+                                e.captionServiceNumber = static_cast<uint8_t>(entryFlag & 0x3F);
+                        }
+                        e.languageCode[0] = in[svcPos + 1];
+                        e.languageCode[1] = in[svcPos + 2];
+                        e.languageCode[2] = in[svcPos + 3];
+                        const uint8_t b4 = in[svcPos + 4];
+                        e.digitalCc = (b4 & 0x80) != 0;
+                        if (e.digitalCc) {
+                                // svc_data_byte_4 carries the 6-bit
+                                // caption_service_number in its low 6
+                                // bits when digital_cc==1.  Per
+                                // SMPTE 334-2 §5.5 / ATSC A/65 §6.9.2
+                                // it must match the entry-flag service
+                                // number.  We treat the entry flag as
+                                // authoritative on the wire but log
+                                // when they disagree — non-zero counts
+                                // suggest a non-compliant encoder.
+                                const uint8_t b4Svc = static_cast<uint8_t>(b4 & 0x3F);
+                                if (b4Svc != e.captionServiceNumber) {
+                                        ++cdp.svcInfoMismatches;
+                                }
+                                e.line21Field = false;
+                        } else {
+                                e.line21Field = (b4 & 0x01) != 0;
+                        }
+                        const uint8_t b5 = in[svcPos + 5];
+                        e.easyReader = (b5 & 0x80) != 0;
+                        e.wideAspect = (b5 & 0x40) != 0;
+                        cdp.ccSvcInfo[i] = e;
+                        svcPos += 7;
+                }
+                pos += svcSize;
+        }
+
+        // Any remaining bytes between here and the footer belong to a
+        // @c future_section (SMPTE 334-2 §5.7) — section IDs in
+        // 0x75..0xEF that this library doesn't model.  Preserve them
+        // verbatim so the built form round-trips byte-exact.
         if (pos < footerStart) {
                 size_t extraLen = footerStart - pos;
                 Buffer extra(extraLen);
@@ -365,6 +492,25 @@ JsonObject Cea708Cdp::toJson() const {
                 obj.set("ccData", arr);
         }
 
+        if (!ccSvcInfo.isEmpty()) {
+                JsonArray arr;
+                for (size_t i = 0; i < ccSvcInfo.size(); ++i) {
+                        const CcSvcInfoEntry &e = ccSvcInfo[i];
+                        JsonObject s;
+                        s.set("csnSize5Bit", e.csnSize5Bit);
+                        s.set("captionServiceNumber", static_cast<int64_t>(e.captionServiceNumber));
+                        char lang[4] = {static_cast<char>(e.languageCode[0]),
+                                         static_cast<char>(e.languageCode[1]),
+                                         static_cast<char>(e.languageCode[2]), 0};
+                        s.set("languageCode", String(lang));
+                        s.set("digitalCc", e.digitalCc);
+                        if (!e.digitalCc) s.set("line21Field", e.line21Field);
+                        s.set("easyReader", e.easyReader);
+                        s.set("wideAspect", e.wideAspect);
+                        arr.add(s);
+                }
+                obj.set("ccSvcInfo", arr);
+        }
         if (extraBytes.size() > 0) {
                 obj.set("extraBytes", static_cast<int64_t>(extraBytes.size()));
         }
@@ -390,6 +536,7 @@ bool Cea708Cdp::operator==(const Cea708Cdp &o) const {
                 if (tcFieldFlag != o.tcFieldFlag) return false;
         }
         if (ccData != o.ccData) return false;
+        if (ccSvcInfo != o.ccSvcInfo) return false;
         if (!(extraBytes == o.extraBytes)) return false;
         return true;
 }

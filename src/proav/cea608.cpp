@@ -208,7 +208,7 @@ bool Cea608::decodeMidRow(uint8_t b1, uint8_t b2, CaptionColor &outColor, bool &
         return true;
 }
 
-// -- Background attribute codes (EIA-608-B §7.6) -------------------
+// -- Background attribute codes (CTA-608-E §6.2 Table 3) -----------
 //
 // Wire layout for CC1 (channel 1, field 1):
 //   b1 = 0x10
@@ -248,15 +248,21 @@ bool Cea608::decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor, b
         return true;
 }
 
+bool Cea608::isBt(uint8_t b1, uint8_t b2) {
+        // §6.2 Table 3: BT = 0x17, 0x2D.  FA = 0x17, 0x2E and FAU =
+        // 0x17, 0x2F share the same first byte — distinguish via b2.
+        return b1 == Cc1ExtAttrB1 && b2 == BtB2;
+}
+
 void Cea608::encodeTabOffset(int columns, uint8_t &b1, uint8_t &b2) {
         if (columns < 1) columns = 1;
         if (columns > 3) columns = 3;
-        b1 = TabOffsetB1;
+        b1 = Cc1ExtAttrB1;
         b2 = static_cast<uint8_t>(0x20 + columns); // 0x21 / 0x22 / 0x23
 }
 
 bool Cea608::isTabOffset(uint8_t b1, uint8_t b2) {
-        return b1 == TabOffsetB1 && b2 >= TabOffsetT1 && b2 <= TabOffsetT3;
+        return b1 == Cc1ExtAttrB1 && b2 >= TabOffsetT1 && b2 <= TabOffsetT3;
 }
 
 bool Cea608::decodeTabOffset(uint8_t b1, uint8_t b2, int &outColumns) {

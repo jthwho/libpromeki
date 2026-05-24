@@ -54,6 +54,13 @@ namespace {
         ///         01 = normal) | pen_size (bits 0-1, 01 = standard).
         /// Byte 2: italic (bit 7) | underline (bit 6) | edge_type (bits 3-5)
         ///         | font_tag (bits 0-2).
+        ///
+        /// @c text_tag (CEA-708-E §8.5.9 — Dialog / SourceId / Lyrics / etc.),
+        /// @c pen_size, and @c offset are emitted at the spec-default values
+        /// because @ref SubtitleSpan doesn't carry those fields today.  The
+        /// decoder side (Cea708WindowState) does parse and store them onto
+        /// the per-cell pen state, so a 708 ↔ 708 round-trip would lose
+        /// them — exposing them on @ref SubtitleSpan is a separate task.
         void packSpaArgs(const SubtitleSpan &s, uint8_t &b1, uint8_t &b2) {
                 b1 = static_cast<uint8_t>((0 << 4) | (1 << 2) | 1); // default text_tag, normal offset, standard pen size
                 const uint8_t italicBit = s.italic() ? 0x80 : 0x00;
@@ -200,25 +207,25 @@ namespace {
 
         /// @brief Maps a @ref SubtitleAnchor enum value (1..9 numpad
         ///        convention used by ASS @c {\anN}, or 0 for Default)
-        ///        onto a CEA-708 DefineWindow @c anchor_point (1..9
-        ///        reading-order convention).
+        ///        onto a CEA-708 DefineWindow @c anchor_point (0..8
+        ///        reading-order convention per §8.4.4 Figure 13).
         ///
         /// SubtitleAnchor uses the numpad/keypad layout where 1=BottomLeft
-        /// and 9=TopRight; CEA-708 uses reading order where 1=TopLeft
-        /// and 9=BottomRight.  The horizontal axis matches; only the
+        /// and 9=TopRight; CEA-708 uses reading order where 0=TopLeft
+        /// and 8=BottomRight.  The horizontal axis matches; only the
         /// vertical layer flips.
         uint8_t subtitleAnchorTo708(int value) {
                 switch (value) {
-                        case 1: return 7; // BottomLeft
-                        case 2: return 8; // BottomCenter
-                        case 3: return 9; // BottomRight
-                        case 4: return 4; // MiddleLeft
-                        case 5: return 5; // MiddleCenter
-                        case 6: return 6; // MiddleRight
-                        case 7: return 1; // TopLeft
-                        case 8: return 2; // TopCenter
-                        case 9: return 3; // TopRight
-                        default: return 8; // Default → BottomCenter (caption convention)
+                        case 1: return 6; // BottomLeft
+                        case 2: return 7; // BottomCenter
+                        case 3: return 8; // BottomRight
+                        case 4: return 3; // MiddleLeft
+                        case 5: return 4; // MiddleCenter
+                        case 6: return 5; // MiddleRight
+                        case 7: return 0; // TopLeft
+                        case 8: return 1; // TopCenter
+                        case 9: return 2; // TopRight
+                        default: return 7; // Default → BottomCenter (caption convention)
                 }
         }
 
@@ -226,14 +233,15 @@ namespace {
         ///        anchor_v / anchor_h pair that places the window's
         ///        @p anchorPoint corner at a sensible default position
         ///        on the safe-title area.  Percent values are 0..99 for
-        ///        vertical and 0..99 for horizontal.
+        ///        vertical and 0..99 for horizontal.  @p anchorPoint
+        ///        is the spec's 0..8 reading-order ID per §8.4.4.
         void anchorPointToWireXY(uint8_t anchorPoint, uint8_t &av, uint8_t &ah) {
                 // Vertical: top row gets 5%, middle gets 50%, bottom gets 90%.
-                if (anchorPoint <= 3)      av = 5;   // top
-                else if (anchorPoint <= 6) av = 50;  // middle
-                else                       av = 90;  // bottom
+                if (anchorPoint <= 2)      av = 5;   // top    (0..2)
+                else if (anchorPoint <= 5) av = 50;  // middle (3..5)
+                else                       av = 90;  // bottom (6..8)
                 // Horizontal: left gets 5%, center gets 50%, right gets 90%.
-                const uint8_t hMod = static_cast<uint8_t>((anchorPoint - 1) % 3);
+                const uint8_t hMod = static_cast<uint8_t>(anchorPoint % 3);
                 if (hMod == 0)      ah = 5;   // left
                 else if (hMod == 1) ah = 50;  // center
                 else                ah = 90;  // right
@@ -355,13 +363,18 @@ namespace {
                 uint8_t anchorH = 0;
                 anchorPointToWireXY(anchorPoint, anchorV, anchorH);
 
-                // DF0 arg1: invisible (bit 6 = 0), locks (bits 4+5),
-                // priority 0.  Real-world captioners author windows
-                // hidden, write the text, then DSW to flip visibility
-                // atomically — that way a multi-packet / multi-frame
-                // show transaction doesn't paint the window
-                // incrementally as each chunk lands.
-                const uint8_t df0Arg1 = static_cast<uint8_t>(0x30);
+                // DF0 arg1 — CEA-708-E §8.10.5.2 wire layout:
+                //   b7 b6  b5      b4       b3       b2 b1 b0
+                //    0  0  visible row_lock col_lock priority(3 bits)
+                // We author windows invisible (bit 5 = 0), both locks
+                // engaged (bits 3 + 4 = 1, mask 0x18), and priority 0
+                // so the receiver renders the cue on top of any
+                // overlapping defined window.  Captioners then DSW to
+                // flip visibility atomically once the text is written
+                // — a multi-packet / multi-frame show transaction
+                // wouldn't paint the window incrementally as each
+                // chunk lands.
+                const uint8_t df0Arg1 = static_cast<uint8_t>(0x18);
                 // anchor byte: relative_pos (bit 7) | anchor_v (bits 0..6).
                 const uint8_t df0Anchor = static_cast<uint8_t>(0x80 | (anchorV & 0x7F));
                 const uint8_t df0AnchorH = anchorH;
@@ -372,10 +385,26 @@ namespace {
                 const uint8_t df0Rows = static_cast<uint8_t>(((anchorPoint & 0x0F) << 4)
                                                               | (rowWire & 0x0F));
                 const uint8_t colWire = static_cast<uint8_t>((colCount - 1) & 0x3F);
-                const uint8_t df0Style = 0x00;
+                // DF0 parm6 — CEA-708-E §8.10.5.2 wire layout:
+                //   b7 b6  b5 b4 b3      b2 b1 b0
+                //    0  0  window_style  pen_style
+                // Window Style #2 = "PopUp Captions w/o Black Background"
+                // (Table 26).  Spec §8.10.5.2 explicitly recommends ws=2
+                // for caption-like display — transparent fill, justify
+                // left, LtR print, BtT scroll, no wrap, snap display
+                // effect.  The encoder then emits SWA only when a per-cue
+                // uniform background was detected; otherwise the
+                // transparent preload remains in effect on receiver.
+                // Pen Style #1 = "Default NTSC Style" (Table 27) — white-
+                // solid foreground on black-solid character bg, no edge.
+                // The encoder always emits SPA + SPC immediately after
+                // DF0 to override the bg opacity to transparent (the per-
+                // cue character runs paint over the window fill, not on
+                // top of an opaque black box).
+                const uint8_t df0Style = static_cast<uint8_t>((2 << 3) | 1);
 
                 List<uint8_t> bytes;
-                bytes.reserve(static_cast<size_t>(7 + colCount * rowCount + rowCount + 2));
+                bytes.reserve(static_cast<size_t>(12 + colCount * rowCount + rowCount + 2));
                 bytes.pushToBack(0x98); // DF0 (window 0)
                 bytes.pushToBack(df0Arg1);
                 bytes.pushToBack(df0Anchor);
@@ -383,6 +412,26 @@ namespace {
                 bytes.pushToBack(df0Rows);
                 bytes.pushToBack(colWire);
                 bytes.pushToBack(df0Style);
+
+                // -- ClearWindow + SetPenLocation (explicit reset) ----
+                //
+                // Spec §8.10.5.2 mandates that DefineWindow with
+                // unchanged parameters from the prior definition shall
+                // be ignored, and that DefineWindow on update preserves
+                // the existing pen location / pen attributes.  Encoders
+                // that rely on DefineWindow as a clear-and-set primitive
+                // would break under a spec-strict decoder when two
+                // adjacent cues happen to use identical window
+                // parameters.  Emit explicit ClearWindow (CLW, 0x88)
+                // and SetPenLocation (SPL, 0x92) immediately after
+                // DF0 so the cue boundary is unambiguous regardless of
+                // whether the decoder treats the DF0 as a create, an
+                // update, or a no-op re-issue.
+                bytes.pushToBack(0x88); // CLW — clear windows
+                bytes.pushToBack(0x01); // bitmap = window 0
+                bytes.pushToBack(0x92); // SPL — SetPenLocation
+                bytes.pushToBack(0x00); // row = 0
+                bytes.pushToBack(0x00); // col = 0
 
                 // -- SWA (SetWindowAttributes) ----------------------
                 //

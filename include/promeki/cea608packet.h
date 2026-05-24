@@ -45,7 +45,10 @@ class DataStream;
  *
  *  - Each entry of @ref ccData has the spec's @c cc_valid, @c cc_type
  *    (0 = field 1, 1 = field 2 — CC1/CC2 in field 1; CC3/CC4 in field
- *    2), and the two parity-stamped data bytes.
+ *    2), and the two parity-stamped data bytes.  CEA-708-D §4.4 also
+ *    defines @c cc_type values 2 and 3 for DTVCC channel-packet
+ *    start / data — those are 708 wire bytes, not 608 caption data,
+ *    and @ref fromCdp filters them out.
  *  - @ref channel disambiguates the intra-field channel via bit 3 of
  *    the first byte: CC1/CC3 have bit 3 clear; CC2/CC4 have bit 3 set.
  *  - @ref fromCdp filters @ref Cea708Cdp::ccData by @c cc_type and

@@ -24,22 +24,22 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace {
 
-        /// @brief Maps a CEA-708 DefineWindow @c anchor_point (1..9,
-        ///        reading-order convention: 1=TopLeft .. 9=BottomRight)
-        ///        back onto a @ref SubtitleAnchor (numpad / @c {\anN}
+        /// @brief Maps a CEA-708 DefineWindow @c anchor_point (0..8 per
+        ///        §8.4.4 Figure 13: 0=TopLeft .. 8=BottomRight) back
+        ///        onto a @ref SubtitleAnchor (numpad / @c {\anN}
         ///        convention: 1=BottomLeft .. 9=TopRight).  The
         ///        horizontal axis matches; vertical flips.
         int subtitleAnchorFrom708(uint8_t anchorPoint) {
                 switch (anchorPoint) {
-                        case 1: return SubtitleAnchor::TopLeft.value();
-                        case 2: return SubtitleAnchor::TopCenter.value();
-                        case 3: return SubtitleAnchor::TopRight.value();
-                        case 4: return SubtitleAnchor::MiddleLeft.value();
-                        case 5: return SubtitleAnchor::MiddleCenter.value();
-                        case 6: return SubtitleAnchor::MiddleRight.value();
-                        case 7: return SubtitleAnchor::BottomLeft.value();
-                        case 8: return SubtitleAnchor::BottomCenter.value();
-                        case 9: return SubtitleAnchor::BottomRight.value();
+                        case 0: return SubtitleAnchor::TopLeft.value();
+                        case 1: return SubtitleAnchor::TopCenter.value();
+                        case 2: return SubtitleAnchor::TopRight.value();
+                        case 3: return SubtitleAnchor::MiddleLeft.value();
+                        case 4: return SubtitleAnchor::MiddleCenter.value();
+                        case 5: return SubtitleAnchor::MiddleRight.value();
+                        case 6: return SubtitleAnchor::BottomLeft.value();
+                        case 7: return SubtitleAnchor::BottomCenter.value();
+                        case 8: return SubtitleAnchor::BottomRight.value();
                         default: return SubtitleAnchor::Default.value();
                 }
         }
@@ -67,6 +67,11 @@ struct Cea708DecoderImpl {
                 ///        @c packet_size_code).  Zero means "no
                 ///        in-flight packet".
                 size_t                   pendingRemaining = 0;
+                /// @brief Sequence number (0..3) of the most recently
+                ///        observed Caption Channel Packet header, used
+                ///        to detect packet loss per CEA-708-E §5.1.
+                ///        Negative = "no prior packet seen yet".
+                int                      lastSeq = -1;
 
                 /// @brief Most-recent pushFrame timestamp.
                 TimeStamp lastFrameTs;
@@ -244,22 +249,39 @@ struct Cea708DecoderImpl {
                 ///        gets dispatched to the window state.
                 void pushTriple(const Cea708Cdp::CcData &t) {
                         if (t.type == Cea708DtvccPacket::CcTypePacketStart) {
-                                // Boundary: flush any in-flight packet first
-                                // (a new packet-start triple implicitly ends
-                                // the previous packet — typically the previous
-                                // one was complete already, but a producer that
-                                // pads early is permitted).
-                                if (pendingRemaining > 0) {
+                                // Per CEA-708-E §5.1, sequence_number is the
+                                // top 2 bits of the CCP header byte.  If it
+                                // doesn't match (lastSeq + 1) mod 4, packet
+                                // loss has occurred: discard any partial
+                                // packet and run Reset on each Caption
+                                // Service.  This is the spec-mandated
+                                // recovery path.
+                                const int seq = static_cast<int>((t.b1 >> 6) & 0x03);
+                                if (lastSeq >= 0 && seq != ((lastSeq + 1) & 0x03)) {
+                                        pending = Cea708Cdp::CcDataList();
+                                        pendingRemaining = 0;
+                                        windows.reset();
+                                } else if (pendingRemaining > 0) {
+                                        // Boundary: flush any in-flight packet
+                                        // first (a new packet-start triple
+                                        // implicitly ends the previous packet
+                                        // — typically the previous one was
+                                        // complete already, but a producer
+                                        // that pads early is permitted).
                                         processCompletePacket();
                                 }
+                                lastSeq = seq;
                                 pending = Cea708Cdp::CcDataList();
                                 pending.pushToBack(t);
-                                // Compute the packet's total wire byte count
-                                // from the header: packet_size_code in the
-                                // low 6 bits of b1.  Wire 0 means "128 bytes";
-                                // non-zero means the exact count.
+                                // Per CEA-708-E §5.1: packet_size_code is in
+                                // byte PAIRS including the header byte.
+                                // packet_data_size = (psc*2) - 1 (or 127 for
+                                // psc=0).  Total wire bytes = psc * 2 (with
+                                // psc=0 meaning 128).
                                 const uint8_t sizeCode = static_cast<uint8_t>(t.b1 & 0x3F);
-                                const size_t  packetSize = (sizeCode == 0) ? 128u : sizeCode;
+                                const size_t  packetSize =
+                                        (sizeCode == 0) ? 128u
+                                                        : static_cast<size_t>(sizeCode) * 2u;
                                 // First triple already carries 2 wire bytes
                                 // (the header + the first payload byte).
                                 if (packetSize <= 2) {
@@ -310,6 +332,7 @@ void Cea708Decoder::reset() {
         d->windows.reset();
         d->pending = Cea708Cdp::CcDataList();
         d->pendingRemaining = 0;
+        d->lastSeq = -1;
         d->lastFrameTs = TimeStamp();
         d->prevVisible = String();
         d->prevSpans = SubtitleSpan::List();
@@ -337,7 +360,18 @@ void Cea708Decoder::pushFrame(FrameNumber /*frame*/, TimeStamp ts, const Cea708C
                 if (!t.valid) continue;
                 if (t.type != Cea708DtvccPacket::CcTypePacketStart
                     && t.type != Cea708DtvccPacket::CcTypePacketData) {
-                        // CEA-608 triple — skip.
+                        // Per §4.3.1 / Figure 2: cc_valid=1 with cc_type=00
+                        // or 01 (NTSC field 1 / 2 data) appearing while a
+                        // DTVCC packet is in flight (states 3, 4, or 5) is
+                        // invalid.  Discard the partial packet and reset
+                        // each Caption Service as the spec mandates.
+                        if (d->pendingRemaining > 0) {
+                                d->pending = Cea708Cdp::CcDataList();
+                                d->pendingRemaining = 0;
+                                d->windows.reset();
+                        }
+                        // CEA-608 triple — skip (this decoder doesn't carry
+                        // a 608 path; callers use Cea608Decoder for that).
                         continue;
                 }
                 d->pushTriple(t);
@@ -358,6 +392,7 @@ SubtitleList Cea708Decoder::finalize() {
         d->windows.reset();
         d->pending = Cea708Cdp::CcDataList();
         d->pendingRemaining = 0;
+        d->lastSeq = -1;
         d->lastFrameTs = TimeStamp();
         d->prevVisible = String();
         d->prevSpans = SubtitleSpan::List();

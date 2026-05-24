@@ -16,7 +16,7 @@ parsers/builders on top so application code (closed-caption
 overlay, SCTE-104 driven splicers, AFD-aware scalers, ATC
 round-trip, HDR pass-through) does not have to touch raw bytes.
 
-## Status at a glance (2026-05-20)
+## Status at a glance (2026-05-23)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -28,6 +28,7 @@ round-trip, HDR pass-through) does not have to touch raw bytes.
 | P2    | Second-pass conformance audit (Phases A/B/C wire bugs, per-codec deep audits, registry / docs) — `devplan/proav/ancaudit.md` | **Complete — all F1–F10 findings landed; audit file retired 2026-05-20** |
 | 3     | Remaining typed parsers (full AFD value type, Atc helpers, Scte104, HdrStatic2086 St291, HDR dynamic, KLV) | **Partial** — HdrStatic2086 HdmiInfoFrame + St291 (ST 2108-1) codecs landed 2026-05-15; HdrDynamic2094_40 value type + HdmiInfoFrame + St291 (ST 2108-2 KLV, multi-packet) codecs landed 2026-05-15; AncOp47Sdp value type + OP-47 SDP codec (RDD 8, DID 0x43/SDID 0x02) landed 2026-05-20; AncSt2020Audio value type + ST 2020-2 Method A codec (DID 0x45, SDIDs 0x01–0x09) landed 2026-05-20; VPID codec (SdiVpid ← → AncTranslator, DID 0x41/SDID 0x01) landed 2026-05-20; Scte104 codec still pending |
 | 3.5   | Subtitle file I/O + CEA-608 codec (Subtitle/SubtitleList/SubRip, Scc, Cea608Encoder/Decoder all three modes, TPG injection, round-trip func test) | **Landed** |
+| P3    | CEA-608 conformance audit — ANSI/CTA-608-E S-2019 (60+ findings across XDS, wire/charset, decoder, encoder) | **Complete — all findings landed 2026-05-23** |
 | 4     | MediaIO backend integration (codec API Frame-shaped refactor + ANC pairing, Cea708 ← / → HlsSei + NVENC SEI injection) | **Partial** — YouTube delivery path landed 2026-05-12; NdiMediaIO ANC + RtmpMediaIO ANC + AncMetadataStamper pending |
 | 4.5   | Frame-sync ANC policy (FrameSyncDisposition + AncSyncPolicy registry + AncFrameSync class with stash + per-codec Play/Drop/Repeat policies for ATC, Cea708, Afd, Hdr*) | **Mostly landed** — registry + AncFrameSync (stash included) + per-codec policies for ATC/Cea708/Afd/Hdr static/Hdr dynamic landed; VPID (Play+Repeat pass-through, Drop discards) + Op47Sdp (Play only, Repeat+Drop both drop — FSC collision avoidance) + St2020Audio (Play+Repeat pass-through, Drop discards) sync policies landed 2026-05-20; SCTE-104 policy still waits on the Scte104 codec; functional 23.976→60 3:2-pulldown test pending |
 | 5     | AJA NTV2 SDI ingest contract (documentation only) + build scaffolding (`thirdparty/libajantv2`, `PROMEKI_ENABLE_NTV2`) | **Scaffolding landed 2026-05-16; MediaIO backend pending** |
@@ -289,6 +290,116 @@ All audit findings from the second-pass review (tracked in the now-retired
 - [x] **`utils/promeki-bench/cases/ancrtp.cpp`** — `ancrtp` bench suite:
   `pack_hd60`, `unpack_hd60`, `roundtrip_hd60` cases measuring RFC 8331
   TX/RX hot-path throughput at a representative ~20 ANC-packets/frame load.
+
+---
+
+## Phase P3 — CEA-608 conformance audit (landed 2026-05-23)
+
+Full ANSI/CTA-608-E S-2019 pass: 60+ findings across four layers.
+All items closed in a single changeset.
+
+### XDS (`Cea608XdsExtractor` / `Cea608XdsInjector`)
+
+New files: `include/promeki/cea608xds.h`, `include/promeki/cea608xdsinjector.h`,
+`src/proav/cea608xds.cpp`, `src/proav/cea608xdsinjector.cpp`.
+
+- [x] **`isEndOfProgramSentinel`** — moved to `Cea608XdsPacket` (correct home);
+  former placement on the extractor was a misplaced helper.
+- [x] **Composite-1 byte cap** — enforced the §9 32-byte informational-byte cap
+  on the Composite Packet-1 payload.
+- [x] **Reserved-bit validation** — `cgmsA` / `aspectRatio` / `channelMapPointer`
+  accessors now reject packets with non-zero reserved bits per §9.1.
+- [x] **§8.6.7 caption-interrupt suspension** — a caption or text control pair
+  arriving mid-XDS-packet suspends the in-flight slot; the next Continue with
+  matching (class, type) resumes rather than creating a second slot.
+- [x] **§E.10 caption-yield** — `nextPair(hasCaptionPair)` holds the in-flight
+  cursor when the caption encoder has claimed the F2 slot for the current frame.
+- [x] **Overdue-tier escalation** — same-priority tie-breaking now uses longest-
+  overdue source first so peer sources rotate fairly under bursty load.
+- [x] **7 new round-trip tests** — `Cea608XdsPacket::encode` + `Cea608XdsExtractor`
+  round-trips for Network Name, MPAA Content Advisory, Impulse Capture ID,
+  Channel Map Pointer (reserved-bit rejection), Program Description Row,
+  NWS Message, and the Future-class shadow of Program Name.
+
+### Wire / charset (`Cea608` / `Cea608Ext`)
+
+- [x] **`applyChannel` / `applyChannelInPlace`** — new helpers consolidating the
+  §8.4 F2 misc-control remap (`0x14 → 0x15`, `0x1C → 0x1D`) and the
+  intra-field channel-bit OR (`0x08`) into a single, tested function.  The
+  encoder now uses a single post-pass channel-shift instead of duplicated
+  inline remap logic.
+- [x] **`isXdsControl` / `isXdsTerminator`** — named predicates replacing magic
+  literal comparisons throughout the decoder.
+- [x] **`TabOffsetB1` / `FgAttrB1` consolidated to `Cc1ExtAttrB1`** — both
+  extended-attribute families share the same CC1 first byte (`0x17`); the
+  duplicate constants were removed and callers updated.
+- [x] **`kExtFrench` table rename** — array and accessor functions renamed
+  `kExtPortugueseGerman` / `decodeExtPortugueseGerman` / etc. to match the
+  actual content (§A.6 Spanish/Miscellaneous and Portuguese/German tables,
+  not French).
+- [x] **16 new wire-level TEST_CASEs** — `applyChannel` × 4 channels,
+  `applyChannelInPlace`, `isXdsControl` / `isXdsTerminator` boundary probes.
+
+### Decoder (`Cea608Decoder` / `Cea608Ext`)
+
+- [x] **D1: §C.11 EOC-during-roll-up** — an EOC while roll-up is active now
+  ends the live cue and blanks the screen instead of silently promoting it
+  to displayed memory.
+- [x] **D2: §C.10 RUx erases prior displayed** — switching INTO roll-up from
+  pop-on / paint-on erases both memories per the spec; the prior pop-on cue
+  is emitted with its end at the RUx timestamp.
+- [x] **D3: §C.10 / §B.8.3 RCL no-clear** — RCL no longer erases
+  non-displayed memory (ENM is the explicit clear); back-to-back RCLs
+  preserve the loading slate.
+- [x] **D4: §C.13 BS at column 32** — a BS received while the cursor is at
+  column 32 (internal col 31) erases the character at col 31 in place rather
+  than wrapping or ignoring.
+- [x] **D5: §C.9 auto-erase for all modes** — the 16-second no-refresh
+  auto-erase applies to pop-on, paint-on, and roll-up alike; formerly only
+  paint-on was guarded.
+- [x] **D6: §C.21 enable-side hysteresis** — after an auto-erase the decoder
+  suppresses output until 15 consecutive parity-valid frames confirm signal
+  restoration.
+- [x] **D7: §C.10 paint-on overlay** — `displayedText()` / `displayedCue()`
+  now overlay the live loading grid on top of any retained pop-on cue using
+  `overlayGrids(under, over)` so "any displayed captioning shall be
+  unaffected" when transitioning into paint-on.
+- [x] **D9: §6.4.2 extended-char cursor decrement** — when an extended
+  character arrives with no preceding placeholder, the decoder now decrements
+  the cursor by one (if not at column 0) before writing, erasing whatever was
+  there, per the spec fallback path.
+- [x] **D12: §6.2 FON styled-space cell** — FON inserts a styled-space cell
+  before switching to Flash opacity so the flash attribute attaches to the
+  correct cell (mirrors the FA / FAU "automatic BS" contract).
+- [x] **F2 misc-control remap via `applyChannel`** — decoder now uses the
+  shared helper rather than per-site `0x14 → 0x15` inline remaps.
+
+### Encoder (`Cea608Encoder`)
+
+- [x] **E1: §B.8.3 ENM-after-RCL in pop-on** — a doubled ENM pair is emitted
+  immediately after the doubled RCL pair in the pop-on pre-roll, ensuring the
+  non-displayed memory is wiped clean before each new cue is loaded.  This
+  is now load-bearing: the corresponding decoder D3 fix relies on the ENM
+  being present.
+- [x] **E4: §B.4 PAC-indent + MR split for coloured / italic rows** — rows
+  that need both a non-zero indent and a colour / italic attribute now emit a
+  PAC at the indent column followed by a Mid-Row code for the colour, instead
+  of collapsing to flush-left with white.
+- [x] **E11: §8.4 F2 misc-control remap scope** — the remap is now correctly
+  scoped to the misc-control family (`b2 0x20..0x2F`) and is NOT applied to
+  other control families (Special / Extended chars, PAC, Mid-Row); a
+  regression that incorrectly remapped special-character first bytes on CC3
+  is fixed.
+- [x] **§B.11.5 0x01–0x0F guard assert** — an assertion blocks emission of
+  raw bytes in the XDS-reserved range; these would corrupt F2 XDS framing if
+  accidentally passed through the encoder.
+- [x] **§6.2 mid-row preceded-space** — the encoder inserts a literal space
+  before every Mid-Row code, honouring the spec requirement that the space be
+  present on the wire even when the caller's text already starts at the
+  transition boundary.
+- [x] **Channel-shift post-pass via `applyChannel`** — the encoder now builds
+  every control pair CC1-shaped and shifts to the target channel in a single
+  post-pass instead of duplicating the inline remap logic.
 
 ---
 

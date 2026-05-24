@@ -10,13 +10,14 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_TLS
-#include <promeki/namespace.h>
-#include <promeki/tcpsocket.h>
-#include <promeki/sslcontext.h>
 #include <promeki/error.h>
-#include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/namespace.h>
+#include <promeki/sharedptr.h>
+#include <promeki/sslcontext.h>
+#include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/tcpsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -159,8 +160,8 @@ class SslSocket : public TcpSocket {
 
         private:
                 struct Impl;
-                Impl      *_d = nullptr;
-                SslContext _ctx;
+                SharedPtr<Impl> _d;
+                SslContext      _ctx;
 
                 enum SslState {
                         NotEncrypted,

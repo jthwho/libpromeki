@@ -253,6 +253,41 @@ class Cea608Encoder : public CaptionEncoder {
                                 ///        Broadcast convention is 2–3 rows;
                                 ///        4 is the practical maximum.
                                 int32_t maxRows = 3;
+                                /// @brief Whether to double every control-code
+                                ///        pair on the wire per CEA-608-E §8.4
+                                ///        "Doubling of Control Pairs".
+                                ///
+                                ///        Default @c true matches the spec's
+                                ///        normative requirement for caption
+                                ///        data: every control pair (PAC, mid-
+                                ///        row, RCL/RDC/RUx, EDM, EOC, CR, BS,
+                                ///        DER, FON, BG attribute, BT, FA/FAU,
+                                ///        Tab Offset) is transmitted twice
+                                ///        adjacent on the wire so the
+                                ///        receiver can recover from a single-
+                                ///        byte transmission error.
+                                ///
+                                ///        Setting to @c false emits each
+                                ///        control pair exactly once, halving
+                                ///        the per-cue control overhead.  Per
+                                ///        §D.2 this mode is suitable for
+                                ///        non-caption F2 traffic where
+                                ///        bandwidth is more valuable than
+                                ///        error recovery — out of spec for
+                                ///        caption data on F1, but useful in
+                                ///        bandwidth-constrained encoder
+                                ///        pipelines that pair this encoder
+                                ///        with an aggressive interleaver.
+                                ///
+                                ///        Pre-roll budgets (RCL+EDM for
+                                ///        pop-on, RUx+CR+PAC for first
+                                ///        roll-up cue, etc.) scale with this
+                                ///        setting automatically — the encoder
+                                ///        emits half the byte pairs when
+                                ///        @c false and starts the wire stream
+                                ///        a proportional number of frames
+                                ///        later before each cue.
+                                bool doubleControls = true;
                 };
 
                 Cea608Encoder();
@@ -321,14 +356,24 @@ class Cea608Encoder : public CaptionEncoder {
                 Cea708Cdp::CcDataList nextFrame(FrameNumber frame) const override;
 
                 /**
-                 * @brief Returns the frame number at which the encoder
-                 *        must begin emitting control codes so the cue
-                 *        is fully loaded by its @c start.
+                 * @brief Returns the *worst-case* frame number at which
+                 *        the encoder must begin emitting control codes
+                 *        so the cue is fully loaded by its @c start.
                  *
                  * Diagnostic helper for callers that want to inspect
                  * pre-roll without running the full @ref setSubtitles
-                 * machinery.  Returns @c FrameNumber::unknown() when
-                 * the configured @ref FrameRate is invalid.
+                 * machinery.  The returned value reflects the cue
+                 * inspected in isolation — the actual pre-roll a
+                 * subsequent @ref setSubtitles call computes can be
+                 * tighter (the prior cue's deferred EDM may absorb
+                 * some of the budget) or shorter still when the cue
+                 * is part of an auto-split chain.  Use this for a
+                 * "fits at all?" pre-flight check, not as the exact
+                 * frame the encoder will pick.
+                 *
+                 * Returns @c FrameNumber::unknown() when the configured
+                 * @ref FrameRate is invalid, or when the worst-case
+                 * pre-roll lands before frame 0 (the cue cannot fit).
                  */
                 FrameNumber earliestStartFor(const Subtitle &cue) const;
 

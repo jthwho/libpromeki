@@ -67,6 +67,40 @@ struct Cea708DecoderImpl; // Pimpl — defined in cea708decoder.cpp.
  *    the prior cue is finalised and the new one starts at the
  *    same timestamp.
  *
+ * @par What's not implemented
+ *
+ * The following CEA-708-E features are out of scope:
+ *
+ *  - **Caption Service Metadata** (§4.5).  ATSC PSIP /
+ *    @c caption_service_descriptor data — language code,
+ *    easy-reader, wide-aspect — is not consumed by this decoder.
+ *    Parsers carrying it via @ref Cea708Cdp::ccSvcInfo can surface
+ *    the structured entries directly (see SMPTE 334-2 §5.5).
+ *  - **DLY timing enforcement** (§8.10.5.12).  The decoder parses
+ *    @c Delay commands but doesn't actually suspend service-data
+ *    interpretation for N/10 seconds — the window-state parser has
+ *    no scheduler.  Real delay semantics would need an external
+ *    pacing layer that calls @ref pushFrame in time-aligned chunks.
+ *    In practice DLY is rare on broadcast streams since the
+ *    carrying CDP / SDI / SEI transport already pins each packet
+ *    to a frame timestamp.
+ *  - **CEA-708.1 3D extensions** (ANSI/CTA-708.1 R-2017).  Stereo
+ *    disparity / offset / eye-precedence fields are not modelled.
+ *    3D broadcast is effectively extinct as of 2026.
+ *  - **SubtitleSpan pen-size / pen-offset propagation**.  The
+ *    decoder captures @c pen_size and @c offset on
+ *    @ref Cea708PenAttr from @c SetPenAttributes (§8.10.5.9), but
+ *    @ref SubtitleSpan doesn't yet carry these fields, so the
+ *    flat @ref Subtitle output doesn't surface them.  Direct
+ *    @ref Cea708WindowState consumers see them via the cell pen.
+ *
+ * Implemented per spec: **DefineWindow** with spec-correct bit
+ * positions (§8.10.5.2), all predefined **Window Style #1..#7** +
+ * **Pen Style #1..#7** preloads (§9.11, Tables 26 / 27), **per-
+ * window pen state** (§8.5.10), **C0 reserved-opcode skip lengths**
+ * (§7.1.4), **G2 / G3 fallback substitutions** (§9.3), and
+ * **safe-title aspect-ratio enforcement** (§9.4 / §9.7).
+ *
  * @par Storage and copy semantics
  *
  * Stateful worker (pimpl, copy/move-deleted).  Instantiate one

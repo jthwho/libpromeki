@@ -23,6 +23,7 @@
 #include <promeki/string.h>
 #include <promeki/subtitle.h>
 #include <promeki/textwrap.h>
+#include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -163,7 +164,7 @@ namespace {
                                 case Cea608Ext::Kind::ExtSpanish:
                                         pushPlaceholderThenControl(enc.placeholder, 0x12, enc.code);
                                         break;
-                                case Cea608Ext::Kind::ExtFrench:
+                                case Cea608Ext::Kind::ExtPortugueseGerman:
                                         pushPlaceholderThenControl(enc.placeholder, 0x13, enc.code);
                                         break;
                                 case Cea608Ext::Kind::None:
@@ -196,29 +197,14 @@ namespace {
                 return 0;
         }
 
-        /// @brief Returns the channel-bit OR-mask that converts a
-        ///        CC1/CC3-shaped control byte into its CC2/CC4
-        ///        sibling.
-        ///
-        /// CEA-608 packs the intra-field channel selector into
-        /// bit 3 of the first byte of every control code: bit 3 = 0
-        /// for CC1 (in field 1) or CC3 (in field 2); bit 3 = 1 for
-        /// CC2 / CC4.  All built-in control-byte constants
-        /// (@ref Cea608::RclB1 / @ref Cea608::Cc1MiscFirstByte / the
-        /// PAC / mid-row / BG-attribute / Special-Character /
-        /// Extended-Character first bytes) are CC1-shaped, so OR-ing
-        /// @c 0x08 into the first byte is the only mechanical step
-        /// needed to retarget them to CC2 / CC4.  Cross-field routing
-        /// (CC1 vs CC3, CC2 vs CC4) is handled separately by
-        /// @ref ccTypeForChannel.
-        uint8_t channelOffsetFor(Cea608Encoder::Channel ch) {
-                switch (ch) {
-                        case Cea608Encoder::Channel::CC1:
-                        case Cea608Encoder::Channel::CC3: return 0x00;
-                        case Cea608Encoder::Channel::CC2:
-                        case Cea608Encoder::Channel::CC4: return 0x08;
-                }
-                return 0x00;
+        /// @brief Maps the encoder's @ref Cea608Encoder::Channel onto
+        ///        the wire-layer @ref Cea608::Channel.  The values are
+        ///        identical (CC1=0, CC2=1, CC3=2, CC4=3) so this is a
+        ///        plain static_cast; the wrapper exists to keep the
+        ///        encoder's call sites grep-able for the conversion
+        ///        point.
+        constexpr Cea608::Channel wireChannel(Cea608Encoder::Channel ch) {
+                return static_cast<Cea608::Channel>(static_cast<uint8_t>(ch));
         }
 
         /// @brief Maps a @ref SubtitleAnchor + row count to the
@@ -296,12 +282,16 @@ namespace {
                         bool                 hasBg = false;
                         Cea608::CaptionColor bgColor = Cea608::CaptionColor::White;
                         bool                 bgSemiTransparent = false;
+                        bool                 bgTransparent = false; ///< Triggers a doubled BT @c (0x17,0x2D) emit.
+                        bool                 flash = false; ///< Triggers a doubled FON @c (0x14,0x28) emit.
 
                         bool operator==(const WireStyle &o) const {
                                 return color == o.color && italic == o.italic
                                        && underline == o.underline && hasBg == o.hasBg
                                        && (!hasBg || (bgColor == o.bgColor
-                                                       && bgSemiTransparent == o.bgSemiTransparent));
+                                                       && bgSemiTransparent == o.bgSemiTransparent))
+                                       && bgTransparent == o.bgTransparent
+                                       && flash == o.flash;
                         }
                         bool operator!=(const WireStyle &o) const { return !(*this == o); }
 
@@ -319,6 +309,25 @@ namespace {
                                        || (hasBg && (bgColor != o.bgColor
                                                       || bgSemiTransparent != o.bgSemiTransparent));
                         }
+                        /// @brief @c true when BG transparency turned
+                        ///        on in @c *this but not in @p o.
+                        ///        Triggers a doubled BT emit.  BT
+                        ///        and the standard BG attribute family
+                        ///        are mutually exclusive in our wire
+                        ///        plan; emit one or the other per row.
+                        bool bgTransparentTurnedOn(const WireStyle &o) const {
+                                return bgTransparent && !o.bgTransparent;
+                        }
+                        /// @brief @c true when the flash attribute is
+                        ///        ON in @c *this but OFF (or
+                        ///        unspecified) in @p o.  Triggers a
+                        ///        FON @c (0x14, 0x28) emit before the
+                        ///        flashing run.  CEA-608-E has no
+                        ///        FOFF code; flash is cleared by a
+                        ///        subsequent PAC.
+                        bool flashTurnedOn(const WireStyle &o) const {
+                                return flash && !o.flash;
+                        }
         };
 
         /// @brief Derives the wire style from a @ref SubtitleSpan.
@@ -326,16 +335,16 @@ namespace {
         ///        limitation); the caller emits one-shot bold
         ///        warnings separately.
         ///
-        /// The foreground paths (PAC + mid-row) have no encoding for
-        /// Black — palette index 7 is BG-attribute only.  A
-        /// near-Black input fg quantises to @c Cea608::CaptionColor::Black
-        /// via nearest-palette but the wire would emit it as White
-        /// anyway; we coerce the in-memory representation to White
-        /// here so downstream "is the fg styled?" predicates
-        /// (positioning degradation, mid-row emission) treat Black
-        /// fg as the visual equivalent of White rather than a
-        /// distinct styled colour.  The BG path keeps the Black
-        /// resolution intact via the separate quantisation call.
+        /// Black foreground is encoded via the CEA-608-E §6.2 Table 3
+        /// Foreground Attribute codes (FA at @c (0x17, 0x2E), FAU at
+        /// @c (0x17, 0x2F)) rather than the PAC + mid-row colour
+        /// subfields — those don't carry Black (palette index 7 is
+        /// "italic white" in PAC, and the mid-row colour subfield
+        /// only has 7 entries).  The encoder keeps Black in the
+        /// in-memory @ref WireStyle::color and converts to FA / FAU
+        /// at emit time; downstream predicates ("is the fg styled?")
+        /// treat Black as a distinct styled colour to trigger the
+        /// FA / FAU emission.
         WireStyle wireStyleFor(const SubtitleSpan &span) {
                 WireStyle ws;
                 ws.italic = span.italic();
@@ -344,15 +353,35 @@ namespace {
                         ws.color = Cea608::CaptionColor::White;
                 } else {
                         ws.color = quantiseColor(span.color());
-                        if (ws.color == Cea608::CaptionColor::Black) {
-                                ws.color = Cea608::CaptionColor::White;
-                        }
                 }
                 if (span.backgroundColor().isValid()) {
                         ws.hasBg = true;
                         ws.bgColor = quantiseColor(span.backgroundColor());
                         ws.bgSemiTransparent =
                                 span.backgroundOpacity() == SubtitleOpacity::Translucent;
+                }
+                // CEA-608-E §6.2 Table 3 BT (0x17, 0x2D): a span with
+                // SubtitleOpacity::Transparent background maps to the
+                // BT code.  BT removes the background box entirely
+                // (no colour persists on the wire); flag it
+                // separately from the BG attribute family so the
+                // emitter picks the right control code.
+                if (span.backgroundOpacity() == SubtitleOpacity::Transparent) {
+                        ws.bgTransparent = true;
+                        // BT and BG-attribute are mutually exclusive
+                        // wire codes; clear the BG attribute slot
+                        // when we go transparent so we don't emit
+                        // both back-to-back.
+                        ws.hasBg = false;
+                        ws.bgColor = Cea608::CaptionColor::White;
+                        ws.bgSemiTransparent = false;
+                }
+                // Foreground opacity @c Flash maps to CEA-608-E §6.2
+                // Misc Control FON (Flash On).  Other opacity values
+                // (Solid / Translucent / Transparent) leave the
+                // flash bit clear — 608 doesn't carry fg translucency.
+                if (span.foregroundOpacity() == SubtitleOpacity::Flash) {
+                        ws.flash = true;
                 }
                 return ws;
         }
@@ -550,6 +579,22 @@ namespace {
                 return placed;
         }
 
+        /// @brief Emits one control-code pair into @p body, doubled
+        ///        per CEA-608-E §8.4 when @p doubleControls is @c true.
+        ///
+        /// Default (doubled) is the spec's normative requirement for
+        /// caption data — the second copy lets the receiver collapse
+        /// to one effective receipt while tolerating a single-byte
+        /// transmission error.  Undoubled mode emits each pair once,
+        /// halving control-code overhead at the cost of error
+        /// recovery (intended for non-caption F2 traffic per §D.2 or
+        /// bandwidth-constrained pipelines paired with their own
+        /// error-recovery layer).
+        inline void emitControlPair(CueBody &body, const ScheduledPair &p, bool doubleControls) {
+                body.bytes.pushToBack(p);
+                if (doubleControls) body.bytes.pushToBack(p);
+        }
+
         /// @brief Pre-parity byte pair for one of the roll-up
         ///        "set row count" control codes.
         ScheduledPair rollUpControl(int rows) {
@@ -578,7 +623,7 @@ namespace {
         /// requested).  Tab Offset codes (T1/T2/T3, doubled) ride
         /// after the PAC for the 1..3 column residual when the target
         /// column isn't a multiple of 4.
-        void emitRowBytes(CueBody &body, const LaidOutRow &laid) {
+        void emitRowBytes(CueBody &body, const LaidOutRow &laid, bool doubleControls) {
                 const WrapRowSpans &spans = laid.spans;
                 WireStyle           initial;
                 for (size_t i = 0; i < spans.size(); ++i) {
@@ -595,47 +640,139 @@ namespace {
                 //
                 // PAC's 4-bit subfield carries colour OR italic OR
                 // indent — the three are mutually exclusive on a single
-                // PAC.  When a row would otherwise need indent AND its
-                // first span is non-white / italic, the encoder
-                // preserves the visual style and drops horizontal
-                // positioning back to flush-left (column 0).  Colour
-                // is the more prominent cue feature for most viewers,
-                // and SubRip files in the wild rarely combine both.
+                // PAC.  When a row needs BOTH a non-zero indent AND a
+                // styled (coloured / italic) first span we follow
+                // §B.4's recommended procedure: emit
+                // @code
+                //   PAC(row, indent_floor_4, White, italic=false, underline=authored)
+                //   TabOffset(residual - 1)        [only when residual > 1]
+                //   MidRow(colour, italic, underline)
+                // @endcode
+                // The mid-row code consumes ONE display cell as a
+                // styled-space placeholder, so the encoder subtracts one
+                // from the @c residual it asks Tab Offset to span.  When
+                // @c residual == 1 the MR cell IS the residual (no Tab
+                // Offset).  When @c residual == 0 the MR cell shifts the
+                // first text column one cell right of @c targetCol — an
+                // unavoidable §6.2 side-effect (the captioner would need
+                // to author a leading space to absorb it).
                 const bool hasFirstSpanStyle =
                         initial.italic || initial.color != Cea608::CaptionColor::White;
                 int targetCol = (laid.targetColumn < 0)
                                         ? 0
                                         : (laid.targetColumn > 31 ? 31 : laid.targetColumn);
-                if (hasFirstSpanStyle) targetCol = 0;
                 const int pacIndent = (targetCol / 4) * 4;
                 const int tabResidual = targetCol - pacIndent;
+                // Black-foreground is signalled via the FA / FAU
+                // attribute family (§6.2 Table 3), not the mid-row
+                // colour subfield.  When the first span is Black +
+                // non-italic we use the existing initial-row FA / FAU
+                // emit path below — only italic / non-Black-non-White
+                // colours need the PAC + MR split.
+                const bool firstSpanIsBlackNonItalic =
+                        (initial.color == Cea608::CaptionColor::Black && !initial.italic);
+                const bool usePacIndentSplit =
+                        hasFirstSpanStyle && !firstSpanIsBlackNonItalic && pacIndent > 0;
 
                 Cea608::PacAttr pac;
                 pac.row = laid.row;
                 pac.indentCol = pacIndent;
-                pac.italic = initial.italic;
-                pac.underline = initial.underline;
-                pac.color = (pacIndent > 0) ? Cea608::CaptionColor::White : initial.color;
+                if (usePacIndentSplit) {
+                        // §B.4 split: PAC carries indent (white, no
+                        // italic); MR below carries colour / italic.
+                        pac.italic = false;
+                        pac.color = Cea608::CaptionColor::White;
+                        pac.underline = initial.underline;
+                } else {
+                        pac.italic = initial.italic;
+                        pac.underline = initial.underline;
+                        // When PAC carries an indent subfield it cannot
+                        // also carry a colour — pin to White on the wire.
+                        pac.color = (pacIndent > 0) ? Cea608::CaptionColor::White : initial.color;
+                }
                 uint8_t pb1 = 0, pb2 = 0;
                 Cea608::encodePac(pac, pb1, pb2);
-                body.bytes.pushToBack(ScheduledPair{pb1, pb2});
-                body.bytes.pushToBack(ScheduledPair{pb1, pb2}); // doubled
-                // Doubled Tab Offset for the 1..3 column residual.
-                if (tabResidual > 0) {
+                emitControlPair(body, ScheduledPair{pb1, pb2}, doubleControls);
+                // Tab Offset (doubled per §8.4 when @c doubleControls is
+                // set).  When taking the §B.4 PAC-indent split path the
+                // MR cell below consumes one display cell, so the Tab
+                // Offset only needs to span (residual - 1) columns.
+                const int tabSpan = usePacIndentSplit
+                                            ? (tabResidual - 1)
+                                            : tabResidual;
+                if (tabSpan > 0) {
                         uint8_t tb1 = 0, tb2 = 0;
-                        Cea608::encodeTabOffset(tabResidual, tb1, tb2);
-                        body.bytes.pushToBack(ScheduledPair{tb1, tb2});
-                        body.bytes.pushToBack(ScheduledPair{tb1, tb2}); // doubled
+                        Cea608::encodeTabOffset(tabSpan, tb1, tb2);
+                        emitControlPair(body, ScheduledPair{tb1, tb2}, doubleControls);
+                }
+                // §B.4 split MR — carries the first span's colour /
+                // italic so the PAC could deliver the indent.  The MR
+                // cell itself displays as a styled space at the
+                // requested column.  Skip the §6.2 preceding-space at
+                // initial row for the same reason the BG / BT / FA-FAU
+                // initial-row emits skip it (no prior cell on the row).
+                if (usePacIndentSplit) {
+                        uint8_t mb1 = 0, mb2 = 0;
+                        Cea608::encodeMidRow(initial.color, initial.italic, initial.underline,
+                                             mb1, mb2);
+                        emitControlPair(body, ScheduledPair{mb1, mb2}, doubleControls);
                 }
                 // Emit the initial row's background-attribute pair right
                 // after the PAC when the first span declares a bg colour.
                 // The bg code persists on the wire until another bg code
                 // or the next row's PAC overrides it.
+                //
+                // SPEC NOTE (§6.2): the spec's "precede each BG/FA/FAU
+                // code with a standard space" rule is well-defined at
+                // mid-row positions (the SPACE gives the code's auto-BS
+                // a cell to restyle, and standard-only decoders still
+                // see a placeholder).  At row start (immediately after
+                // PAC) the rule is ambiguous — there's no prior cell
+                // and emitting the preceding space adds a visible
+                // leading cell that wasn't in the source cue.  We omit
+                // the preceding space at initial row to preserve cue
+                // text fidelity; the mid-row path below honours §6.2.
                 if (initial.hasBg) {
                         uint8_t bb1 = 0, bb2 = 0;
                         Cea608::encodeBgAttribute(initial.bgColor, initial.bgSemiTransparent, bb1, bb2);
-                        body.bytes.pushToBack(ScheduledPair{bb1, bb2});
-                        body.bytes.pushToBack(ScheduledPair{bb1, bb2}); // doubled
+                        emitControlPair(body, ScheduledPair{bb1, bb2}, doubleControls);
+                }
+                // Initial-row BT (Background Transparent): if the
+                // first span has SubtitleOpacity::Transparent on the
+                // background, emit a doubled BT (0x17, 0x2D) pair
+                // right after the PAC.  Skipping the §6.2 preceding-
+                // space at row start for the same reason as the
+                // initial-row BG branch above.
+                if (initial.bgTransparent) {
+                        emitControlPair(body,
+                                        ScheduledPair{Cea608::Cc1ExtAttrB1, Cea608::BtB2},
+                                        doubleControls);
+                }
+                // When the initial span is Black-foreground (CEA-608-E
+                // §6.2 Table 3), the PAC above couldn't carry Black —
+                // PAC + mid-row colour subfields don't have a Black
+                // slot — so the wire shows White at PAC time.  Emit
+                // FA / FAU immediately after the PAC (and BG, if any)
+                // to assert Black before any characters.  Italic is
+                // incompatible with Black per spec (FA / FAU
+                // explicitly turn italics off), so we only take this
+                // path when @c initial.italic == false.  Initial-row
+                // FA / FAU also skips the §6.2 preceding-space — see
+                // the comment on the initial-row BG branch above.
+                if (initial.color == Cea608::CaptionColor::Black && !initial.italic) {
+                        uint8_t fb1 = 0, fb2 = 0;
+                        Cea608::encodeFgBlack(initial.underline, fb1, fb2);
+                        emitControlPair(body, ScheduledPair{fb1, fb2}, doubleControls);
+                }
+                // Initial-row FON: if the first span has flash on,
+                // emit a doubled FON (0x14, 0x28) right after the
+                // PAC.  PAC doesn't carry flash, so the captioner
+                // sends FON to turn it on for subsequent chars.
+                if (initial.flash) {
+                        emitControlPair(body,
+                                        ScheduledPair{Cea608::Cc1MiscFirstByte,
+                                                      Cea608::MiscFON},
+                                        doubleControls);
                 }
 
                 WireStyle current = initial;
@@ -648,19 +785,101 @@ namespace {
                         const bool      emitBg = anyCharsEmitted && ws.bgDiffers(current);
                         if (emitMr) {
                                 uint8_t mb1 = 0, mb2 = 0;
-                                Cea608::encodeMidRow(ws.color, ws.italic, ws.underline, mb1, mb2);
-                                body.bytes.pushToBack(ScheduledPair{mb1, mb2});
-                                body.bytes.pushToBack(ScheduledPair{mb1, mb2}); // doubled
+                                // CEA-608-E §6.2 Table 3: Black
+                                // foreground uses the Foreground
+                                // Attribute Code family (FA / FAU) —
+                                // mid-row carries only the 7 White /
+                                // Green / Blue / Cyan / Red / Yellow /
+                                // Magenta + italic-white colours.
+                                // Black is the spec's 8th foreground
+                                // colour, signalled via @c (0x17,
+                                // 0x2E) for FA or @c (0x17, 0x2F) for
+                                // FAU.  Italic is incompatible with
+                                // Black (FA / FAU specifically turn
+                                // italics off per spec).
+                                //
+                                // Per §6.2: every mid-row / attribute
+                                // code MUST be preceded by a standard
+                                // space (the code's "auto-BS" semantics
+                                // restyle that cell on the receiver,
+                                // and standard-only decoders still see
+                                // a placeholder).  FA / FAU explicitly
+                                // require this; the audit calls for the
+                                // same on the true MR family so the
+                                // wire is uniformly spec-compliant.
+                                // When the upcoming text already starts
+                                // with a SPACE we let that SPACE serve
+                                // as the §6.2 cell (no need to inject a
+                                // duplicate); otherwise we inject one
+                                // (SPACE + NUL filler) — char pair, not
+                                // doubled.
+                                const bool isFaFau =
+                                        (ws.color == Cea608::CaptionColor::Black && !ws.italic);
+                                const String &spanText = span.text();
+                                const bool nextIsSpace =
+                                        !spanText.isEmpty() && spanText.cstr()[0] == ' ';
+                                if (isFaFau || !nextIsSpace) {
+                                        body.bytes.pushToBack(ScheduledPair{0x20, 0x00});
+                                }
+                                if (isFaFau) {
+                                        Cea608::encodeFgBlack(ws.underline, mb1, mb2);
+                                } else {
+                                        Cea608::encodeMidRow(ws.color, ws.italic, ws.underline, mb1, mb2);
+                                }
+                                emitControlPair(body, ScheduledPair{mb1, mb2}, doubleControls);
                         }
                         if (emitBg) {
+                                // Per §6.2 BG codes carry the same
+                                // auto-BS + preceding-space convention
+                                // as FA / FAU.  Single SPACE paired
+                                // with NUL filler so the cell budget
+                                // matches.  Char pair — not doubled.
+                                body.bytes.pushToBack(ScheduledPair{0x20, 0x00});
                                 uint8_t bb1 = 0, bb2 = 0;
                                 Cea608::encodeBgAttribute(
                                         ws.hasBg ? ws.bgColor : Cea608::CaptionColor::White,
                                         ws.hasBg && ws.bgSemiTransparent, bb1, bb2);
-                                body.bytes.pushToBack(ScheduledPair{bb1, bb2});
-                                body.bytes.pushToBack(ScheduledPair{bb1, bb2}); // doubled
+                                emitControlPair(body, ScheduledPair{bb1, bb2}, doubleControls);
                         }
-                        if (emitMr || emitBg) {
+                        // Mid-span BT: emit a doubled BT pair when
+                        // bg transparency transitions off → on.  Like
+                        // FON, BT persists until the next PAC clears
+                        // it; the encoder cannot represent a
+                        // bgTransparent → opaque transition without
+                        // re-emitting the row's PAC.
+                        const bool emitBt =
+                                anyCharsEmitted && ws.bgTransparentTurnedOn(current);
+                        if (emitBt) {
+                                // §6.2: precede BT with a standard
+                                // space so the auto-BS receiver
+                                // restyles the cell to transparent.
+                                // Char pair — not doubled.
+                                body.bytes.pushToBack(ScheduledPair{0x20, 0x00});
+                                emitControlPair(body,
+                                                ScheduledPair{Cea608::Cc1ExtAttrB1,
+                                                              Cea608::BtB2},
+                                                doubleControls);
+                        }
+                        // Mid-span FON: emit a doubled FON pair when
+                        // flash transitions off → on.  CEA-608-E has
+                        // no Flash-Off code; flash is cleared by the
+                        // next PAC.  If flash is going on → off
+                        // mid-row, the wire still carries flash on
+                        // those cells — we can't represent the
+                        // transition without re-emitting the PAC,
+                        // which would be a row-restart.  Live-trace
+                        // captioners almost always FON whole rows
+                        // (set once at row start) so this asymmetry
+                        // rarely matters.
+                        const bool emitFon =
+                                anyCharsEmitted && ws.flashTurnedOn(current);
+                        if (emitFon) {
+                                emitControlPair(body,
+                                                ScheduledPair{Cea608::Cc1MiscFirstByte,
+                                                              Cea608::MiscFON},
+                                                doubleControls);
+                        }
+                        if (emitMr || emitBg || emitBt || emitFon) {
                                 current = ws;
                         }
                         String text = span.text();
@@ -699,11 +918,11 @@ namespace {
 
         /// @brief Builds the per-cue body byte stream for a placed
         ///        multi-row layout.
-        CueBody buildCueBody(const List<LaidOutRow> &laidOut) {
+        CueBody buildCueBody(const List<LaidOutRow> &laidOut, bool doubleControls) {
                 CueBody body;
                 body.hadBold = false;
                 for (size_t r = 0; r < laidOut.size(); ++r) {
-                        emitRowBytes(body, laidOut[r]);
+                        emitRowBytes(body, laidOut[r], doubleControls);
                 }
                 return body;
         }
@@ -727,10 +946,52 @@ struct Cea608EncoderImpl {
 // Cea608Encoder — construction
 // ============================================================================
 
-Cea608Encoder::Cea608Encoder() : _d(SharedPtr<Cea608EncoderImpl>::create()) {}
+namespace {
+
+        /// @brief Emits a one-shot §D.2 warning when a caption channel
+        ///        (CC1 / CC2 / CC3 / CC4) is configured with
+        ///        @ref Cea608Encoder::Config::doubleControls disabled.
+        ///        Per §D.2 normative, doubled controls are required on
+        ///        every caption channel — single-emit is only valid
+        ///        for non-caption F2 traffic.  Since this encoder
+        ///        targets caption channels by design, disabling the
+        ///        doubling is almost always a misconfiguration; warn
+        ///        the caller so they notice before shipping.
+        void warnIfUndoubledOnCaptionChannel(const Cea608Encoder::Config &cfg) {
+                if (cfg.doubleControls) return;
+                // Every Cea608Encoder::Channel value (CC1 / CC2 / CC3 /
+                // CC4) is a caption channel; the warning fires for all
+                // of them.  Kept as a switch in case a non-caption
+                // channel (e.g. T1..T4 text mode) is ever added.
+                bool isCaptionChannel = false;
+                switch (cfg.channel) {
+                        case Cea608Encoder::Channel::CC1:
+                        case Cea608Encoder::Channel::CC2:
+                        case Cea608Encoder::Channel::CC3:
+                        case Cea608Encoder::Channel::CC4:
+                                isCaptionChannel = true;
+                                break;
+                }
+                if (!isCaptionChannel) return;
+                promekiWarn("Cea608Encoder: doubleControls=false on caption channel "
+                            "(channel=%d) is out of spec per CTA-608-E §D.2; doubled "
+                            "control pairs are normatively required on caption "
+                            "channels.  Single-emit mode is only valid for non-"
+                            "caption F2 traffic.  Set doubleControls=true unless "
+                            "you have a specific bandwidth-constrained reason and "
+                            "an external error-recovery layer.",
+                            static_cast<int>(cfg.channel));
+        }
+
+} // namespace
+
+Cea608Encoder::Cea608Encoder() : _d(SharedPtr<Cea608EncoderImpl>::create()) {
+        warnIfUndoubledOnCaptionChannel(_d->cfg);
+}
 
 Cea608Encoder::Cea608Encoder(Config cfg) : _d(SharedPtr<Cea608EncoderImpl>::create()) {
         _d.modify()->cfg = std::move(cfg);
+        warnIfUndoubledOnCaptionChannel(_d->cfg);
 }
 
 Cea608Encoder::~Cea608Encoder() = default;
@@ -917,9 +1178,23 @@ namespace {
                         }
 
                         List<LaidOutRow> laidOut = placeChunk(wrap, lo, hi, cue.anchor());
-                        CueBody          body = buildCueBody(laidOut);
+                        CueBody          body = buildCueBody(laidOut, d->cfg.doubleControls);
 
-                        const size_t  preRollFrames = 2 + body.bytes.size();
+                        // Doubled mode: 2 RCL + 2 ENM + body.  Undoubled
+                        // mode: 1 RCL + 1 ENM + body.  Body size already
+                        // halves itself when doubleControls is false
+                        // (PAC + MR + BG + … each emit once).
+                        //
+                        // §B.8.3 recommended pop-on order is
+                        // RCL → ENM (optional) → PAC → text → EOC.  After
+                        // the Phase 3 decoder fix (§C.10: RCL no longer
+                        // clears non-displayed memory on receipt), ENM
+                        // after RCL is mandatory for correctness — without
+                        // it, stale loading memory from the previous
+                        // pop-on cue carries over and contaminates this
+                        // cue's swap target.
+                        const size_t  ctlReps = d->cfg.doubleControls ? 2 : 1;
+                        const size_t  preRollFrames = 2 * ctlReps + body.bytes.size();
                         const int64_t firstFrame =
                                 subStart - static_cast<int64_t>(preRollFrames);
                         if (firstFrame < 0) {
@@ -947,15 +1222,25 @@ namespace {
                                 return Error::OutOfRange;
                         }
                         if (state.pendingEdmFrame != INT64_MIN) {
-                                if (firstFrame > state.pendingEdmFrame + 1) {
+                                // Pending EDM lands one frame earlier
+                                // (undoubled) since the pre-roll comes
+                                // sooner.  Compute the EDM tail span
+                                // accordingly.
+                                const int64_t edmTail =
+                                        state.pendingEdmFrame
+                                        + static_cast<int64_t>(ctlReps) - 1;
+                                if (firstFrame > edmTail) {
                                         d->schedule.insert(state.pendingEdmFrame,
                                                            ScheduledPair{Cea608::EdmB1,
                                                                          Cea608::EdmB2});
-                                        d->schedule.insert(state.pendingEdmFrame + 1,
-                                                           ScheduledPair{Cea608::EdmB1,
-                                                                         Cea608::EdmB2});
-                                        if (state.pendingEdmFrame + 1 > state.lastByteFrame) {
-                                                state.lastByteFrame = state.pendingEdmFrame + 1;
+                                        if (d->cfg.doubleControls) {
+                                                d->schedule.insert(
+                                                        state.pendingEdmFrame + 1,
+                                                        ScheduledPair{Cea608::EdmB1,
+                                                                      Cea608::EdmB2});
+                                        }
+                                        if (edmTail > state.lastByteFrame) {
+                                                state.lastByteFrame = edmTail;
                                         }
                                 }
                                 state.pendingEdmFrame = INT64_MIN;
@@ -963,15 +1248,42 @@ namespace {
 
                         int64_t f = firstFrame;
                         d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
-                        d->schedule.insert(f++, ScheduledPair{Cea608::RclB1, Cea608::RclB2});
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(f++,
+                                                   ScheduledPair{Cea608::RclB1,
+                                                                 Cea608::RclB2});
+                        }
+                        // ENM after RCL (doubled when configured) — wipes
+                        // non-displayed memory so the upcoming PAC + chars
+                        // land on a clean canvas.  Required since the
+                        // Phase 3 decoder fix made RCL no longer clear
+                        // loading memory (§C.10); without ENM here the
+                        // previous pop-on cue's residue would survive into
+                        // this cue's swap target.
+                        d->schedule.insert(f++, ScheduledPair{Cea608::EnmB1, Cea608::EnmB2});
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(f++,
+                                                   ScheduledPair{Cea608::EnmB1,
+                                                                 Cea608::EnmB2});
+                        }
                         for (size_t b = 0; b < body.bytes.size(); ++b) {
                                 d->schedule.insert(f++, body.bytes[b]);
                         }
                         d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
-                        d->schedule.insert(f++, ScheduledPair{Cea608::EocB1, Cea608::EocB2});
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(f++,
+                                                   ScheduledPair{Cea608::EocB1,
+                                                                 Cea608::EocB2});
+                        }
 
                         state.pendingEdmFrame = subEnd;
-                        state.lastEocFrame = subStart + 1;
+                        // lastEocFrame marks "EOC swap has fired" so the
+                        // next cue's pre-roll can't overlap.  With the
+                        // doubled EOC pair, the swap completes after
+                        // the second copy at subStart+1; with the
+                        // undoubled single EOC, the swap completes at
+                        // subStart.
+                        state.lastEocFrame = subStart + (d->cfg.doubleControls ? 1 : 0);
                         if (f - 1 > state.lastByteFrame) state.lastByteFrame = f - 1;
                         accChars += chunkChars;
                 }
@@ -1041,20 +1353,35 @@ namespace {
                         if (!flat.isEmpty()) wrap.pushToBack(flat[0].spans);
                 }
                 List<LaidOutRow> laidOut = placeChunk(wrap, 0, wrap.size(), cue.anchor());
-                CueBody          body = buildCueBody(laidOut);
+                CueBody          body = buildCueBody(laidOut, d->cfg.doubleControls);
 
-                // Body shape: [PAC0,PAC0,(MR,MR,)?chars0...,PAC1,PAC1,chars1,...].
-                // Paint-on splits that into:
-                //   pre-roll (lands before startFrame): RDC,RDC + first PAC pair = 4 frames
-                //   live chars (land at startFrame onward): body.bytes minus the
-                //                                           leading first-PAC pair.
-                // Body always begins with PAC,PAC (buildCueBody contract).
-                if (body.bytes.size() < 2) {
-                        // Defensive: should never happen, PAC pair always present.
+                // Body shape (doubled):   [PAC0,PAC0,(MR,MR,)?chars0...,PAC1,PAC1,chars1,...].
+                // Body shape (undoubled): [PAC0,(MR,)?chars0...,PAC1,chars1,...].
+                // Paint-on splits the body into:
+                //   pre-roll (lands before startFrame): RDC + first PAC =
+                //     4 frames doubled / 2 frames undoubled.
+                //   live chars (land at startFrame onward): body.bytes
+                //     minus the leading first-PAC pair.
+                // Body always begins with the PAC pair (or single PAC
+                // when undoubled) per buildCueBody contract.
+                const size_t  ctlReps = d->cfg.doubleControls ? 2 : 1;
+                if (body.bytes.size() < ctlReps) {
+                        // Upstream invariant violation: @ref buildCueBody
+                        // is contracted to begin the body with the row's
+                        // PAC pair (doubled when configured), so
+                        // body.bytes.size() must be at least ctlReps.
+                        // Warn loudly when this assumption fails so the
+                        // bug surfaces before the caller silently emits
+                        // a malformed wire stream.
+                        promekiWarn("Cea608Encoder::setSubtitles[paint-on]: cue %zu body "
+                                    "size %zu < ctlReps %zu — buildCueBody contract "
+                                    "violated (PAC pair must lead the body)",
+                                    cueIndex, body.bytes.size(), ctlReps);
                         return Error::Ok;
                 }
-                const size_t  charCount = body.bytes.size() - 2;
-                const int64_t firstFrame = startFrame - 4; // 2 RDC + 2 PAC
+                const size_t  charCount = body.bytes.size() - ctlReps;
+                const int64_t firstFrame =
+                        startFrame - static_cast<int64_t>(2 * ctlReps); // RDC + PAC
                 const int64_t lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
 
                 if (firstFrame < 0) {
@@ -1080,27 +1407,38 @@ namespace {
                         return Error::OutOfRange;
                 }
                 if (state.pendingEdmFrame != INT64_MIN) {
-                        if (firstFrame > state.pendingEdmFrame + 1) {
+                        const int64_t edmTail = state.pendingEdmFrame
+                                              + static_cast<int64_t>(ctlReps) - 1;
+                        if (firstFrame > edmTail) {
                                 d->schedule.insert(state.pendingEdmFrame,
-                                                   ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                d->schedule.insert(state.pendingEdmFrame + 1,
-                                                   ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                if (state.pendingEdmFrame + 1 > state.lastByteFrame) {
-                                        state.lastByteFrame = state.pendingEdmFrame + 1;
+                                                   ScheduledPair{Cea608::EdmB1,
+                                                                 Cea608::EdmB2});
+                                if (d->cfg.doubleControls) {
+                                        d->schedule.insert(state.pendingEdmFrame + 1,
+                                                           ScheduledPair{Cea608::EdmB1,
+                                                                         Cea608::EdmB2});
+                                }
+                                if (edmTail > state.lastByteFrame) {
+                                        state.lastByteFrame = edmTail;
                                 }
                         }
                         state.pendingEdmFrame = INT64_MIN;
                 }
 
                 int64_t f = firstFrame;
-                // Doubled RDC at startFrame-4, startFrame-3.
+                // RDC pair (doubled or single).
                 d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscRDC});
-                d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscRDC});
-                // Doubled PAC at startFrame-2, startFrame-1.
-                d->schedule.insert(f++, body.bytes[0]);
-                d->schedule.insert(f++, body.bytes[1]);
+                if (d->cfg.doubleControls) {
+                        d->schedule.insert(f++,
+                                           ScheduledPair{Cea608::Cc1MiscFirstByte,
+                                                         Cea608::MiscRDC});
+                }
+                // PAC pair (doubled or single) — body.bytes[0..ctlReps-1].
+                for (size_t k = 0; k < ctlReps; ++k) {
+                        d->schedule.insert(f++, body.bytes[k]);
+                }
                 // Live chars / mid-row pairs starting at startFrame.
-                for (size_t b = 2; b < body.bytes.size(); ++b) {
+                for (size_t b = ctlReps; b < body.bytes.size(); ++b) {
                         d->schedule.insert(f++, body.bytes[b]);
                 }
 
@@ -1168,18 +1506,30 @@ namespace {
                 }
                 if (layoutHadBold(wrap)) warnBoldOnce(state.boldWarned, cueIndex);
                 List<LaidOutRow> laidOut = placeChunk(wrap, 0, wrap.size(), cue.anchor());
-                CueBody          body = buildCueBody(laidOut);
-                if (body.bytes.size() < 2) return Error::Ok; // defensive
+                CueBody          body = buildCueBody(laidOut, d->cfg.doubleControls);
+                const size_t     ctlReps = d->cfg.doubleControls ? 2 : 1;
+                if (body.bytes.size() < ctlReps) {
+                        // Upstream invariant violation — see the
+                        // matching warn in encodePaintOnCue.
+                        promekiWarn("Cea608Encoder::setSubtitles[roll-up]: cue %zu body "
+                                    "size %zu < ctlReps %zu — buildCueBody contract "
+                                    "violated (PAC pair must lead the body)",
+                                    cueIndex, body.bytes.size(), ctlReps);
+                        return Error::Ok;
+                }
 
-                // Body shape: [PAC,PAC,(MR,MR,)?chars...].
+                // Body shape (doubled):   [PAC,PAC,(MR,MR,)?chars...].
+                // Body shape (undoubled): [PAC,(MR,)?chars...].
                 // Per-cue pre-roll bytes (live chars excluded):
-                //   Need RUx:  2 (RUx) + 2 (CR) + 2 (PAC) = 6
-                //   Otherwise: 2 (CR) + 2 (PAC) = 4
+                //   Need RUx (doubled):    2 RUx + 2 CR + 2 PAC = 6
+                //   Need RUx (undoubled):  1 RUx + 1 CR + 1 PAC = 3
+                //   Otherwise (doubled):   2 CR + 2 PAC = 4
+                //   Otherwise (undoubled): 1 CR + 1 PAC = 2
                 // Characters land at startFrame onward.
                 const bool needRux = !state.rollUpInitialised
                                      || state.rollUpInitialisedRows != rollUpRows;
-                const size_t  charCount = body.bytes.size() - 2;
-                const size_t  preRoll = needRux ? 6 : 4;
+                const size_t  charCount = body.bytes.size() - ctlReps;
+                const size_t  preRoll = (needRux ? 3 : 2) * ctlReps;
                 const int64_t firstFrame = startFrame - static_cast<int64_t>(preRoll);
                 const int64_t lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
 
@@ -1210,31 +1560,48 @@ namespace {
                 if (needRux) {
                         const ScheduledPair ruPair = rollUpControl(rollUpRows);
                         d->schedule.insert(f++, ruPair);
-                        d->schedule.insert(f++, ruPair);
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(f++, ruPair);
+                        }
                         state.rollUpInitialised = true;
                         state.rollUpInitialisedRows = rollUpRows;
                 }
-                // Doubled CR.
+                // CR pair (doubled or single).
                 d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscCR});
-                d->schedule.insert(f++, ScheduledPair{Cea608::Cc1MiscFirstByte, Cea608::MiscCR});
-                // Doubled PAC.  Roll-up always anchors row 15 by spec
-                // regardless of cue.anchor; buildCueBody honoured cue.anchor
-                // which we override here.  Re-encode the PAC bytes via
-                // Cea608::encodePac to keep colour/italic/underline from the
-                // body's leading PAC but lock the row to 15.
+                if (d->cfg.doubleControls) {
+                        d->schedule.insert(f++,
+                                           ScheduledPair{Cea608::Cc1MiscFirstByte,
+                                                         Cea608::MiscCR});
+                }
+                // Doubled PAC.  Per §B.5 the roll-up base row may be
+                // 1..4 (top region) or 12..15 (bottom region).
+                // Choose the base row from the cue's anchor —
+                // Bottom* → row 15 (default), Top* → row equal to
+                // the roll-up window depth (visible rows 1..N), and
+                // any other anchor (Middle / Default) → row 15.
+                // buildCueBody honoured cue.anchor for the PAC's
+                // colour / italic / underline subfield — preserve
+                // those and only override the row.
                 {
                         Cea608::PacAttr ovr;
                         if (!Cea608::decodePac(body.bytes[0].b1, body.bytes[0].b2, ovr)) {
                                 ovr = Cea608::PacAttr{};
                         }
-                        ovr.row = 15;
+                        const int v = cue.anchor().value();
+                        const bool isTop = (v == SubtitleAnchor::TopLeft.value()
+                                            || v == SubtitleAnchor::TopCenter.value()
+                                            || v == SubtitleAnchor::TopRight.value());
+                        ovr.row = isTop ? rollUpRows : 15;
                         uint8_t pb1 = 0, pb2 = 0;
                         Cea608::encodePac(ovr, pb1, pb2);
                         d->schedule.insert(f++, ScheduledPair{pb1, pb2});
-                        d->schedule.insert(f++, ScheduledPair{pb1, pb2});
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(f++, ScheduledPair{pb1, pb2});
+                        }
                 }
                 // Live chars / mid-row pairs starting at startFrame.
-                for (size_t b = 2; b < body.bytes.size(); ++b) {
+                // Skip the leading PAC pair already consumed above.
+                for (size_t b = ctlReps; b < body.bytes.size(); ++b) {
                         d->schedule.insert(f++, body.bytes[b]);
                 }
                 state.lastByteFrame = lastCharFrame;
@@ -1272,16 +1639,23 @@ namespace {
                         if (currentModeValid && currentMode != cueMode) {
                                 // Flush any pending EDM (pop-on / paint-on)
                                 // so the residue clears before the new mode
-                                // takes over.
+                                // takes over.  Doubled when configured;
+                                // single otherwise.
                                 if (state.pendingEdmFrame != INT64_MIN) {
+                                        const int64_t edmTail =
+                                                state.pendingEdmFrame
+                                                + (d->cfg.doubleControls ? 1 : 0);
                                         d->schedule.insert(
                                                 state.pendingEdmFrame,
                                                 ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                        d->schedule.insert(
-                                                state.pendingEdmFrame + 1,
-                                                ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                        if (state.pendingEdmFrame + 1 > state.lastByteFrame) {
-                                                state.lastByteFrame = state.pendingEdmFrame + 1;
+                                        if (d->cfg.doubleControls) {
+                                                d->schedule.insert(
+                                                        state.pendingEdmFrame + 1,
+                                                        ScheduledPair{Cea608::EdmB1,
+                                                                      Cea608::EdmB2});
+                                        }
+                                        if (edmTail > state.lastByteFrame) {
+                                                state.lastByteFrame = edmTail;
                                         }
                                         state.pendingEdmFrame = INT64_MIN;
                                 }
@@ -1293,10 +1667,14 @@ namespace {
                                         d->schedule.insert(
                                                 edmFrame,
                                                 ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                        d->schedule.insert(
-                                                edmFrame + 1,
-                                                ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                                        state.lastByteFrame = edmFrame + 1;
+                                        if (d->cfg.doubleControls) {
+                                                d->schedule.insert(
+                                                        edmFrame + 1,
+                                                        ScheduledPair{Cea608::EdmB1,
+                                                                      Cea608::EdmB2});
+                                        }
+                                        state.lastByteFrame =
+                                                edmFrame + (d->cfg.doubleControls ? 1 : 0);
                                 }
                                 // Re-entering roll-up requires re-emitting
                                 // RUx; reset the latch.
@@ -1331,14 +1709,24 @@ namespace {
                 if (state.pendingEdmFrame != INT64_MIN) {
                         d->schedule.insert(state.pendingEdmFrame,
                                            ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
-                        d->schedule.insert(state.pendingEdmFrame + 1,
-                                           ScheduledPair{Cea608::EdmB1, Cea608::EdmB2});
+                        if (d->cfg.doubleControls) {
+                                d->schedule.insert(state.pendingEdmFrame + 1,
+                                                   ScheduledPair{Cea608::EdmB1,
+                                                                 Cea608::EdmB2});
+                        }
                 }
                 return Error::Ok;
         }
 
 } // namespace
 
+// NOTE: XDS (Extended Data Services, §9) does NOT flow through this
+// encoder.  XDS lives in field-2 cc_type=1 with class-start bytes in
+// 0x01..0x0F — disjoint from the caption byte-pair stream this
+// encoder produces.  Authors targeting XDS payloads (ratings, program
+// description, time-of-day, etc.) use the dedicated
+// @ref Cea608XdsInjector class, which schedules the XDS packets and
+// merges them with this encoder's CcDataList at the wire layer.
 Error Cea608Encoder::setSubtitles(const SubtitleList &subs) {
         auto *d = _d.modify();
         d->schedule.clear();
@@ -1354,19 +1742,31 @@ Error Cea608Encoder::setSubtitles(const SubtitleList &subs) {
         Error err = buildMixedModeSchedule(d, subs);
         if (err.isError()) return err;
 
-        // Apply the channel-bit OR-mask.  All schedule builders write
-        // CC1 / CC3-shaped control bytes (bit 3 = 0); for CC2 / CC4
-        // we OR @c 0x08 into every first-byte that lives in the
-        // control range @c 0x10..0x1F.  Char first bytes (>= 0x20)
-        // and the @c NUL filler (@c 0x00) are left untouched.
-        const uint8_t channelOffset = channelOffsetFor(d->cfg.channel);
-        if (channelOffset != 0) {
+        // Apply the channel-bit OR-mask and the §8.4(a)(b) field-2
+        // misc-control first-byte remap.  All schedule builders write
+        // CC1 / CC3-shaped control bytes (bit 3 = 0); the wire-layer
+        // @ref Cea608::applyChannel encapsulates both mechanical steps:
+        //
+        //   1. For CC2 / CC4 (second channel of the field) OR @c 0x08
+        //      into every first-byte in the control range @c 0x10..0x1F.
+        //      Char first bytes (>= 0x20) and the @c NUL filler are
+        //      left untouched.
+        //   2. For CC3 / CC4 (field 2) remap the misc-control first
+        //      byte: @c 0x14 → @c 0x15, @c 0x1C → @c 0x1D.  This remap
+        //      is mandated only for the misc-control pairs (RCL/BS/AOF/
+        //      AON/DER/RUx/FON/RDC/TR/RTD/EDM/CR/ENM/EOC), identified
+        //      by @c b2 in @c 0x20..0x2F.  PACs at Row 14 / Row 15 also
+        //      use @c b1=0x14 / @c b1=0x1C but their @c b2 is in
+        //      @c [0x40, 0x7F], so they MUST NOT be remapped — doing
+        //      so corrupts every CC3 / CC4 cue anchored on rows 14/15.
+        //      Mirror the decoder's gate at cea608decoder.cpp around
+        //      §8.4 receive.
+        const Cea608::Channel wireCh = wireChannel(d->cfg.channel);
+        if (Cea608::isSecondChannelOfField(wireCh) || Cea608::isFieldTwo(wireCh)) {
                 Map<int64_t, ScheduledPair> shifted;
                 for (auto it = d->schedule.constBegin(); it != d->schedule.constEnd(); ++it) {
                         ScheduledPair p = it->second;
-                        if (p.b1 >= 0x10 && p.b1 <= 0x1F) {
-                                p.b1 = static_cast<uint8_t>(p.b1 | channelOffset);
-                        }
+                        Cea608::applyChannelInPlace(p.b1, p.b2, wireCh);
                         shifted.insert(it->first, p);
                 }
                 d->schedule = std::move(shifted);
@@ -1398,6 +1798,19 @@ Cea708Cdp::CcDataList Cea608Encoder::nextFrame(FrameNumber frame) const {
                 b1 = it->second.b1;
                 b2 = it->second.b2;
         }
+        // §B.11.5 / §D.2: every wire byte must be either the null
+        // filler (0x00 — pre-parity, becomes 0x80 stamped), a control
+        // byte (0x10..0x1F) or a printable data byte (0x20..0x7F).
+        // Bytes in 0x01..0x0F are the XDS class-start range and MUST
+        // never appear on the caption byte stream this encoder
+        // produces (XDS rides through @ref Cea608XdsInjector instead).
+        // Assert as a "should-never-happen" invariant — a violation
+        // means the schedule was corrupted upstream.
+        const auto isValidByte = [](uint8_t b) {
+                return b == 0x00 || b >= 0x10;
+        };
+        PROMEKI_ASSERT(isValidByte(b1));
+        PROMEKI_ASSERT(isValidByte(b2));
         out.pushToBack(Cea708Cdp::CcData{true, ccTypeForChannel(_d->cfg.channel),
                                         Cea608::withOddParity(b1), Cea608::withOddParity(b2)});
         return out;
@@ -1425,25 +1838,26 @@ FrameNumber Cea608Encoder::earliestStartFor(const Subtitle &cue) const {
                 (_d->cfg.maxRows > 0) ? static_cast<size_t>(_d->cfg.maxRows) : wrap.size();
         const size_t firstChunkHi = std::min(chunkSize, wrap.size());
         List<LaidOutRow> firstChunk = placeChunk(wrap, 0, firstChunkHi, cue.anchor());
-        const CueBody    body = buildCueBody(firstChunk);
+        const CueBody    body = buildCueBody(firstChunk, _d->cfg.doubleControls);
+        const size_t     ctlReps = _d->cfg.doubleControls ? 2 : 1;
         int64_t          firstFrame = 0;
         switch (_d->cfg.mode) {
                 case Mode::PopOn:
-                        // Pre-roll = 2 (RCL) + body (PAC pairs + chars + MRs).
-                        // EOC pair lands at and after the chunk's start.
-                        firstFrame = startFrame - static_cast<int64_t>(2 + body.bytes.size());
+                        // Pre-roll = ctlReps (RCL) + ctlReps (ENM) + body
+                        // (PAC + chars + MRs + …).  EOC pair lands at and
+                        // after the chunk's start.
+                        firstFrame =
+                                startFrame - static_cast<int64_t>(2 * ctlReps + body.bytes.size());
                         break;
                 case Mode::PaintOn:
-                        // Pre-roll = 4 (RDC + first PAC), chars (and any
-                        // row 2+ PAC pairs) stream live from startFrame.
-                        firstFrame = startFrame - 4;
+                        // Pre-roll = RDC + first PAC = 2*ctlReps frames.
+                        firstFrame = startFrame - static_cast<int64_t>(2 * ctlReps);
                         break;
                 case Mode::RollUp:
-                        // First cue pre-roll = 6 (RUx + CR + PAC); subsequent cues = 4.
-                        // earliestStartFor is a single-cue diagnostic so we report the
-                        // worst case (first-cue) — callers building schedules can use
-                        // setSubtitles' actual layout.
-                        firstFrame = startFrame - 6;
+                        // First cue pre-roll = RUx + CR + PAC = 3*ctlReps;
+                        // subsequent = CR + PAC = 2*ctlReps.  Diagnostic
+                        // reports worst-case (first-cue).
+                        firstFrame = startFrame - static_cast<int64_t>(3 * ctlReps);
                         break;
         }
         if (firstFrame < 0) return FrameNumber::unknown();
@@ -1485,27 +1899,32 @@ SubtitleList Cea608Encoder::encodableSubset(const SubtitleList &in, SubtitleList
                 const size_t firstChunkHi = std::min(chunkSize, wrap.size());
                 const size_t chunkCount = (wrap.size() + chunkSize - 1) / chunkSize;
                 List<LaidOutRow> firstChunk = placeChunk(wrap, 0, firstChunkHi, cue.anchor());
-                const CueBody    body = buildCueBody(firstChunk);
+                const CueBody    body = buildCueBody(firstChunk, _d->cfg.doubleControls);
+                const size_t     ctlReps = _d->cfg.doubleControls ? 2 : 1;
                 size_t           preRoll = 0;
                 int64_t          lastCharFrame = INT64_MIN;
                 bool             charsOverrun = false;
                 size_t           charCount = 0;
-                if (body.bytes.size() >= 2) charCount = body.bytes.size() - 2;
+                if (body.bytes.size() >= ctlReps) charCount = body.bytes.size() - ctlReps;
                 switch (_d->cfg.mode) {
                         case Mode::PopOn:
-                                preRoll = 2 + body.bytes.size();
+                                preRoll = 2 * ctlReps + body.bytes.size();
                                 // For multi-sub-cue pop-on the *last* wire
-                                // byte is the final sub-cue's doubled EOC
-                                // at frame @c endFrame + 1.
-                                lastCharFrame = (chunkCount > 1) ? endFrame + 1 : startFrame + 1;
+                                // byte is the final sub-cue's EOC pair at
+                                // frame @c endFrame + (ctlReps - 1).
+                                lastCharFrame = (chunkCount > 1)
+                                                        ? endFrame
+                                                          + static_cast<int64_t>(ctlReps) - 1
+                                                        : startFrame
+                                                          + static_cast<int64_t>(ctlReps) - 1;
                                 break;
                         case Mode::PaintOn:
-                                preRoll = 4;
+                                preRoll = 2 * ctlReps;
                                 lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
                                 if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
                                 break;
                         case Mode::RollUp:
-                                preRoll = rollUpInitialised ? 4 : 6;
+                                preRoll = (rollUpInitialised ? 2 : 3) * ctlReps;
                                 lastCharFrame = startFrame + static_cast<int64_t>(charCount) - 1;
                                 if (charCount > 0 && lastCharFrame >= endFrame) charsOverrun = true;
                                 break;

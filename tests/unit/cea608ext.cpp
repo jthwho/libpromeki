@@ -142,8 +142,8 @@ TEST_CASE("Cea608Ext: extended French / German key glyphs round-trip") {
         };
         for (const Pair &p : table) {
                 CAPTURE(p.idx);
-                CHECK(Cea608Ext::decodeExtFrench(p.idx) == p.cp);
-                CHECK(Cea608Ext::encodeExtFrench(p.cp) == p.idx);
+                CHECK(Cea608Ext::decodeExtPortugueseGerman(p.idx) == p.cp);
+                CHECK(Cea608Ext::encodeExtPortugueseGerman(p.cp) == p.idx);
         }
 }
 
@@ -185,7 +185,7 @@ TEST_CASE("Cea608Ext::encode: extended Spanish codepoint -> placeholder + (0x12,
 TEST_CASE("Cea608Ext::encode: extended French codepoint -> placeholder + (0x13, 0x3X) code") {
         // U+00DF ß — extended French index 0x34, placeholder 'B'.
         const auto e = Cea608Ext::encode(0x00DF);
-        CHECK(e.kind == Cea608Ext::Kind::ExtFrench);
+        CHECK(e.kind == Cea608Ext::Kind::ExtPortugueseGerman);
         CHECK(e.placeholder == 'B');
         CHECK(e.code == 0x34);
 }

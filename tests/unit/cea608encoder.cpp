@@ -149,11 +149,15 @@ TEST_CASE("Cea608Encoder: every channel (CC1..CC4) accepts setSubtitles") {
 TEST_CASE("Cea608Encoder: single 2-char cue lays out the pop-on byte stream") {
         // At 30fps, cue starts at frame 30 (= 1000 ms).
         //   "AB" → 1 char pair.
-        //   firstFrame = startFrame - (2 RCL + 2 PAC + N chars) = 30 - 5 = 25.
+        //   firstFrame = startFrame - (2 RCL + 2 ENM + 2 PAC + N chars)
+        //              = 30 - 7 = 23.  Per §B.8.3 ENM rides between RCL
+        //              and PAC so the upcoming PAC + chars land on a
+        //              clean non-displayed memory canvas (E1).
         //   First EOC lands at frame 30 (== startFrame) so the receiver
         //   swaps memory exactly at the cue's logical start.
         // Layout:
-        //   frame 25, 26: RCL doubled
+        //   frame 23, 24: RCL doubled
+        //   frame 25, 26: ENM doubled (§B.8.3 — wipe loading memory)
         //   frame 27, 28: PAC doubled
         //   frame 29:     "AB"
         //   frame 30, 31: EOC doubled (swap at 30; duplicate at 31)
@@ -166,12 +170,16 @@ TEST_CASE("Cea608Encoder: single 2-char cue lays out the pop-on byte stream") {
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
         REQUIRE(enc.setSubtitles(subs).isOk());
 
-        // Frame 24: still empty (pre-RCL).
-        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::NullB1, Cea608::NullB2));
+        // Frame 22: still empty (pre-RCL).
+        CHECK(tripleHasBytes(oneTriple(enc, 22), Cea608::NullB1, Cea608::NullB2));
 
-        // Frames 25, 26: RCL doubled.
-        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::RclB1, Cea608::RclB2));
-        CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::RclB1, Cea608::RclB2));
+        // Frames 23, 24: RCL doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 23), Cea608::RclB1, Cea608::RclB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::RclB1, Cea608::RclB2));
+
+        // Frames 25, 26: ENM doubled (§B.8.3).
+        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::EnmB1, Cea608::EnmB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::EnmB1, Cea608::EnmB2));
 
         // Frames 27, 28: PAC doubled.
         CHECK(tripleHasBytes(oneTriple(enc, 27), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
@@ -204,7 +212,9 @@ TEST_CASE("Cea608Encoder: emitted bytes carry odd parity") {
         SubtitleList  subs;
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
         REQUIRE(enc.setSubtitles(subs).isOk());
-        for (int64_t f = 25; f <= 62; ++f) {
+        // Pre-roll now begins at frame 23 (2 RCL + 2 ENM + 2 PAC + 1
+        // char = 7 frames before startFrame=30; E1 added the ENM pair).
+        for (int64_t f = 23; f <= 62; ++f) {
                 Cea708Cdp::CcData t = oneTriple(enc, f);
                 CHECK(Cea608::checkOddParity(t.b1));
                 CHECK(Cea608::checkOddParity(t.b2));
@@ -213,8 +223,8 @@ TEST_CASE("Cea608Encoder: emitted bytes carry odd parity") {
 
 TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with space") {
         // "ABC" is 3 chars → 2 char pairs (AB then C+space).
-        // Pre-roll: 2 (RCL) + 2 (PAC) + 2 (chars) = 6 frames.
-        // firstFrame = 30 - 6 = 24.  First EOC at frame 30.
+        // Pre-roll: 2 (RCL) + 2 (ENM) + 2 (PAC) + 2 (chars) = 8 frames.
+        // firstFrame = 30 - 8 = 22.  First EOC at frame 30.
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -222,9 +232,12 @@ TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with space") 
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "ABC"));
         REQUIRE(enc.setSubtitles(subs).isOk());
 
-        // Frame 24..25: RCL doubled.
-        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::RclB1, Cea608::RclB2));
-        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::RclB1, Cea608::RclB2));
+        // Frame 22..23: RCL doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 22), Cea608::RclB1, Cea608::RclB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 23), Cea608::RclB1, Cea608::RclB2));
+        // Frame 24..25: ENM doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 24), Cea608::EnmB1, Cea608::EnmB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 25), Cea608::EnmB1, Cea608::EnmB2));
         // Frame 26..27: PAC doubled.
         CHECK(tripleHasBytes(oneTriple(enc, 26), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
         CHECK(tripleHasBytes(oneTriple(enc, 27), Cea608::PacRow15Col0WhiteB1, Cea608::PacRow15Col0WhiteB2));
@@ -242,8 +255,9 @@ TEST_CASE("Cea608Encoder: odd-length text pads the final char pair with space") 
 // ============================================================================
 
 TEST_CASE("Cea608Encoder: cue start too close to t=0 -> Error::OutOfRange") {
-        // "AB" needs 5 frames of pre-roll.  A cue starting at frame
-        // 3 fails: firstFrame would be -2.
+        // "AB" needs 7 frames of pre-roll (RCL + ENM + PAC + 1 char,
+        // each control pair doubled — E1 added the ENM pair).  A cue
+        // starting at frame 3 fails: firstFrame would be -4.
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -254,10 +268,12 @@ TEST_CASE("Cea608Encoder: cue start too close to t=0 -> Error::OutOfRange") {
 
 TEST_CASE("Cea608Encoder: back-to-back cues colliding with prior EDM elide that EDM") {
         // Cue 1: ends at frame 60.  EDM would land at frames 60, 61.
-        // Cue 2: starts at frame 65.  "CD" needs firstFrame = 65 - 5 = 60.
-        // Pre-roll collides with cue 1's EDM at frames 60, 61 — the
-        // encoder elides cue 1's EDM (cue 1 persists until cue 2's
-        // EOC at frame 65) instead of dropping cue 2 entirely.
+        // Cue 2: starts at frame 65.  "CD" needs firstFrame = 65 - 7 = 58
+        // (E1 added the doubled ENM pair to the pop-on pre-roll).
+        // Cue 2's pre-roll overlaps cue 1's EDM slot at frames 60, 61
+        // (via the ENM pair) — the encoder elides cue 1's EDM (cue 1
+        // persists until cue 2's EOC at frame 65) instead of dropping
+        // cue 2 entirely.
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -266,9 +282,12 @@ TEST_CASE("Cea608Encoder: back-to-back cues colliding with prior EDM elide that 
         subs.append(Subtitle(tsFromMs(2167), tsFromMs(3000), "CD"));
         REQUIRE(enc.setSubtitles(subs).isOk());
 
-        // Frames 60, 61: cue 2's RCL doubled — *not* cue 1's EDM.
-        CHECK(tripleHasBytes(oneTriple(enc, 60), Cea608::RclB1, Cea608::RclB2));
-        CHECK(tripleHasBytes(oneTriple(enc, 61), Cea608::RclB1, Cea608::RclB2));
+        // Frames 58, 59: cue 2's RCL doubled.
+        CHECK(tripleHasBytes(oneTriple(enc, 58), Cea608::RclB1, Cea608::RclB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 59), Cea608::RclB1, Cea608::RclB2));
+        // Frames 60, 61: cue 2's ENM doubled — *not* cue 1's EDM.
+        CHECK(tripleHasBytes(oneTriple(enc, 60), Cea608::EnmB1, Cea608::EnmB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 61), Cea608::EnmB1, Cea608::EnmB2));
         // Frames 62, 63: cue 2's PAC doubled.
         CHECK(tripleHasBytes(oneTriple(enc, 62), Cea608::PacRow15Col0WhiteB1,
                              Cea608::PacRow15Col0WhiteB2));
@@ -290,10 +309,10 @@ TEST_CASE("Cea608Encoder: back-to-back cues colliding with prior EDM elide that 
 TEST_CASE("Cea608Encoder: pre-roll overlapping prior cue's wire stream -> OutOfRange") {
         // Cue 1: 1000..2000ms = frames 30..60.  "AB" → wire stream ends
         // at frame 31 (second EOC).
-        // Cue 2: 1100..3000ms = frame 33 start.  "CD" pre-roll = 5
-        // frames → firstFrame = 28.  Frame 28 is inside cue 1's PAC
-        // doubled at frames 27, 28 — no amount of EDM elision can
-        // rescue this collision.
+        // Cue 2: 1100..3000ms = frame 33 start.  "CD" pre-roll = 7
+        // frames (E1 added the doubled ENM pair) → firstFrame = 26.
+        // Frame 26 is inside cue 1's ENM doubled at frames 25-26 — no
+        // amount of EDM elision can rescue this collision.
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -309,20 +328,21 @@ TEST_CASE("Cea608Encoder::encodableSubset drops cues that fail pre-roll") {
         Cea608Encoder enc(cfg);
 
         SubtitleList subs;
-        // Cue 0: starts at frame ~3 — pre-roll for "AB" is 5 frames so
-        // firstFrame would be -2.  Dropped (before t=0).
+        // Pre-roll for a 2-char pop-on cue is 7 frames (E1: 2 RCL + 2
+        // ENM + 2 PAC + 1 char).  Cue 0: starts at frame ~3 → firstFrame
+        // would be -4.  Dropped (before t=0).
         subs.append(Subtitle(tsFromMs(100), tsFromMs(1000), "AB"));
-        // Cue 1: starts at frame 30 — pre-roll 5 → firstFrame 25.
-        // Comfortable; kept.  lastEocFrame after kept = 31.
+        // Cue 1: starts at frame 30 — firstFrame 23.  Comfortable; kept.
+        // lastEocFrame after kept = 31.
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "CD"));
-        // Cue 2: starts at frame 33 — firstFrame 28.  Overlaps cue 1's
-        // PAC at frame 27/28 (lastEocFrame=31).  Dropped (wire-stream
+        // Cue 2: starts at frame 33 — firstFrame 26.  Overlaps cue 1's
+        // ENM at frame 25/26 (lastEocFrame=31).  Dropped (wire-stream
         // collision — EDM elision cannot rescue).
         subs.append(Subtitle(tsFromMs(1100), tsFromMs(3000), "EF"));
-        // Cue 3: starts at frame 65 — firstFrame 60.  Overlaps cue 1's
+        // Cue 3: starts at frame 65 — firstFrame 58.  Overlaps cue 1's
         // EDM at frame 60/61, but EDM elision rescues it.  Kept.
         subs.append(Subtitle(tsFromMs(2167), tsFromMs(3000), "GH"));
-        // Cue 4: starts at frame 120 — firstFrame 115.  Kept.
+        // Cue 4: starts at frame 120 — firstFrame 113.  Kept.
         subs.append(Subtitle(tsFromMs(4000), tsFromMs(5000), "IJ"));
 
         SubtitleList dropped;
@@ -341,7 +361,8 @@ TEST_CASE("Cea608Encoder::encodableSubset drops cues that fail pre-roll") {
 
 TEST_CASE("Cea608Encoder: comfortably spaced cues schedule successfully") {
         // Cue 1 ends at frame 60.  Cue 2 starts at frame 120.  Cue 2
-        // firstFrame = 120 - 5 = 115, well after cue 1's EDM at 61.
+        // firstFrame = 120 - 7 = 113, well after cue 1's EDM at 61.
+        // Pre-roll grew from 5 to 7 frames in E1 (added doubled ENM).
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
@@ -349,8 +370,8 @@ TEST_CASE("Cea608Encoder: comfortably spaced cues schedule successfully") {
         subs.append(Subtitle(tsFromMs(1000), tsFromMs(2000), "AB"));
         subs.append(Subtitle(tsFromMs(4000), tsFromMs(5000), "CD"));
         REQUIRE(enc.setSubtitles(subs).isOk());
-        // Cue 2: RCL at frame 115.
-        CHECK(tripleHasBytes(oneTriple(enc, 115), Cea608::RclB1, Cea608::RclB2));
+        // Cue 2: RCL at frame 113.
+        CHECK(tripleHasBytes(oneTriple(enc, 113), Cea608::RclB1, Cea608::RclB2));
 }
 
 // ============================================================================
@@ -361,11 +382,13 @@ TEST_CASE("Cea608Encoder::earliestStartFor returns the RCL frame for a cue") {
         Cea608Encoder::Config cfg;
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
-        // 2 chars at 30fps → 5 frames of pre-roll → first RCL at frame 25.
+        // 2-char pop-on pre-roll = 7 frames (2 RCL + 2 ENM + 2 PAC + 1
+        // char); the doubled ENM was added by E1.  First RCL at frame
+        // 30 - 7 = 23.
         Subtitle    cue(tsFromMs(1000), tsFromMs(2000), "AB");
         FrameNumber first = enc.earliestStartFor(cue);
         REQUIRE(first.isValid());
-        CHECK(first.value() == 25);
+        CHECK(first.value() == 23);
 }
 
 TEST_CASE("Cea608Encoder::earliestStartFor: pre-roll < 0 returns Unknown") {
@@ -508,6 +531,39 @@ TEST_CASE("Cea608Encoder[roll-up]: first cue lays out RUx + CR + PAC + chars") {
         for (int64_t f = 31; f < 90; ++f) {
                 CHECK(tripleHasBytes(oneTriple(enc, f), Cea608::NullB1, Cea608::NullB2));
         }
+}
+
+TEST_CASE("Cea608Encoder[roll-up]: TopCenter anchor places base row at the top region (§B.5)") {
+        // §B.5: roll-up base rows are 1..4 (top) or 12..15 (bottom).
+        // A top-anchored cue with rollUpRows=2 must emit a PAC for
+        // row 2 (visible rows 1, 2) — NOT the bottom default row 15.
+        Cea608Encoder::Config cfg;
+        cfg.frameRate = FrameRate(FrameRate::FPS_30);
+        cfg.mode = Cea608Encoder::Mode::RollUp;
+        cfg.rollUpRows = 2;
+        Cea608Encoder enc(cfg);
+        SubtitleList  subs;
+        Subtitle s(tsFromMs(1000), tsFromMs(2000), "AB");
+        s.setAnchor(SubtitleAnchor::TopCenter);
+        subs.append(s);
+        REQUIRE(enc.setSubtitles(subs).isOk());
+
+        // PAC at frame 28-29 — row 2.  Decode it back to confirm.
+        Cea708Cdp::CcData pacTriple = oneTriple(enc, 28);
+        const uint8_t pb1 = Cea608::stripParity(pacTriple.b1);
+        const uint8_t pb2 = Cea608::stripParity(pacTriple.b2);
+        Cea608::PacAttr pac;
+        REQUIRE(Cea608::decodePac(pb1, pb2, pac));
+        CHECK(pac.row == 2);
+
+        // Round-trip through the decoder to confirm.
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 90; ++f) {
+                dec.pushFrame(FrameNumber(f), tsFromMs(f * 1000 / 30), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "AB");
 }
 
 TEST_CASE("Cea608Encoder[roll-up]: subsequent cue skips RUx (just CR + PAC + chars)") {
@@ -780,15 +836,15 @@ TEST_CASE("Cea608Encoder: single-row cue identical to legacy single-PAC byte str
         cfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(cfg);
         SubtitleList  subs;
-        // 13-char cue, fits one row → pre-roll = 2 (RCL) + 2 (PAC) +
-        // 7 char pairs = 11 frames.
+        // 13-char cue, fits one row → pre-roll = 2 (RCL) + 2 (ENM) +
+        // 2 (PAC) + 7 char pairs = 13 frames (E1 added the ENM pair).
         subs.append(Subtitle(tsFromMs(3000), tsFromMs(6000), "Hello, world!"));
         REQUIRE(enc.setSubtitles(subs).isOk());
-        // Cue starts at frame 90; pre-roll begins at 90 - 11 = 79.
-        CHECK(tripleHasBytes(oneTriple(enc, 79), Cea608::RclB1, Cea608::RclB2));
-        CHECK(tripleHasBytes(oneTriple(enc, 80), Cea608::RclB1, Cea608::RclB2));
+        // Cue starts at frame 90; pre-roll begins at 90 - 13 = 77.
+        CHECK(tripleHasBytes(oneTriple(enc, 77), Cea608::RclB1, Cea608::RclB2));
+        CHECK(tripleHasBytes(oneTriple(enc, 78), Cea608::RclB1, Cea608::RclB2));
         // Exactly one distinct PAC row in the pre-roll window.
-        CHECK(countDistinctPacs(enc, 79, 89) == 1);
+        CHECK(countDistinctPacs(enc, 77, 89) == 1);
 }
 
 TEST_CASE("Cea608Encoder[roll-up]: multi-row wrap falls back to single row with warning") {
@@ -999,19 +1055,82 @@ TEST_CASE("Cea608Encoder: CC3 emits cc_type=1 (field 2)") {
         subs.append(Subtitle(tsFromMs(2000), tsFromMs(3000), "X"));
         REQUIRE(enc.setSubtitles(subs).isOk());
 
-        // Pre-roll RCL at some frame — verify cc_type=1 and the
-        // CC1-shaped first byte (channel bit clear).
+        // Pre-roll RCL at some frame — verify cc_type=1 (field 2) and
+        // the §8.4(a) F2 misc-control b1 = 0x15 (not 0x14: that's the
+        // F1 form; F2 remap is mandatory per §8.4(a) so a spec-strict
+        // receiver can route the RCL).
         bool sawCc3Rcl = false;
         for (int64_t f = 0; f < 60; ++f) {
                 Cea708Cdp::CcData t = oneTriple(enc, f);
                 if (t.type == 1
-                    && Cea608::stripParity(t.b1) == Cea608::Cc1MiscFirstByte
+                    && Cea608::stripParity(t.b1) == 0x15
                     && Cea608::stripParity(t.b2) == Cea608::MiscRCL) {
                         sawCc3Rcl = true;
                         break;
                 }
         }
         CHECK(sawCc3Rcl);
+}
+
+TEST_CASE("Cea608Encoder + Decoder: CC3 Row-15 PAC round-trips (no §8.4 over-remap)") {
+        // Regression for the §8.4 over-remap bug: the F2 misc-control
+        // remap (b1=0x14 → 0x15 / b1=0x1C → 0x1D) applies ONLY when b2
+        // is in 0x20..0x2F (the misc-control range).  The PAC for
+        // Row 15 (default Bottom anchor) uses b1=0x14, b2=0x70 — its
+        // b2 sits OUTSIDE the misc range, so the encoder must leave
+        // b1 alone.  Before the fix, b1 was remapped unconditionally,
+        // corrupting every CC3/CC4 cue anchored on rows 14/15.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.channel = Cea608Encoder::Channel::CC3;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        // Even-length text avoids the encoder's odd-pair pad appending
+        // a trailing space (round-trip alignment, not a §8.4 concern).
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "Row 15 CC3"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        // Walk the encoded byte stream and assert that for every PAC
+        // we emit (b1=0x14 / b1=0x1C with b2 in 0x40..0x7F), the b1
+        // stays at the F1 form — the §8.4 remap MUST NOT touch it.
+        // Misc-control pairs (b2 in 0x20..0x2F) still get the remap.
+        bool sawPacRow15 = false;
+        bool sawMiscRemap = false;
+        for (int64_t f = 0; f < 140; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (b2 >= 0x40 && b2 <= 0x7F) {
+                        // Looks like a PAC b2.  If b1 is 0x14 / 0x1C the
+                        // PAC was correctly NOT remapped.  Catch the
+                        // corrupted form too: 0x15 / 0x1D + b2 in the
+                        // PAC range is the bug signature.
+                        if (b1 == 0x14 || b1 == 0x1C) {
+                                if (b2 == 0x70) sawPacRow15 = true;
+                        } else if (b1 == 0x15 || b1 == 0x1D) {
+                                // bug signature — must not occur
+                                INFO("Spurious F2 remap on PAC: b1=", static_cast<int>(b1),
+                                     " b2=", static_cast<int>(b2));
+                                CHECK(false);
+                        }
+                }
+                if ((b1 == 0x15 || b1 == 0x1D) && b2 >= 0x20 && b2 <= 0x2F) {
+                        sawMiscRemap = true;
+                }
+        }
+        CHECK(sawPacRow15);     // Row 15 PAC must appear in F1 form on F2.
+        CHECK(sawMiscRemap);    // Misc-control bytes (RCL, EDM, EOC) still remap.
+
+        // End-to-end: decode the same stream through a CC3 decoder.
+        Cea608Decoder::Config decCfg;
+        decCfg.channel = Cea608Decoder::Channel::CC3;
+        Cea608Decoder dec(decCfg);
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == "Row 15 CC3");
 }
 
 TEST_CASE("Cea608Encoder + Decoder: CC2 round-trips end-to-end") {
@@ -1109,6 +1228,61 @@ TEST_CASE("Cea608Encoder + Decoder: time-shared CC1 + CC2 stream both decode ind
         CHECK(out2[0].text() == "Espanola");
 }
 
+TEST_CASE("Cea608Encoder + Decoder: CC3 special character (™) — §8.4 F2 misc remap NOT applied (E11)") {
+        // §8.4(a)(b) F2 remap (b1=0x14 → 0x15, b1=0x1C → 0x1D) is
+        // gated by @c b2 in @c 0x20..0x2F (the misc-control range).
+        // The Special Character control pair sits at @c (0x11, 0x30..0x3F)
+        // on CC1 — @c b2 is OUTSIDE the misc range, so a CC3 encoder
+        // MUST NOT remap the @c b1.  CC3 is field-2, channel-1: bit 3
+        // of the first byte stays clear (no channel OR), so the Special
+        // pair lands as @c (0x11, 0x34) on the wire (cc_type=1).
+        //
+        // This regression check protects against a future widening of
+        // the F2 remap to non-misc control families.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        encCfg.channel = Cea608Encoder::Channel::CC3;
+        Cea608Encoder enc(encCfg);
+        SubtitleList  in;
+        // Even-length text keeps the encoder's odd-pair pad from
+        // affecting the trailing fill.
+        in.append(Subtitle(tsAt30fps(60), tsAt30fps(120), "TM\xE2\x84\xA2"));
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        // Walk the wire and find the Special-character pair @c (0x11, 0x34).
+        // It MUST appear (no bit-3 OR, no §8.4 remap on b2=0x34) and the
+        // bug signature @c (0x19, *) MUST NOT.
+        bool sawSpecialPair = false;
+        bool sawBugSignature = false;
+        bool cc3OnFieldTwo = true;
+        for (int64_t f = 0; f < 140; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                const uint8_t b1 = Cea608::stripParity(t.b1);
+                const uint8_t b2 = Cea608::stripParity(t.b2);
+                if (b1 == 0x11 && b2 == 0x34) {
+                        sawSpecialPair = true;
+                        if (t.type != 1) cc3OnFieldTwo = false;
+                }
+                if (b1 == 0x19 && b2 >= 0x30 && b2 <= 0x3F) {
+                        sawBugSignature = true;
+                }
+        }
+        CHECK(sawSpecialPair);
+        CHECK_FALSE(sawBugSignature);
+        CHECK(cc3OnFieldTwo);
+
+        // End-to-end: the same stream decodes back through a CC3 decoder.
+        Cea608Decoder::Config decCfg;
+        decCfg.channel = Cea608Decoder::Channel::CC3;
+        Cea608Decoder dec(decCfg);
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].text() == String("TM\xE2\x84\xA2"));
+}
+
 TEST_CASE("Cea608Encoder + Decoder: CC2 special character (™) round-trips") {
         // Special-character control code for CC1 is (0x11, 0x34); for
         // CC2 it's (0x19, 0x34) — verifies the channel-bit OR-mask
@@ -1130,6 +1304,112 @@ TEST_CASE("Cea608Encoder + Decoder: CC2 special character (™) round-trips") {
         SubtitleList out = dec.finalize();
         REQUIRE(out.size() == 1);
         CHECK(out[0].text() == String("TM\xE2\x84\xA2"));
+}
+
+// ============================================================================
+// BT (Background Transparent) round-trip — SubtitleOpacity::Transparent
+// ============================================================================
+
+TEST_CASE("Cea608Encoder + Decoder: SubtitleOpacity::Transparent background round-trips via doubled BT") {
+        // §6.2 Table 3 BT (0x17, 0x2D): removes the background box.
+        // A span with backgroundOpacity == Transparent must emit a
+        // doubled BT pair and decode back with the same opacity.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan span("AB", false, false, false, Color());
+        span.setBackgroundOpacity(SubtitleOpacity::Transparent);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        Subtitle s(tsAt30fps(60), tsAt30fps(120), spans,
+                   SubtitleAnchor::Default, Rect2Di32(), String(), Metadata());
+        SubtitleList in;
+        in.append(s);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        // Walk the encoded wire — confirm a doubled BT pair exists.
+        int btCount = 0;
+        for (int64_t f = 0; f < 140; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                if (Cea608::stripParity(t.b1) == Cea608::Cc1ExtAttrB1
+                    && Cea608::stripParity(t.b2) == Cea608::BtB2) {
+                        ++btCount;
+                }
+        }
+        CHECK(btCount >= 2); // doubled per §B.14
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        // Find a span carrying Transparent bg opacity.
+        bool sawTransparent = false;
+        for (size_t i = 0; i < out[0].spans().size(); ++i) {
+                if (out[0].spans()[i].backgroundOpacity() == SubtitleOpacity::Transparent) {
+                        sawTransparent = true;
+                        break;
+                }
+        }
+        CHECK(sawTransparent);
+}
+
+// ============================================================================
+// FON (Flash On) round-trip — SubtitleOpacity::Flash through the encoder
+// ============================================================================
+
+TEST_CASE("Cea608Encoder + Decoder: SubtitleOpacity::Flash round-trips via doubled FON") {
+        // §6.2 FON (0x14, 0x28): sets the flash attribute for all
+        // subsequent characters until the next PAC clears it.  The
+        // encoder must emit a doubled FON pair when a span carries
+        // SubtitleOpacity::Flash; the decoder must recover the
+        // attribute on the recovered span.
+        Cea608Encoder::Config encCfg;
+        encCfg.frameRate = FrameRate(FrameRate::FPS_30);
+        Cea608Encoder enc(encCfg);
+
+        SubtitleSpan span("AB", false, false, false, Color());
+        span.setForegroundOpacity(SubtitleOpacity::Flash);
+        SubtitleSpan::List spans;
+        spans.pushToBack(span);
+        Subtitle s(tsAt30fps(60), tsAt30fps(120), spans,
+                   SubtitleAnchor::Default, Rect2Di32(), String(), Metadata());
+        SubtitleList in;
+        in.append(s);
+        REQUIRE(enc.setSubtitles(in).isOk());
+
+        // Walk the encoded wire and confirm a doubled FON pair lands
+        // on the schedule.  FON is 0x14 (Cc1MiscFirstByte) + 0x28
+        // (MiscFON).
+        int fonCount = 0;
+        for (int64_t f = 0; f < 140; ++f) {
+                Cea708Cdp::CcData t = oneTriple(enc, f);
+                if (Cea608::stripParity(t.b1) == Cea608::Cc1MiscFirstByte
+                    && Cea608::stripParity(t.b2) == Cea608::MiscFON) {
+                        ++fonCount;
+                }
+        }
+        CHECK(fonCount >= 2); // doubled per §B.14
+
+        Cea608Decoder dec;
+        for (int64_t f = 0; f < 140; ++f) {
+                dec.pushFrame(FrameNumber(f), tsAt30fps(f), enc.nextFrame(FrameNumber(f)));
+        }
+        SubtitleList out = dec.finalize();
+        REQUIRE(out.size() == 1);
+        REQUIRE(out[0].spans().size() >= 1);
+        // The recovered span carries the flash attribute.
+        bool sawFlash = false;
+        for (size_t i = 0; i < out[0].spans().size(); ++i) {
+                if (out[0].spans()[i].foregroundOpacity() == SubtitleOpacity::Flash) {
+                        sawFlash = true;
+                        break;
+                }
+        }
+        CHECK(sawFlash);
 }
 
 // ============================================================================
@@ -1315,7 +1595,7 @@ TEST_CASE("Cea608::encodeTabOffset round-trips T1 / T2 / T3 codes") {
         for (int n : {1, 2, 3}) {
                 uint8_t b1 = 0, b2 = 0;
                 Cea608::encodeTabOffset(n, b1, b2);
-                CHECK(b1 == Cea608::TabOffsetB1);
+                CHECK(b1 == Cea608::Cc1ExtAttrB1);
                 CHECK(b2 == static_cast<uint8_t>(0x20 + n));
                 CHECK(Cea608::isTabOffset(b1, b2));
                 int got = 0;
@@ -1334,9 +1614,9 @@ TEST_CASE("Cea608::encodeTabOffset clamps out-of-range values to [1,3]") {
 
 TEST_CASE("Cea608::isTabOffset rejects non-Tab-Offset pairs") {
         CHECK_FALSE(Cea608::isTabOffset(0x14, Cea608::MiscRCL));
-        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x40));
-        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x20));
-        CHECK_FALSE(Cea608::isTabOffset(Cea608::TabOffsetB1, 0x24));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::Cc1ExtAttrB1, 0x40));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::Cc1ExtAttrB1, 0x20));
+        CHECK_FALSE(Cea608::isTabOffset(Cea608::Cc1ExtAttrB1, 0x24));
 }
 
 // ============================================================================
@@ -1509,12 +1789,19 @@ TEST_CASE("Cea608Encoder + Decoder: TopCenter and MiddleCenter anchors round-tri
         CHECK(out[1].anchor() == SubtitleAnchor::MiddleCenter);
 }
 
-TEST_CASE("Cea608Encoder: coloured BottomCenter cue degrades to flush-left (PAC colour wins over indent)") {
-        // PAC's 4-bit subfield carries colour OR indent (mutually
-        // exclusive).  When the row needs both, the encoder
-        // preserves colour and drops horizontal positioning back to
-        // column 0.  Verify by looking for the coloured PAC byte
-        // and the *absence* of any Tab Offset codes.
+TEST_CASE("Cea608Encoder: coloured BottomCenter cue uses §B.4 PAC-indent + MR split (E4)") {
+        // §B.4: when a row needs BOTH a non-zero indent AND a coloured
+        // first span, the encoder splits across two control codes —
+        // PAC carries the indent (white, no italic) and a MR carries
+        // the colour.  Tab Offset spans (residual - 1) since the MR
+        // cell itself consumes one display column.  Previously the
+        // encoder collapsed this case to flush-left column 0 to
+        // preserve colour; the audit (E4) restores §B.4 conformance.
+        //
+        // "REDX" is 4 chars centred → targetCol = (32-4)/2 = 14.
+        // pacIndent = 12, residual = 2 → PAC(row 15, indent 12, white)
+        // + TabOffset(residual - 1 = 1) + MidRow(Red, italic=false,
+        // underline=false) + chars.
         Cea608Encoder::Config encCfg;
         encCfg.frameRate = FrameRate(FrameRate::FPS_30);
         Cea608Encoder enc(encCfg);
@@ -1526,21 +1813,39 @@ TEST_CASE("Cea608Encoder: coloured BottomCenter cue degrades to flush-left (PAC 
                            Rect2Di32(), String(), Metadata()));
         REQUIRE(enc.setSubtitles(in).isOk());
 
-        bool sawTabOffset = false;
+        bool sawIndentPac = false;
         bool sawColorPac = false;
+        bool sawT1 = false;
+        bool sawRedMidRow = false;
         for (int64_t f = 0; f < 90; ++f) {
                 Cea708Cdp::CcData t = oneTriple(enc, f);
                 const uint8_t b1 = Cea608::stripParity(t.b1);
                 const uint8_t b2 = Cea608::stripParity(t.b2);
-                if (Cea608::isTabOffset(b1, b2)) sawTabOffset = true;
                 if (Cea608::isPac(b1, b2)) {
                         Cea608::PacAttr pac;
-                        if (Cea608::decodePac(b1, b2, pac)
-                            && pac.color == Cea608::CaptionColor::Red) {
-                                sawColorPac = true;
+                        if (Cea608::decodePac(b1, b2, pac)) {
+                                if (pac.color == Cea608::CaptionColor::Red) sawColorPac = true;
+                                if (pac.indentCol == 12
+                                    && pac.color == Cea608::CaptionColor::White) {
+                                        sawIndentPac = true;
+                                }
+                        }
+                }
+                if (Cea608::isTabOffset(b1, b2) && b2 == Cea608::TabOffsetT1) sawT1 = true;
+                if (Cea608::isMidRow(b1, b2)) {
+                        Cea608::CaptionColor c = Cea608::CaptionColor::White;
+                        bool italic = false;
+                        bool underline = false;
+                        if (Cea608::decodeMidRow(b1, b2, c, italic, underline)
+                            && c == Cea608::CaptionColor::Red) {
+                                sawRedMidRow = true;
                         }
                 }
         }
-        CHECK(sawColorPac);
-        CHECK_FALSE(sawTabOffset);
+        // The PAC carries indent + White (NOT the coloured PAC the
+        // old encoder emitted).  Colour rides on the subsequent MR.
+        CHECK(sawIndentPac);
+        CHECK_FALSE(sawColorPac);
+        CHECK(sawT1);
+        CHECK(sawRedMidRow);
 }

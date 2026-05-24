@@ -237,14 +237,23 @@ TEST_CASE("SubtitleRenderer: full Cea608 round-trip of cue 8 still draws an unde
                 }
         }
         REQUIRE_FALSE(decoded.spans().isEmpty());
-        // Sanity: the decoded cue must carry exactly one
-        // underline-flagged span ("underlined") — same invariant
-        // the cea608 round-trip test enforces.
-        int underlineCount = 0;
+        // Sanity: the underlined "underlined" word survived.  Per
+        // §6.2 the mid-row code's cell takes the new style, so an
+        // additional styled-space span carrying underline=true may
+        // sit immediately before the word.  Allow 1 or 2.
+        int  underlineCount = 0;
+        bool sawUnderlinedWord = false;
         for (size_t i = 0; i < decoded.spans().size(); ++i) {
-                if (decoded.spans()[i].underline()) ++underlineCount;
+                if (decoded.spans()[i].underline()) {
+                        ++underlineCount;
+                        if (decoded.spans()[i].text() == "underlined") {
+                                sawUnderlinedWord = true;
+                        }
+                }
         }
-        REQUIRE(underlineCount == 1);
+        REQUIRE(sawUnderlinedWord);
+        REQUIRE(underlineCount >= 1);
+        REQUIRE(underlineCount <= 2);
 
         // Now render that decoded cue and check for underline
         // pixels.

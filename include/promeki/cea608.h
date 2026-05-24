@@ -28,7 +28,23 @@ PROMEKI_NAMESPACE_BEGIN
  * mapping used to select CC1..CC4.
  *
  * All byte values below are **pre-parity** — bit 7 is zero in the
- * constants.  Stamping odd parity is the encoder's responsibility
+ * constants.  Every decode helper in this struct (@ref decodePac,
+ * @ref decodeMidRow, @ref decodeMisc, @ref decodeBgAttribute, etc.)
+ * assumes its inputs have already been validated with
+ * @ref checkOddParity (or @ref checkOddParityPair for byte pairs) and
+ * stripped via @ref stripParity.  The decoders do **not** re-validate
+ * parity — feeding them bytes with bit 7 still set will misinterpret
+ * the upper bit as data and produce garbage.  The typical ingress
+ * pattern is:
+ *
+ * @code
+ * if (!Cea608::checkOddParityPair(b1, b2)) continue; // drop the pair
+ * const uint8_t v1 = Cea608::stripParity(b1);
+ * const uint8_t v2 = Cea608::stripParity(b2);
+ * if (Cea608::decodePac(v1, v2, pac)) { ... }
+ * @endcode
+ *
+ * Stamping odd parity is the encoder's responsibility
  * (via @ref withOddParity); the decoder strips it via
  * @ref stripParity after first validating with @ref checkOddParity.
  *
@@ -42,9 +58,10 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Inside a @ref Cea708Cdp::CcData triple, @c cc_type selects the
  * field (0 = field 1, 1 = field 2).  Within a field, the channel
- * is encoded in the first byte: the "channel bit" (bit 11 of the
- * 16-bit big-endian pair, i.e. bit 3 of byte 1 after parity strip)
- * is 0 for CC1/CC3 and 1 for CC2/CC4.
+ * is encoded in the first byte: bit 3 of byte 1 (after parity
+ * strip) is 0 for CC1/CC3 and 1 for CC2/CC4.  Equivalently, if
+ * the byte pair is viewed as a 16-bit big-endian word @c ((b1<<8)
+ * | b2), the channel bit lives at bit 11 of that 16-bit value.
  */
 struct Cea608 {
                 // -- Odd parity ---------------------------------------------
@@ -75,14 +92,62 @@ struct Cea608 {
                 /// @brief Strips bit 7 (the parity bit) from @p c.
                 static constexpr uint8_t stripParity(uint8_t c) { return static_cast<uint8_t>(c & 0x7F); }
 
+                /// @brief Validates odd parity on both bytes of a
+                ///        received pair.  Returns @c true only when
+                ///        both bytes pass @ref checkOddParity.  Use
+                ///        this at the field-2 / line-21 ingress before
+                ///        feeding pre-parity bytes (via @ref stripParity)
+                ///        into the higher-level decoders
+                ///        (@ref decodePac, @ref decodeMidRow,
+                ///        @ref decodeMisc, @ref decodeBgAttribute) —
+                ///        those decoders trust their inputs to already
+                ///        be parity-validated and parity-stripped per
+                ///        the contract documented on each function.
+                static constexpr bool checkOddParityPair(uint8_t b1, uint8_t b2) {
+                        return checkOddParity(b1) && checkOddParity(b2);
+                }
+
                 // -- Channel selectors (pre-parity first-byte values) -------
+
+                /// @brief Caption channel selector.  CC1 / CC2 ride in
+                ///        field 1 (@c cc_type = 0); CC3 / CC4 ride in
+                ///        field 2 (@c cc_type = 1).  Within a field,
+                ///        the second channel (CC2 / CC4) is encoded by
+                ///        bit 3 of the first control byte being set;
+                ///        CC1 / CC3 leave bit 3 clear.  Used by
+                ///        @ref applyChannel to retarget a CC1-shaped
+                ///        control pair onto its CC2 / CC3 / CC4 sibling.
+                enum class Channel : uint8_t {
+                        CC1 = 0, ///< Field 1, channel 1.
+                        CC2 = 1, ///< Field 1, channel 2.
+                        CC3 = 2, ///< Field 2, channel 1.
+                        CC4 = 3, ///< Field 2, channel 2.
+                };
+
+                /// @brief @c true when @p ch is the second channel of
+                ///        its field (CC2 or CC4) — those channels OR
+                ///        @c 0x08 into the first control byte to set
+                ///        the intra-field channel bit.
+                static constexpr bool isSecondChannelOfField(Channel ch) {
+                        return ch == Channel::CC2 || ch == Channel::CC4;
+                }
+
+                /// @brief @c true when @p ch lives in field 2 — those
+                ///        channels trigger the §8.4(a)(b) misc-control
+                ///        first-byte remap (@c 0x14 → @c 0x15,
+                ///        @c 0x1C → @c 0x1D).
+                static constexpr bool isFieldTwo(Channel ch) {
+                        return ch == Channel::CC3 || ch == Channel::CC4;
+                }
 
                 /// @brief First-byte value used for the field-1 / CC1
                 ///        miscellaneous control codes (RCL, EDM, EOC,
                 ///        …).  Combined with the per-code second byte
-                ///        below to form a full @c (b1, b2) pair.
-                ///        CC2/CC3/CC4 use different first bytes; not
-                ///        modelled here (v1 is CC1-only).
+                ///        below to form a full @c (b1, b2) pair.  Use
+                ///        @ref applyChannel to retarget the resulting
+                ///        pair onto CC2 / CC3 / CC4 (the encoder builds
+                ///        every control pair CC1-shaped and channel-
+                ///        shifts in a single post-pass).
                 static constexpr uint8_t Cc1MiscFirstByte = 0x14;
 
                 // -- Misc control codes (second-byte values) ----------------
@@ -308,13 +373,13 @@ struct Cea608 {
 
                 // -- Background attribute codes -----------------------------
                 //
-                // CEA-608-B background attribute codes (EIA-608-B §7.6) live
+                // Background attribute codes (CTA-608-E §6.2 Table 3) live
                 // at @c b1=0x10 (CC1 channel 1) with @c b2 in @c [0x20, 0x2F].
                 // They set the background colour and opacity for subsequent
                 // characters on the row.  Doubled per spec like other
-                // control codes.  This is a *post-EIA-608* extension —
-                // older 608 decoders that don't recognise them treat the
-                // bytes as no-ops, so emitting them is safe.
+                // control codes.  This is part of the §6.2 "extended"
+                // attribute set — older 608 decoders that don't recognise
+                // them treat the bytes as no-ops, so emitting them is safe.
 
                 /**
                  * @brief Encodes a CC1 background attribute code.
@@ -347,7 +412,39 @@ struct Cea608 {
                 static bool decodeBgAttribute(uint8_t b1, uint8_t b2, CaptionColor &outColor,
                                               bool &outSemiTransparent);
 
-                // -- Tab Offset codes (EIA-608-B §7.6) ---------------------
+                /**
+                 * @brief Returns @c true when @c (b1, b2) is the
+                 *        Background Transparent (BT) code per
+                 *        CTA-608-E §6.2 Table 3.
+                 *
+                 * BT lives in the @c (@ref Cc1ExtAttrB1 = 0x17,
+                 * @ref BtB2 = 0x2D) family — distinct from the
+                 * @c (0x10, 0x20..0x2F) BG colour family.  BT removes
+                 * the background box entirely; the previously-set BG
+                 * colour becomes invisible until the next BG attribute
+                 * or PAC re-establishes it.
+                 *
+                 * @param b1  First wire byte (pre-parity, CC1 form).
+                 * @param b2  Second wire byte (pre-parity).
+                 */
+                static bool isBt(uint8_t b1, uint8_t b2);
+
+                /**
+                 * @brief Encodes the Background Transparent (BT) code
+                 *        (CTA-608-E §6.2 Table 3).
+                 *
+                 * Produces (@ref Cc1ExtAttrB1, @ref BtB2).  BT carries
+                 * no parameters — it's a pure mode toggle that removes
+                 * the background box until the next BG attribute or PAC
+                 * re-establishes it.  Bytes are pre-parity; callers
+                 * stamp odd parity at emit time.
+                 */
+                static void encodeBackgroundTransparency(uint8_t &b1, uint8_t &b2) {
+                        b1 = Cc1ExtAttrB1;
+                        b2 = BtB2;
+                }
+
+                // -- Tab Offset codes (CTA-608-E §6.2 Table 3) -------------
                 //
                 // Tab Offset codes nudge the pen position 1, 2, or 3
                 // columns to the right of where a PAC just landed it.
@@ -358,9 +455,14 @@ struct Cea608 {
                 // horizontal half (Center / Right) when the cue's
                 // computed start column isn't already a multiple of 4.
 
-                /// @brief First wire byte for a CC1 Tab Offset code.
-                ///        CC2 form is @c 0x1F (channel-bit OR'd in).
-                static constexpr uint8_t TabOffsetB1 = 0x17;
+                /// @brief First wire byte for the CC1 Tab Offset code
+                ///        family AND the CC1 Foreground / Background
+                ///        Attribute code family (BT, FA, FAU).  Both
+                ///        families share @c b1 = @c 0x17 per CTA-608-E
+                ///        §6.2 Table 3 — the second byte disambiguates
+                ///        them.  CC2 form is @c 0x1F (channel-bit OR'd
+                ///        in via @ref applyChannel).
+                static constexpr uint8_t Cc1ExtAttrB1 = 0x17;
 
                 /// @brief Second-byte values for the three Tab Offset
                 ///        codes — T1 advances the pen by 1 column, T2
@@ -378,9 +480,20 @@ struct Cea608 {
                  * pre-parity (bit 7 zero); callers stamp odd parity
                  * via @ref withOddParity at emit time.
                  *
+                 * **Caller responsibility (CEA-608-E Annex B §B.4):**
+                 * "Tab Offsets shall not move the cursor beyond the 32nd
+                 * column of the current row."  This function does not
+                 * know the cursor's current column, so it cannot enforce
+                 * the rule itself — the calling pen-position layer
+                 * must guarantee that the most recent PAC's indent
+                 * plus this offset stays in @c [0, 32].  The encoder
+                 * in @ref Cea608Encoder honours this via its row-layout
+                 * clamp that caps the final column at 31 before
+                 * splitting into @c (pacIndent, residual) pairs.
+                 *
                  * @param columns Column shift (1, 2, or 3).
                  * @param[out] b1 First wire byte (always
-                 *                @ref TabOffsetB1 = @c 0x17).
+                 *                @ref Cc1ExtAttrB1 = @c 0x17).
                  * @param[out] b2 Second wire byte (one of
                  *                @ref TabOffsetT1 / @ref TabOffsetT2 /
                  *                @ref TabOffsetT3).
@@ -404,6 +517,67 @@ struct Cea608 {
                  */
                 static bool decodeTabOffset(uint8_t b1, uint8_t b2, int &outColumns);
 
+                // -- Foreground Attribute Codes (FA / FAU, BT) --------------
+                //
+                // CTA-608-E §6.2 Table 3: optional "extended decoder"
+                // codes that supplement the standard 7-colour PAC + mid-
+                // row foreground palette with a Black-foreground entry,
+                // and supplement the BG attribute set with a "Background
+                // Transparent" entry.  All three live in CC1's @c 0x17
+                // first-byte family (CC2 form uses @c 0x1F via
+                // @ref applyChannel).
+                //
+                // Per spec, each FA / FAU pair is preceded by a literal
+                // space and "incorporates an automatic BS" on extended
+                // decoders so the visual effect is a single space
+                // tinted with the new colour.  The encoder honours this
+                // when emitting Black-foreground spans; the decoder
+                // applies the colour to subsequent characters without
+                // synthesising the BS (the upstream space + BS pair
+                // are a backward-compat hack for standard decoders).
+                //
+                // Field 2 doesn't remap these — §8.4(a)(b) only covers
+                // @c 0x14 ↔ 0x15 and @c 0x1C ↔ 0x1D.  CC3 / CC4 use
+                // the same 0x17 / 0x1F first bytes as CC1 / CC2.
+
+                /// @brief Background Transparent (BT) — second byte.
+                static constexpr uint8_t BtB2 = 0x2D;
+                /// @brief Foreground Black, no underline (FA) — second byte.
+                static constexpr uint8_t FaB2 = 0x2E;
+                /// @brief Foreground Black, underline (FAU) — second byte.
+                static constexpr uint8_t FauB2 = 0x2F;
+
+                /**
+                 * @brief Encodes the Foreground Black attribute code
+                 *        (CTA-608-E §6.2 Table 3).
+                 *
+                 * Produces (@ref Cc1ExtAttrB1, @ref FaB2) when @p underline
+                 * is false (mnemonic FA) or (@ref Cc1ExtAttrB1, @ref FauB2)
+                 * when true (FAU).  Bytes are pre-parity; callers
+                 * stamp odd parity at emit time.
+                 */
+                static void encodeFgBlack(bool underline, uint8_t &b1, uint8_t &b2) {
+                        b1 = Cc1ExtAttrB1;
+                        b2 = underline ? FauB2 : FaB2;
+                }
+
+                /// @brief Returns @c true when @c (b1, b2) is a CC1 FA
+                ///        or FAU code (Foreground Black, with or
+                ///        without underline).
+                static bool isFgBlack(uint8_t b1, uint8_t b2) {
+                        return b1 == Cc1ExtAttrB1 && (b2 == FaB2 || b2 == FauB2);
+                }
+
+                /// @brief Decodes an FA / FAU code.  Returns @c true
+                ///        and sets @p outUnderline on success; @c false
+                ///        when @c (b1, b2) is not a Foreground Black
+                ///        code.
+                static bool decodeFgBlack(uint8_t b1, uint8_t b2, bool &outUnderline) {
+                        if (!isFgBlack(b1, b2)) return false;
+                        outUnderline = (b2 == FauB2);
+                        return true;
+                }
+
                 // -- Null pair (no-op filler) -------------------------------
 
                 /// @brief CEA-608 null filler.  Pre-parity @c (0x00, 0x00);
@@ -413,6 +587,103 @@ struct Cea608 {
                 ///        nothing to send, ignored by the decoder.
                 static constexpr uint8_t NullB1 = 0x00;
                 static constexpr uint8_t NullB2 = 0x00;
+
+                // -- Doubled-control-code detection -------------------------
+
+                /// @brief @c true when @c (b1, b2) is a control pair (as
+                ///        opposed to an informational character pair).
+                ///        CEA-608 control pairs have @c b1 in @c 0x10..0x1F;
+                ///        informational pairs have @c b1 in @c 0x20..0x7F.
+                ///        @c (0x00, 0x00) (the null filler) returns
+                ///        @c false.  Inputs are pre-parity.
+                static constexpr bool isControlPair(uint8_t b1, uint8_t b2) {
+                        (void)b2;
+                        return b1 >= 0x10 && b1 <= 0x1F;
+                }
+
+                // -- Channel retargeting (CTA-608-E §8.4) -------------------
+
+                /**
+                 * @brief Retargets a CC1-shaped pre-parity @c (b1, b2)
+                 *        pair onto the @p channel form.
+                 *
+                 * Encapsulates the §8.4(a)(b) channel-bit OR + field-2
+                 * misc-control first-byte remap that's otherwise
+                 * scattered across every per-control encoder.  Two
+                 * mechanical steps:
+                 *
+                 *   1. For CC2 / CC4 (second channel of the field),
+                 *      OR @c 0x08 into @p b1 when it's in the control
+                 *      range @c 0x10..0x1F.  This is the intra-field
+                 *      channel selector.
+                 *   2. For CC3 / CC4 (field 2), remap the misc-control
+                 *      first byte: @c 0x14 → @c 0x15 and @c 0x1C →
+                 *      @c 0x1D.  This remap is *gated on the misc-
+                 *      control b2 range* (@c 0x20..0x2F) — PACs at row
+                 *      14 / 15 also use @c b1 = 0x14 / 0x1C but their
+                 *      b2 is in @c [0x40, 0x7F], so they MUST NOT be
+                 *      remapped.  Other §6.2 control families (PAC,
+                 *      mid-row, BG attribute, Tab Offset, FA/FAU/BT,
+                 *      Special / Extended characters) keep the same
+                 *      first byte in both fields per spec.
+                 *
+                 * @p b1 outside the control range is returned
+                 * unchanged.  Null filler @c (0x00, 0x00) and
+                 * informational character pairs (@p b1 >= 0x20) are
+                 * also returned unchanged — the channel selector lives
+                 * only on control bytes.
+                 *
+                 * @param b1      First wire byte (pre-parity, CC1 form).
+                 * @param b2      Second wire byte (pre-parity); needed
+                 *                only to gate the misc-control remap.
+                 * @param channel Target channel.
+                 * @return The remapped first byte.
+                 */
+                static constexpr uint8_t applyChannel(uint8_t b1, uint8_t b2, Channel channel) {
+                        if (b1 < 0x10 || b1 > 0x1F) return b1;
+                        uint8_t out = b1;
+                        if (isSecondChannelOfField(channel)) {
+                                out = static_cast<uint8_t>(out | 0x08);
+                        }
+                        if (isFieldTwo(channel) && b2 >= 0x20 && b2 <= 0x2F) {
+                                if (out == 0x14) out = 0x15;
+                                else if (out == 0x1C) out = 0x1D;
+                        }
+                        return out;
+                }
+
+                /**
+                 * @brief Retargets a CC1-shaped @c (b1, b2) pair onto
+                 *        @p channel in place.
+                 *
+                 * Convenience wrapper around the value-returning
+                 * @ref applyChannel — modifies @p b1 directly.  @p b2
+                 * is read-only (used only to gate the §8.4(a)(b) misc-
+                 * control remap on field 2).
+                 */
+                static constexpr void applyChannelInPlace(uint8_t &b1, uint8_t b2, Channel channel) {
+                        b1 = applyChannel(b1, b2, channel);
+                }
+
+                // -- XDS framing predicates (CTA-608-E §9.3) ----------------
+
+                /// @brief @c true when @p b1 is an XDS Class Start or
+                ///        Class Continue control byte (@c 0x01..0x0E).
+                ///        XDS framing lives in field 2; callers must
+                ///        also filter by @c cc_type == 1 before
+                ///        consulting this predicate.
+                static constexpr bool isXdsControl(uint8_t b1) {
+                        return b1 >= 0x01 && b1 <= 0x0E;
+                }
+
+                /// @brief @c true when @c (b1, b2) is the XDS
+                ///        End / Checksum pair (@p b1 == @c 0x0F).  @p b2
+                ///        is the checksum byte; this predicate does not
+                ///        validate it.
+                static constexpr bool isXdsTerminator(uint8_t b1, uint8_t b2) {
+                        (void)b2;
+                        return b1 == 0x0F;
+                }
 
                 // -- Predicates ---------------------------------------------
 
@@ -429,6 +700,82 @@ struct Cea608 {
                 }
 
                 Cea608() = delete;
+};
+
+/**
+ * @brief Stateful filter that collapses doubled CEA-608 control pairs.
+ * @ingroup proav
+ *
+ * CEA-608 mandates that every control-code pair (@c b1 in @c 0x10..0x1F)
+ * is transmitted twice in immediate succession for error protection
+ * (§6.1).  Receivers must recognise the second copy and drop it, so
+ * each logical control event fires only once.  This struct encapsulates
+ * that rule for external consumers who walk the byte-pair stream
+ * outside of @ref Cea608Decoder.
+ *
+ * Usage:
+ *
+ * @code
+ * Cea608PairDeduper dd;
+ * for (auto [b1, b2] : pairs) {
+ *     if (!dd.accept(b1, b2)) continue; // skip second copy of a doubled control
+ *     // ... process (b1, b2) ...
+ * }
+ * @endcode
+ *
+ * The filter tolerates the real-world case where a control pair arrives
+ * without its duplicate (encoders sometimes drop the second copy on a
+ * busy frame): a *single* control pair still triggers @ref accept
+ * returning @c true.  An interleaved informational pair between two
+ * identical control pairs also resets the rule, matching §6.1's
+ * "immediate" requirement.
+ *
+ * Reset via @ref reset between independent caption streams (e.g.
+ * when switching channels) so a control pair at the new stream's
+ * start doesn't get suppressed by stale state.
+ */
+struct Cea608PairDeduper {
+                /// @brief Returns @c true when the caller should process
+                ///        @c (b1, b2), @c false when it's the spec-required
+                ///        immediate duplicate of the previous control pair
+                ///        and should be ignored.  Always @c true for
+                ///        informational pairs.
+                bool accept(uint8_t b1, uint8_t b2) {
+                        if (!Cea608::isControlPair(b1, b2)) {
+                                // Informational pair clears the dedup window;
+                                // a control pair following an info pair is
+                                // always a fresh logical event.
+                                _hasPending = false;
+                                return true;
+                        }
+                        if (_hasPending && b1 == _lastB1 && b2 == _lastB2) {
+                                // Second copy of the same control pair —
+                                // suppress it and clear the window so a
+                                // *third* copy (rare, but seen in real
+                                // streams) is recognised as a new event.
+                                _hasPending = false;
+                                return false;
+                        }
+                        _lastB1 = b1;
+                        _lastB2 = b2;
+                        _hasPending = true;
+                        return true;
+                }
+
+                /// @brief Clears the dedup window.  Call when switching
+                ///        between independent caption channels so the
+                ///        first control pair on the new channel isn't
+                ///        suppressed by stale state from the prior one.
+                void reset() {
+                        _lastB1 = 0;
+                        _lastB2 = 0;
+                        _hasPending = false;
+                }
+
+        private:
+                uint8_t _lastB1 = 0;
+                uint8_t _lastB2 = 0;
+                bool    _hasPending = false;
 };
 
 PROMEKI_NAMESPACE_END

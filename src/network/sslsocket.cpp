@@ -21,6 +21,8 @@ PROMEKI_DEBUG(SslSocket);
 // Pimpl: hold mbedTLS state out of the public header.
 // ============================================================
 struct SslSocket::Impl {
+                PROMEKI_SHARED_FINAL(Impl)
+
                 mbedtls_ssl_context ssl{};
                 bool                sslReady = false; ///< after mbedtls_ssl_setup
                 bool                sentClose = false;
@@ -69,17 +71,19 @@ namespace {
 // SslSocket
 // ============================================================
 
-SslSocket::SslSocket(ObjectBase *parent) : TcpSocket(parent), _d(new Impl()) {}
+SslSocket::SslSocket(ObjectBase *parent)
+    : TcpSocket(parent), _d(SharedPtr<Impl>::create()) {}
 
 SslSocket::~SslSocket() {
         if (_state == Encrypted && !_d->sentClose) {
                 // Best-effort close_notify.  Ignore errors — the
                 // socket is going away regardless.
-                mbedtls_ssl_close_notify(&_d->ssl);
-                _d->sentClose = true;
+                Impl *d = _d.modify();
+                mbedtls_ssl_close_notify(&d->ssl);
+                d->sentClose = true;
         }
-        delete _d;
-        _d = nullptr;
+        // _d's SharedPtr destructor releases the Impl when the last
+        // reference drops — no explicit delete needed.
 }
 
 void SslSocket::setSslContext(SslContext ctx) {
@@ -128,22 +132,23 @@ Error SslSocket::startEncryption(const String &hostname) {
         mbedtls_ssl_conf_authmode(
                 conf, _ctx.verifyPeer() ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_NONE);
 
-        int rc = mbedtls_ssl_setup(&_d->ssl, conf);
+        Impl *d = _d.modify();
+        int   rc = mbedtls_ssl_setup(&d->ssl, conf);
         if (rc != 0) {
                 promekiWarn("SslSocket: ssl_setup failed: %s", mbedtlsErrText(rc).cstr());
                 return Error::LibraryFailure;
         }
-        _d->sslReady = true;
+        d->sslReady = true;
 
         if (!hostname.isEmpty()) {
-                rc = mbedtls_ssl_set_hostname(&_d->ssl, hostname.cstr());
+                rc = mbedtls_ssl_set_hostname(&d->ssl, hostname.cstr());
                 if (rc != 0) {
                         promekiWarn("SslSocket: set_hostname failed: %s", mbedtlsErrText(rc).cstr());
                         return Error::LibraryFailure;
                 }
         }
 
-        mbedtls_ssl_set_bio(&_d->ssl, this, bioSend, bioRecv, nullptr);
+        mbedtls_ssl_set_bio(&d->ssl, this, bioSend, bioRecv, nullptr);
         _state = Handshaking;
         return performHandshakeStep();
 }
@@ -188,14 +193,15 @@ Error SslSocket::startServerEncryption() {
                 mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_NONE);
         }
 
-        int rc = mbedtls_ssl_setup(&_d->ssl, conf);
+        Impl *d = _d.modify();
+        int   rc = mbedtls_ssl_setup(&d->ssl, conf);
         if (rc != 0) {
                 promekiWarn("SslSocket: ssl_setup failed: %s", mbedtlsErrText(rc).cstr());
                 return Error::LibraryFailure;
         }
-        _d->sslReady = true;
+        d->sslReady = true;
 
-        mbedtls_ssl_set_bio(&_d->ssl, this, bioSend, bioRecv, nullptr);
+        mbedtls_ssl_set_bio(&d->ssl, this, bioSend, bioRecv, nullptr);
         _state = Handshaking;
         return performHandshakeStep();
 }
@@ -203,11 +209,12 @@ Error SslSocket::startServerEncryption() {
 Error SslSocket::performHandshakeStep() {
         if (_state != Handshaking) return Error::Invalid;
 
+        Impl *d = _d.modify();
         // mbedtls_ssl_handshake drives the full handshake but
         // suspends with MBEDTLS_ERR_SSL_WANT_READ / WRITE on a
         // non-blocking BIO.  Callers re-invoke when the loop says
         // the fd is ready in the corresponding direction.
-        const int rc = mbedtls_ssl_handshake(&_d->ssl);
+        const int rc = mbedtls_ssl_handshake(&d->ssl);
         if (rc == 0) {
                 _state = Encrypted;
                 encryptedSignal.emit();
@@ -215,7 +222,7 @@ Error SslSocket::performHandshakeStep() {
                 // application can log / decide.  When verifyPeer was
                 // disabled the handshake completes despite errors —
                 // we still report them so debug builds see them.
-                const uint32_t flags = mbedtls_ssl_get_verify_result(&_d->ssl);
+                const uint32_t flags = mbedtls_ssl_get_verify_result(&d->ssl);
                 if (flags != 0) {
                         StringList errs;
                         if (flags & MBEDTLS_X509_BADCERT_EXPIRED) errs.pushToBack("certificate expired");
@@ -243,7 +250,12 @@ Error SslSocket::continueHandshake() {
 
 String SslSocket::peerCertificateSubject() const {
         if (_state != Encrypted) return String();
-        const mbedtls_x509_crt *peer = mbedtls_ssl_get_peer_cert(&_d->ssl);
+        // mbedtls_ssl_get_peer_cert takes a non-const ssl pointer but
+        // the call only reads cached peer state — safe to const_cast
+        // off the read-only @c _d view here so the accessor stays
+        // const.  (Same convention applies to @ref bytesAvailable.)
+        Impl *d = const_cast<Impl *>(_d.operator->());
+        const mbedtls_x509_crt *peer = mbedtls_ssl_get_peer_cert(&d->ssl);
         if (peer == nullptr) return String();
         char buf[512] = {0};
         int  rc = mbedtls_x509_dn_gets(buf, sizeof(buf), &peer->subject);
@@ -257,7 +269,9 @@ String SslSocket::peerCertificateSubject() const {
 
 int64_t SslSocket::read(void *data, int64_t maxSize) {
         if (_state != Encrypted) return TcpSocket::read(data, maxSize);
-        const int rc = mbedtls_ssl_read(&_d->ssl, static_cast<unsigned char *>(data), static_cast<size_t>(maxSize));
+        Impl     *d = _d.modify();
+        const int rc =
+                mbedtls_ssl_read(&d->ssl, static_cast<unsigned char *>(data), static_cast<size_t>(maxSize));
         if (rc > 0) return rc;
         if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 errno = EAGAIN;
@@ -273,8 +287,9 @@ int64_t SslSocket::read(void *data, int64_t maxSize) {
 
 int64_t SslSocket::write(const void *data, int64_t maxSize) {
         if (_state != Encrypted) return TcpSocket::write(data, maxSize);
+        Impl     *d = _d.modify();
         const int rc =
-                mbedtls_ssl_write(&_d->ssl, static_cast<const unsigned char *>(data), static_cast<size_t>(maxSize));
+                mbedtls_ssl_write(&d->ssl, static_cast<const unsigned char *>(data), static_cast<size_t>(maxSize));
         if (rc > 0) return rc;
         if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
                 errno = EAGAIN;
@@ -290,14 +305,17 @@ int64_t SslSocket::bytesAvailable() const {
         // mbedtls_ssl_get_bytes_avail reports plaintext bytes that
         // have already been decoded and are sitting in the SSL
         // input buffer — exactly the right answer for callers that
-        // poll-then-read.
-        return static_cast<int64_t>(mbedtls_ssl_get_bytes_avail(&_d->ssl));
+        // poll-then-read.  Takes a non-const pointer but only reads
+        // cached state; const_cast through the read-only @c _d view.
+        Impl *d = const_cast<Impl *>(_d.operator->());
+        return static_cast<int64_t>(mbedtls_ssl_get_bytes_avail(&d->ssl));
 }
 
 Error SslSocket::close() {
-        if (_d != nullptr && _state == Encrypted && !_d->sentClose) {
-                mbedtls_ssl_close_notify(&_d->ssl);
-                _d->sentClose = true;
+        if (_state == Encrypted && !_d->sentClose) {
+                Impl *d = _d.modify();
+                mbedtls_ssl_close_notify(&d->ssl);
+                d->sentClose = true;
         }
         _state = NotEncrypted;
         return TcpSocket::close();

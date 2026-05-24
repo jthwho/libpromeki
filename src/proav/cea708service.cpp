@@ -208,22 +208,42 @@ Result<List<Cea708Service>> Cea708DtvccPacket::parsePayloadBytes(const void *dat
                 const uint8_t serviceNum = static_cast<uint8_t>((hdr >> 5) & 0x07);
                 const uint8_t blockSize = static_cast<uint8_t>(hdr & 0x1F);
                 if (serviceNum == 0 && blockSize == 0) {
-                        // Null block: terminator.  Spec says the
-                        // remainder of the packet is padding 0xFF — we
-                        // stop parsing here.
-                        out.pushToBack(Cea708Service());
+                        // Null block: terminator per §6.2.5.  Remainder
+                        // of the packet is padding (0x00 or 0xFF) and
+                        // should not appear in the parsed block list.
                         return makeResult<List<Cea708Service>>(std::move(out));
                 }
                 uint8_t effectiveServiceNum = serviceNum;
                 if (serviceNum == 0x07) {
-                        // Extended header: next byte carries the full
-                        // 6-bit service_number_ext.
+                        // Extended header (CEA-708-E §6.2.2): next byte
+                        // carries 2 reserved (null_fill) bits in bits 7..6
+                        // followed by the 6-bit service_number_extension
+                        // in bits 5..0.  service_number_extension must be
+                        // >= 7 because services 1..6 use the standard
+                        // (non-extended) header form.
                         if (i >= size) {
                                 promekiWarn("Cea708DtvccPacket::parsePayloadBytes: truncated "
                                             "extended block header");
                                 return makeError<List<Cea708Service>>(Error::ParseFailed);
                         }
-                        effectiveServiceNum = static_cast<uint8_t>(p[i++] & 0x3F);
+                        const uint8_t extByte = p[i++];
+                        // Warn (don't fail) on non-zero reserved bits —
+                        // some encoders leave them set; the data bits are
+                        // still meaningful.
+                        if ((extByte & 0xC0) != 0) {
+                                promekiWarn("Cea708DtvccPacket::parsePayloadBytes: extended "
+                                            "service header reserved bits (b7..b6) = 0x%X, "
+                                            "expected 0x0",
+                                            static_cast<unsigned>((extByte >> 6) & 0x03));
+                        }
+                        effectiveServiceNum = static_cast<uint8_t>(extByte & 0x3F);
+                        if (effectiveServiceNum < 7) {
+                                promekiWarn("Cea708DtvccPacket::parsePayloadBytes: extended "
+                                            "header reports service_number=%u, which should "
+                                            "use the standard (non-extended) header form",
+                                            static_cast<unsigned>(effectiveServiceNum));
+                                return makeError<List<Cea708Service>>(Error::ParseFailed);
+                        }
                 }
                 if (i + blockSize > size) {
                         promekiWarn("Cea708DtvccPacket::parsePayloadBytes: block size %u "
@@ -255,33 +275,57 @@ Cea708Cdp::CcDataList Cea708DtvccPacket::toCcData() const {
                             payloadSize, MaxPayloadBytes);
         }
         // Header byte: sequence_number (2 bits) << 6 | packet_size_code (6 bits).
-        // packet_size_code carries (payload_size + 1) mod 128 — spec
-        // value 0 means 128.  For our payloads <= 127 bytes we just
-        // emit payload_size + 1; if payload_size == 0 we still emit
-        // a header (size_code=1) plus a null filler byte.
-        const uint8_t packetSizeCode =
-                static_cast<uint8_t>((payloadSize == 0) ? 1u : ((payloadSize + 1u) & 0x3F));
+        //
+        // Per CEA-708-E §5.1, packet_size_code encodes the number of
+        // byte PAIRS in the CCP including the header byte:
+        //   if (packet_size_code == 0): packet_data_size = 127 (n=128)
+        //   else:                       packet_data_size = (psc*2) - 1
+        // So total wire byte count n = packet_size_code * 2 (with the
+        // special case psc=0 meaning n=128).  Since each cc_data triple
+        // carries 2 wire bytes, ceil((1 + payloadSize) / 2) triples
+        // are needed; pad with 0xFF when payloadSize doesn't fill the
+        // last triple.
+        size_t  ccpTotalBytes = 1 + payloadSize;
+        if (ccpTotalBytes & 1) ++ccpTotalBytes; // pad to even
+        uint8_t packetSizeCode;
+        if (ccpTotalBytes >= 128) {
+                packetSizeCode = 0; // spec's max-encoded value
+        } else if (ccpTotalBytes <= 2) {
+                // Minimum legal CCP is 1 header + 1 byte = 2 wire bytes
+                // (psc=1, packet_data_size=1).  Even a zero-payload
+                // packet emits a single 0xFF padding byte so the wire
+                // form remains parseable.
+                packetSizeCode = 1;
+        } else {
+                packetSizeCode = static_cast<uint8_t>((ccpTotalBytes / 2) & 0x3F);
+        }
         const uint8_t header = static_cast<uint8_t>((_sequenceNumber & 0x03) << 6 | packetSizeCode);
 
         const auto *p = static_cast<const uint8_t *>(payload.data());
-        bool        first = true;
         // The wire layout for the per-packet triples is:
         //   triple 0: cc_type=2  (start)   bytes = [header, p[0]]
         //   triple k: cc_type=3  (data)    bytes = [p[2k-1], p[2k]]
-        // for total ceil((payloadSize + 1) / 2) triples.
+        // for total ceil((payloadSize + 1) / 2) triples — derived from
+        // ccpTotalBytes above so the wire byte count matches the
+        // packet_size_code we just stamped into the header.
         size_t i = 0;
-        while (true) {
-                if (first) {
+        // Pad with 0x00 (null service block header) per §6.2.5 ("A
+        // Null Service Block Header shall be inserted as the last
+        // Service Block in the Caption Channel Packet if space
+        // permits").  This lets a spec-compliant service-block parser
+        // terminate cleanly when it hits the padding bytes instead of
+        // misinterpreting 0xFF as a malformed extended service header.
+        const size_t totalTriples = ccpTotalBytes / 2;
+        for (size_t t = 0; t < totalTriples; ++t) {
+                if (t == 0) {
                         const uint8_t b1 = header;
-                        const uint8_t b2 = (i < payloadSize) ? p[i++] : 0xFF;
+                        const uint8_t b2 = (i < payloadSize) ? p[i++] : 0x00;
                         out.pushToBack(Cea708Cdp::CcData{true, CcTypePacketStart, b1, b2});
-                        first = false;
                 } else {
-                        const uint8_t b1 = (i < payloadSize) ? p[i++] : 0xFF;
-                        const uint8_t b2 = (i < payloadSize) ? p[i++] : 0xFF;
+                        const uint8_t b1 = (i < payloadSize) ? p[i++] : 0x00;
+                        const uint8_t b2 = (i < payloadSize) ? p[i++] : 0x00;
                         out.pushToBack(Cea708Cdp::CcData{true, CcTypePacketData, b1, b2});
                 }
-                if (i >= payloadSize) break;
         }
         return out;
 }
@@ -314,15 +358,17 @@ Result<Cea708DtvccPacket> Cea708DtvccPacket::fromCcData(const Cea708Cdp::CcDataL
         const uint8_t header = bytes[0];
         const uint8_t seq = static_cast<uint8_t>((header >> 6) & 0x03);
         uint8_t       sizeCode = static_cast<uint8_t>(header & 0x3F);
-        const size_t  packetSize = (sizeCode == 0) ? 128u : sizeCode;
-        if (packetSize == 0 || packetSize > bytes.size()) {
+        // Per CEA-708-E §5.1: packet_size_code is in byte PAIRS,
+        // including the header byte.  packet_data_size = (psc*2) - 1
+        // except psc=0 which means 127 (full 128-byte packet).
+        const size_t packetSize = (sizeCode == 0) ? 128u : static_cast<size_t>(sizeCode) * 2u;
+        const size_t payloadSize = packetSize - 1;
+        if (packetSize > bytes.size()) {
                 promekiWarn("Cea708DtvccPacket::fromCcData: packet size %zu (size_code=%u) "
                             "exceeds available %zu bytes",
                             packetSize, static_cast<unsigned>(sizeCode), bytes.size());
                 return makeError<Cea708DtvccPacket>(Error::ParseFailed);
         }
-        // Payload bytes follow the header byte; payloadSize = packetSize - 1.
-        const size_t payloadSize = packetSize - 1;
         Result<List<Cea708Service>> blocksR =
                 parsePayloadBytes(bytes.data() + 1, payloadSize);
         if (blocksR.second().isError()) {

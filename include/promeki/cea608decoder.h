@@ -13,9 +13,11 @@
 #include <cstdint>
 #include <promeki/captiondecoder.h>
 #include <promeki/cea608encoder.h>
+#include <promeki/cea608xds.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/enums.h>
 #include <promeki/framenumber.h>
+#include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/string.h>
@@ -105,6 +107,52 @@ struct Cea608DecoderImpl; // Pimpl — defined in cea608decoder.cpp.
  * Special Characters via @c (0x11, 0x30..0x3F), and the two
  * 32-glyph Extended Western European tables via
  * @c (0x12 / 0x13, 0x20..0x3F).
+ *
+ * @par What's not implemented
+ *
+ * The following CEA-608-E features are out of scope of this
+ * caption decoder.  Callers needing them should compose a separate
+ * extractor or post-processor:
+ *
+ *  - **Text mode (T1..T4, §7 of the spec) — surfacing**.  Caption
+ *    decoders do not emit text-mode cues.  @ref TR (Text Restart,
+ *    @c 0x14 0x2A) and @ref RTD (Resume Text Display, @c 0x14 0x2B)
+ *    ARE recognised, however, as text-channel mode-establishing
+ *    codes: their receipt flips the decoder's character-attribution
+ *    context to "not our channel" so subsequent text-mode bytes
+ *    don't bleed into the caption stream.  In digital delivery
+ *    workflows (ATSC A/53, ATSC A/65, RTP-40 / SMPTE 334-2)
+ *    text mode is virtually extinct — modern receivers use
+ *    CEA-708 service blocks for non-caption text data — so the
+ *    omission of full text-mode decode is not a practical
+ *    compliance gap.  Callers needing T1..T4 content can compose
+ *    a dedicated text-mode extractor on top of the raw byte stream.
+ *
+ * @par What's now implemented
+ *
+ *  - **XDS** (eXtended Data Services, §8.6 / §9) is decoded
+ *    internally: every field-2 triple passed through @ref pushFrame
+ *    is fed through an embedded @ref Cea608XdsExtractor in addition
+ *    to the caption-channel processing.  Surfaced via
+ *    @ref drainXdsPackets / @ref xdsPending /
+ *    @ref xdsChecksumFailures.  Typed accessors cover Program
+ *    Identification, Length / Time-in-Show, Program Name, Program
+ *    Type, Content Advisory (US TV / MPAA / Canadian English /
+ *    Canadian French), Copy and Redistribution Control (CGMS-A,
+ *    APS, ASB, RCD), Audio Services, Caption Services, Network
+ *    Name, Call Letters + Native Channel, Tape Delay, TSID, Time of
+ *    Day, Impulse Capture ID, Supplemental Data Location, Local
+ *    Time Zone & DST, Out-of-Band Channel, Channel Map Pointer /
+ *    Header / Packet, WRSAME, NWS Message, and Program Description
+ *    rows 1–8.
+ *  - **§C.13 right-margin limitation**, **§C.22 safe-caption-area**,
+ *    and most other Annex C "Preferred" rendering rules — those are
+ *    receiver-rendering policy and live in the renderer layer.
+ *
+ * Implemented per spec: **F2 control-code remap** (§8.4(a)(b),
+ * @c 0x14 ↔ 0x15 / @c 0x1C ↔ 0x1D for CC3 / CC4), **FA / FAU
+ * Foreground Black attribute codes** (§6.2 Table 3), and the
+ * **§C.9 16-second auto-erasure** (Preferred).
  *
  * @par Channel filtering
  *
@@ -228,6 +276,37 @@ class Cea608Decoder : public CaptionDecoder {
                  * source mid-session.
                  */
                 void reset() override;
+
+                /**
+                 * @brief Returns and clears the list of XDS packets
+                 *        extracted from field-2 byte pairs since the
+                 *        last call to @ref drainXdsPackets or
+                 *        construction.
+                 *
+                 * The decoder runs an internal @ref Cea608XdsExtractor
+                 * that watches every field-2 triple passed through
+                 * @ref pushFrame — independent of the configured
+                 * caption channel.  This lets a single decoder
+                 * instance surface both the caption cue list and the
+                 * XDS program-metadata stream without the caller
+                 * needing to spin a separate extractor in parallel.
+                 *
+                 * Empty list when no validated XDS packets have
+                 * arrived.
+                 */
+                List<Cea608XdsPacket> drainXdsPackets();
+
+                /// @brief Number of validated XDS packets currently
+                ///        buffered for the next @ref drainXdsPackets
+                ///        call.
+                size_t xdsPending() const;
+
+                /// @brief Count of XDS packets that failed the §8.6.3
+                ///        checksum check since construction / reset.
+                ///        Useful for telemetry — non-zero indicates
+                ///        line-21 bit-flip noise or a malformed
+                ///        upstream encoder.
+                uint32_t xdsChecksumFailures() const;
 
         private:
                 SharedPtr<Cea608DecoderImpl> _d;

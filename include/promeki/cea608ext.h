@@ -144,7 +144,7 @@ struct Cea608Ext {
                  * @brief Returns the codepoint for extended-Portuguese
                  *        index @p idx (@c 0x20..0x3F).
                  */
-                static uint32_t decodeExtFrench(uint8_t idx);
+                static uint32_t decodeExtPortugueseGerman(uint8_t idx);
 
                 /**
                  * @brief Returns the @c 0x20..0x3F second-byte index
@@ -152,13 +152,13 @@ struct Cea608Ext {
                  *        table, or @ref NoMapping when @p cp is not in
                  *        this table.
                  */
-                static uint8_t encodeExtFrench(uint32_t cp);
+                static uint8_t encodeExtPortugueseGerman(uint32_t cp);
 
                 /**
                  * @brief Best-fit ASCII placeholder for an extended-
                  *        Portuguese glyph.
                  */
-                static uint8_t extFrenchPlaceholder(uint8_t idx);
+                static uint8_t extPortugueseGermanPlaceholder(uint8_t idx);
 
                 // -- Composite encode --------------------------------------
 
@@ -187,7 +187,7 @@ struct Cea608Ext {
                         ///        placeholder + doubled
                         ///        @c (0x13, code) on CC1 (or
                         ///        @c (0x1B, code) on CC2).
-                        ExtFrench = 4,
+                        ExtPortugueseGerman = 4,
                 };
 
                 /// @brief Result of @ref encode.  @c kind tells the

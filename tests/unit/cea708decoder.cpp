@@ -57,11 +57,15 @@ namespace {
                 return Cea708Service(serviceNumber, makeServiceBytes(bytes));
         }
 
-        /// @brief Builds a one-service-block DTVCC packet (sequence 0)
-        ///        and returns its cc_data triple list.
+        /// @brief Builds a one-service-block DTVCC packet (sequence
+        ///        rotates 0..3 across calls per CEA-708-E §5.1 — the
+        ///        decoder's discontinuity guard expects monotonic
+        ///        wrap-around) and returns its cc_data triple list.
         Cea708Cdp::CcDataList packetTriples(uint8_t serviceNumber,
                                             const std::vector<uint8_t> &serviceBytes) {
-                Cea708DtvccPacket pkt;
+                static uint8_t seq = 0;
+                Cea708DtvccPacket pkt(seq, {});
+                seq = static_cast<uint8_t>((seq + 1u) & 0x03u);
                 pkt.serviceBlocks().pushToBack(makeService(serviceNumber, serviceBytes));
                 return pkt.toCcData();
         }

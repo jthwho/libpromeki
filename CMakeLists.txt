@@ -2448,6 +2448,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/cea608encoder.h
         include/promeki/cea608ext.h
         include/promeki/cea608packet.h
+        include/promeki/cea608xds.h
+        include/promeki/cea608xdsinjector.h
         include/promeki/cea708cdp.h
         include/promeki/cea708ext.h
         include/promeki/hdmiinfoframe.h
@@ -2560,6 +2562,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/cea608encoder.cpp
         src/proav/cea608ext.cpp
         src/proav/cea608packet.cpp
+        src/proav/cea608xds.cpp
+        src/proav/cea608xdsinjector.cpp
         src/proav/cea708cdp.cpp
         src/proav/cea708decoder.cpp
         src/proav/cea708encoder.cpp
@@ -3706,6 +3710,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/cea608encoder.cpp
             tests/unit/cea608ext.cpp
             tests/unit/cea608packet.cpp
+            tests/unit/cea608xds.cpp
+            tests/unit/cea608xdsinjector.cpp
             tests/unit/cea708cdp.cpp
             tests/unit/cea708decoder.cpp
             tests/unit/cea708encoder.cpp
