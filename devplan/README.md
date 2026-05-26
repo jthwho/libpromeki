@@ -161,6 +161,7 @@ devplan/
    codec pre-echo wobbles).  Tests: `tests/unit/audiofile_codecs.cpp`
    (8 cases: factory routing, testmedia reader checks, end-to-end
    encoder/decoder round-trips through FLAC/Vorbis/MP3).
+   All codec deps shipped as shared objects — see item 17.
    See [proav/backends.md](proav/backends.md).
 16. **`enums.h` split + optional display labels** — SHIPPED 2026-05-26.
    The monolithic `include/promeki/enums.h` (3806 lines) was split into
@@ -184,6 +185,20 @@ devplan/
    `CODING_STANDARDS.md` § Well-Known Enums updated for both changes.
    Audit finding #29 (entry triple-declaration sync) is *not* addressed
    by this work and remains open.
+17. **Static → shared vendored deps + `$ORIGIN` RPATH** — SHIPPED 2026-05-26.
+   LGPL and codec deps (libsndfile, libmpg123, libmp3lame, libFLAC,
+   libogg, libvorbis, libopus, fdk-aac) switched from static archives
+   absorbed into `libpromeki.so` to standalone shared objects shipped
+   beside it in `lib/`.  `libpromeki_srt.so` likewise changed from a
+   `ld -r` + `objcopy --localize-symbols` static archive to a
+   `c++ -shared --exclude-libs` shared object — same mbedTLS-3.6
+   isolation guarantees, simpler toolchain requirements.  Every binary
+   and library now carries an `$ORIGIN`-relative RPATH so `build/bin/`
+   + `build/lib/` form a self-contained, relocatable bundle.  A
+   `cmake/promeki_stage_shared_deps.cmake` POST_BUILD helper stages the
+   vendored `.so` families (preserving symlink chains) into `build/lib/`
+   so the build tree mirrors the install layout.  `PROMEKI_FORCE_BUNDLED_LIBS`
+   CMake option available to switch to legacy `DT_RPATH` if needed.
 13. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
    `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
    scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,

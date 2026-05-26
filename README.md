@@ -211,15 +211,29 @@ flags.
 ## No Dependency Hell
 
 All third-party libraries that promeki depends on are vendored as git
-submodules, built as static libraries with `-fPIC`, and absorbed
-directly into `libpromeki.so`. Alternatively, each dependency can be
-switched to use system-installed versions via `PROMEKI_USE_SYSTEM_*`
-CMake options.
+submodules and built from source — no system packages to chase down, no
+version mismatches, no transitive dependency surprises. Alternatively,
+each dependency can be switched to a system-installed version via the
+`PROMEKI_USE_SYSTEM_*` CMake options.
 
-When you install libpromeki, you get a shared library and a set of
-headers. Your application links against `promeki::promeki` — no
-chasing down system packages, no version mismatches, no transitive
-dependency surprises.
+How each dependency is linked depends on its license:
+
+- **Permissively-licensed deps** (zlib, BSD, MIT, Apache, FTL) are built
+  as static archives with `-fPIC` and absorbed directly into
+  `libpromeki.so`.
+- **LGPL and codec deps** — libsndfile, libmpg123, libmp3lame, fdk-aac,
+  libFLAC, libogg, libvorbis, libopus — plus the SRT transport library
+  (`libpromeki_srt.so`) are built as their own shared objects and
+  installed beside `libpromeki.so`. They are located at runtime through
+  an `$ORIGIN`-relative RPATH, so the `bin/` + `lib/` layout relocates
+  as a self-contained unit and an end user can drop in their own build
+  of any of them — which is what satisfies the LGPL relinking
+  requirement. See [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES) for the
+  details.
+
+When you install libpromeki you get `libpromeki.so`, the handful of
+shared dependencies above in the same `lib/` directory, and a set of
+headers. Your application links against `promeki::promeki`.
 
 Vendored dependencies: zlib-ng, libspng, libjpeg-turbo, FreeType,
 libsndfile, libFLAC, libogg, libvorbis, mpg123, libmp3lame, libopus,
@@ -312,7 +326,14 @@ years. --jth
 
 ## License
 
-libpromeki is licensed under the [MIT License](LICENSE).
+libpromeki's own source is licensed under the [MIT License](LICENSE).
 
-Third-party library licenses and attribution notices are documented in
+Some vendored dependencies carry licenses with redistribution or
+relinking obligations — notably the LGPL-licensed libsndfile, libmpg123
+and libmp3lame, the Fraunhofer-licensed fdk-aac (which also carries a
+patent notice), and the MPL-2.0 SRT library. These are shipped as
+separate, dynamically-linked, user-replaceable shared objects so their
+obligations are met without encumbering libpromeki's MIT-licensed core.
+
+Full third-party attribution notices and license texts are documented in
 [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES).

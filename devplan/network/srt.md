@@ -7,7 +7,8 @@ SRT support has shipped. The full vendoring + symbol-isolation pipeline, public 
 
 **Shipped:**
 - Two submodules: `thirdparty/srt` (libsrt 1.5.5) and `thirdparty/srt-mbedtls` (mbedTLS 3.6.6 LTS)
-- CMake bundle pipeline (`cmake/promeki_srt_bundle.cmake`): partial-links libsrt + mbedTLS-3.6 archives, `objcopy --localize-symbols` seals mbedTLS-3.6 inside the bundle, `--exclude-libs` hides `srt_*` / `haicrypt_*` from `libpromeki.so` dynsym
+- CMake bundle pipeline (`cmake/promeki_srt_bundle.cmake`): links libsrt + mbedTLS-3.6 archives into `libpromeki_srt.so` via `c++ -shared --exclude-libs`; mbedTLS-3.6 is statically absorbed and all its symbols are localized — invisible to anything linking against the `.so`. Replaces the older `ld -r` + `objcopy --localize-symbols` static-archive approach.
+- `libpromeki_srt.so` is emitted to `build/lib/` and installed beside `libpromeki.so`; `libpromeki.so` carries a `DT_NEEDED` on it resolved at runtime via `$ORIGIN`.
 - `SrtSocket` (IODevice subclass) — caller-mode connect, options, stats, groupHandle
 - `SrtServer` — listen + accept with optional listen callback for streamid-based routing/auth
 - `SrtSocketTransport` — PacketTransport adapter with Caller / Listener / Rendezvous modes

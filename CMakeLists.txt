@@ -1055,9 +1055,60 @@ configure_file(
 
 # Output directories ###########################################################
 
+# build/bin + build/lib together form a self-contained, copyable runtime
+# bundle: executables in bin/, shared libraries (+ their SONAME symlink
+# chains) in lib/, resolved against each other via $ORIGIN.  Keep the
+# intermediate static archives (.a) — internal deps absorbed into
+# libpromeki.so, never shipped — out of that bundle by routing them to a
+# separate build/lib-static dir.  The archive dir is a plain (non-cache)
+# set so the redirect takes effect even on a build tree previously
+# configured with archives pointed at build/lib.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE STRING "Runtime directory")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Library directory")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Archive directory")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib-static)
+
+# Runtime library search path ($ORIGIN-relative RPATH) ########################
+#
+# promeki ships several vendored dependencies as their own shared objects
+# (the LGPL-licensed libsndfile / libmp3lame / libmpg123 so end users can
+# drop in their own builds, plus libfdk-aac and the self-contained
+# libpromeki_srt).  Every promeki binary must therefore locate sibling
+# libraries *relative to its own install location* rather than falling
+# through to whatever the system loader happens to find — otherwise a
+# stray /usr/lib/libsndfile.so.1 of a different vintage could be picked up.
+#
+# We bake an $ORIGIN-relative RPATH into every promeki library and
+# executable.  Two entries cover both layouts in one list:
+#   $ORIGIN              — a library in lib/ finding a sibling in lib/
+#   $ORIGIN/<bin→lib>    — an executable in bin/ reaching up into lib/
+# Both are relative, so the whole bin/+lib/ pair can be relocated anywhere
+# on disk and still resolve.  The harmless extra entry (an app also gets
+# $ORIGIN, a lib also gets the ../lib form) simply never resolves anything.
+#
+# INSTALL_RPATH_USE_LINK_PATH stays OFF: that default would fold the
+# absolute link-time directories (including system and thirdparty-prefix
+# paths) into the install RPATH, which is exactly the accidental
+# system-library leak we are guarding against.
+file(RELATIVE_PATH _PROMEKI_BIN_TO_LIB
+    "${CMAKE_INSTALL_FULL_BINDIR}"
+    "${CMAKE_INSTALL_FULL_LIBDIR}")
+set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/${_PROMEKI_BIN_TO_LIB}")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH OFF)
+# Use $ORIGIN-relative entries in the build tree too, so binaries run
+# straight out of build/bin + build/lib without an absolute RPATH.
+set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
+
+# By default we emit modern DT_RUNPATH (new dtags): bundled libraries win
+# over the system loader's default paths, but an explicit LD_LIBRARY_PATH
+# can still override them — useful for debugging and overrides.  Turning
+# this option ON switches to legacy DT_RPATH (--disable-new-dtags), which
+# is consulted *before* LD_LIBRARY_PATH, forcing the bundled copies to win
+# unconditionally.
+option(PROMEKI_FORCE_BUNDLED_LIBS
+    "Use legacy DT_RPATH so bundled libraries override LD_LIBRARY_PATH" OFF)
+if(PROMEKI_FORCE_BUNDLED_LIBS)
+    add_link_options("LINKER:--disable-new-dtags")
+endif()
 
 # Third Party Dependencies ####################################################
 
@@ -1418,13 +1469,17 @@ if(PROMEKI_ENABLE_SRT)
         set(PROMEKI_SRT_MBEDX509_LIBA ${PROMEKI_SRT_LIBDIR}/libmbedx509.a)
         set(PROMEKI_SRT_MBEDCRYPTO_LIBA ${PROMEKI_SRT_LIBDIR}/libmbedcrypto.a)
         set(PROMEKI_SRT_LIBA          ${PROMEKI_SRT_LIBDIR}/libsrt.a)
-        set(PROMEKI_SRT_BUNDLE_OBJ    ${CMAKE_BINARY_DIR}/srt-bundle/libpromeki_srt_bundle.o)
-        set(PROMEKI_SRT_BUNDLE_LIB    ${CMAKE_BINARY_DIR}/srt-bundle/libpromeki_srt_bundle.a)
-        set(PROMEKI_SRT_BUNDLE_LOCALSYMS ${CMAKE_BINARY_DIR}/srt-bundle/localize-syms.txt)
+        # The bundle is emitted as a shared object directly into the
+        # library output dir so it sits beside libpromeki.so and resolves
+        # via $ORIGIN both in the build tree and once installed.  It is a
+        # promeki-private artifact (mbedTLS-3.6 sealed inside), so it
+        # carries a plain SONAME with no independent ABI versioning.
+        set(PROMEKI_SRT_BUNDLE_SONAME libpromeki_srt.so)
+        set(PROMEKI_SRT_BUNDLE_SO     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${PROMEKI_SRT_BUNDLE_SONAME})
 
         file(MAKE_DIRECTORY ${PROMEKI_SRT_PREFIX}/include
                             ${PROMEKI_SRT_LIBDIR}
-                            ${CMAKE_BINARY_DIR}/srt-bundle)
+                            ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
         # Build mbedTLS 3.6 LTS into the isolated prefix.  Compiled with
         # -fvisibility=hidden so even before the symbol-localization
@@ -1489,38 +1544,13 @@ if(PROMEKI_ENABLE_SRT)
                 ${PROMEKI_SRT_LIBA}
         )
 
-        # Symbol-localization pass.  ar -t lists each archive's object
-        # members; nm -g --defined-only on each member emits the global
-        # symbols that member defines.  We collect every global symbol
-        # from the three mbedTLS-3.6 archives into a file and feed it
-        # to objcopy --localize-symbols=<file>.  All SRT C/C++ public
-        # symbols stay GLOBAL.  The result is a single .o that contains
-        # the union of libsrt + libmbedtls/x509/crypto, with every
-        # mbedTLS-3.6 symbol marked LOCAL — invisible to the linker
-        # that later builds promeki.so.
-        #
-        # Use the toolchain's CMAKE_<TOOL> values rather than find_program(),
-        # which would pick the host binutils — wrong for cross-compile, where
-        # we must operate on aarch64 / ${CMAKE_SYSTEM_PROCESSOR} object files.
-        # project()'s compiler detection sets these from the compiler's
-        # prefix (e.g. CMAKE_LINKER=/usr/bin/aarch64-linux-gnu-ld) when the
-        # toolchain file specifies the cross compiler.
-        set(PROMEKI_LD      "${CMAKE_LINKER}")
-        set(PROMEKI_OBJCOPY "${CMAKE_OBJCOPY}")
-        set(PROMEKI_AR      "${CMAKE_AR}")
-        set(PROMEKI_NM      "${CMAKE_NM}")
-        foreach(_tool LD OBJCOPY AR NM)
-            if(NOT PROMEKI_${_tool})
-                # Fall back to host binutils if the toolchain hasn't told
-                # us where to find each tool (typical for native builds
-                # with no toolchain file).
-                string(TOLOWER "${_tool}" _toolname)
-                find_program(PROMEKI_${_tool} NAMES ${_toolname} REQUIRED)
-            endif()
-        endforeach()
-
+        # Link libsrt.a + the three isolated mbedTLS-3.6 archives into a
+        # single shared object (libpromeki_srt.so) with every mbedTLS-3.6
+        # symbol localized via --exclude-libs.  See promeki_srt_bundle.cmake
+        # for the details.  We link with the C++ compiler driver (not ld
+        # directly) so libstdc++ — SRT is C++ — is pulled in correctly.
         add_custom_command(
-            OUTPUT ${PROMEKI_SRT_BUNDLE_LIB}
+            OUTPUT ${PROMEKI_SRT_BUNDLE_SO}
             DEPENDS srt_ep srt_mbedtls_ep
                     ${PROMEKI_SRT_LIBA}
                     ${PROMEKI_SRT_MBEDTLS_LIBA}
@@ -1528,32 +1558,30 @@ if(PROMEKI_ENABLE_SRT)
                     ${PROMEKI_SRT_MBEDCRYPTO_LIBA}
                     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_srt_bundle.cmake
             COMMAND ${CMAKE_COMMAND}
-                -DBUNDLE_OBJ=${PROMEKI_SRT_BUNDLE_OBJ}
-                -DBUNDLE_LIB=${PROMEKI_SRT_BUNDLE_LIB}
-                -DLOCALSYMS_FILE=${PROMEKI_SRT_BUNDLE_LOCALSYMS}
+                -DBUNDLE_SO=${PROMEKI_SRT_BUNDLE_SO}
+                -DBUNDLE_SONAME=${PROMEKI_SRT_BUNDLE_SONAME}
                 -DSRT_LIBA=${PROMEKI_SRT_LIBA}
                 -DMBEDTLS_LIBA=${PROMEKI_SRT_MBEDTLS_LIBA}
                 -DMBEDX509_LIBA=${PROMEKI_SRT_MBEDX509_LIBA}
                 -DMBEDCRYPTO_LIBA=${PROMEKI_SRT_MBEDCRYPTO_LIBA}
-                -DLD_TOOL=${PROMEKI_LD}
-                -DOBJCOPY_TOOL=${PROMEKI_OBJCOPY}
-                -DAR_TOOL=${PROMEKI_AR}
-                -DNM_TOOL=${PROMEKI_NM}
+                -DCXX_TOOL=${CMAKE_CXX_COMPILER}
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_srt_bundle.cmake
-            COMMENT "Bundling SRT + isolated mbedTLS-3.6 into ${PROMEKI_SRT_BUNDLE_LIB} (mbedtls symbols localized)"
+            COMMENT "Linking SRT + isolated mbedTLS-3.6 into ${PROMEKI_SRT_BUNDLE_SONAME} (mbedtls symbols localized)"
             VERBATIM
         )
         add_custom_target(promeki_srt_bundle_target
-            DEPENDS ${PROMEKI_SRT_BUNDLE_LIB})
+            DEPENDS ${PROMEKI_SRT_BUNDLE_SO})
 
-        # Wrap the bundle as an INTERFACE target so the rest of CMake
-        # can treat it like any other promeki dep — link via
-        # PROMEKI_SRT_TARGET, picks up include dirs automatically.  The
-        # bundle is still a static archive at link time.
+        # Wrap the bundle as an INTERFACE target so the rest of CMake can
+        # treat it like any other promeki dep — link via PROMEKI_SRT_TARGET,
+        # picks up include dirs automatically.  Linking the .so by path
+        # gives promeki.so a DT_NEEDED on libpromeki_srt.so, resolved at
+        # runtime via the $ORIGIN RPATH; mbedTLS-3.6 stays sealed inside
+        # and never appears as a NEEDED of its own.
         add_library(promeki_srt_bundle INTERFACE)
         add_dependencies(promeki_srt_bundle promeki_srt_bundle_target)
         target_link_libraries(promeki_srt_bundle INTERFACE
-            ${PROMEKI_SRT_BUNDLE_LIB})
+            ${PROMEKI_SRT_BUNDLE_SO})
         target_include_directories(promeki_srt_bundle SYSTEM INTERFACE
             ${PROMEKI_SRT_INCLUDE_DIR})
         # SRT references pthread / atomic at link time, even with
@@ -1734,8 +1762,10 @@ if(PROMEKI_ENABLE_PNG)
 endif()
 
 # --- libogg ---
-# Shared dependency for libFLAC (Ogg-FLAC container) and libvorbis.  Built
-# only when FLAC or Vorbis is on, since libsndfile is the only consumer.
+# Shared object shared by libFLAC (Ogg-FLAC container), libvorbis, and
+# libsndfile.  Built as a .so (rather than absorbed) so promeki can also
+# call it directly later and an end user can drop in their own build;
+# libogg is a leaf with no other vendored deps, so it needs no RPATH.
 if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG)
     ExternalProject_Add(
         libogg-ep
@@ -1744,16 +1774,16 @@ if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG
             ${_PROMEKI_EXTPROJ_CROSS_ARGS}
             -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DBUILD_SHARED_LIBS=OFF
+            -DBUILD_SHARED_LIBS=ON
             -DBUILD_TESTING=OFF
             -DINSTALL_DOCS=OFF
             -DINSTALL_PKG_CONFIG_MODULE=ON
             -DINSTALL_CMAKE_PACKAGE_MODULE=ON
-        BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.a
+        BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.so
     )
-    add_library(promeki_ogg_vendored STATIC IMPORTED)
+    add_library(promeki_ogg_vendored SHARED IMPORTED)
     set_target_properties(promeki_ogg_vendored PROPERTIES
-        IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.a
+        IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.so
     )
     add_dependencies(promeki_ogg_vendored libogg-ep)
     set(PROMEKI_OGG_TARGET promeki_ogg_vendored)
@@ -1779,7 +1809,12 @@ if(PROMEKI_ENABLE_FLAC)
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_SHARED_LIBS=ON
+                # libFLAC.so DT_NEEDEDs libogg.so; $ORIGIN lets it find
+                # the sibling wherever the lib dir is relocated to.
+                -DCMAKE_INSTALL_RPATH=$ORIGIN
+                -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+                -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF
                 -DBUILD_CXXLIBS=OFF
                 -DBUILD_PROGRAMS=OFF
                 -DBUILD_EXAMPLES=OFF
@@ -1791,11 +1826,11 @@ if(PROMEKI_ENABLE_FLAC)
                 -DWITH_OGG=ON
                 -DWITH_FORTIFY_SOURCE=OFF
                 -DWITH_STACK_PROTECTOR=OFF
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.so
         )
-        add_library(promeki_flac_vendored STATIC IMPORTED)
+        add_library(promeki_flac_vendored SHARED IMPORTED)
         set_target_properties(promeki_flac_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.so
         )
         add_dependencies(promeki_flac_vendored libflac-ep)
         set(PROMEKI_FLAC_TARGET promeki_flac_vendored)
@@ -1823,26 +1858,31 @@ if(PROMEKI_ENABLE_VORBIS)
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_SHARED_LIBS=ON
+                # libvorbis*.so DT_NEEDED libogg.so (and each other);
+                # $ORIGIN resolves the siblings after relocation.
+                -DCMAKE_INSTALL_RPATH=$ORIGIN
+                -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+                -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF
                 -DINSTALL_CMAKE_PACKAGE_MODULE=ON
             BUILD_BYPRODUCTS
-                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.a
-                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.a
-                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.a
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.so
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.so
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.so
         )
-        add_library(promeki_vorbis_vendored STATIC IMPORTED)
+        add_library(promeki_vorbis_vendored SHARED IMPORTED)
         set_target_properties(promeki_vorbis_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.so
         )
         add_dependencies(promeki_vorbis_vendored libvorbis-ep)
-        add_library(promeki_vorbisenc_vendored STATIC IMPORTED)
+        add_library(promeki_vorbisenc_vendored SHARED IMPORTED)
         set_target_properties(promeki_vorbisenc_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.so
         )
         add_dependencies(promeki_vorbisenc_vendored libvorbis-ep)
-        add_library(promeki_vorbisfile_vendored STATIC IMPORTED)
+        add_library(promeki_vorbisfile_vendored SHARED IMPORTED)
         set_target_properties(promeki_vorbisfile_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.so
         )
         add_dependencies(promeki_vorbisfile_vendored libvorbis-ep)
         set(PROMEKI_VORBIS_TARGET promeki_vorbis_vendored)
@@ -1883,8 +1923,8 @@ if(PROMEKI_ENABLE_MP3)
                 ${PROMEKI_MPG123_SRC_COPY}/configure
                     --prefix=${PROMEKI_THIRDPARTY_PREFIX}
                     --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
                     --disable-debug
                     --disable-modules
                     --with-cpu=generic
@@ -1894,11 +1934,15 @@ if(PROMEKI_ENABLE_MP3)
                     --enable-libmpg123
             BUILD_COMMAND make
             INSTALL_COMMAND make install
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.so
         )
-        add_library(promeki_mpg123_vendored STATIC IMPORTED)
+        # Shared (LGPL-2.1): shipped alongside libpromeki.so so an end
+        # user can drop in their own libmpg123 build.  IMPORTED_LOCATION
+        # points at the bare .so dev symlink; the linker reads the real
+        # DT_SONAME (libmpg123.so.0) straight from the file.
+        add_library(promeki_mpg123_vendored SHARED IMPORTED)
         set_target_properties(promeki_mpg123_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.so
         )
         add_dependencies(promeki_mpg123_vendored libmpg123-ep)
         set(PROMEKI_MPG123_TARGET promeki_mpg123_vendored)
@@ -1931,19 +1975,23 @@ if(PROMEKI_ENABLE_MP3)
                 ${PROMEKI_LAME_SRC_COPY}/configure
                     --prefix=${PROMEKI_THIRDPARTY_PREFIX}
                     --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
-                    --enable-static
-                    --disable-shared
+                    --disable-static
+                    --enable-shared
                     --disable-frontend
                     --disable-analyzer-hooks
                     --disable-gtktest
                     --disable-debug
             BUILD_COMMAND make
             INSTALL_COMMAND make install
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.so
         )
-        add_library(promeki_lame_vendored STATIC IMPORTED)
+        # Shared (LGPL): shipped alongside libpromeki.so so an end user
+        # can drop in their own libmp3lame build.  The shared link pulls
+        # in libm itself (the psymodel's sin/cos/log), so consumers no
+        # longer need to add -lm by hand the way the static archive did.
+        add_library(promeki_lame_vendored SHARED IMPORTED)
         set_target_properties(promeki_lame_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.so
         )
         add_dependencies(promeki_lame_vendored liblame-ep)
         set(PROMEKI_LAME_TARGET promeki_lame_vendored)
@@ -2009,17 +2057,27 @@ if(PROMEKI_ENABLE_AUDIO)
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_SHARED_LIBS=ON
+                # libsndfile.so absorbs the PIC static codec backends
+                # (FLAC / Vorbis / Ogg / Opus) but DT_NEEDEDs the shared
+                # LGPL ones (mpg123 / mp3lame); $ORIGIN lets it find those
+                # siblings wherever the lib dir is relocated to.
+                -DCMAKE_INSTALL_RPATH=$ORIGIN
+                -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+                -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF
                 -DBUILD_PROGRAMS=OFF
                 -DBUILD_EXAMPLES=OFF
                 -DBUILD_TESTING=OFF
                 -DENABLE_EXTERNAL_LIBS=${_promeki_sndfile_extlibs}
                 -DENABLE_MPEG=${_promeki_sndfile_mpeg}
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.so
         )
-        add_library(promeki_sndfile_vendored STATIC IMPORTED)
+        # Shared (LGPL-2.1): shipped so an end user can relink against
+        # their own libsndfile.  IMPORTED_LOCATION is the bare .so dev
+        # symlink; the linker reads the real DT_SONAME (libsndfile.so.1).
+        add_library(promeki_sndfile_vendored SHARED IMPORTED)
         set_target_properties(promeki_sndfile_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.so
         )
         add_dependencies(promeki_sndfile_vendored libsndfile-ep)
         set(PROMEKI_SNDFILE_TARGET promeki_sndfile_vendored)
@@ -2027,11 +2085,12 @@ if(PROMEKI_ENABLE_AUDIO)
 endif()
 
 # --- libopus ---
-# Vendored opus is a static library (.a) so the IMPORTED_LOCATION
-# matches the install prefix's lib path.  Built with all of opus's
-# optional flags (custom modes, programs, testing, framework, DRED,
-# OSCE, pkg-config, CMake config) turned off — the codec backend
-# only needs the encoder / decoder API and we keep the build small.
+# Shipped as a shared object (.so) beside libpromeki.so so promeki can
+# call it directly and an end user can drop in their own build.  opus is
+# a leaf with no other vendored deps, so it needs no RPATH.  Built with
+# all of opus's optional extras (custom modes, programs, testing,
+# framework, DRED, OSCE, pkg-config, CMake config) turned off — the codec
+# backend only needs the encoder / decoder API and we keep the build small.
 if(PROMEKI_ENABLE_OPUS)
     if(PROMEKI_USE_SYSTEM_OPUS)
         find_package(Opus REQUIRED)
@@ -2044,8 +2103,8 @@ if(PROMEKI_ENABLE_OPUS)
                 ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=OFF
-                -DOPUS_BUILD_SHARED_LIBRARY=OFF
+                -DBUILD_SHARED_LIBS=ON
+                -DOPUS_BUILD_SHARED_LIBRARY=ON
                 -DOPUS_BUILD_PROGRAMS=OFF
                 -DOPUS_BUILD_TESTING=OFF
                 -DOPUS_CUSTOM_MODES=OFF
@@ -2053,11 +2112,11 @@ if(PROMEKI_ENABLE_OPUS)
                 -DOPUS_INSTALL_CMAKE_CONFIG_MODULE=OFF
                 -DOPUS_DRED=OFF
                 -DOPUS_OSCE=OFF
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
         )
-        add_library(promeki_opus_vendored STATIC IMPORTED)
+        add_library(promeki_opus_vendored SHARED IMPORTED)
         set_target_properties(promeki_opus_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
         )
         add_dependencies(promeki_opus_vendored libopus-ep)
         set(PROMEKI_OPUS_TARGET promeki_opus_vendored)
@@ -2082,15 +2141,18 @@ if(PROMEKI_ENABLE_AAC)
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_INSTALL_LIBDIR:PATH=lib
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_SHARED_LIBS=ON
                 -DBUILD_PROGRAMS=OFF
                 -DFDK_AAC_INSTALL_CMAKE_CONFIG_MODULE=OFF
                 -DFDK_AAC_INSTALL_PKGCONFIG_MODULE=OFF
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.a
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.so
         )
-        add_library(promeki_fdkaac_vendored STATIC IMPORTED)
+        # Shared: the Fraunhofer FDK license is treated as copyleft-
+        # adjacent, so libfdk-aac ships as a replaceable .so beside
+        # libpromeki.so (SONAME libfdk-aac.so.2).
+        add_library(promeki_fdkaac_vendored SHARED IMPORTED)
         set_target_properties(promeki_fdkaac_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.a
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfdk-aac.so
             INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_THIRDPARTY_PREFIX}/include
         )
         # The header dir doesn't exist until ExternalProject installs;
@@ -3302,6 +3364,58 @@ set_target_properties(promeki PROPERTIES
     EXPORT_NAME promeki
 )
 
+# Vendored shared dependencies shipped beside libpromeki.so ###################
+#
+# The list of glob patterns naming the vendored .so families we build and
+# ship (the LGPL trio + fdk-aac + the FLAC/Ogg/Vorbis/Opus codecs).  Built
+# once here and reused for both (a) staging into the build tree's lib dir
+# and (b) the install() rules further down.  Each is included only when
+# built from vendored source — a system copy contributes nothing.
+set(PROMEKI_SHIPPED_SO_PATTERNS "")
+if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_USE_SYSTEM_SNDFILE)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libsndfile.so*")
+endif()
+if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_MPG123)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libmpg123.so*")
+endif()
+if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_LAME)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libmp3lame.so*")
+endif()
+if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_USE_SYSTEM_FDKAAC)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libfdk-aac.so*")
+endif()
+if(PROMEKI_ENABLE_FLAC AND NOT PROMEKI_USE_SYSTEM_FLAC)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libFLAC.so*")
+endif()
+if(PROMEKI_ENABLE_VORBIS AND NOT PROMEKI_USE_SYSTEM_VORBIS)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS
+        "libvorbis.so*" "libvorbisenc.so*" "libvorbisfile.so*")
+endif()
+if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libogg.so*")
+endif()
+if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_USE_SYSTEM_OPUS)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libopus.so*")
+endif()
+
+# Stage those shared deps into build/lib after promeki links so the build
+# tree mirrors the install layout — apps in build/bin then resolve the
+# whole chain via $ORIGIN/../lib without reaching into the thirdparty
+# prefix.  The EPs that produce these are upstream of promeki in the
+# build graph (promeki links libsndfile/opus/fdk-aac, which depend on the
+# rest), so the files exist by the time this POST_BUILD runs.  The SRT
+# bundle is emitted into build/lib directly and so needs no staging.
+if(PROMEKI_SHIPPED_SO_PATTERNS)
+    add_custom_command(TARGET promeki POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            -DSRC=${PROMEKI_THIRDPARTY_PREFIX}/lib
+            -DDST=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+            "-DPATTERNS=${PROMEKI_SHIPPED_SO_PATTERNS}"
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_stage_shared_deps.cmake
+        COMMENT "Staging vendored shared dependencies into ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+        VERBATIM)
+endif()
+
 # Include directories
 target_include_directories(promeki PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -3481,38 +3595,23 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
-        # libsndfile is itself a static archive — the codec back-ends it
-        # references (libFLAC, libogg, libvorbis*, libmpg123, libmp3lame)
-        # do not flow through transitively, so each one must be on the
-        # final link line of libpromeki.so explicitly.  Order matters
-        # only for the static linker's symbol resolution pass; the
-        # dependency arrows are libsndfile -> {FLAC,Vorbis*,MPG123,LAME},
-        # FLAC/Vorbis -> Ogg, so list Ogg last.
+        # libsndfile is now a shared object and every codec backend it
+        # uses (libFLAC, libogg, libvorbis*, libmpg123, libmp3lame) is
+        # itself a shared object carried as a DT_NEEDED of libsndfile.so,
+        # so they all reach libpromeki.so transitively — we link only
+        # libsndfile here.  (This also drops the old explicit -lm:
+        # libmp3lame's own shared link now pulls in the libm symbols its
+        # psymodel needs.)  Should promeki ever call FLAC / Ogg / Vorbis
+        # directly, add the corresponding PROMEKI_*_TARGET to this link
+        # then; for now the feature flags just gate promeki code paths.
         if(PROMEKI_ENABLE_FLAC)
-            target_link_libraries(promeki PRIVATE ${PROMEKI_FLAC_TARGET})
             target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_FLAC)
         endif()
         if(PROMEKI_ENABLE_VORBIS)
-            target_link_libraries(promeki PRIVATE
-                ${PROMEKI_VORBISENC_TARGET}
-                ${PROMEKI_VORBISFILE_TARGET}
-                ${PROMEKI_VORBIS_TARGET})
             target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_VORBIS)
         endif()
-        if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS)
-                AND NOT PROMEKI_USE_SYSTEM_OGG)
-            target_link_libraries(promeki PRIVATE ${PROMEKI_OGG_TARGET})
-        endif()
         if(PROMEKI_ENABLE_MP3)
-            target_link_libraries(promeki PRIVATE
-                ${PROMEKI_MPG123_TARGET}
-                ${PROMEKI_LAME_TARGET})
             target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_MP3)
-            # libmp3lame on Linux needs libm at link time
-            # (sin/cos/log in the psymodel).  libsndfile's stock CMake
-            # config would have wired this for us; vendored static
-            # archive doesn't, so add it explicitly.
-            target_link_libraries(promeki PRIVATE m)
         endif()
     endif()
     if(PROMEKI_ENABLE_OPUS)
@@ -3621,26 +3720,18 @@ if(PROMEKI_ENABLE_TLS)
 endif()
 
 # SRT stack — depends only on PROMEKI_ENABLE_NETWORK + _TLS.  The
-# bundle is a single static archive whose internal mbedTLS-3.6 symbols
-# are LOCAL-marked (see promeki_srt_bundle.cmake), so it cannot
-# collide with the main mbedTLS-4.x in this same .so.  Linked PRIVATE
-# — SRT is an implementation detail of our network module, not part
-# of the public API.
-#
-# --exclude-libs=libpromeki_srt_bundle.a localizes every remaining
-# global symbol the bundle still exports (srt_*, haicrypt_*, plus the
-# couple of hardcoded `__attribute__((visibility("default")))` SRT
-# adornments that survived -fvisibility=hidden) so they stay
-# resolvable inside libpromeki.so but never reach the .dynsym table.
-# Without this, dlsym(libpromeki, "srt_socket") would still hand a
-# caller our private libsrt entry points.
+# vendored bundle is now a standalone shared object (libpromeki_srt.so)
+# with its private mbedTLS-3.6 sealed inside via --exclude-libs (see
+# promeki_srt_bundle.cmake).  promeki links it PRIVATE, gaining a
+# DT_NEEDED on libpromeki_srt.so resolved at runtime through the
+# $ORIGIN RPATH — SRT is an implementation detail of our network
+# module, not part of the public API.  No --exclude-libs is needed on
+# *this* link any more: the bundle is no longer absorbed as an archive
+# into libpromeki.so, so neither srt_* nor mbedTLS-3.6 symbols can
+# reach libpromeki.so's own dynsym in the first place.
 if(PROMEKI_ENABLE_SRT)
     target_link_libraries(promeki PRIVATE ${PROMEKI_SRT_TARGET})
     target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SRT)
-    if(NOT PROMEKI_USE_SYSTEM_SRT AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_link_options(promeki PRIVATE
-            "LINKER:--exclude-libs=libpromeki_srt_bundle.a")
-    endif()
 endif()
 
 # TUI Library ##################################################################
@@ -3792,6 +3883,34 @@ install(TARGETS promeki
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+# Vendored shared dependencies that ship beside libpromeki.so ##################
+#
+# The LGPL trio (libsndfile / libmpg123 / libmp3lame) and libfdk-aac are
+# built as their own shared objects so an end user can drop in a modified
+# build and relink — satisfying the LGPL / FDK relink expectations that a
+# statically-fused copy could not.  They live in the same lib dir as
+# libpromeki.so and are found at runtime through its $ORIGIN RPATH.
+#
+# These are IMPORTED targets (not built by install(TARGETS)), so we copy
+# them out of the thirdparty prefix with install(DIRECTORY ... PATTERN),
+# which preserves the real-file → SONAME → linker-name symlink chain.
+# PROMEKI_SHIPPED_SO_PATTERNS is the same list used to stage them into
+# build/lib (built where the promeki target is defined); a library is
+# shipped only when built from vendored source, so for a system copy the
+# prefix simply has nothing matching and that pattern is a no-op.
+foreach(_pat ${PROMEKI_SHIPPED_SO_PATTERNS})
+    install(DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/lib/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        FILES_MATCHING PATTERN "${_pat}")
+endforeach()
+
+# The SRT bundle is a single plain-SONAME shared object emitted straight
+# into the library output dir (no symlink chain), so install it directly.
+if(PROMEKI_ENABLE_SRT AND NOT PROMEKI_USE_SYSTEM_SRT)
+    install(FILES ${PROMEKI_SRT_BUNDLE_SO}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 # Install headers (flat under promeki/, excluding tui and sdl subdirs)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/

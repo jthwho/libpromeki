@@ -1,9 +1,27 @@
 Third-Party Software Notices and Licenses
 ==========================================
 
-libpromeki incorporates the following third-party libraries.  Their
-compiled code is statically linked into libpromeki-proav and their
-headers are distributed under the promeki/thirdparty/ include path.
+libpromeki incorporates the third-party libraries listed below.  They
+are distributed in one of two ways, depending on their license:
+
+  * Permissively-licensed libraries (zlib, BSD, MIT, Apache, FTL and the
+    like) are compiled as static archives and absorbed directly into
+    libpromeki.so.
+
+  * Libraries whose licenses make a user's ability to substitute their
+    own build important — the LGPL-licensed libsndfile, libmpg123 and
+    libmp3lame, and the Fraunhofer-licensed fdk-aac — together with the
+    audio codecs libFLAC, libogg, libvorbis and libopus, are each built
+    as a *separate shared object* and shipped alongside libpromeki.so.
+    They are dynamically linked and located at runtime through an
+    $ORIGIN-relative RPATH, so an end user can drop in a modified build
+    of any of them without rebuilding or relinking libpromeki.  (See the
+    libsndfile note below for how this satisfies the LGPL.)  The SRT
+    transport library is likewise shipped as a separate shared object
+    (libpromeki_srt.so).
+
+Vendored headers are distributed under the promeki/thirdparty/ include
+path.
 
 This software is based in part on the work of the Independent JPEG Group.
 
@@ -12,12 +30,15 @@ Portions of this software are copyright (c) 2025 The FreeType Project
 
 
 ==========================================================================
- zlib  (v1.3.1)
+ zlib-ng  (v2.3.1)
  License: zlib License
- https://github.com/madler/zlib
+ https://github.com/zlib-ng/zlib-ng
 ==========================================================================
 
-Copyright (C) 1995-2022 Jean-loup Gailly and Mark Adler
+zlib-ng is a zlib-compatible fork distributed under the zlib License.
+
+Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler,
+and the zlib-ng contributors.
 
 This software is provided 'as-is', without any express or implied
 warranty.  In no event will the authors be held liable for any damages
@@ -37,41 +58,36 @@ freely, subject to the following restrictions:
 
 
 ==========================================================================
- libpng  (v1.6.55)
- License: PNG Reference Library License version 2
- https://github.com/glennrp/libpng
+ libspng  (v0.7.4)
+ License: BSD 2-Clause License
+ https://github.com/randy408/libspng
 ==========================================================================
 
-Copyright (c) 1995-2026 The PNG Reference Library Authors.
-Copyright (c) 2018-2026 Cosmin Truta.
-Copyright (c) 2000-2002, 2004, 2006-2018 Glenn Randers-Pehrson.
-Copyright (c) 1996-1997 Andreas Dilger.
-Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
+Copyright (c) 2018-2023, Randy <randy408@protonmail.com>
 
-The software is supplied "as is", without warranty of any kind,
-express or implied, including, without limitation, the warranties
-of merchantability, fitness for a particular purpose, title, and
-non-infringement.  In no event shall the Copyright owners, or
-anyone distributing the software, be liable for any damages or
-other liability, whether in contract, tort or otherwise, arising
-from, out of, or in connection with the software, or the use or
-other dealings in the software, even if advised of the possibility
-of such damage.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-Permission is hereby granted to use, copy, modify, and distribute
-this software, or portions hereof, for any purpose, without fee,
-subject to the following restrictions:
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
 
- 1. The origin of this software must not be misrepresented; you
-    must not claim that you wrote the original software.  If you
-    use this software in a product, an acknowledgment in the product
-    documentation would be appreciated, but is not required.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
- 2. Altered source versions must be plainly marked as such, and must
-    not be misrepresented as being the original software.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 
- 3. This Copyright notice may not be removed or altered from any
-    source or altered source distribution.
+libspng decodes/encodes PNG using zlib-ng (above) for compression.
 
 
 ==========================================================================
@@ -197,38 +213,139 @@ SOFTWARE.
  libsndfile  (v1.2.2)
  License: GNU Lesser General Public License v2.1 (LGPL-2.1-or-later)
  https://github.com/libsndfile/libsndfile
-
- *** LICENSE COMPATIBILITY NOTE ***
 ==========================================================================
 
 libsndfile is licensed under the GNU Lesser General Public License,
-version 2.1 or later.
+version 2.1 or later.  It is used for its broadcast WAV (BWF) support
+and as the I/O layer for the FLAC, Ogg Vorbis, and MPEG (MP3) codecs.
 
-LGPL-2.1 imposes restrictions on static linking that are more stringent
-than the MIT license used by libpromeki.  Specifically, LGPL Section 6
-requires that when a "work that uses the Library" is distributed with
-the Library statically linked in, the distributor must provide the means
-for users to re-link the work against a modified version of the Library
-(e.g. by providing object files or by using dynamic linking).
+LGPL Section 6 requires that, when a work that uses the Library is
+distributed, the recipient be able to re-link that work against a
+modified version of the Library.  libpromeki satisfies this by *dynamic
+linking*: libsndfile is built as its own shared object (libsndfile.so)
+and shipped alongside libpromeki.so rather than being statically
+absorbed into it.  libpromeki.so carries a DT_NEEDED reference to
+libsndfile.so and locates it at runtime via an $ORIGIN-relative RPATH,
+so a user may replace the shipped libsndfile.so with their own build —
+including a modified one — without rebuilding or relinking libpromeki.
+The same applies to libsndfile's own codec back-ends libmpg123 and
+libmp3lame (also LGPL; see their entries below), which libsndfile in
+turn loads as shared objects.
 
-As of this writing, the static linking of libsndfile into
-libpromeki-proav is a known compliance issue under active investigation.
-The library is used for its broadcast WAV (BWF) file support, which is
-a requirement for professional audio workflows.  Options being evaluated
-include:
+The full text of the LGPL-2.1 is available in the source tree at
+thirdparty/libsndfile/COPYING.
 
-  1. Switching libsndfile to dynamic linking (the simplest LGPL-
-     compliant approach, but adds a runtime dependency for consumers).
 
-  2. Replacing libsndfile with a permissively-licensed alternative
-     that supports the required broadcast WAV features.
+==========================================================================
+ mpg123 / libmpg123  (v1.33.6)
+ License: GNU Lesser General Public License v2.1 (LGPL-2.1-only)
+ https://www.mpg123.de
+==========================================================================
 
-  3. Providing object files alongside the shared library to satisfy
-     LGPL Section 6(a) re-linking requirements.
+Copyright (c) 1995-2020 by Michael Hipp and others,
+free software under the terms of the LGPL v2.1.
 
-Until this is resolved, users who redistribute libpromeki binaries
-should be aware of the LGPL obligations.  The full text of the LGPL-2.1
-is available in the source tree at thirdparty/libsndfile/COPYING.
+libmpg123 provides MPEG audio (MP3) decoding for libsndfile.  It is
+distributed as a separate shared object (libmpg123.so), dynamically
+linked and user-replaceable per the LGPL re-linking requirement
+described in the libsndfile note above.  The full LGPL-2.1 text and the
+author list are in the source tree at thirdparty/mpg123/COPYING and
+thirdparty/mpg123/AUTHORS.
+
+
+==========================================================================
+ LAME / libmp3lame  (v3.100)
+ License: GNU Lesser General Public License v2.0-or-later (LGPL-2.0+)
+ https://lame.sourceforge.io
+==========================================================================
+
+Copyright (c) 1998-2017 The LAME Project.
+
+libmp3lame provides MP3 encoding for libsndfile.  This product is based
+in part on the LAME MP3 encoding library.  It is distributed as a
+separate shared object (libmp3lame.so), dynamically linked and user-
+replaceable per the LGPL re-linking requirement described in the
+libsndfile note above; modifications to LAME, if any, are released under
+the LGPL.  The full LGPL text is in the source tree at
+thirdparty/lame/COPYING.
+
+
+==========================================================================
+ Xiph.Org audio codecs — libogg, libvorbis, libFLAC, libopus
+ License: BSD 3-Clause License
+   libogg     (v1.3.6)   https://xiph.org/ogg
+   libvorbis  (v1.3.7)   https://xiph.org/vorbis
+   libFLAC    (v1.5.0)   https://xiph.org/flac
+   libopus    (v1.5.2)   https://opus-codec.org
+==========================================================================
+
+These four codecs are each licensed under the 3-clause BSD license and
+are distributed as separate shared objects (libogg.so; libvorbis.so /
+libvorbisenc.so / libvorbisfile.so; libFLAC.so; libopus.so) shipped
+alongside libpromeki.so.  Per the BSD license's binary-redistribution
+clause, the following copyright notices and disclaimer are reproduced:
+
+  libogg:    Copyright (c) 2002 Xiph.org Foundation
+  libvorbis: Copyright (c) 2002-2020 Xiph.org Foundation
+  libFLAC:   Copyright (C) 2000-2009 Josh Coalson;
+             Copyright (C) 2011-2025 Xiph.Org Foundation
+  libopus:   Copyright 2001-2023 Xiph.Org, Skype Limited, Octasic,
+             Jean-Marc Valin, Timothy B. Terriberry, CSIRO,
+             Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo,
+             Mozilla, Amazon
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+- Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+- Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+- Neither the names of the copyright holders nor the names of their
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The full per-library license texts are in the source tree at
+thirdparty/libogg/COPYING, thirdparty/libvorbis/COPYING,
+thirdparty/libflac/COPYING.Xiph, and thirdparty/opus/COPYING.
+
+
+==========================================================================
+ fdk-aac  (v2.0.3)
+ License: Software License for The Fraunhofer FDK AAC Codec Library
+ https://github.com/mstorsjo/fdk-aac
+==========================================================================
+
+(c) Copyright 1995 - 2018 Fraunhofer-Gesellschaft zur Foerderung der
+angewandten Forschung e.V. All rights reserved.
+
+fdk-aac is licensed under the Software License for The Fraunhofer FDK
+AAC Codec Library (a BSD-style copyright license with an explicit patent
+clause).  It is distributed as a separate shared object (libfdk-aac.so)
+shipped alongside libpromeki.so and dynamically linked, so it can be
+omitted or replaced.
+
+IMPORTANT — PATENT NOTICE: The FDK AAC license grants copyright
+permissions but expressly does NOT grant any patent licenses, neither
+express nor implied.  AAC and its extensions are covered by patents;
+parties that distribute AAC encoders/decoders may need to obtain patent
+licenses from the respective patent holders.  The full license text,
+including the complete patent disclaimer and the redistribution
+conditions, is in the source tree at thirdparty/fdk-aac/NOTICE.
 
 
 ==========================================================================
@@ -262,6 +379,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 ==========================================================================
+ libsrt  (v1.5.5)
+ License: Mozilla Public License 2.0 (MPL-2.0)
+ https://github.com/Haivision/srt
+==========================================================================
+
+The Secure Reliable Transport (SRT) library is licensed under the
+Mozilla Public License 2.0.  It is distributed as a separate shared
+object, libpromeki_srt.so, shipped alongside libpromeki.so; libpromeki
+links it dynamically and locates it at runtime via an $ORIGIN-relative
+RPATH.  MPL-2.0 is a file-level copyleft: a distributor who modifies any
+MPL-covered SRT source file must make that modified file's source
+available under the MPL.  libpromeki uses SRT unmodified.  The full
+license text is in the source tree at thirdparty/srt/LICENSE.
+
+libpromeki_srt.so also contains a private copy of mbedTLS 3.6 (see the
+mbedTLS entry below) statically linked in, with all of its symbols
+localized so they cannot collide with the project's main mbedTLS stack.
+
+
+==========================================================================
  mbedTLS  (v3.6.6)
  License: Apache-2.0 OR GPL-2.0-or-later (libpromeki distributes under Apache-2.0)
  https://github.com/Mbed-TLS/mbedtls
@@ -270,7 +407,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 Mbed TLS is dual-licensed under the Apache License 2.0 and the
 GPL-2.0-or-later.  libpromeki distributes the vendored static library
 under the Apache License 2.0; downstream consumers may select either
-license per the upstream dual-license offer.  Full license text is
+license per the upstream dual-license offer.  This 3.6 LTS copy is the
+one SRT links against; it is built in isolation and sealed inside
+libpromeki_srt.so with its symbols localized.  Full license text is
 available in the source tree at thirdparty/mbedtls/LICENSE.
 
 Apache License 2.0 copyright notice:
@@ -288,3 +427,135 @@ Apache License 2.0 copyright notice:
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
+
+
+==========================================================================
+ libsamplerate  (v0.2.2)
+ License: BSD 2-Clause License
+ https://github.com/libsndfile/libsamplerate
+==========================================================================
+
+Copyright (c) 2012-2016, Erik de Castro Lopo <erikd@mega-nerd.com>
+
+libsamplerate (Secret Rabbit Code) provides sample-rate conversion and is
+licensed under the 2-clause BSD license.  Redistribution in binary form
+must reproduce the above copyright notice, this list of conditions, and
+the disclaimer.  The full license text is in the source tree at
+thirdparty/libsamplerate/COPYING.
+
+
+==========================================================================
+ pugixml  (v1.15)
+ License: MIT License
+ https://github.com/zeux/pugixml
+==========================================================================
+
+Copyright (c) 2006-2025 Arseny Kapoulkine
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the inclusion of the above copyright notice and this permission notice
+in all copies or substantial portions of the Software.  The full license
+text is in the source tree at thirdparty/pugixml/LICENSE.md.
+
+
+==========================================================================
+ Google Highway  (v1.3.0)
+ License: Apache-2.0 OR BSD-3-Clause (dual; libpromeki uses Apache-2.0)
+ https://github.com/google/highway
+==========================================================================
+
+Copyright 2019 Google LLC
+
+Highway is a SIMD library used by the color-space-conversion framework.
+Upstream offers it under your choice of the Apache License 2.0 or the
+3-clause BSD License; libpromeki uses it under the Apache License 2.0.
+The full license text (and the per-file exceptions noted upstream) is in
+the source tree at thirdparty/highway/LICENSE.
+
+
+==========================================================================
+ SVT-JPEG-XS  (v0.9.0)
+ License: BSD 2-Clause Plus Patent License (BSD-2-Clause-Patent)
+ https://github.com/OpenVisualCloud/SVT-JPEG-XS
+==========================================================================
+
+Copyright (c) 2024 Intel Corporation
+
+The Scalable Video Technology JPEG-XS encoder/decoder (x86-64 only) is
+licensed under the BSD 2-Clause Plus Patent License, which pairs a
+permissive BSD-2-Clause grant with an express patent license.
+Redistribution in binary form must reproduce the above copyright notice,
+this list of conditions, and the disclaimer.  The full license text,
+including the patent grant, is in the source tree at
+thirdparty/svt-jpeg-xs/LICENSE.md.
+
+
+==========================================================================
+ whisper.cpp + GGML  (v1.8.4)
+ License: MIT License
+ https://github.com/ggml-org/whisper.cpp
+==========================================================================
+
+Copyright (c) 2023-2026 The ggml authors
+
+whisper.cpp (speech transcription) and its bundled GGML tensor library
+are licensed under the MIT License.  The full license text is in the
+source tree at thirdparty/whisper.cpp/LICENSE.
+
+
+==========================================================================
+ libajantv2  (ntv2_18_0_0)
+ License: MIT License
+ https://github.com/aja-video/libajantv2
+==========================================================================
+
+Copyright (c) 2023 AJA Video Systems
+
+The AJA NTV2 SDK (driver/SDK for AJA capture and playback hardware) is
+licensed under the MIT License.  The full license text is in the source
+tree at thirdparty/libajantv2/LICENSE.
+
+
+==========================================================================
+ libvtc  (v0.1.0)
+ License: MIT License
+ https://github.com/jthwho/libvtc
+==========================================================================
+
+Copyright (c) 2025 Howard Logic
+
+libvtc (the timecode engine backing the Timecode class) is licensed
+under the MIT License.  The full license text is in the source tree at
+thirdparty/libvtc/LICENSE.
+
+
+==========================================================================
+ cirf  (Compiled-In Resource Filesystem)
+ License: MIT License
+ https://github.com/jthwho/cirf
+==========================================================================
+
+Copyright (c) Howard Logic
+
+cirf provides the compiled-in resource filesystem (the :/.PROMEKI/ paths)
+and is licensed under the MIT License, as stated in
+thirdparty/cirf/README.md.
+
+
+==========================================================================
+ doctest  (v2.4.11)
+ License: MIT License
+ https://github.com/doctest/doctest
+==========================================================================
+
+Copyright (c) 2016-2023 Viktor Kirilov
+
+doctest is the unit-test framework used by libpromeki's test suite (it is
+not linked into the shipped libpromeki.so, but its header is installed
+for downstream test use).  The full MIT license text is carried in the
+header itself at thirdparty/doctest/doctest.h.

@@ -1,123 +1,75 @@
 # promeki_srt_bundle.cmake
 #
-# Helper script invoked at build time (via cmake -P) to combine libsrt.a
-# with the three isolated mbedTLS-3.6 static archives into a single
-# static library where every mbedTLS-3.6 symbol is marked LOCAL — so
-# the symbols cannot collide with the *main* mbedTLS-4.x stack that
-# the rest of libpromeki.so links against.
+# Helper script invoked at build time (via cmake -P) to link libsrt.a
+# together with the three isolated mbedTLS-3.6 static archives into a
+# single *shared* object — libpromeki_srt.so — in which:
+#
+#   * the public SRT C API (srt_*) stays GLOBAL in the dynamic symbol
+#     table (SRT_API expands to visibility("default") on non-Windows, so
+#     these survive even though SRT is compiled -fvisibility=hidden),
+#   * every SRT-internal symbol is already hidden by the visibility
+#     preset and so never reaches the dynsym,
+#   * every mbedTLS-3.6 symbol is forced LOCAL by --exclude-libs naming
+#     the three mbedTLS archives — invisible to anything that links
+#     against the .so, so the 3.6 crypto stack cannot collide with the
+#     *main* mbedTLS-4.x stack the rest of libpromeki.so links against.
+#
+# This replaces the older `ld -r` + `objcopy --localize-symbols` pass:
+# --exclude-libs does the same symbol localization declaratively, at the
+# moment the shared object's dynamic symbol table is produced, with no
+# nm enumeration step.  mbedTLS-3.6 is statically absorbed into the .so
+# (it never appears as a DT_NEEDED), so there is nothing for a consumer
+# to resolve or accidentally bind to a different copy.
 #
 # Required vars (set by the parent CMakeLists.txt via -D...):
-#   BUNDLE_OBJ        path of the partial-linked object to produce
-#   BUNDLE_LIB        path of the final static archive
-#   LOCALSYMS_FILE    path of the generated localize-symbols list
+#   BUNDLE_SO         path of the shared object to produce
+#   BUNDLE_SONAME     DT_SONAME to embed (e.g. libpromeki_srt.so)
 #   SRT_LIBA          input libsrt.a (built by srt_ep)
 #   MBEDTLS_LIBA      input libmbedtls.a    (3.6, built by srt_mbedtls_ep)
 #   MBEDX509_LIBA     input libmbedx509.a   (3.6)
 #   MBEDCRYPTO_LIBA   input libmbedcrypto.a (3.6)
-#   LD_TOOL           path to ld
-#   OBJCOPY_TOOL      path to objcopy
-#   AR_TOOL           path to ar
-#   NM_TOOL           path to nm
+#   CXX_TOOL          path to the C++ compiler driver (links libstdc++)
 
-foreach(_var BUNDLE_OBJ BUNDLE_LIB LOCALSYMS_FILE
+foreach(_var BUNDLE_SO BUNDLE_SONAME
              SRT_LIBA MBEDTLS_LIBA MBEDX509_LIBA MBEDCRYPTO_LIBA
-             LD_TOOL OBJCOPY_TOOL AR_TOOL NM_TOOL)
+             CXX_TOOL)
     if(NOT DEFINED ${_var})
         message(FATAL_ERROR "promeki_srt_bundle.cmake: ${_var} is not set")
     endif()
 endforeach()
 
 # Make sure the output directory exists.
-get_filename_component(_outdir "${BUNDLE_LIB}" DIRECTORY)
+get_filename_component(_outdir "${BUNDLE_SO}" DIRECTORY)
 file(MAKE_DIRECTORY "${_outdir}")
 
-# 1. Enumerate every GLOBAL symbol defined by the isolated mbedTLS-3.6
-#    archives — these are the symbols we want to localize.  `nm -g
-#    --defined-only` prints addr/type/name; the symbol name is the
-#    last column.  We strip leading whitespace and de-duplicate.
-set(_mbedtls_archives
-    "${MBEDTLS_LIBA}"
-    "${MBEDX509_LIBA}"
-    "${MBEDCRYPTO_LIBA}"
-)
-
-set(_all_syms "")
-foreach(_a ${_mbedtls_archives})
-    execute_process(
-        COMMAND "${NM_TOOL}" -g --defined-only --format=posix "${_a}"
-        OUTPUT_VARIABLE _nm_out
-        RESULT_VARIABLE _nm_rc
-        ERROR_VARIABLE  _nm_err)
-    if(NOT _nm_rc EQUAL 0)
-        message(FATAL_ERROR "nm failed on ${_a}: ${_nm_err}")
-    endif()
-    # Each line: "<symbol> <type> [<addr> [<size>]]"  — POSIX format.
-    # Skip blank lines and archive-member headers ("name.o:").
-    string(REPLACE "\n" ";" _nm_lines "${_nm_out}")
-    foreach(_line ${_nm_lines})
-        string(STRIP "${_line}" _line)
-        if(_line STREQUAL "" OR _line MATCHES ":$")
-            continue()
-        endif()
-        # Symbol is the first whitespace-separated token.
-        string(REGEX REPLACE "[ \t].*$" "" _sym "${_line}")
-        if(_sym STREQUAL "")
-            continue()
-        endif()
-        list(APPEND _all_syms "${_sym}")
-    endforeach()
+# --exclude-libs matches archives by base filename; collect the three
+# mbedTLS-3.6 archive names (no path) into a colon-separated list.
+foreach(_a MBEDTLS_LIBA MBEDX509_LIBA MBEDCRYPTO_LIBA)
+    get_filename_component(_name "${${_a}}" NAME)
+    list(APPEND _mbed_names "${_name}")
 endforeach()
+string(REPLACE ";" ":" _exclude_arg "${_mbed_names}")
 
-list(REMOVE_DUPLICATES _all_syms)
-list(SORT _all_syms)
-list(LENGTH _all_syms _n_syms)
-message(STATUS "promeki-srt-bundle: localizing ${_n_syms} mbedTLS-3.6 symbols")
-
-# Write the symbol list, one per line, for objcopy --localize-symbols.
-set(_localsyms_content "")
-foreach(_s ${_all_syms})
-    string(APPEND _localsyms_content "${_s}\n")
-endforeach()
-file(WRITE "${LOCALSYMS_FILE}" "${_localsyms_content}")
-
-# 2. Partial-link libsrt.a + the three mbedTLS-3.6 archives into one
-#    object.  --whole-archive on libsrt forces in every libsrt member
-#    (we want all of SRT to be present).  The mbedTLS archives are
-#    pulled in selectively by reference; haicrypt symbols inside libsrt
-#    drag in only the mbedTLS .o's they actually use.
+# Link the shared object:
+#   * --whole-archive on libsrt forces in every libsrt member (we want
+#     the complete SRT library present in the .so),
+#   * the mbedTLS archives follow and are pulled in by reference (only
+#     the .o's haicrypt actually uses get dragged in),
+#   * --exclude-libs localizes every symbol the mbedTLS archives define,
+#   * -pthread because SRT references pthread / atomic even with
+#     ENABLE_STDCXX_SYNC=ON (libstdc++ and haicrypt pull them in).
 execute_process(
-    COMMAND "${LD_TOOL}" -r
-        --whole-archive    "${SRT_LIBA}"
-        --no-whole-archive "${MBEDTLS_LIBA}" "${MBEDX509_LIBA}" "${MBEDCRYPTO_LIBA}"
-        -o "${BUNDLE_OBJ}"
-    RESULT_VARIABLE _ld_rc
-    ERROR_VARIABLE  _ld_err)
-if(NOT _ld_rc EQUAL 0)
-    message(FATAL_ERROR "ld -r failed bundling SRT + mbedTLS-3.6:\n${_ld_err}")
+    COMMAND "${CXX_TOOL}" -shared -fPIC
+        "-Wl,-soname,${BUNDLE_SONAME}"
+        -o "${BUNDLE_SO}"
+        "-Wl,--whole-archive" "${SRT_LIBA}" "-Wl,--no-whole-archive"
+        "${MBEDTLS_LIBA}" "${MBEDX509_LIBA}" "${MBEDCRYPTO_LIBA}"
+        "-Wl,--exclude-libs,${_exclude_arg}"
+        -pthread
+    RESULT_VARIABLE _link_rc
+    ERROR_VARIABLE  _link_err)
+if(NOT _link_rc EQUAL 0)
+    message(FATAL_ERROR "linking ${BUNDLE_SONAME} failed:\n${_link_err}")
 endif()
 
-# 3. Localize all collected mbedTLS-3.6 symbols inside the partial-linked
-#    object.  After this pass, the symbols still resolve internally
-#    (SRT haicrypt → mbedTLS-3.6) but become invisible to anything
-#    linking against the bundle.
-execute_process(
-    COMMAND "${OBJCOPY_TOOL}" "--localize-symbols=${LOCALSYMS_FILE}" "${BUNDLE_OBJ}"
-    RESULT_VARIABLE _oc_rc
-    ERROR_VARIABLE  _oc_err)
-if(NOT _oc_rc EQUAL 0)
-    message(FATAL_ERROR "objcopy --localize-symbols failed:\n${_oc_err}")
-endif()
-
-# 4. Wrap the localized object into a static archive.  Delete any
-#    stale archive first — `ar rcs` appends to existing archives,
-#    which would double the bundle on rebuilds.
-file(REMOVE "${BUNDLE_LIB}")
-execute_process(
-    COMMAND "${AR_TOOL}" rcs "${BUNDLE_LIB}" "${BUNDLE_OBJ}"
-    RESULT_VARIABLE _ar_rc
-    ERROR_VARIABLE  _ar_err)
-if(NOT _ar_rc EQUAL 0)
-    message(FATAL_ERROR "ar rcs failed:\n${_ar_err}")
-endif()
-
-message(STATUS "promeki-srt-bundle: wrote ${BUNDLE_LIB}")
+message(STATUS "promeki-srt-bundle: wrote ${BUNDLE_SO} (mbedTLS-3.6 symbols localized)")
