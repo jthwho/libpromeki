@@ -1080,6 +1080,20 @@ Error TpgMediaIO::proposeOutput(const MediaDesc &requested, MediaDesc *achievabl
                         return Error::NotSupported;
                 }
         }
+        // Audio: TPG's pattern generators always emit native float
+        // PCM (see @ref AudioTestPattern::createPayload, which writes
+        // into @c workingDesc() = @c PCMI_Float32LE).  A non-native
+        // audio format request can't be satisfied by a config delta
+        // — there's no "AudioFormat" TPG config key — so report that
+        // shape as unachievable and let the planner splice an audio
+        // SRC bridge downstream.  Plain rate / channel changes are
+        // still expressible through @ref MediaConfig::AudioRate /
+        // @c AudioChannels and remain in the achievable set.
+        for (const auto &aud : requested.audioList()) {
+                if (aud.format().isValid() && aud.format().id() != AudioFormat::PCMI_Float32LE) {
+                        return Error::NotSupported;
+                }
+        }
         *achievable = requested;
 
         // When the planner asks for a config delta, translate the

@@ -1,6 +1,7 @@
 add_executable(promeki-test
     main.cpp
     testcontext.cpp
+    testmedia.cpp
     testrunner.cpp
     cases/pipeline_common.cpp
     cases/audio.cpp
@@ -13,6 +14,7 @@ add_executable(promeki-test
     cases/rtp_ffmpeg.cpp
     cases/rtpchaos.cpp
     cases/rtpchaosshim.cpp
+    cases/transcription.cpp
     cases/videocarrier.cpp
 )
 

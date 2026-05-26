@@ -126,7 +126,11 @@ that history now lives in git. What remains here is the open work.
 - **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,
   DebugMedia, Mjpeg, NullPacing** all carry full describe /
   proposeInput / proposeOutput coverage per the planner contract (see
-  `proav/planner.md`).
+  `proav/planner.md`).  TPG's `proposeOutput` now rejects any requested
+  `AudioDesc` whose format is not `PCMI_Float32LE` (the only format the
+  pattern generators can emit) with `Error::NotSupported`, so the planner
+  inserts an audio SRC bridge rather than asking TPG to produce a format
+  it can't synthesize.
 
 ---
 

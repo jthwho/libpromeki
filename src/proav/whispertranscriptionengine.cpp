@@ -14,16 +14,19 @@
  *
  *   1. @ref submitFrame  — extract the selected @ref PcmAudioPayload,
  *                          convert to float32 if necessary, downmix
- *                          per @ref TranscriptionChannelMode, resample
- *                          to 16 kHz mono via libsamplerate, append
- *                          to the in-flight float buffer.
+ *                          per @ref TranscriptionChannelMode into the
+ *                          persistent mono scratch, and push into the
+ *                          per-session @ref AudioBuffer accumulator
+ *                          (which handles the 16 kHz mono resampling
+ *                          and ring storage internally).
  *
  *   2. @ref flush        — lazily initialise the whisper context from
- *                          the resolved model file, run
- *                          @c whisper_full over the accumulated
- *                          samples, iterate the resulting segments,
- *                          and emit one finalised output @ref Frame
- *                          per segment carrying a @ref Transcript on
+ *                          the resolved model file, drain the
+ *                          accumulator into a contiguous float buffer,
+ *                          run @c whisper_full over those samples,
+ *                          iterate the resulting segments, and emit
+ *                          one finalised output @ref Frame per
+ *                          segment carrying a @ref Transcript on
  *                          @c Metadata::Transcript.
  *
  *   3. @ref receiveFrame — dequeues one ready output Frame per call,
@@ -48,15 +51,17 @@
 #include <cstring>
 #include <cmath>
 
+#include <promeki/audiobuffer.h>
 #include <promeki/audiochannelmap.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiopayload.h>
-#include <promeki/audioresampler.h>
 #include <promeki/backendweight.h>
+#include <promeki/basicthread.h>
 #include <promeki/bufferview.h>
 #include <promeki/deque.h>
 #include <promeki/dir.h>
 #include <promeki/duration.h>
+#include <promeki/env.h>
 #include <promeki/enum.h>
 #include <promeki/enums.h>
 #include <promeki/char.h>
@@ -153,12 +158,6 @@ namespace {
         // canonical format before invoking whisper_full.
         constexpr float kWhisperSampleRate = 16000.0f;
 
-        // Default model name when MediaConfig::TranscriptionModelHint
-        // is empty.  Multilingual, ~470 MB on disk, real-time on a
-        // modern desktop CPU.  Bare-name resolution puts this at
-        // Dir::models()/whisper/ggml-small.bin (see resolveModelPath).
-        const String kDefaultModelName = "small";
-
         // Whisper t0/t1 timestamps are expressed in 10 ms units
         // (centiseconds).  Convert to nanoseconds for the absolute
         // TimeStamp we stamp on each TranscriptWord / Transcript.
@@ -166,25 +165,188 @@ namespace {
 
         // ---- Model-path resolution -----------------------------------
 
-        // Resolves the engine-specific model identifier into an absolute
-        // filesystem path.  Empty / unset hint maps to the kDefault model
-        // name.  Absolute paths are honoured verbatim so users can stage
-        // models outside Dir::models() (network share, read-only mount,
-        // etc.).  Bare names resolve under Dir::models()/whisper/ with
-        // whisper.cpp's canonical "ggml-<name>.bin" filename.
-        String resolveModelPath(const String &hint) {
-                String name = hint.isEmpty() ? kDefaultModelName : hint;
-                // Crude absolute-path detection: POSIX paths begin with
-                // '/', Windows paths begin with a drive letter + ':'.
-                // FilePath itself can answer the same question but it's
-                // overkill here.
-                if (name.startsWith("/") || (name.size() >= 2 && name.charAt(1) == Char(':'))) {
-                        return name;
+        // Subdirectory of Dir::models() that holds whisper.cpp model
+        // files.  All bare-name / fallback / symlink lookups happen
+        // here.  Kept as a constant so the layout is visible in one
+        // place; promeki-fetch-model and the unit tests use the same
+        // convention.
+        const String kWhisperSubdir = "whisper";
+
+        // Bare name of the pseudo-symlink (or OS symlink) that, when
+        // present in the whisper model directory, names which model
+        // to load by default.  Created by users / tools that want to
+        // pin a particular model without rewriting every config file
+        // that asks for the engine.  See FilePath::writePseudoSymlink
+        // for the on-disk shape when symlinks are not available.
+        const String kDefaultLinkName = "default";
+
+        // Environment variable consulted (only if MediaConfig is not
+        // already pinning a model) for an explicit override path.
+        // Values may be absolute paths or bare model names; bare
+        // names resolve under Dir::models()/whisper/ with the
+        // canonical "ggml-<name>.bin" filename.
+        const char *kEnvVarModel = "PROMEKI_WHISPER_MODEL";
+
+        // Fallback model order, used when no config / env / default
+        // symlink applies.  Tries "small" first (the canonical
+        // mid-quality whisper model: ~470 MB, real-time on a desktop
+        // CPU, multilingual), then walks outward — preferring the
+        // next-better tier ("medium", then the large variants)
+        // before degrading to the lighter "base" / "tiny" tiers.
+        // English-only variants are interleaved so an .en model can
+        // satisfy callers who have only that staged.
+        const String kFallbackTiers[] = {
+                "small",      "small.en",   "medium",     "medium.en", "large-v3",
+                "large-v3-turbo", "large-v2", "large",      "large-v1",  "base",       "base.en",
+                "tiny",       "tiny.en",
+        };
+        constexpr size_t kFallbackTiersCount = sizeof(kFallbackTiers) / sizeof(kFallbackTiers[0]);
+
+        // Returns the on-disk path the canonical whisper.cpp file for
+        // a bare model name lives at:
+        //   Dir::models()/whisper/ggml-<name>.bin
+        FilePath whisperModelFile(const String &bareName) {
+                FilePath dir = Dir::models().path() / kWhisperSubdir;
+                return dir / (String("ggml-") + bareName + ".bin");
+        }
+
+        // True when @p s looks like a filesystem path (contains a
+        // path separator) or carries a file extension we recognise.
+        // Used to decide whether an override value is a path or a
+        // bare model name.  Conservative — a value that simply names
+        // a model ("small", "tiny") returns @c false; anything with
+        // a slash, a drive letter, or a ".bin" / ".gguf" extension
+        // returns @c true.
+        bool looksLikePath(const String &s) {
+                if (s.isEmpty()) return false;
+                if (s.find('/') != String::npos) return true;
+                if (s.find('\\') != String::npos) return true;
+                if (s.size() >= 2 && s.charAt(1) == Char(':')) return true; // Windows drive
+                if (s.endsWith(String(".bin")) || s.endsWith(String(".gguf"))) return true;
+                return false;
+        }
+
+        // Expands an override value (from config or env) into an
+        // absolute filesystem path.  Absolute paths pass through
+        // unchanged.  Other path-shaped strings are returned as-is
+        // (the caller-supplied form, which may be relative to
+        // their CWD).  Bare model names ("small", "tiny.en") are
+        // canonicalised to Dir::models()/whisper/ggml-<name>.bin.
+        String expandOverride(const String &raw) {
+                if (raw.isEmpty()) return raw;
+                if (looksLikePath(raw)) return raw;
+                return whisperModelFile(raw).toString();
+        }
+
+        // Walks the fallback tier list and returns the first model
+        // file that exists on disk, or an empty path when none of
+        // the tiers are present.  Also reports back via @p outTier
+        // which tier matched, for logging.
+        String findFallbackModel(String *outTier) {
+                for (size_t i = 0; i < kFallbackTiersCount; ++i) {
+                        FilePath candidate = whisperModelFile(kFallbackTiers[i]);
+                        if (candidate.exists()) {
+                                if (outTier) *outTier = kFallbackTiers[i];
+                                return candidate.toString();
+                        }
                 }
-                FilePath dir = Dir::models().path();
-                String filename = String("ggml-") + name + ".bin";
-                FilePath model = dir / "whisper" / filename;
-                return model.toString();
+                if (outTier) outTier->clear();
+                return String();
+        }
+
+        // Resolves the model path to load, in priority order:
+        //
+        //   1. @p hint  — MediaConfig::TranscriptionModelHint as set by
+        //                 the caller.  Absolute path, relative path, or
+        //                 bare model name; the latter resolves under
+        //                 Dir::models()/whisper/.
+        //   2. $PROMEKI_WHISPER_MODEL env var.  Same expansion rules
+        //                 as the config hint.
+        //   3. The "default" link in Dir::models()/whisper/ — an OS
+        //                 symlink or a libpromeki pseudo-symlink.
+        //   4. Dir::models()/whisper/ggml-small.bin if present (the
+        //                 canonical default model).
+        //   5. The closest available model from kFallbackTiers,
+        //                 preferring next-better over next-smaller.
+        //
+        // Every successful resolution emits a single promekiInfo
+        // line naming the model and the rule that picked it so
+        // diagnostic logs make the choice unambiguous.  An empty
+        // return means "no model usable" and the caller (ensureContext)
+        // surfaces an Error::NotExist.
+        String resolveModelPath(const String &hint) {
+                // 1. Config hint wins outright.
+                if (!hint.isEmpty()) {
+                        String resolved = expandOverride(hint);
+                        promekiInfo("WhisperEngine: model from MediaConfig::TranscriptionModelHint "
+                                    "(hint='%s') -> %s",
+                                    hint.cstr(), resolved.cstr());
+                        return resolved;
+                }
+
+                // 2. Environment override.  Read via the library Env
+                // wrapper rather than std::getenv directly so it goes
+                // through the same path as other PROMEKI_* knobs
+                // (and so tests can stub it later if needed).
+                String env = Env::get(kEnvVarModel);
+                if (!env.isEmpty()) {
+                        String resolved = expandOverride(env);
+                        promekiInfo("WhisperEngine: model from %s env (raw='%s') -> %s",
+                                    kEnvVarModel, env.cstr(), resolved.cstr());
+                        return resolved;
+                }
+
+                // 3. "default" link in the whisper model directory.
+                FilePath whisperDir = Dir::models().path() / kWhisperSubdir;
+                FilePath defaultLink = whisperDir / kDefaultLinkName;
+                if (defaultLink.isLink()) {
+                        Result<FilePath> r = defaultLink.readLink();
+                        if (r.second().isOk()) {
+                                FilePath target = r.first();
+                                // Mirror OS symlink semantics: a
+                                // relative target resolves against the
+                                // link's parent (the whisper dir).
+                                if (target.isRelative()) target = whisperDir / target;
+                                promekiInfo("WhisperEngine: model from '%s' link in %s -> %s",
+                                            kDefaultLinkName.cstr(),
+                                            whisperDir.toString().cstr(),
+                                            target.toString().cstr());
+                                return target.toString();
+                        }
+                        promekiWarn("WhisperEngine: '%s' link present at %s but unreadable; "
+                                    "falling through to size-tier fallback",
+                                    kDefaultLinkName.cstr(),
+                                    defaultLink.toString().cstr());
+                }
+
+                // 4 + 5. Walk the fallback tier list (which starts at
+                // "small" — covers the user's "use small if it exists"
+                // rule — and degrades from there preferring "closest
+                // to small, preferring better" semantics).
+                String matchedTier;
+                String fallback = findFallbackModel(&matchedTier);
+                if (!fallback.isEmpty()) {
+                        if (matchedTier == "small") {
+                                promekiInfo("WhisperEngine: using canonical default model 'small' -> %s",
+                                            fallback.cstr());
+                        } else {
+                                promekiInfo("WhisperEngine: 'small' not staged in %s; "
+                                            "fallback tier '%s' -> %s",
+                                            (Dir::models().path() / kWhisperSubdir).toString().cstr(),
+                                            matchedTier.cstr(), fallback.cstr());
+                        }
+                        return fallback;
+                }
+
+                // No model on disk at all.  Return the canonical
+                // "small" path so the caller's not-exist error names
+                // a concrete file the user is likely to want to stage.
+                FilePath canonical = whisperModelFile("small");
+                promekiWarn("WhisperEngine: no whisper model staged under %s; "
+                            "expected at %s (use promeki-fetch-model to install)",
+                            (Dir::models().path() / kWhisperSubdir).toString().cstr(),
+                            canonical.toString().cstr());
+                return canonical.toString();
         }
 
         // ---- BCP 47 → whisper language code --------------------------
@@ -349,13 +511,30 @@ namespace {
 
                         Error flush() override {
                                 clearError();
-                                if (_buffer.isEmpty()) {
+                                const size_t available = _accumulator.isValid() ? _accumulator.available() : 0;
+                                if (available == 0) {
                                         // Nothing to transcribe — flush is a no-op but not
                                         // an error.  receiveFrame() will return an invalid
                                         // Frame immediately.
                                         return Error::Ok;
                                 }
                                 if (!ensureContext()) {
+                                        return _lastError;
+                                }
+
+                                // Drain the accumulator ring into a flat scratch buffer.
+                                // whisper_full needs a single contiguous float* spanning
+                                // the whole utterance, so the pop into _flushScratch is
+                                // unavoidable; the persistent List grows over the session's
+                                // peak utterance length and stays there for reuse.
+                                _flushScratch.resize(available);
+                                auto popRes = _accumulator.pop(_flushScratch.data(), available);
+                                const size_t popped = popRes.first();
+                                if (popRes.second() != Error::Ok || popped != available) {
+                                        promekiWarn("WhisperEngine::flush: AudioBuffer pop returned %zu/%zu (err=%s)",
+                                                    popped, available, popRes.second().name().cstr());
+                                        setError(popRes.second() != Error::Ok ? popRes.second() : Error::LibraryFailure,
+                                                 "AudioBuffer accumulator drain underran");
                                         return _lastError;
                                 }
 
@@ -371,14 +550,23 @@ namespace {
                                 params.token_timestamps = _wantWordTimestamps;
                                 params.suppress_blank = true;
                                 params.thold_pt = 0.01f;
-                                // n_threads defaults to std::thread::hardware_concurrency()
-                                // inside whisper.cpp — fine for batch transcription.
+                                // whisper_full_default_params() caps n_threads at
+                                // min(4, hardware_concurrency()) — fine for low-end
+                                // boxes but pins us to four cores on anything
+                                // beefier.  Override with the library's
+                                // BasicThread::idealThreadCount() (wraps
+                                // std::thread::hardware_concurrency, returns 0 on
+                                // failure) so the encoder GEMMs see the whole CPU.
+                                {
+                                        const unsigned int hwc = BasicThread::idealThreadCount();
+                                        params.n_threads = hwc > 0 ? static_cast<int>(hwc) : 4;
+                                }
 
-                                int rc = whisper_full(_ctx, params, _buffer.data(),
-                                                      static_cast<int>(_buffer.size()));
+                                int rc = whisper_full(_ctx, params, _flushScratch.data(),
+                                                      static_cast<int>(popped));
                                 if (rc != 0) {
                                         promekiWarn("WhisperEngine::flush: whisper_full failed (rc=%d, samples=%zu)",
-                                                    rc, _buffer.size());
+                                                    rc, popped);
                                         setError(Error::DecodeFailed,
                                                  String::sprintf("whisper_full failed (rc=%d)", rc));
                                         return _lastError;
@@ -386,24 +574,22 @@ namespace {
                                 drainSegments();
                                 // Reset in-flight state: the batch is complete.  Configuration
                                 // and the loaded whisper context are preserved so the next
-                                // session can reuse them.
-                                _buffer.clear();
+                                // session can reuse them.  _flushScratch keeps its capacity
+                                // so the next flush amortises the allocation.
                                 _anchor = MediaTimeStamp();
                                 return Error::Ok;
                         }
 
                         Error reset() override {
                                 clearError();
-                                _buffer.clear();
+                                if (_accumulator.isValid()) _accumulator.clear();
                                 _pending.clear();
                                 _anchor = MediaTimeStamp();
-                                // Keep _ctx and _resampler alive — the model is expensive
-                                // to load (hundreds of MB) and the resampler's filter state
-                                // is cheap to throw away via AudioResampler::reset(), which
-                                // ensureResampler() will call when channel count changes.
-                                if (_resampler.isValid() && _resampler->isValid()) {
-                                        _resampler->reset();
-                                }
+                                // Keep _ctx and the accumulator's storage alive — the model
+                                // is expensive to load (hundreds of MB) and the ring's
+                                // backing buffer is cheap to reuse.  AudioBuffer::clear
+                                // resets the ring head/tail and PTS anchors but leaves the
+                                // storage capacity in place.
                                 return Error::Ok;
                         }
 
@@ -453,33 +639,60 @@ namespace {
                                 return true;
                         }
 
-                        // Sets up / re-sets up the resampler when the input format
-                        // changes.  Whisper takes 16 kHz mono so the *output* of
-                        // libsamplerate is always 1 channel; we resample the
-                        // already-downmixed mono buffer.  Returns false on setup
-                        // failure.
-                        bool ensureResampler(float inputRate) {
+                        // Sets up / reconfigures the per-session AudioBuffer accumulator.
+                        // The storage format is fixed at 16 kHz mono Float32LE (whisper's
+                        // canonical input), so the only thing that varies between sessions
+                        // is the input sample rate.  AudioBuffer handles the actual sample
+                        // rate conversion + ring storage internally; SincFastest is plenty
+                        // since whisper is robust to lower-quality resampling and burning
+                        // cycles on a higher tier buys zero accuracy here.
+                        bool ensureAccumulator(float inputRate) {
                                 if (inputRate <= 0.0f) {
                                         setError(Error::Invalid, "PCM payload has zero sample rate");
                                         return false;
                                 }
-                                if (_resampler.isValid() && _resampler->isValid() && _inputRate == inputRate) {
+                                if (_accumulator.isValid() && _inputRate == inputRate) {
                                         return true;
                                 }
-                                if (!_resampler.isValid()) {
-                                        _resampler = UniquePtr<AudioResampler>::create();
+                                if (!_accumulator.isValid()) {
+                                        AudioDesc storage(AudioFormat::PCMI_Float32LE,
+                                                          kWhisperSampleRate, 1u);
+                                        _accumulator = AudioBuffer(storage);
+                                        // ~30 s headroom up front (whisper's encoder window).
+                                        // appendPayload grows on demand via reserve() if the
+                                        // utterance runs longer than that.
+                                        _accumulator.reserve(static_cast<size_t>(kWhisperSampleRate) * 30u);
+                                        Error qerr = _accumulator.setResamplerQuality(SrcQuality::SincFastest);
+                                        if (qerr != Error::Ok && qerr != Error::NotSupported) {
+                                                setError(qerr, "AudioBuffer::setResamplerQuality failed");
+                                                return false;
+                                        }
                                 }
-                                Error err = _resampler->setup(1u, SrcQuality::SincMedium);
-                                if (err != Error::Ok) {
-                                        setError(err, "AudioResampler::setup failed");
-                                        return false;
-                                }
-                                err = _resampler->setRatio(inputRate, kWhisperSampleRate);
-                                if (err != Error::Ok) {
-                                        setError(err, "AudioResampler::setRatio failed");
-                                        return false;
-                                }
+                                AudioDesc input(AudioFormat::PCMI_Float32LE, inputRate, 1u);
+                                _accumulator.setInputFormat(input);
                                 _inputRate = inputRate;
+                                return true;
+                        }
+
+                        // Ensures the accumulator has room for at least @p extraSamples
+                        // *input* samples worth of output (so an upward resample doesn't
+                        // hit NoSpace mid-push).  Cheap when already large enough.
+                        bool ensureAccumulatorRoom(size_t extraInputSamples, float inputRate) {
+                                const double upRatio = inputRate > 0.0f
+                                                               ? std::max(1.0,
+                                                                          static_cast<double>(kWhisperSampleRate) /
+                                                                                  static_cast<double>(inputRate))
+                                                               : 1.0;
+                                const size_t needOutputRoom =
+                                        static_cast<size_t>(std::ceil(static_cast<double>(extraInputSamples) * upRatio)) +
+                                        64u;
+                                if (_accumulator.free() >= needOutputRoom) return true;
+                                const size_t newCap = _accumulator.available() + needOutputRoom;
+                                Error err = _accumulator.reserve(newCap);
+                                if (err != Error::Ok) {
+                                        setError(err, "AudioBuffer::reserve failed");
+                                        return false;
+                                }
                                 return true;
                         }
 
@@ -522,55 +735,35 @@ namespace {
                                 // Step 2: downmix to a mono float buffer.  Selecting zero
                                 // channels means "drop this payload silently" — keep going
                                 // rather than fail, since the caller's MediaConfig may have
-                                // been targeting a different audio stream.
+                                // been targeting a different audio stream.  _monoScratch is
+                                // a persistent member so the buffer's storage is reused
+                                // across submits and only grows on the rare peak.
                                 List<int> channelSel = selectChannels(payload, this->config());
                                 if (channelSel.isEmpty()) {
                                         return Error::Ok;
                                 }
-                                List<float> mono;
-                                mono.resize(frames);
+                                _monoScratch.resize(frames);
                                 if (channels == 1 && channelSel.size() == 1 && channelSel.at(0) == 0) {
-                                        std::memcpy(mono.data(), interleaved, frames * sizeof(float));
+                                        std::memcpy(_monoScratch.data(), interleaved, frames * sizeof(float));
                                 } else {
-                                        downmixFloat32(interleaved, frames, channels, channelSel, mono.data());
+                                        downmixFloat32(interleaved, frames, channels, channelSel,
+                                                       _monoScratch.data());
                                 }
 
-                                // Step 3: resample to 16 kHz mono unless the input is
-                                // already at the target rate, in which case pass through
-                                // verbatim (saves the filter delay).
-                                if (sampleRate == kWhisperSampleRate) {
-                                        const size_t base = _buffer.size();
-                                        _buffer.resize(base + frames);
-                                        std::memcpy(_buffer.data() + base, mono.data(), frames * sizeof(float));
-                                        return Error::Ok;
-                                }
+                                // Step 3: hand the mono float scratch to the AudioBuffer
+                                // accumulator.  AudioBuffer transparently resamples to
+                                // 16 kHz mono (or short-circuits when sampleRate already
+                                // matches the storage rate) and stores the result in its
+                                // ring.  Reserve enough output headroom for an
+                                // upward-resampling worst case before pushing so the ring
+                                // never returns NoSpace mid-utterance.
+                                if (!ensureAccumulator(sampleRate)) return _lastError;
+                                if (!ensureAccumulatorRoom(frames, sampleRate)) return _lastError;
 
-                                if (!ensureResampler(sampleRate)) return _lastError;
-
-                                // Allocate a generous output buffer — libsamplerate may
-                                // produce up to ratio*frames + (filter-internal) extra
-                                // samples per process() call.  +64 absorbs the rounding
-                                // / filter overhang without forcing a second loop pass.
-                                const double ratio = static_cast<double>(kWhisperSampleRate) / sampleRate;
-                                const size_t outCap = static_cast<size_t>(
-                                                              std::ceil(static_cast<double>(frames) * ratio))
-                                                      + 64;
-                                List<float> out;
-                                out.resize(outCap);
-
-                                long used = 0;
-                                long gen = 0;
-                                Error err = _resampler->process(mono.data(), static_cast<long>(frames),
-                                                                out.data(), static_cast<long>(outCap),
-                                                                used, gen, /*endOfInput=*/false);
+                                AudioDesc monoInput(AudioFormat::PCMI_Float32LE, sampleRate, 1u);
+                                Error err = _accumulator.push(_monoScratch.data(), frames, monoInput);
                                 if (err != Error::Ok) {
                                         return err;
-                                }
-                                if (gen > 0) {
-                                        const size_t base = _buffer.size();
-                                        _buffer.resize(base + static_cast<size_t>(gen));
-                                        std::memcpy(_buffer.data() + base, out.data(),
-                                                    static_cast<size_t>(gen) * sizeof(float));
                                 }
                                 return Error::Ok;
                         }
@@ -659,12 +852,19 @@ namespace {
                         bool    _wantWordTimestamps = false;
                         int32_t _streamIndex = -1;
 
-                        // Resampler (lazy; recreated when input format changes).
-                        UniquePtr<AudioResampler> _resampler;
-                        float                     _inputRate = 0.0f;
+                        // Per-session 16 kHz mono Float32 accumulator (lazy; lives
+                        // for the engine's lifetime once primed so the ring storage
+                        // amortises across sessions).  AudioBuffer handles the
+                        // sample-rate conversion and ring storage; we only feed it
+                        // downmixed mono float scratch.  _inputRate tracks the
+                        // currently-installed input rate so we only reconfigure on
+                        // an actual change.
+                        AudioBuffer  _accumulator;
+                        float        _inputRate = 0.0f;
+                        List<float>  _monoScratch;   // Persistent downmix scratch.
+                        List<float>  _flushScratch;  // Persistent drain buffer fed to whisper_full.
 
                         // Per-session in-flight state.
-                        List<float>      _buffer;   // 16 kHz mono float32, accumulated across submits.
                         MediaTimeStamp   _anchor;   // PTS of the first submitted payload.
                         Deque<Frame>     _pending;  // Output Frames waiting on receiveFrame().
         };

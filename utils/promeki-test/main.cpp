@@ -34,6 +34,7 @@
 
 #include "cases/cases.h"
 #include "testcontext.h"
+#include "testmedia.h"
 #include "testparams.h"
 #include "testrunner.h"
 
@@ -70,6 +71,7 @@ namespace {
         struct Options {
                         StringList regexes;            // --regex, repeatable
                         String     baseFolder;         // --base, default = Dir::temp() / promeki-test-<ts>
+                        String     testmediaPath;      // --testmedia, default = resolved via env / source dir
                         int32_t    frames = 30;        // --frames
                         int32_t    phaseTimeoutMs = 10000; // --timeout-ms
                         bool       verbose = false;    // --verbose
@@ -185,6 +187,14 @@ namespace {
                                  opts.baseFolder = s;
                                  return 0;
                          })},
+                        {'m', "testmedia",
+                         "Path to the testmedia/ corpus root (default: $PROMEKI_TESTMEDIA, "
+                         "else <source>/testmedia symlink).  Data-driven suites skip when no "
+                         "candidate is usable.",
+                         CmdLineParser::OptionStringCallback([&](const String &s) {
+                                 opts.testmediaPath = s;
+                                 return 0;
+                         })},
                         {'n', "frames", "Frame count for tests that consume one (default: 30)",
                          CmdLineParser::OptionIntCallback([&](int v) {
                                  if (v <= 0) {
@@ -265,6 +275,10 @@ namespace {
                         "                             pattern matches it.  Default: run everything.\n"
                         "  -b, --base DIR           Base folder for per-test scratch space\n"
                         "                             (default: Dir::temp()/promeki-test-<timestamp>)\n"
+                        "  -m, --testmedia DIR      Path to the testmedia/ corpus root.  Used by\n"
+                        "                             data-driven suites (speech-to-text today).\n"
+                        "                             Falls back to $PROMEKI_TESTMEDIA, then to\n"
+                        "                             <source>/testmedia (the in-tree symlink).\n"
                         "  -n, --frames N           Frames per test for tests that need one (default: 30)\n"
                         "  -t, --timeout-ms MS      Per-phase watchdog timeout (default: 10000)\n"
                         "  -v, --verbose            Verbose logging (Logger = Debug)\n"
@@ -380,7 +394,8 @@ namespace {
         // dump.  The Logger is left pointing at this case's log on
         // exit; the caller switches it to the next case (or to a
         // run-level catch-all path) before the next invocation.
-        CaseOutcome runOne(const TestCase &c, const Options &opts, const String &baseFolder) {
+        CaseOutcome runOne(const TestCase &c, const Options &opts, const String &baseFolder,
+                           const String &testmediaRoot) {
                 CaseOutcome o;
                 o.name = c.name();
 
@@ -408,6 +423,7 @@ namespace {
                 params.set(TestParams::Verbose, opts.verbose);
                 params.set(TestParams::Frames, opts.frames);
                 params.set(TestParams::PhaseTimeoutMs, opts.phaseTimeoutMs);
+                params.set(TestParams::TestMediaRoot, testmediaRoot);
 
                 // Apply CLI -p / --param overrides last so they win
                 // over the well-known defaults above.  Validation is
@@ -555,6 +571,15 @@ int main(int argc, char **argv) {
                 }
         }
 
+        // Resolve the testmedia corpus root once, before suite
+        // registration.  Empty means "no candidate usable" and any
+        // data-driven suites skip themselves with a one-liner.
+        // The resolved string is also stamped onto every TestParams
+        // (see runOne) so individual cases have a single source of
+        // truth for the corpus location.
+        FilePath     testmediaRoot = resolveTestMediaRoot(opts.testmediaPath);
+        const String testmediaRootStr = testmediaRoot.toString();
+
         // Suite registration happens after argv parsing so suites
         // can read TestParams defaults (frame count, etc.) when
         // deciding which cases to register.
@@ -568,6 +593,7 @@ int main(int argc, char **argv) {
         registerRtpChaosCases();
         registerNdiCases();
         registerVideoCarrierCases();
+        registerTranscriptionCases(testmediaRoot);
 
         const List<TestCase> &all = TestRunner::registeredCases();
         List<TestCase>        cases = filterCases(all, opts.regexes);
@@ -601,6 +627,14 @@ int main(int argc, char **argv) {
 
         std::printf("promeki-test\n");
         std::printf("  base folder:  %s\n", baseFolder.cstr());
+        if (!testmediaRootStr.isEmpty()) {
+                std::printf("  testmedia:    %s\n", testmediaRootStr.cstr());
+        } else if (!opts.testmediaPath.isEmpty()) {
+                std::printf("  testmedia:    (requested '%s' but no index.json found)\n",
+                            opts.testmediaPath.cstr());
+        } else {
+                std::printf("  testmedia:    (not found — data-driven suites will skip)\n");
+        }
         std::printf("  cases:        %zu of %zu (after filter)\n", (size_t)cases.size(), (size_t)all.size());
         std::printf("  frames:       %d\n", (int)opts.frames);
         std::printf("  timeout(ms):  %d\n", (int)opts.phaseTimeoutMs);
@@ -613,7 +647,7 @@ int main(int argc, char **argv) {
         int                skipped = 0;
         int                timedOut = 0;
         for (size_t i = 0; i < cases.size(); ++i) {
-                CaseOutcome o = runOne(cases[i], opts, baseFolder);
+                CaseOutcome o = runOne(cases[i], opts, baseFolder, testmediaRootStr);
                 outcomes.pushToBack(o);
                 printCaseLine(o, nameWidth, colors);
                 switch (o.status) {

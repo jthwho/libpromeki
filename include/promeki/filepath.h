@@ -200,6 +200,193 @@ class FilePath {
                         return Result<FilePath>(FilePath(r), Error::Ok);
                 }
 
+                /// @name Symbolic / pseudo-symbolic links
+                ///
+                /// libpromeki supports two kinds of "link" pointers:
+                ///
+                ///   - **OS symlink** — a real filesystem symlink, as
+                ///     exposed by @c std::filesystem::is_symlink and
+                ///     @c read_symlink.  Available on POSIX and on
+                ///     modern Windows with the right privileges.
+                ///   - **Pseudo-symlink** — a small, regular text file
+                ///     whose first line is exactly the magic marker
+                ///     @c "#!/promeki/symlink" and whose remaining
+                ///     content (trimmed of ASCII whitespace) is the
+                ///     link target path.  This lets the library carry
+                ///     a "name → real file" indirection on hosts /
+                ///     filesystems that don't support real symlinks
+                ///     (FAT on a USB stick, a CI artifact bundle
+                ///     unpacked as regular files, an LFS-backed
+                ///     repository where symlinks are not preserved).
+                ///
+                /// Pseudo-symlinks require an explicit magic header
+                /// rather than a heuristic content check so they
+                /// can't be confused with unrelated short text files
+                /// that happen to look path-shaped (a @c VERSION
+                /// file, a tag, etc.).  Use @ref writePseudoSymlink
+                /// to create one without having to remember the
+                /// header text.
+                /// @{
+
+                /**
+                 * @brief Maximum byte length of a pseudo-symlink file.
+                 *
+                 * Files larger than this are not considered pseudo-
+                 * symlinks even if they carry the magic header.
+                 */
+                static constexpr size_t kPseudoSymlinkMaxBytes = 4096;
+
+                /**
+                 * @brief Magic first line marking a file as a
+                 *        pseudo-symlink.
+                 *
+                 * The first line of a pseudo-symlink file must be
+                 * exactly this string, optionally followed by a
+                 * trailing CR / LF.  Shaped like a shebang so a
+                 * stray @c cat on the file is obviously a pointer
+                 * rather than an opaque blob.
+                 */
+                static constexpr const char *kPseudoSymlinkMagic = "#!/promeki/symlink";
+
+                /**
+                 * @brief Returns @c true if this path is an OS-level
+                 *        symbolic link.
+                 *
+                 * Uses @c std::filesystem::symlink_status so a broken
+                 * symlink (target does not exist) still returns @c true.
+                 * Returns @c false on any stat error or for paths that
+                 * do not exist at all.
+                 */
+                bool isSymlink() const {
+                        std::error_code ec;
+                        auto            st = std::filesystem::symlink_status(_path, ec);
+                        if (ec) return false;
+                        return std::filesystem::is_symlink(st);
+                }
+
+                /**
+                 * @brief Returns @c true if this path is a pseudo-symlink.
+                 *
+                 * A pseudo-symlink is a regular (non-symlink, non-
+                 * directory) file that satisfies every condition below:
+                 *
+                 *   - Size is in @c [1, @ref kPseudoSymlinkMaxBytes] bytes.
+                 *   - The first line is exactly @ref kPseudoSymlinkMagic
+                 *     (followed by a newline or end-of-file).
+                 *   - The remaining payload, trimmed of leading /
+                 *     trailing ASCII whitespace, is non-empty and
+                 *     contains no NUL or ASCII control characters.
+                 *
+                 * Implementation lives in @c filepath.cpp because it
+                 * has to read the file body.
+                 */
+                bool isPseudoSymlink() const;
+
+                /**
+                 * @brief Returns @c true if this path is either an OS
+                 *        symlink or a pseudo-symlink.
+                 */
+                bool isLink() const { return isSymlink() || isPseudoSymlink(); }
+
+                /**
+                 * @brief Reads an OS symlink's target (verbatim).
+                 *
+                 * Wraps @c std::filesystem::read_symlink.  The returned
+                 * FilePath is exactly what the symlink stores — which
+                 * is often a relative path.  Use @ref resolveLink (or
+                 * @ref canonicalPath) when you want the fully-resolved
+                 * absolute target.
+                 *
+                 * @return The link's stored target on success, or
+                 *         @c Error::Invalid (with @c *this) on any
+                 *         failure (not a symlink, permission error,
+                 *         broken link with an unreadable target).
+                 */
+                Result<FilePath> readSymlink() const {
+                        std::error_code ec;
+                        auto            t = std::filesystem::read_symlink(_path, ec);
+                        if (ec) return Result<FilePath>(*this, Error::Invalid);
+                        return Result<FilePath>(FilePath(t), Error::Ok);
+                }
+
+                /**
+                 * @brief Reads a pseudo-symlink's target.
+                 *
+                 * Verifies the magic header, then returns the
+                 * remaining trimmed payload as a FilePath.  The path
+                 * is returned verbatim — relative paths are @em not
+                 * resolved against this file's parent directory.
+                 * See @ref resolveLink for that.
+                 *
+                 * @return The stored target on success, or
+                 *         @c Error::Invalid (with @c *this) when the
+                 *         file is missing, unreadable, larger than
+                 *         @ref kPseudoSymlinkMaxBytes, missing the
+                 *         magic header, or empty after the header.
+                 */
+                Result<FilePath> readPseudoSymlink() const;
+
+                /**
+                 * @brief Writes @p target as a pseudo-symlink at @c *this.
+                 *
+                 * Creates a regular file containing the magic header
+                 * line followed by @p target.  Overwrites any
+                 * existing file at @c *this.  Parent directory must
+                 * already exist — use @ref Dir::mkpath to stage it
+                 * first if needed.
+                 *
+                 * @param target Relative or absolute path the
+                 *               pseudo-symlink should point at.
+                 * @return @c Error::Ok on success, or @c Error::Invalid
+                 *         on any I/O failure (parent missing,
+                 *         permission denied, oversize target).
+                 */
+                Error writePseudoSymlink(const FilePath &target) const;
+
+                /**
+                 * @brief Reads either kind of link's target.
+                 *
+                 * Tries @ref readSymlink first; if @c *this is not an
+                 * OS symlink, tries @ref readPseudoSymlink.  Returns
+                 * the first hit verbatim (no relative-path resolution).
+                 *
+                 * @return The stored target on success, or
+                 *         @c Error::Invalid (with @c *this) when the
+                 *         path is neither link kind.
+                 */
+                Result<FilePath> readLink() const {
+                        if (isSymlink()) return readSymlink();
+                        if (isPseudoSymlink()) return readPseudoSymlink();
+                        return Result<FilePath>(*this, Error::Invalid);
+                }
+
+                /**
+                 * @brief Follows a chain of OS / pseudo-symlinks to its
+                 *        final target.
+                 *
+                 * At each hop, relative targets are resolved against
+                 * the link file's parent directory (mirroring OS
+                 * symlink semantics).  The walk stops when the
+                 * current path is neither an OS symlink nor a
+                 * pseudo-symlink, or after @p maxHops iterations.
+                 * Visited paths are tracked to break loops.
+                 *
+                 * @param maxHops Maximum number of indirection hops
+                 *                to follow before giving up.  Default
+                 *                @c 16 mirrors the Linux kernel's
+                 *                @c MAXSYMLINKS.
+                 * @return The resolved FilePath on success (which may
+                 *         not exist — a broken link still returns
+                 *         what it points at), or @c Error::Invalid
+                 *         when the loop guard trips or a hop fails
+                 *         to resolve.  When @c *this is not a link
+                 *         to start with, returns @c *this with
+                 *         @c Error::Ok.
+                 */
+                Result<FilePath> resolveLink(int maxHops = 16) const;
+
+                /// @}
+
                 /**
                  * @brief Converts the path to a String.
                  * @return The path as a String.

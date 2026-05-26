@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <promeki/filepath.h>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -154,6 +155,27 @@ namespace promekitest {
          * first-class through the existing config plumbing.
          */
         void registerVideoCarrierCases();
+
+        /**
+         * @brief Registers speech-to-text transcription cases driven
+         *        by the testmedia corpus.
+         *
+         * For every entry in @c testmedia/index.json whose
+         * @c useCases list contains @c "speech-to-text", registers
+         * one case named @c "transcription.<slug>" that decodes the
+         * asset through @c "WhisperCpp" and compares the result to
+         * the asset's expected transcript file.  When the corpus
+         * symlink is absent, the WhisperCpp backend is unregistered,
+         * or no model file is staged on the host the suite logs a
+         * one-liner and registers nothing (or the per-case body
+         * Skips cleanly) so a fresh checkout without testmedia
+         * doesn't have to set anything up.
+         *
+         * @param testmediaRoot Resolved testmedia root (output of
+         *                      @ref resolveTestMediaRoot, or empty
+         *                      when no candidate was usable).
+         */
+        void registerTranscriptionCases(const FilePath &testmediaRoot);
 
 } // namespace promekitest
 

@@ -2121,6 +2121,18 @@ endif()
 #   * GGML_BUILD_TESTS=OFF          — same reason
 #   * GGML_BUILD_EXAMPLES=OFF       — ditto
 #
+# Knobs turned on explicitly (perf wins for the CPU backend):
+#   * GGML_OPENMP=ON                — use libgomp's thread pool for
+#                                      the CPU GEMM kernels.  Faster
+#                                      than ggml's hand-rolled
+#                                      std::thread pool and the only
+#                                      thing that lets whisper scale
+#                                      past a handful of cores.
+#   * GGML_LLAMAFILE=ON             — enable llamafile's tinyBLAS
+#                                      sgemm fast path, which lifts
+#                                      the encoder noticeably on
+#                                      AVX2 / AVX-512 hosts.
+#
 # CUDA / Metal / Vulkan backends are intentionally left at their
 # defaults (off) on this first cut; PROMEKI_ENABLE_CUDA will pass
 # GGML_CUDA=ON through here in a follow-up.
@@ -2157,7 +2169,8 @@ if(PROMEKI_ENABLE_WHISPER)
                 -DWHISPER_OPENVINO=OFF
                 -DGGML_BUILD_TESTS=OFF
                 -DGGML_BUILD_EXAMPLES=OFF
-                -DGGML_OPENMP=OFF
+                -DGGML_OPENMP=ON
+                -DGGML_LLAMAFILE=ON
             BUILD_BYPRODUCTS
                 ${_whisper_lib}
                 ${_ggml_lib}
@@ -2169,7 +2182,11 @@ if(PROMEKI_ENABLE_WHISPER)
         # ggml (dispatcher), which depends on ggml-cpu (backend), which
         # depends on ggml-base (shared core).  Threads + libm are
         # transitive deps (GGML uses pthread / std::thread + libm math).
+        # OpenMP is needed by ggml-cpu because GGML_OPENMP=ON above
+        # pulls libgomp symbols into the static archive — the consumer
+        # of the archive must link the runtime.
         find_package(Threads REQUIRED)
+        find_package(OpenMP REQUIRED)
         add_library(promeki_whisper_lib STATIC IMPORTED)
         set_target_properties(promeki_whisper_lib PROPERTIES
             IMPORTED_LOCATION ${_whisper_lib})
@@ -2193,6 +2210,7 @@ if(PROMEKI_ENABLE_WHISPER)
             promeki_ggml_cpu_lib
             promeki_ggml_base_lib
             Threads::Threads
+            OpenMP::OpenMP_CXX
             m
             ${CMAKE_DL_LIBS}
         )
@@ -2521,6 +2539,7 @@ set(PROMEKI_SOURCES
     src/core/file.cpp
     src/core/fileinfo.cpp
     src/core/fileiodevice.cpp
+    src/core/filepath.cpp
     src/core/fourcc.cpp
     src/core/framecount.cpp
     src/core/framenumber.cpp

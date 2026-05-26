@@ -186,3 +186,51 @@ TEST_CASE("WhisperCpp: end-to-end batch transcription"
         }
         MESSAGE("WhisperCpp emitted ", produced, " segment(s)");
 }
+
+TEST_CASE("WhisperCpp: end-to-end batch transcription with resampling"
+          * doctest::skip(true)) {
+        // Same shape as the previous test, but feeds 48 kHz audio
+        // through the AudioBuffer accumulator's resampler path.
+        // Exercises the cross-rate code in WhisperEngine::appendPayload
+        // (downmix scratch + ensureAccumulatorRoom + AudioBuffer push
+        // with input rate != output rate).
+        String modelPath = resolveTestModelPath();
+        if (!FilePath(modelPath).exists()) {
+                MESSAGE("Skipping: model file not found at ", modelPath.cstr());
+                return;
+        }
+
+        MediaConfig cfg;
+        cfg.set(MediaConfig::TranscriptionSessionMode,
+                Variant(TranscriptionMode(TranscriptionMode::Batch)));
+        cfg.set(MediaConfig::TranscriptionModelHint, Variant(modelPath));
+        cfg.set(MediaConfig::TranscriptionLanguage, Variant(String("en")));
+        cfg.set(MediaConfig::TranscriptionChannelMode,
+                Variant(TranscriptionChannelMode(TranscriptionChannelMode::DownmixAll)));
+
+        auto res = TranscriptionEngine::create("WhisperCpp", &cfg);
+        REQUIRE(error(res) == Error::Ok);
+        TranscriptionEngine::UPtr engine = std::move(res.first());
+
+        constexpr float kSr = 48000.0f;
+        for (int i = 0; i < 3; ++i) {
+                auto payload = makeTonePayload(static_cast<size_t>(kSr / 3), kSr, 220.0f,
+                                               static_cast<int64_t>(i) * 333'000'000LL);
+                Frame frame;
+                frame.addPayload(payload);
+                CHECK(engine->submitFrame(frame) == Error::Ok);
+        }
+        CHECK(engine->flush() == Error::Ok);
+
+        int produced = 0;
+        for (;;) {
+                Frame out = engine->receiveFrame();
+                if (!out.isValid()) break;
+                ++produced;
+                Variant t = out.metadata().get(Metadata::Transcript);
+                CHECK(t.isValid());
+                Transcript tr = t.get<Transcript>();
+                CHECK_FALSE(tr.partial());
+        }
+        MESSAGE("WhisperCpp (48k -> 16k) emitted ", produced, " segment(s)");
+}

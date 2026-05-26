@@ -11,6 +11,34 @@ Color, VariantDatabase, Metadata, TimeStamp, etc.). The historical
 `Function<Sig>`, `Optional<T>`, …) lives in git history. The items below
 are the remaining opportunistic enhancements.
 
+## FilePath / FileInfo symlink and pseudo-symlink API (2026-05-26)
+
+`FilePath` and `FileInfo` gained a pair of "link" APIs that abstract
+over both OS symlinks and *pseudo-symlinks* (magic-header text files used
+on filesystems / platforms that don't support real symlinks):
+
+- `FilePath::isSymlink()` — OS symlink check via `symlink_status`.
+- `FilePath::isPseudoSymlink()` — reads the file body; validates magic
+  header (`#!/promeki/symlink`), size guard (≤ 4096 bytes), and payload
+  (non-empty, no NUL / control chars).
+- `FilePath::isLink()` — either kind.
+- `FilePath::readSymlink()` / `readPseudoSymlink()` / `readLink()` —
+  returns the stored target verbatim.
+- `FilePath::writePseudoSymlink(target)` — creates / overwrites a
+  pseudo-symlink file.
+- `FilePath::resolveLink(maxHops=16)` — follows a chain of OS + pseudo
+  symlinks to the final target, with loop detection and relative-path
+  resolution at each hop.
+- `FilePath::kPseudoSymlinkMagic` / `kPseudoSymlinkMaxBytes` — constants
+  for tooling that needs to write or validate pseudo-symlink files without
+  going through the API.
+- `FileInfo::isSymlink()` / `isPseudoSymlink()` / `isLink()` — delegating
+  wrappers for callers who already hold a `FileInfo`.
+
+Implementation lives in `src/core/filepath.cpp` (new file).
+Doctest coverage: `tests/unit/filepath.cpp` (18 link-API cases) and
+`tests/unit/fileinfo.cpp` (3 link-API cases).
+
 ---
 
 ## Result\<T\> Adoption

@@ -6,11 +6,41 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/dir.h>
 #include <promeki/fileinfo.h>
 #include <promeki/filepath.h>
 #include <promeki/string.h>
 
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <string>
+#include <unistd.h>
+
 using namespace promeki;
+
+namespace {
+
+        std::filesystem::path makeScratchDir(const char *tag) {
+                std::filesystem::path base = Dir::temp().path().toStdPath();
+                std::filesystem::path dir =
+                        base / (std::string("fileinfo-test-") + tag + "-" +
+                                std::to_string(::getpid()) + "-" +
+                                std::to_string(std::rand()));
+                std::error_code ec;
+                std::filesystem::create_directories(dir, ec);
+                return dir;
+        }
+
+        bool writeFile(const std::filesystem::path &path, const std::string &body) {
+                std::FILE *fp = std::fopen(path.string().c_str(), "wb");
+                if (fp == nullptr) return false;
+                if (!body.empty()) std::fwrite(body.data(), 1, body.size(), fp);
+                std::fclose(fp);
+                return true;
+        }
+
+} // namespace
 
 TEST_CASE("FileInfo: construction from path") {
         FileInfo fi("/tmp/test.txt");
@@ -89,4 +119,41 @@ TEST_CASE("FileInfo: FilePath round-trip") {
         FileInfo fi(original);
         FilePath result = fi.filePath();
         CHECK(result.toString() == original.toString());
+}
+
+TEST_CASE("FileInfo: isSymlink + isLink — OS symlink") {
+        auto dir = makeScratchDir("issym");
+        auto target = dir / "real.bin";
+        auto link = dir / "default";
+        REQUIRE(writeFile(target, "payload"));
+        std::error_code ec;
+        std::filesystem::create_symlink(target, link, ec);
+        REQUIRE_FALSE(ec);
+        FileInfo fi{FilePath(link)};
+        CHECK(fi.isSymlink());
+        CHECK(fi.isLink());
+        CHECK_FALSE(fi.isPseudoSymlink());
+        std::filesystem::remove_all(dir);
+}
+
+TEST_CASE("FileInfo: isPseudoSymlink + isLink — magic-header file") {
+        auto dir = makeScratchDir("pseudo");
+        auto pseudo = dir / "default";
+        REQUIRE(FilePath(pseudo).writePseudoSymlink(FilePath("ggml-small.bin")).isOk());
+        FileInfo fi{FilePath(pseudo)};
+        CHECK(fi.isPseudoSymlink());
+        CHECK(fi.isLink());
+        CHECK_FALSE(fi.isSymlink());
+        std::filesystem::remove_all(dir);
+}
+
+TEST_CASE("FileInfo: isLink — false for ordinary regular file") {
+        auto dir = makeScratchDir("notalink");
+        auto reg = dir / "regular.txt";
+        REQUIRE(writeFile(reg, "just text\nmultiple lines\n"));
+        FileInfo fi{FilePath(reg)};
+        CHECK_FALSE(fi.isSymlink());
+        CHECK_FALSE(fi.isPseudoSymlink());
+        CHECK_FALSE(fi.isLink());
+        std::filesystem::remove_all(dir);
 }

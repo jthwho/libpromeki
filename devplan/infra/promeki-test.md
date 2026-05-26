@@ -31,7 +31,16 @@ uses for microbenchmarks.
     registry introspection. Replaces `tests/func/roundtrip/`.
   - `codec.*` — in-memory encode→decode with no file in between; one
     case per (codec, backend) pair.
-  - `audio.*` — AudioFile roundtrip (WAV, BWF, AIFF, OGG).
+  - `audio.*` — AudioFile roundtrip (WAV, BWF, AIFF, FLAC, OGG, MP3).
+    Lossy formats (OGG, MP3) use a narrowed inspector check set (Continuity /
+    Timestamp / AudioSamples only — codeword-based AudioData + AvSync require
+    bit-exact PCM). FLAC is lossless and runs the full inspector suite.
+  - `transcription.*` — Speech-to-text round-trip driven by the testmedia
+    corpus. Each entry whose `useCases` list includes `"speech-to-text"`
+    registers one case. Reads audio via AudioFile, submits chunks to a
+    `WhisperCpp` batch `TranscriptionEngine`, drains output frames, records
+    decoded transcript + word-error-rate to `result.json`. Skips cleanly when
+    the corpus or model file is absent.
   - `rtp.*` — RTP loopback (MJPEG, RFC 4175 raw, L16 audio).
   - `framebridge.*` — single-process FrameBridge probe (currently FAIL
     — surfaces library bug where `acceptPending` only runs inside

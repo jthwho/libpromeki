@@ -32,6 +32,24 @@ shipped; the items below are known follow-ups.
 - Unit tests: `subtitlecuebuilder.cpp`, `transcriptionengine.cpp`,
   `whispertranscriptionengine.cpp` (registration + gated e2e).
 
+## Phase 1 follow-on (2026-05-26)
+
+- `WhisperCpp::submitFrame` now feeds audio through the per-session
+  `AudioBuffer` accumulator instead of a raw float vector.  The accumulator
+  handles 16 kHz mono resampling and ring storage internally; the engine no
+  longer manages a separate libsamplerate handle.  The downmix step still
+  uses a persistent mono scratch buffer for the channel-reduction pass before
+  handing samples to the accumulator.
+- `FilePath::writePseudoSymlink` / `isPseudoSymlink` / `readPseudoSymlink` /
+  `resolveLink` added to `FilePath` and mirrored on `FileInfo`.  The
+  model-resolver in `whispertranscriptionengine.cpp` uses `FilePath::isLink`
+  + `resolveLink` to follow the `default` symlink in the whisper model
+  directory, supporting both real OS symlinks and the new pseudo-symlink
+  format (magic-header text file) on filesystems that don't support symlinks.
+- Unit test `whispertranscriptionengine.cpp` gains a second gated e2e case
+  that exercises the 48 kHz → 16 kHz resampling path through the accumulator
+  (feeds 48k audio, confirms the engine accepts it and emits finalised output).
+
 ## Open
 
 ### Streaming / sliding-window mode

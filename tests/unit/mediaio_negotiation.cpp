@@ -603,6 +603,96 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_OGG_AlwaysFloat") {
         delete io;
 }
 
+TEST_CASE("MediaIO_proposeInput_AudioFile_FLAC_DataTypeMapping") {
+        // FLAC is integer-only: libsndfile rejects SF_FORMAT_FLAC +
+        // SF_FORMAT_FLOAT at sf_open() time.  preferredWriterDataType
+        // maps the source format as follows:
+        //   S16 / S32 → pass-through (FLAC stores both natively)
+        //   S24        → S32 (FLAC has no packed 24-bit mode;
+        //                     promote so precision is preserved)
+        //   Float32    → S16 (quantise to integer; S16 is the safe
+        //                     fallback when the caller hasn't specified
+        //                     a preferred bit depth)
+        //   unknown    → S16 (same safe fallback)
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "AudioFile");
+        cfg.set(MediaConfig::Filename, scratchPathWithExt("flac"));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        struct Case {
+                        AudioFormat::ID source;
+                        AudioFormat::ID expected;
+                        const char     *label;
+        };
+        const Case cases[] = {
+                {AudioFormat::PCMI_S16LE, AudioFormat::PCMI_S16LE, "S16 → S16 pass-through"},
+                {AudioFormat::PCMI_S32LE, AudioFormat::PCMI_S32LE, "S32 → S32 pass-through"},
+                {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S32LE, "S24 → S32 (no packed 24-bit FLAC)"},
+                {AudioFormat::PCMI_Float32LE, AudioFormat::PCMI_S16LE, "Float32 → S16 (integer-only container)"},
+                {AudioFormat::PCMI_U8, AudioFormat::PCMI_S16LE, "U8 → S16 (safe fallback)"},
+        };
+        for (const auto &c : cases) {
+                INFO(c.label);
+                MediaDesc offered;
+                offered.setFrameRate(FrameRate(FrameRate::FPS_30));
+                AudioDesc ad;
+                ad.setSampleRate(48000.0f);
+                ad.setChannels(2);
+                ad.setFormat(c.source);
+                offered.audioList().pushToBack(ad);
+
+                MediaDesc preferred;
+                CHECK(proposeInputOpen(io, offered, &preferred) == Error::Ok);
+                REQUIRE(!preferred.audioList().isEmpty());
+                CHECK(preferred.audioList()[0].format().id() == c.expected);
+        }
+        delete io;
+}
+
+TEST_CASE("MediaIO_proposeOutput_TPGRejectsNonFloatAudio") {
+        // TPG's pattern generators always emit PCMI_Float32LE audio
+        // (the AudioTestPattern::createPayload output format).
+        // proposeOutput must return Error::NotSupported when a
+        // requested AudioDesc carries a different valid audio format,
+        // so the pipeline planner inserts an audio SRC bridge rather
+        // than asking TPG to produce a format it can't emit.
+        // Plain rate / channel requests (no format override) must
+        // still be accepted.
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        // Non-float audio format — must be rejected.
+        {
+                MediaDesc requested;
+                requested.setFrameRate(FrameRate(FrameRate::FPS_30));
+                AudioDesc ad;
+                ad.setSampleRate(48000.0f);
+                ad.setChannels(2);
+                ad.setFormat(AudioFormat::PCMI_S16LE);
+                requested.audioList().pushToBack(ad);
+                MediaDesc achievable;
+                CHECK(proposeOutputOpen(io, requested, &achievable) == Error::NotSupported);
+        }
+
+        // Float32 audio — must be accepted.
+        {
+                MediaDesc requested;
+                requested.setFrameRate(FrameRate(FrameRate::FPS_30));
+                AudioDesc ad;
+                ad.setSampleRate(48000.0f);
+                ad.setChannels(2);
+                ad.setFormat(AudioFormat::PCMI_Float32LE);
+                requested.audioList().pushToBack(ad);
+                MediaDesc achievable;
+                CHECK(proposeOutputOpen(io, requested, &achievable) == Error::Ok);
+        }
+
+        delete io;
+}
+
 TEST_CASE("MediaIO_proposeInput_QuickTime_PreservesBitDepthAndChroma") {
         // QuickTime's writer accepts a curated set of FourCCs.  The
         // proposeInput override must (a) reject unsupported

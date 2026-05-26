@@ -29,7 +29,11 @@ PROMEKI_NAMESPACE_BEGIN
  * are chunked into frame-sized blocks according to the configured
  * frame rate.
  *
- * Supported formats: WAV, BWF, AIFF, OGG.
+ * Supported formats: WAV, BWF, AIFF; OGG (Vorbis), FLAC, and MP3
+ * are additionally available when the corresponding
+ * @c PROMEKI_ENABLE_VORBIS / @c PROMEKI_ENABLE_FLAC /
+ * @c PROMEKI_ENABLE_MP3 flag is on for both libpromeki and the
+ * vendored libsndfile.
  *
  * @par Config keys
  * | Key | Type | Default | Description |
@@ -91,10 +95,43 @@ class AudioFileFactory : public MediaIOFactory {
                 String name() const override { return String("AudioFile"); }
                 String displayName() const override { return String("Audio File"); }
                 String description() const override {
-                        return String("Audio file formats via libsndfile (WAV, BWF, AIFF, OGG)");
+                        return String("Audio file formats via libsndfile (WAV, BWF, AIFF"
+#if PROMEKI_ENABLE_VORBIS
+                                      ", OGG"
+#endif
+#if PROMEKI_ENABLE_FLAC
+                                      ", FLAC"
+#endif
+#if PROMEKI_ENABLE_MP3
+                                      ", MP3"
+#endif
+                                      ")");
                 }
                 StringList extensions() const override {
-                        return {String("wav"), String("bwf"), String("aiff"), String("aif"), String("ogg")};
+                        // The factory advertises every extension the
+                        // libsndfile backend can probe at this build
+                        // configuration; runtime feature gating (the
+                        // vendored libsndfile's own MPEG/Vorbis/FLAC
+                        // toggles) is handled inside
+                        // @ref AudioFileFactory_LibSndFile, which
+                        // intersects this list against libsndfile's
+                        // reported major-format set.  Keeping this
+                        // header gated on the @c PROMEKI_ENABLE_*
+                        // flags matches the same flags that compile
+                        // the codec wiring in.
+                        StringList exts{String("wav"), String("bwf"), String("aiff"), String("aif")};
+#if PROMEKI_ENABLE_VORBIS
+                        exts.pushToBack(String("ogg"));
+                        exts.pushToBack(String("oga"));
+#endif
+#if PROMEKI_ENABLE_FLAC
+                        exts.pushToBack(String("flac"));
+#endif
+#if PROMEKI_ENABLE_MP3
+                        exts.pushToBack(String("mp3"));
+                        exts.pushToBack(String("mpeg"));
+#endif
+                        return exts;
                 }
 
                 bool canBeSource() const override { return true; }

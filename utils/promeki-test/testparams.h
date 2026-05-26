@@ -98,6 +98,24 @@ namespace promekitest {
                                                    .setDefault(int32_t(10000))
                                                    .setRange(int32_t(100), int32_t(3600000))
                                                    .setDescription("Per-phase watchdog timeout in milliseconds."));
+
+                        /// @brief String — absolute path to the resolved
+                        ///        @c testmedia/ corpus root, or empty
+                        ///        when no candidate was usable.
+                        ///
+                        /// The runner resolves the root once before
+                        /// suite registration (via the CLI override,
+                        /// the @c PROMEKI_TESTMEDIA env var, or the
+                        /// default in-tree symlink) and stamps the
+                        /// result here so individual tests have a
+                        /// single source of truth for "where is the
+                        /// corpus?" without having to redo the
+                        /// discovery search themselves.
+                        PROMEKI_DECLARE_ID(TestMediaRoot,
+                                           VariantSpec()
+                                                   .setType(DataTypeString)
+                                                   .setDefault(String())
+                                                   .setDescription("Resolved testmedia corpus root (empty if not found)."));
         };
 
 } // namespace promekitest

@@ -128,6 +128,42 @@ class FileInfo {
                  */
                 bool isDirectory() const { return std::filesystem::is_directory(status()); }
 
+                /// @name Symbolic / pseudo-symbolic links
+                /// @{
+
+                /**
+                 * @brief Returns true if the path is an OS symlink.
+                 *
+                 * Uses @c std::filesystem::symlink_status so a broken
+                 * symlink (target does not exist) still returns @c true.
+                 * Returns @c false on any stat error or for paths that
+                 * do not exist.
+                 */
+                bool isSymlink() const {
+                        std::error_code ec;
+                        auto            st = std::filesystem::symlink_status(_path, ec);
+                        if (ec) return false;
+                        return std::filesystem::is_symlink(st);
+                }
+
+                /**
+                 * @brief Returns true if the path is a pseudo-symlink.
+                 *
+                 * Defers to @ref FilePath::isPseudoSymlink, which
+                 * inspects the file body — heavier than the cached
+                 * status accessors above.  See @ref FilePath for the
+                 * detection criteria.
+                 */
+                bool isPseudoSymlink() const { return FilePath(_path).isPseudoSymlink(); }
+
+                /**
+                 * @brief Returns true if the path is either an OS
+                 *        symlink or a pseudo-symlink.
+                 */
+                bool isLink() const { return isSymlink() || isPseudoSymlink(); }
+
+                /// @}
+
                 /**
                  * @brief Updates the cached file status.
                  * @param force If true, refreshes the status even if already cached.

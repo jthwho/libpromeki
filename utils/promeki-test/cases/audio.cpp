@@ -7,25 +7,31 @@
  * AudioFile roundtrip tests.
  *
  * Each case writes a TPG-generated audio stream to a file in one
- * of the formats @ref AudioFileMediaIO ships (WAV, BWF, AIFF, OGG)
- * and then reads it back through @ref InspectorMediaIO so the
- * Inspector can validate continuity, sample-count cadence, and PTS
- * jitter end-to-end.
+ * of the formats @ref AudioFileMediaIO ships (WAV, BWF, AIFF, FLAC,
+ * OGG, MP3) and then reads it back through @ref InspectorMediaIO so
+ * the Inspector can validate continuity, sample-count cadence, and
+ * PTS jitter end-to-end.
  *
  * The pipeline is:
  *
  *   TPG (audio-only) → AudioFile (sink) → AudioFile (source) → Inspector
  *
  * Video is explicitly disabled at TPG so the sink only sees audio
- * essence.  The Inspector still applies its default check set
- * minus the image-data tests (which would just report "no video"
- * for every frame); audio-data + AvSync + sample-count tests do
- * the heavy lifting.
+ * essence.  Lossless cases (WAV / BWF / AIFF / FLAC) get the
+ * inspector's full default check set minus the image-data tests
+ * (which would just report "no video" for every frame).  Lossy
+ * cases (OGG / MP3) narrow the check list to @c Continuity /
+ * @c Timestamp / @c AudioSamples — the codeword-based @c AudioData
+ * and @c AvSync checks need bit-exact PCM, which lossy codecs can't
+ * preserve at the per-frame codeword sizes TPG emits.  Codec-level
+ * bit-fidelity is exercised separately by
+ * @c tests/unit/audiofile_codecs.cpp.
  *
  * Skip / fail policy mirrors @c roundtrip.cpp:
  *   - Build / open / start failures with @c Error::NotSupported
  *     classify as Skip (the format isn't wired up in this build —
- *     OGG, for example, requires the libsndfile Vorbis component).
+ *     OGG, for example, requires the libsndfile Vorbis component;
+ *     MP3 requires lame + mpg123).
  *   - Anything else, including a non-zero discontinuity count, is
  *     Fail.
  */
@@ -38,6 +44,8 @@
 
 #include <promeki/application.h>
 #include <promeki/dir.h>
+#include <promeki/enums.h>
+#include <promeki/enumlist.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/filepath.h>
@@ -64,23 +72,49 @@ namespace promekitest {
 
                 struct Case {
                                 String name;       // dotted identifier
-                                String extension;  // "wav", "aiff", "bwf", "ogg"
+                                String extension;  // "wav", "aiff", "bwf", "ogg", "mp3", "flac"
+                                // True when the file format encodes
+                                // audio through a lossy psychoacoustic
+                                // codec (e.g. Vorbis in @c .ogg).  The
+                                // inspector's per-frame AudioData
+                                // codeword check assumes sample-exact
+                                // bit fidelity, which lossy codecs
+                                // cannot provide at the per-frame
+                                // packetSamples sizes the TPG stamper
+                                // emits — see @ref runAudioCase for
+                                // the test-list adjustment that drops
+                                // the codeword-dependent checks on
+                                // these formats.  Bit-level Vorbis /
+                                // MP3 round-trip integrity is covered
+                                // separately by
+                                // @c tests/unit/audiofile_codecs.cpp,
+                                // which sizes its codeword to span
+                                // multiple frames so the codec
+                                // preserves it intact.
+                                bool   lossy = false;
                 };
 
                 List<Case> buildMatrix() {
                         List<Case> matrix;
-                        // libsndfile's WAV / BWF / AIFF / OGG support
-                        // is the slate of formats AudioFileFactory
-                        // advertises in its @c extensions() list.  We
-                        // exercise one case per format — these aren't
-                        // codec-style variants where each one stresses
-                        // a different code path, so a single
-                        // representative file per backend dispatch is
-                        // enough.
-                        matrix.pushToBack({String("audio.wav"), String("wav")});
-                        matrix.pushToBack({String("audio.bwf"), String("bwf")});
-                        matrix.pushToBack({String("audio.aiff"), String("aiff")});
-                        matrix.pushToBack({String("audio.ogg"), String("ogg")});
+                        // libsndfile's WAV / BWF / AIFF / OGG / MP3 /
+                        // FLAC support is the slate of formats
+                        // AudioFileFactory advertises in its
+                        // @c extensions() list.  We exercise one case
+                        // per format — these aren't codec-style
+                        // variants where each one stresses a different
+                        // code path, so a single representative file
+                        // per backend dispatch is enough.  FLAC is
+                        // lossless, so it gets the full inspector
+                        // check set (including the codeword-based
+                        // @c AudioData / @c AvSync tests); only the
+                        // psychoacoustic codecs (OGG / MP3) need the
+                        // narrowed list.
+                        matrix.pushToBack({String("audio.wav"), String("wav"), false});
+                        matrix.pushToBack({String("audio.bwf"), String("bwf"), false});
+                        matrix.pushToBack({String("audio.aiff"), String("aiff"), false});
+                        matrix.pushToBack({String("audio.flac"), String("flac"), false});
+                        matrix.pushToBack({String("audio.ogg"), String("ogg"), true});
+                        matrix.pushToBack({String("audio.mp3"), String("mp3"), true});
                         return matrix;
                 }
 
@@ -138,10 +172,29 @@ namespace promekitest {
                         return cfg;
                 }
 
-                MediaPipelineConfig buildReadConfig(const String &path) {
+                // Inspector stage with InspectorTests narrowed to the
+                // format-agnostic checks (Continuity / Timestamp /
+                // AudioSamples).  Drops the codeword-dependent
+                // @c AudioData + @c AvSync tests, which require
+                // bit-exact PCM round-trip and therefore can't pass
+                // through a lossy codec at per-frame packetSamples
+                // (the codec-robust encoder settings produce a
+                // codeword larger than one frame's worth of audio at
+                // 48 kHz / 29.97 fps).
+                MediaPipelineConfig::Stage makeLossyInspectorStage() {
+                        MediaPipelineConfig::Stage s = makeInspectorStage();
+                        EnumList                   tests = EnumList::forType<InspectorTest>();
+                        tests.append(InspectorTest::Continuity);
+                        tests.append(InspectorTest::Timestamp);
+                        tests.append(InspectorTest::AudioSamples);
+                        s.config.set(MediaConfig::InspectorTests, tests);
+                        return s;
+                }
+
+                MediaPipelineConfig buildReadConfig(const String &path, bool lossy) {
                         MediaPipelineConfig cfg;
                         cfg.addStage(makeAudioFileSourceStage(path));
-                        cfg.addStage(makeInspectorStage());
+                        cfg.addStage(lossy ? makeLossyInspectorStage() : makeInspectorStage());
                         cfg.addRoute(String("in"), String("insp"));
                         return cfg;
                 }
@@ -222,11 +275,19 @@ namespace promekitest {
                         }
 
                         // ---- Read phase ----
+                        // The Inspector is injected as a pre-built
+                        // stage so the test can hold a pointer to it
+                        // and call @ref InspectorMediaIO::snapshot
+                        // after the pipeline closes.  Its config must
+                        // match the one @ref buildReadConfig stamped
+                        // onto the inspector stage — in particular the
+                        // narrowed @c InspectorTests list for lossy
+                        // codecs (drops codeword-dependent checks).
                         InspectorMediaIO *insp = new InspectorMediaIO();
                         {
-                                MediaIO::Config inspCfg = MediaIOFactory::defaultConfig("Inspector");
-                                inspCfg.set(MediaConfig::Type, String("Inspector"));
-                                insp->setConfig(inspCfg);
+                                MediaPipelineConfig::Stage inspStage =
+                                        c.lossy ? makeLossyInspectorStage() : makeInspectorStage();
+                                insp->setConfig(inspStage.config);
                                 insp->setName(String("insp"));
                         }
 
@@ -236,7 +297,7 @@ namespace promekitest {
                         int64_t audioSamplesTotal = 0;
                         bool    earlyExitSet = false;
                         {
-                                MediaPipelineConfig cfg = buildReadConfig(path);
+                                MediaPipelineConfig cfg = buildReadConfig(path, c.lossy);
                                 MediaPipeline       pipe;
                                 Error               ie = pipe.injectStage(insp);
                                 if (ie.isError()) {

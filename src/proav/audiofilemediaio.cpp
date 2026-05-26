@@ -337,12 +337,36 @@ AudioFormat::ID AudioFileMediaIO::preferredWriterDataType(const String &filename
                 return AudioFormat::PCMI_Float32LE;
         }
 
-        // WAV / BWF / AIFF / FLAC / W64 / RF64: integer-friendly PCM
-        // containers.  Pass through the source's data type when
-        // libsndfile can store it directly; otherwise fall back to
-        // 24-bit signed little-endian (the production-typical form).
-        if (ext == "wav" || ext == "bwf" || ext == "aiff" || ext == "aif" || ext == "flac" || ext == "w64" ||
-            ext == "rf64") {
+        // FLAC: integer-only PCM container.  libsndfile rejects
+        // SF_FORMAT_FLAC + SF_FORMAT_FLOAT at sf_open() time, so a
+        // float-pipeline source must be quantised to integer before
+        // it reaches the writer.  The libsndfile R/W paths handle
+        // S16 and S32 directly via @c sf_writef_short /
+        // @c sf_writef_int (the latter maps to FLAC's 24-bit storage
+        // by truncating to the upper 24 bits).  S24 packed integers
+        // would need a separate pack/unpack path; until that lands,
+        // map S24LE / S24BE callers up to S32 so they still take a
+        // wider-precision FLAC path than the S16 fallback.
+        if (ext == "flac") {
+                switch (source) {
+                        case AudioFormat::PCMI_S16LE:
+                        case AudioFormat::PCMI_S16BE:
+                        case AudioFormat::PCMI_S32LE:
+                        case AudioFormat::PCMI_S32BE: return source;
+                        case AudioFormat::PCMI_S24LE:
+                        case AudioFormat::PCMI_S24BE: return AudioFormat::PCMI_S32LE;
+                        case AudioFormat::PCMI_Float32LE:
+                        case AudioFormat::PCMI_Float32BE: return AudioFormat::PCMI_S16LE;
+                        default: return AudioFormat::PCMI_S16LE;
+                }
+        }
+
+        // WAV / BWF / AIFF / W64 / RF64: integer-friendly PCM
+        // containers that also accept float.  Pass through the
+        // source's data type when libsndfile can store it directly;
+        // otherwise fall back to 24-bit signed little-endian (the
+        // production-typical form).
+        if (ext == "wav" || ext == "bwf" || ext == "aiff" || ext == "aif" || ext == "w64" || ext == "rf64") {
                 switch (source) {
                         case AudioFormat::PCMI_S16LE:
                         case AudioFormat::PCMI_S16BE:
