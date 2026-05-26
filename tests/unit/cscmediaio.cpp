@@ -21,7 +21,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/ancpayload.h>
 #include <promeki/clockdomain.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>

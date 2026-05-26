@@ -6,7 +6,7 @@
  */
 
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/error.h>
 #include <promeki/fastfont.h>
 #include <promeki/imagedesc.h>

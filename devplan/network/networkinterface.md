@@ -54,7 +54,7 @@ All work follows `CODING_STANDARDS.md` and the existing devplan conventions:
 | `NetworkInterfaceBackend`    | Utility/infrastructure  | Plug-in source; registry is internally synchronized.                                    |
 | `NetworkInterfaceMonitor`    | Functional (ObjectBase) | Identity, signals, thread-affine.                                                       |
 | `NetworkRouting`             | Utility (static-only)   | Constructor + destructor `= delete`'d; never instantiated.                              |
-| `NetworkInterfaceKind`       | TypedEnum               | In `enums.h`, registered via `PROMEKI_REGISTER_ENUM_TYPE`.                              |
+| `NetworkInterfaceKind`       | TypedEnum               | In `enums_network.h`, registered via `PROMEKI_REGISTER_ENUM_TYPE`.                              |
 
 ---
 
@@ -229,7 +229,7 @@ same files. No new threads, no notifications.
 - [x] `include/promeki/networkinterface.h` — accessors for new fields,
       new `data()` accessor, `toString()`, `operator<<`. Update accessor
       signatures to return by value.
-- [x] `include/promeki/enums.h` — add `NetworkInterfaceKind` `TypedEnum`
+- [x] `include/promeki/enums_network.h` — add `NetworkInterfaceKind` `TypedEnum`
       (Unknown / Ethernet / Wifi / Loopback / Tunnel / Bridge / Vlan /
       Virtual / Cellular / PointToPoint).
 - [x] `src/network/networkinterface.cpp` — new accessors, `toString()`;

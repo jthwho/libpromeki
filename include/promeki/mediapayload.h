@@ -22,7 +22,7 @@
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/variant.h>
 #include <promeki/error.h>
 

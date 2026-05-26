@@ -16,7 +16,7 @@
 #include <promeki/ancpayload.h>
 #include <promeki/deque.h>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/frame.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>

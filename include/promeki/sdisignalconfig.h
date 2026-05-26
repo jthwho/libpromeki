@@ -11,7 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
 #include <promeki/datatype.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>

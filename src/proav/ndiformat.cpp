@@ -11,7 +11,7 @@
 
 #include <promeki/ndiformat.h>
 
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/xml.h>
 
 #include <Processing.NDI.Lib.h>

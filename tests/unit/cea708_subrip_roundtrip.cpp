@@ -21,7 +21,7 @@
 #include <promeki/cea708decoder.h>
 #include <promeki/cea708encoder.h>
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/file.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>

@@ -14,7 +14,9 @@
 #include <promeki/variantdatabase.h>
 #include <promeki/sharedptr.h>
 #include <promeki/audiomarker.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_video.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/framenumber.h>
 #include <promeki/mediaduration.h>

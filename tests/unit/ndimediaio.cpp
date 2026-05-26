@@ -23,7 +23,9 @@
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
 #include <promeki/datetime.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_ndi.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>

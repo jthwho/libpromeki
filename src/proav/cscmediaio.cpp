@@ -8,7 +8,7 @@
 #include <promeki/cscmediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/cscregistry.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagedesc.h>

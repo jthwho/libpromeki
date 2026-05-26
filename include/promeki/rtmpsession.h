@@ -14,7 +14,7 @@
 
 #include <promeki/amf0.h>
 #include <promeki/atomic.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtmp.h>
 #include <promeki/error.h>
 #include <promeki/fourcc.h>
 #include <promeki/hashmap.h>

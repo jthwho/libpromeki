@@ -9,7 +9,7 @@
 #include <promeki/datastream.h>
 #include <promeki/audioformat.h>
 #include <promeki/atomic.h>
-#include <promeki/enums.h>
+#include <promeki/enums_codec.h>
 #include <promeki/map.h>
 #include <promeki/stringlist.h>
 #include <promeki/logger.h>

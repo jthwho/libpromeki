@@ -11,7 +11,8 @@
 #include <promeki/buffer.h>
 #include <promeki/colormodel.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/filepath.h>
 #include <promeki/imagedesc.h>
 #include <promeki/imagefile.h>

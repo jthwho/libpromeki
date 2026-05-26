@@ -16,7 +16,7 @@
 #include <promeki/string.h>
 #include <promeki/stringregistry.h>
 #include <promeki/list.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

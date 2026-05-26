@@ -13,7 +13,7 @@
 
 #include <promeki/ansistream.h>
 #include <promeki/audiocodec.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/fileiodevice.h>
 #include <promeki/imagefilemediaio.h>
 #include <promeki/mediaiofactory.h>
@@ -297,19 +297,56 @@ namespace mediaplay {
                 // usage hint spells out how an EnumList accepts its value so
                 // callers don't have to go hunt for the syntax.
                 const char *kind = isEnumList ? "EnumList" : "Enum";
-                fprintf(stdout, "%s (%s %s):\n", keyLabel.cstr(), kind, type.name().cstr());
+
+                AnsiStream         out(FileIODevice::stdoutDevice());
+                out.setAnsiEnabled(helpUseColor());
+                const HelpPalette &palette = helpPalette();
+
+                // Header: colored key label, then a dim "(Enum <DisplayName>)"
+                // tag.  The type carries its own display label too, so we show
+                // that rather than the programmatic name.
+                out.setForeground(palette.keyName);
+                out << keyLabel;
+                out.reset();
+                out.setForeground(palette.dim);
+                out << " (" << kind << ' ' << type.displayName() << "):";
+                out.reset();
+                out << '\n';
+
                 Enum::ValueList vals = Enum::values(type);
+                // Pad the enum-name column to the widest name so every display
+                // label starts in the same column; pad the display column too
+                // so the trailing (value) lines up.
+                size_t nameWidth = 0;
+                size_t dispWidth = 0;
                 for (size_t i = 0; i < vals.size(); i++) {
-                        fprintf(stdout, "  %-24s (%d)\n", vals[i].first().cstr(), vals[i].second());
+                        nameWidth = std::max(nameWidth, vals[i].first().length());
+                        dispWidth = std::max(dispWidth, Enum::displayNameOf(type, vals[i].second()).length());
+                }
+                for (size_t i = 0; i < vals.size(); i++) {
+                        String disp = Enum::displayNameOf(type, vals[i].second());
+                        out << "  ";
+                        out.setForeground(palette.keyName);
+                        out << vals[i].first();
+                        out.reset();
+                        for (size_t j = vals[i].first().length(); j < nameWidth; j++) out << ' ';
+                        out << "  " << disp;
+                        for (size_t j = disp.length(); j < dispWidth; j++) out << ' ';
+                        out << ' ';
+                        out.setForeground(palette.dim);
+                        out << '(' << vals[i].second() << ')';
+                        out.reset();
+                        out << '\n';
                 }
                 if (isEnumList) {
-                        fprintf(stdout,
-                                "\nPass a comma-separated list of names to set "
-                                "multiple slots, e.g.\n  %s:%s,%s\n",
-                                keyLabel.cstr(), vals.isEmpty() ? "" : vals[0].first().cstr(),
-                                vals.size() > 1 ? vals[1].first().cstr()
-                                                : (vals.isEmpty() ? "" : vals[0].first().cstr()));
+                        out << '\n'
+                            << "Pass a comma-separated list of names to set multiple slots, e.g.\n  "
+                            << keyLabel << ':' << (vals.isEmpty() ? String() : vals[0].first()) << ','
+                            << (vals.size() > 1 ? vals[1].first()
+                                                : (vals.isEmpty() ? String() : vals[0].first()))
+                            << '\n';
                 }
+                out.flush();
                 std::exit(0);
         }
 

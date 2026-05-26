@@ -19,7 +19,7 @@
 #include <promeki/colormodel.h>
 #include <promeki/pixelmemlayout.h>
 #include <promeki/videocodec.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN

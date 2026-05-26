@@ -12,7 +12,7 @@
 #if PROMEKI_ENABLE_NETWORK
 #include <cstdint>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/framerate.h>
 #include <promeki/namespace.h>
 

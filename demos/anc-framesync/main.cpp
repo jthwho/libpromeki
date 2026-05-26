@@ -63,7 +63,8 @@
 #include <promeki/ciepoint.h>
 #include <promeki/cmdlineparser.h>
 #include <promeki/contentlightlevel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_color.h>
 #include <promeki/frame.h>
 #include <promeki/framesyncdisposition.h>
 #include <promeki/hdrdynamic2094_40.h>

@@ -15,7 +15,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
-#include <promeki/enums.h>
+#include <promeki/enums_timecode.h>
 #include <promeki/framenumber.h>
 #include <promeki/array.h>
 #include <promeki/datatype.h>

@@ -15,7 +15,7 @@
 #include <promeki/stringregistry.h>
 #include <promeki/list.h>
 #include <promeki/fourcc.h>
-#include <promeki/enums.h>
+#include <promeki/enums_codec.h>
 #include <promeki/result.h>
 #include <promeki/error.h>
 #include <promeki/datatype.h>

@@ -10,7 +10,7 @@
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enum.h>
 #include <promeki/filepath.h>
 #include <promeki/framecount.h>
 #include <promeki/mediaconfig.h>

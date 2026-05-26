@@ -7,7 +7,7 @@
 
 #include <promeki/burnmediaio.h>
 #include <promeki/mediaioportgroup.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/imagedesc.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>

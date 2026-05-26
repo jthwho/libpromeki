@@ -50,7 +50,7 @@
 #include <promeki/anctranslator.h>
 #include <promeki/buffer.h>
 #include <promeki/datatype.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>

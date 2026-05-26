@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/framerate.h>
 #include <promeki/st2110tx.h>
 

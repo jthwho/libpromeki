@@ -19,7 +19,11 @@
 #include <promeki/duration.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_codec.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_video.h>
 #include <promeki/metadata.h>
 #include <promeki/videocodec.h>
 #include <promeki/masteringdisplay.h>

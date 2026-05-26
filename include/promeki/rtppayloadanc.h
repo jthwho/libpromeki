@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <promeki/ancpacket.h>
 #include <promeki/buffer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/error.h>
 #include <promeki/namespace.h>
 #include <promeki/rtppacket.h>

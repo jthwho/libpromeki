@@ -11,7 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NTV2
 
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/error.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>

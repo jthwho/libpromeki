@@ -22,7 +22,7 @@
 #include <promeki/videopayload.h>
 #include <promeki/audiopayload.h>
 #include <promeki/clockdomain.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 
 using namespace promeki;
 

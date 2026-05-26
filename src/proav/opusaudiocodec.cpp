@@ -26,7 +26,7 @@
 #include <promeki/frame.h>
 #include <promeki/duration.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>

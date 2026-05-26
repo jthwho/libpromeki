@@ -14,7 +14,7 @@
 #include <promeki/namespace.h>
 #include <promeki/size2d.h>
 #include <promeki/framerate.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/string.h>

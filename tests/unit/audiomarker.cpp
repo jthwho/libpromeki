@@ -11,7 +11,7 @@
 #include <promeki/buffer.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/metadata.h>
 #include <promeki/variant.h>
 

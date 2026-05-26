@@ -13,7 +13,7 @@
 #include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/char.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/uuid.h>

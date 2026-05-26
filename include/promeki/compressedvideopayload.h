@@ -16,7 +16,7 @@
 #include <promeki/videopayload.h>
 #include <promeki/buffer.h>
 #include <promeki/videocodec.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/variantlookup.h>
 
 PROMEKI_NAMESPACE_BEGIN

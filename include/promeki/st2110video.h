@@ -16,7 +16,8 @@
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/pixelformat.h>
 #endif
-#include <promeki/enums.h>
+#include <promeki/enums_st2110.h>
+#include <promeki/enums_video.h>
 #include <promeki/framerate.h>
 #include <promeki/map.h>
 #include <promeki/namespace.h>

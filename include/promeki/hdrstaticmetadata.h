@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/contentlightlevel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/error.h>
 #include <promeki/json.h>
 #include <promeki/masteringdisplay.h>

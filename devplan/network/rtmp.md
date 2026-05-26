@@ -805,7 +805,7 @@ The keys, with concrete Variant types matching the existing
 Each key gets a Doxygen comment describing units, defaults, and
 what subsystem reads it (matching the `RtpFooBar` convention).
 
-The shared enums declared in `enums.h` (per
+The shared enums declared in `enums_rtmp.h` (per
 `feedback_typedenum_enums_h.md`) are:
 
 - `RtmpRole` — `Client` / `Server`. Used by `RtmpHandshake`,
@@ -884,7 +884,7 @@ between both `RtmpClient` (TCP) and the eventual `RtmpServer` role.
 class RtmpHandshake {
                 PROMEKI_OBJECT(RtmpHandshake, ObjectBase)
         public:
-                // Role and Mode come from enums.h (RtmpRole,
+                // Role and Mode come from enums_rtmp.h (RtmpRole,
                 // RtmpHandshakeMode) — see Phase 0 §8.  Only the
                 // class-local State enum lives here.
                 enum State { NotStarted, ExchangingC0C1, ExchangingC2S2, Done, Failed };
@@ -1205,7 +1205,7 @@ dispatches AMF0 commands ↔ application-level signals. Mirrors
 class RtmpSession : public ObjectBase {
                 PROMEKI_OBJECT(RtmpSession, ObjectBase)
         public:
-                // Uses RtmpRole from enums.h — same enum the
+                // Uses RtmpRole from enums_rtmp.h — same enum the
                 // handshake / server use; not redeclared here.
 
                 explicit RtmpSession(RtmpRole role, ObjectBase *parent = nullptr);

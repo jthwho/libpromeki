@@ -21,7 +21,14 @@
 #if PROMEKI_ENABLE_CSC
 #include <promeki/cscregistry.h>
 #endif
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_jxs.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_rtp.h>
+#include <promeki/enums_st2110.h>
+#include <promeki/enums_video.h>
 #include <promeki/eui64.h>
 #include <promeki/file.h>
 #include <promeki/networkinterface.h>

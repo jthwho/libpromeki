@@ -14,7 +14,10 @@
 #include <cstring>
 #include <promeki/audiodesc.h>
 #include <promeki/colormodel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_ndi.h>
 #include <promeki/pixelformat.h>
 #include <promeki/audioformat.h>
 #include <promeki/audiopayload.h>

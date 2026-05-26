@@ -10,7 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/cea708windowstate.h>
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/string.h>
 #include <promeki/subtitle.h>
 

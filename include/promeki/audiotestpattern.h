@@ -19,7 +19,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/list.h>
 #include <promeki/map.h>
 #include <promeki/audiodataencoder.h>

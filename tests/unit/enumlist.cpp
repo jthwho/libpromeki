@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/enum.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/variant.h>
 #include <promeki/datastream.h>
 #include <promeki/bufferiodevice.h>

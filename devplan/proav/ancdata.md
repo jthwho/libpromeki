@@ -248,7 +248,7 @@ All audit findings from the second-pass review (tracked in the now-retired
   CTM is implicit when TM is absent.
 - [x] **P2-17** — `St291Packet::buildRaw` / `buildRawType1` now hard-reject
   reserved DID ranges (ST 291-1 §6.1 Figure 4a/4b) and SDID=0x00 for Type-2.
-- [x] **P2-21** — `AncCategory::Control{15}` added to `enums.h` for
+- [x] **P2-21** — `AncCategory::Control{15}` added to `enums_anc.h` for
   in-band control packets (PacketForDeletion, EDH, RP 165 status).
 - [x] **P2-22** — `AncFormat::PacketForDeletion` wildcard match: `fromSt291DidSdid(0x80, anyDBN)` resolves via the Type-1 wildcard path.
 - [x] **P2-23** — `AncTranslator::parseGroup` + `hasParser` tested; confirmed

@@ -24,7 +24,8 @@
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
 #include <promeki/colormodel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/mediatimestamp.h>
 #include <promeki/timestamp.h>
 #include <promeki/duration.h>

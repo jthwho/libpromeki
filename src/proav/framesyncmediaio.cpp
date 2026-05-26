@@ -8,7 +8,7 @@
 #include <promeki/framesyncmediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/colormodel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/audiodesc.h>

@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/string.h>
 
 using namespace promeki;

@@ -13,7 +13,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <promeki/buffer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_st2110.h>
+#include <promeki/enums_video.h>
 #include <promeki/namespace.h>
 #include <promeki/rtppacket.h>
 #include <promeki/rtppayload.h>

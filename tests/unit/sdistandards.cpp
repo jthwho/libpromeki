@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/sdistandards.h>
 
 using namespace promeki;

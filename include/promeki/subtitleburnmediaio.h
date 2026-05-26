@@ -13,7 +13,7 @@
 #include <promeki/anctranslator.h>
 #include <promeki/captiondecoder.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/list.h>
 #include <promeki/mediaiofactory.h>
 #include <promeki/namespace.h>

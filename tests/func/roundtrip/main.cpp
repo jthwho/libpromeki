@@ -39,7 +39,7 @@
 
 #include <promeki/application.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enum.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/filepath.h>

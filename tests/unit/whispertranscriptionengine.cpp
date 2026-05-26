@@ -31,7 +31,7 @@
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_transcription.h>
 #include <promeki/filepath.h>
 #include <promeki/frame.h>
 #include <promeki/mediaconfig.h>

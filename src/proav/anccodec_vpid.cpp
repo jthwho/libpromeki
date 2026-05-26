@@ -47,7 +47,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslator.h>
 #include <promeki/datatype.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/sdivpid.h>

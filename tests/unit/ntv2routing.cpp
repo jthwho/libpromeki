@@ -10,7 +10,7 @@
 #if PROMEKI_ENABLE_NTV2
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/list.h>
 #include <promeki/ntv2routing.h>
 

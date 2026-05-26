@@ -15,7 +15,7 @@
 #include <promeki/ancmeta.h>
 #include <promeki/ancpacket.h>
 #include <promeki/ancpayload.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
 #include <promeki/metadata.h>

@@ -10,7 +10,7 @@
 #if PROMEKI_ENABLE_NTV2
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/ntv2vpid.h>
 
 #include <ntv2enums.h>

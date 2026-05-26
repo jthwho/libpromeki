@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 #include <promeki/debugmediafile.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/variantquery.h>
 #include <promeki/frame.h>
 #include <promeki/mediaio.h>

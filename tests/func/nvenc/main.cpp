@@ -33,7 +33,10 @@ int main() {
 #include <promeki/frame.h>
 #include <promeki/color.h>
 #include <promeki/cuda.h>
-#include <promeki/enums.h>
+#include <promeki/enums_codec.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_tpg.h>
+#include <promeki/enums_video.h>
 #include <promeki/error.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediaconfig.h>

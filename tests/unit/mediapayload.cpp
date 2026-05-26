@@ -27,7 +27,7 @@
 #include <promeki/clockdomain.h>
 #include <promeki/metadata.h>
 #include <promeki/timestamp.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 
 using namespace promeki;
 

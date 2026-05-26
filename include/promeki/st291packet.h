@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/ancpacket.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/error.h>

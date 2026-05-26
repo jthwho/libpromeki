@@ -14,7 +14,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/result.h>
 #include <promeki/error.h>
 #include <promeki/datatype.h>

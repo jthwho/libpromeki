@@ -22,7 +22,9 @@
 #include <promeki/elapsedtimer.h>
 #include <promeki/framenumber.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/eventloop.h>
 #include <promeki/file.h>
 #include <promeki/filepath.h>

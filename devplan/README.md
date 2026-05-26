@@ -162,6 +162,28 @@ devplan/
    (8 cases: factory routing, testmedia reader checks, end-to-end
    encoder/decoder round-trips through FLAC/Vorbis/MP3).
    See [proav/backends.md](proav/backends.md).
+16. **`enums.h` split + optional display labels** — SHIPPED 2026-05-26.
+   The monolithic `include/promeki/enums.h` (3806 lines) was split into
+   17 per-subsystem headers (`enums_anc.h`, `enums_audio.h`,
+   `enums_clock.h`, `enums_codec.h`, `enums_color.h`, `enums_jxs.h`,
+   `enums_mediaio.h`, `enums_ndi.h`, `enums_network.h`, `enums_rtmp.h`,
+   `enums_rtp.h`, `enums_st2110.h`, `enums_subtitle.h`,
+   `enums_timecode.h`, `enums_tpg.h`, `enums_transcription.h`,
+   `enums_video.h`) so editing one group's enums no longer rebuilds
+   every consumer in the tree; all include sites updated.  `Enum` also
+   gained an **optional, presentational** display-label facility:
+   `Enum::Entry::displayName` (third entry-row field) and
+   `Enum::Definition::displayName`, the new
+   `PROMEKI_REGISTER_ENUM_TYPE_DISPLAY` macro (plain
+   `PROMEKI_REGISTER_ENUM_TYPE` forwards with `nullptr`), and accessors
+   `valueDisplayName()` / `typeDisplayName()` / `Type::displayName()` /
+   static `displayNameOf()`.  Labels are never parsed, looked up, or
+   serialized — `lookup`/`valueOf`/`toString`/the `"Type::Value"` wire
+   form always use the programmatic name — and are zero-cost when
+   unused (literal caches allocated only when a label is registered).
+   `CODING_STANDARDS.md` § Well-Known Enums updated for both changes.
+   Audit finding #29 (entry triple-declaration sync) is *not* addressed
+   by this work and remains open.
 13. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
    `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
    scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,

@@ -13,7 +13,7 @@
 #include <promeki/atomic.h>
 #include <promeki/clock.h>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/framerate.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaiofactory.h>

@@ -23,7 +23,9 @@
 #include <promeki/clockdomain.h>
 #include <promeki/duration.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_subtitle.h>
+#include <promeki/enums_video.h>
 #include <promeki/frame.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>

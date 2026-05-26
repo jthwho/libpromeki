@@ -16,7 +16,6 @@
 #include <promeki/stringlist.h>
 #include <promeki/error.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN

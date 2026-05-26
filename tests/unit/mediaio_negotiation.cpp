@@ -21,7 +21,7 @@
 
 #include <promeki/audiodesc.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/filepath.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>

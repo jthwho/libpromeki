@@ -10,7 +10,7 @@
 #include <promeki/anctranslateconfig.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 
 using namespace promeki;
 

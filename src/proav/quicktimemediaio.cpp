@@ -12,7 +12,7 @@
 #include <promeki/colormodel.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/compressedvideopayload.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/h264bitstream.h>
 #include <promeki/hevcbitstream.h>

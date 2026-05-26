@@ -18,7 +18,7 @@
 #include <promeki/audioformat.h>
 #include <promeki/buffer.h>
 #include <promeki/compressedaudiopayload.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/mediaconfig.h>

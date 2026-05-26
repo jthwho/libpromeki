@@ -10,7 +10,7 @@
 #include <promeki/variantspec.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/buffer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/framerate.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>

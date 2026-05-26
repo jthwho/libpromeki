@@ -14,7 +14,7 @@
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/datastream.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/result.h>

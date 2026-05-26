@@ -15,7 +15,8 @@
 #include <promeki/anctranslator.h>
 #include <promeki/captionencoder.h>
 #include <promeki/cea708cdp.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/sharedthreadmediaio.h>
 #include <promeki/map.h>
 #include <promeki/mediaiofactory.h>

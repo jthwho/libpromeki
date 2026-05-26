@@ -12,7 +12,7 @@
 #if PROMEKI_ENABLE_NTV2
 
 #include <cstdint>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 

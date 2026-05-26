@@ -9,7 +9,7 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN

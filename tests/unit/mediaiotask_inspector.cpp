@@ -24,7 +24,9 @@
 #include <promeki/size2d.h>
 #include <promeki/videoformat.h>
 #include <promeki/pixelformat.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/enumlist.h>
 #include <promeki/audiotestpattern.h>
 #include <promeki/pcmaudiopayload.h>

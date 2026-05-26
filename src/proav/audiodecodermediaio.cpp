@@ -8,7 +8,7 @@
 #include <promeki/audiodecodermediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/frame.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>

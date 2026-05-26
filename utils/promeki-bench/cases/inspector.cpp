@@ -39,7 +39,7 @@
 #if PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_CSC
 
 #include <promeki/benchmarkrunner.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiofactory.h>
 #include <promeki/mediaiocommand.h>

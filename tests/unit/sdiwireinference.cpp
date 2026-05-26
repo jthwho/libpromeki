@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/framerate.h>
 #include <promeki/pixelformat.h>
 #include <promeki/sdistandards.h>

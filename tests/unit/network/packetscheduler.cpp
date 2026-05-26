@@ -9,7 +9,7 @@
 #include <promeki/burstpacketscheduler.h>
 #include <promeki/cadencepacketscheduler.h>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/kernelfqpacketscheduler.h>
 #include <promeki/list.h>
 #include <promeki/packetscheduler.h>

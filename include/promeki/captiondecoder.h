@@ -12,7 +12,7 @@
 #if PROMEKI_ENABLE_PROAV
 #include <cstdint>
 #include <promeki/cea708cdp.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/framenumber.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>

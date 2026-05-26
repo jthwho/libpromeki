@@ -13,7 +13,7 @@
 #include <promeki/cea708cdp.h>
 #include <promeki/colormodel.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/frame.h>
 #include <promeki/framenumber.h>
 #include <promeki/imagedesc.h>

@@ -12,7 +12,7 @@
 #include <doctest/doctest.h>
 #include <promeki/bufferiodevice.h>
 #include <promeki/datastream.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/sdioutputfanoutconfig.h>
 #include <promeki/sdisignalconfig.h>
 #include <promeki/videoportref.h>

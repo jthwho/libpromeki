@@ -13,7 +13,7 @@
 #include <promeki/namespace.h>
 #include <promeki/audioformat.h>
 #include <promeki/backendweight.h>
-#include <promeki/enums.h>
+#include <promeki/enums_transcription.h>
 #include <promeki/error.h>
 #include <promeki/function.h>
 #include <promeki/list.h>

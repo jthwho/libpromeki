@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 
 using namespace promeki;
 

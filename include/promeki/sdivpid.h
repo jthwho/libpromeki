@@ -12,7 +12,8 @@
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/array.h>
 #include <promeki/datatype.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_video.h>
 #include <promeki/error.h>
 #include <promeki/namespace.h>
 #include <promeki/result.h>

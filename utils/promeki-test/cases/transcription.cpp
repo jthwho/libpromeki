@@ -51,7 +51,7 @@
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_transcription.h>
 #include <promeki/error.h>
 #include <promeki/file.h>
 #include <promeki/filepath.h>

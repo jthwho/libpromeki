@@ -16,7 +16,7 @@
 #include <promeki/duration.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN

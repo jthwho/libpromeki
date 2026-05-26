@@ -699,14 +699,14 @@ This is the **only** case where an ID should appear in a public parameter list. 
 
 ## Well-Known Enums
 
-libpromeki uses the runtime-typed `Enum` class (`include/promeki/enum.h`) for any enumerated value that needs to round-trip through `Variant`, `VariantDatabase`, JSON config files, or user-facing CLI/GUI options. Every **well-known** enum — meaning one that is shared across subsystems or exposed as configuration — goes in a single header: `include/promeki/enums.h`.
+libpromeki uses the runtime-typed `Enum` class (`include/promeki/enum.h`) for any enumerated value that needs to round-trip through `Variant`, `VariantDatabase`, JSON config files, or user-facing CLI/GUI options. Every **well-known** enum — meaning one that is shared across subsystems or exposed as configuration — goes in a per-subsystem header named `include/promeki/enums_<group>.h` (e.g. `enums_audio.h`, `enums_rtp.h`, `enums_subtitle.h`). These were once a single `enums.h`; that header was split so a change to one group's enums does not trigger a rebuild of every consumer in the tree.
 
 ### Use the `TypedEnum<Derived>` CRTP Pattern
 
-All enums in `enums.h` inherit from `TypedEnum<Self>`. This gives the enum a compile-time type identity so function signatures can take a concrete `const VideoPattern &` (etc.) instead of a generic `const Enum &`, while still participating in every runtime Enum API via public inheritance.
+All well-known enums inherit from `TypedEnum<Self>`. This gives the enum a compile-time type identity so function signatures can take a concrete `const VideoPattern &` (etc.) instead of a generic `const Enum &`, while still participating in every runtime Enum API via public inheritance.
 
 ```cpp
-// include/promeki/enums.h
+// include/promeki/enums_tpg.h
 class VideoPattern : public TypedEnum<VideoPattern> {
         public:
                 PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
@@ -734,11 +734,21 @@ Key elements:
 - **`static const` member declarations inside the class, `inline const` definitions outside** — declaring them inline inside the class does not work because the enclosing class is not yet complete when the brace initializer runs. Defining them outside the class body after it closes is mandatory.
 - **No `Type` argument on the static definitions** — the inherited `TypedEnum(int)` pulls `Derived::Type` automatically, so `{ 0 }` is all that is needed.
 
-The low-level `Enum::registerType(const String &, const ValueList &, int)` is still available for truly dynamic cases (e.g. V4L2 menu controls built from device-advertised menu items); it copies the name and entry list onto the heap.  Do **not** use it for well-known enums in `enums.h` — always prefer `PROMEKI_REGISTER_ENUM_TYPE` so the data lives in rodata and the compile-time validators run.
+The low-level `Enum::registerType(const String &, const ValueList &, int)` is still available for truly dynamic cases (e.g. V4L2 menu controls built from device-advertised menu items); it copies the name and entry list onto the heap.  Do **not** use it for well-known enums in the `enums_<group>.h` headers — always prefer `PROMEKI_REGISTER_ENUM_TYPE` so the data lives in rodata and the compile-time validators run.
+
+### Optional Human-Readable Display Labels
+
+Both the enum type and each value may carry an optional **presentational** display label for user-facing UI. These are entirely optional — when omitted, the accessors fall back to the programmatic name, so existing enums need no changes.
+
+- **Per-value label** — add a third field to the entry row: `{ "ColorBars", 0, "Color Bars (100%)" }`. Rows without it (`{ "Ramp", 1 }`) display as `"Ramp"`.
+- **Per-type label** — use `PROMEKI_REGISTER_ENUM_TYPE_DISPLAY(TypeName, DisplayName, Default, Entries...)`; the plain `PROMEKI_REGISTER_ENUM_TYPE` forwards to it with a `nullptr` display name.
+- **Accessors** — `Enum::valueDisplayName()`, `Enum::typeDisplayName()`, `Enum::Type::displayName()`, and the static `Enum::displayNameOf(Type, value)`. The value form falls back to `valueName()` (or the decimal form for an out-of-list value); the type form falls back to `typeName()`.
+
+Display labels are **never parsed, looked up, or serialized**. `Enum::lookup`, `Enum::valueOf`, `toString`, and the `"Type::Value"` wire/config form always use the programmatic name. This keeps persisted data stable and lets labels be reworded (or later localized) freely. Labels are also exempt from the duplicate-name/value `static_assert` (two values may share a label).
 
 ### Where Well-Known Enums Live
 
-Every enum that is used outside a single implementation file **must** live in `include/promeki/enums.h`. Do not scatter them across subsystem headers. Private, single-file enums (like a scoped `enum class` used only inside one `.cpp`) stay local — only enums that cross module boundaries or become config values belong in `enums.h`.
+Every enum that is used outside a single implementation file **must** live in the `enums_<group>.h` header for the subsystem it belongs to (e.g. `enums_audio.h`, `enums_anc.h`, `enums_video.h`). Pick the existing group that best fits, or add a new `enums_<group>.h` (and list it in `CMakeLists.txt`) if none does. Do not scatter well-known enums into unrelated subsystem headers. Private, single-file enums (like a scoped `enum class` used only inside one `.cpp`) stay local — only enums that cross module boundaries or become config values belong in an `enums_<group>.h` header.
 
 When adding a new well-known enum, also add a brief Doxygen comment explaining what subsystem it belongs to and which `MediaConfig` / `VariantDatabase` keys consume it.
 

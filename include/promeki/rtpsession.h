@@ -19,7 +19,7 @@
 #include <promeki/buffer.h>
 #include <promeki/clockdomain.h>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/packetscheduler.h>
 #include <promeki/queue.h>
 #include <promeki/rtcppacket.h>

@@ -7,7 +7,8 @@
 
 #include <promeki/srcmediaio.h>
 #include <promeki/mediaioportgroup.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/mediapayload.h>
 #include <promeki/videopayload.h>

@@ -60,12 +60,13 @@ class DataStream;
  *       enum kind that crosses module boundaries or gets stored in a
  *       @ref Variant / @ref VariantDatabase / config file must use the
  *       @ref TypedEnum "TypedEnum<Self>" CRTP wrapper and live in
- *       @c include/promeki/enums.h — see @c CODING_STANDARDS.md for
- *       the rationale.  The @c Codec example below uses the bare
+ *       one of the per-subsystem @c include/promeki/enums_<group>.h
+ *       headers — see @c CODING_STANDARDS.md for the rationale.  The
+ *       @c Codec example below uses the bare
  *       @c struct @c { @c static @c inline @c const @c Enum @c X; @c }
  *       pattern only to illustrate the base-class API; for any new
  *       shared enum, copy one of the @ref TypedEnum "TypedEnum-derived" classes in
- *       @c enums.h instead.
+ *       an @c enums_<group>.h header instead.
  *
  * @par Example (base API — prefer TypedEnum for shared enums)
  * @code
@@ -110,7 +111,7 @@ class DataStream;
  * @endcode
  *
  * @see TypedEnum for the compile-time-typed wrapper used by all
- *      well-known enums in @c include/promeki/enums.h.
+ *      well-known enums in the @c include/promeki/enums_<group>.h headers.
  */
 class Enum {
         public:
@@ -130,11 +131,22 @@ class Enum {
                  * A lightweight structural type suitable for placement in
                  * rodata via a `static constexpr` array — see
                  * @ref PROMEKI_REGISTER_ENUM_TYPE for the ergonomic wrapper
-                 * used by well-known enums in @c include/promeki/enums.h.
+                 * used by well-known enums in the @c include/promeki/enums_<group>.h headers.
+                 *
+                 * @c displayName is an optional, purely presentational label
+                 * for user interfaces (e.g. @c "Color Bars (100%)" for the
+                 * @c "ColorBars" value).  It is @em never parsed, looked up,
+                 * or serialized — @ref Enum::lookup, @ref Enum::valueOf, and
+                 * the @c "Type::Value" wire/config form always use @ref name —
+                 * so display strings are free to be reworded (or later
+                 * localized) without breaking persisted data.  When
+                 * @c nullptr (the default), @ref Enum::valueDisplayName falls
+                 * back to @ref name.
                  */
                 struct Entry {
                                 const char *name;
                                 int         value;
+                                const char *displayName = nullptr; ///< Optional human-readable label; nullptr → falls back to @ref name.
                 };
 
                 /**
@@ -164,11 +176,27 @@ class Enum {
                  * registration time.
                  */
                 struct Definition {
-                                const char      *name = nullptr;              ///< Human-readable type name.
+                                const char      *name = nullptr;              ///< Programmatic type name (also the wire/config token).
                                 const Entry     *entries = nullptr;           ///< Pointer to the Entry table.
                                 size_t           entryCount = 0;              ///< Number of entries in the table.
                                 int              defaultValue = InvalidValue; ///< Default integer value.
                                 mutable uint32_t typeIndex = 0;               ///< Monotonic id; set by the registry.
+
+                                /**
+                         * @brief Optional, purely presentational label for the
+                         *        enum @em type (e.g. @c "Video Test Pattern"
+                         *        for the @c "VideoPattern" type).
+                         *
+                         * Like @ref Entry::displayName, this is never parsed or
+                         * serialized; it exists only so a UI can show a friendly
+                         * type label.  @c nullptr (the default) means
+                         * @ref Enum::typeDisplayName falls back to @ref name.
+                         *
+                         * Declared after @ref typeIndex so the designated
+                         * initializer emitted by @ref PROMEKI_REGISTER_ENUM_TYPE
+                         * stays in member-declaration order.
+                         */
+                                const char *displayName = nullptr;
 
                                 /**
                          * @brief Literal-backed @ref String cache for the type name.
@@ -212,6 +240,31 @@ class Enum {
                          */
                                 mutable StringLiteralData *entryQualifiedLits = nullptr;
 
+                                /**
+                         * @brief Literal-backed @ref String cache for the type's
+                         *        @ref displayName, or @c nullptr when none was
+                         *        registered (the accessor then falls back to
+                         *        @ref nameLit).  Same zero-copy story as
+                         *        @ref nameLit.
+                         */
+                                mutable StringLiteralData *displayNameLit = nullptr;
+
+                                /**
+                         * @brief Parallel array of literal-backed @ref String
+                         *        caches for per-entry display names, with
+                         *        @c entryCount elements indexed in lock-step
+                         *        with @ref entries.
+                         *
+                         * @c nullptr when no entry in the table registered a
+                         * display name (the common case — zero extra storage).
+                         * When non-null, only the slots whose
+                         * @ref Entry::displayName is non-null are constructed;
+                         * the others are never read because
+                         * @ref Enum::valueDisplayName guards on
+                         * @ref Entry::displayName first.
+                         */
+                                mutable StringLiteralData *entryDisplayLits = nullptr;
+
                                 /// @brief Linear-search lookup of an entry by name.
                                 const Entry *findByName(const String &n) const;
                                 /// @brief Linear-search lookup of an entry by integer value.
@@ -235,6 +288,20 @@ class Enum {
 
                                 /// @brief Returns the string name this type was registered with.
                                 String name() const;
+
+                                /**
+                                 * @brief Returns the human-readable display label for
+                                 *        this enum type.
+                                 *
+                                 * Presentational only — see @ref Enum::Entry::displayName.
+                                 * Falls back to @ref name when no display label was
+                                 * registered, so the result is always non-empty for a
+                                 * valid Type.
+                                 *
+                                 * @return The display label, or an empty String if the
+                                 *         Type is invalid.
+                                 */
+                                String displayName() const;
 
                                 /**
                                  * @brief Returns a stable monotonic integer identifier.
@@ -384,6 +451,22 @@ class Enum {
                 static String nameOf(Type type, int value, Error *err = nullptr);
 
                 /**
+                 * @brief Looks up the display label associated with @p value in @p type.
+                 *
+                 * Presentational sibling of @ref nameOf — see
+                 * @ref Enum::Entry::displayName.  Falls back to the
+                 * programmatic name when the entry registered no display
+                 * label, so a UI can call this unconditionally.
+                 *
+                 * @param type   Registered enum type.
+                 * @param value  Integer value to look up.
+                 * @param err    Optional error pointer; set to Error::IdNotFound on miss.
+                 * @return The display label (or programmatic name fallback), or
+                 *         an empty String if @p value is not registered.
+                 */
+                static String displayNameOf(Type type, int value, Error *err = nullptr);
+
+                /**
                  * @brief Parses a "TypeName::ValueName" string into an Enum.
                  *
                  * This is the inverse of toString() and is used by Variant
@@ -468,8 +551,31 @@ class Enum {
                  */
                 String valueName() const;
 
+                /**
+                 * @brief Returns the human-readable display label for this
+                 *        enum's value.
+                 *
+                 * Presentational only — see @ref Enum::Entry::displayName.
+                 * For an in-list value with no registered display label this
+                 * falls back to @ref valueName; for an out-of-list value it
+                 * falls back to the decimal form (matching @ref toString).
+                 * Returns an empty String only when the type is invalid.
+                 */
+                String valueDisplayName() const;
+
                 /// @brief Returns the name of the enum type, or empty if the type is invalid.
                 String typeName() const;
+
+                /**
+                 * @brief Returns the human-readable display label for this
+                 *        enum's type.
+                 *
+                 * Presentational only — see @ref Enum::Definition::displayName.
+                 * Falls back to @ref typeName when no type display label was
+                 * registered.  Returns an empty String only when the type is
+                 * invalid.
+                 */
+                String typeDisplayName() const;
 
                 /**
                  * @brief Returns the short value-name form.
@@ -690,25 +796,60 @@ PROMEKI_NAMESPACE_END
  * - no two entries share a name or an integer value,
  * - the default value is present in the table.
  *
- * @param TypeName String literal — the human-readable type name.
+ * @param TypeName String literal — the programmatic type name (also the
+ *                 wire/config token).
  * @param Default  Integer default value, which must appear in the table.
  * @param ...      Brace-initialized `Enum::Entry` rows —
- *                 `{ "Name", integer }` comma-separated.
+ *                 `{ "Name", integer }`, or
+ *                 `{ "Name", integer, "Display Label" }` to attach an
+ *                 optional presentational label, comma-separated.
+ *
+ * To additionally give the @em type a display label, use
+ * @ref PROMEKI_REGISTER_ENUM_TYPE_DISPLAY.  Display labels are purely
+ * presentational — they are never parsed or serialized (see
+ * @ref promeki::Enum::Entry::displayName).
  *
  * @par Example
  * @code
  * class VideoPattern : public TypedEnum<VideoPattern> {
  *     public:
  *         PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
- *                 { "ColorBars",   0 },
- *                 { "ColorBars75", 1 },
- *                 { "Ramp",        2 });
+ *                 { "ColorBars",   0, "Color Bars" },
+ *                 { "ColorBars75", 1, "Color Bars (75%)" },
+ *                 { "Ramp",        2 });   // no label → displays as "Ramp"
  *         using TypedEnum<VideoPattern>::TypedEnum;
  *         static const VideoPattern ColorBars;
  * };
  * @endcode
  */
 #define PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default, ...)                                                             \
+        PROMEKI_REGISTER_ENUM_TYPE_DISPLAY(TypeName, nullptr, Default, __VA_ARGS__)
+
+/**
+ * @brief Like @ref PROMEKI_REGISTER_ENUM_TYPE, but also attaches a
+ *        presentational display label to the enum @em type.
+ * @ingroup util
+ *
+ * Identical to @ref PROMEKI_REGISTER_ENUM_TYPE except for the extra
+ * @p DisplayName argument, surfaced via
+ * @ref promeki::Enum::typeDisplayName / @ref promeki::Enum::Type::displayName.
+ * Pass @c nullptr for @p DisplayName to fall back to @p TypeName (which is
+ * exactly what @ref PROMEKI_REGISTER_ENUM_TYPE does).
+ *
+ * @param TypeName    String literal — the programmatic type name.
+ * @param DisplayName String literal or @c nullptr — the human-readable
+ *                    type label (never parsed or serialized).
+ * @param Default     Integer default value, which must appear in the table.
+ * @param ...         Brace-initialized `Enum::Entry` rows.
+ *
+ * @par Example
+ * @code
+ * PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("VideoPattern", "Video Test Pattern", 0,
+ *         { "ColorBars", 0, "Color Bars" },
+ *         { "Ramp",      1, "Linear Ramp" });
+ * @endcode
+ */
+#define PROMEKI_REGISTER_ENUM_TYPE_DISPLAY(TypeName, DisplayName, Default, ...)                                        \
         static constexpr ::promeki::Enum::Entry _promeki_enum_entries_[] = {__VA_ARGS__};                              \
         static_assert(sizeof(_promeki_enum_entries_) / sizeof(_promeki_enum_entries_[0]) > 0,                          \
                       "Enum type '" TypeName "' has no entries");                                                      \
@@ -725,7 +866,8 @@ PROMEKI_NAMESPACE_END
                                                                      .entryCount = sizeof(_promeki_enum_entries_) /    \
                                                                                    sizeof(_promeki_enum_entries_[0]),  \
                                                                      .defaultValue = (Default),                        \
-                                                                     .typeIndex = 0};                                  \
+                                                                     .typeIndex = 0,                                   \
+                                                                     .displayName = (DisplayName)};                    \
         static inline const ::promeki::Enum::Type Type = ::promeki::Enum::registerDefinition(&_promeki_enum_def_)
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Enum);

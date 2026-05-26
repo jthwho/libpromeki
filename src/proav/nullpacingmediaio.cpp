@@ -7,7 +7,7 @@
 
 #include <promeki/nullpacingmediaio.h>
 
-#include <promeki/enums.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
 #include <promeki/mediaconfig.h>

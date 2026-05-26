@@ -53,7 +53,8 @@
 #include <promeki/cea708decoder.h>
 #include <promeki/dir.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/file.h>

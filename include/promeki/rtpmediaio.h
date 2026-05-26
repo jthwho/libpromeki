@@ -16,7 +16,10 @@
 #include <promeki/clockdomain.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/duration.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_jxs.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/eui64.h>
 #include <promeki/macaddress.h>
 #include <promeki/frame.h>

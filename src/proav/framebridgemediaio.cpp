@@ -8,7 +8,7 @@
 #include <promeki/framebridgemediaio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediaioportgroup.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/metadata.h>
 #include <promeki/mediatimestamp.h>

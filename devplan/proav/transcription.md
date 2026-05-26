@@ -22,7 +22,7 @@ shipped; the items below are known follow-ups.
   `TranscriptionModelHint`, `TranscriptionDiarization`,
   `TranscriptionWordTimestamps`, `TranscriptionVad`,
   `TranscriptionEndpointSilence`; and `SubtitleCue*` shaping keys.
-- `TranscriptionMode` / `TranscriptionChannelMode` enums in `enums.h`.
+- `TranscriptionMode` / `TranscriptionChannelMode` enums in `enums_transcription.h`.
 - `Metadata::Transcript` key in `metadata.h`.
 - `WhisperCpp` backend via vendored `whisper.cpp` v1.8.4.  Batch mode
   only; CPU only; `PCMI_Float32LE` / `PCMI_S16LE` inputs.

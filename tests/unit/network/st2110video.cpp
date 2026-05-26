@@ -6,7 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enums_st2110.h>
+#include <promeki/enums_video.h>
 #include <promeki/framerate.h>
 #include <promeki/map.h>
 #include <promeki/pixelaspect.h>

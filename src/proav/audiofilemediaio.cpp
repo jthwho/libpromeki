@@ -10,7 +10,7 @@
 
 #include <promeki/audiofilemediaio.h>
 #include <promeki/audiopayload.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>

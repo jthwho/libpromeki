@@ -26,7 +26,7 @@
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708decoder.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/framenumber.h>
 #include <promeki/duration.h>
 #include <promeki/file.h>

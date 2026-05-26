@@ -6,4 +6,4 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/enums.h>
+#include <promeki/enum.h>

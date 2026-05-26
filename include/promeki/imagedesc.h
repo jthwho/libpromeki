@@ -16,7 +16,7 @@
 #include <promeki/size2d.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

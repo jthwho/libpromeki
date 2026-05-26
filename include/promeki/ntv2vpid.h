@@ -11,7 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_NTV2
 
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN

@@ -13,7 +13,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audiolevel.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/timecode.h>
 
 using namespace promeki;

@@ -8,7 +8,7 @@
 #include <promeki/captiondecoder.h>
 #include <promeki/cea608decoder.h>
 #include <promeki/cea708decoder.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN

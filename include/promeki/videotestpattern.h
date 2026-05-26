@@ -19,7 +19,7 @@
 #include <promeki/mediaioallocator.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/timecode.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/fastfont.h>
 #include <promeki/motionband.h>
 

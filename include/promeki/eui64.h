@@ -17,7 +17,7 @@
 #include <promeki/string.h>
 #include <promeki/result.h>
 #include <promeki/array.h>
-#include <promeki/enums.h>
+#include <promeki/enums_network.h>
 #include <promeki/datatype.h>
 
 PROMEKI_NAMESPACE_BEGIN

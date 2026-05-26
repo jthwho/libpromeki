@@ -8,7 +8,7 @@
 #include <promeki/debugmediamediaio.h>
 
 #include <promeki/debugmediafile.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/logger.h>
 #include <promeki/mediaconfig.h>

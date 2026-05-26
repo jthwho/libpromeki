@@ -8,7 +8,7 @@
 #include <atomic>
 #include <doctest/doctest.h>
 #include <promeki/videotestpattern.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>

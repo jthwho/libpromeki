@@ -20,7 +20,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/audioencoder.h>
 #include <promeki/buffer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/pcmaudiopayload.h>

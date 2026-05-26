@@ -17,7 +17,8 @@
 #include <promeki/framerate.h>
 #include <promeki/metadata.h>
 #include <promeki/list.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_video.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

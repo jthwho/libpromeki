@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

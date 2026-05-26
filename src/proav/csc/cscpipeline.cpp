@@ -11,7 +11,7 @@
 #include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <cstring>
 #include <cmath>
 #include <tuple>

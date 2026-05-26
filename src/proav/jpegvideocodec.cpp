@@ -21,7 +21,7 @@
 #include <promeki/videocodec.h>
 #include <promeki/logger.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
 

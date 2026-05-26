@@ -26,7 +26,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/audiodesc.h>
 #include <promeki/cuda.h>
-#include <promeki/enums.h>
+#include <promeki/enums_codec.h>
 #include <promeki/memspace.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>

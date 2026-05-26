@@ -12,7 +12,8 @@
 
 #include <promeki/duration.h>
 #include <promeki/elapsedtimer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_rtp.h>
 #include <promeki/eventloop.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>

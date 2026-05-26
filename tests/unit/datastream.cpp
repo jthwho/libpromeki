@@ -30,7 +30,8 @@
 #include <promeki/pixelmemlayout.h>
 #include <promeki/pixelformat.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
+#include <promeki/enums_tpg.h>
+#include <promeki/enums_video.h>
 #include <promeki/json.h>
 #include <promeki/metadata.h>
 #include <promeki/xyzcolor.h>

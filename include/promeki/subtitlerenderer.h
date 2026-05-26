@@ -11,7 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/error.h>
 #include <promeki/fastfont.h>
 #include <promeki/namespace.h>

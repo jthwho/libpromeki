@@ -18,7 +18,7 @@
 #include <promeki/result.h>
 #include <promeki/error.h>
 #include <promeki/datastream.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
 #include <promeki/audiostreamdesc.h>
 
 PROMEKI_NAMESPACE_BEGIN

@@ -15,7 +15,7 @@
 #include <promeki/buffer.h>
 #include <promeki/cea708service.h>
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>

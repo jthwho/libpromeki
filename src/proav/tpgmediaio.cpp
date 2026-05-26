@@ -16,7 +16,10 @@
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/audiolevel.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_subtitle.h>
+#include <promeki/enums_tpg.h>
+#include <promeki/enums_video.h>
 #include <promeki/imagedataencoder.h>
 #include <promeki/logger.h>
 #include <promeki/mediaiodescription.h>

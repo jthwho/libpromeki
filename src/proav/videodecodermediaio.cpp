@@ -8,7 +8,7 @@
 #include <promeki/videodecodermediaio.h>
 #include <promeki/mediaioportgroup.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/frame.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>

@@ -21,7 +21,7 @@
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>

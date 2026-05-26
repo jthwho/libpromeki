@@ -13,7 +13,8 @@
 #include <promeki/atomic.h>
 #include <promeki/audiodesc.h>
 #include <promeki/dedicatedthreadmediaio.h>
-#include <promeki/enums.h>
+#include <promeki/enums_mediaio.h>
+#include <promeki/enums_rtmp.h>
 #include <promeki/frame.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>

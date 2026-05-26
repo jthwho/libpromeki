@@ -14,7 +14,7 @@
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
 #include <promeki/framesyncdisposition.h>
 #include <promeki/list.h>
 #include <promeki/result.h>

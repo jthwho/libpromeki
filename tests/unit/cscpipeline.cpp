@@ -41,7 +41,8 @@ namespace promeki {
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
 #include <promeki/mediaconfig.h>
-#include <promeki/enums.h>
+#include <promeki/enums_color.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/videotestpattern.h>
 #include <cstring>
 #include <cmath>

@@ -7,7 +7,9 @@
 
 #include <doctest/doctest.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_codec.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/metadata.h>
 #include <promeki/variant.h>
 #include <promeki/variantdatabase.h>
@@ -40,6 +42,43 @@ namespace {
                                 "TestSeverity", {{"Debug", -1}, {"Info", 0}, {"Warning", 1}, {"Error", 2}},
                                 0); // default = Info
         };
+
+        // A TypedEnum exercising the presentational display-name feature: a
+        // type-level label plus per-entry labels, with one entry (Plain)
+        // deliberately left label-less to verify the fallback.
+        class TestDisplayPattern : public TypedEnum<TestDisplayPattern> {
+                public:
+                        PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("TestDisplayPattern", "Test Display Pattern", 0,
+                                                           {"ColorBars", 0, "Color Bars"}, {"Ramp", 1, "Linear Ramp"},
+                                                           {"Plain", 2}); // no label → falls back to "Plain"
+
+                        using TypedEnum<TestDisplayPattern>::TypedEnum;
+
+                        static const TestDisplayPattern ColorBars;
+                        static const TestDisplayPattern Ramp;
+                        static const TestDisplayPattern Plain;
+        };
+
+        inline const TestDisplayPattern TestDisplayPattern::ColorBars{0};
+        inline const TestDisplayPattern TestDisplayPattern::Ramp{1};
+        inline const TestDisplayPattern TestDisplayPattern::Plain{2};
+
+        // A TypedEnum registered via the static (rodata) macro path with NO
+        // display labels at all — neither a type label nor any per-entry
+        // label.  Exercises the zero-cost fallback where typeDisplayName() and
+        // valueDisplayName() return the programmatic names unchanged.
+        class TestNoDisplay : public TypedEnum<TestNoDisplay> {
+                public:
+                        PROMEKI_REGISTER_ENUM_TYPE("TestNoDisplay", 0, {"Read", 0}, {"Write", 1});
+
+                        using TypedEnum<TestNoDisplay>::TypedEnum;
+
+                        static const TestNoDisplay Read;
+                        static const TestNoDisplay Write;
+        };
+
+        inline const TestNoDisplay TestNoDisplay::Read{0};
+        inline const TestNoDisplay TestNoDisplay::Write{1};
 
 } // namespace
 
@@ -643,7 +682,7 @@ TEST_CASE("Variant::asEnum: rejects an unsupported source type (e.g. Color)") {
 }
 
 // ---------------------------------------------------------------------------
-// ImgSeqPathMode — well-known Enum from enums.h
+// ImgSeqPathMode — well-known Enum from enums_mediaio.h
 // ---------------------------------------------------------------------------
 
 TEST_CASE("ImgSeqPathMode: constants have expected values") {
@@ -761,7 +800,7 @@ TEST_CASE("Metadata: constexpr ID usable in a switch statement") {
 }
 
 // ============================================================================
-// Well-known enums in enums.h — sanity checks for newly-added values
+// Well-known enums (enums_<group>.h) — sanity checks for newly-added values
 // ============================================================================
 
 TEST_CASE("RateControlMode: all four registered values") {
@@ -808,4 +847,99 @@ TEST_CASE("OpusApplication: values and names") {
         Enum  back = Enum::lookup("OpusApplication::LowDelay", &err);
         CHECK(err.isOk());
         CHECK(back == OpusApplication::LowDelay);
+}
+
+// ============================================================================
+// Display names (presentational labels) — enums_<group>.h opt-in feature
+// ============================================================================
+
+TEST_CASE("Enum display: type-level display label") {
+        CHECK(TestDisplayPattern::Type.name() == "TestDisplayPattern");
+        CHECK(TestDisplayPattern::Type.displayName() == "Test Display Pattern");
+        CHECK(TestDisplayPattern::ColorBars.typeName() == "TestDisplayPattern");
+        CHECK(TestDisplayPattern::ColorBars.typeDisplayName() == "Test Display Pattern");
+}
+
+TEST_CASE("Enum display: per-entry display label vs programmatic name") {
+        // Labelled entries return their label; programmatic name unchanged.
+        CHECK(TestDisplayPattern::ColorBars.valueName() == "ColorBars");
+        CHECK(TestDisplayPattern::ColorBars.valueDisplayName() == "Color Bars");
+        CHECK(TestDisplayPattern::Ramp.valueName() == "Ramp");
+        CHECK(TestDisplayPattern::Ramp.valueDisplayName() == "Linear Ramp");
+}
+
+TEST_CASE("Enum display: entry without a label falls back to the programmatic name") {
+        CHECK(TestDisplayPattern::Plain.valueName() == "Plain");
+        CHECK(TestDisplayPattern::Plain.valueDisplayName() == "Plain");
+}
+
+TEST_CASE("Enum display: static displayNameOf mirrors nameOf with label fallback") {
+        Error err;
+        CHECK(Enum::displayNameOf(TestDisplayPattern::Type, 0, &err) == "Color Bars");
+        CHECK(err.isOk());
+        CHECK(Enum::displayNameOf(TestDisplayPattern::Type, 1) == "Linear Ramp");
+        CHECK(Enum::displayNameOf(TestDisplayPattern::Type, 2) == "Plain"); // fallback
+        // Unknown value → IdNotFound, empty String.
+        CHECK(Enum::displayNameOf(TestDisplayPattern::Type, 77, &err).isEmpty());
+        CHECK(err == Error::IdNotFound);
+}
+
+TEST_CASE("Enum display: out-of-list value falls back to decimal form") {
+        Enum e(TestDisplayPattern::Type, 99);
+        CHECK_FALSE(e.hasListedValue());
+        CHECK(e.valueDisplayName() == "99");
+}
+
+TEST_CASE("Enum display: labels are presentational only — never parsed or looked up") {
+        // valueOf / lookup operate on the programmatic name, not the label.
+        CHECK(Enum::valueOf(TestDisplayPattern::Type, "ColorBars").second().isOk());
+        CHECK(Enum::valueOf(TestDisplayPattern::Type, "Color Bars").second().isError());
+
+        Error err;
+        Enum  ok = Enum::lookup("TestDisplayPattern::ColorBars", &err);
+        CHECK(err.isOk());
+        CHECK(ok == TestDisplayPattern::ColorBars);
+
+        Enum bad = Enum::lookup("TestDisplayPattern::Color Bars", &err);
+        CHECK(err == Error::IdNotFound);
+        CHECK_FALSE(bad.isValid());
+
+        // toString / wire form stay on the programmatic name.
+        CHECK(TestDisplayPattern::ColorBars.toString() == "ColorBars");
+}
+
+TEST_CASE("Enum display: enums with no labels fall back everywhere (zero-cost path)") {
+        // A well-known-style enum (static rodata macro path) that registered
+        // no display labels.
+        CHECK(TestNoDisplay::Read.valueName() == "Read");
+        CHECK(TestNoDisplay::Read.valueDisplayName() == "Read");
+        CHECK(TestNoDisplay::Read.typeName() == "TestNoDisplay");
+        CHECK(TestNoDisplay::Read.typeDisplayName() == "TestNoDisplay");
+
+        // The dynamic-registration path also has no labels and falls back.
+        Enum c(TestCodec::Type, 2);
+        CHECK(c.valueDisplayName() == "H265");
+        CHECK(c.typeDisplayName() == "TestCodec");
+        CHECK(Enum::displayNameOf(TestCodec::Type, 1) == "H264");
+}
+
+TEST_CASE("Enum display: invalid type yields empty strings on every display accessor") {
+        // A default-constructed Enum::Type has _def == nullptr; every display
+        // accessor must take its invalid-type guard and return an empty String
+        // rather than dereferencing a null definition.
+        Enum::Type invalidType;
+        CHECK_FALSE(invalidType.isValid());
+        CHECK(invalidType.displayName().isEmpty());
+
+        Error err = Error::Ok;
+        CHECK(Enum::displayNameOf(invalidType, 0, &err).isEmpty());
+        CHECK(err == Error::IdNotFound);
+        // The err pointer is optional — the no-error overload must not crash.
+        CHECK(Enum::displayNameOf(invalidType, 0).isEmpty());
+
+        // A default-constructed Enum carries an invalid type as well.
+        Enum invalid;
+        CHECK_FALSE(invalid.isValid());
+        CHECK(invalid.valueDisplayName().isEmpty());
+        CHECK(invalid.typeDisplayName().isEmpty());
 }

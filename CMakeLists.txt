@@ -2375,7 +2375,23 @@ set(PROMEKI_HEADERS
     include/promeki/duration.h
     include/promeki/elapsedtimer.h
     include/promeki/enum.h
-    include/promeki/enums.h
+    include/promeki/enums_anc.h
+    include/promeki/enums_audio.h
+    include/promeki/enums_clock.h
+    include/promeki/enums_codec.h
+    include/promeki/enums_color.h
+    include/promeki/enums_jxs.h
+    include/promeki/enums_mediaio.h
+    include/promeki/enums_ndi.h
+    include/promeki/enums_network.h
+    include/promeki/enums_rtmp.h
+    include/promeki/enums_rtp.h
+    include/promeki/enums_st2110.h
+    include/promeki/enums_subtitle.h
+    include/promeki/enums_timecode.h
+    include/promeki/enums_tpg.h
+    include/promeki/enums_transcription.h
+    include/promeki/enums_video.h
     include/promeki/env.h
     include/promeki/error.h
     include/promeki/event.h

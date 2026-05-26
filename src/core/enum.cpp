@@ -131,9 +131,16 @@ namespace {
                 size_t typeNameLen = std::strlen(def->name);
                 def->nameLit = new StringLiteralData(def->name, typeNameLen);
                 PROMEKI_INTENTIONAL_LEAK(def->nameLit);
+                // Optional, presentational type display label (zero cost when
+                // none was registered — the accessor falls back to nameLit).
+                if (def->displayName != nullptr) {
+                        def->displayNameLit = new StringLiteralData(def->displayName, std::strlen(def->displayName));
+                        PROMEKI_INTENTIONAL_LEAK(def->displayNameLit);
+                }
                 if (def->entryCount == 0) {
                         def->entryNameLits = nullptr;
                         def->entryQualifiedLits = nullptr;
+                        def->entryDisplayLits = nullptr;
                         return;
                 }
                 void *rawNames = ::operator new(sizeof(StringLiteralData) * def->entryCount);
@@ -161,6 +168,32 @@ namespace {
                 }
                 def->entryNameLits = nameLits;
                 def->entryQualifiedLits = qualifiedLits;
+
+                // Per-entry display labels (presentational only).  Allocated
+                // only when at least one entry registered a label, so the
+                // common case costs nothing.  Only the slots whose
+                // Entry::displayName is non-null are constructed; the rest are
+                // never read (valueDisplayName / displayNameOf guard on
+                // Entry::displayName first).
+                bool anyEntryDisplay = false;
+                for (size_t i = 0; i < def->entryCount; ++i) {
+                        if (def->entries[i].displayName != nullptr) {
+                                anyEntryDisplay = true;
+                                break;
+                        }
+                }
+                if (anyEntryDisplay) {
+                        void *rawDisplay = ::operator new(sizeof(StringLiteralData) * def->entryCount);
+                        PROMEKI_INTENTIONAL_LEAK(rawDisplay);
+                        auto *displayLits = static_cast<StringLiteralData *>(rawDisplay);
+                        for (size_t i = 0; i < def->entryCount; ++i) {
+                                const char *dn = def->entries[i].displayName;
+                                if (dn != nullptr) {
+                                        new (&displayLits[i]) StringLiteralData(dn, std::strlen(dn));
+                                }
+                        }
+                        def->entryDisplayLits = displayLits;
+                }
         }
 
 } // namespace
@@ -171,6 +204,12 @@ namespace {
 
 String Enum::Type::name() const {
         if (_def == nullptr) return String();
+        return String::fromLiteralData(_def->nameLit);
+}
+
+String Enum::Type::displayName() const {
+        if (_def == nullptr) return String();
+        if (_def->displayNameLit != nullptr) return String::fromLiteralData(_def->displayNameLit);
         return String::fromLiteralData(_def->nameLit);
 }
 
@@ -325,6 +364,24 @@ String Enum::nameOf(Type type, int value, Error *err) {
         return String::fromLiteralData(&type._def->entryNameLits[index]);
 }
 
+String Enum::displayNameOf(Type type, int value, Error *err) {
+        if (type._def == nullptr) {
+                if (err != nullptr) *err = Error::IdNotFound;
+                return String();
+        }
+        const Entry *entry = type._def->findByValue(value);
+        if (entry == nullptr) {
+                if (err != nullptr) *err = Error::IdNotFound;
+                return String();
+        }
+        if (err != nullptr) *err = Error::Ok;
+        const size_t index = static_cast<size_t>(entry - type._def->entries);
+        if (entry->displayName != nullptr && type._def->entryDisplayLits != nullptr) {
+                return String::fromLiteralData(&type._def->entryDisplayLits[index]);
+        }
+        return String::fromLiteralData(&type._def->entryNameLits[index]);
+}
+
 // ---------------------------------------------------------------------------
 // String form / lookup
 // ---------------------------------------------------------------------------
@@ -385,8 +442,28 @@ String Enum::valueName() const {
         return String::fromLiteralData(&_def->entryNameLits[index]);
 }
 
+String Enum::valueDisplayName() const {
+        if (_def == nullptr) return String();
+        const Entry *entry = _def->findByValue(_value);
+        // Out-of-list: no entry, so mirror toString()'s decimal fallback.
+        if (entry == nullptr) return toString();
+        if (entry->displayName != nullptr && _def->entryDisplayLits != nullptr) {
+                const size_t index = static_cast<size_t>(entry - _def->entries);
+                return String::fromLiteralData(&_def->entryDisplayLits[index]);
+        }
+        // In-list but no display label registered: fall back to the
+        // programmatic short name.
+        return valueName();
+}
+
 String Enum::typeName() const {
         if (_def == nullptr) return String();
+        return String::fromLiteralData(_def->nameLit);
+}
+
+String Enum::typeDisplayName() const {
+        if (_def == nullptr) return String();
+        if (_def->displayNameLit != nullptr) return String::fromLiteralData(_def->displayNameLit);
         return String::fromLiteralData(_def->nameLit);
 }
 

@@ -44,7 +44,7 @@
 
 #include <promeki/application.h>
 #include <promeki/dir.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
 #include <promeki/enumlist.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>

@@ -20,7 +20,9 @@
 #include <promeki/datetime.h>
 #include <promeki/dir.h>
 #include <promeki/enumlist.h>
-#include <promeki/enums.h>
+#include <promeki/enums_anc.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_tpg.h>
 #include <promeki/frame.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/uncompressedvideopayload.h>

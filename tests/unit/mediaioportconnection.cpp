@@ -24,7 +24,8 @@
 #include <promeki/mediaiosource.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/elapsedtimer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/dedicatedthreadmediaio.h>
 #include <promeki/dir.h>
 #include <promeki/file.h>

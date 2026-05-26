@@ -12,7 +12,8 @@
 #include <doctest/doctest.h>
 #include <promeki/audiodesc.h>
 #include <promeki/elapsedtimer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_clock.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/frame.h>
 #include <promeki/list.h>
 #include <promeki/mediaconfig.h>

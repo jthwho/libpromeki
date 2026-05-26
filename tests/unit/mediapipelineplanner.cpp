@@ -19,7 +19,7 @@
 #include <doctest/doctest.h>
 
 #include <promeki/audiodesc.h>
-#include <promeki/enums.h>
+#include <promeki/enum.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>
 #include <promeki/inlinemediaio.h>

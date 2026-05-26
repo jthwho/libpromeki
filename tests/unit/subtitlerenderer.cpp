@@ -12,7 +12,7 @@
 #include <promeki/cea608encoder.h>
 #include <promeki/cea708cdp.h>
 #include <promeki/color.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
 #include <promeki/imagedesc.h>

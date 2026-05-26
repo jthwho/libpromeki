@@ -13,7 +13,7 @@
 #include <promeki/set.h>
 #include <promeki/stringlist.h>
 #include <promeki/logger.h>
-#include <promeki/enums.h>
+#include <promeki/enums_codec.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

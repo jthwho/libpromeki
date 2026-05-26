@@ -63,7 +63,8 @@
 #include <promeki/duration.h>
 #include <promeki/env.h>
 #include <promeki/enum.h>
-#include <promeki/enums.h>
+#include <promeki/enums_audio.h>
+#include <promeki/enums_transcription.h>
 #include <promeki/char.h>
 #include <promeki/error.h>
 #include <promeki/filepath.h>

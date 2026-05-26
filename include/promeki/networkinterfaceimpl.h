@@ -20,7 +20,7 @@
 #include <promeki/ipv6subnet.h>
 #include <promeki/sharedptr.h>
 #include <promeki/readwritelock.h>
-#include <promeki/enums.h>
+#include <promeki/enums_network.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

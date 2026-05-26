@@ -17,7 +17,7 @@
 #include <promeki/ancpacket.h>
 #include <promeki/ancpayload.h>
 #include <promeki/buffer.h>
-#include <promeki/enums.h>
+#include <promeki/enums_video.h>
 #include <promeki/framerate.h>
 #include <promeki/list.h>
 #include <promeki/ntv2anc.h>

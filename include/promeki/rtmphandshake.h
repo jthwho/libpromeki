@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
-#include <promeki/enums.h>
+#include <promeki/enums_rtmp.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>

@@ -15,7 +15,7 @@
 #include <promeki/cea708cdp.h>
 #include <promeki/cea708service.h>
 #include <promeki/cea708windowstate.h>
-#include <promeki/enums.h>
+#include <promeki/enums_subtitle.h>
 #include <promeki/framenumber.h>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
