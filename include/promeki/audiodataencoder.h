@@ -38,24 +38,36 @@ class PcmAudioPayload;
  *
  * @par Wire format
  * Each Item produces an @c N -sample run laid out as follows, where
- * @c S = samplesPerBit, @c H = S/2, and the trailing pad fills any
- * additional samples in the Item up to its @c sampleCount:
+ * @c S = samplesPerBit, @c H = S/2, @c L = leadInBits, and the
+ * trailing pad fills any additional samples in the Item up to its
+ * @c sampleCount:
  *
  * @verbatim
- *   |  4 sync bits  |       64 payload bits        |  8 CRC bits  | pad |
- *   |  1010         | MSB ........................ | MSB ... LSB  |     |
- *   each bit = H samples of (+A or -A) followed by H samples of
+ *   |   L lead-in    |  4 sync bits  |       64 payload bits        |  8 CRC bits  | pad |
+ *   |  +A +A ...     |  1010         | MSB ........................ | MSB ... LSB  |     |
+ *   each bit cell = H samples of (+A or -A) followed by H samples of
  *   the opposite sign.  bit '1' = +A, then -A; bit '0' = -A, then +A.
+ *   The lead-in is L bit cells of constant +A — purely additive at
+ *   the front; absent when leadInBits=0 (the default).
  * @endverbatim
  *
+ * - **Lead-in** (optional; @c leadInBits cells of constant @c +A):
+ *   absent by default.  When set, prepends @c L*S samples of @c +A
+ *   to the codeword so that lossy psychoacoustic codecs (MP3 /
+ *   Vorbis) eat their onset-transient erosion out of the lead-in
+ *   instead of bit 0's @c +A half-bit.  Invisible to the decoder:
+ *   its sync localiser still finds the first @c +→- transition at
+ *   the lead-in / sync boundary and computes the codeword start
+ *   from there.  See the @c leadInBits constructor parameter for
+ *   when to enable.
  * - **Sync nibble**: `0b1010` (transmitted MSB-first).
  * - **Payload**: 64-bit value, transmitted MSB-first (bit 63 first).
  * - **CRC**: CRC-8/AUTOSAR over the 8 payload bytes interpreted
  *   big-endian — byte 0 is bits 56..63 of the payload, byte 7 is
  *   bits 0..7.  Transmitted MSB-first.
- * - **Trailing pad**: samples in the Item beyond the @c 76*S codeword
- *   are written as silence (@c 0.0f converted to the format's
- *   neutral value — e.g. @c 128 for unsigned 8-bit).
+ * - **Trailing pad**: samples in the Item beyond the
+ *   @c (L+76)*S codeword are written as silence (@c 0.0f converted
+ *   to the format's neutral value — e.g. @c 128 for unsigned 8-bit).
  *
  * Bits cells are constant amplitude in each half-bit (the encoder
  * does not band-limit the transition); this keeps DC zero, gives
@@ -84,17 +96,19 @@ class PcmAudioPayload;
  * calls — 152 half-bits per Item per channel, plus the pad fill.
  *
  * @par Lifetime and reuse
- * Construct one encoder per (AudioDesc, samplesPerBit, amplitude)
- * triple and reuse it across many payloads.  The encoder owns its
- * primer buffers internally; @ref encode is reentrant on a single
- * instance only with respect to itself (concurrent @c encode calls
- * on the same instance must be externally synchronized).  Use
- * @ref isValid to detect a construction failure (descriptor invalid,
- * compressed format, samplesPerBit out of range, etc.).
+ * Construct one encoder per
+ * (AudioDesc, samplesPerBit, amplitude, leadInBits) tuple and reuse
+ * it across many payloads.  The encoder owns its primer buffers
+ * internally; @ref encode is reentrant on a single instance only with
+ * respect to itself (concurrent @c encode calls on the same instance
+ * must be externally synchronized).  Use @ref isValid to detect a
+ * construction failure (descriptor invalid, compressed format,
+ * samplesPerBit out of range, etc.).
  *
  * @par Example
  * @code
- * AudioDataEncoder enc(payload->desc());  // defaults: 8 SPB, 0.1 amp
+ * AudioDataEncoder enc(payload->desc());
+ *     // defaults: 8 SPB, 0.1 amp, 0 lead-in bits
  * if(!enc.isValid()) return Error::Invalid;
  *
  * AudioDataEncoder::Item items[] = {
@@ -173,15 +187,39 @@ class AudioDataEncoder {
                 static constexpr float DefaultAmplitude = 0.1f;
 
                 /**
+                 * @brief Default lead-in length in bit cells (0).
+                 *
+                 * Zero keeps the wire format identical to the
+                 * SRC-tolerant baseline: codeword starts at sample 0
+                 * of the Item region.  Non-zero lead-in is the
+                 * "robust against lossy psychoacoustic codec"
+                 * mode — see the @c leadInBits constructor parameter
+                 * for details.
+                 */
+                static constexpr uint32_t DefaultLeadInBits = 0;
+
+                /**
+                 * @brief Maximum lead-in length (32 bit cells).
+                 *
+                 * Sized to allow comfortably more than one MP3
+                 * granule's worth of pre-roll (24 ms at 48 kHz with
+                 * samplesPerBit=64) while still keeping the on-wire
+                 * codeword from dominating typical per-frame audio
+                 * windows.
+                 */
+                static constexpr uint32_t MaxLeadInBits = 32;
+
+                /**
                  * @brief One stamp request: write a 64-bit payload into
                  *        a contiguous run of samples on a single channel.
                  *
                  * @c firstSample and @c sampleCount are in
                  * payload-sample units (one unit per sample frame, the
                  * same units as @ref AudioPayload::sampleCount).  The
-                 * codeword occupies the first @c BitsPerPacket *
-                 * samplesPerBit() samples of the run; any additional
-                 * samples up to @c sampleCount are zero-filled.
+                 * codeword (including any configured lead-in) occupies
+                 * the first @ref packetSamples samples of the run; any
+                 * additional samples up to @c sampleCount are
+                 * zero-filled.
                  */
                 struct Item {
                                 /// First sample (per-channel) at which the codeword starts.
@@ -209,12 +247,44 @@ class AudioDataEncoder {
                  * @param amplitude      Linear amplitude per sample
                  *                       (@c 0..1).  Defaults to
                  *                       @ref DefaultAmplitude.
+                 * @param leadInBits     Constant @c +A lead-in length in
+                 *                       bit cells (0..@ref MaxLeadInBits).
+                 *                       Defaults to @ref DefaultLeadInBits.
+                 *                       Zero keeps the original SRC-tolerant
+                 *                       wire format.  Non-zero values
+                 *                       prepend @c leadInBits *
+                 *                       @c samplesPerBit samples of
+                 *                       constant @c +A before the sync
+                 *                       nibble.  The lead-in is invisible
+                 *                       to @ref AudioDataDecoder: its
+                 *                       sync localiser finds the first
+                 *                       @c +→- transition at the
+                 *                       lead-in / sync boundary and
+                 *                       computes the codeword start
+                 *                       from there, so an unchanged
+                 *                       decoder recovers the payload
+                 *                       correctly.  The lead-in is
+                 *                       intended to absorb the leading-
+                 *                       edge transient that lossy
+                 *                       psychoacoustic codecs (MP3,
+                 *                       Vorbis at low bitrates) impose
+                 *                       on the codeword: instead of
+                 *                       eating the first ~6 samples of
+                 *                       bit 0's @c +A half-bit (which
+                 *                       erodes the sync localiser's
+                 *                       sustained-positive run), the
+                 *                       codec eats the head of the
+                 *                       lead-in and bit 0 reaches the
+                 *                       decoder intact.  Use
+                 *                       @c leadInBits=2 or more for
+                 *                       MP3 / Vorbis round-trips.
                  *
                  * After construction call @ref isValid to check whether
                  * the encoder is usable.
                  */
                 explicit AudioDataEncoder(const AudioDesc &desc, uint32_t samplesPerBit = DefaultSamplesPerBit,
-                                          float amplitude = DefaultAmplitude);
+                                          float amplitude = DefaultAmplitude,
+                                          uint32_t leadInBits = DefaultLeadInBits);
 
                 /** @brief Returns @c true if the encoder is ready to use. */
                 bool isValid() const { return _valid; }
@@ -225,17 +295,24 @@ class AudioDataEncoder {
                 /** @brief Returns the configured linear amplitude. */
                 float amplitude() const { return _amplitude; }
 
+                /** @brief Returns the configured lead-in length in bit cells. */
+                uint32_t leadInBits() const { return _leadInBits; }
+
                 /** @brief Returns the audio descriptor the encoder was built for. */
                 const AudioDesc &desc() const { return _desc; }
 
                 /**
-                 * @brief Returns the codeword length in samples.
+                 * @brief Returns the on-wire codeword length in samples.
                  *
-                 * Equivalent to @c BitsPerPacket * samplesPerBit().
-                 * The smallest @c sampleCount an Item may carry.
+                 * Equivalent to @c (BitsPerPacket + leadInBits()) *
+                 * samplesPerBit().  The smallest @c sampleCount an
+                 * Item may carry.  With the default
+                 * @c leadInBits=0 this reduces to
+                 * @c BitsPerPacket * samplesPerBit().
                  */
                 uint64_t packetSamples() const {
-                        return static_cast<uint64_t>(BitsPerPacket) * static_cast<uint64_t>(_samplesPerBit);
+                        return static_cast<uint64_t>(BitsPerPacket + _leadInBits) *
+                               static_cast<uint64_t>(_samplesPerBit);
                 }
 
                 /**
@@ -278,6 +355,7 @@ class AudioDataEncoder {
                 AudioDesc _desc;
                 uint32_t  _samplesPerBit = 0;
                 float     _amplitude = 0.0f;
+                uint32_t  _leadInBits = 0;
                 bool      _valid = false;
 
                 // Bytes per single sample of one channel, in the target format.

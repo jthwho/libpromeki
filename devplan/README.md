@@ -149,6 +149,19 @@ devplan/
    `docs/whisper.md`.  Streaming mode, CUDA backend, diarization, and
    HTTP-streaming downloads are deferred.
    See [proav/transcription.md](proav/transcription.md).
+15. **FLAC / Vorbis / MP3 via libsndfile** — SHIPPED 2026-05-25.
+   Five new vendored submodules (`libogg`, `libflac`, `libvorbis`,
+   `mpg123`, `lame`); three new feature flags
+   (`PROMEKI_ENABLE_FLAC/VORBIS/MP3`); `audiofile_libsndfile.cpp`
+   extended for `flac`, `mp3`, `ogg`, `oga`, `mpeg` extensions.
+   `AudioDataEncoder` gained `leadInBits` (0..32 bit cells of constant
+   `+A` pre-roll; absorbs MP3/Vorbis onset-transient erosion).
+   `AudioDataDecoder` gained `expectedAmplitude` (quarter-amplitude
+   threshold for the sustained-positive sync-edge filter; rejects
+   codec pre-echo wobbles).  Tests: `tests/unit/audiofile_codecs.cpp`
+   (8 cases: factory routing, testmedia reader checks, end-to-end
+   encoder/decoder round-trips through FLAC/Vorbis/MP3).
+   See [proav/backends.md](proav/backends.md).
 13. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
    `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
    scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,

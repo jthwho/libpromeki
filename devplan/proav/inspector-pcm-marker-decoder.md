@@ -7,12 +7,19 @@ inspector `AudioData` test changeset.
 
 - `AudioDataEncoder` — Manchester-encoded 76-bit codeword (4 sync +
   64 payload + 8 CRC-8/AUTOSAR), one encoder per
-  (AudioDesc, samplesPerBit, amplitude) triple.  Handles every PCM
-  format (interleaved + planar) via pre-built primer buffers.
+  (AudioDesc, samplesPerBit, amplitude, leadInBits) tuple.  Handles
+  every PCM format (interleaved + planar) via pre-built primer buffers.
+  `leadInBits` (default 0, max 32) prepends N bit cells of constant
+  `+A` before the sync nibble to absorb the onset-transient erosion
+  that lossy psychoacoustic codecs (MP3 / Vorbis) impose; the decoder
+  needs no awareness of the lead-in.
 
 - `AudioDataDecoder` — sync-nibble run-length measurement + integrate-
   and-compare Manchester demodulation.  ±50 % pitch tolerance absorbs
-  ordinary SRC drift.  Streaming `decodeAll(StreamState&, ...)` API for
+  ordinary SRC drift.  `expectedAmplitude` (default 0.1) sets the
+  quarter-amplitude threshold for the sustained-positive sync-edge
+  filter; samples below `expectedAmplitude/4` are treated as silence /
+  pre-echo wobble.  Streaming `decodeAll(StreamState&, ...)` API for
   cross-chunk codeword reassembly.  Per-band `decode(payload, band)` for
   batch-style callers.
 
@@ -31,8 +38,8 @@ inspector `AudioData` test changeset.
   - `AudioDataLengthAnomaly` — measured codeword length deviates
     substantially from the expected span.
 
-- Tests: `tests/unit/audiodataencoder.cpp` (13 cases),
-  `tests/unit/audiodatadecoder.cpp` (19 cases including 16-phase SRC
+- Tests: `tests/unit/audiodataencoder.cpp` (14 cases),
+  `tests/unit/audiodatadecoder.cpp` (20 cases including 16-phase SRC
   round-trips and multi-codeword streaming), plus inspector integration
   tests in `tests/unit/mediaiotask_inspector.cpp`.
 

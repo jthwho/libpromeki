@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <sndfile.h>
+#include <promeki/config.h>
 #include <promeki/audiofilefactory.h>
 #include <promeki/audiofile.h>
 #include <promeki/iodevice.h>
@@ -102,42 +103,80 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                 int computeLibSndFormat() {
                         int    ret = 0;
                         bool   pcm = false;
+                        // Only WAV / AIFF / RAW carry an explicit endian
+                        // flag in the libsndfile SF_INFO::format field.
+                        // FLAC stores native PCM with its own metadata
+                        // (no endian flag); OGG-Vorbis / MPEG are
+                        // self-describing codecs.  Setting the endian
+                        // bits on these formats makes sf_format_check()
+                        // reject the descriptor at sf_open() time.
+                        bool   wantEndian = false;
                         String ext = effectiveExtension();
                         if (ext == "wav" || ext == "bwf") {
                                 ret |= SF_FORMAT_WAV;
                                 pcm = true;
+                                wantEndian = true;
                         } else if (ext == "aif" || ext == "aiff") {
                                 ret |= SF_FORMAT_AIFF;
                                 pcm = true;
-                        } else if (ext == "ogg") {
+                                wantEndian = true;
+#if PROMEKI_ENABLE_FLAC
+                        } else if (ext == "flac") {
+                                // FLAC stores native integer PCM (8/16/24-bit).
+                                // The subformat is set by the pcm-mapping switch
+                                // below from the AudioDesc's element type.
+                                ret |= SF_FORMAT_FLAC;
+                                pcm = true;
+                                wantEndian = false;
+#endif
+#if PROMEKI_ENABLE_VORBIS
+                        } else if (ext == "ogg" || ext == "oga") {
                                 ret |= (SF_FORMAT_OGG | SF_FORMAT_VORBIS);
                                 pcm = false;
+#endif
+#if PROMEKI_ENABLE_MP3
+                        } else if (ext == "mp3" || ext == "mpeg") {
+                                // Layer III is the only practically-useful MPEG
+                                // audio variant; libsndfile's MPEG encoder
+                                // (via libmp3lame) accepts float/int16 input.
+                                ret |= (SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III);
+                                pcm = false;
+#endif
                         } else {
                                 promekiWarn("computeLibSndFormat: invalid extension '%s'", ext.cstr());
                                 return 0;
                         }
                         if (pcm) {
+                                // For containers that don't carry an
+                                // endian flag (FLAC), the helper below
+                                // ignores the LE/BE distinction: the
+                                // codec stores samples in its own
+                                // canonical order and round-trips
+                                // exactly through whichever AudioFormat
+                                // the caller asked for.
+                                const int leEndian = wantEndian ? SF_ENDIAN_LITTLE : 0;
+                                const int beEndian = wantEndian ? SF_ENDIAN_BIG : 0;
                                 switch (_desc.format().id()) {
                                         case AudioFormat::PCMI_Float32LE:
-                                                ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_LITTLE);
+                                                ret |= (SF_FORMAT_FLOAT | leEndian);
                                                 break;
                                         case AudioFormat::PCMI_Float32BE:
-                                                ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_BIG);
+                                                ret |= (SF_FORMAT_FLOAT | beEndian);
                                                 break;
                                         case AudioFormat::PCMI_S8: ret |= SF_FORMAT_PCM_S8; break;
                                         case AudioFormat::PCMI_U8: ret |= SF_FORMAT_PCM_U8; break;
                                         case AudioFormat::PCMI_S16LE:
-                                                ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_LITTLE);
+                                                ret |= (SF_FORMAT_PCM_16 | leEndian);
                                                 break;
-                                        case AudioFormat::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | beEndian); break;
                                         case AudioFormat::PCMI_S24LE:
-                                                ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_LITTLE);
+                                                ret |= (SF_FORMAT_PCM_24 | leEndian);
                                                 break;
-                                        case AudioFormat::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | beEndian); break;
                                         case AudioFormat::PCMI_S32LE:
-                                                ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_LITTLE);
+                                                ret |= (SF_FORMAT_PCM_32 | leEndian);
                                                 break;
-                                        case AudioFormat::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_BIG); break;
+                                        case AudioFormat::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | beEndian); break;
                                         default:
                                                 promekiWarn("computeLibSndFormat: incompatible audio desc: %s",
                                                             _desc.toString().cstr());
@@ -235,6 +274,16 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                         // Vorbis decoded as native float.
                                         dt = AudioFormat::PCMI_Float32LE;
                                         break;
+#if PROMEKI_ENABLE_MP3
+                                case SF_FORMAT_MPEG_LAYER_I:
+                                case SF_FORMAT_MPEG_LAYER_II:
+                                case SF_FORMAT_MPEG_LAYER_III:
+                                        // libsndfile's MPEG decoder (mpg123)
+                                        // decodes layer-I/II/III streams to
+                                        // native-float PCM.
+                                        dt = AudioFormat::PCMI_Float32LE;
+                                        break;
+#endif
                                 default:
                                         promekiWarn("computeDesc: unsupported subformat 0x%x", sub);
                                         return AudioDesc();
@@ -485,23 +534,53 @@ class AudioFileFactory_LibSndFile : public AudioFileFactory {
         public:
                 AudioFileFactory_LibSndFile() {
                         _name = "libsndfile";
-                        // libsndfile's optional codecs (Vorbis, FLAC, Opus, …)
-                        // are compile-time toggles; a stripped build still
-                        // declares the extensions in its headers but won't
-                        // actually open them.  Build _exts by intersecting
-                        // the formats this code knows how to drive against
-                        // the major-format list libsndfile reports for the
-                        // running build.  The result is that callers see a
-                        // clean lookup miss (and a planner Skip) instead of
-                        // a runtime open failure for codecs that simply
-                        // aren't there.
-                        StringList candidates = {"wav", "bwf", "aiff", "aif", "ogg"};
+                        // libsndfile's optional codecs (Vorbis, FLAC, Opus,
+                        // MPEG, …) are compile-time toggles; a stripped
+                        // build still declares the extensions in its
+                        // headers but won't actually open them.  Build
+                        // _exts by intersecting the formats this code
+                        // knows how to drive against the major-format
+                        // list libsndfile reports for the running build.
+                        // The result is that callers see a clean lookup
+                        // miss (and a planner Skip) instead of a runtime
+                        // open failure for codecs that simply aren't
+                        // there.
+                        //
+                        // The flac/mp3/ogg entries each ride on the
+                        // matching PROMEKI_ENABLE_* gate so that when the
+                        // codec is compiled out of libsndfile (and the
+                        // wider build), the factory advertises a smaller
+                        // extension set and consumers fall through to
+                        // another backend (or fail cleanly).
+                        StringList candidates = {"wav", "bwf", "aiff", "aif"};
+#if PROMEKI_ENABLE_FLAC
+                        candidates.pushToBack("flac");
+#endif
+#if PROMEKI_ENABLE_VORBIS
+                        candidates.pushToBack("ogg");
+                        candidates.pushToBack("oga");
+#endif
+#if PROMEKI_ENABLE_MP3
+                        candidates.pushToBack("mp3");
+                        candidates.pushToBack("mpeg");
+#endif
                         StringList majors = enumerateLibSndMajorExts();
                         for (const auto &ext : candidates) {
-                                // bwf is libsndfile's WAV major with the
-                                // BWF extension chunks layered on top, so
-                                // it inherits wav's availability.
-                                String probe = (ext == "bwf") ? String("wav") : ext;
+                                // libsndfile only reports one canonical
+                                // extension per major format, so we
+                                // collapse aliases into that canonical
+                                // string before probing.  Mapping:
+                                //   bwf  -> wav   (BWF rides WAV major)
+                                //   aif  -> aiff  (file-suffix alias)
+                                //   ogg  -> oga   (libsndfile reports "oga")
+                                //   mp3  -> m1a   (libsndfile reports "m1a"
+                                //                  for MPEG-1/2 Audio)
+                                //   mpeg -> m1a   (same)
+                                String probe = ext;
+                                if (ext == "bwf") probe = "wav";
+                                else if (ext == "aif") probe = "aiff";
+                                else if (ext == "ogg") probe = "oga";
+                                else if (ext == "mp3" || ext == "mpeg") probe = "m1a";
                                 if (majors.contains(probe)) _exts.pushToBack(ext);
                         }
                 }

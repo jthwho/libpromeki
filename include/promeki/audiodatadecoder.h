@@ -38,10 +38,14 @@ class PcmAudioPayload;
  *  1. Extract @c sampleCount samples of the requested channel into
  *     a normalized float array (@ref AudioFormat::samplesToFloat
  *     handles every PCM format uniformly).
- *  2. Locate the sync nibble: search a small window around
- *     @c firstSample for the first positive zero-crossing-going
- *     transition, then measure the next three transitions
- *     (@c (+→-, -→+, +→-)).  Reject if any run is more than 25 %
+ *  2. Locate the sync nibble: scan forward for the first
+ *     sustained-positive run of @c samplesPerBit/2 samples whose
+ *     values all exceed @c expectedAmplitude/4 (filtering out the
+ *     tiny pre-echo wobbles lossy psychoacoustic codecs leave in
+ *     the silence pad before a transient), then measure the next
+ *     four sign-flip transitions (@c (+→-, -→+, +→-, -→+)) — the
+ *     four mid-bit transitions of the sync nibble's four bits.
+ *     Reject if any inter-transition distance is more than 25 %
  *     off the average — a strong signal that the band is corrupted
  *     or mis-located.
  *  3. Validate the recovered samples-per-bit against the
@@ -56,9 +60,10 @@ class PcmAudioPayload;
  *     decoded CRC.
  *
  * @par Lifetime and reuse
- * Construct one decoder per (AudioDesc, samplesPerBit hint) pair
- * and reuse it across many payloads.  @ref decode is reentrant on a
- * single instance only with respect to itself.
+ * Construct one decoder per
+ * (AudioDesc, samplesPerBit hint, amplitude hint) triple and reuse
+ * it across many payloads.  @ref decode is reentrant on a single
+ * instance only with respect to itself.
  *
  * @par Example
  * @code
@@ -173,15 +178,37 @@ class AudioDataDecoder {
                  *                              the same value the
                  *                              encoder used.  Defaults
                  *                              to @ref AudioDataEncoder::DefaultSamplesPerBit.
+                 * @param expectedAmplitude     Encoder amplitude hint
+                 *                              for the sustained-positive
+                 *                              filter.  Samples below
+                 *                              @c expectedAmplitude/4
+                 *                              don't count as positive
+                 *                              for the sync localiser
+                 *                              — that's how the decoder
+                 *                              rejects the very small
+                 *                              (~0.001 .. 0.01) same-sign
+                 *                              wobble runs that lossy
+                 *                              psychoacoustic codecs
+                 *                              (MP3 / Vorbis) leave in
+                 *                              the silence pad before a
+                 *                              transient ("pre-echo").
+                 *                              Pass the same amplitude
+                 *                              the encoder was built
+                 *                              with.  Defaults to
+                 *                              @ref AudioDataEncoder::DefaultAmplitude.
                  */
                 explicit AudioDataDecoder(const AudioDesc &desc,
-                                          uint32_t expectedSamplesPerBit = AudioDataEncoder::DefaultSamplesPerBit);
+                                          uint32_t expectedSamplesPerBit = AudioDataEncoder::DefaultSamplesPerBit,
+                                          float expectedAmplitude = AudioDataEncoder::DefaultAmplitude);
 
                 /** @brief Returns @c true if the decoder is ready to use. */
                 bool isValid() const { return _valid; }
 
                 /** @brief Returns the configured expected samples-per-bit. */
                 uint32_t expectedSamplesPerBit() const { return _expectedSamplesPerBit; }
+
+                /** @brief Returns the configured expected amplitude. */
+                float expectedAmplitude() const { return _expectedAmplitude; }
 
                 /** @brief Returns the audio descriptor the decoder was built for. */
                 const AudioDesc &desc() const { return _desc; }
@@ -329,6 +356,12 @@ class AudioDataDecoder {
                 uint32_t  _expectedSamplesPerBit = 0;
                 uint32_t  _samplesPerBitMin = 0;
                 uint32_t  _samplesPerBitMax = 0;
+                float     _expectedAmplitude = 0.0f;
+                /// Sustained-positive samples must exceed this value
+                /// (computed as @c expectedAmplitude/4) to count toward
+                /// the @c samplesPerBit/2 sync-edge run; below this the
+                /// sample is treated as silence/pre-echo wobble.
+                float     _positiveThreshold = 0.0f;
                 bool      _valid = false;
 
                 DecodedItem decodeOne(const PcmAudioPayload &payload, const Band &band) const;

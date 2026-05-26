@@ -74,8 +74,9 @@ namespace {
 
 } // namespace
 
-AudioDataEncoder::AudioDataEncoder(const AudioDesc &desc, uint32_t samplesPerBit, float amplitude)
-    : _desc(desc), _samplesPerBit(samplesPerBit), _amplitude(amplitude) {
+AudioDataEncoder::AudioDataEncoder(const AudioDesc &desc, uint32_t samplesPerBit, float amplitude,
+                                   uint32_t leadInBits)
+    : _desc(desc), _samplesPerBit(samplesPerBit), _amplitude(amplitude), _leadInBits(leadInBits) {
         if (!_desc.isValid()) return;
         if (_desc.isCompressed()) {
                 promekiErr("AudioDataEncoder: compressed formats are not supported");
@@ -88,6 +89,10 @@ AudioDataEncoder::AudioDataEncoder(const AudioDesc &desc, uint32_t samplesPerBit
         }
         if (!(amplitude > 0.0f && amplitude <= 1.0f)) {
                 promekiErr("AudioDataEncoder: amplitude %f outside (0,1]", static_cast<double>(amplitude));
+                return;
+        }
+        if (leadInBits > MaxLeadInBits) {
+                promekiErr("AudioDataEncoder: leadInBits %u exceeds MaxLeadInBits %u", leadInBits, MaxLeadInBits);
                 return;
         }
         const AudioFormat &fmt = _desc.format();
@@ -131,6 +136,23 @@ Error AudioDataEncoder::stampOne(uint8_t *channelBase, const Item &item) const {
         const uint8_t  crcBits = computeCrc(payloadBits);
 
         size_t sampleCursor = 0;
+
+        // Optional constant @c +A lead-in.  Two half-bit's worth of
+        // @c +A primer are emitted per bit cell — the primer is a
+        // half-bit long, so two of them back-to-back fill one full
+        // bit cell with @c +A.  Lossy psychoacoustic codecs (MP3 in
+        // particular) erode the very first few samples of any
+        // transient onset; with a lead-in present the codec's onset
+        // transient hits the head of the lead-in instead of the head
+        // of bit 0's @c +A half-bit, so the decoder's sync localiser
+        // still sees a clean @c +→- transition at the lead-in / sync
+        // boundary and computes @c syncStart correctly.
+        for (uint32_t lb = 0; lb < _leadInBits; ++lb) {
+                uint8_t *dst = channelBase + sampleCursor * stride;
+                writeSamples(dst, stride, posSrc, bps, halfSamples);
+                writeSamples(dst + halfSamples * stride, stride, posSrc, bps, halfSamples);
+                sampleCursor += _samplesPerBit;
+        }
 
         // Helper lambda: write one Manchester-encoded bit at the
         // current cursor.  bit '1' = +A then -A; bit '0' = -A then +A.

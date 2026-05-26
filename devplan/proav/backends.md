@@ -30,7 +30,10 @@ that history now lives in git. What remains here is the open work.
 - **ImageFileMediaIO** — DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, JPEG XS,
   RawYUV. Includes the BWF sidecar audio path and `.imgseq` sequence
   index.
-- **AudioFileMediaIO** — WAV, BWF, AIFF, FLAC, W64, RF64, OGG (libsndfile).
+- **AudioFileMediaIO** — WAV, BWF, AIFF, W64, RF64 (libsndfile always);
+  FLAC, OGG/Vorbis, MP3/MPEG (libsndfile + vendored libogg/libflac/
+  libvorbis/mpg123/lame; each behind its own `PROMEKI_ENABLE_*` flag,
+  default ON when AUDIO is ON).
 - **QuickTimeMediaIO** — Classic + fragmented `.mov` / `.mp4` reader and
   writer (ProRes, H.264, HEVC, AV1, JPEG, JPEG XS, PCM, AAC).
 - **CscMediaIO** — uncompressed pixel-format conversion via `Image::convert`.

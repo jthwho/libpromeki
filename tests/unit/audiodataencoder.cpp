@@ -104,7 +104,40 @@ TEST_CASE("AudioDataEncoder constructs with defaults for native float interleave
         REQUIRE(enc.isValid());
         CHECK(enc.samplesPerBit() == AudioDataEncoder::DefaultSamplesPerBit);
         CHECK(enc.amplitude() == doctest::Approx(AudioDataEncoder::DefaultAmplitude));
+        CHECK(enc.leadInBits() == AudioDataEncoder::DefaultLeadInBits);
         CHECK(enc.packetSamples() == AudioDataEncoder::BitsPerPacket * AudioDataEncoder::DefaultSamplesPerBit);
+}
+
+TEST_CASE("AudioDataEncoder leadInBits: accessor, packetSamples, and rejection") {
+        AudioDesc desc(AudioFormat(AudioFormat::NativeFloat), 48000.0f, 1);
+        const uint32_t spb = AudioDataEncoder::DefaultSamplesPerBit;
+
+        SUBCASE("zero lead-in is the default") {
+                AudioDataEncoder enc(desc, spb, 0.5f, 0);
+                REQUIRE(enc.isValid());
+                CHECK(enc.leadInBits() == 0u);
+                CHECK(enc.packetSamples() ==
+                      static_cast<uint64_t>(AudioDataEncoder::BitsPerPacket) * spb);
+        }
+
+        SUBCASE("non-zero lead-in grows packetSamples") {
+                AudioDataEncoder enc(desc, spb, 0.5f, 4);
+                REQUIRE(enc.isValid());
+                CHECK(enc.leadInBits() == 4u);
+                CHECK(enc.packetSamples() ==
+                      static_cast<uint64_t>(AudioDataEncoder::BitsPerPacket + 4) * spb);
+        }
+
+        SUBCASE("MaxLeadInBits is accepted") {
+                AudioDataEncoder enc(desc, spb, 0.5f, AudioDataEncoder::MaxLeadInBits);
+                REQUIRE(enc.isValid());
+                CHECK(enc.leadInBits() == AudioDataEncoder::MaxLeadInBits);
+        }
+
+        SUBCASE("MaxLeadInBits + 1 is rejected") {
+                AudioDataEncoder enc(desc, spb, 0.5f, AudioDataEncoder::MaxLeadInBits + 1);
+                CHECK_FALSE(enc.isValid());
+        }
 }
 
 TEST_CASE("AudioDataEncoder rejects out-of-range samplesPerBit") {

@@ -59,3 +59,18 @@
 	path = thirdparty/whisper.cpp
 	url = https://github.com/ggml-org/whisper.cpp.git
 	branch = master
+[submodule "thirdparty/libogg"]
+	path = thirdparty/libogg
+	url = https://github.com/xiph/ogg.git
+[submodule "thirdparty/libflac"]
+	path = thirdparty/libflac
+	url = https://github.com/xiph/flac.git
+[submodule "thirdparty/libvorbis"]
+	path = thirdparty/libvorbis
+	url = https://github.com/xiph/vorbis.git
+[submodule "thirdparty/mpg123"]
+	path = thirdparty/mpg123
+	url = https://github.com/madebr/mpg123.git
+[submodule "thirdparty/lame"]
+	path = thirdparty/lame
+	url = https://github.com/lameproject/lame.git

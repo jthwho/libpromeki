@@ -405,6 +405,16 @@ option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
 option(PROMEKI_ENABLE_AAC      "Include AAC audio codec (vendored fdk-aac)" ON)
+# Extra codecs surfaced through libsndfile.  Each one transitively pulls
+# in its own vendored submodule(s): FLAC requires libFLAC+libogg, Vorbis
+# requires libvorbis+libogg, MP3 requires libmpg123 (read) + libmp3lame
+# (write).  libsndfile itself is the wrapper — when any of these are on,
+# libsndfile-ep is rebuilt with -DENABLE_EXTERNAL_LIBS=ON or
+# -DENABLE_MPEG=ON.  Each flag depends transitively on
+# PROMEKI_ENABLE_AUDIO; turning AUDIO off forces all three off.
+option(PROMEKI_ENABLE_FLAC     "Include FLAC audio codec via libsndfile (libFLAC + libogg)"   ON)
+option(PROMEKI_ENABLE_VORBIS   "Include Vorbis audio codec via libsndfile (libvorbis + libogg)" ON)
+option(PROMEKI_ENABLE_MP3      "Include MP3 audio codec via libsndfile (mpg123 read + lame write)" ON)
 # Vendored whisper.cpp speech-to-text backend.  Drives the WhisperCpp
 # TranscriptionEngine; GGML built CPU-only on the first cut.  CUDA /
 # Metal / Vulkan backends inside whisper.cpp are off (we'll light them
@@ -593,6 +603,14 @@ option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_FDKAAC        "Use system fdk-aac instead of vendored"        OFF)
+# libsndfile external codec deps (FLAC / Vorbis / MP3): each one
+# separately switchable between vendored submodule and a system install.
+# libogg is the shared dependency for FLAC and Vorbis.
+option(PROMEKI_USE_SYSTEM_OGG           "Use system libogg instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_FLAC          "Use system libFLAC instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_VORBIS        "Use system libvorbis instead of vendored"      OFF)
+option(PROMEKI_USE_SYSTEM_MPG123        "Use system libmpg123 instead of vendored"      OFF)
+option(PROMEKI_USE_SYSTEM_LAME          "Use system libmp3lame instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_SAMPLERATE   "Use system libsamplerate instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_PUGIXML       "Use system pugixml instead of vendored"        OFF)
@@ -691,6 +709,18 @@ if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV")
+endif()
+# The libsndfile-fronted codecs ride on the libsndfile build (which is the
+# audio file-I/O backend), so they transitively need PROMEKI_ENABLE_AUDIO.
+# Each one also needs PROMEKI_ENABLE_PROAV via the AUDIO chain.
+if(PROMEKI_ENABLE_FLAC AND NOT PROMEKI_ENABLE_AUDIO)
+    message(FATAL_ERROR "PROMEKI_ENABLE_FLAC requires PROMEKI_ENABLE_AUDIO")
+endif()
+if(PROMEKI_ENABLE_VORBIS AND NOT PROMEKI_ENABLE_AUDIO)
+    message(FATAL_ERROR "PROMEKI_ENABLE_VORBIS requires PROMEKI_ENABLE_AUDIO")
+endif()
+if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_ENABLE_AUDIO)
+    message(FATAL_ERROR "PROMEKI_ENABLE_MP3 requires PROMEKI_ENABLE_AUDIO")
 endif()
 if(PROMEKI_ENABLE_WHISPER AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_WHISPER requires PROMEKI_ENABLE_PROAV")
@@ -1703,25 +1733,288 @@ if(PROMEKI_ENABLE_PNG)
     endif()
 endif()
 
+# --- libogg ---
+# Shared dependency for libFLAC (Ogg-FLAC container) and libvorbis.  Built
+# only when FLAC or Vorbis is on, since libsndfile is the only consumer.
+if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG)
+    ExternalProject_Add(
+        libogg-ep
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libogg
+        CMAKE_ARGS
+            ${_PROMEKI_EXTPROJ_CROSS_ARGS}
+            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+            -DBUILD_SHARED_LIBS=OFF
+            -DBUILD_TESTING=OFF
+            -DINSTALL_DOCS=OFF
+            -DINSTALL_PKG_CONFIG_MODULE=ON
+            -DINSTALL_CMAKE_PACKAGE_MODULE=ON
+        BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.a
+    )
+    add_library(promeki_ogg_vendored STATIC IMPORTED)
+    set_target_properties(promeki_ogg_vendored PROPERTIES
+        IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libogg.a
+    )
+    add_dependencies(promeki_ogg_vendored libogg-ep)
+    set(PROMEKI_OGG_TARGET promeki_ogg_vendored)
+endif()
+
+# --- libFLAC ---
+# Vendored libFLAC; depends on libogg-ep for the FLAC-in-Ogg container.
+# libsndfile probes for FLAC::FLAC via its own FindFLAC.cmake which
+# honours CMAKE_PREFIX_PATH; the install we drop into
+# PROMEKI_THIRDPARTY_PREFIX is therefore picked up automatically when
+# libsndfile-ep gets CMAKE_PREFIX_PATH pointing here.
+if(PROMEKI_ENABLE_FLAC)
+    if(PROMEKI_USE_SYSTEM_FLAC)
+        find_package(FLAC REQUIRED)
+        set(PROMEKI_FLAC_TARGET FLAC::FLAC)
+    else()
+        ExternalProject_Add(
+            libflac-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libflac
+            DEPENDS libogg-ep
+            CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_CXXLIBS=OFF
+                -DBUILD_PROGRAMS=OFF
+                -DBUILD_EXAMPLES=OFF
+                -DBUILD_DOCS=OFF
+                -DBUILD_TESTING=OFF
+                -DINSTALL_MANPAGES=OFF
+                -DINSTALL_PKGCONFIG_MODULES=ON
+                -DINSTALL_CMAKE_CONFIG_MODULE=ON
+                -DWITH_OGG=ON
+                -DWITH_FORTIFY_SOURCE=OFF
+                -DWITH_STACK_PROTECTOR=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.a
+        )
+        add_library(promeki_flac_vendored STATIC IMPORTED)
+        set_target_properties(promeki_flac_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libFLAC.a
+        )
+        add_dependencies(promeki_flac_vendored libflac-ep)
+        set(PROMEKI_FLAC_TARGET promeki_flac_vendored)
+    endif()
+endif()
+
+# --- libvorbis ---
+# Vendored libvorbis; depends on libogg-ep.  Builds three archives:
+# libvorbis.a (the codec), libvorbisenc.a (encoder API), and
+# libvorbisfile.a (Ogg container reader).  All three are needed when
+# libsndfile drives Vorbis read+write.
+if(PROMEKI_ENABLE_VORBIS)
+    if(PROMEKI_USE_SYSTEM_VORBIS)
+        find_package(Vorbis REQUIRED)
+        set(PROMEKI_VORBIS_TARGET Vorbis::vorbis)
+        set(PROMEKI_VORBISENC_TARGET Vorbis::vorbisenc)
+        set(PROMEKI_VORBISFILE_TARGET Vorbis::vorbisfile)
+    else()
+        ExternalProject_Add(
+            libvorbis-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvorbis
+            DEPENDS libogg-ep
+            CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DINSTALL_CMAKE_PACKAGE_MODULE=ON
+            BUILD_BYPRODUCTS
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.a
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.a
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.a
+        )
+        add_library(promeki_vorbis_vendored STATIC IMPORTED)
+        set_target_properties(promeki_vorbis_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbis.a
+        )
+        add_dependencies(promeki_vorbis_vendored libvorbis-ep)
+        add_library(promeki_vorbisenc_vendored STATIC IMPORTED)
+        set_target_properties(promeki_vorbisenc_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisenc.a
+        )
+        add_dependencies(promeki_vorbisenc_vendored libvorbis-ep)
+        add_library(promeki_vorbisfile_vendored STATIC IMPORTED)
+        set_target_properties(promeki_vorbisfile_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libvorbisfile.a
+        )
+        add_dependencies(promeki_vorbisfile_vendored libvorbis-ep)
+        set(PROMEKI_VORBIS_TARGET promeki_vorbis_vendored)
+        set(PROMEKI_VORBISENC_TARGET promeki_vorbisenc_vendored)
+        set(PROMEKI_VORBISFILE_TARGET promeki_vorbisfile_vendored)
+    endif()
+endif()
+
+# --- libmpg123 ---
+# MP3 decoder backend for libsndfile.  Pure autotools (no upstream CMake
+# build); the git submodule does not ship a generated configure script,
+# so we run autoreconf -fi first.  Static archive only; runtime audio-
+# output modules are off (libmpg123 is the codec, not the player).
+if(PROMEKI_ENABLE_MP3)
+    if(PROMEKI_USE_SYSTEM_MPG123)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(MPG123 REQUIRED IMPORTED_TARGET libmpg123)
+        set(PROMEKI_MPG123_TARGET PkgConfig::MPG123)
+    else()
+        # autotools wants to write generated files alongside its sources, so
+        # build in-source.  Copy the submodule into the build tree first so
+        # the original checkout stays clean.
+        set(PROMEKI_MPG123_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/mpg123)
+        ExternalProject_Add(
+            libmpg123-ep
+            DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mpg123
+                ${PROMEKI_MPG123_SRC_COPY}
+            SOURCE_DIR ${PROMEKI_MPG123_SRC_COPY}
+            BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND
+                ${CMAKE_COMMAND} -E chdir ${PROMEKI_MPG123_SRC_COPY}
+                    autoreconf -fi
+                COMMAND
+                ${CMAKE_COMMAND} -E env
+                    "CFLAGS=-fPIC -O2"
+                    "CXXFLAGS=-fPIC -O2"
+                ${PROMEKI_MPG123_SRC_COPY}/configure
+                    --prefix=${PROMEKI_THIRDPARTY_PREFIX}
+                    --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    --enable-static
+                    --disable-shared
+                    --disable-debug
+                    --disable-modules
+                    --with-cpu=generic
+                    --with-default-audio=dummy
+                    --with-audio=dummy
+                    --disable-components
+                    --enable-libmpg123
+            BUILD_COMMAND make
+            INSTALL_COMMAND make install
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.a
+        )
+        add_library(promeki_mpg123_vendored STATIC IMPORTED)
+        set_target_properties(promeki_mpg123_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmpg123.a
+        )
+        add_dependencies(promeki_mpg123_vendored libmpg123-ep)
+        set(PROMEKI_MPG123_TARGET promeki_mpg123_vendored)
+    endif()
+endif()
+
+# --- libmp3lame ---
+# MP3 encoder backend for libsndfile.  Pure autotools; the upstream
+# tarball ships a configure script (lame's checkout already contains
+# one), so we skip autoreconf.  Frontend programs and the decoder
+# stay off — libsndfile drives the encoder API directly.
+if(PROMEKI_ENABLE_MP3)
+    if(PROMEKI_USE_SYSTEM_LAME)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(LAME REQUIRED IMPORTED_TARGET mp3lame)
+        set(PROMEKI_LAME_TARGET PkgConfig::LAME)
+    else()
+        set(PROMEKI_LAME_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/lame)
+        ExternalProject_Add(
+            liblame-ep
+            DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/lame
+                ${PROMEKI_LAME_SRC_COPY}
+            SOURCE_DIR ${PROMEKI_LAME_SRC_COPY}
+            BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND
+                ${CMAKE_COMMAND} -E env
+                    "CFLAGS=-fPIC -O2"
+                    "CXXFLAGS=-fPIC -O2"
+                ${PROMEKI_LAME_SRC_COPY}/configure
+                    --prefix=${PROMEKI_THIRDPARTY_PREFIX}
+                    --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    --enable-static
+                    --disable-shared
+                    --disable-frontend
+                    --disable-analyzer-hooks
+                    --disable-gtktest
+                    --disable-debug
+            BUILD_COMMAND make
+            INSTALL_COMMAND make install
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.a
+        )
+        add_library(promeki_lame_vendored STATIC IMPORTED)
+        set_target_properties(promeki_lame_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libmp3lame.a
+        )
+        add_dependencies(promeki_lame_vendored liblame-ep)
+        set(PROMEKI_LAME_TARGET promeki_lame_vendored)
+    endif()
+endif()
+
 # --- libsndfile ---
+# Wraps wav/aiff/flac/vorbis/mpeg in one I/O layer.  ENABLE_EXTERNAL_LIBS
+# turns on FLAC + Vorbis + Opus inside libsndfile; ENABLE_MPEG turns on
+# MPEG layer-I/II/III via mpg123 (read) + lame (write).  libsndfile's
+# CMake probes find_package(FLAC), find_package(Vorbis), and
+# find_package(MPG123) / find_package(mp3lame) — all of which honour
+# CMAKE_PREFIX_PATH.  We push our vendored install prefix in via
+# CMAKE_PREFIX_PATH so libsndfile picks up our static archives instead
+# of any system copies.
 if(PROMEKI_ENABLE_AUDIO)
     if(PROMEKI_USE_SYSTEM_SNDFILE)
         find_package(SndFile REQUIRED)
         set(PROMEKI_SNDFILE_TARGET SndFile::sndfile)
     else()
+        # libsndfile insists on both FLAC and Vorbis being present when
+        # ENABLE_EXTERNAL_LIBS is on; if only one is enabled, leaving the
+        # other off the build still produces a libsndfile that *does* try
+        # find_package() for the missing one and bails.  We treat the
+        # XIPH external-libs switch as "FLAC OR Vorbis": one being on is
+        # enough to flip it.  libsndfile's CMakeLists is tolerant about a
+        # missing component as long as ENABLE_EXTERNAL_LIBS is on.
+        set(_promeki_sndfile_extlibs OFF)
+        if(PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS)
+            set(_promeki_sndfile_extlibs ON)
+        endif()
+        set(_promeki_sndfile_mpeg OFF)
+        if(PROMEKI_ENABLE_MP3)
+            set(_promeki_sndfile_mpeg ON)
+        endif()
+
+        # Collect the upstream codec build targets the libsndfile-ep must
+        # finish behind, so its FindFLAC / FindVorbis / FindMPG123 /
+        # Findmp3lame probes have the install prefix populated.
+        set(_promeki_sndfile_deps "")
+        if(PROMEKI_ENABLE_FLAC AND NOT PROMEKI_USE_SYSTEM_FLAC)
+            list(APPEND _promeki_sndfile_deps libflac-ep)
+        endif()
+        if(PROMEKI_ENABLE_VORBIS AND NOT PROMEKI_USE_SYSTEM_VORBIS)
+            list(APPEND _promeki_sndfile_deps libvorbis-ep)
+        endif()
+        if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG)
+            list(APPEND _promeki_sndfile_deps libogg-ep)
+        endif()
+        if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_MPG123)
+            list(APPEND _promeki_sndfile_deps libmpg123-ep)
+        endif()
+        if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_LAME)
+            list(APPEND _promeki_sndfile_deps liblame-ep)
+        endif()
+
         ExternalProject_Add(
             libsndfile-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsndfile
+            DEPENDS ${_promeki_sndfile_deps}
             CMAKE_ARGS
                 ${_PROMEKI_EXTPROJ_CROSS_ARGS}
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_PREFIX_PATH:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                 -DBUILD_SHARED_LIBS=OFF
                 -DBUILD_PROGRAMS=OFF
                 -DBUILD_EXAMPLES=OFF
                 -DBUILD_TESTING=OFF
-                -DENABLE_EXTERNAL_LIBS=OFF
-                -DENABLE_MPEG=OFF
+                -DENABLE_EXTERNAL_LIBS=${_promeki_sndfile_extlibs}
+                -DENABLE_MPEG=${_promeki_sndfile_mpeg}
             BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.a
         )
         add_library(promeki_sndfile_vendored STATIC IMPORTED)
@@ -3153,6 +3446,39 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+        # libsndfile is itself a static archive — the codec back-ends it
+        # references (libFLAC, libogg, libvorbis*, libmpg123, libmp3lame)
+        # do not flow through transitively, so each one must be on the
+        # final link line of libpromeki.so explicitly.  Order matters
+        # only for the static linker's symbol resolution pass; the
+        # dependency arrows are libsndfile -> {FLAC,Vorbis*,MPG123,LAME},
+        # FLAC/Vorbis -> Ogg, so list Ogg last.
+        if(PROMEKI_ENABLE_FLAC)
+            target_link_libraries(promeki PRIVATE ${PROMEKI_FLAC_TARGET})
+            target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_FLAC)
+        endif()
+        if(PROMEKI_ENABLE_VORBIS)
+            target_link_libraries(promeki PRIVATE
+                ${PROMEKI_VORBISENC_TARGET}
+                ${PROMEKI_VORBISFILE_TARGET}
+                ${PROMEKI_VORBIS_TARGET})
+            target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_VORBIS)
+        endif()
+        if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS)
+                AND NOT PROMEKI_USE_SYSTEM_OGG)
+            target_link_libraries(promeki PRIVATE ${PROMEKI_OGG_TARGET})
+        endif()
+        if(PROMEKI_ENABLE_MP3)
+            target_link_libraries(promeki PRIVATE
+                ${PROMEKI_MPG123_TARGET}
+                ${PROMEKI_LAME_TARGET})
+            target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_MP3)
+            # libmp3lame on Linux needs libm at link time
+            # (sin/cos/log in the psymodel).  libsndfile's stock CMake
+            # config would have wired this for us; vendored static
+            # archive doesn't, so add it explicitly.
+            target_link_libraries(promeki PRIVATE m)
+        endif()
     endif()
     if(PROMEKI_ENABLE_OPUS)
         target_link_libraries(promeki PRIVATE ${PROMEKI_OPUS_TARGET})
@@ -3885,6 +4211,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/audioencoder.cpp
             tests/unit/aacbitstream.cpp
             tests/unit/audiofilefactory.cpp
+            $<$<BOOL:${PROMEKI_ENABLE_AUDIO}>:tests/unit/audiofile_codecs.cpp>
             tests/unit/audiotestpattern.cpp
             tests/unit/pcmsilencefiller.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>

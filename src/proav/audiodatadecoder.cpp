@@ -102,7 +102,7 @@ namespace {
                         uint64_t syncStartSampleInt = 0;
         };
 
-        SyncMeasurement findSync(const List<float> &samples, uint32_t expectedSamplesPerBit) {
+        SyncMeasurement findSync(const List<float> &samples, uint32_t expectedSamplesPerBit, float positiveThreshold) {
                 SyncMeasurement r;
 
                 if (samples.size() < 8) {
@@ -126,11 +126,21 @@ namespace {
                 // (samplesPerBit=4 → half-bit=2) workable.
                 const size_t minRun =
                         std::max<size_t>(2, static_cast<size_t>(expectedSamplesPerBit) / 2);
+                // Samples must exceed @p positiveThreshold to count as
+                // sustained-positive.  Threshold > 0 filters the small
+                // pre-echo wobbles lossy psychoacoustic codecs leave in
+                // the silence pad before a transient: those wobbles
+                // hover well under the codeword amplitude (typically
+                // <0.01 vs a codeword's ±amplitude) so they never reach
+                // a threshold derived from the codeword amplitude.
+                // The constructor sets the threshold to @c amplitude/4
+                // by default; pass 0 to fall back to bare
+                // zero-crossing detection (legacy behaviour).
                 size_t firstPos = 0;
                 while (firstPos + minRun <= samples.size()) {
                         bool sustained = true;
                         for (size_t k = 0; k < minRun; ++k) {
-                                if (samples[firstPos + k] <= 0.0f) {
+                                if (samples[firstPos + k] <= positiveThreshold) {
                                         sustained = false;
                                         break;
                                 }
@@ -208,8 +218,8 @@ namespace {
 
 } // namespace
 
-AudioDataDecoder::AudioDataDecoder(const AudioDesc &desc, uint32_t expectedSamplesPerBit)
-    : _desc(desc), _expectedSamplesPerBit(expectedSamplesPerBit) {
+AudioDataDecoder::AudioDataDecoder(const AudioDesc &desc, uint32_t expectedSamplesPerBit, float expectedAmplitude)
+    : _desc(desc), _expectedSamplesPerBit(expectedSamplesPerBit), _expectedAmplitude(expectedAmplitude) {
         if (!_desc.isValid()) return;
         if (_desc.isCompressed()) return;
         if (expectedSamplesPerBit < AudioDataEncoder::MinSamplesPerBit ||
@@ -217,9 +227,22 @@ AudioDataDecoder::AudioDataDecoder(const AudioDesc &desc, uint32_t expectedSampl
                 promekiErr("AudioDataDecoder: expectedSamplesPerBit %u out of range", expectedSamplesPerBit);
                 return;
         }
+        if (!(expectedAmplitude > 0.0f && expectedAmplitude <= 1.0f)) {
+                promekiErr("AudioDataDecoder: expectedAmplitude %f outside (0,1]",
+                           static_cast<double>(expectedAmplitude));
+                return;
+        }
         // ±50 % acceptance band — same generosity the image decoder uses.
         _samplesPerBitMin = std::max<uint32_t>(1, expectedSamplesPerBit / 2);
         _samplesPerBitMax = expectedSamplesPerBit + expectedSamplesPerBit / 2;
+        // Quarter-amplitude positive-threshold for the sustained-run
+        // search.  Real codeword samples sit near ±amplitude even after
+        // mild smoothing; codec pre-echo / SRC ripple wobbles sit well
+        // below that.  Quarter-amplitude is high enough to reject
+        // wobbles and low enough that genuine codewords whose leading
+        // edge has been smoothed by an SRC's anti-aliasing filter still
+        // qualify.
+        _positiveThreshold = expectedAmplitude * 0.25f;
         _valid = true;
 }
 
@@ -263,7 +286,7 @@ AudioDataDecoder::DecodedItem AudioDataDecoder::decodeSamples(const float *sampl
         // copy doesn't show up in profiles.
         List<float> samples(samplesPtr, samplesPtr + count);
 
-        SyncMeasurement sync = findSync(samples, _expectedSamplesPerBit);
+        SyncMeasurement sync = findSync(samples, _expectedSamplesPerBit, _positiveThreshold);
         if (!sync.ok) {
                 item.error = sync.error;
                 return item;
@@ -447,7 +470,7 @@ void AudioDataDecoder::decodeAll(StreamState &state, const float *newSamples, si
         // bounded if the failure persists.
         while (state.buffer.size() >= minPacketSamples) {
                 List<float> view(state.buffer.data(), state.buffer.data() + state.buffer.size());
-                SyncMeasurement    sync = findSync(view, _expectedSamplesPerBit);
+                SyncMeasurement    sync = findSync(view, _expectedSamplesPerBit, _positiveThreshold);
                 if (!sync.ok) break;
 
                 // Need @c samplesPerBit*BitsPerPacket samples after

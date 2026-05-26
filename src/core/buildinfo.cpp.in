@@ -193,6 +193,15 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_AUDIO
         features += "AUDIO";
 #endif
+#if PROMEKI_ENABLE_FLAC
+        features += "FLAC";
+#endif
+#if PROMEKI_ENABLE_VORBIS
+        features += "VORBIS";
+#endif
+#if PROMEKI_ENABLE_MP3
+        features += "MP3";
+#endif
 #if PROMEKI_ENABLE_OPUS
         features += "OPUS";
 #endif

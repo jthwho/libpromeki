@@ -8,3 +8,6 @@ BUILD
 __pycache__/
 # Auto-discovered repo-local mirrors config (see cmake/PromekiSubmodules.cmake).
 /mirrors.cmake
+# testmedia is the optional testmedia repo (or symlink to the repo)
+testmedia/
+testmedia

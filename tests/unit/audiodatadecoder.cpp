@@ -62,6 +62,38 @@ TEST_CASE("AudioDataDecoder constructs with defaults") {
         AudioDataDecoder dec(desc);
         CHECK(dec.isValid());
         CHECK(dec.expectedSamplesPerBit() == AudioDataEncoder::DefaultSamplesPerBit);
+        CHECK(dec.expectedAmplitude() == doctest::Approx(AudioDataEncoder::DefaultAmplitude));
+}
+
+TEST_CASE("AudioDataDecoder expectedAmplitude: accessor and rejection") {
+        AudioDesc desc(AudioFormat(AudioFormat::NativeFloat), 48000.0f, 1);
+        const uint32_t spb = AudioDataEncoder::DefaultSamplesPerBit;
+
+        SUBCASE("explicit amplitude is stored") {
+                AudioDataDecoder dec(desc, spb, 0.9f);
+                REQUIRE(dec.isValid());
+                CHECK(dec.expectedAmplitude() == doctest::Approx(0.9f));
+        }
+
+        SUBCASE("amplitude of 1.0 is accepted") {
+                AudioDataDecoder dec(desc, spb, 1.0f);
+                CHECK(dec.isValid());
+        }
+
+        SUBCASE("amplitude of 0.0 is rejected") {
+                AudioDataDecoder dec(desc, spb, 0.0f);
+                CHECK_FALSE(dec.isValid());
+        }
+
+        SUBCASE("negative amplitude is rejected") {
+                AudioDataDecoder dec(desc, spb, -0.1f);
+                CHECK_FALSE(dec.isValid());
+        }
+
+        SUBCASE("amplitude above 1.0 is rejected") {
+                AudioDataDecoder dec(desc, spb, 1.1f);
+                CHECK_FALSE(dec.isValid());
+        }
 }
 
 TEST_CASE("AudioDataDecoder rejects compressed formats") {

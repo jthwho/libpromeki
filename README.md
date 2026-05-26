@@ -99,7 +99,8 @@ color science, and timecode.
 
 **Audio processing:**
 - `Audio` / `AudioBuffer` — audio sample containers
-- `AudioFile` — audio file I/O (WAV, AIFF, OGG via libsndfile)
+- `AudioFile` — audio file I/O via libsndfile (WAV/BWF, AIFF, FLAC,
+  Ogg Vorbis, MP3 read+write)
 - `AudioGen` — signal generators (sine, square, sawtooth, noise, etc.)
 - `AudioLevel` — level measurement
 - `AudioTestPattern` — standard test audio patterns
@@ -221,7 +222,9 @@ chasing down system packages, no version mismatches, no transitive
 dependency surprises.
 
 Vendored dependencies: zlib-ng, libspng, libjpeg-turbo, FreeType,
-libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
+libsndfile, libFLAC, libogg, libvorbis, mpg123, libmp3lame, libopus,
+fdk-aac, libsamplerate, mbedTLS, libsrt, llhttp, pugixml, libajantv2,
+whisper.cpp, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 
 ## Included Utilities
 
