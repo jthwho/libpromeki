@@ -114,6 +114,39 @@ class TcpSocket : public AbstractSocket {
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error setKeepAlive(bool enable);
+
+                /**
+                 * @brief Requests a kernel receive buffer size (SO_RCVBUF).
+                 *
+                 * On Linux the kernel silently doubles the requested
+                 * value (for bookkeeping) and caps it at
+                 * @c net.core.rmem_max.  A larger buffer raises the
+                 * effective TCP receive window, which is the dominant
+                 * throughput knob on long-RTT or high-bandwidth links
+                 * (large HTTPS downloads, in particular).
+                 *
+                 * @param bytes Desired receive buffer size in bytes.
+                 *              Pass @c 0 to leave the kernel default
+                 *              in place.
+                 * @return @ref Error::Ok on success or @ref Error::NotOpen
+                 *         if the socket has not been opened yet.
+                 */
+                Error setReceiveBufferSize(int bytes);
+
+                /**
+                 * @brief Requests a kernel send buffer size (SO_SNDBUF).
+                 *
+                 * Symmetric to @ref setReceiveBufferSize.  Mostly
+                 * relevant for upload-heavy clients; downloads care
+                 * far more about the receive buffer.
+                 *
+                 * @param bytes Desired send buffer size in bytes.
+                 *              Pass @c 0 to leave the kernel default
+                 *              in place.
+                 * @return @ref Error::Ok on success or @ref Error::NotOpen
+                 *         if the socket has not been opened yet.
+                 */
+                Error setSendBufferSize(int bytes);
 };
 
 PROMEKI_NAMESPACE_END

@@ -167,6 +167,8 @@ enum DataTypeID : uint16_t {
         DataTypeIpv6Address           = 0x70,
         DataTypeNetworkAddress        = 0x71,
         DataTypePixelAspect           = 0x72,
+        DataTypeTranscript            = 0x73,
+        DataTypeTranscriptWord        = 0x74,
 };
 
 /** @brief First @ref DataTypeID value available for user-defined types. */

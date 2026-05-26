@@ -171,6 +171,15 @@ class SslSocket : public TcpSocket {
                 };
                 SslState _state = NotEncrypted;
 
+                // Captured at handshake-start time and consulted by
+                // log lines later in the lifecycle (handshake success
+                // / failure / close), so a single warn line in a
+                // field log identifies which peer was being talked
+                // to without the operator having to correlate with
+                // other lines.
+                String _hostname;
+                bool   _isClient = true;
+
                 Error performHandshakeStep();
 };
 

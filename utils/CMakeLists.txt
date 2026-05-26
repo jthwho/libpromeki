@@ -40,3 +40,11 @@ if(PROMEKI_ENABLE_PROAV)
         add_subdirectory(mediaplay)
     endif()
 endif()
+
+# promeki-fetch-model — downloads ML model files (currently
+# whisper.cpp GGML weights) into Dir::models() with optional
+# SHA-256 verification.  Requires PROMEKI_ENABLE_HTTP for the
+# HTTP / HTTPS client used to fetch from Hugging Face.
+if(PROMEKI_ENABLE_HTTP AND PROMEKI_ENABLE_WHISPER)
+    add_subdirectory(promeki-fetch-model)
+endif()

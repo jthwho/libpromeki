@@ -22,6 +22,7 @@
 #include <promeki/mediaduration.h>
 #include <promeki/timecode.h>
 #include <promeki/videoformat.h>
+#include <promeki/audiochannelmap.h>
 #include <promeki/audiocodec.h>
 #include <promeki/hdmisignalconfig.h>
 #include <promeki/sdioutputfanoutconfig.h>
@@ -3576,6 +3577,280 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setType(DataTypeInt32)
                                            .setDefault(int32_t(-1))
                                            .setDescription("JPEG compression quality 1-100 (-1 = device default)."));
+
+                // ============================================================
+                // TranscriptionEngine — speech-to-text sessions
+                //
+                // Knobs consumed by @ref TranscriptionEngine::configure.
+                // The input @ref AudioDesc is carried implicitly by every
+                // submitted @ref PcmAudioPayload on the source @ref Frame
+                // — these keys only describe the *session* (which audio
+                // stream/channels to listen to, language hint, model
+                // hint, streaming-vs-batch behaviour, endpointing).
+                // ============================================================
+
+                /// @brief int — 0-based audio stream index on the input
+                ///        @ref Frame that the engine should transcribe.
+                ///
+                /// Mirrors the @c streamIndex argument the encoder /
+                /// decoder symmetry uses (see
+                /// @ref AudioEncoder::selectInputPayload).  @c -1 means
+                /// "the first PCM audio payload found, regardless of its
+                /// @ref MediaPayload::streamIndex" — the natural choice
+                /// when the source frame carries only one audio stream.
+                PROMEKI_DECLARE_ID(TranscriptionStreamIndex,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(-1))
+                                           .setMin(int32_t(-1))
+                                           .setDescription(
+                                                   "0-based audio stream index on the source Frame "
+                                                   "for transcription (-1 = first PCM audio payload found)."));
+
+                /// @brief Enum @ref TranscriptionChannelMode — how the
+                ///        engine selects which sample channels to feed
+                ///        the speech-to-text decoder.
+                ///
+                /// - @c ChannelMap   — use the channels whose
+                ///                     @ref ChannelRole appears in
+                ///                     @ref TranscriptionChannelMap.
+                /// - @c ChannelIndex — pick exactly the channel named
+                ///                     by @ref TranscriptionChannelIndex.
+                /// - @c DownmixAll   — sum every channel of the payload
+                ///                     to mono.
+                PROMEKI_DECLARE_ID(TranscriptionChannelMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setEnumType(promeki::TranscriptionChannelMode::Type)
+                                           .setDefault(promeki::TranscriptionChannelMode(
+                                                   promeki::TranscriptionChannelMode::ChannelMap))
+                                           .setDescription(
+                                                   "How the engine selects channels from the input PCM payload "
+                                                   "(ChannelMap, ChannelIndex, DownmixAll)."));
+
+                /// @brief AudioChannelMap — role-based channel selection
+                ///        for transcription.
+                ///
+                /// Consulted when @ref TranscriptionChannelMode is
+                /// @c ChannelMap.  The engine downmixes the channels of
+                /// the input PCM payload whose @ref ChannelRole appears
+                /// in this map; channels whose role is absent are
+                /// dropped.  An empty map means "use the dialog stem
+                /// when present (@c FrontCenter), else fall back to
+                /// downmix all" — engines may refine this default.
+                ///
+                /// Default is empty; pass @c {FrontCenter} for the 5.1
+                /// dialog stem, @c {Mono} to pick the commentary track
+                /// out of a mixed-stream buffer, etc.
+                PROMEKI_DECLARE_ID(TranscriptionChannelMap,
+                                   VariantSpec()
+                                           .setType(DataTypeAudioChannelMap)
+                                           .setDefault(promeki::AudioChannelMap())
+                                           .setDescription(
+                                                   "AudioChannelMap selecting roles for role-based "
+                                                   "transcription channel selection."));
+
+                /// @brief int — single channel index (0-based) when
+                ///        @ref TranscriptionChannelMode is
+                ///        @c ChannelIndex.  Ignored otherwise.
+                PROMEKI_DECLARE_ID(TranscriptionChannelIndex,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription(
+                                                   "Single 0-based channel index for index-based transcription "
+                                                   "channel selection (used when ChannelMode = ChannelIndex)."));
+
+                /// @brief String — BCP 47 language hint for the engine
+                ///        (e.g. @c "en", @c "en-US", @c "es-MX").
+                ///
+                /// Empty (default) means "let the engine auto-detect or
+                /// use its built-in default."  Engines without language
+                /// detection treat an empty hint as their fall-back
+                /// language (typically English).
+                PROMEKI_DECLARE_ID(TranscriptionLanguage,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription(
+                                                   "BCP 47 language hint (e.g. \"en-US\"); "
+                                                   "empty = engine default / auto-detect."));
+
+                /// @brief Enum @ref TranscriptionMode — streaming vs
+                ///        batch session behaviour.
+                ///
+                /// @c Streaming — engine may emit interim partial cues
+                ///                during @c submitFrame; finalised cues
+                ///                follow once the endpoint heuristic
+                ///                fires.
+                /// @c Batch     — engine accumulates audio silently and
+                ///                only emits cues after @c flush.
+                ///
+                /// Engines that only support one mode reject the other
+                /// at @c configure with @c Error::NotSupported.
+                PROMEKI_DECLARE_ID(TranscriptionSessionMode,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setEnumType(promeki::TranscriptionMode::Type)
+                                           .setDefault(promeki::TranscriptionMode(
+                                                   promeki::TranscriptionMode::Streaming))
+                                           .setDescription(
+                                                   "Streaming (interim partials) vs Batch (final-only on flush) "
+                                                   "session behaviour."));
+
+                /// @brief String — engine-specific model hint
+                ///        (e.g. @c "whisper.cpp:large-v3", @c "vosk:small-en").
+                ///
+                /// Empty (default) means "engine picks its own default
+                /// model."  Format is engine-specific; engines that
+                /// don't recognise the hint either fall back to their
+                /// default or fail @c configure with
+                /// @c Error::NotSupported per their own policy.
+                PROMEKI_DECLARE_ID(TranscriptionModelHint,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription(
+                                                   "Engine-specific model identifier hint "
+                                                   "(empty = engine default)."));
+
+                /// @brief bool — request speaker diarization output.
+                ///
+                /// When supported by the engine, populates each emitted
+                /// @ref Subtitle::speaker with the diarised speaker
+                /// identifier (typically @c "S1", @c "S2", …).  Engines
+                /// without diarization treat this as a no-op and leave
+                /// @c speaker empty.
+                PROMEKI_DECLARE_ID(TranscriptionDiarization,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription(
+                                                   "Request per-cue speaker diarization "
+                                                   "(populates Subtitle::speaker when supported)."));
+
+                /// @brief bool — request word-level timestamps.
+                ///
+                /// When supported, the engine splits long utterances
+                /// into multiple smaller cues whose @c start / @c end
+                /// align with word boundaries, rather than emitting
+                /// one cue per sentence.  Useful for karaoke-style
+                /// rendering and tighter sync.
+                PROMEKI_DECLARE_ID(TranscriptionWordTimestamps,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription(
+                                                   "Emit word-level timestamped cues rather than "
+                                                   "sentence-level cues."));
+
+                /// @brief bool — gate decoding on voice-activity
+                ///        detection.
+                ///
+                /// When enabled, the engine consults its own VAD and
+                /// skips decode on segments that look like silence /
+                /// noise — useful for live capture where most audio is
+                /// non-speech.  Disabled by default since some engines
+                /// VAD-unconditionally and gain nothing from this.
+                PROMEKI_DECLARE_ID(TranscriptionVad,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription(
+                                                   "Enable voice-activity detection gating before decode."));
+
+                /// @brief Duration — endpoint silence threshold.
+                ///
+                /// In @c Streaming mode, when no speech is observed for
+                /// this long the engine finalises the pending partial
+                /// cue and emits a final cue.  Ignored in @c Batch
+                /// mode.  @c Duration::zero() (default) means "engine
+                /// default" — typical values are 300-800 ms.
+                PROMEKI_DECLARE_ID(TranscriptionEndpointSilence,
+                                   VariantSpec()
+                                           .setType(DataTypeDuration)
+                                           .setDefault(Duration::zero())
+                                           .setDescription(
+                                                   "Streaming endpoint silence threshold "
+                                                   "(Duration::zero() = engine default)."));
+
+                // ============================================================
+                // SubtitleCueBuilder — Transcript → Subtitle cue shaping
+                //
+                // The cue builder consumes Transcript values (typically
+                // produced by a @ref TranscriptionEngine, but anywhere
+                // word-timed text comes from works equally well) and
+                // emits @ref Subtitle cues per a configurable layout /
+                // merge / partial-gating policy.
+                // ============================================================
+
+                /// @brief int — maximum characters per cue line.
+                ///        @c 0 disables wrapping.  Default 42 matches
+                ///        the SRT / CEA-708 convention for English.
+                PROMEKI_DECLARE_ID(SubtitleCueMaxCharsPerLine,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(42))
+                                           .setMin(int32_t(0))
+                                           .setDescription(
+                                                   "Maximum characters per cue line (0 = no wrap)."));
+
+                /// @brief int — maximum lines per cue.  Default 2
+                ///        matches the SRT / CEA-608 / CEA-708 norm.
+                PROMEKI_DECLARE_ID(SubtitleCueMaxLines,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(2))
+                                           .setMin(int32_t(1))
+                                           .setDescription("Maximum lines per cue."));
+
+                /// @brief Duration — minimum cue display time.  The
+                ///        builder extends the cue's @c end so the cue
+                ///        stays on screen at least this long.
+                ///        Default 1 s matches the WebVTT / Netflix
+                ///        accessibility recommendation.
+                PROMEKI_DECLARE_ID(SubtitleCueMinDuration,
+                                   VariantSpec()
+                                           .setType(DataTypeDuration)
+                                           .setDefault(Duration::fromMilliseconds(1000))
+                                           .setDescription("Minimum cue display duration."));
+
+                /// @brief Duration — maximum cue display time.  The
+                ///        builder truncates the cue's @c end so it
+                ///        leaves the screen by this point.  Default
+                ///        7 s matches the standard reading-speed cap.
+                PROMEKI_DECLARE_ID(SubtitleCueMaxDuration,
+                                   VariantSpec()
+                                           .setType(DataTypeDuration)
+                                           .setDefault(Duration::fromMilliseconds(7000))
+                                           .setDescription("Maximum cue display duration."));
+
+                /// @brief bool — emit cues for partial / interim
+                ///        transcripts.  Default @c false — most
+                ///        consumers (offline SRT writers, file-based
+                ///        burn-in) only want finalised cues.  Live
+                ///        captioning enables this to surface interim
+                ///        hypotheses with @ref Subtitle::partial set.
+                PROMEKI_DECLARE_ID(SubtitleCueEmitPartials,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(false)
+                                           .setDescription(
+                                                   "Emit cues for partial transcripts (default off)."));
+
+                /// @brief Enum @ref SubtitleAnchor — default cue
+                ///        anchor.  The builder stamps this on every
+                ///        emitted cue; transcripts whose source
+                ///        metadata already carries an anchor override
+                ///        this value.  Default @c BottomCenter.
+                PROMEKI_DECLARE_ID(SubtitleCueAnchor,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setEnumType(promeki::SubtitleAnchor::Type)
+                                           .setDefault(promeki::SubtitleAnchor(
+                                                   promeki::SubtitleAnchor::BottomCenter))
+                                           .setDescription("Default cue anchor for emitted Subtitles."));
 
                 // ============================================================
                 // AJA NTV2 (SDI / HDMI capture & playout) — Ntv2MediaIO

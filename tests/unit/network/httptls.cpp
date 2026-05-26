@@ -189,6 +189,38 @@ namespace {
                 return String::sprintf("https://127.0.0.1:%u%s", port, path.cstr());
         }
 
+        // Variant of @ref TlsFixture whose client trusts the self-
+        // signed test cert as a CA and verifies the peer hostname.
+        // Used by the hostname-match regression tests below; the
+        // existing TlsFixture deliberately disables verifyPeer for
+        // its happy-path round-trip cases.
+        struct VerifyingTlsFixture : TlsFixture {
+                        VerifyingTlsFixture() : TlsFixture() {
+                                Atomic<bool> done(false);
+                                clientThread.threadEventLoop()->postCallable([this, &done]() {
+                                        // Re-build the client context with the
+                                        // server cert installed as the trust
+                                        // anchor + verifyPeer on, so any
+                                        // hostname / chain / expiry failure
+                                        // raises a real verify error instead
+                                        // of being silently ignored.
+                                        SslContext ctx;
+                                        REQUIRE(ctx.setCaCertificates(pemBuffer(kCertPem)).isOk());
+                                        ctx.setVerifyPeer(true);
+                                        client->setSslContext(ctx);
+                                        done.setValue(true);
+                                });
+                                for (int i = 0; i < 200 && !done.value(); ++i) {
+                                        BasicThread::sleepMs(2);
+                                }
+                                REQUIRE(done.value());
+                        }
+        };
+
+        String urlForHost(const String &host, uint16_t port, const String &path) {
+                return String::sprintf("https://%s:%u%s", host.cstr(), port, path.cstr());
+        }
+
 } // anonymous namespace
 
 TEST_CASE("HttpServer + HttpClient - TLS loopback GET") {
@@ -204,6 +236,53 @@ TEST_CASE("HttpServer + HttpClient - TLS loopback GET") {
         CHECK(res.status() == HttpStatus::Ok);
         REQUIRE(res.body().size() == 15);
         CHECK(std::memcmp(res.body().data(), "encrypted hello", 15) == 0);
+}
+
+TEST_CASE("HttpServer + HttpClient - TLS hostname verification accepts matching CN") {
+        // Regression guard for the SAN-/CN-matching path: with peer
+        // verification on and the server cert installed as a CA, a
+        // request to https://localhost:PORT should succeed because
+        // the cert's CN is "localhost".  If a future change drops
+        // the @c mbedtls_ssl_set_hostname call or the verify-peer
+        // wiring, this test catches it — the handshake would either
+        // succeed-silently (the bad case) or fail closed with a
+        // CN_MISMATCH, both of which we want CI to see.
+        VerifyingTlsFixture f;
+        f.configure([](HttpServer &s) {
+                s.route("/secure", HttpMethod::Get,
+                        [](const HttpRequest &, HttpResponse &res) { res.setText("verified hello"); });
+        });
+        f.listenOnAnyPort();
+
+        auto [res, err] =
+                f.request([&](HttpClient &c) { return c.get(urlForHost("localhost", f.port, "/secure")); });
+        CHECK(err.isOk());
+        CHECK(res.status() == HttpStatus::Ok);
+        REQUIRE(res.body().size() == 14);
+        CHECK(std::memcmp(res.body().data(), "verified hello", 14) == 0);
+}
+
+TEST_CASE("HttpServer + HttpClient - TLS hostname verification rejects mismatched CN") {
+        // Same fixture as above but the client targets 127.0.0.1
+        // instead of localhost.  The cert's CN is "localhost" and it
+        // has no IP SAN, so a correct mbedTLS verify path must reject
+        // the handshake with CN_MISMATCH (mapped through
+        // SslSocket::performHandshakeStep to a connection error on
+        // the client side).
+        VerifyingTlsFixture f;
+        f.configure([](HttpServer &s) {
+                s.route("/secure", HttpMethod::Get,
+                        [](const HttpRequest &, HttpResponse &res) { res.setText("should not reach"); });
+        });
+        f.listenOnAnyPort();
+
+        auto [res, err] = f.request([&](HttpClient &c) { return c.get(urlForHost("127.0.0.1", f.port, "/secure")); });
+        // Either the future surfaces the error directly, or the
+        // handshake closes the connection before any HTTP framing
+        // arrives — either way the success path must NOT be reached
+        // and we must see the body never written.
+        CHECK(err.isError());
+        CHECK(res.body().size() == 0);
 }
 
 TEST_CASE("HttpServer + HttpClient - TLS loopback POST") {

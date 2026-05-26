@@ -258,11 +258,54 @@ Logger::LogFormatter Logger::defaultConsoleFormatter() {
                 bool            ansi = AnsiStream::stdoutSupportsANSI();
                 char            lvl = levelToChar(entry.level);
 
-                // Build source:line and pad to a fixed column width
+                // Build source:line and pad to a fixed column width.
+                //
+                // The on-disk file formatter shows the file string as-passed
+                // (already a basename at compile time via PROMEKI_SOURCE_FILE
+                // for promeki-internal sites, or whatever the third-party
+                // library's debug callback reported for mbedTLS / libsrt /
+                // whisper).  The console column is bounded, so degrade the
+                // displayed name in this order to keep it recognisable:
+                //
+                //   1. Strip any leading directory portion (handles paths
+                //      reported by third-party callbacks at runtime).
+                //   2. If the resulting "basename:line" still overflows,
+                //      drop the file extension — losing ".cpp" / ".c" keeps
+                //      the identifying name intact.
+                //   3. Only then truncate characters from the right.
                 static const int maxSourceLen = 25;
                 String           lineno = String::number(entry.line);
-                String           file = String(entry.file).left(maxSourceLen - lineno.length() - 1);
-                String           source = file + ":" + lineno;
+                String           file = entry.file != nullptr ? String(entry.file) : String();
+
+                // Strip directory (defensive — promeki-side sites are
+                // already basenames at compile time).
+                size_t slash = file.rfind('/');
+                size_t bslash = file.rfind('\\');
+                size_t cut = String::npos;
+                if (slash != String::npos) cut = slash;
+                if (bslash != String::npos && (cut == String::npos || bslash > cut)) cut = bslash;
+                if (cut != String::npos) file = file.right(file.length() - cut - 1);
+
+                // Budget for the file portion is the column width minus the
+                // ":line" suffix.  If we can't even fit a colon + 1 digit,
+                // there's no useful name to show.
+                int budget = static_cast<int>(maxSourceLen) - static_cast<int>(lineno.length()) - 1;
+                if (budget < 1) budget = 1;
+                if (static_cast<int>(file.length()) > budget) {
+                        // Drop the extension first — ".cpp" / ".c" / ".cc" are
+                        // load-bearing in the source tree but redundant in a
+                        // log column where the rest of the row already names
+                        // the level, thread, and message.
+                        size_t dot = file.rfind('.');
+                        if (dot != String::npos && dot > 0) {
+                                file = file.left(dot);
+                        }
+                }
+                if (static_cast<int>(file.length()) > budget) {
+                        // Still too long — char-truncate the basename.
+                        file = file.left(budget);
+                }
+                String source = file + ":" + lineno;
 
                 String thread = fmt.threadName != nullptr ? *fmt.threadName : String::dec(entry.threadId);
 

@@ -245,6 +245,50 @@ Dir Dir::ipc() {
 #endif
 }
 
+Dir Dir::models() {
+        // Library-wide override wins — same model as Dir::temp / Dir::ipc.
+        const String override = LibraryOptions::instance().getAs<String>(LibraryOptions::ModelsDir, String());
+        if (!override.isEmpty()) {
+                return Dir(FilePath(override));
+        }
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // XDG Base Directory Specification: user-specific data files go
+        // under $XDG_DATA_HOME (or $HOME/.local/share when unset).  Big
+        // model weights are exactly the kind of "persistent, large,
+        // user-owned" data this directory is meant for.
+        const char *xdg = std::getenv("XDG_DATA_HOME");
+        if (xdg != nullptr && xdg[0] != '\0') {
+                return Dir(FilePath(String(xdg) + "/promeki/models"));
+        }
+        const char *home = std::getenv("HOME");
+        if (home != nullptr && home[0] != '\0') {
+                return Dir(FilePath(String(home) + "/.local/share/promeki/models"));
+        }
+        return Dir::temp();
+#elif defined(PROMEKI_PLATFORM_MACOS)
+        // macOS: Apple's Application Support convention.  Per-app data
+        // is expected to live under ~/Library/Application Support/<App>.
+        const char *home = std::getenv("HOME");
+        if (home != nullptr && home[0] != '\0') {
+                return Dir(FilePath(String(home) + "/Library/Application Support/promeki/models"));
+        }
+        return Dir::temp();
+#elif defined(PROMEKI_PLATFORM_WINDOWS)
+        // Windows: LOCALAPPDATA is the per-user, non-roaming app-data
+        // location.  Falls back to Dir::temp() if the env var is
+        // missing (highly unusual on a real desktop session).
+        const char *lap = std::getenv("LOCALAPPDATA");
+        if (lap != nullptr && lap[0] != '\0') {
+                return Dir(FilePath(String(lap) + "\\promeki\\models"));
+        }
+        return Dir::temp();
+#else
+        // Unknown platform: a deployment can still set
+        // LibraryOptions::ModelsDir to whatever's appropriate.
+        return Dir::temp();
+#endif
+}
+
 Error Dir::setCurrent(const FilePath &path) {
         std::error_code ec;
         std::filesystem::current_path(path.toStdPath(), ec);

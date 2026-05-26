@@ -202,6 +202,63 @@ TEST_CASE("SslContext - toString reports state without leaking cert bytes") {
         CHECK_FALSE(s2.contains("BEGIN PRIVATE KEY"));
 }
 
+TEST_CASE("SslContext - default security profile is Strict") {
+        // Strict bundles AEAD+PFS-only ciphers, modern curves, and
+        // modern signature algorithms.  Every default-constructed
+        // SslContext rides into HttpClient / HttpServer / WebSocket
+        // / RtmpClient with this preset so consumer code does not
+        // have to opt into the modern security posture by hand.
+        SslContext ctx;
+        CHECK(ctx.securityProfile() == SslContext::Strict);
+}
+
+TEST_CASE("SslContext - security profile set/get round-trips") {
+        SslContext ctx;
+        ctx.setSecurityProfile(SslContext::Compatible);
+        CHECK(ctx.securityProfile() == SslContext::Compatible);
+        ctx.setSecurityProfile(SslContext::Strict);
+        CHECK(ctx.securityProfile() == SslContext::Strict);
+}
+
+TEST_CASE("SslContext - security profile applied lazily on first nativeConfig") {
+        // The profile setter is harmless before the underlying
+        // mbedtls_ssl_config has been built; the eager re-apply path
+        // only fires when configReady is already true.  This test
+        // covers the "set profile first, then trigger config build"
+        // ordering used by every typical client setup.
+        SslContext ctx;
+        ctx.setSecurityProfile(SslContext::Compatible);
+        CHECK(ctx.nativeConfig() != nullptr);
+        CHECK(ctx.securityProfile() == SslContext::Compatible);
+}
+
+TEST_CASE("SslContext - security profile flip re-applies eagerly when conf is built") {
+        // Once nativeConfig has built the underlying conf, a profile
+        // change must re-walk the cipher / group / sig-alg lists
+        // immediately so the next mbedtls_ssl_setup sees the new
+        // policy without having to call nativeConfig() again first.
+        SslContext ctx;
+        REQUIRE(ctx.nativeConfig() != nullptr);
+        CHECK(ctx.securityProfile() == SslContext::Strict);
+        // Flip both directions; either order has to work.
+        ctx.setSecurityProfile(SslContext::Compatible);
+        CHECK(ctx.securityProfile() == SslContext::Compatible);
+        ctx.setSecurityProfile(SslContext::Strict);
+        CHECK(ctx.securityProfile() == SslContext::Strict);
+        // Underlying conf still resolves — the re-apply path did not
+        // corrupt or null it out.
+        CHECK(ctx.nativeConfig() != nullptr);
+}
+
+TEST_CASE("SslContext - toString reports the security profile") {
+        SslContext ctx;
+        String     s1 = ctx.toString();
+        CHECK(s1.contains("profile=Strict"));
+        ctx.setSecurityProfile(SslContext::Compatible);
+        String s2 = ctx.toString();
+        CHECK(s2.contains("profile=Compatible"));
+}
+
 TEST_CASE("SslContext - writeToStream refuses to serialize credentials") {
         // PROMEKI_DATATYPE participation requires the member API to
         // exist, but the body refuses by design — TLS state must not

@@ -279,6 +279,203 @@ TEST_CASE("HttpClient - rejects empty/invalid URL up front") {
         CHECK(err == Error::Invalid);
 }
 
+TEST_CASE("HttpClient - bodySink receives full body, response buffer stays empty") {
+        // Streams 256 KiB through the sink so we exercise multiple
+        // llhttp_execute chunks (read buffer is 64 KiB).  The
+        // response's own body buffer must remain empty — the sink
+        // is the exclusive consumer when installed.
+        const size_t payloadLen = 256 * 1024;
+        ClientFixture f;
+        f.configure([&](HttpServer &s) {
+                s.route("/blob", HttpMethod::Get, [&](const HttpRequest &, HttpResponse &res) {
+                        Buffer b(payloadLen);
+                        std::memset(b.data(), 'A', payloadLen);
+                        b.setSize(payloadLen);
+                        res.setBody(b);
+                });
+        });
+        f.listenOnAnyPort();
+
+        Buffer accum(payloadLen);
+        std::memset(accum.data(), 0, payloadLen);
+        accum.setSize(0);
+
+        auto [res, err] = f.request([&](HttpClient &c) {
+                HttpRequest r;
+                r.setMethod(HttpMethod::Get);
+                r.setUrl(Url::fromString(urlFor(f.port, "/blob")).first());
+                r.setBodySink([&accum, payloadLen](const void *data, size_t len) -> Error {
+                        const size_t prev = accum.size();
+                        if (prev + len > payloadLen) return Error::OutOfRange;
+                        std::memcpy(static_cast<char *>(accum.data()) + prev, data, len);
+                        accum.setSize(prev + len);
+                        return Error::Ok;
+                });
+                return c.send(r);
+        });
+        REQUIRE(err.isOk());
+        CHECK(res.status() == HttpStatus::Ok);
+        CHECK(res.body().size() == 0); // sink owns the bytes
+        REQUIRE(accum.size() == payloadLen);
+        // Spot-check a few bytes — full memcmp inside CHECK would
+        // spam doctest output on mismatch; bytes are uniform 'A'.
+        const unsigned char *p = static_cast<const unsigned char *>(accum.data());
+        CHECK(p[0] == 'A');
+        CHECK(p[payloadLen / 2] == 'A');
+        CHECK(p[payloadLen - 1] == 'A');
+}
+
+TEST_CASE("HttpClient - progressCallback fires with cumulative received and parsed total") {
+        const size_t payloadLen = 128 * 1024;
+        ClientFixture f;
+        f.configure([&](HttpServer &s) {
+                s.route("/p", HttpMethod::Get, [&](const HttpRequest &, HttpResponse &res) {
+                        Buffer b(payloadLen);
+                        std::memset(b.data(), 'B', payloadLen);
+                        b.setSize(payloadLen);
+                        res.setBody(b);
+                });
+        });
+        f.listenOnAnyPort();
+
+        Atomic<int64_t> lastReceived(-1);
+        Atomic<int64_t> lastTotal(-2);
+        Atomic<int>     callCount(0);
+
+        auto [res, err] = f.request([&](HttpClient &c) {
+                HttpRequest r;
+                r.setMethod(HttpMethod::Get);
+                r.setUrl(Url::fromString(urlFor(f.port, "/p")).first());
+                r.setProgressCallback([&](int64_t received, int64_t total) -> bool {
+                        lastReceived.setValue(received);
+                        lastTotal.setValue(total);
+                        callCount.setValue(callCount.value() + 1);
+                        return true;
+                });
+                return c.send(r);
+        });
+        REQUIRE(err.isOk());
+        CHECK(res.status() == HttpStatus::Ok);
+        CHECK(callCount.value() >= 2); // at minimum: initial(0,total) + final
+        CHECK(lastReceived.value() == static_cast<int64_t>(payloadLen));
+        CHECK(lastTotal.value() == static_cast<int64_t>(payloadLen));
+}
+
+TEST_CASE("HttpClient - progressCallback returning false cancels the request") {
+        // Trickle bytes through a 1 MiB body so the progress callback
+        // gets a chance to fire mid-stream and reject the rest.
+        const size_t payloadLen = 1024 * 1024;
+        ClientFixture f;
+        f.configure([&](HttpServer &s) {
+                s.route("/cancel-me", HttpMethod::Get, [&](const HttpRequest &, HttpResponse &res) {
+                        Buffer b(payloadLen);
+                        std::memset(b.data(), 'C', payloadLen);
+                        b.setSize(payloadLen);
+                        res.setBody(b);
+                });
+        });
+        f.listenOnAnyPort();
+
+        auto [res, err] = f.request([&](HttpClient &c) {
+                HttpRequest r;
+                r.setMethod(HttpMethod::Get);
+                r.setUrl(Url::fromString(urlFor(f.port, "/cancel-me")).first());
+                r.setProgressCallback([](int64_t /*received*/, int64_t /*total*/) -> bool {
+                        // Refuse from the very first tick (the initial
+                        // headers-complete callback before any bytes
+                        // arrive).  Cancellation propagates as
+                        // Error::Cancelled on the Future.
+                        return false;
+                });
+                return c.send(r);
+        });
+        CHECK(err == Error::Cancelled);
+}
+
+TEST_CASE("HttpClient - follows redirects by default; sink only sees final body") {
+        // Build a redirect chain on a single server: /a 302→/b 302→/c
+        // (200 with payload).  Our chase only follows absolute URLs,
+        // so the Location headers are written as full http://host:port
+        // URLs — the same scheme HF / S3 / xethub use in practice.
+        // The body sink must see only the /c body, never the
+        // would-be junk from the /a /b redirect bodies.
+        ClientFixture f;
+        f.listenOnAnyPort();
+
+        const String baseUrl = urlFor(f.port, "");
+        const String finalText = "REDIRECTED_PAYLOAD";
+        f.configure([&](HttpServer &s) {
+                s.route("/a", HttpMethod::Get, [&](const HttpRequest &, HttpResponse &res) {
+                        res.setStatus(HttpStatus::Found);
+                        res.setHeader("Location", baseUrl + "/b");
+                        res.setText("AAAAAAA");
+                });
+                s.route("/b", HttpMethod::Get, [&](const HttpRequest &, HttpResponse &res) {
+                        res.setStatus(HttpStatus::Found);
+                        res.setHeader("Location", baseUrl + "/c");
+                        res.setText("BBBBBBB");
+                });
+                s.route("/c", HttpMethod::Get,
+                        [&](const HttpRequest &, HttpResponse &res) { res.setText(finalText); });
+        });
+
+        String      capturedBody;
+        Atomic<int> progressCalls(0);
+        auto [res, err] = f.request([&](HttpClient &c) {
+                HttpRequest r;
+                r.setMethod(HttpMethod::Get);
+                r.setUrl(Url::fromString(urlFor(f.port, "/a")).first());
+                r.setBodySink([&capturedBody](const void *data, size_t len) -> Error {
+                        capturedBody += String(static_cast<const char *>(data), len);
+                        return Error::Ok;
+                });
+                r.setProgressCallback([&](int64_t /*r*/, int64_t /*t*/) -> bool {
+                        progressCalls.setValue(progressCalls.value() + 1);
+                        return true;
+                });
+                return c.send(r);
+        });
+        REQUIRE(err.isOk());
+        CHECK(res.status() == HttpStatus::Ok);
+        CHECK(capturedBody == finalText);
+        // Progress must have ticked only for the final hop.  An exact
+        // count would lock the test to internal chunking details, but
+        // we know it must fire at least once (initial headers-complete
+        // tick) and won't fire more than a handful of times for a
+        // tiny payload.
+        CHECK(progressCalls.value() >= 1);
+        CHECK(progressCalls.value() <= 4);
+}
+
+TEST_CASE("HttpClient - setMaxRedirects(0) disables follow") {
+        ClientFixture f;
+        f.configure([&](HttpServer &s) {
+                s.route("/r", HttpMethod::Get, [](const HttpRequest &, HttpResponse &res) {
+                        res.setStatus(HttpStatus::Found);
+                        // The Location is irrelevant — we'll opt out
+                        // of following, so the 302 must reach the
+                        // caller as-is.
+                        res.setHeader("Location", "/elsewhere");
+                        res.setText("noisy-redirect-body");
+                });
+        });
+        f.listenOnAnyPort();
+
+        Atomic<bool> done{false};
+        f.clientThread.threadEventLoop()->postCallable([&]() {
+                f.client->setMaxRedirects(0);
+                done.setValue(true);
+        });
+        for (int i = 0; i < 200 && !done.value(); ++i) {
+                BasicThread::sleepMs(2);
+        }
+
+        auto [res, err] = f.request([&](HttpClient &c) { return c.get(urlFor(f.port, "/r")); });
+        CHECK(err.isOk());
+        CHECK(res.status() == HttpStatus::Found);
+        CHECK(res.headers().value("Location") == "/elsewhere");
+}
+
 TEST_CASE("HttpClient - timeout when server never responds") {
         // Server that accepts but never writes.  We register the
         // listening fd manually so the kernel completes the

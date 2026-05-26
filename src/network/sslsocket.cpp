@@ -10,6 +10,7 @@
 #include <mbedtls/ssl.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/error.h>
+#include <mbedtls/x509_crt.h>
 #include <cstring>
 #include <errno.h>
 
@@ -65,6 +66,41 @@ namespace {
                 return String(buf);
         }
 
+        // Pretty-print an X.509 DN into a short String.  Returns the
+        // empty String on the rare error path; the caller decides
+        // whether to elide the field or substitute a placeholder.
+        static String x509DnString(const mbedtls_x509_name *dn) {
+                if (dn == nullptr) return String();
+                char buf[256] = {0};
+                int  rc = mbedtls_x509_dn_gets(buf, sizeof(buf), dn);
+                if (rc < 0) return String();
+                return String(buf);
+        }
+
+        // Render the verify-result bitfield as a short, fixed-form
+        // human string so a single warn line is self-diagnosing in
+        // a field log.  Unrecognized flag bits collapse to a
+        // hex-formatted fallback so we never silently drop signal.
+        static String verifyFlagsToString(uint32_t flags) {
+                if (flags == 0) return String("ok");
+                String s;
+                auto   append = [&s](const char *what) {
+                        if (!s.isEmpty()) s += ",";
+                        s += what;
+                };
+                if (flags & MBEDTLS_X509_BADCERT_EXPIRED) append("expired");
+                if (flags & MBEDTLS_X509_BADCERT_REVOKED) append("revoked");
+                if (flags & MBEDTLS_X509_BADCERT_CN_MISMATCH) append("cn-mismatch");
+                if (flags & MBEDTLS_X509_BADCERT_NOT_TRUSTED) append("not-trusted");
+                if (flags & MBEDTLS_X509_BADCERT_FUTURE) append("not-yet-valid");
+                if (flags & MBEDTLS_X509_BADCERT_BAD_MD) append("bad-hash");
+                if (flags & MBEDTLS_X509_BADCERT_BAD_PK) append("bad-pk");
+                if (flags & MBEDTLS_X509_BADCERT_BAD_KEY) append("bad-key");
+                if (flags & MBEDTLS_X509_BADCERT_OTHER) append("other");
+                if (s.isEmpty()) s = String::sprintf("0x%08x", flags);
+                return s;
+        }
+
 } // anonymous namespace
 
 // ============================================================
@@ -76,6 +112,10 @@ SslSocket::SslSocket(ObjectBase *parent)
 
 SslSocket::~SslSocket() {
         if (_state == Encrypted && !_d->sentClose) {
+                promekiDebug("SslSocket::~SslSocket: implicit close_notify "
+                             "(role=%s peer=%s)",
+                             _isClient ? "client" : "server",
+                             _isClient ? _hostname.cstr() : "(connected client)");
                 // Best-effort close_notify.  Ignore errors — the
                 // socket is going away regardless.
                 Impl *d = _d.modify();
@@ -97,6 +137,15 @@ void SslSocket::setSslContext(SslContext ctx) {
 Error SslSocket::startEncryption(const String &hostname) {
         if (_state != NotEncrypted) return Error::AlreadyOpen;
 
+        _hostname = hostname;
+        _isClient = true;
+        promekiDebug("SslSocket::startEncryption: client handshake to '%s' "
+                     "(profile=%s, verifyPeer=%s, hasCa=%s)",
+                     hostname.cstr(),
+                     _ctx.securityProfile() == SslContext::Strict ? "Strict" : "Compatible",
+                     _ctx.verifyPeer() ? "true" : "false",
+                     _ctx.hasCaCertificates() ? "true" : "false");
+
         // Fail-closed verify policy: refuse to start a client
         // handshake when the caller asked for verification but did
         // not load any CA anchors.  Without CAs the handshake would
@@ -108,10 +157,11 @@ Error SslSocket::startEncryption(const String &hostname) {
         // want unauthenticated TLS (loopback smoke tests, self-
         // signed dev servers) call setVerifyPeer(false) explicitly.
         if (_ctx.verifyPeer() && !_ctx.hasCaCertificates()) {
-                promekiWarn("SslSocket::startEncryption: refusing client handshake "
+                promekiWarn("SslSocket::startEncryption: refusing client handshake to '%s' "
                             "without CA chain — call setSystemCaCertificates() / "
                             "setCaCertificates() or setVerifyPeer(false) on the "
-                            "SslContext first");
+                            "SslContext first",
+                            hostname.cstr());
                 return Error::Invalid;
         }
 
@@ -135,7 +185,8 @@ Error SslSocket::startEncryption(const String &hostname) {
         Impl *d = _d.modify();
         int   rc = mbedtls_ssl_setup(&d->ssl, conf);
         if (rc != 0) {
-                promekiWarn("SslSocket: ssl_setup failed: %s", mbedtlsErrText(rc).cstr());
+                promekiWarn("SslSocket: client ssl_setup for '%s' failed: %s",
+                            hostname.cstr(), mbedtlsErrText(rc).cstr());
                 return Error::LibraryFailure;
         }
         d->sslReady = true;
@@ -143,7 +194,8 @@ Error SslSocket::startEncryption(const String &hostname) {
         if (!hostname.isEmpty()) {
                 rc = mbedtls_ssl_set_hostname(&d->ssl, hostname.cstr());
                 if (rc != 0) {
-                        promekiWarn("SslSocket: set_hostname failed: %s", mbedtlsErrText(rc).cstr());
+                        promekiWarn("SslSocket: set_hostname('%s') failed: %s",
+                                    hostname.cstr(), mbedtlsErrText(rc).cstr());
                         return Error::LibraryFailure;
                 }
         }
@@ -159,6 +211,14 @@ Error SslSocket::startServerEncryption() {
                 promekiWarn("SslSocket::startServerEncryption: SslContext has no certificate");
                 return Error::Invalid;
         }
+
+        _hostname.clear();
+        _isClient = false;
+        promekiDebug("SslSocket::startServerEncryption: server handshake "
+                     "(profile=%s, requireClientCert=%s, hasCa=%s)",
+                     _ctx.securityProfile() == SslContext::Strict ? "Strict" : "Compatible",
+                     _ctx.requireClientCert() ? "true" : "false",
+                     _ctx.hasCaCertificates() ? "true" : "false");
 
         // nativeConfig lazy-allocates on first call; returns nullptr
         // only in TLS-disabled builds.
@@ -196,7 +256,7 @@ Error SslSocket::startServerEncryption() {
         Impl *d = _d.modify();
         int   rc = mbedtls_ssl_setup(&d->ssl, conf);
         if (rc != 0) {
-                promekiWarn("SslSocket: ssl_setup failed: %s", mbedtlsErrText(rc).cstr());
+                promekiWarn("SslSocket: server ssl_setup failed: %s", mbedtlsErrText(rc).cstr());
                 return Error::LibraryFailure;
         }
         d->sslReady = true;
@@ -217,13 +277,45 @@ Error SslSocket::performHandshakeStep() {
         const int rc = mbedtls_ssl_handshake(&d->ssl);
         if (rc == 0) {
                 _state = Encrypted;
+                // Pull the negotiated state out of mbedTLS so the
+                // debug line names exactly what was agreed.  Useful
+                // when an in-field error report says "TLS broke" —
+                // the pre-flight session details narrow the search
+                // immediately (wrong cipher, downgraded TLS version,
+                // unexpected peer cert, etc.).
+                const char *negVersion = mbedtls_ssl_get_version(&d->ssl);
+                const char *negCipher = mbedtls_ssl_get_ciphersuite(&d->ssl);
+                const mbedtls_x509_crt *peer = mbedtls_ssl_get_peer_cert(&d->ssl);
+                const uint32_t          flags = mbedtls_ssl_get_verify_result(&d->ssl);
+                String                  subj = peer ? x509DnString(&peer->subject) : String();
+                String                  issuer = peer ? x509DnString(&peer->issuer) : String();
+                promekiDebug("SslSocket: handshake ok role=%s peer=%s "
+                             "tls=%s cipher=%s subject=\"%s\" issuer=\"%s\" verify=%s",
+                             _isClient ? "client" : "server",
+                             _isClient ? _hostname.cstr() : "(connected client)",
+                             negVersion ? negVersion : "?",
+                             negCipher ? negCipher : "?",
+                             subj.isEmpty() ? "(none)" : subj.cstr(),
+                             issuer.isEmpty() ? "(none)" : issuer.cstr(),
+                             verifyFlagsToString(flags).cstr());
+
                 encryptedSignal.emit();
                 // Surface any non-fatal verification issues so the
                 // application can log / decide.  When verifyPeer was
                 // disabled the handshake completes despite errors —
-                // we still report them so debug builds see them.
-                const uint32_t flags = mbedtls_ssl_get_verify_result(&d->ssl);
+                // we still report them so debug builds see them, and
+                // we promote them to a warn so the field log shows
+                // them even when debug is off (verification is the
+                // exact kind of thing operators need to see by
+                // default).
                 if (flags != 0) {
+                        const String flagText = verifyFlagsToString(flags);
+                        promekiWarn("SslSocket: peer-cert verify flags %s for %s "
+                                    "subject=\"%s\" (verifyPeer was %s)",
+                                    flagText.cstr(),
+                                    _isClient ? _hostname.cstr() : "client",
+                                    subj.isEmpty() ? "(none)" : subj.cstr(),
+                                    _ctx.verifyPeer() ? "true" : "false");
                         StringList errs;
                         if (flags & MBEDTLS_X509_BADCERT_EXPIRED) errs.pushToBack("certificate expired");
                         if (flags & MBEDTLS_X509_BADCERT_REVOKED) errs.pushToBack("certificate revoked");
@@ -238,8 +330,18 @@ Error SslSocket::performHandshakeStep() {
                 // Caller re-invokes when the loop signals readiness.
                 return Error::TryAgain;
         }
-        // Real failure.
-        promekiWarn("SslSocket: handshake failed: %s", mbedtlsErrText(rc).cstr());
+        // Real failure.  Include role + hostname + negotiated state
+        // (if any partial state is available) so the warn line is
+        // self-diagnosing in a field log.
+        const char *negVersion = mbedtls_ssl_get_version(&d->ssl);
+        const char *negCipher = mbedtls_ssl_get_ciphersuite(&d->ssl);
+        promekiWarn("SslSocket: %s handshake to '%s' failed: %s "
+                    "(tls=%s cipher=%s)",
+                    _isClient ? "client" : "server",
+                    _isClient ? _hostname.cstr() : "(connected client)",
+                    mbedtlsErrText(rc).cstr(),
+                    negVersion ? negVersion : "n/a",
+                    negCipher ? negCipher : "n/a");
         _state = Failed;
         return Error::ConnectionReset;
 }
@@ -269,20 +371,65 @@ String SslSocket::peerCertificateSubject() const {
 
 int64_t SslSocket::read(void *data, int64_t maxSize) {
         if (_state != Encrypted) return TcpSocket::read(data, maxSize);
-        Impl     *d = _d.modify();
-        const int rc =
-                mbedtls_ssl_read(&d->ssl, static_cast<unsigned char *>(data), static_cast<size_t>(maxSize));
-        if (rc > 0) return rc;
-        if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE) {
-                errno = EAGAIN;
+        Impl    *d = _d.modify();
+        auto    *buf = static_cast<unsigned char *>(data);
+        int64_t  total = 0;
+
+        // Drain every decoded TLS record currently sitting in
+        // mbedTLS's input buffer plus any whole records the kernel
+        // has handed up since the last call.  Single-call versions
+        // capped each invocation at one TLS record (~16 KiB, see
+        // MBEDTLS_SSL_IN_CONTENT_LEN) which forced the upstream
+        // event loop into one epoll wake-up per record — measured
+        // in Phase A as the cause of the ~30 % throughput gap vs
+        // curl on Hugging Face downloads.  Looping here lets a
+        // single readiness event consume up to the caller's full
+        // buffer in one go, matching curl's drain pattern.
+        //
+        // Loop invariants:
+        //   - We return the bytes already buffered as soon as
+        //     mbedTLS signals WANT_READ / WANT_WRITE (no more data
+        //     ready right now).
+        //   - We propagate peer close cleanly as a 0 return only
+        //     when nothing else is buffered, so a coalesced
+        //     "last-record + close_notify" wake-up still delivers
+        //     the bytes first.
+        //   - The first hard error short-circuits everything; any
+        //     bytes already collected ride into the caller's hands
+        //     so they are not silently dropped.
+        while (total < maxSize) {
+                const size_t want = static_cast<size_t>(maxSize - total);
+                const int    rc = mbedtls_ssl_read(&d->ssl, buf + total, want);
+                if (rc > 0) {
+                        total += rc;
+                        continue;
+                }
+                if (rc == MBEDTLS_ERR_SSL_WANT_READ || rc == MBEDTLS_ERR_SSL_WANT_WRITE ||
+                    rc == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET) {
+                        // No more decoded bytes available right
+                        // now.  NewSessionTicket is a TLS 1.3
+                        // post-handshake message; we don't use
+                        // session resumption, so treat it as "call
+                        // again".  Return whatever we already
+                        // gathered; the caller will be re-armed on
+                        // the next ready event.
+                        if (total > 0) return total;
+                        errno = EAGAIN;
+                        return -1;
+                }
+                if (rc == 0 || rc == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+                        // Clean shutdown.  If anything was already
+                        // decoded, surface that first so the caller
+                        // sees the trailing bytes before the EOF.
+                        if (total > 0) return total;
+                        return 0;
+                }
+                promekiWarnThrottled(1000, "SslSocket::read mbedtls_ssl_read failed: %s",
+                                     mbedtlsErrText(rc).cstr());
+                if (total > 0) return total;
                 return -1;
         }
-        if (rc == 0 || rc == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-                return 0; // clean shutdown
-        }
-        promekiWarnThrottled(1000, "SslSocket::read mbedtls_ssl_read failed: %s",
-                             mbedtlsErrText(rc).cstr());
-        return -1;
+        return total;
 }
 
 int64_t SslSocket::write(const void *data, int64_t maxSize) {
@@ -313,9 +460,15 @@ int64_t SslSocket::bytesAvailable() const {
 
 Error SslSocket::close() {
         if (_state == Encrypted && !_d->sentClose) {
+                promekiDebug("SslSocket::close: sending close_notify (role=%s peer=%s)",
+                             _isClient ? "client" : "server",
+                             _isClient ? _hostname.cstr() : "(connected client)");
                 Impl *d = _d.modify();
                 mbedtls_ssl_close_notify(&d->ssl);
                 d->sentClose = true;
+        } else if (_state != NotEncrypted) {
+                promekiDebug("SslSocket::close: closing in state=%d (no close_notify sent)",
+                             static_cast<int>(_state));
         }
         _state = NotEncrypted;
         return TcpSocket::close();

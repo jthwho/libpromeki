@@ -366,6 +366,50 @@ unsigned int String::toUInt(Error *e) const {
         return static_cast<unsigned int>(v);
 }
 
+int64_t String::toInt64(Error *e) const {
+        int         base = 10;
+        String      cleaned = prepareIntParse(cstr(), &base);
+        char       *end = nullptr;
+        const char *s = cleaned.cstr();
+        errno = 0;
+        long long v = std::strtoll(s, &end, base);
+        if (end == s || *end != '\0') {
+                if (e != nullptr) *e = Error::Invalid;
+                return 0;
+        }
+        // strtoll's own out-of-range signal — int64_t and long long
+        // are not guaranteed to be the same width on every platform
+        // (LLP64 systems make long long 64-bit and long 32-bit), but
+        // every platform we ship to keeps long long >= 64 bits, so the
+        // bounds-vs-int64_t check below is the operative range guard.
+        if (errno == ERANGE || v > std::numeric_limits<int64_t>::max() ||
+            v < std::numeric_limits<int64_t>::min()) {
+                if (e != nullptr) *e = Error::OutOfRange;
+                return 0;
+        }
+        if (e != nullptr) *e = Error::Ok;
+        return static_cast<int64_t>(v);
+}
+
+uint64_t String::toUInt64(Error *e) const {
+        int         base = 10;
+        String      cleaned = prepareIntParse(cstr(), &base);
+        char       *end = nullptr;
+        const char *s = cleaned.cstr();
+        errno = 0;
+        unsigned long long v = std::strtoull(s, &end, base);
+        if (end == s || *end != '\0') {
+                if (e != nullptr) *e = Error::Invalid;
+                return 0;
+        }
+        if (errno == ERANGE || v > std::numeric_limits<uint64_t>::max()) {
+                if (e != nullptr) *e = Error::OutOfRange;
+                return 0;
+        }
+        if (e != nullptr) *e = Error::Ok;
+        return static_cast<uint64_t>(v);
+}
+
 double String::toDouble(Error *e) const {
         String      cleaned = stripNumericSeparators(cstr());
         char       *end = nullptr;

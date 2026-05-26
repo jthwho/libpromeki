@@ -53,6 +53,18 @@ namespace {
                 longjmp(mgr->jmpBuf, 1);
         }
 
+        // libjpeg's default output_message writes to stderr; redirect
+        // it into the promeki logger so probe-time corruption notices
+        // (truncated JFIF header, bad markers) end up in the same
+        // place as everything else.  format_message expands the
+        // numeric msg_code into a human-readable string using
+        // libjpeg's internal table.
+        static void jpegProbeOutputMessage(j_common_ptr cinfo) {
+                char buf[JMSG_LENGTH_MAX];
+                (*cinfo->err->format_message)(cinfo, buf);
+                promekiWarn("jpeg(probe): %s", buf);
+        }
+
         // Probes the JPEG bitstream at @p data for dimensions and the best-matching
         // JPEG PixelFormat.  On success, fills @p widthOut / @p heightOut and returns
         // the chosen PixelFormat::ID.  Returns PixelFormat::Invalid if the header can't
@@ -62,6 +74,7 @@ namespace {
                 ProbeErrorMgr          jerr;
                 dinfo.err = jpeg_std_error(&jerr.pub);
                 jerr.pub.error_exit = probeErrorExit;
+                jerr.pub.output_message = jpegProbeOutputMessage;
                 if (setjmp(jerr.jmpBuf)) {
                         jpeg_destroy_decompress(&dinfo);
                         return PixelFormat::Invalid;

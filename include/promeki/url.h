@@ -249,18 +249,60 @@ class Url {
                 /** @brief Replaces the entire query map. */
                 Url &setQuery(const Map<String, String> &q) {
                         _query = q;
+                        _rawQuery.clear();
                         return *this;
                 }
 
                 /** @brief Inserts or overwrites a single query key. */
                 Url &setQueryValue(const String &key, const String &value) {
                         _query.insert(key, value);
+                        _rawQuery.clear();
                         return *this;
                 }
 
                 /** @brief Removes a single query key.  No-op if absent. */
                 Url &removeQueryValue(const String &key) {
                         _query.remove(key);
+                        _rawQuery.clear();
+                        return *this;
+                }
+
+                /**
+                 * @brief Returns the verbatim query string parsed from
+                 *        the input URL, with the leading @c ? stripped.
+                 *
+                 * Set by @ref fromString to the original
+                 * post-@c ?-prefix bytes — preserving any
+                 * percent-encoding the caller relied on (e.g. an
+                 * AWS-style signed CDN URL whose signature was computed
+                 * over a specific encoded form).  @ref toString and
+                 * @ref HttpClient use this value verbatim when it's
+                 * present so the signature survives a round trip.
+                 *
+                 * Cleared by every query mutator
+                 * (@ref setQuery, @ref setQueryValue,
+                 * @ref removeQueryValue) so a URL whose query has been
+                 * touched programmatically falls back to
+                 * canonical re-encoding from @ref query.
+                 *
+                 * Empty when the parsed URL had no query, or when the
+                 * URL was built from individual setters.
+                 */
+                const String &rawQuery() const { return _rawQuery; }
+
+                /**
+                 * @brief Sets the verbatim query string to emit on
+                 *        @ref toString / HTTP serialization.
+                 *
+                 * Pairs with @ref rawQuery for callers that need to
+                 * supply a pre-encoded query (e.g. a signed URL the
+                 * library shouldn't re-encode).  @em Does not update
+                 * @ref query — the map and the raw form are
+                 * independent surfaces, with raw winning when both
+                 * are populated.
+                 */
+                Url &setRawQuery(const String &q) {
+                        _rawQuery = q;
                         return *this;
                 }
 
@@ -315,6 +357,41 @@ class Url {
                  */
                 String redactedString() const;
 
+                /**
+                 * @brief Serializes a short, log-safe rendering of the URL.
+                 *
+                 * Returns @c scheme://host[:port]/path[?…] with the
+                 * query string, fragment, and any user-info credential
+                 * stripped — the userinfo (when present) collapses to
+                 * the marker @c "***@" so structure stays visible
+                 * without exposing the secret.  The query indicator
+                 * @c "?…" is added when any query was present so a
+                 * reader can tell the request carried parameters
+                 * without seeing what they were.
+                 *
+                 * This is a different contract from @ref redactedString:
+                 *
+                 *  - @ref redactedString preserves the URL's round-
+                 *    trippable form with only known credential-bearing
+                 *    bits masked (designed for RTMP stream keys + a
+                 *    small allowlist of query parameter names).  Use it
+                 *    when echoing a configured URL back to a user.
+                 *
+                 *  - @ref briefForLog drops everything not needed to
+                 *    identify the endpoint.  Signed-CDN URLs (Hugging
+                 *    Face, S3, GitHub release assets, Google Cloud
+                 *    Storage) carry credentials in query parameters
+                 *    with provider-specific names (@c X-Amz-Signature,
+                 *    @c X-Goog-Signature, @c Policy, @c Expires, …) that
+                 *    no closed allowlist can keep up with; the only
+                 *    safe move for a log line is to drop the query
+                 *    entirely.  Use this from @c promekiDebug /
+                 *    @c promekiWarn sites that mention a URL.
+                 *
+                 * Returns the empty String when the URL is not valid.
+                 */
+                String briefForLog() const;
+
                 /** @brief Equality on all components. */
                 bool operator==(const Url &other) const;
 
@@ -328,6 +405,7 @@ class Url {
                 int                 _port = PortUnset;
                 String              _path;
                 Map<String, String> _query;
+                String              _rawQuery;
                 String              _fragment;
                 bool                _hasAuthority = false;
 };

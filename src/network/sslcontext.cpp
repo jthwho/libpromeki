@@ -14,10 +14,12 @@
 #if PROMEKI_ENABLE_TLS
 #include <psa/crypto.h>
 #include <mbedtls/ssl.h>
+#include <mbedtls/ssl_ciphersuites.h>
 #include <mbedtls/x509_crt.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/psa_util.h>
 #include <mbedtls/error.h>
+#include <mbedtls/debug.h>
 #endif
 #include <promeki/atomic.h>
 #include <cstring>
@@ -25,6 +27,17 @@
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(SslContext);
+
+#if PROMEKI_ENABLE_TLS
+// Forward decl: a separate translation unit installs mbedTLS's
+// internal trace callback on every conf so level-1 errors always
+// surface in the libpromeki log as warns, and the verbose levels
+// (2/3/4) can be enabled per-process via PROMEKI_DEBUG=MbedTlsInternal.
+// Lives in its own TU because PROMEKI_DEBUG declares a static
+// _promeki_debug_enabled and only one such module fits per TU.
+// See src/network/mbedtlsdebug.cpp for the routing policy.
+extern void promekiMbedTlsConfigureDebug(struct mbedtls_ssl_config *conf);
+#endif
 
 #if PROMEKI_ENABLE_TLS
 
@@ -51,6 +64,69 @@ namespace {
                 done.store(true, MemoryOrder::Release);
                 return Error::Ok;
         }
+
+// ============================================================
+// Strict-profile cipher / group / signature-algorithm allow-lists.
+//
+// mbedTLS stores only the pointer (the documented contract on each
+// of mbedtls_ssl_conf_ciphersuites / _conf_groups / _conf_sig_algs
+// is "list not copied, must remain valid for the conf's lifetime"),
+// so these have to live with static storage duration.  They do —
+// the SslContext::Impl that points at them outlives only individual
+// handshakes, never these constants.
+//
+// Lists are ordered by decreasing preference.  TLS 1.3 suites come
+// first because every modern server should already pick one of
+// them; the TLS 1.2 ECDHE entries are the fallback for the small
+// remaining population of TLS-1.2-only peers (still all AEAD + PFS).
+// ============================================================
+
+// Terminator for mbedtls_ssl_conf_ciphersuites' int* list.
+static constexpr int kCiphersuitesEnd = 0;
+
+static const int kStrictCiphersuites[] = {
+        // TLS 1.3 — every suite is AEAD-only by spec.
+        MBEDTLS_TLS1_3_AES_128_GCM_SHA256,
+        MBEDTLS_TLS1_3_AES_256_GCM_SHA384,
+        MBEDTLS_TLS1_3_CHACHA20_POLY1305_SHA256,
+        // TLS 1.2 — ECDHE only (forward secrecy), AEAD only
+        // (Lucky13 / POODLE-class CBC suites excluded).
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+        MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+        MBEDTLS_TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+        MBEDTLS_TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+        kCiphersuitesEnd,
+};
+
+// IANA NamedGroup IDs, ordered by preference.  X25519 first — it is
+// the modern default everywhere, has constant-time implementations
+// in every credible library, and dodges the secp* sidechannel
+// concerns.  P-256 / P-384 are the universally-deployed NIST
+// fallback; secp521r1 / brainpool* are deliberately omitted (low
+// adoption, larger keys for no extra security in the libpromeki
+// threat model).
+static const uint16_t kStrictGroups[] = {
+        MBEDTLS_SSL_IANA_TLS_GROUP_X25519,
+        MBEDTLS_SSL_IANA_TLS_GROUP_SECP256R1,
+        MBEDTLS_SSL_IANA_TLS_GROUP_SECP384R1,
+        0, // terminator
+};
+
+// Signature algorithms.  TLS 1.3 IANA values; TLS 1.2 reuses the
+// same wire encoding for the same primitive (hash << 8 | sig)
+// according to mbedtls_ssl_conf_sig_algs' doc.  Ed25519 first, then
+// ECDSA on P-256 / P-384, then RSA-PSS as the last resort for RSA
+// certs (PKCS#1 v1.5 signatures are deliberately not on this list).
+static const uint16_t kStrictSigAlgs[] = {
+        MBEDTLS_TLS1_3_SIG_ED25519,
+        MBEDTLS_TLS1_3_SIG_ECDSA_SECP256R1_SHA256,
+        MBEDTLS_TLS1_3_SIG_ECDSA_SECP384R1_SHA384,
+        MBEDTLS_TLS1_3_SIG_RSA_PSS_RSAE_SHA256,
+        MBEDTLS_TLS1_3_SIG_RSA_PSS_RSAE_SHA384,
+        MBEDTLS_TLS1_3_SIG_NONE, // terminator (== 0)
+};
 
 } // anonymous namespace
 
@@ -85,6 +161,10 @@ struct SslContext::Impl {
                 bool configReady = false;
 
                 SslProtocol protocol = SecureProtocols;
+                // Strict by default: AEAD-only + PFS-only ciphers,
+                // modern curves, modern sig algs.  Callers needing
+                // legacy-server interop drop to Compatible.
+                SecurityProfile securityProfile = Strict;
                 // Client-side: verify the server's certificate.
                 bool verifyPeer = true;
                 // Server-side: require + verify a client cert (mutual
@@ -135,6 +215,18 @@ struct SslContext::Impl {
                         // server-default VERIFY_NONE; SslSocket sets
                         // the role-appropriate value at handshake time.
                         applyProtocol();
+                        // Renegotiation closes a Logjam-class footgun and
+                        // we have no caller-driven use case for it.
+                        // mbedTLS 3.6's compile-time default is already
+                        // DISABLED, but the runtime call makes the intent
+                        // explicit so future user_config tweaks can't
+                        // silently re-enable it.
+                        mbedtls_ssl_conf_renegotiation(&conf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                        applySecurityProfile();
+                        // Optional internal trace stream.  No-op
+                        // unless PROMEKI_DEBUG=MbedTlsInternal is set
+                        // at process start.  See mbedtlsdebug.cpp.
+                        promekiMbedTlsConfigureDebug(&conf);
                         configReady = true;
                         return Error::Ok;
                 }
@@ -154,6 +246,47 @@ struct SslContext::Impl {
                                         mbedtls_ssl_conf_max_tls_version(&conf, MBEDTLS_SSL_VERSION_TLS1_3);
                                         break;
                         }
+                }
+
+                // Apply the cipher / group / sig-alg triple that the
+                // current securityProfile names.  Strict installs the
+                // hand-curated allow-lists above; Compatible leaves
+                // ciphersuites at mbedTLS's defaults (which include
+                // the legacy CBC-MAC + static-RSA suites) but still
+                // pins curves and sig-algs to the modern set.
+                //
+                // Per mbedTLS doc, the configured lists are stored by
+                // pointer — the static arrays live for the duration
+                // of the process so the conf's view stays valid even
+                // after this Impl is destroyed.
+                void applySecurityProfile() {
+                        promekiDebug("SslContext: applying security profile %s",
+                                     securityProfile == Strict ? "Strict" : "Compatible");
+                        switch (securityProfile) {
+                                case Strict:
+                                        mbedtls_ssl_conf_ciphersuites(&conf, kStrictCiphersuites);
+                                        break;
+                                case Compatible:
+                                        // Restoring mbedTLS's default
+                                        // ciphersuite list cleanly requires
+                                        // re-running config_defaults with the
+                                        // same preset; do that to recover the
+                                        // CBC + RSA-kex suites in case we are
+                                        // flipping back from Strict.
+                                        mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_SERVER,
+                                                                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                                                                    MBEDTLS_SSL_PRESET_DEFAULT);
+                                        applyProtocol();
+                                        mbedtls_ssl_conf_renegotiation(&conf,
+                                                                       MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                        break;
+                        }
+                        // Curves and signature algorithms stay pinned to the
+                        // modern set under both profiles — Compatible only
+                        // relaxes the cipher list, not the rest of the
+                        // crypto policy.
+                        mbedtls_ssl_conf_groups(&conf, kStrictGroups);
+                        mbedtls_ssl_conf_sig_algs(&conf, kStrictSigAlgs);
                 }
 
                 // No applyAuthMode helper: mbedTLS authmode is
@@ -213,6 +346,19 @@ SslContext::SslProtocol SslContext::protocol() const {
         return _d->protocol;
 }
 
+void SslContext::setSecurityProfile(SecurityProfile profile) {
+        Impl *p = _d.modify();
+        p->securityProfile = profile;
+        // Re-apply eagerly when the conf is already built so a
+        // subsequent SslSocket setup sees the new policy without
+        // having to call nativeConfig() first.
+        if (p->configReady) p->applySecurityProfile();
+}
+
+SslContext::SecurityProfile SslContext::securityProfile() const {
+        return _d->securityProfile;
+}
+
 void SslContext::setVerifyPeer(bool enable) {
         // No live re-apply: SslSocket reads verifyPeer() at handshake
         // start and sets the role-appropriate authmode on the conf.
@@ -253,8 +399,13 @@ String SslContext::toString() const {
                 case TlsV1_3: proto = "TlsV1_3"; break;
                 case SecureProtocols: proto = "SecureProtocols"; break;
         }
-        String s = String::sprintf("SslContext(protocol=%s, verifyPeer=%s",
-                                   proto, _d->verifyPeer ? "true" : "false");
+        const char *prof = "Strict";
+        switch (_d->securityProfile) {
+                case Strict: prof = "Strict"; break;
+                case Compatible: prof = "Compatible"; break;
+        }
+        String s = String::sprintf("SslContext(protocol=%s, profile=%s, verifyPeer=%s",
+                                   proto, prof, _d->verifyPeer ? "true" : "false");
         if (_d->hasOwnCert) s += ", hasCert";
         if (_d->hasOwnKey) s += ", hasKey";
         if (_d->hasCaChain) s += ", hasCa";
@@ -483,10 +634,11 @@ Error SslContext::setSystemCaCertificates() {
 struct SslContext::Impl {
                 PROMEKI_SHARED_FINAL(Impl)
 
-                SslProtocol protocol = SecureProtocols;
-                bool        verifyPeer = true;
-                bool        requireClientCert = false;
-                int         verifyDepth = 9;
+                SslProtocol     protocol = SecureProtocols;
+                SecurityProfile securityProfile = Strict;
+                bool            verifyPeer = true;
+                bool            requireClientCert = false;
+                int             verifyDepth = 9;
 };
 
 bool SslContext::hasTlsSupport() {
@@ -518,6 +670,14 @@ void SslContext::setProtocol(SslProtocol protocol) {
 }
 SslContext::SslProtocol SslContext::protocol() const {
         return _d->protocol;
+}
+
+void SslContext::setSecurityProfile(SecurityProfile profile) {
+        // Storage-only in the TLS-disabled build — no conf to apply to.
+        _d.modify()->securityProfile = profile;
+}
+SslContext::SecurityProfile SslContext::securityProfile() const {
+        return _d->securityProfile;
 }
 
 void SslContext::setVerifyPeer(bool enable) {
@@ -556,8 +716,13 @@ String SslContext::toString() const {
                 case TlsV1_3: proto = "TlsV1_3"; break;
                 case SecureProtocols: proto = "SecureProtocols"; break;
         }
-        return String::sprintf("SslContext(protocol=%s, verifyPeer=%s, tls-disabled)",
-                               proto, _d->verifyPeer ? "true" : "false");
+        const char *prof = "Strict";
+        switch (_d->securityProfile) {
+                case Strict: prof = "Strict"; break;
+                case Compatible: prof = "Compatible"; break;
+        }
+        return String::sprintf("SslContext(protocol=%s, profile=%s, verifyPeer=%s, tls-disabled)",
+                               proto, prof, _d->verifyPeer ? "true" : "false");
 }
 
 Error SslContext::writeToStream(DataStream &) const {

@@ -81,6 +81,24 @@ class HttpClient : public ObjectBase {
                 static constexpr int64_t DefaultMaxBodyBytes = 64 * 1024 * 1024;
 
                 /**
+                 * @brief Default redirect-follow limit.
+                 *
+                 * Ten by default, matching the default in Go's
+                 * @c net/http and within the range every mainstream
+                 * client uses (curl: 50, Chromium: 20).  Following
+                 * redirects is the transparent behavior callers
+                 * expect — a signed-CDN GET (Hugging Face, S3,
+                 * etc.) chains two or three 3xx hops before reaching
+                 * the bytes, and a buffered downloader that didn't
+                 * follow them would silently land an HTML redirect
+                 * stub in the destination.  Callers that need to
+                 * inspect the redirect chain set this to @c 0 with
+                 * @ref setMaxRedirects to disable automatic
+                 * following.
+                 */
+                static constexpr int DefaultMaxRedirects = 10;
+
+                /**
                  * @brief Constructs a client bound to the current EventLoop.
                  *
                  * Falls back to @ref Application::mainEventLoop when
@@ -168,6 +186,44 @@ class HttpClient : public ObjectBase {
                 void setMaxBodyBytes(int64_t bytes) { _maxBodyBytes = bytes; }
 
                 /**
+                 * @brief Sets the maximum number of redirects to follow automatically.
+                 *
+                 * When set to a positive value, @ref HttpClient
+                 * intercepts any 3xx response that carries a @c Location
+                 * header and silently re-dispatches the request to that
+                 * URL, up to @p max times.  The body sink and progress
+                 * callback installed on the request are invoked only
+                 * for the final non-redirect response, so a caller
+                 * streaming a large download to disk does not have to
+                 * worry about a tiny redirect-body landing in the
+                 * destination file ahead of the real bytes.
+                 *
+                 * Only absolute redirect URLs (starting with @c http://
+                 * or @c https://) are followed; relative redirects fail
+                 * the request with @ref Error::NotSupported.  Cross-
+                 * scheme redirects are permitted (e.g. http→https for
+                 * the common CDN upgrade), but require this client to
+                 * be TLS-capable for any https leg.
+                 *
+                 * Default is @ref DefaultMaxRedirects (10), matching the
+                 * default in Go's @c net/http.  Following redirects is
+                 * the transparent behavior callers expect — a signed-
+                 * CDN GET (Hugging Face, S3, etc.) chains two or three
+                 * 3xx hops before reaching the bytes, and a buffered
+                 * downloader that didn't follow them would silently
+                 * land an HTML redirect stub in the destination file.
+                 *
+                 * @param max Maximum hops to follow.  @c 0 disables
+                 *            automatic following — the first 3xx is
+                 *            returned to the caller for manual
+                 *            inspection.
+                 */
+                void setMaxRedirects(int max) { _maxRedirects = max; }
+
+                /** @brief Returns the current redirect-follow limit. */
+                int  maxRedirects() const { return _maxRedirects; }
+
+                /**
                  * @brief Attaches the @ref SslContext used for @c https:// requests.
                  *
                  * Optional — a default-constructed @ref SslContext
@@ -217,6 +273,7 @@ class HttpClient : public ObjectBase {
                 Url              _baseUrl;
                 unsigned int     _timeoutMs = DefaultTimeoutMs;
                 int64_t          _maxBodyBytes = DefaultMaxBodyBytes;
+                int              _maxRedirects = DefaultMaxRedirects;
                 List<PendingPtr> _active;
                 SslContext  _sslContext;
 

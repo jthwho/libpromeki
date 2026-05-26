@@ -232,6 +232,52 @@ TEST_CASE("Logger_DefaultFormatters") {
         CHECK(consoleResult.contains("hello"));
 }
 
+// Exercises the console formatter's source-column degradation chain:
+//   - short basename            → kept verbatim, extension visible
+//   - long basename             → extension dropped, basename intact
+//   - very long basename        → extension dropped + char-truncated
+//   - leading directory portion → directory stripped (3rd-party callbacks
+//                                 pass paths like "library/ssl_tls.c")
+TEST_CASE("Logger_ConsoleFormatterFilenameShortening") {
+        auto consoleFmt = Logger::defaultConsoleFormatter();
+
+        SUBCASE("short basename keeps extension") {
+                Logger::LogEntry  entry{DateTime::now(), Logger::Info, "logger.cpp", 42, 1, "x"};
+                Logger::LogFormat fmt{&entry, nullptr};
+                CHECK(consoleFmt(fmt).contains("logger.cpp:42"));
+        }
+        SUBCASE("over-budget basename drops the extension first") {
+                // 22-char basename + ":142" overflows the 25-char column;
+                // dropping ".cpp" makes the identifier fit intact at 22.
+                Logger::LogEntry  entry{DateTime::now(), Logger::Info, "subtitlecuebuilder.cpp", 142, 1, "x"};
+                Logger::LogFormat fmt{&entry, nullptr};
+                String            result = consoleFmt(fmt);
+                CHECK(result.contains("subtitlecuebuilder:142"));
+                CHECK_FALSE(result.contains("subtitlecuebuilder.cpp"));
+        }
+        SUBCASE("extreme overflow falls back to char truncation") {
+                // Even without the extension the basename is too long;
+                // expect a truncated prefix followed by ":<line>".
+                Logger::LogEntry  entry{DateTime::now(), Logger::Info,
+                                        "whispertranscriptionengine.cpp", 142, 1, "x"};
+                Logger::LogFormat fmt{&entry, nullptr};
+                String            result = consoleFmt(fmt);
+                CHECK(result.contains("whispertranscript"));
+                CHECK(result.contains(":142"));
+                CHECK_FALSE(result.contains(".cpp"));
+        }
+        SUBCASE("leading directory is stripped at format time") {
+                // mbedTLS and libsrt feed paths into Logger::log; the
+                // console column shows just the basename so the row
+                // stays readable.
+                Logger::LogEntry  entry{DateTime::now(), Logger::Info, "library/ssl_tls.c", 9, 1, "x"};
+                Logger::LogFormat fmt{&entry, nullptr};
+                String            result = consoleFmt(fmt);
+                CHECK(result.contains("ssl_tls.c:9"));
+                CHECK_FALSE(result.contains("library/"));
+        }
+}
+
 // ============================================================================
 // Debug channel registration
 // ============================================================================

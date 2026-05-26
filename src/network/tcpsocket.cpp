@@ -114,6 +114,18 @@ Error TcpSocket::setKeepAlive(bool enable) {
         return setSocketOption(SOL_SOCKET, SO_KEEPALIVE, enable ? 1 : 0);
 }
 
+Error TcpSocket::setReceiveBufferSize(int bytes) {
+        if (_fd < 0) return Error::NotOpen;
+        if (bytes <= 0) return Error::Ok;
+        return setSocketOption(SOL_SOCKET, SO_RCVBUF, bytes);
+}
+
+Error TcpSocket::setSendBufferSize(int bytes) {
+        if (_fd < 0) return Error::NotOpen;
+        if (bytes <= 0) return Error::Ok;
+        return setSocketOption(SOL_SOCKET, SO_SNDBUF, bytes);
+}
+
 PROMEKI_NAMESPACE_END
 
 #endif // !PROMEKI_PLATFORM_EMSCRIPTEN

@@ -75,6 +75,38 @@ class DataStream;
  * handshakes once initialized.
  *
  * @par Security model
+ * The default-constructed context applies the
+ * @ref SecurityProfile::Strict preset: TLS 1.2+ minimum, AEAD-only
+ * ciphers over ECDHE, modern curves (X25519 / P-256 / P-384),
+ * modern signature algorithms (Ed25519 / ECDSA / RSA-PSS), and
+ * renegotiation explicitly disabled.  Callers can opt down to
+ * @ref SecurityProfile::Compatible to interop with legacy HTTPS
+ * endpoints that only speak TLS 1.2 + RSA-kex + CBC-MAC; see
+ * @ref SecurityProfile for the full per-profile breakdown.
+ *
+ * Known gaps:
+ *  - **Certificate revocation is not checked.** Neither CRL fetching
+ *    nor OCSP-stapling is wired into the handshake path, so a
+ *    revoked-but-otherwise-valid server certificate verifies
+ *    successfully.  The vendored mbedTLS 3.6 LTS does not ship a
+ *    client-side OCSP API (there is no @c mbedtls_ocsp_* surface,
+ *    only an OID constant for the OCSP-signing EKU); the
+ *    @c status_request TLS extension is parsed but not actionable
+ *    from user code.  Closing this gap would require either
+ *    upstream mbedTLS 4.x support or a from-scratch OCSP
+ *    request/response stack on top of @ref HttpClient.  The
+ *    recommended mitigation today is short-lived server
+ *    certificates (Let's Encrypt's 90-day default, or shorter for
+ *    private PKI) — the modern industry consensus is that
+ *    short-cert hygiene is a more reliable revocation answer
+ *    than online OCSP, which is widely soft-failed in practice.
+ *    See @c devplan/network/tls.md for the deferral rationale and
+ *    re-evaluation triggers.
+ *  - **TLS session resumption is not used.** Each connection runs a
+ *    fresh handshake.  For the current one-shot download / RPC
+ *    workloads this is the right trade — session tickets would only
+ *    save CPU on reconnect storms we don't have.
+ *
  * Sensitive material handling:
  *  - **mbedTLS internal state** (the @c mbedtls_pk_context,
  *    @c mbedtls_x509_crt, and @c mbedtls_ssl_config) is wiped via
@@ -172,6 +204,71 @@ class SslContext {
                 };
 
                 /**
+                 * @brief Coherent presets for the cipher-suite / group / signature-algorithm triple.
+                 *
+                 * A security profile bundles three otherwise-independent
+                 * TLS policy knobs into a single named choice so callers
+                 * don't have to chase RFCs to pick a coherent set.  The
+                 * defaults bias toward the @ref Strict end of the
+                 * spectrum.
+                 *
+                 *  - @ref Strict (the default) — TLS 1.3 plus the AEAD-
+                 *    only / PFS-only subset of TLS 1.2.  Ciphers:
+                 *    AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305 over
+                 *    ECDHE only.  Groups: X25519, NIST P-256, NIST
+                 *    P-384.  Signature algorithms: Ed25519, ECDSA-P256,
+                 *    ECDSA-P384, RSA-PSS (with SHA-256 / SHA-384).
+                 *    Rejects CBC-MAC suites (Lucky13 / POODLE class),
+                 *    static RSA key exchange (no forward secrecy),
+                 *    brainpool curves (low adoption, side-channel
+                 *    concerns), and PKCS#1 v1.5 signatures.  This is
+                 *    what every libpromeki consumer gets out of the
+                 *    box.
+                 *
+                 *  - @ref Compatible — keeps @ref Strict's curves and
+                 *    signature algorithms but widens the cipher suite
+                 *    list back to mbedTLS's defaults, which include
+                 *    TLS 1.2 CBC-MAC suites and static RSA key
+                 *    exchange.  Use only when connecting to legacy
+                 *    HTTPS endpoints (older appliances, embedded
+                 *    devices) that have never upgraded past TLS 1.2 +
+                 *    RSA-kex.  Modern servers continue to negotiate the
+                 *    AEAD suites first; the legacy suites are only
+                 *    offered as a fallback.
+                 *
+                 * Renegotiation is disabled in both profiles
+                 * (@c MBEDTLS_SSL_RENEGOTIATION_DISABLED).  libpromeki
+                 * has no caller-driven renegotiation today and the
+                 * explicit disable forecloses a Logjam-class footgun
+                 * even if a future build flips the compile-time
+                 * default.
+                 *
+                 * @note The profile is applied to the underlying
+                 *       @c mbedtls_ssl_config at the same time as the
+                 *       protocol version policy (lazy on first
+                 *       @ref nativeConfig call, or eagerly if a profile
+                 *       change happens after the config is already
+                 *       built).  An in-flight @ref SslSocket already
+                 *       past @c mbedtls_ssl_setup keeps its values
+                 *       frozen from setup time; the change takes effect
+                 *       on the next handshake.
+                 *
+                 * @note **Certificate revocation is not currently
+                 *       checked** under either profile.  Neither CRL
+                 *       fetching nor OCSP-stapling is wired into the
+                 *       handshake path; a revoked-but-otherwise-valid
+                 *       server certificate verifies successfully today.
+                 *       This is a documented gap, not a profile
+                 *       difference; closing it would require either an
+                 *       online CRL/OCSP responder integration or
+                 *       OCSP-stapling support in @ref SslSocket.
+                 */
+                enum SecurityProfile {
+                        Strict,     ///< AEAD-only + PFS-only + modern curves/sigs (default).
+                        Compatible, ///< Adds CBC-MAC + static-RSA suites for legacy servers.
+                };
+
+                /**
                  * @brief Reports whether this build can actually speak TLS.
                  *
                  * Single source of truth for the @c PROMEKI_ENABLE_TLS
@@ -265,6 +362,26 @@ class SslContext {
 
                 /** @brief Returns the current protocol policy (default @ref SecureProtocols when null). */
                 SslProtocol protocol() const;
+
+                /**
+                 * @brief Selects the cipher / group / signature-algorithm preset.
+                 *
+                 * The new profile takes effect the next time mbedTLS
+                 * touches the underlying @c mbedtls_ssl_config —
+                 * immediately if the config has already been built
+                 * (@ref nativeConfig was called), or on first
+                 * @ref nativeConfig if not.  Mid-handshake
+                 * @ref SslSocket instances are unaffected; the config
+                 * snapshot they took at @c mbedtls_ssl_setup time is
+                 * frozen until they go through the handshake again.
+                 *
+                 * See @ref SecurityProfile for what each preset
+                 * includes and excludes.
+                 */
+                void setSecurityProfile(SecurityProfile profile);
+
+                /** @brief Returns the current security profile (default @ref Strict). */
+                SecurityProfile securityProfile() const;
 
                 // ----------------------------------------------------
                 // Server-side credentials

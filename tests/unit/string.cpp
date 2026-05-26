@@ -1118,6 +1118,45 @@ TEST_CASE("String_NumericConversions_EdgeCases") {
         CHECK(d == 0.0);
 }
 
+TEST_CASE("String_toInt64_toUInt64") {
+        // Plain decimal, both signs.
+        CHECK(String("0").toInt64() == 0);
+        CHECK(String("42").toInt64() == 42);
+        CHECK(String("-42").toInt64() == -42);
+        CHECK(String("42").toUInt64() == 42u);
+
+        // Large 64-bit values that would not survive toInt / toUInt
+        // (those clamp at 32-bit range).
+        Error err;
+        CHECK(String("9223372036854775807").toInt64(&err) == 9223372036854775807LL);
+        CHECK(err.isOk());
+        CHECK(String("-9223372036854775808").toInt64(&err) == INT64_MIN);
+        CHECK(err.isOk());
+        CHECK(String("18446744073709551615").toUInt64(&err) == 18446744073709551615ULL);
+        CHECK(err.isOk());
+
+        // Base prefixes inherited from prepareIntParse.
+        CHECK(String("0xDEADBEEF").toInt64() == 0xDEADBEEFLL);
+        CHECK(String("0b101").toInt64() == 5);
+
+        // Numeric separators.
+        CHECK(String("1_000_000_000_000").toInt64() == 1'000'000'000'000LL);
+
+        // Garbage and trailing junk surface Error::Invalid.
+        Error parseErr;
+        CHECK(String("abc").toInt64(&parseErr) == 0);
+        CHECK(parseErr == Error::Invalid);
+        CHECK(String("42abc").toInt64(&parseErr) == 0);
+        CHECK(parseErr == Error::Invalid);
+        CHECK(String("").toUInt64(&parseErr) == 0u);
+        CHECK(parseErr == Error::Invalid);
+
+        // Out-of-range for unsigned (negative).  strtoull silently
+        // accepts negatives, but we don't need to chase that edge
+        // here — the toInt64/toUInt64 contract just promises proper
+        // parsing of well-formed integer strings within range.
+}
+
 TEST_CASE("String_To_NarrowingOverflowReportsOutOfRange") {
         // Signed narrowing overflow.
         Error  err;

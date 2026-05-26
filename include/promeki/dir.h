@@ -214,6 +214,39 @@ class Dir {
                 static Dir ipc();
 
                 /**
+                 * @brief Returns a Dir for the library's model-file
+                 *        directory.
+                 *
+                 * The models directory is where large auxiliary data
+                 * files — speech-recognition GGML weights, image
+                 * super-resolution networks, etc. — live by
+                 * convention.  Sub-directories under it are owned by
+                 * individual features (e.g. @c whisper/ for the
+                 * vendored whisper.cpp backend) so multiple consumers
+                 * can coexist without colliding.
+                 *
+                 * Resolves in this order:
+                 *  1. @ref LibraryOptions::ModelsDir — non-empty
+                 *     override (set programmatically or via
+                 *     @c PROMEKI_OPT_ModelsDir).
+                 *  2. @c $XDG_DATA_HOME/promeki/models when
+                 *     @c XDG_DATA_HOME is set (Linux / Free Desktop
+                 *     convention).
+                 *  3. @c $HOME/.local/share/promeki/models on Linux
+                 *     when @c XDG_DATA_HOME is unset.
+                 *  4. @c $HOME/Library/Application Support/promeki/models
+                 *     on macOS.
+                 *  5. @c %LOCALAPPDATA%\\promeki\\models on Windows.
+                 *  6. Otherwise the result of @ref Dir::temp.
+                 *
+                 * The directory is @em not auto-created; callers that
+                 * need it should @ref mkpath the returned @ref Dir.
+                 *
+                 * @return A Dir wrapping the effective models directory.
+                 */
+                static Dir models();
+
+                /**
                  * @brief Sets the current working directory.
                  * @param path The new working directory.
                  * @return Error::Ok on success, or an error on failure.

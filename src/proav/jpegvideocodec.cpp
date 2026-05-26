@@ -47,6 +47,17 @@ namespace {
                 longjmp(mgr->jmpBuf, 1);
         }
 
+        // libjpeg's default output_message writes to stderr.  Route it
+        // into the promeki logger so warnings ("Premature end of JPEG
+        // file", "Corrupt JPEG data") surface in the same place as
+        // every other warning the codec emits.  format_message expands
+        // libjpeg's numeric msg_code into the human-readable string.
+        static void jpegOutputMessage(j_common_ptr cinfo) {
+                char buf[JMSG_LENGTH_MAX];
+                (*cinfo->err->format_message)(cinfo, buf);
+                promekiWarn("jpeg: %s", buf);
+        }
+
         // ---------------------------------------------------------------------------
         // Input format classification
         // ---------------------------------------------------------------------------
@@ -713,6 +724,7 @@ struct JpegVideoEncoder::Impl {
                 Impl() {
                         cinfo.err = jpeg_std_error(&jerr.pub);
                         jerr.pub.error_exit = jpegErrorExit;
+                        jerr.pub.output_message = jpegOutputMessage;
                         // libjpeg's create can longjmp on OOM during state
                         // allocation; guard with a setjmp so the partially-
                         // initialized struct doesn't leak.
@@ -852,6 +864,7 @@ struct JpegVideoDecoder::Impl {
                 Impl() {
                         dinfo.err = jpeg_std_error(&jerr.pub);
                         jerr.pub.error_exit = jpegErrorExit;
+                        jerr.pub.output_message = jpegOutputMessage;
                         if (setjmp(jerr.jmpBuf)) {
                                 created = false;
                                 return;

@@ -25,7 +25,8 @@ devplan/
 │   ├── avoverip.md      Phase 3C — PtpClock + RTP follow-ups
 │   ├── 2110.md          SMPTE ST 2110 conformance plan (-10/-20/-21/-30/-31/-40)
 │   ├── srt.md           Phase 3D — SRT shipped; MediaIO backend + bonded listener deferred
-│   └── rtmp.md          Phase 3F/5 — RTMP / RTMPS publisher + subscriber (Phases 0-5 shipped; Phase 6 docs/CMake next)
+│   ├── rtmp.md          Phase 3F/5 — RTMP / RTMPS publisher + subscriber (Phases 0-5 shipped; Phase 6 docs/CMake next)
+│   └── tls.md           mbedTLS audit follow-ups — OCSP, 4.x upgrade triggers, deferred items
 ├── proav/               ProAV / MediaIO subsystem
 │   ├── pipeline.md      MediaPipeline class follow-ups
 │   ├── planner.md       MediaPipelinePlanner future work
@@ -35,6 +36,7 @@ devplan/
 │   ├── timestamps.md    MediaTimeStamp / ClockDomain follow-ups
 │   ├── framesync.md     COMPLETE; stub retained
 │   ├── inspector-pcm-marker-decoder.md  COMPLETE; stub retained
+│   ├── transcription.md TranscriptionEngine / WhisperCpp follow-ups (streaming, CUDA, diarization)
 │   ├── dsp.md           Deferred audio DSP backends
 │   ├── nvenc.md         NVENC / NVDEC follow-up work
 │   ├── video-signal-carriers.md  VideoPortRef / SdiSignalConfig / HdmiSignalConfig / VideoReferenceConfig
@@ -135,6 +137,18 @@ devplan/
    mirrors; reads the same CMake-syntax config file.
    `cmake/mirrors.example.cmake` documents the config format.
    Replaces deleted `scripts/mirrors.conf` + `scripts/setup-mirrors.sh`.
+14. **Speech-to-text (TranscriptionEngine + WhisperCpp Phase 1)** —
+   SHIPPED 2026-05-25. `TranscriptionEngine` abstract base + backend
+   registry; `Transcript` / `TranscriptWord` / `TranscriptList` value
+   types; `SubtitleCueBuilder` cue-shaping layer; `MediaConfig`
+   Transcription* + SubtitleCue* keys; `TranscriptionMode` /
+   `TranscriptionChannelMode` enums; `Metadata::Transcript` key;
+   vendored `whisper.cpp` v1.8.4 `WhisperCpp` backend (CPU, batch
+   only); `Dir::models()` + `LibraryOptions::ModelsDir` convention;
+   `promeki-fetch-model` CLI (SHA-256-verified Hugging Face downloader);
+   `docs/whisper.md`.  Streaming mode, CUDA backend, diarization, and
+   HTTP-streaming downloads are deferred.
+   See [proav/transcription.md](proav/transcription.md).
 13. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
    `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
    scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,

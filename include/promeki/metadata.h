@@ -20,6 +20,7 @@
 #include <promeki/mediaduration.h>
 #include <promeki/subtitle.h>
 #include <promeki/timecode.h>
+#include <promeki/transcript.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/eui64.h>
 #endif
@@ -93,6 +94,27 @@ class Metadata : public VariantDatabase<"Metadata"> {
                                            .setDefault(promeki::Subtitle())
                                            .setDescription(
                                                    "Subtitle cue active at this media unit (start <= ts < end)."));
+
+                /// @brief Raw transcript utterance attached to this
+                ///        media unit.
+                ///
+                /// Stamped by a @ref TranscriptionEngine on the Frame
+                /// whose audio drove the utterance.  Carries word-level
+                /// timing, confidence, speaker, and (for streaming
+                /// engines) a partial / final lifecycle bit on the
+                /// @ref Transcript itself.  Subtitle-shaping consumers
+                /// (e.g. @c SubtitleCueBuilder) read this key and emit
+                /// finished @ref Subtitle cues to
+                /// @ref Metadata::Subtitle; consumers that want raw
+                /// transcript data (analytics, search indexers, dub
+                /// alignment) read it directly without the
+                /// cue-builder step.
+                PROMEKI_DECLARE_ID(Transcript,
+                                   VariantSpec()
+                                           .setType(DataTypeTranscript)
+                                           .setDefault(promeki::Transcript())
+                                           .setDescription(
+                                                   "Raw transcript utterance attached to this media unit."));
 #endif
 
                 /// @brief Gamma / transfer-function exponent.

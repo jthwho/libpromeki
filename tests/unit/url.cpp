@@ -240,6 +240,88 @@ TEST_CASE("Url: redactedString does not mutate the source") {
         CHECK(u.path() == "/app/sk");
 }
 
+// ---- briefForLog ----
+
+TEST_CASE("Url: briefForLog returns scheme://host/path on a simple URL") {
+        Url u = Url::fromString("https://example.com/api/v1/status").first();
+        CHECK(u.briefForLog() == "https://example.com/api/v1/status");
+}
+
+TEST_CASE("Url: briefForLog includes non-default port") {
+        Url u = Url::fromString("https://example.com:8443/api").first();
+        CHECK(u.briefForLog() == "https://example.com:8443/api");
+}
+
+TEST_CASE("Url: briefForLog substitutes / for an absent path") {
+        Url u = Url::fromString("https://example.com").first();
+        CHECK(u.briefForLog() == "https://example.com/");
+}
+
+TEST_CASE("Url: briefForLog collapses any query to '?…'") {
+        // Hugging-Face-style signed CDN URL: provider-specific query
+        // keys (Expires / Policy / Signature) that no allowlist can
+        // sensibly mask, plus our long opaque token.  briefForLog
+        // drops all of it.
+        Url u = Url::fromString(
+                            "https://cas-bridge.xethub.hf.co/xet-bridge/abc/def?"
+                            "Expires=1700000000&Policy=eyJ&Signature=opaqueLong")
+                        .first();
+        const String s = u.briefForLog();
+        CHECK(s == "https://cas-bridge.xethub.hf.co/xet-bridge/abc/def?…");
+        // No leakage of any query parameter name OR value.
+        CHECK(s.find("Expires") == String::npos);
+        CHECK(s.find("Policy") == String::npos);
+        CHECK(s.find("Signature") == String::npos);
+        CHECK(s.find("opaqueLong") == String::npos);
+}
+
+TEST_CASE("Url: briefForLog query indicator fires for programmatic queries too") {
+        // Confirms the indicator triggers on the parsed-map form, not
+        // only on the raw-query fast path.  A URL built programmatically
+        // (no rawQuery roundtrip) should still get the "?…" marker.
+        Url u;
+        u.setScheme("https");
+        u.setHost("api.example.com");
+        u.setPath("/v1/lookup");
+        // Direct query insertion goes through the parsed map only.
+        // (We don't have a setRawQuery escape hatch in this test —
+        // exercising the _query branch is the point.)
+        u.setHasAuthority(true);
+        Map<String, String> q;
+        q["q"] = "open weather";
+        u.setQuery(q);
+        const String s = u.briefForLog();
+        CHECK(s == "https://api.example.com/v1/lookup?…");
+}
+
+TEST_CASE("Url: briefForLog masks user-info credentials") {
+        Url u = Url::fromString("https://alice:hunter2@example.com/api").first();
+        const String s = u.briefForLog();
+        CHECK(s == "https://***@example.com/api");
+        CHECK(s.find("alice") == String::npos);
+        CHECK(s.find("hunter2") == String::npos);
+}
+
+TEST_CASE("Url: briefForLog drops the fragment") {
+        Url u = Url::fromString("https://example.com/docs/page#section-3").first();
+        const String s = u.briefForLog();
+        CHECK(s == "https://example.com/docs/page");
+        CHECK(s.find("section-3") == String::npos);
+}
+
+TEST_CASE("Url: briefForLog of invalid Url is empty") {
+        Url u;
+        CHECK(u.briefForLog().isEmpty());
+}
+
+TEST_CASE("Url: briefForLog does not mutate the source") {
+        Url    u = Url::fromString("https://example.com/api?token=secret").first();
+        String before = u.toString();
+        (void)u.briefForLog();
+        CHECK(u.toString() == before);
+        CHECK(u.queryValue("token") == "secret");
+}
+
 // ---- RTMP scheme parse — verifies the existing parser handles the form
 //      RtmpClient / RtmpMediaIO will consume ----
 

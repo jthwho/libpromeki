@@ -310,10 +310,20 @@ void HttpServer::onNewConnection() {
 
                 Error err = conn->start();
                 if (err.isError()) {
-                        promekiWarn("HttpServer: failed to start connection: %s", err.name().cstr());
+                        promekiWarn("HttpServer: failed to start connection from %s: %s",
+                                    sock->peerAddress().toString().cstr(), err.name().cstr());
                         delete conn;
                         continue;
                 }
+                // Per-connection accept breadcrumb.  Names the peer
+                // address and whether TLS termination is happening,
+                // so an in-field log can correlate a later
+                // request/parse/timeout warn back to the originating
+                // client without the operator having to enable any
+                // connection-level tracing.
+                promekiDebug("HttpServer: accepted %s tls=%s",
+                             sock->peerAddress().toString().cstr(),
+                             needsHandshake ? "yes" : "no");
                 _connections.pushToBack(conn);
         }
 }

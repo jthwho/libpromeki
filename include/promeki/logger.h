@@ -129,7 +129,7 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
 
 #define PROMEKI_BENCHMARK_END(name)                                                                                    \
         if (_promeki_debug_enabled) {                                                                                  \
-                Logger::defaultLogger().log(Logger::LogLevel::Debug, __FILE__, __LINE__,                               \
+                Logger::defaultLogger().log(Logger::LogLevel::Debug, PROMEKI_SOURCE_FILE, __LINE__,                    \
                                             String::sprintf("[%s] %s took %.9lf sec", _promeki_debug_name,             \
                                                             PROMEKI_STRINGIFY(name),                                   \
                                                             _promeki_debug_timestamp_##name.elapsedSeconds()));        \

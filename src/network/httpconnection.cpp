@@ -245,7 +245,10 @@ void HttpConnection::readSome() {
         const llhttp_errno_t rc = llhttp_execute(&_impl->parser, dst, static_cast<size_t>(n));
         if (rc != HPE_OK && rc != HPE_PAUSED && rc != HPE_PAUSED_UPGRADE) {
                 const char *reason = llhttp_get_error_reason(&_impl->parser);
-                promekiWarn("HttpConnection: parse error: %s", reason ? reason : "(unknown)");
+                promekiWarn("HttpConnection: parse error from %s: %s",
+                            _socket != nullptr ? _socket->peerAddress().toString().cstr()
+                                               : "(no socket)",
+                            reason ? reason : "(unknown)");
                 // Best-effort 400 reply, then close.  Reuse the
                 // pending request as the responseSent context so
                 // observers see the failure surface.
@@ -358,7 +361,10 @@ int HttpConnection::cbBody(void *parser, const char *at, size_t len) {
         auto *self = CONN(parser);
         self->_bodyBytesSoFar += static_cast<int64_t>(len);
         if (self->_maxBodyBytes >= 0 && self->_bodyBytesSoFar > self->_maxBodyBytes) {
-                promekiWarn("HttpConnection: request body exceeded maxBodyBytes=%lld (received=%lld) — replying 413",
+                promekiWarn("HttpConnection: request body from %s exceeded maxBodyBytes=%lld "
+                            "(received=%lld) — replying 413",
+                            self->_socket != nullptr ? self->_socket->peerAddress().toString().cstr()
+                                                     : "(no socket)",
                             static_cast<long long>(self->_maxBodyBytes),
                             static_cast<long long>(self->_bodyBytesSoFar));
                 // 413: stop reading, queue the error reply, and ask
@@ -557,6 +563,20 @@ void HttpConnection::enqueueResponse(HttpResponse response) {
                 _ioHandle = _loop->addIoSource(fd, EventLoop::IoRead | EventLoop::IoWrite,
                                                [this](int f, uint32_t e) { onIoReady(f, e); });
         }
+
+        // One-line per-request server-side breadcrumb: peer + method
+        // + path + status + body bytes.  Mirrors the HttpClient
+        // "done" line so client/server-side traces compare 1:1 in a
+        // log review.  Path comes from the request URL; we route
+        // through briefForLog so any query-string credentials stay
+        // out of the log (the server may receive signed-URL bytes
+        // from a client that doesn't know better).
+        promekiDebug("HttpConnection: %s %s %s status=%d body=%lld bytes",
+                     _socket != nullptr ? _socket->peerAddress().toString().cstr() : "(no socket)",
+                     _lastRequest.method().wireName().cstr(),
+                     _lastRequest.url().briefForLog().cstr(),
+                     response.status().value(),
+                     (long long)(response.body().isValid() ? response.body().size() : 0));
 
         responseSentSignal.emit(_lastRequest, response);
 

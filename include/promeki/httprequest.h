@@ -21,6 +21,7 @@
 #include <promeki/httpmethod.h>
 #include <promeki/httpheaders.h>
 #include <promeki/json.h>
+#include <promeki/function.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -174,6 +175,66 @@ class HttpRequest {
                 /** @brief As above, for arrays. */
                 void setBody(const JsonArray &arr);
 
+                /**
+                 * @brief Callback that drains response body bytes as they arrive.
+                 *
+                 * When installed on a client-side request via
+                 * @ref setBodySink, @ref HttpClient invokes this for
+                 * each chunk of body bytes it parses instead of
+                 * appending to the in-memory @ref HttpResponse::body
+                 * @ref Buffer.  Useful for streaming large downloads
+                 * straight to disk (or any other @ref IODevice) without
+                 * buffering the full response in memory.
+                 *
+                 * Returning anything other than @ref Error::Ok aborts
+                 * the request; the failing error code is reported on
+                 * the @ref Future returned from @ref HttpClient::send.
+                 *
+                 * The sink is not consulted on the server side.
+                 */
+                using BodySink = ::promeki::Function<Error(const void *data, size_t len)>;
+
+                /**
+                 * @brief Callback that observes download progress.
+                 *
+                 * When installed on a client-side request via
+                 * @ref setProgressCallback, @ref HttpClient invokes
+                 * this each time more body bytes arrive (and once at
+                 * the start, after headers are parsed, so the caller
+                 * sees the announced @c Content-Length).  @p received
+                 * is the running total of body bytes read so far;
+                 * @p total is the @c Content-Length advertised by the
+                 * server, or @c -1 when the size is unknown (chunked
+                 * transfer-encoding with no length).
+                 *
+                 * Return @c false to cancel the request; the
+                 * @ref Future fulfills with @ref Error::Cancelled.
+                 */
+                using ProgressCallback = ::promeki::Function<bool(int64_t received, int64_t total)>;
+
+                /** @brief Returns the installed body sink, if any. */
+                const BodySink &bodySink() const { return _bodySink; }
+
+                /**
+                 * @brief Installs a body sink for client-side streaming.
+                 *
+                 * See @ref BodySink for the contract.  Pass an empty
+                 * @ref Function to clear (the default buffered path
+                 * resumes).
+                 */
+                void setBodySink(BodySink sink) { _bodySink = std::move(sink); }
+
+                /** @brief Returns the installed progress callback, if any. */
+                const ProgressCallback &progressCallback() const { return _progressCallback; }
+
+                /**
+                 * @brief Installs a progress callback for client-side downloads.
+                 *
+                 * See @ref ProgressCallback for the contract.  Pass an
+                 * empty @ref Function to clear.
+                 */
+                void setProgressCallback(ProgressCallback cb) { _progressCallback = std::move(cb); }
+
                 /** @brief All matched path parameters. */
                 const HashMap<String, String> &pathParams() const { return _pathParams; }
 
@@ -227,6 +288,8 @@ class HttpRequest {
                 HashMap<String, String> _pathParams;
                 String                  _httpVersion = DefaultHttpVersion;
                 String                  _peerAddress;
+                BodySink                _bodySink;
+                ProgressCallback        _progressCallback;
 };
 
 PROMEKI_NAMESPACE_END

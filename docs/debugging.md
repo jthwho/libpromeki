@@ -188,6 +188,87 @@ log output at the `Debug` level. When disabled, the module's
 `promekiDebug()` calls skip the logging call entirely — just a
 branch on a local `bool`.
 
+### Discovering Registered Modules {#debug_promekidebug_list}
+
+If you don't know what modules are available, run with
+`PROMEKI_DEBUG=list`. The library prints the registered modules
+(plus the source file and line where each was declared) at process
+exit, then continues normally:
+
+```sh
+PROMEKI_DEBUG=list ./myapp
+```
+
+The same mechanism warns when you mis-spell a module name —
+anything in your `PROMEKI_DEBUG` list that doesn't match a
+registered module produces a one-line warning at startup, so a
+typo doesn't silently leave you with no debug output.
+
+### Common Debug Modules for Network / TLS Diagnostics {#debug_promekidebug_network}
+
+The following modules are the most useful for in-field
+investigation of HTTP, WebSocket, RTMP, or TLS issues. Use them
+individually or combine via comma:
+
+| Module | What it traces |
+|--------|----------------|
+| `HttpClient` | Per-request lifecycle: method + URL + resolved IP + port + TLS yes/no, response headers (status + content-length + content-type), redirect detection, redirect follow chain, finish summary (bytes received vs announced) |
+| `HttpServer` | Per-connection accept breadcrumb (peer address, TLS yes/no) |
+| `HttpConnection` | Per-request server-side breadcrumb (peer + method + path + status + body bytes), idle-timeout closes, parse errors with peer context |
+| `SslSocket` | TLS handshake start (hostname + profile + verifyPeer + hasCa), handshake complete (negotiated TLS version + cipher suite + peer subject + peer issuer + verify-flag decoded names), handshake failure with role + peer + decoded mbedTLS error, close / close_notify |
+| `SslContext` | Security-profile application (Strict / Compatible), PEM/CA load warnings with path |
+| `WebSocket` | Connect-success (URL + negotiated subprotocol), disconnect (clean or error), URL parsing |
+| `RtmpClient` | Open lifecycle (URL with stream-key-redacted), TLS handshake outcome, RTMP NetConnection.connect, publish / play, all with redacted URLs and key-length-only key references |
+| `MbedTlsInternal` | mbedTLS's own internal trace stream (handshake state changes, key schedule, record-level activity). Very chatty — meant for deep investigation only |
+
+The mbedTLS error stream is wired up *unconditionally*: any
+message matching the error vocabulary (`fail`, `error`, `fatal`,
+`invalid`, `bad `, `unsupport`, `reject`, `alert`, …) routes to
+`promekiWarn` regardless of whether `MbedTlsInternal` is enabled,
+so genuine TLS errors always reach the log. Non-error mbedTLS
+messages (state transitions, key schedule progress) are
+debug-gated.
+
+URL-bearing log lines route through `Url::briefForLog`
+(scheme + host + port + path, query collapsed to `?…`) or
+`Url::redactedString` (RTMP stream-key-aware) so signed-CDN
+credentials and stream keys never land in a log shipped off-host
+in a support bundle. RTMP key references are length-only
+(`keyLen=N`) rather than printing the key bytes.
+
+### In-Field TLS / HTTP Diagnostic Workflow {#debug_promekidebug_tls_workflow}
+
+For diagnosing an HTTPS issue in production:
+
+```sh
+# Start narrow: just the client + the cipher negotiation outcome.
+PROMEKI_DEBUG=HttpClient,SslSocket ./myapp
+
+# Widen if the failure looks crypto-policy related:
+PROMEKI_DEBUG=HttpClient,SslSocket,SslContext ./myapp
+
+# Last resort — full mbedTLS verbose trace (very large):
+PROMEKI_DEBUG=HttpClient,SslSocket,SslContext,MbedTlsInternal ./myapp
+```
+
+A successful HTTPS download under
+`PROMEKI_DEBUG=HttpClient,SslSocket` produces a trace like:
+
+```
+SslContext: applying security profile Strict
+HttpClient: GET https://example.com/big.bin -> 1.2.3.4:443 tls=yes
+SslSocket::startEncryption: client handshake to 'example.com' (profile=Strict, verifyPeer=true, hasCa=true)
+SslSocket: handshake ok role=client peer=example.com tls=TLSv1.3 cipher=TLS1-3-AES-128-GCM-SHA256 subject="CN=example.com" issuer="C=US, O=..., CN=..." verify=ok
+HttpClient: 200 OK on https://example.com/big.bin contentLength=104857600 type=application/octet-stream sink=stream
+SslSocket::close: sending close_notify (role=client peer=example.com)
+HttpClient: done https://example.com/big.bin status=200 body=104857600 bytes
+```
+
+That single trace identifies the peer, the negotiated cipher, the
+trust path, the response size, and the clean shutdown — enough to
+distinguish a network outage from a cipher rejection from a
+certificate problem without any further instrumentation.
+
 ### What Happens in Release Builds? {#debug_promekidebug_compiled_out}
 
 In a **Release** build, `PROMEKI_DEBUG_ENABLE` is not defined, so

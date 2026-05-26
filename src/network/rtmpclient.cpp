@@ -278,7 +278,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                        unsigned int timeoutMs) {
         if (_open.value()) {
                 promekiWarn("RtmpClient::open: already open (url='%s')",
-                            url.toString().cstr());
+                            url.redactedString().cstr());
                 return Error::Exists;
         }
 
@@ -291,27 +291,28 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                 isTls = false;
         } else {
                 promekiWarn("RtmpClient::open: unsupported URL scheme '%s' (url='%s')",
-                            scheme.cstr(), url.toString().cstr());
+                            scheme.cstr(), url.redactedString().cstr());
                 return Error::InvalidArgument;
         }
 
 #if !PROMEKI_ENABLE_TLS
         if (isTls) {
                 promekiWarn("RtmpClient::open: rtmps:// requested but TLS is not "
-                            "enabled in this build (url='%s')", url.toString().cstr());
+                            "enabled in this build (url='%s')", url.redactedString().cstr());
                 return Error::NotSupported;
         }
 #endif
 
         if (url.host().isEmpty()) {
                 promekiWarn("RtmpClient::open: empty host in URL '%s'",
-                            url.toString().cstr());
+                            url.redactedString().cstr());
                 return Error::InvalidArgument;
         }
 
         splitPath(url, _app, _streamKey);
-        promekiDebug("RtmpClient::open: url='%s' app='%s' urlKey='%s'",
-                     url.toString().cstr(), _app.cstr(), _streamKey.cstr());
+        promekiDebug("RtmpClient::open: url='%s' app='%s' urlKeySet=%s",
+                     url.redactedString().cstr(), _app.cstr(),
+                     _streamKey.isEmpty() ? "no" : "yes");
 
         // Open the right socket.
 #if PROMEKI_ENABLE_TLS
@@ -331,7 +332,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
 #endif
         if (Error err = _socket->open(IODevice::ReadWrite); err.isError()) {
                 promekiWarn("RtmpClient::open: socket open failed (url='%s'): %s",
-                            url.toString().cstr(), err.desc().cstr());
+                            url.redactedString().cstr(), err.desc().cstr());
                 _socket.reset();
                 return err;
         }
@@ -431,7 +432,7 @@ Error RtmpClient::open(const Url &url, const RtmpConnectOptions &userOpts,
                 promekiWarn("RtmpClient::open: empty AMF0 `app` field — most RTMP servers "
                             "(YouTube, Twitch, nginx-rtmp) will reject the connect call. "
                             "URL '%s' may need to be of the form rtmp://host/<app>[/<streamKey>].",
-                            url.toString().cstr());
+                            url.redactedString().cstr());
         }
         if (Error err = _session->connect(opts, timeoutMs); err.isError()) {
                 promekiWarn("RtmpClient::open: RTMP NetConnection.connect failed "
@@ -480,7 +481,7 @@ Error RtmpClient::publish(const String &streamKey, const String &mode, unsigned 
         if (key.isEmpty()) {
                 promekiWarn("RtmpClient::publish: no stream key (neither argument nor "
                             "MediaConfig::RtmpStreamKey supplied one) — URL was '%s'",
-                            _url.toString().cstr());
+                            _url.redactedString().cstr());
                 return Error::InvalidArgument;
         }
 
@@ -490,8 +491,8 @@ Error RtmpClient::publish(const String &streamKey, const String &mode, unsigned 
 
         Result<uint32_t> sidR = _session->createStream(timeoutMs);
         if (sidR.second().isError()) {
-                promekiWarn("RtmpClient::publish: createStream failed (key='%s'): %s",
-                            key.cstr(), sidR.second().desc().cstr());
+                promekiWarn("RtmpClient::publish: createStream failed (keyLen=%zu): %s",
+                            (size_t)key.byteCount(), sidR.second().desc().cstr());
                 return sidR.second();
         }
         _streamId.setValue(sidR.first());
@@ -499,8 +500,8 @@ Error RtmpClient::publish(const String &streamKey, const String &mode, unsigned 
         Error err = _session->publish(sidR.first(), key, mode, timeoutMs);
         if (err.isError()) {
                 promekiWarn("RtmpClient::publish: publish failed "
-                            "(streamId=%u, key='%s', mode='%s'): %s",
-                            sidR.first(), key.cstr(), mode.cstr(), err.desc().cstr());
+                            "(streamId=%u, keyLen=%zu, mode='%s'): %s",
+                            sidR.first(), (size_t)key.byteCount(), mode.cstr(), err.desc().cstr());
         } else {
                 startMediaThreads();
         }
@@ -521,14 +522,14 @@ Error RtmpClient::play(const String &streamKey, unsigned int timeoutMs, bool use
         if (key.isEmpty()) {
                 promekiWarn("RtmpClient::play: no stream key (neither argument nor "
                             "MediaConfig::RtmpStreamKey supplied one) — URL was '%s'",
-                            _url.toString().cstr());
+                            _url.redactedString().cstr());
                 return Error::InvalidArgument;
         }
 
         Result<uint32_t> sidR = _session->createStream(timeoutMs);
         if (sidR.second().isError()) {
-                promekiWarn("RtmpClient::play: createStream failed (key='%s'): %s",
-                            key.cstr(), sidR.second().desc().cstr());
+                promekiWarn("RtmpClient::play: createStream failed (keyLen=%zu): %s",
+                            (size_t)key.byteCount(), sidR.second().desc().cstr());
                 return sidR.second();
         }
         _streamId.setValue(sidR.first());
@@ -536,8 +537,8 @@ Error RtmpClient::play(const String &streamKey, unsigned int timeoutMs, bool use
         Error err = _session->play(sidR.first(), key, -2.0, -1.0, timeoutMs);
         if (err.isError()) {
                 promekiWarn("RtmpClient::play: play failed "
-                            "(streamId=%u, key='%s'): %s",
-                            sidR.first(), key.cstr(), err.desc().cstr());
+                            "(streamId=%u, keyLen=%zu): %s",
+                            sidR.first(), (size_t)key.byteCount(), err.desc().cstr());
         } else {
                 startMediaThreads();
         }

@@ -405,6 +405,12 @@ option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
 option(PROMEKI_ENABLE_AAC      "Include AAC audio codec (vendored fdk-aac)" ON)
+# Vendored whisper.cpp speech-to-text backend.  Drives the WhisperCpp
+# TranscriptionEngine; GGML built CPU-only on the first cut.  CUDA /
+# Metal / Vulkan backends inside whisper.cpp are off (we'll light them
+# up behind PROMEKI_ENABLE_CUDA in a follow-up).  Default ON when
+# PROMEKI_ENABLE_PROAV is on, since speech-to-text is a PROAV feature.
+option(PROMEKI_ENABLE_WHISPER  "Include vendored whisper.cpp speech-to-text engine" ON)
 option(PROMEKI_ENABLE_SRC      "Include audio resampling (libsamplerate)" ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
@@ -597,6 +603,7 @@ option(PROMEKI_USE_SYSTEM_LLHTTP        "Use system llhttp instead of vendored" 
 option(PROMEKI_USE_SYSTEM_MBEDTLS       "Use system mbedTLS instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SRT           "Use system libsrt instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_NTV2          "Use system libajantv2 instead of vendored"     OFF)
+option(PROMEKI_USE_SYSTEM_WHISPER       "Use system whisper.cpp instead of vendored"   OFF)
 
 # Build statistics wrapper #####################################################
 # When PROMEKI_BUILD_STATS is ON and the platform has GNU `/usr/bin/time -v`,
@@ -684,6 +691,9 @@ if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_WHISPER AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_WHISPER requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_NETWORK AND NOT PROMEKI_ENABLE_PROAV)
     # The library follows a strict layering chain: CORE -> PROAV -> NETWORK -> HTTP.
@@ -1799,6 +1809,115 @@ if(PROMEKI_ENABLE_AAC)
     endif()
 endif()
 
+# --- whisper.cpp ---
+# Vendored whisper.cpp + GGML (CPU-only build for the first cut).  The
+# build installs libwhisper.a plus three GGML archives (libggml.a is
+# the dispatcher, libggml-base.a holds the shared graph/tensor core,
+# libggml-cpu.a is the CPU backend).  All linked PRIVATE into
+# libpromeki.so — the whisper API surface is an implementation detail
+# of the WhisperTranscriptionEngine backend, not part of the public
+# promeki API.
+#
+# Knobs turned off explicitly:
+#   * BUILD_SHARED_LIBS=OFF         — static archives, linked into our .so
+#   * WHISPER_BUILD_TESTS / EXAMPLES / SERVER=OFF — strip everything
+#                                      except the library itself
+#   * WHISPER_CURL=OFF              — model fetching is handled by
+#                                      promeki-fetch-model, not by
+#                                      whisper.cpp's own libcurl path
+#   * GGML_BUILD_TESTS=OFF          — same reason
+#   * GGML_BUILD_EXAMPLES=OFF       — ditto
+#
+# CUDA / Metal / Vulkan backends are intentionally left at their
+# defaults (off) on this first cut; PROMEKI_ENABLE_CUDA will pass
+# GGML_CUDA=ON through here in a follow-up.
+if(PROMEKI_ENABLE_WHISPER)
+    if(PROMEKI_USE_SYSTEM_WHISPER)
+        find_package(whisper REQUIRED)
+        set(PROMEKI_WHISPER_TARGET whisper::whisper)
+    else()
+        # whisper.cpp installs its archives into lib/ on Linux/macOS, but
+        # the static-library filenames depend on the toolchain.  On GCC/
+        # Clang they're libwhisper.a / libggml*.a; MSVC uses .lib.  Stick
+        # with the .a names since this code path only runs on Unix-like
+        # platforms (Windows builds would set PROMEKI_USE_SYSTEM_WHISPER
+        # or build differently).
+        set(_whisper_lib     ${PROMEKI_THIRDPARTY_PREFIX}/lib/libwhisper.a)
+        set(_ggml_lib        ${PROMEKI_THIRDPARTY_PREFIX}/lib/libggml.a)
+        set(_ggml_base_lib   ${PROMEKI_THIRDPARTY_PREFIX}/lib/libggml-base.a)
+        set(_ggml_cpu_lib    ${PROMEKI_THIRDPARTY_PREFIX}/lib/libggml-cpu.a)
+        ExternalProject_Add(
+            whisper-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/whisper.cpp
+            CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_INSTALL_LIBDIR:PATH=lib
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DWHISPER_BUILD_TESTS=OFF
+                -DWHISPER_BUILD_EXAMPLES=OFF
+                -DWHISPER_BUILD_SERVER=OFF
+                -DWHISPER_CURL=OFF
+                -DWHISPER_SDL2=OFF
+                -DWHISPER_COREML=OFF
+                -DWHISPER_OPENVINO=OFF
+                -DGGML_BUILD_TESTS=OFF
+                -DGGML_BUILD_EXAMPLES=OFF
+                -DGGML_OPENMP=OFF
+            BUILD_BYPRODUCTS
+                ${_whisper_lib}
+                ${_ggml_lib}
+                ${_ggml_base_lib}
+                ${_ggml_cpu_lib}
+        )
+        # Wrap the four static archives in an INTERFACE library so callers
+        # link a single target.  Link order matters: whisper depends on
+        # ggml (dispatcher), which depends on ggml-cpu (backend), which
+        # depends on ggml-base (shared core).  Threads + libm are
+        # transitive deps (GGML uses pthread / std::thread + libm math).
+        find_package(Threads REQUIRED)
+        add_library(promeki_whisper_lib STATIC IMPORTED)
+        set_target_properties(promeki_whisper_lib PROPERTIES
+            IMPORTED_LOCATION ${_whisper_lib})
+        add_library(promeki_ggml_lib STATIC IMPORTED)
+        set_target_properties(promeki_ggml_lib PROPERTIES
+            IMPORTED_LOCATION ${_ggml_lib})
+        add_library(promeki_ggml_cpu_lib STATIC IMPORTED)
+        set_target_properties(promeki_ggml_cpu_lib PROPERTIES
+            IMPORTED_LOCATION ${_ggml_cpu_lib})
+        add_library(promeki_ggml_base_lib STATIC IMPORTED)
+        set_target_properties(promeki_ggml_base_lib PROPERTIES
+            IMPORTED_LOCATION ${_ggml_base_lib})
+        add_dependencies(promeki_whisper_lib whisper-ep)
+        add_dependencies(promeki_ggml_lib whisper-ep)
+        add_dependencies(promeki_ggml_cpu_lib whisper-ep)
+        add_dependencies(promeki_ggml_base_lib whisper-ep)
+        add_library(promeki_whisper_vendored INTERFACE)
+        target_link_libraries(promeki_whisper_vendored INTERFACE
+            promeki_whisper_lib
+            promeki_ggml_lib
+            promeki_ggml_cpu_lib
+            promeki_ggml_base_lib
+            Threads::Threads
+            m
+            ${CMAKE_DL_LIBS}
+        )
+        # whisper.cpp installs its public headers into include/ at the
+        # top level (whisper.h plus ggml*.h alongside).  Create the dir
+        # eagerly so the imported target can advertise it before the
+        # ExternalProject runs.
+        file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        target_include_directories(promeki_whisper_vendored SYSTEM INTERFACE
+            ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        set(PROMEKI_WHISPER_TARGET promeki_whisper_vendored)
+        unset(_whisper_lib)
+        unset(_ggml_lib)
+        unset(_ggml_base_lib)
+        unset(_ggml_cpu_lib)
+    endif()
+endif()
+
 # --- libsamplerate ---
 if(PROMEKI_ENABLE_SRC)
     if(PROMEKI_USE_SYSTEM_SAMPLERATE)
@@ -2363,6 +2482,7 @@ if(PROMEKI_ENABLE_TLS)
     )
     list(APPEND PROMEKI_SOURCES
         src/network/sslsocket.cpp
+        src/network/mbedtlsdebug.cpp
     )
 endif()
 
@@ -2458,6 +2578,9 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/st291packet.h
         include/promeki/subrip.h
         include/promeki/subtitle.h
+        include/promeki/subtitlecuebuilder.h
+        include/promeki/transcript.h
+        include/promeki/transcriptionengine.h
         include/promeki/audioblock.h
         include/promeki/audiobuffer.h
         include/promeki/audiodecoder.h
@@ -2578,7 +2701,10 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/subrip.cpp
         src/proav/subtitle.cpp
         src/proav/subtitleburnmediaio.cpp
+        src/proav/subtitlecuebuilder.cpp
         src/proav/subtitlerenderer.cpp
+        src/proav/transcript.cpp
+        src/proav/transcriptionengine.cpp
         src/proav/audioblock.cpp
         src/proav/audiobuffer.cpp
         src/proav/audiodecoder.cpp
@@ -2711,6 +2837,12 @@ if(PROMEKI_ENABLE_PROAV)
         # the file includes <fdk-aac/aacenc_lib.h> / <fdk-aac/aacdecoder_lib.h>
         # directly.
         list(APPEND PROMEKI_SOURCES src/proav/fdkaaccodec.cpp)
+    endif()
+    if(PROMEKI_ENABLE_WHISPER)
+        # Vendored whisper.cpp TranscriptionEngine backend.  Includes
+        # <whisper.h> directly, so the file is gated on
+        # PROMEKI_ENABLE_WHISPER.
+        list(APPEND PROMEKI_SOURCES src/proav/whispertranscriptionengine.cpp)
     endif()
     if(PROMEKI_ENABLE_NVDEC)
         # Same story as NVENC — the backend compiles only when the
@@ -3029,6 +3161,17 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AAC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_FDKAAC_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_AAC)
+    endif()
+    if(PROMEKI_ENABLE_WHISPER)
+        # Vendored whisper.cpp installs its public headers at
+        # ${PROMEKI_THIRDPARTY_PREFIX}/include (whisper.h + ggml*.h);
+        # the include path is already attached to PROMEKI_WHISPER_TARGET
+        # via SYSTEM INTERFACE.  Define PROMEKI_ENABLE_WHISPER on the
+        # promeki TU compile line for the implementation file's #if
+        # guard (it's also set globally via config.h, but a direct
+        # define keeps the source file independent of generated config).
+        target_link_libraries(promeki PRIVATE ${PROMEKI_WHISPER_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_WHISPER)
     endif()
     if(PROMEKI_ENABLE_SRC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SAMPLERATE_TARGET})
@@ -3729,7 +3872,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/st291packet.cpp
             tests/unit/subrip.cpp
             tests/unit/subtitleburnmediaio.cpp
+            tests/unit/subtitlecuebuilder.cpp
             tests/unit/subtitlerenderer.cpp
+            tests/unit/transcriptionengine.cpp
             tests/unit/tpg_anc_captions.cpp
             tests/unit/windowedstatsbundle.cpp
             tests/unit/audioblock.cpp
@@ -3744,6 +3889,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/pcmsilencefiller.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
             $<$<BOOL:${PROMEKI_ENABLE_AAC}>:tests/unit/fdkaaccodec.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_WHISPER}>:tests/unit/whispertranscriptionengine.cpp>
             tests/unit/encodeddesc.cpp
             tests/unit/flvtag.cpp
             tests/unit/fastfont.cpp

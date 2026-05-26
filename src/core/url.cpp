@@ -241,6 +241,16 @@ Result<Url> Url::fromString(const String &s) {
                 url._path = percentDecode(remainder);
         }
 
+        // Preserve the verbatim post-`?` bytes so callers that need
+        // a byte-exact round trip (AWS-signed CDN URLs in particular —
+        // their HMAC-SHA256 signature is computed over a specific
+        // percent-encoded form, and any encode/decode cycle breaks
+        // it) can recover the original encoding via rawQuery() and
+        // emit it back unchanged.  Query mutators clear this so a
+        // URL whose query has been touched programmatically falls
+        // back to canonical re-encoding from the map.
+        url._rawQuery = queryStr;
+
         // Query map.  Empty values (foo=) and bare flags (foo) both
         // map to an empty String — the distinction is preserved by
         // the key's presence in the map either way.
@@ -320,7 +330,15 @@ String Url::toString() const {
                 out += percentEncode(_path, "/:@");
         }
 
-        if (!_query.isEmpty()) {
+        // Query: prefer the verbatim parsed form when it's still
+        // available (signed URLs round-trip; the parser sets it
+        // unconditionally and the mutators clear it).  Fall back to
+        // canonical re-encoding from the map for programmatically
+        // built URLs.
+        if (!_rawQuery.isEmpty()) {
+                out += "?";
+                out += _rawQuery;
+        } else if (!_query.isEmpty()) {
                 out += "?";
                 bool first = true;
                 for (const auto &[k, v] : _query) {
@@ -420,6 +438,56 @@ String Url::redactedString() const {
                 out += "#";
                 out += percentEncode(_fragment, ":/@?");
         }
+        return out;
+}
+
+String Url::briefForLog() const {
+        if (!isValid()) return String();
+
+        String out = _scheme;
+        out += ":";
+
+        if (_hasAuthority) {
+                out += "//";
+                // Userinfo collapses to the marker so the structure
+                // ("there were credentials") is still visible without
+                // exposing the secret bytes.  redactedString preserves
+                // userinfo (round-trippable contract); briefForLog
+                // drops it (log-safe contract).
+                if (!_userInfo.isEmpty()) out += "***@";
+                if (_host.find(':') != String::npos &&
+                    (_host.isEmpty() || _host.cstr()[0] != '[')) {
+                        out += "[";
+                        out += _host;
+                        out += "]";
+                } else {
+                        out += percentEncode(_host, "");
+                }
+                if (_port != PortUnset) {
+                        out += ":";
+                        out += String::number(_port);
+                }
+        }
+
+        // Path: emit canonical percent-encoded form to match the rest
+        // of the URL surface; the absent-path case substitutes "/" so
+        // the log reads as a complete absolute URL.
+        if (_path.isEmpty()) {
+                if (_hasAuthority) out += "/";
+        } else {
+                out += percentEncode(_path, "/:@");
+        }
+
+        // Query indicator: drop the actual bytes regardless of source
+        // (raw or parsed-map) — signed-CDN URLs use provider-specific
+        // parameter names (X-Amz-Signature, X-Goog-Signature, Policy,
+        // Expires, …) that no closed allowlist can keep up with.
+        // The "?…" marker keeps the fact-of-presence visible so an
+        // operator can tell a parameterized request from a bare GET.
+        if (!_rawQuery.isEmpty() || !_query.isEmpty()) out += "?…";
+
+        // Fragment is omitted: it never reaches the server and adds
+        // noise to log lines.
         return out;
 }
 

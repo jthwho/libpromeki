@@ -83,6 +83,10 @@ struct SubtitleImpl {
                 Rect2Di32 region;
                 /// @brief Optional speaker / voice identifier.
                 String speaker;
+                /// @brief Interim-hypothesis marker for progressive
+                ///        cue producers (live ASR, paint-on builds);
+                ///        defaults to @c false (finalised cue).
+                bool partial = false;
                 /// @brief Format-specific extension metadata.
                 Metadata metadata;
 
@@ -587,6 +591,7 @@ const CaptionMode        &Subtitle::mode() const { return _d->mode; }
 int                       Subtitle::rollUpRows() const { return _d->rollUpRows; }
 const Rect2Di32          &Subtitle::region() const { return _d->region; }
 const String             &Subtitle::speaker() const { return _d->speaker; }
+bool                      Subtitle::partial() const { return _d->partial; }
 const Metadata           &Subtitle::metadata() const { return _d->metadata; }
 
 void Subtitle::setStart(const TimeStamp &v) { _d.modify()->start = v; }
@@ -611,6 +616,7 @@ void Subtitle::setMode(const CaptionMode &v) { _d.modify()->mode = v; }
 void Subtitle::setRollUpRows(int v) { _d.modify()->rollUpRows = v; }
 void Subtitle::setRegion(const Rect2Di32 &v) { _d.modify()->region = v; }
 void Subtitle::setSpeaker(const String &v) { _d.modify()->speaker = v; }
+void Subtitle::setPartial(bool v) { _d.modify()->partial = v; }
 void Subtitle::setMetadata(const Metadata &v) { _d.modify()->metadata = v; }
 
 Subtitle Subtitle::wrapped(int maxCols, int maxRows) const {
@@ -640,7 +646,8 @@ bool Subtitle::operator==(const Subtitle &o) const {
         return _d->start == o._d->start && _d->end == o._d->end && _d->spans == o._d->spans
                 && _d->anchor.value() == o._d->anchor.value() && _d->mode.value() == o._d->mode.value()
                 && _d->rollUpRows == o._d->rollUpRows && _d->region == o._d->region
-                && _d->speaker == o._d->speaker && _d->metadata == o._d->metadata;
+                && _d->speaker == o._d->speaker && _d->partial == o._d->partial
+                && _d->metadata == o._d->metadata;
 }
 
 JsonObject Subtitle::toJson() const {
@@ -681,6 +688,9 @@ JsonObject Subtitle::toJson() const {
                 obj.set("region", regionObj);
         }
         if (!_d->speaker.isEmpty()) obj.set("speaker", _d->speaker);
+        // Only emit the partial flag when it's set — keeps the JSON
+        // dump clean for the (vast majority) finalised-cue case.
+        if (_d->partial) obj.set("partial", true);
         if (_d->metadata.size() > 0) {
                 // Metadata exposes a toString() rendering; structured
                 // JSON for Metadata is a separate cleanup (it's
@@ -728,6 +738,7 @@ String Subtitle::toString() const {
 //   int32_t   rollUpRows     (TypeS32 — 0 = encoder default)
 //   Rect2Di32 region         (free-function operator<< template)
 //   String    speaker        (TypeString)
+//   bool      partial        (TypeBool — interim-hypothesis marker)
 //   Metadata  metadata       (VariantDatabase template operator<<)
 //   List<SubtitleSpan> spans (TypeList of TypeSubtitleSpan)
 //
@@ -742,6 +753,7 @@ Error Subtitle::writeToStream(DataStream &s) const {
         s << static_cast<int32_t>(rollUpRows());
         s << region();
         s << speaker();
+        s << partial();
         s << metadata();
         s << spans();
         return s.status() == DataStream::Ok ? Error::Ok : s.toError();
@@ -756,14 +768,17 @@ Result<Subtitle> Subtitle::readFromStream<1>(DataStream &s) {
         int32_t            rollUpRows  = 0;
         Rect2Di32          region;
         String             speaker;
+        bool               partial = false;
         Metadata           metadata;
         SubtitleSpan::List spans;
-        s >> start >> end >> anchorValue >> modeValue >> rollUpRows >> region >> speaker >> metadata >> spans;
+        s >> start >> end >> anchorValue >> modeValue >> rollUpRows >> region >> speaker >> partial >> metadata
+                >> spans;
         if (s.status() != DataStream::Ok) return makeError<Subtitle>(s.toError());
         Subtitle sub(start, end, std::move(spans), SubtitleAnchor(anchorValue), region, std::move(speaker),
                      std::move(metadata));
         sub.setMode(CaptionMode(modeValue));
         sub.setRollUpRows(static_cast<int>(rollUpRows));
+        sub.setPartial(partial);
         return makeResult(std::move(sub));
 }
 

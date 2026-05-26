@@ -516,6 +516,13 @@ void WebSocket::parseClientHandshakeResponse() {
         }
         _impl->handshakeComplete = true;
         _state = Connected;
+        // One-line connect breadcrumb: URL (briefForLog so signed
+        // /token query strings stay out of the log) + subprotocol
+        // chosen by the server (if any).  Mirrors HttpClient's
+        // "done" breadcrumb for stream lifetime symmetry.
+        promekiDebug("WebSocket: connected to %s subprotocol=\"%s\"",
+                     _url.briefForLog().cstr(),
+                     _negotiatedSubprotocol.cstr());
         connectedSignal.emit();
 }
 
@@ -824,8 +831,16 @@ void WebSocket::finalizeClose(Error err) {
                 _socket = nullptr;
         }
 
-        if (err.isError()) errorOccurredSignal.emit(err);
+        if (err.isError()) {
+                promekiWarn("WebSocket: disconnected from %s with error: %s",
+                            _url.briefForLog().cstr(), err.name().cstr());
+                errorOccurredSignal.emit(err);
+        }
         if (!_impl->disconnectedEmitted) {
+                if (err.isOk()) {
+                        promekiDebug("WebSocket: disconnected from %s (clean)",
+                                     _url.briefForLog().cstr());
+                }
                 _impl->disconnectedEmitted = true;
                 disconnectedSignal.emit();
         }

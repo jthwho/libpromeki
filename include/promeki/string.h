@@ -1270,6 +1270,33 @@ class String {
                 unsigned int toUInt(Error *err = nullptr) const;
 
                 /**
+                 * @brief Converts the string to a 64-bit signed integer.
+                 *
+                 * Recognises the same base prefixes as @ref toInt
+                 * (@c "0x" for hex, @c "0b" for binary, plain
+                 * leading-zero octal) and strips ASCII numeric
+                 * separators (@c '_' and @c ',') so callers do not
+                 * have to pre-clean parsed header / config values.
+                 *
+                 * @param err Optional error output.  Set to
+                 *            @ref Error::Invalid for garbled input or
+                 *            @ref Error::OutOfRange when the value
+                 *            does not fit in @c int64_t.
+                 * @return The integer value, or @c 0 on failure.
+                 */
+                int64_t toInt64(Error *err = nullptr) const;
+
+                /**
+                 * @brief Converts the string to a 64-bit unsigned integer.
+                 *
+                 * Same base / separator handling as @ref toInt64.
+                 *
+                 * @param err Optional error output.
+                 * @return The unsigned integer value, or @c 0 on failure.
+                 */
+                uint64_t toUInt64(Error *err = nullptr) const;
+
+                /**
                  * @brief Converts the string to a double.
                  * @param err Optional error output.
                  * @return The double value, or 0.0 on failure.

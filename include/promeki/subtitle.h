@@ -222,6 +222,13 @@ DataStream &operator>>(DataStream &stream, SubtitleSpan &span);
  *  - @ref anchor — 9-position anchor (matches ASS @c \\anN).
  *  - @ref region — optional pixel-space bounding box hint.
  *  - @ref speaker — accessibility / voice attribution.
+ *  - @ref partial — @c true when this cue is an interim hypothesis
+ *                   produced by a progressive cue source (live ASR,
+ *                   paint-on caption builds), @c false (the default)
+ *                   for a finalised cue.  Format parsers (SubRip,
+ *                   ASS, WebVTT, CEA-608 / CEA-708) always produce
+ *                   finalised cues; only progressive producers ever
+ *                   flip this on.
  *  - @ref metadata — escape hatch for format-specific keys carried
  *                    as a @ref Metadata (typed key/value store).
  *
@@ -383,6 +390,25 @@ class Subtitle {
                 /** @brief Speaker / voice identifier; empty when absent. */
                 const String &speaker() const;
 
+                /**
+                 * @brief @c true when this cue is an interim hypothesis
+                 *        rather than a finalised cue.
+                 *
+                 * Progressive cue producers — live transcription
+                 * engines emitting partials as audio accumulates,
+                 * future paint-on caption builders, two-pass ASR that
+                 * re-decodes earlier audio — flip this on for cues
+                 * whose content may still be revised.  A subsequent
+                 * cue with the same (or overlapping) time window and
+                 * @ref partial @c false supersedes the partial.
+                 *
+                 * Defaults to @c false; format parsers (SubRip, ASS,
+                 * WebVTT, CEA-608 / CEA-708) always produce finalised
+                 * cues and do not touch this field.  Renderers and
+                 * re-emitters may honour or skip partials by policy.
+                 */
+                bool partial() const;
+
                 /** @brief Format-specific extension metadata. */
                 const Metadata &metadata() const;
 
@@ -407,6 +433,7 @@ class Subtitle {
                 void setRollUpRows(int v);
                 void setRegion(const Rect2Di32 &v);
                 void setSpeaker(const String &v);
+                void setPartial(bool v);
                 void setMetadata(const Metadata &v);
 
                 // -- Layout helpers ---------------------------------------
@@ -474,9 +501,9 @@ class Subtitle {
                  *        @ref PROMEKI_DATATYPE member-API path.
                  *
                  * Wire body: start, end, anchor, mode, rollUpRows,
-                 * region, speaker, metadata, spans — each field
-                 * carrying its own DataType tag.  Cached @ref text is
-                 * reconstructed from spans on read.
+                 * region, speaker, partial, metadata, spans — each
+                 * field carrying its own DataType tag.  Cached
+                 * @ref text is reconstructed from spans on read.
                  */
                 Error writeToStream(DataStream &s) const;
 

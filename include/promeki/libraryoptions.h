@@ -166,6 +166,44 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                                            .setDefault(String())
                                            .setDescription("Override for Dir::ipc() (empty = platform default)."));
 
+                /// @brief String — override for the path returned by
+                /// @ref Dir::models (empty = platform default).
+                ///
+                /// The models directory holds large auxiliary data
+                /// files used by ML-backed features — speech-to-text
+                /// weights for @ref TranscriptionEngine, image
+                /// super-resolution networks, etc.  Each feature owns
+                /// its own sub-directory (e.g. @c whisper/ for the
+                /// vendored whisper.cpp backend).
+                ///
+                /// Defaults follow the platform convention:
+                ///  - Linux:   @c $XDG_DATA_HOME/promeki/models
+                ///             (or @c $HOME/.local/share/promeki/models)
+                ///  - macOS:   @c $HOME/Library/Application&nbsp;Support/promeki/models
+                ///  - Windows: @c %LOCALAPPDATA%\\promeki\\models
+                ///
+                /// Set via code:
+                ///
+                /// @code
+                /// LibraryOptions::instance().set(
+                ///     LibraryOptions::ModelsDir,
+                ///     String("/var/lib/promeki/models"));
+                /// @endcode
+                ///
+                /// ...or via the environment:
+                ///
+                /// @code
+                /// export PROMEKI_OPT_ModelsDir=/var/lib/promeki/models
+                /// @endcode
+                ///
+                /// The override is returned verbatim — the directory
+                /// is not auto-created.
+                PROMEKI_DECLARE_ID(ModelsDir,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("Override for Dir::models() (empty = platform default)."));
+
                 // ============================================================
                 // Termination signal handling
                 // ============================================================
