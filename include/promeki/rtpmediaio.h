@@ -275,9 +275,8 @@ class Thread;
  *  - **Config key** — if @ref MediaConfig::RtpSaveSdpPath is set,
  *    the SDP text is written to that file before the first frame
  *    is transmitted.
- *  - **Parameterized command** — callers can issue a
- *    @c MediaIOCommandParams with @c name == "GetSdp" and read
- *    the SDP text from the result under the same key name.
+ *  - **Parameterized command** — callers can @c get(ParamSdp) via
+ *    @ref sendParams and read the SDP text from that action's result.
  *
  * Both paths use the same internal builder so the SDP on disk and
  * the SDP returned from a live task are byte-identical.
@@ -534,9 +533,12 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                  *         until the first SR has arrived. */
                 static inline const MediaIOStats::ID StatsRxFirstSrLatencyUs{"RxFirstSrLatencyUs"};
 
-                /** @brief Params command name: return the SDP text in @c result["Sdp"]. */
-                static inline const MediaIOParamsID ParamGetSdp{"GetSdp"};
-                /** @brief Key used in @c GetSdp result. */
+                /**
+                 * @brief Read-only param id: the live session description as text.
+                 *
+                 * @c get(ParamSdp) via @ref sendParams resolves with the
+                 * SDP string; @c set is not supported.
+                 */
                 static inline const MediaIOParamsID ParamSdp{"Sdp"};
 
                 /** @brief Constructs an RtpMediaIO. */
@@ -656,7 +658,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
-                Error executeCmd(MediaIOCommandParams &cmd) override;
+                Error getParam(MediaIOParamsID id, Variant &out) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
                 /**
                  * @brief Accepts an external pacing clock for writer mode.
@@ -1822,7 +1824,7 @@ class RtpMediaIO : public DedicatedThreadMediaIO {
                 // open time.  Reader mode leaves this empty (the
                 // reader consumes an externally-supplied SDP via
                 // RtpSdp); writer mode populates it so the
-                // GetSdp params command and the RtpSaveSdpPath
+                // get(ParamSdp) param and the RtpSaveSdpPath
                 // export path can serve it.
                 SdpSession _sdpSession;
                 String     _sdpPath;

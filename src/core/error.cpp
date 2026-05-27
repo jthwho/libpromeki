@@ -118,7 +118,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(InsufficientContext, NONE,
                      "Required context (e.g. ATC parse rate hint) not stamped on the packet's meta or in the translate config"),
         DEFINE_ERROR(InvalidChecksum, NONE,
-                     "Stored ST 291 checksum word does not match the value recomputed over the packet (StrictValidate)")};
+                     "Stored ST 291 checksum word does not match the value recomputed over the packet (StrictValidate)"),
+        DEFINE_ERROR(TransactionAborted, NONE,
+                     "Action belonged to an all-or-nothing parameter block that was aborted; no side effect was committed")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

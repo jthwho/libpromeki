@@ -780,31 +780,40 @@ class MediaIO : public ObjectBase {
                 void setConfig(const Config &config) { _config = config; }
 
                 /**
-                 * @brief Sends a backend-specific parameterized command.
+                 * @brief Runs a backend-specific get/set parameter block.
                  *
                  * Parameterized commands let backends expose operations
                  * beyond the standard open/close/read/write/seek set —
-                 * for example, setting device gain, querying device
-                 * temperature, or retrieving codec parameters.  The
-                 * meaning of @p name and the contents of @p params and
-                 * the resolved @ref MediaIOParams output are entirely
-                 * backend-defined.
+                 * for example, reading or writing device gain, querying
+                 * device temperature, or retrieving codec parameters.
+                 * @p block is an ordered list of @c Get / @c Set actions
+                 * against backend-defined parameter ids; the meaning of
+                 * those ids is entirely backend-defined.
                  *
-                 * Per the always-async API rule, the result is
-                 * delivered through the returned request — callers
-                 * write @c io->sendParams("Foo").wait() to read it
-                 * synchronously, or attach a @c .then() continuation.
-                 * Backends that don't recognize @p name return
-                 * @c Error::NotSupported.
+                 * Per the always-async API rule the result is delivered
+                 * through the returned request.  @ref MediaIORequest::wait
+                 * yields the aggregate @ref Error; per-action results are
+                 * read from the command's (mutated) block:
+                 * @code
+                 * MediaIOParams block;
+                 * block.set(GainKey, 0.5);
+                 * block.get(GainKey);
+                 * auto req = io->sendParams(block);
+                 * req.wait();
+                 * const MediaIOParams &done = req.commandAs<MediaIOCommandParams>()->block;
+                 * Result<Variant> gain = done.result(1);
+                 * @endcode
                  *
-                 * @param name   Operation name.
-                 * @param params Input parameters (may be empty).
-                 * @return A request resolving with the operation's
-                 *         output @ref MediaIOParams plus an
-                 *         @ref Error.  The @c MediaIOParams payload
-                 *         is empty on failure.
+                 * Backends that don't recognize a parameter id resolve
+                 * that action with @c Error::NotSupported.  See
+                 * @ref MediaIOParams for atomic (all-or-nothing) semantics.
+                 *
+                 * @param block Ordered get/set actions (may be empty).
+                 * @return A request resolving with the aggregate
+                 *         @ref Error; @c Error::Ok iff every action
+                 *         succeeded.
                  */
-                MediaIORequest sendParams(const String &name, const MediaIOParams &params = MediaIOParams());
+                MediaIORequest sendParams(const MediaIOParams &block);
 
                 /**
                  * @brief Queries the cumulative-aggregate runtime statistics.

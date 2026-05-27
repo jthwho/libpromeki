@@ -14,7 +14,9 @@
 #include <promeki/string.h>
 #include <promeki/frame.h>
 #include <promeki/audiodesc.h>
+#if PROMEKI_ENABLE_SRC
 #include <promeki/audioresampler.h>
+#endif
 #include <promeki/videopayload.h>
 #include <promeki/pcmaudiopayload.h>
 #include <promeki/framecount.h>
@@ -426,8 +428,12 @@ class FrameSync {
                 int64_t _pendingFrameSyncDrops = 0;
                 int64_t _frameSyncRepeatIndex = 0;
 
-                // Audio resampler pipeline.
+                // Audio resampler pipeline.  Only present when libsamplerate
+                // (PROMEKI_ENABLE_SRC) is compiled in; without it the audio
+                // path falls back to a 1:1 pass-through (no rate conversion).
+#if PROMEKI_ENABLE_SRC
                 AudioResampler::UPtr       _resampler;
+#endif
                 List<PcmAudioPayload::Ptr> _audioInput;               // pending input audio, FIFO
                 int64_t                    _audioSamplesConsumed = 0; // of current front audio
 

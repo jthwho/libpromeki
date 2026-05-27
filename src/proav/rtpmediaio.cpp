@@ -4949,14 +4949,13 @@ Error RtpMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         return Error::Ok;
 }
 
-Error RtpMediaIO::executeCmd(MediaIOCommandParams &cmd) {
-        if (cmd.name == ParamGetSdp.name()) {
-                // The GetSdp command returns the live session
-                // description as text.  Callers that want the
-                // structured form should set up their own
-                // SdpSession — the RTP backend doesn't currently
-                // expose a typed variant-returning params command.
-                cmd.output.set(ParamSdp, _sdpSession.toString());
+Error RtpMediaIO::getParam(MediaIOParamsID id, Variant &out) {
+        if (id == ParamSdp) {
+                // Returns the live session description as text.  Callers
+                // that want the structured form should set up their own
+                // SdpSession — the RTP backend doesn't currently expose a
+                // typed variant-returning param.
+                out = _sdpSession.toString();
                 return Error::Ok;
         }
         return Error::NotSupported;

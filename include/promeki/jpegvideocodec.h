@@ -9,7 +9,7 @@
 
 
 #include <promeki/config.h>
-#if PROMEKI_ENABLE_PROAV
+#if PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_JPEG
 #include <promeki/namespace.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
@@ -146,4 +146,4 @@ class JpegVideoDecoder : public VideoDecoder {
 
 PROMEKI_NAMESPACE_END
 
-#endif // PROMEKI_ENABLE_PROAV
+#endif // PROMEKI_ENABLE_PROAV && PROMEKI_ENABLE_JPEG

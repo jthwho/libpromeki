@@ -367,6 +367,13 @@ option(PROMEKI_USE_PCH          "Use precompiled headers to speed up incremental
 # PROMEKI_BUILD_STATS (stats wrapper times the ccache call, so cache hits
 # log near-zero wall + small RSS).
 option(PROMEKI_USE_CCACHE       "Use ccache as a compiler launcher when available" ON)
+# Split debug symbols out of every shared library we build into a sibling
+# build/lib-debug/ tree, leaving a stripped (but still backtrace-capable)
+# .so in build/lib.  Keeps build/bin + build/lib a lean, copyable runtime
+# bundle while the symbols stay retrievable on demand.  No-op for build
+# types without debug info (Release / MinSizeRel) and on non-ELF
+# toolchains.  See cmake/PromekiSplitDebug.cmake.
+option(PROMEKI_SPLIT_DEBUG      "Split debug symbols into build/lib-debug, shipping stripped shared libraries" ON)
 
 # Compiler sanitizer: applied as both compile and link flags to every target
 # the build defines (library + executables).  Empty = none.  Useful values
@@ -662,6 +669,11 @@ if(PROMEKI_USE_CCACHE)
         # compiles that use precompiled headers — without it, every PCH-
         # consuming TU is marked uncacheable and skipped.  Injected via
         # /usr/bin/env so we don't have to touch the user's ~/.ccache/config.
+        #
+        # pch_defines also makes ccache blind to #define changes that arrive
+        # through a PCH, so config.h flag changes can otherwise serve a stale
+        # baked-in PCH.  The PROMEKI_CONFIG_SIG define (added where config.h is
+        # generated) folds a config.h hash into the compile key to compensate.
         find_program(PROMEKI_ENV_BIN NAMES env PATHS /usr/bin /bin NO_DEFAULT_PATH)
         if(PROMEKI_ENV_BIN)
             set(_ccache_chain "${PROMEKI_ENV_BIN};CCACHE_SLOPPINESS=pch_defines,time_macros;${PROMEKI_CCACHE}")
@@ -1053,6 +1065,28 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h
 )
 
+# Precompiled-header / ccache staleness guard ##################################
+#
+# config.h is baked into the precompiled header (the PCH pulls in namespace.h,
+# error.h, string.h, … and every one of those #includes config.h).  ccache is
+# run with CCACHE_SLOPPINESS=pch_defines (see the ccache launcher block above),
+# which is *required* to cache PCH-consuming TUs at all — but it makes ccache
+# blind to #define changes that arrive through a PCH.  So a reconfigure that
+# flips a PROMEKI_ENABLE_* flag regenerates config.h yet ccache can hand a TU
+# the previously-cached object still baked with the old flag values.  That
+# surfaces either as a spurious "PROMEKI_ENABLE_X redefined" warning (a fresh
+# config.h disagreeing with a stale baked-in PCH value) or, worse, as silently
+# miscompiled feature gates.
+#
+# Fold a hash of the generated config.h into every PCH-consuming compile as a
+# command-line define.  ccache *does* key on -D options even under pch_defines,
+# so any change to a baked flag changes PROMEKI_CONFIG_SIG, which busts the
+# cache and forces both the PCH and its dependent objects to rebuild — while
+# no-op rebuilds still hit the cache.  The value is never read by code; it
+# exists purely to make the feature configuration part of the compile key.
+file(SHA256 ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h PROMEKI_CONFIG_SIG)
+string(SUBSTRING ${PROMEKI_CONFIG_SIG} 0 16 PROMEKI_CONFIG_SIG)
+
 # Output directories ###########################################################
 
 # build/bin + build/lib together form a self-contained, copyable runtime
@@ -1066,6 +1100,33 @@ configure_file(
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE STRING "Runtime directory")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Library directory")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib-static)
+
+# Split-out debug symbols land here — a third sibling of lib/ and
+# lib-static/, deliberately OUTSIDE build/lib so the bin/+lib/ runtime
+# bundle stays symbol-free and copyable on its own.  Both our own libraries
+# (promeki_split_debug, PromekiSplitDebug.cmake) and the vendored / SRT
+# shared objects (promeki_strip_so, PromekiStripSo.cmake) drop their .debug
+# files here.
+set(PROMEKI_DEBUG_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib-debug)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiSplitDebug.cmake)
+
+# Single gate for the whole debug-splitting feature: enabled, ELF toolchain
+# (Mach-O uses dSYM, a different mechanism), objcopy available, and a build
+# type that actually emits debug info — Release / MinSizeRel compile without
+# -g, so there is nothing to split.  Computed once and reused by the
+# first-party helper, the vendored-dep stager, the SRT bundler, and the
+# install rules.
+set(PROMEKI_SPLIT_DEBUG_ACTIVE FALSE)
+if(PROMEKI_SPLIT_DEBUG AND UNIX AND NOT APPLE AND CMAKE_OBJCOPY)
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" _promeki_bt_upper)
+    if(_promeki_bt_upper MATCHES "^(DEBUG|DEVRELEASE|RELWITHDEBINFO)$")
+        set(PROMEKI_SPLIT_DEBUG_ACTIVE TRUE)
+        message(STATUS "PROMEKI_SPLIT_DEBUG: debug symbols -> ${PROMEKI_DEBUG_OUTPUT_DIRECTORY}")
+    else()
+        message(STATUS "PROMEKI_SPLIT_DEBUG: build type '${CMAKE_BUILD_TYPE}' carries no debug info; nothing to split")
+    endif()
+    unset(_promeki_bt_upper)
+endif()
 
 # Runtime library search path ($ORIGIN-relative RPATH) ########################
 #
@@ -1549,6 +1610,13 @@ if(PROMEKI_ENABLE_SRT)
         # symbol localized via --exclude-libs.  See promeki_srt_bundle.cmake
         # for the details.  We link with the C++ compiler driver (not ld
         # directly) so libstdc++ — SRT is C++ — is pulled in correctly.
+        # OBJCOPY is passed only when split-debug is active, so the bundler
+        # strips the result and saves its symbols to build/lib-debug.
+        if(PROMEKI_SPLIT_DEBUG_ACTIVE)
+            set(_promeki_srt_objcopy "${CMAKE_OBJCOPY}")
+        else()
+            set(_promeki_srt_objcopy "")
+        endif()
         add_custom_command(
             OUTPUT ${PROMEKI_SRT_BUNDLE_SO}
             DEPENDS srt_ep srt_mbedtls_ep
@@ -1565,6 +1633,8 @@ if(PROMEKI_ENABLE_SRT)
                 -DMBEDX509_LIBA=${PROMEKI_SRT_MBEDX509_LIBA}
                 -DMBEDCRYPTO_LIBA=${PROMEKI_SRT_MBEDCRYPTO_LIBA}
                 -DCXX_TOOL=${CMAKE_CXX_COMPILER}
+                -DOBJCOPY=${_promeki_srt_objcopy}
+                -DDEBUGDIR=${PROMEKI_DEBUG_OUTPUT_DIRECTORY}
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_srt_bundle.cmake
             COMMENT "Linking SRT + isolated mbedTLS-3.6 into ${PROMEKI_SRT_BUNDLE_SONAME} (mbedtls symbols localized)"
             VERBATIM
@@ -2399,6 +2469,13 @@ endif()
 set(PROMEKI_HEADERS
     include/promeki/algorithm.h
     include/promeki/amf0.h
+    # Network address / SDP value types — core types, not NETWORK-gated.
+    # See the matching block in PROMEKI_SOURCES for the rationale.
+    include/promeki/ipv4address.h
+    include/promeki/ipv6address.h
+    include/promeki/eui64.h
+    include/promeki/macaddress.h
+    include/promeki/sdpsession.h
     include/promeki/ansistream.h
     include/promeki/application.h
     include/promeki/array.h
@@ -2570,6 +2647,18 @@ set(PROMEKI_HEADERS
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    # Network address / SDP value types.  These live under src/network/ but
+    # have no networking (socket) dependency — they are plain value types and
+    # text-format (de)serializers wired into the core Variant/DataType system
+    # (their headers are guarded #if PROMEKI_ENABLE_CORE) and referenced by
+    # core (Variant specs) and pro A/V (MediaConfig keys, AudioDesc/ImageDesc/
+    # AncDesc::fromSdp/toSdp) regardless of PROMEKI_ENABLE_NETWORK.  They must
+    # therefore build with the core library, not behind the NETWORK gate.
+    src/network/ipv4address.cpp
+    src/network/ipv6address.cpp
+    src/network/eui64.cpp
+    src/network/macaddress.cpp
+    src/network/sdpsession.cpp
     src/core/ansistream.cpp
     src/core/application.cpp
     src/core/array.cpp
@@ -2713,15 +2802,12 @@ set(PROMEKI_SOURCES
 if(PROMEKI_ENABLE_NETWORK)
     list(APPEND PROMEKI_HEADERS
         include/promeki/abstractsocket.h
-        include/promeki/ipv4address.h
         include/promeki/ipv4subnet.h
-        include/promeki/ipv6address.h
         include/promeki/ipv6subnet.h
         include/promeki/klvframe.h
         include/promeki/localserver.h
         include/promeki/localsocket.h
         include/promeki/loopbacktransport.h
-        include/promeki/macaddress.h
         include/promeki/multicastmanager.h
         include/promeki/multicastreceiver.h
         include/promeki/networkaddress.h
@@ -2776,7 +2862,6 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtmpmediaio.h
         include/promeki/framebridge.h
         include/promeki/framebridgemediaio.h
-        include/promeki/sdpsession.h
         include/promeki/socketaddress.h
         include/promeki/sslcontext.h
         include/promeki/tcpserver.h
@@ -2787,16 +2872,12 @@ if(PROMEKI_ENABLE_NETWORK)
     list(APPEND PROMEKI_SOURCES
         src/network/abstractsocket.cpp
         src/network/sslcontext.cpp
-        src/network/ipv4address.cpp
         src/network/ipv4subnet.cpp
-        src/network/ipv6address.cpp
         src/network/ipv6subnet.cpp
-        src/network/eui64.cpp
         src/network/klvframe.cpp
         src/network/localserver.cpp
         src/network/localsocket.cpp
         src/network/loopbacktransport.cpp
-        src/network/macaddress.cpp
         src/network/multicastmanager.cpp
         src/network/multicastreceiver.cpp
         src/network/networkaddress.cpp
@@ -2851,7 +2932,6 @@ if(PROMEKI_ENABLE_NETWORK)
         src/proav/rtmpmediaio.cpp
         src/proav/framebridge.cpp
         src/proav/framebridgemediaio.cpp
-        src/network/sdpsession.cpp
         src/network/socketaddress.cpp
         src/network/tcpserver.cpp
         src/network/tcpsocket.cpp
@@ -2995,7 +3075,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
         include/promeki/jpeggeometryprobe.h
-        include/promeki/jpegvideocodec.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
@@ -3127,7 +3206,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefileio_tga.cpp
         src/proav/imagefileio_sgi.cpp
         src/proav/imagefileio_pnm.cpp
-        src/proav/jpegvideocodec.cpp
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
@@ -3190,11 +3268,18 @@ if(PROMEKI_ENABLE_PROAV)
 
     # Feature-gated proav sources
     if(PROMEKI_ENABLE_JPEG)
-        # jpegvideocodec is always included when proav is on; this gate
-        # controls linking against libjpeg (codec uses it internally
-        # via the libjpeg-turbo plumbing folded into JpegVideoEncoder /
-        # JpegVideoDecoder).
-        list(APPEND PROMEKI_SOURCES src/proav/imagefileio_jpeg.cpp)
+        # jpegvideocodec.cpp #includes <jpeglib.h> and calls libjpeg-turbo
+        # directly, so the whole file (and its header) is gated on
+        # PROMEKI_ENABLE_JPEG — there is no fallback without libjpeg.  The
+        # codec self-registers into the VideoEncoder/VideoDecoder registries,
+        # so when JPEG is off it is simply absent at runtime; consumers that
+        # go through VideoCodec(VideoCodec::JPEG) (e.g. MjpegStreamMediaIO)
+        # get a clean createEncoder failure rather than a link error.
+        list(APPEND PROMEKI_HEADERS include/promeki/jpegvideocodec.h)
+        list(APPEND PROMEKI_SOURCES
+            src/proav/jpegvideocodec.cpp
+            src/proav/imagefileio_jpeg.cpp
+        )
     endif()
     if(PROMEKI_ENABLE_JPEGXS)
         # JPEG XS has no fallback — the entire file is gated, not just
@@ -3363,6 +3448,7 @@ set_target_properties(promeki PROPERTIES
     OUTPUT_NAME promeki
     EXPORT_NAME promeki
 )
+promeki_split_debug(promeki)
 
 # Vendored shared dependencies shipped beside libpromeki.so ###################
 #
@@ -3405,12 +3491,24 @@ endif()
 # build graph (promeki links libsndfile/opus/fdk-aac, which depend on the
 # rest), so the files exist by the time this POST_BUILD runs.  The SRT
 # bundle is emitted into build/lib directly and so needs no staging.
+#
+# When split-debug is active, OBJCOPY + DEBUGDIR are passed too, so the
+# stager strips each staged .so (--strip-unneeded) and saves its symbols
+# into build/lib-debug.  When inactive they are empty and the stager just
+# copies.
 if(PROMEKI_SHIPPED_SO_PATTERNS)
+    if(PROMEKI_SPLIT_DEBUG_ACTIVE)
+        set(_promeki_stage_objcopy "${CMAKE_OBJCOPY}")
+    else()
+        set(_promeki_stage_objcopy "")
+    endif()
     add_custom_command(TARGET promeki POST_BUILD
         COMMAND ${CMAKE_COMMAND}
             -DSRC=${PROMEKI_THIRDPARTY_PREFIX}/lib
             -DDST=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
             "-DPATTERNS=${PROMEKI_SHIPPED_SO_PATTERNS}"
+            -DOBJCOPY=${_promeki_stage_objcopy}
+            -DDEBUGDIR=${PROMEKI_DEBUG_OUTPUT_DIRECTORY}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/promeki_stage_shared_deps.cmake
         COMMENT "Staging vendored shared dependencies into ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
         VERBATIM)
@@ -3531,6 +3629,8 @@ set(PROMEKI_PCH_HEADERS
 )
 if(PROMEKI_USE_PCH)
     target_precompile_headers(promeki PRIVATE ${PROMEKI_PCH_HEADERS})
+    # Bust ccache when the baked-in config.h changes — see PROMEKI_CONFIG_SIG.
+    target_compile_definitions(promeki PRIVATE PROMEKI_CONFIG_SIG=0x${PROMEKI_CONFIG_SIG})
 endif()
 
 # Vendored thirdparty include paths and link dependencies
@@ -3799,6 +3899,7 @@ if(PROMEKI_BUILD_TUI)
     target_link_libraries(promeki-tui PUBLIC promeki)
     target_link_libraries(promeki-tui PRIVATE promeki::warnings)
     target_compile_definitions(promeki-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
+    promeki_split_debug(promeki-tui)
 endif()
 
 # SDL Library ##################################################################
@@ -3843,6 +3944,7 @@ if(PROMEKI_BUILD_SDL)
     target_link_libraries(promeki-sdl PUBLIC promeki SDL3::SDL3)
     target_link_libraries(promeki-sdl PRIVATE promeki::warnings)
     target_compile_definitions(promeki-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
+    promeki_split_debug(promeki-sdl)
 endif()
 
 # Utility Applications #########################################################
@@ -3893,14 +3995,25 @@ install(TARGETS promeki
 # libpromeki.so and are found at runtime through its $ORIGIN RPATH.
 #
 # These are IMPORTED targets (not built by install(TARGETS)), so we copy
-# them out of the thirdparty prefix with install(DIRECTORY ... PATTERN),
-# which preserves the real-file → SONAME → linker-name symlink chain.
-# PROMEKI_SHIPPED_SO_PATTERNS is the same list used to stage them into
-# build/lib (built where the promeki target is defined); a library is
-# shipped only when built from vendored source, so for a system copy the
-# prefix simply has nothing matching and that pattern is a no-op.
+# them with install(DIRECTORY ... PATTERN), which preserves the real-file →
+# SONAME → linker-name symlink chain.  PROMEKI_SHIPPED_SO_PATTERNS is the
+# same list used to stage them into build/lib (built where the promeki
+# target is defined); a library is shipped only when built from vendored
+# source, so for a system copy the source dir simply has nothing matching
+# and that pattern is a no-op.
+#
+# Source dir: when split-debug is active we install the already-stripped
+# staged copies from build/lib (so installed vendored libs are stripped too,
+# and their .debug files ship via the debug component below); otherwise we
+# take the pristine originals straight from the thirdparty prefix.  Both
+# directories carry the identical symlink chain.
+if(PROMEKI_SPLIT_DEBUG_ACTIVE)
+    set(_promeki_shipped_so_src ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+else()
+    set(_promeki_shipped_so_src ${PROMEKI_THIRDPARTY_PREFIX}/lib)
+endif()
 foreach(_pat ${PROMEKI_SHIPPED_SO_PATTERNS})
-    install(DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/lib/
+    install(DIRECTORY ${_promeki_shipped_so_src}/
         DESTINATION ${CMAKE_INSTALL_LIBDIR}
         FILES_MATCHING PATTERN "${_pat}")
 endforeach()
@@ -3912,6 +4025,21 @@ if(PROMEKI_ENABLE_SRT AND NOT PROMEKI_USE_SYSTEM_SRT)
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+# Split-out debug symbols (build/lib-debug/*.debug).  Every installed
+# library — promeki itself, the vendored deps, and the SRT bundle — is
+# already stripped (install(TARGETS) copies the post-build .so; the vendored
+# / SRT installs source the stripped build/lib copies above).  Ship the
+# matching .debug files into <libdir>/debug as a separate "debug" component
+# that is EXCLUDE_FROM_ALL — a default `cmake --install` stays lean;
+# `cmake --install . --component debug` pulls them in when wanted.
+if(PROMEKI_SPLIT_DEBUG_ACTIVE)
+    install(DIRECTORY ${PROMEKI_DEBUG_OUTPUT_DIRECTORY}/
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/debug
+        COMPONENT debug
+        EXCLUDE_FROM_ALL
+        FILES_MATCHING PATTERN "*.debug")
+endif()
+
 # Install headers (flat under promeki/, excluding tui and sdl subdirs)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
@@ -3921,8 +4049,14 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/
     PATTERN "*.h.in" EXCLUDE
 )
 
-# Install generated config.h
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h
+# Install generated headers.  These live under the build tree, not the
+# source tree, so the source-dir glob above does not see them — they must
+# be installed explicitly.  buildident.h carries PROMEKI_BUILD_IDENT and
+# the PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT() macro that downstream apps
+# include to detect stale binaries, so it has to ship with the package.
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/buildident.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
 )
 
@@ -4373,8 +4507,8 @@ if(PROMEKI_BUILD_TESTS)
             $<$<BOOL:${PROMEKI_ENABLE_WHISPER}>:tests/unit/whispertranscriptionengine.cpp>
             tests/unit/encodeddesc.cpp
             tests/unit/flvtag.cpp
-            tests/unit/fastfont.cpp
-            tests/unit/basicfont.cpp
+            $<$<BOOL:${PROMEKI_ENABLE_FREETYPE}>:tests/unit/fastfont.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_FREETYPE}>:tests/unit/basicfont.cpp>
             tests/unit/debugmediafile.cpp
             tests/unit/frame.cpp
             tests/unit/framebridge.cpp
@@ -4392,7 +4526,6 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/imagefileio_pnm.cpp
             tests/unit/imgseq.cpp
             tests/unit/jpeggeometryprobe.cpp
-            tests/unit/jpegvideocodec.cpp
             tests/unit/ltcdecoder.cpp
             tests/unit/ltcencoder.cpp
             tests/unit/mediadesc.cpp
@@ -4400,6 +4533,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaioallocator.cpp
             tests/unit/mediaioclock.cpp
             tests/unit/mediaiodescription.cpp
+            tests/unit/mediaioparams.cpp
             tests/unit/mediaioportgroup.cpp
             tests/unit/mediaiorequest.cpp
             tests/unit/mediaio_bridges.cpp
@@ -4459,6 +4593,7 @@ if(PROMEKI_BUILD_TESTS)
         endif()
         if(PROMEKI_ENABLE_JPEG)
             list(APPEND UNITTEST_SOURCES
+                tests/unit/jpegvideocodec.cpp
                 tests/unit/imagefileio_jpeg.cpp
             )
         endif()
@@ -4567,6 +4702,8 @@ if(PROMEKI_BUILD_TESTS)
             <promeki/pixelformat.h>
             <promeki/metadata.h>
         )
+        # Bust ccache when the baked-in config.h changes — see PROMEKI_CONFIG_SIG.
+        target_compile_definitions(unittest-promeki PRIVATE PROMEKI_CONFIG_SIG=0x${PROMEKI_CONFIG_SIG})
         set_source_files_properties(tests/unit/doctest_main.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
     endif()
     add_test(NAME unittest-promeki COMMAND unittest-promeki)

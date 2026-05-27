@@ -349,21 +349,37 @@ req.cancel();
 
 ## Parameterized commands {#mediaio_user_params}
 
-For backend-specific RPCs (set device gain, query temperature,
-trigger a one-shot, …), use `sendParams`. The `name` and the
-`MediaIOParams` payload are entirely backend-defined:
+For backend-specific parameters (read/write device gain, query
+temperature, …), use `sendParams` with a `MediaIOParams` block — an
+ordered list of `get` / `set` actions against backend-defined
+parameter ids. The framework runs the block and writes each action's
+result back in place. Read results from the resolved command:
 
 ```cpp
-MediaIOParams params;
-params.set(SomeBackend::ChannelID, 0);
-MediaIORequest req = io->sendParams("SetGain", params);
+MediaIOParams block;
+block.set(SomeBackend::GainID, 0.5);   // write
+block.get(SomeBackend::GainID);        // read back what was accepted
+
+MediaIORequest req = io->sendParams(block);
 if (req.wait().isOk()) {
-    const auto *cmd = req.commandAs<MediaIOCommandParams>();
-    double actual = cmd->params.getAs<double>(SomeBackend::ActualGainID, 0.0);
+    const MediaIOParams &done = req.commandAs<MediaIOCommandParams>()->block;
+    Result<Variant> gain = done.result(1);   // {value, error}
 }
 ```
 
-Backends that don't recognize `name` return `Error::NotSupported`.
+"Set then read back the accepted value" is a `set` followed by a `get`
+of the same id; "capture the prior value, then change it" is a `get`
+followed by a `set`. Because the apply pass runs in list order, the
+`get` observes exactly the state implied by its position.
+
+Every `set` is validated by the backend before it is applied. Set
+`block.setAtomic(true)` for all-or-nothing semantics: the whole block
+is validated up front and, if any validation fails, nothing is
+applied; a failure during apply rolls back the sets already committed,
+and aborted actions report `Error::TransactionAborted`. In a
+non-atomic block a rejected `set` skips only that write and the other
+actions still run. Backends that don't recognize a parameter id
+resolve that action with `Error::NotSupported`.
 
 ## Stats {#mediaio_user_stats}
 

@@ -11,7 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
-#include <promeki/variantdatabase.h>
+#include <promeki/mediaioparams.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -47,24 +47,9 @@ enum MediaIOSeekMode {
         MediaIO_SeekKeyframeAfter    ///< @brief Land on the closest keyframe at or after.
 };
 
-/**
- * @brief Parameter / result container for MediaIO parameterized commands.
- * @ingroup mediaio_user
- *
- * A distinct VariantDatabase type for backend-specific parameterized
- * command payloads.  Has its own StringRegistry so param keys don't
- * collide with config or stats keys.  Has no predefined keys — the
- * key set is entirely backend-defined.  Backends that want to expose
- * named parameters typically define static const IDs on their task
- * class.
- */
-using MediaIOParams = VariantDatabase<"MediaIOParams">;
-
-/**
- * @brief Parameterized command ID type.
- * @ingroup mediaio_user
- */
-using MediaIOParamsID = MediaIOParams::ID;
+// The parameterized-command payload (MediaIOParams, MediaIOParamsID,
+// MediaIOParamAction, MediaIOParamOp) lives in mediaioparams.h, included
+// above so mediaio.h and mediaiocommand.h reach it through this header.
 
 PROMEKI_NAMESPACE_END
 

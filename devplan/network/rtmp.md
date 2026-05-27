@@ -1710,12 +1710,12 @@ StatsPacingSlackUs (Histogram)          // signed slack (deadline − now) sampl
 StatsPacingClockKind                    // String tag: "internal" / "external" / "none" — reflects the live gate binding, not the configured mode
 ```
 
-- `MediaIOCommandParams` actions (analogous to RTP's `GetSdp`):
-  - `GetServerOnConnect`: returns the AMF0 object the server
+- `sendParams` param ids (analogous to RTP's `ParamSdp`):
+  - `ParamServerOnConnect`: `get` returns the AMF0 object the server
     responded with on connect — useful for logging the negotiated
     `objectEncoding`, `data.version`, etc.
-  - `GetMetadata`: returns the most recent `onMetaData` AMF0 object
-    seen by the reader.
+  - `ParamMetadata`: `get` returns the most recent `onMetaData` AMF0
+    object seen by the reader.
 
 **Sink (publish) path:**
 
@@ -1975,8 +1975,8 @@ Cross-thread shutdown via the existing `Queue::cancelWaiters` /
   **deferred** to a follow-up.  The current set is sufficient for
   smoke-level observability and matches what the in-tree counters
   already track.
-- **`MediaIOCommandParams` not implemented.**  The plan's
-  `GetServerOnConnect` and `GetMetadata` params commands are not
+- **`sendParams` param ids not implemented.**  The planned
+  `ParamServerOnConnect` and `ParamMetadata` param ids are not
   wired up.  Land alongside the `Metadata`-population path
   (Phase 4 carry-over re: `RtmpClient::sendMetadata` body).
 - **Sequence-header policy is best-effort.**  The sink emits the
@@ -2135,7 +2135,7 @@ Phase 5 ── RtmpMediaIO ──────────► doctest landed ✅ 
                                   │                  metadata wired (2026-05-10);
                                   │                  promeki-test matrix +
                                   │                  remaining stats keys +
-                                  │                  MediaIOCommandParams TODO
+                                  │                  sendParams param ids TODO
                                   ▼
 Phase 6 ── docs + CMake + demo wiring   (next)
 ```

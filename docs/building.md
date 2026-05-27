@@ -105,6 +105,50 @@ The `debug`, `release`, and `asan` @ref building_config_presets
 `PROMEKI_SANITIZER=address,undefined`) so they can be combined with
 a feature preset in a single `-DPROMEKI_CONFIG_FILE=` argument.
 
+### Split Debug Symbols {#building_split_debug}
+
+For the debug-info-bearing build types (**Debug**, **DevRelease**, and
+`RelWithDebInfo`) the symbols are *split out* of the shared libraries
+after linking, rather than left embedded. Each library is stripped and
+its debug information written to a standalone `.debug` file in a separate
+directory:
+
+| Directory | Contents |
+|-----------|----------|
+| `build/bin` | executables |
+| `build/lib` | shared libraries — **stripped** |
+| `build/lib-debug` | the matching `*.debug` symbol files |
+
+This keeps `build/bin` + `build/lib` a lean, self-contained runtime
+bundle you can copy on its own — the (often far larger) debug
+information stays behind in `build/lib-debug` and is re-attached on
+demand only when you actually need to debug. See @ref debugging_split
+"Working with split debug symbols" for how to bring them back for a GDB
+session.
+
+Every shared object the build produces is handled this way — the three
+first-party libraries (`promeki`, `promeki-tui`, `promeki-sdl`) and every
+vendored dependency shipped beside them (`libsndfile`, the FLAC / Vorbis /
+Ogg / Opus / MP3 codecs, `libfdk-aac`, the `libpromeki_srt` bundle, …).
+The first-party libraries keep their symbol table (`.symtab`) so
+backtraces still resolve to function names without the heavy DWARF; the
+vendored libraries — which you do not normally debug into — are stripped
+harder (`--strip-unneeded`, keeping only the dynamic symbols needed to
+load and link them).
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `PROMEKI_SPLIT_DEBUG` | `ON` | Split debug symbols into `build/lib-debug` and ship stripped shared libraries. Set `OFF` to leave symbols embedded. |
+
+The option is a no-op for build types that emit no debug info
+(**Release**, `MinSizeRel`) and on non-ELF toolchains (macOS uses dSYM
+bundles, a different mechanism), so it is safe to leave on everywhere.
+
+```sh
+# Leave debug info embedded in the libraries (the old behaviour):
+cmake -B build -DPROMEKI_SPLIT_DEBUG=OFF
+```
+
 ---
 
 ## Feature Flags {#building_feature_flags}
@@ -401,7 +445,7 @@ Variables a config commonly sets:
 | Category              | Variables                                                                  |
 |-----------------------|----------------------------------------------------------------------------|
 | Component builds      | `PROMEKI_BUILD_TUI`, `PROMEKI_BUILD_SDL`, `PROMEKI_BUILD_UTILS`, `PROMEKI_BUILD_DEMOS`, `PROMEKI_BUILD_TESTS`, `PROMEKI_BUILD_DOCS`, `PROMEKI_BUILD_BENCHMARKS`, `PROMEKI_BUILD_STATS` |
-| Build hygiene         | `PROMEKI_WARNINGS_AS_ERRORS`, `PROMEKI_USE_PCH`, `PROMEKI_USE_CCACHE`, `PROMEKI_SANITIZER` |
+| Build hygiene         | `PROMEKI_WARNINGS_AS_ERRORS`, `PROMEKI_USE_PCH`, `PROMEKI_USE_CCACHE`, `PROMEKI_SPLIT_DEBUG`, `PROMEKI_SANITIZER` |
 | Feature flags         | every `PROMEKI_ENABLE_*` (see @ref building_feature_flags "Feature Flags") |
 | Vendored vs system    | every `PROMEKI_USE_SYSTEM_*` (see @ref building_system_deps "Vendored vs. System Dependencies") |
 | External SDK paths    | `PROMEKI_NVENC_SDK_DIR`, `PROMEKI_NDI_SDK_DIR`                             |
@@ -855,18 +899,49 @@ The install tree contains:
 - `lib/libpromeki.so` (versioned, with SONAME), plus
   `libpromeki-tui.so` and `libpromeki-sdl.so` when enabled
 - `include/promeki/` — all public headers, including the generated
-  `config.h` that records which features were compiled in
+  `config.h` (records which features were compiled in) and
+  `buildident.h` (carries `PROMEKI_BUILD_IDENT` and the
+  `PROMEKI_VERIFY_BUILD_IDENT_OR_ABORT()` stale-binary guard)
 - `include/promeki/thirdparty/` — bundled third-party headers (when
   the corresponding dependency was vendored)
 - `lib/cmake/promeki/` — CMake package-config files for
   `find_package(promeki)`
 - `share/doc/promeki/` — license and third-party attribution notices
 
+When @ref building_split_debug "split debug symbols" is active (the
+default for debug-info-bearing build types), the installed libraries are
+**stripped**, and their `.debug` files are *not* installed by default —
+they form a separate `debug` install component so the runtime install
+stays lean. Install them alongside the libraries (into `lib/debug/`) only
+when you want them:
+
+```sh
+cmake --install build --component debug
+```
+
 ---
 
 ## Using libpromeki in Your Project {#building_downstream}
 
-After installing, add this to your project's `CMakeLists.txt`:
+There are two supported ways to consume libpromeki from a CMake
+project.  A complete, runnable example of both lives in
+`examples/downstream/` (an out-of-tree project — point CMake straight
+at that directory to try it).
+
+| | `find_package` | `add_subdirectory` |
+|---|---|---|
+| libpromeki is… | already built & installed | built from source as part of your build |
+| feature set | fixed when the library was built | **chosen by your build** |
+| best for | packaged / distro / cross / Yocto images | monorepos, quick vendored bring-up, when the app must pick features |
+
+The link line is identical for both — libpromeki exposes the same
+target names (`promeki::promeki`, `promeki::tui`, `promeki::sdl`)
+whether it was imported or built in-tree.
+
+### Consuming an installed library — find_package {#building_downstream_findpackage}
+
+After @ref building_installing "installing", add this to your project's
+`CMakeLists.txt`:
 
 ```cmake
 find_package(promeki REQUIRED)
@@ -887,6 +962,90 @@ it:
 ```sh
 cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki
 ```
+
+This is the recommended path for any build where libpromeki is its own
+artifact — a distro package, a `/opt` install, or a Yocto recipe.  The
+library's feature set was decided when it was built; the consuming
+project links the imported target and inherits its transitive include
+directories and dependencies automatically.  It cannot (and should not)
+change which features are compiled in.
+
+### Embedding the source — add_subdirectory {#building_downstream_subdir}
+
+When the application needs to *control* which libpromeki features are
+compiled in (the common case for embedded appliances), build it from
+source:
+
+```cmake
+add_subdirectory(third_party/libpromeki)
+target_link_libraries(myapp PRIVATE promeki::promeki)
+```
+
+#### Setting libpromeki's feature flags from your build {#building_downstream_flags}
+
+This is the part that is easy to get subtly wrong.  Four rules:
+
+1. **Set the flags _before_ `add_subdirectory()`.** libpromeki reads
+   them while it configures; anything set afterwards is ignored.
+
+2. **A plain `set()` is enough — no `CACHE` / `FORCE` needed.**
+   libpromeki declares each flag with `option()` / `set(... CACHE ...)`,
+   and CMake policy `CMP0077` (NEW since CMake 3.13; libpromeki requires
+   3.22) makes a normal variable of the same name win over the cached
+   default.  Writing `set(PROMEKI_ENABLE_JPEG OFF CACHE BOOL "" FORCE)`
+   works but is heavier than necessary; prefer the plain form:
+
+   ```cmake
+   set(PROMEKI_ENABLE_JPEG OFF)
+   ```
+
+3. **Prefer a stock preset over a hand-maintained wall of flags.**
+   libpromeki ships @ref building_config_presets "presets" under
+   `cmake/configs/` that are kept in sync with the flag set and
+   exercised by the project's own builds.  Pointing
+   `PROMEKI_CONFIG_FILE` at one gives you a coherent, tested
+   configuration instead of a list that silently drifts every time a
+   flag is added or removed.  An SDI / ANC appliance, for instance,
+   wants the `proav-embedded` preset — Pro A/V core with the software
+   codecs, fonts, audio file I/O, and networking compiled out:
+
+   ```cmake
+   set(PROMEKI_CONFIG_FILE proav-embedded)   # before add_subdirectory()
+   # Deviate from the preset only where you must:
+   set(PROMEKI_ENABLE_NTV2 ON)               # this box has an AJA card
+   add_subdirectory(third_party/libpromeki)
+   ```
+
+   > A hand-rolled flag list is also easy to get internally
+   > inconsistent — e.g. disabling `PROMEKI_ENABLE_HTTP` / `_TLS` /
+   > `_SRT` but forgetting that `PROMEKI_ENABLE_NETWORK` defaults **ON**,
+   > so the whole networking layer is still compiled in.  The presets
+   > don't have that failure mode.
+
+4. **Control build size with the build type, not per-target compile
+   options.** Reaching for
+   `target_compile_options(promeki PRIVATE -g0 -Os)` after
+   `add_subdirectory()` fights the toolchain.  `CMAKE_BUILD_TYPE` is
+   global to the whole tree — set it once, before `add_subdirectory()`
+   (libpromeki only forces its own `DevRelease` default when the build
+   type is otherwise unset).  In a packaged build, let the packaging
+   system handle debug info (e.g. Yocto splits it into a `-dbg`
+   package); don't strip it with `-g0`.
+
+   ```cmake
+   if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+       set(CMAKE_BUILD_TYPE Release)
+   endif()
+   ```
+
+> **Yocto / cross builds:** prefer a standalone libpromeki recipe that
+> builds and installs the library (with the feature preset and build
+> type passed via `EXTRA_OECMAKE`), then have the application
+> `find_package(promeki)`.  That keeps the application out of the
+> business of knowing libpromeki's internal flags and lets the layer's
+> sysroot, staging, and debug-splitting behave normally.  See the
+> @ref building_config_cross_arm64 "cross-compile" section for the
+> toolchain side.
 
 ### Include Conventions {#building_include_conventions}
 

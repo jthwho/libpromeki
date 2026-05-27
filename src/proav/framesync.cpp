@@ -8,7 +8,9 @@
 #include <promeki/framesync.h>
 #include <promeki/clock.h>
 #include <promeki/syntheticclock.h>
+#if PROMEKI_ENABLE_SRC
 #include <promeki/audioresampler.h>
+#endif
 #include <promeki/buffer.h>
 #include <promeki/bufferview.h>
 #include <promeki/mediatimestamp.h>
@@ -85,7 +87,9 @@ void FrameSync::setTargetAudioDesc(const AudioDesc &desc) {
         _targetAudioDesc = desc;
         // Teardown resampler on channel/rate change — lazy re-init on
         // the next pull.
+#if PROMEKI_ENABLE_SRC
         _resampler.clear();
+#endif
 }
 
 void FrameSync::setClock(const Clock::Ptr &clock) {
@@ -155,7 +159,9 @@ void FrameSync::resetLocked(bool setExplicitOrigin, int64_t originNs) {
         _framesDropped.setValue(0);
         _overflowDrops.setValue(0);
 
+#if PROMEKI_ENABLE_SRC
         if (_resampler.isValid()) _resampler->reset();
+#endif
 }
 
 void FrameSync::reset() {
@@ -461,6 +467,7 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         const float        targetRate = _targetAudioDesc.sampleRate();
         if (channels == 0 || targetRate <= 0.0f) return PcmAudioPayload::Ptr();
 
+#if PROMEKI_ENABLE_SRC
         // Lazy init the resampler once we know channel count.
         if (_resampler.isNull()) {
                 _resampler = AudioResampler::UPtr::create();
@@ -489,6 +496,16 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
         }
         _currentResampleRatio = ratio;
         _resampler->setRatio(ratio);
+#else
+        // No libsamplerate: fall back to a 1:1 pass-through.  Audio is
+        // copied through at its native rate without drift correction;
+        // any sample-rate mismatch between source and target is not
+        // compensated (see PROMEKI_ENABLE_SRC).
+        _currentResampleRatio = 1.0;
+        promekiWarnOnce("FrameSync[%s]: audio resampling unavailable "
+                        "(PROMEKI_ENABLE_SRC=OFF) — passing audio through 1:1",
+                        _name.cstr());
+#endif
 
         // Allocate output.  The full sample count is always produced
         // (we pad with silence if the resampler or input runs dry).
@@ -523,8 +540,9 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
                         continue;
                 }
 
-                long  inUsed = 0;
-                long  outGen = 0;
+                long inUsed = 0;
+                long outGen = 0;
+#if PROMEKI_ENABLE_SRC
                 Error err = _resampler->process(inPtr + (long)_audioSamplesConsumed * channels, inAvail,
                                                 outPtr + outWritten * channels, (long)targetSamples - outWritten,
                                                 inUsed, outGen, false);
@@ -532,6 +550,17 @@ PcmAudioPayload::Ptr FrameSync::produceAudio(int64_t targetSamples) {
                         promekiWarn("FrameSync[%s]: resampler process failed", _name.cstr());
                         break;
                 }
+#else
+                // 1:1 pass-through: copy as many native-float samples as
+                // fit in the remaining output, no rate conversion.
+                const long outRoom = (long)targetSamples - outWritten;
+                const long toCopy = (inAvail < outRoom) ? inAvail : outRoom;
+                std::memcpy(outPtr + outWritten * channels,
+                            inPtr + (long)_audioSamplesConsumed * channels,
+                            (size_t)toCopy * channels * sizeof(float));
+                inUsed = toCopy;
+                outGen = toCopy;
+#endif
 
                 _audioSamplesConsumed += (size_t)inUsed;
                 outWritten += outGen;

@@ -419,6 +419,10 @@ TEST_CASE("AudioDataDecoder::decodeAll reports streamSampleStart across multiple
 // ============================================================================
 // Real SRC round-trip — 48 k → 44.1 k → 48 k via libsamplerate
 // ============================================================================
+//
+// These cases drive AudioResampler directly and so only build when
+// libsamplerate is compiled in (PROMEKI_ENABLE_SRC).
+#if PROMEKI_ENABLE_SRC
 
 namespace {
 
@@ -603,6 +607,8 @@ TEST_CASE("AudioDataDecoder::decodeAll survives a 48k -> 44.1k -> 48k SRC round-
         REQUIRE(recovered.size() == 3);
         for (size_t i = 0; i < 3; ++i) CHECK(recovered[i] == payloads[i]);
 }
+
+#endif // PROMEKI_ENABLE_SRC
 
 TEST_CASE("AudioDataDecoder survives a boxcar smoothing the encoder output") {
         // Default samplesPerBit=8, half-bit=4 samples.  A 3-sample

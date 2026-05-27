@@ -93,7 +93,7 @@ TEST_CASE("MediaIORequest::cancel before dispatch resolves with Error::Cancelled
         io.processOne();
         REQUIRE(openReq.wait().isOk());
 
-        MediaIORequest req = io.sendParams("nonexistent-op-for-cancel-test");
+        MediaIORequest req = io.sendParams(MediaIOParams().get(MediaIOParamsID("nonexistent-op-for-cancel-test")));
         REQUIRE(io.pending() == 1);
         req.cancel();
         CHECK(req.isCancelled());
@@ -125,18 +125,15 @@ TEST_CASE("MediaIORequest::stats carries framework-measured timing for every com
         // PausedTestMediaIO mirrors the per-command telemetry path
         // every strategy class records (QueueWaitDuration around the
         // submit→dispatch hop, ExecuteDuration around the executeCmd
-        // hop).  The hooks default to Error::NotSupported on Params,
-        // matching the historical TPG-backed assertion.
+        // hop).  An unknown param id resolves to Error::NotSupported via
+        // the default getParam hook, matching the historical assertion.
         PausedTestMediaIO io;
-        io.onParams = [](MediaIOCommandParams &) {
-                return Error::NotSupported;
-        };
 
         MediaIORequest openReq = io.open();
         io.processOne();
         REQUIRE(openReq.wait().isOk());
 
-        MediaIORequest req = io.sendParams("nonexistent-op-for-stats-test");
+        MediaIORequest req = io.sendParams(MediaIOParams().get(MediaIOParamsID("nonexistent-op-for-stats-test")));
         io.processOne();
         Error err = req.wait();
         CHECK(err == Error::NotSupported);
@@ -215,7 +212,7 @@ TEST_CASE("MediaIORequest::wait(timeout) returns Timeout when deadline expires")
         io.processOne();
         REQUIRE(openReq.wait().isOk());
 
-        MediaIORequest req = io.sendParams("nonexistent-op-for-timeout-test");
+        MediaIORequest req = io.sendParams(MediaIOParams().get(MediaIOParamsID("nonexistent-op-for-timeout-test")));
         Error          early = req.wait(1);
         CHECK(early == Error::Timeout);
         io.processAll();

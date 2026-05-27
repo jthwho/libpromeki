@@ -8,6 +8,7 @@
 #include <promeki/commandmediaio.h>
 
 #include <promeki/clock.h>
+#include <promeki/logger.h>
 #include <promeki/mediaiocommand.h>
 #include <promeki/mediaioclock.h>
 #include <promeki/mediaioport.h>
@@ -113,8 +114,115 @@ Error CommandMediaIO::executeCmd(MediaIOCommandSeek &cmd) {
 }
 
 Error CommandMediaIO::executeCmd(MediaIOCommandParams &cmd) {
-        (void)cmd;
+        MediaIOParams &block = cmd.block;
+        const int      n = block.count();
+        Error          firstError = Error::Ok;
+
+        // Every Set is validated before it is applied.  For atomic blocks
+        // the whole block is validated up front here so a rejection aborts
+        // before anything is applied; non-atomic blocks validate each Set
+        // inline in the apply pass below (a rejection skips just that Set).
+        if (block.isAtomic()) {
+                for (int i = 0; i < n; i++) {
+                        MediaIOParamAction &a = block.action(i);
+                        if (a.op != MediaIOParamOp::Set) continue;
+                        Error e = validateParam(a.id, a.value);
+                        if (e.isError()) {
+                                a.error = e;
+                                for (int j = 0; j < n; j++) {
+                                        if (j != i) block.action(j).error = Error::TransactionAborted;
+                                }
+                                return e;
+                        }
+                }
+        }
+
+        // Records a committed Set so an atomic block can roll it back if a
+        // later action fails.  hadPrior is false when the pre-write read
+        // failed, in which case the value cannot be restored.
+        struct Applied {
+                MediaIOParamsID id;
+                Variant         prior;
+                bool            hadPrior;
+        };
+        List<Applied> committed;
+
+        // Apply pass — strictly in list order so a Get always observes the
+        // effect of any Set earlier in the block.
+        for (int i = 0; i < n; i++) {
+                MediaIOParamAction &a = block.action(i);
+
+                if (a.op == MediaIOParamOp::Get) {
+                        a.error = getParam(a.id, a.value);
+                        if (a.error.isError() && firstError.isOk()) firstError = a.error;
+                        continue;
+                }
+
+                // Set.  For atomic blocks, snapshot the current value first
+                // so a later failure can roll this write back.
+                if (block.isAtomic()) {
+                        Variant prior;
+                        Error   readErr = getParam(a.id, prior);
+                        a.error = setParam(a.id, a.value);
+                        if (a.error.isOk()) {
+                                committed.pushToBack(Applied{a.id, prior, readErr.isOk()});
+                                continue;
+                        }
+
+                        // Mid-apply failure: best-effort rollback of every
+                        // committed Set, newest first.
+                        for (size_t r = committed.size(); r-- > 0;) {
+                                const Applied &ap = committed[r];
+                                if (!ap.hadPrior) {
+                                        promekiWarn("CommandMediaIO: cannot roll back param '%s' "
+                                                    "(prior value was unreadable)",
+                                                    ap.id.name().cstr());
+                                        continue;
+                                }
+                                Error re = setParam(ap.id, ap.prior);
+                                if (re.isError()) {
+                                        promekiErr("CommandMediaIO: rollback of param '%s' failed: %s",
+                                                   ap.id.name().cstr(), re.name().cstr());
+                                }
+                        }
+                        // The failing action keeps its real error; everything
+                        // else in the block is reported as aborted.
+                        for (int j = 0; j < n; j++) {
+                                if (j != i) block.action(j).error = Error::TransactionAborted;
+                        }
+                        return a.error;
+                }
+
+                // Non-atomic Set: validate immediately before applying.  A
+                // rejection records the validation error and skips the
+                // write; other actions are unaffected.
+                a.error = validateParam(a.id, a.value);
+                if (a.error.isError()) {
+                        if (firstError.isOk()) firstError = a.error;
+                        continue;
+                }
+                a.error = setParam(a.id, a.value);
+                if (a.error.isError() && firstError.isOk()) firstError = a.error;
+        }
+        return firstError;
+}
+
+Error CommandMediaIO::getParam(MediaIOParamsID id, Variant &out) {
+        (void)id;
+        (void)out;
         return Error::NotSupported;
+}
+
+Error CommandMediaIO::setParam(MediaIOParamsID id, const Variant &value) {
+        (void)id;
+        (void)value;
+        return Error::NotSupported;
+}
+
+Error CommandMediaIO::validateParam(MediaIOParamsID id, const Variant &value) {
+        (void)id;
+        (void)value;
+        return Error::Ok;
 }
 
 Error CommandMediaIO::executeCmd(MediaIOCommandStats &cmd) {

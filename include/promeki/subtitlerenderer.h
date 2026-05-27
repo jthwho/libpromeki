@@ -13,7 +13,9 @@
 #include <promeki/color.h>
 #include <promeki/enums_subtitle.h>
 #include <promeki/error.h>
+#if PROMEKI_ENABLE_FREETYPE
 #include <promeki/fastfont.h>
+#endif
 #include <promeki/namespace.h>
 #include <promeki/rect.h>
 #include <promeki/string.h>
@@ -183,9 +185,11 @@ class SubtitleRenderer {
                 void computePosition(const SubtitleAnchor &anchor, const Rect2Di32 &bounds, int maxLineWidth,
                                      int totalHeight, int ascender, int &outX, int &outBaselineY) const;
 
+#if PROMEKI_ENABLE_FREETYPE
                 /// @brief Builds a FastFont DrawStyle for @p span using
                 ///        the renderer's defaults for missing colours.
                 FastFont::DrawStyle styleFor(const SubtitleSpan &span) const;
+#endif
 
                 String         _fontFilename;
                 int            _fontSize = 0; // 0 = auto.
@@ -197,8 +201,12 @@ class SubtitleRenderer {
                 int            _topReserved = 0;
                 int            _bottomReserved = 0;
 
-                // Mutable state — updated from @ref render.
+                // Mutable state — updated from @ref render.  The glyph
+                // renderer is only present when FreeType is compiled in;
+                // without it @ref render returns @c Error::FontUnavailable.
+#if PROMEKI_ENABLE_FREETYPE
                 FastFont::UPtr _font;
+#endif
                 int            _effectiveFontSize = 0;
                 bool           _fontDirty = true;
 };

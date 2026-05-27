@@ -67,6 +67,56 @@ paramount and debug logging overhead must be zero.
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
+### Working with split debug symbols {#debugging_split}
+
+For the debug-info-bearing build types (**Debug**, **DevRelease**, and
+`RelWithDebInfo`) the debug information is **split out** of the shared
+libraries after linking — see @ref building_split_debug "Split Debug
+Symbols" in the build guide for the rationale and the
+`PROMEKI_SPLIT_DEBUG` toggle. The shipped libraries in `build/lib` are
+stripped; their symbols live in matching `*.debug` files alongside:
+
+| Location | What lives there |
+|----------|------------------|
+| `build/lib/lib*.so` | stripped libraries (what runs) |
+| `build/lib-debug/lib*.so.debug` | the split-out debug symbols |
+| `<prefix>/lib/debug/` | installed symbols (the `debug` install component) |
+
+Each stripped library records a `.gnu_debuglink` (the basename of its
+`.debug` file plus a CRC) and keeps its GNU build-id note, so a debugger
+re-associates the two automatically once it can find the `.debug` file.
+There are two ways to make that happen.
+
+**Drop the symbols next to the library** (simplest, no GDB config — the
+debuglink basename matches):
+
+```sh
+cp build/lib-debug/*.debug build/lib/
+gdb ./build/bin/mediaplay        # full source-level symbols available
+# remove them again to restore the lean runtime bundle:
+rm build/lib/*.debug
+```
+
+**Or point GDB at the split-debug tree** without copying — the preserved
+build-id lets GDB resolve symbols by build-id:
+
+```gdb
+(gdb) set debug-file-directory build/lib-debug
+```
+
+Either way, backtraces through the **first-party** libraries
+(`promeki`, `promeki-tui`, `promeki-sdl`) already resolve to function
+names even *without* the `.debug` files, because those libraries retain
+their symbol table (`.symtab`) when stripped — you only need to re-attach
+the `.debug` files for source/line information and stepping. The vendored
+libraries are stripped harder, so resolving names inside them does
+require their `.debug` files.
+
+This applies to core dumps too: a backtrace from a core dumped by a
+stripped library symbolicates fully once the matching `.debug` files are
+reachable by either method above. See
+@ref debug_crash_coredumps "Enabling Core Dumps".
+
 ---
 
 ## The Logger System {#debug_logging}

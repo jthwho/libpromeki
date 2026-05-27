@@ -8,7 +8,9 @@
 #include <promeki/color.h>
 #include <promeki/enums_subtitle.h>
 #include <promeki/error.h>
+#if PROMEKI_ENABLE_FREETYPE
 #include <promeki/fastfont.h>
+#endif
 #include <promeki/imagedesc.h>
 #include <promeki/list.h>
 #include <promeki/logger.h>
@@ -70,6 +72,7 @@ SubtitleAnchor SubtitleRenderer::effectiveAnchor(const SubtitleAnchor &cueAnchor
         return SubtitleAnchor::BottomCenter;
 }
 
+#if PROMEKI_ENABLE_FREETYPE
 FastFont::DrawStyle SubtitleRenderer::styleFor(const SubtitleSpan &span) const {
         FastFont::DrawStyle s;
         s.foreground = span.color().isValid() ? span.color() : _defaultFg;
@@ -79,6 +82,7 @@ FastFont::DrawStyle SubtitleRenderer::styleFor(const SubtitleSpan &span) const {
         s.underline = span.underline();
         return s;
 }
+#endif
 
 void SubtitleRenderer::layoutSpans(const SubtitleSpan::List &spans, StyledLineList &lines) {
         lines.clear();
@@ -172,6 +176,16 @@ void SubtitleRenderer::computePosition(const SubtitleAnchor &anchor, const Rect2
 // ============================================================================
 
 Error SubtitleRenderer::render(const Subtitle &subtitle, UncompressedVideoPayload &target) {
+#if !PROMEKI_ENABLE_FREETYPE
+        // Subtitle rendering requires FreeType (FastFont) for glyph
+        // rasterisation.  Built without it, there is no renderer, so
+        // report the cue as unrenderable rather than silently dropping it.
+        (void)subtitle;
+        (void)target;
+        promekiWarnOnce("SubtitleRenderer::render: subtitle rendering unavailable "
+                        "(PROMEKI_ENABLE_FREETYPE=OFF)");
+        return Error::FontUnavailable;
+#else
         if (!target.isValid()) return Error::InvalidArgument;
         const PixelFormat &pf = target.desc().pixelFormat();
         if (!pf.hasPaintEngine()) return Error::NotSupported;
@@ -355,6 +369,7 @@ Error SubtitleRenderer::render(const Subtitle &subtitle, UncompressedVideoPayloa
                 cursorY += lineHeight + lineSpacing;
         }
         return Error::Ok;
+#endif // PROMEKI_ENABLE_FREETYPE
 }
 
 PROMEKI_NAMESPACE_END

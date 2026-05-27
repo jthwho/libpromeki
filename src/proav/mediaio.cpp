@@ -1110,12 +1110,11 @@ Error MediaIO::setAudioTracks(const List<int> &tracks) {
         return Error::Ok;
 }
 
-MediaIORequest MediaIO::sendParams(const String &name, const MediaIOParams &params) {
+MediaIORequest MediaIO::sendParams(const MediaIOParams &block) {
         if (!isOpen() || isClosing()) return MediaIORequest::resolved(Error::NotOpen);
 
         auto *cmdParams = new MediaIOCommandParams();
-        cmdParams->name = name;
-        cmdParams->params = params;
+        cmdParams->block = block;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdParams);
         MediaIORequest req(cmd);
         submit(cmd);

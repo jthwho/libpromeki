@@ -13,7 +13,9 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/pixelformat.h>
 #include <promeki/random.h>
+#if PROMEKI_ENABLE_FREETYPE
 #include <promeki/fastfont.h>
+#endif
 #include <promeki/timecode.h>
 #include <promeki/rect.h>
 #include <promeki/stringlist.h>
@@ -216,15 +218,27 @@ UncompressedVideoPayload::Ptr VideoTestPattern::createPayload(const ImageDesc &d
 }
 
 void VideoTestPattern::applyBurnFontConfig() const {
+#if PROMEKI_ENABLE_FREETYPE
         if (_burnFont.isNull()) return;
         _burnFont->setFontFilename(_burnFontFilename);
         _burnFont->setFontSize(_burnEffectiveFontSize);
         _burnFont->setForegroundColor(_burnTextColor);
         _burnFont->setBackgroundColor(_burnBackgroundColor);
         _burnFontConfigDirty = false;
+#endif
 }
 
 Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout, const String &burnText) const {
+#if !PROMEKI_ENABLE_FREETYPE
+        // Text burn-in requires FreeType (FastFont).  Built without it,
+        // there is no glyph renderer, so report the overlay as
+        // unavailable rather than silently dropping the request.
+        (void)inout;
+        (void)burnText;
+        promekiWarnOnce("VideoTestPattern::applyBurn: text burn-in unavailable "
+                        "(PROMEKI_ENABLE_FREETYPE=OFF)");
+        return Error::FontUnavailable;
+#else
         if (!_burnEnabled || burnText.isEmpty()) return Error::Ok;
         if (!inout.isValid()) return Error::InvalidArgument;
         const PixelFormat &pf = inout.desc().pixelFormat();
@@ -322,6 +336,7 @@ Error VideoTestPattern::applyBurn(UncompressedVideoPayload &inout, const String 
                 cursorY += lineHeight + lineSpacing;
         }
         return Error::Ok;
+#endif // PROMEKI_ENABLE_FREETYPE
 }
 
 void VideoTestPattern::computeBurnPosition(int frameW, int frameH, int textW, int totalH, int ascender, int &x,

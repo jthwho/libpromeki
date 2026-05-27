@@ -322,19 +322,36 @@ new position.
 
 ### Parameterized commands {#mediaio_backend_params}
 
+You do **not** override `executeCmd(MediaIOCommandParams &)` — the
+framework owns that loop. It walks the caller's `MediaIOParams` block
+in list order and dispatches each action to your `getParam` /
+`setParam` hooks (and `validateParam` for atomic blocks). Implement
+the hooks and dispatch on the id:
+
 ```cpp
-Error FooMediaIO::executeCmd(MediaIOCommandParams &cmd) {
-        if (cmd.name == "SetGain") {
-                double db = cmd.params.getAs<double>(GainParamID, 0.0);
-                double actual = _device.setGain(db);
-                cmd.params.set(ActualGainParamID, actual);
-                return Error::Ok;
-        }
-        return Error::NotSupported;
+Error FooMediaIO::getParam(MediaIOParamsID id, Variant &out) {
+        if (id == GainID) { out = _device.gain(); return Error::Ok; }
+        return Error::NotSupported;   // unknown or write-only id
+}
+
+Error FooMediaIO::setParam(MediaIOParamsID id, const Variant &value) {
+        if (id == GainID) { _device.setGain(value.get<double>()); return Error::Ok; }
+        return Error::NotSupported;   // unknown or read-only id
+}
+
+// Called before every Set (up front for atomic blocks, inline otherwise)
+// so setParam can trust its input.  Reject unknown ids or bad values
+// here; return Error::NotSupported to refuse atomic semantics entirely.
+Error FooMediaIO::validateParam(MediaIOParamsID id, const Variant &value) {
+        if (id == GainID && value.get<double>() < 0.0) return Error::InvalidArgument;
+        return Error::Ok;
 }
 ```
 
-Define the param IDs as `static const MediaIOParamsID` members
+The framework reads back accepted values for you: a caller wanting the
+post-set value issues a `set` followed by a `get` of the same id, and
+because the apply pass is in list order your `getParam` observes the
+write. Define the param ids as `static const MediaIOParamsID` members
 on the backend's class so callers can reference them by symbol.
 
 ### Stats {#mediaio_backend_stats}

@@ -29,6 +29,13 @@
 #   MBEDX509_LIBA     input libmbedx509.a   (3.6)
 #   MBEDCRYPTO_LIBA   input libmbedcrypto.a (3.6)
 #   CXX_TOOL          path to the C++ compiler driver (links libstdc++)
+#
+# Optional vars (split-debug; both must be set to strip):
+#   OBJCOPY           path to objcopy; when set, the freshly-linked bundle is
+#                     stripped (--strip-unneeded) and its symbols saved to
+#                     DEBUGDIR.  The public srt_* API lives in .dynsym (kept);
+#                     only .symtab is dropped.
+#   DEBUGDIR          directory the <name>.debug file is written into
 
 foreach(_var BUNDLE_SO BUNDLE_SONAME
              SRT_LIBA MBEDTLS_LIBA MBEDX509_LIBA MBEDCRYPTO_LIBA
@@ -73,3 +80,9 @@ if(NOT _link_rc EQUAL 0)
 endif()
 
 message(STATUS "promeki-srt-bundle: wrote ${BUNDLE_SO} (mbedTLS-3.6 symbols localized)")
+
+# Split debug symbols out of the freshly-linked bundle (no-op when OBJCOPY
+# is unset).  Runs only as part of this OUTPUT command, which re-links from
+# scratch whenever its inputs change, so the captured .debug stays complete.
+include(${CMAKE_CURRENT_LIST_DIR}/PromekiStripSo.cmake)
+promeki_strip_so("${BUNDLE_SO}" "${DEBUGDIR}" "${OBJCOPY}" "--strip-unneeded")

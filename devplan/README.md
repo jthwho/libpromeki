@@ -199,6 +199,26 @@ devplan/
    vendored `.so` families (preserving symlink chains) into `build/lib/`
    so the build tree mirrors the install layout.  `PROMEKI_FORCE_BUNDLED_LIBS`
    CMake option available to switch to legacy `DT_RPATH` if needed.
+18. **`MediaIOParams` transactional get/set + build infra** — SHIPPED 2026-05-27.
+   `MediaIOParams` replaces the old `VariantDatabase`-based `(name, params)`
+   verb form with an ordered `Get`/`Set` block (`include/promeki/mediaioparams.h`).
+   `CommandMediaIO` owns the apply loop; backends implement `getParam` /
+   `setParam` / `validateParam` hooks. Atomic semantics: validate-all-up-front,
+   abort-before-anything-applied, best-effort rollback (reverse-order prior
+   restore) on mid-apply failure; aborted actions report `Error::TransactionAborted`
+   (new error code). `RtpMediaIO` migrated from `GetSdp` verb to `get(ParamSdp)`.
+   Tests: `tests/unit/mediaioparams.cpp` (13 cases / 66 assertions, covering
+   ordering, non-atomic failure isolation, atomic validation abort, mid-apply
+   rollback, unreadable-prior rollback skip, failing-restore tolerance, empty
+   block, and pre-open short-circuit). Also shipped: `cmake/PromekiSplitDebug.cmake`
+   + `PromekiStripSo.cmake` (DWARF split to `build/lib-debug/`);
+   `cmake/configs/proav-embedded.cmake` (no software codecs / fonts / audio
+   preset); `examples/downstream/` (runnable `find_package` + `add_subdirectory`
+   example); `PROMEKI_ENABLE_SRC` / `PROMEKI_ENABLE_FREETYPE` / `PROMEKI_ENABLE_JPEG`
+   header guards in `FrameSync`, `SubtitleRenderer`, `VideoTestPattern`,
+   `JpegVideoCodec` so those headers compile cleanly with the corresponding
+   feature disabled; `docs/building.md` updated with split-debug and
+   downstream-consumption sections.
 13. **`BasicThread` + `Thread` refactor** — SHIPPED 2026-05-18.
    `BasicThread` (Pimpl, move-only, no `ObjectBase`) owns OS thread,
    scheduling, affinity, naming, and static helpers (`sleepMs/Us/Ns`,

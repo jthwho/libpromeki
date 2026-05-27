@@ -54,21 +54,25 @@ namespace promeki {
                                 using ReadHook = std::function<Error(MediaIOCommandRead &)>;
                                 using WriteHook = std::function<Error(MediaIOCommandWrite &)>;
                                 using SeekHook = std::function<Error(MediaIOCommandSeek &)>;
-                                using ParamsHook = std::function<Error(MediaIOCommandParams &)>;
+                                using GetParamHook = std::function<Error(MediaIOParamsID, Variant &)>;
+                                using SetParamHook = std::function<Error(MediaIOParamsID, const Variant &)>;
+                                using ValidateParamHook = std::function<Error(MediaIOParamsID, const Variant &)>;
                                 using StatsHook = std::function<Error(MediaIOCommandStats &)>;
                                 using SetClockHook = std::function<Error(MediaIOCommandSetClock &)>;
 
                                 InlineTestMediaIO(ObjectBase *parent = nullptr) : InlineMediaIO(parent) {}
                                 ~InlineTestMediaIO() override = default;
 
-                                OpenHook     onOpen;
-                                CloseHook    onClose;
-                                ReadHook     onRead;
-                                WriteHook    onWrite;
-                                SeekHook     onSeek;
-                                ParamsHook   onParams;
-                                StatsHook    onStats;
-                                SetClockHook onSetClock;
+                                OpenHook          onOpen;
+                                CloseHook         onClose;
+                                ReadHook          onRead;
+                                WriteHook         onWrite;
+                                SeekHook          onSeek;
+                                GetParamHook      onGetParam;
+                                SetParamHook      onSetParam;
+                                ValidateParamHook onValidateParam;
+                                StatsHook         onStats;
+                                SetClockHook      onSetClock;
 
                         protected:
                                 Error executeCmd(MediaIOCommandOpen &cmd) override {
@@ -86,8 +90,17 @@ namespace promeki {
                                 Error executeCmd(MediaIOCommandSeek &cmd) override {
                                         return onSeek ? onSeek(cmd) : Error::IllegalSeek;
                                 }
-                                Error executeCmd(MediaIOCommandParams &cmd) override {
-                                        return onParams ? onParams(cmd) : Error::Ok;
+                                Error getParam(MediaIOParamsID id, Variant &out) override {
+                                        return onGetParam ? onGetParam(id, out)
+                                                          : ::promeki::CommandMediaIO::getParam(id, out);
+                                }
+                                Error setParam(MediaIOParamsID id, const Variant &value) override {
+                                        return onSetParam ? onSetParam(id, value)
+                                                          : ::promeki::CommandMediaIO::setParam(id, value);
+                                }
+                                Error validateParam(MediaIOParamsID id, const Variant &value) override {
+                                        return onValidateParam ? onValidateParam(id, value)
+                                                               : ::promeki::CommandMediaIO::validateParam(id, value);
                                 }
                                 Error executeCmd(MediaIOCommandStats &cmd) override {
                                         return onStats ? onStats(cmd) : Error::Ok;
@@ -125,7 +138,9 @@ namespace promeki {
                                 using ReadHook = std::function<Error(MediaIOCommandRead &)>;
                                 using WriteHook = std::function<Error(MediaIOCommandWrite &)>;
                                 using SeekHook = std::function<Error(MediaIOCommandSeek &)>;
-                                using ParamsHook = std::function<Error(MediaIOCommandParams &)>;
+                                using GetParamHook = std::function<Error(MediaIOParamsID, Variant &)>;
+                                using SetParamHook = std::function<Error(MediaIOParamsID, const Variant &)>;
+                                using ValidateParamHook = std::function<Error(MediaIOParamsID, const Variant &)>;
                                 using StatsHook = std::function<Error(MediaIOCommandStats &)>;
 
                                 PausedTestMediaIO(ObjectBase *parent = nullptr) : CommandMediaIO(parent) {}
@@ -165,13 +180,15 @@ namespace promeki {
                                 /** @brief Number of queued (not-yet-dispatched) commands. */
                                 size_t pending() const { return _queue.size(); }
 
-                                OpenHook   onOpen;
-                                CloseHook  onClose;
-                                ReadHook   onRead;
-                                WriteHook  onWrite;
-                                SeekHook   onSeek;
-                                ParamsHook onParams;
-                                StatsHook  onStats;
+                                OpenHook          onOpen;
+                                CloseHook         onClose;
+                                ReadHook          onRead;
+                                WriteHook         onWrite;
+                                SeekHook          onSeek;
+                                GetParamHook      onGetParam;
+                                SetParamHook      onSetParam;
+                                ValidateParamHook onValidateParam;
+                                StatsHook         onStats;
 
                         protected:
                                 void submit(MediaIOCommand::Ptr cmd) override {
@@ -194,8 +211,17 @@ namespace promeki {
                                 Error executeCmd(MediaIOCommandSeek &cmd) override {
                                         return onSeek ? onSeek(cmd) : Error::IllegalSeek;
                                 }
-                                Error executeCmd(MediaIOCommandParams &cmd) override {
-                                        return onParams ? onParams(cmd) : Error::Ok;
+                                Error getParam(MediaIOParamsID id, Variant &out) override {
+                                        return onGetParam ? onGetParam(id, out)
+                                                          : ::promeki::CommandMediaIO::getParam(id, out);
+                                }
+                                Error setParam(MediaIOParamsID id, const Variant &value) override {
+                                        return onSetParam ? onSetParam(id, value)
+                                                          : ::promeki::CommandMediaIO::setParam(id, value);
+                                }
+                                Error validateParam(MediaIOParamsID id, const Variant &value) override {
+                                        return onValidateParam ? onValidateParam(id, value)
+                                                               : ::promeki::CommandMediaIO::validateParam(id, value);
                                 }
                                 Error executeCmd(MediaIOCommandStats &cmd) override {
                                         return onStats ? onStats(cmd) : Error::Ok;

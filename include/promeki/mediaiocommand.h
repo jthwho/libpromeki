@@ -519,29 +519,34 @@ class MediaIOCommandSeek : public MediaIOCommand {
 };
 
 /**
- * @brief Backend-specific parameterized command.
+ * @brief Backend-specific parameterized get/set command.
  * @ingroup mediaio_backend
  *
- * Carries an arbitrary operation name plus parameter and result
- * containers, allowing backends to expose operations beyond the
- * standard open/close/read/write/seek set.  Examples: setting
- * device gain, querying device temperature, triggering a one-shot
- * capture, retrieving codec parameters.
+ * Carries a @ref MediaIOParams block — an ordered list of @c Get /
+ * @c Set actions against backend-defined parameter ids — letting
+ * backends expose operations beyond the standard
+ * open/close/read/write/seek set.  Examples: setting device gain,
+ * querying device temperature, retrieving codec parameters.
  *
- * Backends override @c executeCmd(MediaIOCommandParams &) and
- * dispatch on @c name.  Unrecognized names should return
- * @c Error::NotSupported.  Default implementation returns
- * @c Error::NotSupported.
+ * Backends do not override @c executeCmd for this command; the
+ * framework's @ref CommandMediaIO::executeCmd(MediaIOCommandParams &)
+ * walks @ref block and dispatches each action to the backend's
+ * @ref CommandMediaIO::getParam / @ref CommandMediaIO::setParam /
+ * @ref CommandMediaIO::validateParam hooks, writing every action's
+ * result back into @ref block in place.
  */
 class MediaIOCommandParams : public MediaIOCommand {
                 PROMEKI_MEDIAIO_COMMAND(MediaIOCommandParams, Params)
         public:
-                // ---- Inputs ----
-                String        name;   ///< @brief Operation name (backend-defined).
-                MediaIOParams params; ///< @brief Operation parameters.
-
-                // ---- Output ----
-                MediaIOParams output; ///< @brief Operation result fields.
+                /**
+                 * @brief In/out parameter block.
+                 *
+                 * Populated by the caller (via @ref MediaIO::sendParams)
+                 * and mutated in place by the framework's apply pass:
+                 * @c Get actions have their value filled, and every
+                 * action's @ref MediaIOParamAction::error is set.
+                 */
+                MediaIOParams block;
 };
 
 /**

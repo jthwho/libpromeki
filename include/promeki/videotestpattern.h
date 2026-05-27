@@ -20,7 +20,13 @@
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/timecode.h>
 #include <promeki/enums_tpg.h>
+// PaintEngine is needed for the cached _cachedBgPixel member regardless of
+// FreeType; fastfont.h used to pull it in transitively, so include it
+// directly now that the FastFont include is feature-gated.
+#include <promeki/paintengine.h>
+#if PROMEKI_ENABLE_FREETYPE
 #include <promeki/fastfont.h>
+#endif
 #include <promeki/motionband.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -388,8 +394,12 @@ class VideoTestPattern {
 
                 // Burn font — lazily constructed the first time burn
                 // actually runs, because FastFont needs a PaintEngine
-                // (and thus a pixel format) at construction time.
+                // (and thus a pixel format) at construction time.  Only
+                // present when FreeType is compiled in; without it
+                // @ref applyBurn returns @c Error::FontUnavailable.
+#if PROMEKI_ENABLE_FREETYPE
                 mutable FastFont::UPtr _burnFont;
+#endif
                 mutable bool           _burnFontConfigDirty = true;
 
                 // Cached @ref PaintEngine::Pixel for @ref _burnBackgroundColor.

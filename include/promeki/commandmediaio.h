@@ -135,12 +135,84 @@ class CommandMediaIO : public MediaIO {
                 virtual Error executeCmd(MediaIOCommandSeek &cmd);
 
                 /**
-                 * @brief Handles a backend-specific parameterized command.
+                 * @brief Runs a parameterized get/set block.
                  *
-                 * Default returns @c Error::NotSupported.  Backends
-                 * dispatch on @c cmd.name and populate @c cmd.output.
+                 * The framework owns this loop — backends normally do
+                 * @em not override it.  It walks @c cmd.block and, in
+                 * list order, dispatches each action to @ref getParam
+                 * (for @c Get) or @ref setParam (for @c Set), recording
+                 * every action's outcome back into the block.
+                 *
+                 * Every @c Set is validated via @ref validateParam before
+                 * it is applied.  When @c cmd.block is atomic
+                 * (@ref MediaIOParams::isAtomic) the whole block is
+                 * validated up front; if any validation fails nothing is
+                 * applied, the offending action carries its error, and the
+                 * rest carry @c Error::TransactionAborted.  A @ref setParam
+                 * failure during the apply pass triggers a best-effort
+                 * rollback of the @c Set actions already committed
+                 * (re-applying their prior values).  When the block is not
+                 * atomic each @c Set is validated inline in list order; a
+                 * rejection records the validation error on that action and
+                 * skips its write, leaving the other actions unaffected.
+                 *
+                 * Returns @c Error::Ok when every action succeeded, the
+                 * first failing action's error otherwise.  Backends that
+                 * need full control of the block may still override this,
+                 * but the common path is to override the three hooks
+                 * below.
                  */
                 virtual Error executeCmd(MediaIOCommandParams &cmd);
+
+                /**
+                 * @brief Reads one parameter's current value.
+                 *
+                 * Called by @ref executeCmd(MediaIOCommandParams &) for
+                 * each @c Get action.  Default returns
+                 * @c Error::NotSupported.  Override and dispatch on
+                 * @p id, writing the value into @p out on success.
+                 *
+                 * @param id  Parameter to read.
+                 * @param out Receives the current value on @c Error::Ok.
+                 * @return @c Error::Ok on success; @c Error::NotSupported
+                 *         for an unknown or write-only @p id.
+                 */
+                virtual Error getParam(MediaIOParamsID id, Variant &out);
+
+                /**
+                 * @brief Writes one parameter's value.
+                 *
+                 * Called by @ref executeCmd(MediaIOCommandParams &) for
+                 * each @c Set action.  Default returns
+                 * @c Error::NotSupported.  Override and dispatch on
+                 * @p id.
+                 *
+                 * @param id    Parameter to write.
+                 * @param value Value to apply.
+                 * @return @c Error::Ok on success; @c Error::NotSupported
+                 *         for an unknown or read-only @p id.
+                 */
+                virtual Error setParam(MediaIOParamsID id, const Variant &value);
+
+                /**
+                 * @brief Validates a prospective @c Set without applying it.
+                 *
+                 * Called by @ref executeCmd(MediaIOCommandParams &) before
+                 * every @c Set — up front for an atomic block (so a
+                 * rejection aborts before anything is applied) and inline
+                 * just before each write for a non-atomic block (so a
+                 * rejection skips only that write).  Default returns
+                 * @c Error::Ok (accept).  Override to reject unknown ids or
+                 * out-of-range / wrong-typed values so @ref setParam can
+                 * trust its input; backends that cannot honor atomic
+                 * semantics return @c Error::NotSupported here so an atomic
+                 * block fails before anything is applied.
+                 *
+                 * @param id    Parameter that would be written.
+                 * @param value Value that would be applied.
+                 * @return @c Error::Ok when the @c Set is acceptable.
+                 */
+                virtual Error validateParam(MediaIOParamsID id, const Variant &value);
 
                 /**
                  * @brief Handles an instance-wide stats query.

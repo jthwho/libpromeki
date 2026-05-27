@@ -19,6 +19,25 @@ The first match is used.  Once a config has been loaded for a build directory,
 the file is registered as a configure-time dependency: editing the file and
 re-running `build` (or `cmake --build`) re-runs CMake configure automatically.
 
+## Using a preset from a downstream build
+
+These presets also work when libpromeki is built from source inside a larger
+project via `add_subdirectory()` — set `PROMEKI_CONFIG_FILE` (a plain `set()`
+is enough) *before* the `add_subdirectory()`:
+
+```cmake
+set(PROMEKI_CONFIG_FILE proav-embedded)   # before add_subdirectory()
+add_subdirectory(third_party/libpromeki)
+target_link_libraries(myapp PRIVATE promeki::promeki)
+```
+
+This is the recommended way for a downstream `add_subdirectory` consumer to
+pick libpromeki's feature set, rather than hand-maintaining a wall of
+`set(PROMEKI_ENABLE_* ...)` lines that drifts as flags come and go.  A
+runnable example lives in `examples/downstream/`, and the full discussion —
+including the four rules for driving the flags from a parent build — is in
+`docs/building.md` (section "Using libpromeki in Your Project").
+
 ## Stock configs
 
 ### Feature presets
@@ -28,6 +47,7 @@ re-running `build` (or `cmake --build`) re-runs CMake configure automatically.
 | `default.cmake`            | You just want the project's normal defaults written out explicitly.          |
 | `minimal.cmake`            | You want the smallest possible promeki: core library only, no codecs/UI/net. |
 | `headless-server.cmake`    | Server-side workloads (ingest, transcode, mux): network + proav, no UI.      |
+| `proav-embedded.cmake`     | Lean embedded pro A/V (SDI ANC boxes): proav core, no codecs/fonts/audio/net. |
 | `media-workstation.cmake`  | Desktop development with the full set of codecs + TUI + SDL3 viewer.         |
 | `full.cmake`               | Everything turned on, including optional GPU / SDK-gated backends.           |
 | `docs-only.cmake`          | Build only the Doxygen `docs` target (equivalent of `-DPROMEKI_DOCS_ONLY=ON`). |
@@ -173,7 +193,7 @@ PROMEKI_BUILD_BENCHMARKS     PROMEKI_BUILD_STATS
 ```
 PROMEKI_WARNINGS_AS_ERRORS   PROMEKI_USE_PCH
 PROMEKI_USE_CCACHE           PROMEKI_SANITIZER (string)
-PROMEKI_DOCS_ONLY
+PROMEKI_SPLIT_DEBUG          PROMEKI_DOCS_ONLY
 ```
 
 ### Feature flags
