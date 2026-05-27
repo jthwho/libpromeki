@@ -1,6 +1,6 @@
 /**
  * @file      textwrap.h
- * @copyright Howard Logic. All rights reserved.
+ * @copyright Jason Howard. All rights reserved.
  * @ingroup strings
  *
  * See LICENSE file in the project root folder for license information.

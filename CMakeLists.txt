@@ -3,9 +3,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(APP_NAME "promeki")
-set(APP_VENDOR "HOWARDLOGIC")
+set(APP_VENDOR "JASONHOWARD")
 set(APP_HUMAN_NAME "libpromeki")
-set(APP_HUMAN_VENDOR "Howard Logic")
+set(APP_HUMAN_VENDOR "Jason Howard")
 
 # The `VERSION` file in the repository root is the single source of truth for
 # the project version. The first non-comment line must be a MAJOR.MINOR.PATCH

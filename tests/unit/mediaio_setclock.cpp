@@ -1,6 +1,6 @@
 /**
  * @file      tests/unit/mediaio_setclock.cpp
- * @copyright Howard Logic. All rights reserved.
+ * @copyright Jason Howard. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  *

@@ -1,7 +1,7 @@
 /**
  * @file      frame.cpp
  * @author    Jason Howard <jth@howardlogic.com>
- * @copyright Howard Logic.  All rights reserved.
+ * @copyright Jason Howard. All rights reserved.
  *
  * See LICENSE file in the project root folder.
  */

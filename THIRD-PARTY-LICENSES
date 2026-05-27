@@ -527,7 +527,7 @@ tree at thirdparty/libajantv2/LICENSE.
  https://github.com/jthwho/libvtc
 ==========================================================================
 
-Copyright (c) 2025 Howard Logic
+Copyright (c) 2025 Jason Howard
 
 libvtc (the timecode engine backing the Timecode class) is licensed
 under the MIT License.  The full license text is in the source tree at
@@ -540,7 +540,7 @@ thirdparty/libvtc/LICENSE.
  https://github.com/jthwho/cirf
 ==========================================================================
 
-Copyright (c) Howard Logic
+Copyright (c) Jason Howard
 
 cirf provides the compiled-in resource filesystem (the :/.PROMEKI/ paths)
 and is licensed under the MIT License, as stated in

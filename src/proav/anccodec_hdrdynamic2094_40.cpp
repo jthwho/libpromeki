@@ -1,6 +1,6 @@
 /**
  * @file      anccodec_hdrdynamic2094_40.cpp
- * @copyright Howard Logic. All rights reserved.
+ * @copyright Jason Howard. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  *

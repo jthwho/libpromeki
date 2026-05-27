@@ -139,7 +139,7 @@ pool.submit([tc]() {
 ```cpp
 /**
  * @file      filename.h
- * @copyright Howard Logic. All rights reserved.
+ * @copyright Jason Howard. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  */
@@ -181,7 +181,7 @@ PROMEKI_NAMESPACE_END
 
 ### File Header Comment
 
-Every file starts with a Doxygen `@file` block. Use `@copyright Howard Logic. All rights reserved.` and reference the license as: `See LICENSE file in the project root folder for license information.` with a trailing period and using "project root folder" (not "source root folder").
+Every file starts with a Doxygen `@file` block. Use `@copyright Jason Howard. All rights reserved.` and reference the license as: `See LICENSE file in the project root folder for license information.` with a trailing period and using "project root folder" (not "source root folder").
 
 The `@author` tag is optional.
 
