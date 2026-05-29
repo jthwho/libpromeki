@@ -325,6 +325,96 @@ int64_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sende
         return static_cast<int64_t>(ret);
 }
 
+Error UdpSocket::setReceivePktInfo(bool enable) {
+        if (_fd < 0) return Error::NotOpen;
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        // Winsock supports IP_PKTINFO / IPV6_PKTINFO with slightly
+        // different option codes; not wired up yet — return
+        // NotSupported so callers can degrade.
+        (void)enable;
+        return Error::NotSupported;
+#else
+        const int val = enable ? 1 : 0;
+        if (_domain == AF_INET6) {
+                // Some platforms (older Linux glibc) define both
+                // names; IPV6_RECVPKTINFO is the modern one.  Pure
+                // RFC 3542 / 2292 distinction; the kernel
+                // accepts the modern macro.
+                return setSocketOption(IPPROTO_IPV6, IPV6_RECVPKTINFO, val);
+        }
+        return setSocketOption(IPPROTO_IP, IP_PKTINFO, val);
+#endif
+}
+
+int64_t UdpSocket::readDatagramWithIfIndex(void *data, size_t maxSize,
+                                           SocketAddress *sender, unsigned int *ifindex) {
+        if (ifindex != nullptr) *ifindex = 0;
+        if (_fd < 0) {
+                promekiWarnThrottled(5000, "UdpSocket::readDatagramWithIfIndex on closed socket (maxSize=%zu)",
+                                     maxSize);
+                return -1;
+        }
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        // No cmsg path on Windows yet — fall back to recvfrom and
+        // leave ifindex zero.
+        (void)sender;
+        return readDatagram(data, maxSize, sender);
+#else
+        struct sockaddr_storage storage;
+        struct iovec            iov;
+        iov.iov_base = data;
+        iov.iov_len  = maxSize;
+        // Generous cmsg scratch.  IPV6 in6_pktinfo is the biggest
+        // payload we expect; 256 bytes covers it + any extras the
+        // kernel may attach (timestamps from prior socket-option
+        // calls etc.).
+        alignas(struct cmsghdr) char cmsgbuf[256];
+        struct msghdr msg;
+        std::memset(&msg, 0, sizeof(msg));
+        msg.msg_name       = &storage;
+        msg.msg_namelen    = sizeof(storage);
+        msg.msg_iov        = &iov;
+        msg.msg_iovlen     = 1;
+        msg.msg_control    = cmsgbuf;
+        msg.msg_controllen = sizeof(cmsgbuf);
+
+        ssize_t ret = ::recvmsg(_fd, &msg, 0);
+        if (ret < 0) {
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                        promekiWarnThrottled(1000, "UdpSocket::recvmsg failed (maxSize=%zu errno=%d %s)",
+                                             maxSize, errno, strerror(errno));
+                } else {
+                        promekiWarnThrottled(5000, "UdpSocket::recvmsg EAGAIN (maxSize=%zu)", maxSize);
+                }
+                return -1;
+        }
+        if (sender != nullptr) {
+                auto [addr, err] = SocketAddress::fromSockAddr(
+                        reinterpret_cast<struct sockaddr *>(&storage), msg.msg_namelen);
+                if (err.isOk()) {
+                        *sender = addr;
+                }
+        }
+        // Walk cmsgs for IP_PKTINFO / IPV6_PKTINFO.  We tolerate
+        // their absence (ifindex stays 0) so a setReceivePktInfo
+        // that silently failed does not poison the read.
+        for (struct cmsghdr *cm = CMSG_FIRSTHDR(&msg);
+             cm != nullptr;
+             cm = CMSG_NXTHDR(&msg, cm)) {
+                if (cm->cmsg_level == IPPROTO_IP && cm->cmsg_type == IP_PKTINFO) {
+                        struct in_pktinfo info;
+                        std::memcpy(&info, CMSG_DATA(cm), sizeof(info));
+                        if (ifindex != nullptr) *ifindex = static_cast<unsigned int>(info.ipi_ifindex);
+                } else if (cm->cmsg_level == IPPROTO_IPV6 && cm->cmsg_type == IPV6_PKTINFO) {
+                        struct in6_pktinfo info6;
+                        std::memcpy(&info6, CMSG_DATA(cm), sizeof(info6));
+                        if (ifindex != nullptr) *ifindex = info6.ipi6_ifindex;
+                }
+        }
+        return static_cast<int64_t>(ret);
+#endif
+}
+
 bool UdpSocket::hasPendingDatagrams() const {
         return bytesAvailable() > 0;
 }

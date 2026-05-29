@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/application.h>
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -64,7 +65,9 @@ template <typename Pred> bool pumpUntil(EventLoop &loop, Pred pred, int64_t time
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection forwards frames TPG -> Inspector") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         // Source: TPG generating a small 30 fps RGBA stream.
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
@@ -119,7 +122,9 @@ TEST_CASE("MediaIOPortConnection forwards frames TPG -> Inspector") {
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection emits upstreamDone when source closes") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -171,7 +176,9 @@ TEST_CASE("MediaIOPortConnection emits upstreamDone when source closes") {
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection fans one source out to multiple sinks") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -235,7 +242,9 @@ TEST_CASE("MediaIOPortConnection fans one source out to multiple sinks") {
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection honours per-sink frame-count cap") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -307,7 +316,9 @@ TEST_CASE("MediaIOPortConnection honours per-sink frame-count cap") {
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection emits allSinksDone when every sink is capped") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -362,7 +373,9 @@ TEST_CASE("MediaIOPortConnection emits allSinksDone when every sink is capped") 
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection rejects addSink after start") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -423,7 +436,9 @@ TEST_CASE("MediaIOPortConnection rejects addSink after start") {
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection cascades through a transform (TPG -> CSC -> Inspector)") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -492,7 +507,9 @@ TEST_CASE("MediaIOPortConnection cascades through a transform (TPG -> CSC -> Ins
 // ============================================================================
 
 TEST_CASE("MediaIOPortConnection unblocks upstream when downstream drains the transform") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config srcCfg = MediaIOFactory::defaultConfig("TPG");
         srcCfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte720p59_94));
@@ -669,7 +686,9 @@ class CascadeCloseSinkMediaIO : public PausedTestMediaIO {
 } // namespace
 
 TEST_CASE("MediaIOPortConnection treats NotOpen mid-flight as upstreamDone") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         CascadeCloseSourceMediaIO source;
         MediaIORequest             srcOpen = source.open();
@@ -847,7 +866,9 @@ class CountingSinkMediaIO : public ::promeki::tests::InlineTestMediaIO {
 } // namespace
 
 TEST_CASE("MediaIOPortConnection drives multiple frames past a slow first read") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         // 250 ms is comfortably longer than any historical "is the
         // device dead?" pump-side timeout (the V4L2 backend's own
@@ -952,7 +973,9 @@ TEST_CASE("MediaIOPortConnection treats Cancelled mid-flight as upstreamDone") {
         // is the simplest reproducible path; it does not need warmup
         // frames and avoids the timing complexity of arming mid-stream.
 
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         CancelledReadSourceMediaIO source;
         // Arm cancellation before the connection can issue a Read.

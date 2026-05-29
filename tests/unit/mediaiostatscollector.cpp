@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/application.h>
 #include <memory>
 #include <promeki/duration.h>
 #include <promeki/eventloop.h>
@@ -43,7 +44,9 @@ namespace {
 }
 
 TEST_CASE("MediaIOStatsCollector_DefaultConstructIsDetached") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaIOStatsCollector coll;
 
         CHECK(coll.target() == nullptr);
@@ -52,7 +55,9 @@ TEST_CASE("MediaIOStatsCollector_DefaultConstructIsDetached") {
 }
 
 TEST_CASE("MediaIOStatsCollector_AttachOnConstruction") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -66,7 +71,9 @@ TEST_CASE("MediaIOStatsCollector_FoldsFrameworkTimingFromOpen") {
         // into MediaIOCommand::stats by the strategy class.  Once
         // commandCompletedSignal fires, the collector should have a
         // window for each under (Open, <id>) keys.
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -87,7 +94,9 @@ TEST_CASE("MediaIOStatsCollector_SeparatesByCommandType") {
         // land in distinct windows: a Read command's ExecuteDuration
         // and a Write command's ExecuteDuration are conceptually
         // different telemetry channels.
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -124,7 +133,9 @@ TEST_CASE("MediaIOStatsCollector_SkipsNonNumericStatEntries") {
         // stamps for diagnostics) must not create windows — the
         // promotion path is shared with WindowedStat::push(Variant)
         // which returns false for non-numeric types.
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -144,7 +155,9 @@ TEST_CASE("MediaIOStatsCollector_SkipsNonNumericStatEntries") {
 TEST_CASE("MediaIOStatsCollector_SkipsFrameCountSentinels") {
         // FrameCount::unknown() / FrameCount::infinity() must not
         // pollute windows with sentinel-encoded negative values.
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -165,7 +178,9 @@ TEST_CASE("MediaIOStatsCollector_SkipsFrameCountSentinels") {
 }
 
 TEST_CASE("MediaIOStatsCollector_DetachStopsFolding") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -187,7 +202,9 @@ TEST_CASE("MediaIOStatsCollector_DetachStopsFolding") {
 }
 
 TEST_CASE("MediaIOStatsCollector_SwapTargetClearsAndRewires") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io1;
         InlineTestMediaIO     io2;
         MediaIOStatsCollector coll(&io1);
@@ -211,7 +228,9 @@ TEST_CASE("MediaIOStatsCollector_SwapTargetClearsAndRewires") {
 }
 
 TEST_CASE("MediaIOStatsCollector_ZeroWindowSizeDropsSamples") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -226,7 +245,9 @@ TEST_CASE("MediaIOStatsCollector_ZeroWindowSizeDropsSamples") {
 }
 
 TEST_CASE("MediaIOStatsCollector_NegativeWindowSizeClampsToZero") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaIOStatsCollector coll;
 
         coll.setWindowSize(-10);
@@ -234,7 +255,9 @@ TEST_CASE("MediaIOStatsCollector_NegativeWindowSizeClampsToZero") {
 }
 
 TEST_CASE("MediaIOStatsCollector_SetWindowSizeShrinksExistingWindows") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -257,7 +280,9 @@ TEST_CASE("MediaIOStatsCollector_SetWindowSizeShrinksExistingWindows") {
 }
 
 TEST_CASE("MediaIOStatsCollector_SetWindowSizeZeroClearsWindows") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -272,7 +297,9 @@ TEST_CASE("MediaIOStatsCollector_SetWindowSizeZeroClearsWindows") {
 }
 
 TEST_CASE("MediaIOStatsCollector_ClearKeepsWindowSize") {
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 
@@ -299,7 +326,9 @@ TEST_CASE("MediaIOStatsCollector_TargetDestroyedAutoNullsPointer") {
         // auto-clears when the MediaIO is destroyed first.  After
         // that, the collector reports a null target and is safe to
         // destroy without trying to disconnect from a dead signal.
-        EventLoop                          loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         std::unique_ptr<InlineTestMediaIO> io = std::make_unique<InlineTestMediaIO>();
         MediaIOStatsCollector              coll(io.get());
         REQUIRE(coll.target() == io.get());
@@ -318,7 +347,9 @@ TEST_CASE("MediaIOStatsCollector_ParentOwnershipDestroysWithParent") {
         // We can't observe the collector's destruction directly from
         // outside (the pointer goes dangling), but we can witness it
         // via aboutToDestroySignal which fires from the destructor.
-        EventLoop  loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         ObjectBase parent;
 
         auto *coll = new MediaIOStatsCollector(&parent);
@@ -341,7 +372,9 @@ TEST_CASE("MediaIOStatsCollector_ParentOwnershipDestroysWithParent") {
 TEST_CASE("MediaIOStatsCollector_NullCommandIgnored") {
         // Defensive: a null command Ptr (which should never occur in
         // the wild) must not crash the collector.
-        EventLoop             loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         InlineTestMediaIO     io;
         MediaIOStatsCollector coll(&io);
 

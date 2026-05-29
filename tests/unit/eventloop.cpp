@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <thread>
 #include <atomic>
+#include <promeki/application.h>
 #include <promeki/eventloop.h>
 #include <promeki/objectbase.h>
 #include <promeki/timerevent.h>
@@ -285,8 +286,10 @@ TEST_CASE("EventLoop: ObjectBase startTimer and stopTimer") {
                         void timerEvent(TimerEvent *) override { fireCount++; }
         };
 
-        EventLoop loop;
-        TimerObj  obj;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
+        TimerObj    obj;
         int       timerId = obj.startTimer(5, true);
         CHECK(timerId >= 0);
         BasicThread::sleepMs(20);
@@ -307,8 +310,10 @@ TEST_CASE("EventLoop: ObjectBase repeating timer via timerEvent") {
                         void timerEvent(TimerEvent *) override { fireCount++; }
         };
 
-        EventLoop loop;
-        TimerObj  obj;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
+        TimerObj    obj;
         int       timerId = obj.startTimer(5, false);
         // Wait and process several times to let the timer fire repeatedly
         for (int i = 0; i < 5; i++) {

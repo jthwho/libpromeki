@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/application.h>
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -248,7 +249,9 @@ TEST_CASE("MediaIORequest::wait sentinel ignores timeout") {
 // ============================================================================
 
 TEST_CASE("MediaIORequest::then marshalls async resolution through the calling EventLoop") {
-        EventLoop       loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaIO::Config cfg = MediaIOFactory::defaultConfig("TPG");
         cfg.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p30));
         cfg.set(MediaConfig::VideoPixelFormat, PixelFormat(PixelFormat::RGBA8_sRGB));

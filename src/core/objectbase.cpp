@@ -23,9 +23,22 @@ Mutex &ObjectBase::objectBasePtrMutex() {
 
 ObjectBase::ObjectBase(ObjectBase *p) : _parent(p) {
         if (_parent != nullptr) _parent->addChild(this);
-        _eventLoop = EventLoop::current();
+        // Affinity is the Thread we were constructed on.  The
+        // dispatch EventLoop is derived from that Thread via
+        // @ref eventLoop, so there is no separately-tracked loop
+        // pointer to fall out of sync.  @ref Thread::currentThread
+        // is stable for the entire lifetime of the thread (set in
+        // @ref Thread::adoptCurrentThread and at the top of
+        // @ref Thread::run) whereas the prior
+        // @c EventLoop::current capture was valid only inside
+        // @c exec — that asymmetry was the bug surface we deleted.
         _thread = Thread::currentThread();
         return;
+}
+
+EventLoop *ObjectBase::eventLoop() const {
+        // Out-of-line so callers don't need @c Thread complete.
+        return _thread != nullptr ? _thread->threadEventLoop() : nullptr;
 }
 
 void ObjectBase::registerCleanup(ObjectBase *target, CleanupHandler fn) {
@@ -50,7 +63,18 @@ void ObjectBase::setParent(ObjectBase *p) {
 }
 
 void ObjectBase::deleteLater() {
-        if (_eventLoop == nullptr) {
+        EventLoop *loop = eventLoop();
+        if (loop == nullptr) {
+                // Almost always a user error: the object was
+                // constructed on a thread that has no @ref Thread
+                // wrapper, so there is no loop to post the delete
+                // to.  Fall back to a synchronous delete (the only
+                // sane option) but flag it loudly.
+                promekiWarn("ObjectBase::deleteLater on object @ %p with no Thread affinity — "
+                            "falling back to immediate delete on the calling thread.  "
+                            "Adopt the constructing thread via Thread::adoptCurrentThread() "
+                            "or moveToThread() before deleteLater.",
+                            static_cast<const void *>(this));
                 delete this;
                 return;
         }
@@ -63,7 +87,7 @@ void ObjectBase::deleteLater() {
         // callable becomes a no-op rather than a use-after-free.
         ObjectBasePtr<> selfPtr(this);
         static const auto kDeleteLaterLabel = EventLoop::Label{"ObjectBase.deleteLater"};
-        _eventLoop->postCallable(kDeleteLaterLabel, [selfPtr]() mutable {
+        loop->postCallable(kDeleteLaterLabel, [selfPtr]() mutable {
                 ObjectBase *self = selfPtr.data();
                 if (self == nullptr) return;
                 self->setParent(nullptr);
@@ -74,28 +98,44 @@ void ObjectBase::deleteLater() {
 void ObjectBase::moveToThread(Thread *t) {
         PROMEKI_ASSERT(_parent == nullptr);
         PROMEKI_ASSERT(_thread == nullptr || _thread == Thread::currentThread());
-        EventLoop *loop = (t != nullptr) ? t->threadEventLoop() : nullptr;
-        setOwnerThreadRecursive(t, loop);
+        setOwnerThreadRecursive(t);
         return;
 }
 
-void ObjectBase::setOwnerThreadRecursive(Thread *t, EventLoop *loop) {
+void ObjectBase::setOwnerThreadRecursive(Thread *t) {
+        // EventLoop is derived from @c _thread, so moving the
+        // affinity transitively moves the dispatch loop — no
+        // separate field to keep in sync.
         _thread = t;
-        _eventLoop = loop;
         for (auto child : _childList) {
-                child->setOwnerThreadRecursive(t, loop);
+                child->setOwnerThreadRecursive(t);
         }
         return;
 }
 
 int ObjectBase::startTimer(unsigned int intervalMs, bool singleShot) {
-        if (_eventLoop == nullptr) return -1;
-        return _eventLoop->startTimer(this, intervalMs, singleShot);
+        EventLoop *loop = eventLoop();
+        if (loop == nullptr) {
+                promekiWarn("ObjectBase::startTimer(%ums%s) on object @ %p with no Thread affinity — "
+                            "no timer started.  Construct the object on a Thread or call "
+                            "moveToThread() before starting timers.",
+                            intervalMs,
+                            singleShot ? ", singleShot" : "",
+                            static_cast<const void *>(this));
+                return -1;
+        }
+        return loop->startTimer(this, intervalMs, singleShot);
 }
 
 void ObjectBase::stopTimer(int timerId) {
-        if (_eventLoop == nullptr) return;
-        _eventLoop->stopTimer(timerId);
+        EventLoop *loop = eventLoop();
+        if (loop == nullptr) {
+                promekiWarn("ObjectBase::stopTimer(%d) on object @ %p with no Thread affinity — no-op.",
+                            timerId,
+                            static_cast<const void *>(this));
+                return;
+        }
+        loop->stopTimer(timerId);
         return;
 }
 

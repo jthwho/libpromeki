@@ -392,6 +392,7 @@ option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
 option(PROMEKI_ENABLE_HTTP     "Include HTTP server / client (vendored llhttp)" ON)
 option(PROMEKI_ENABLE_TLS      "Include TLS support (vendored mbedTLS)"  ON)
 option(PROMEKI_ENABLE_SRT      "Include SRT (Secure Reliable Transport) support (vendored libsrt + isolated mbedTLS-3.6)" ON)
+option(PROMEKI_ENABLE_MDNS     "Include mDNS / DNS-SD service discovery (vendored mjansson/mdns)" ON)
 option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
 option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
 option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
@@ -627,6 +628,7 @@ option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"   
 option(PROMEKI_USE_SYSTEM_LLHTTP        "Use system llhttp instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_MBEDTLS       "Use system mbedTLS instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SRT           "Use system libsrt instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_MDNS          "Use system mjansson/mdns instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NTV2          "Use system libajantv2 instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_WHISPER       "Use system whisper.cpp instead of vendored"   OFF)
 
@@ -756,6 +758,11 @@ if(PROMEKI_ENABLE_SRT AND NOT PROMEKI_ENABLE_TLS)
     # libsrt requires a crypto backend for handshake auth + AES; we always
     # ride on the same vendored mbedTLS that the rest of the library uses.
     message(FATAL_ERROR "PROMEKI_ENABLE_SRT requires PROMEKI_ENABLE_TLS (vendored mbedTLS)")
+endif()
+if(PROMEKI_ENABLE_MDNS AND NOT PROMEKI_ENABLE_NETWORK)
+    # mDNS rides on the project's UDP socket / multicast plumbing in src/network/.
+    # Without NETWORK there is no socket layer to bind 5353 on.
+    message(FATAL_ERROR "PROMEKI_ENABLE_MDNS requires PROMEKI_ENABLE_NETWORK")
 endif()
 if(PROMEKI_ENABLE_SRC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_SRC requires PROMEKI_ENABLE_PROAV")
@@ -1212,6 +1219,39 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     add_subdirectory(thirdparty/pugixml EXCLUDE_FROM_ALL)
     set(PROMEKI_PUGIXML_TARGET pugixml-static)
+endif()
+
+# --- mjansson/mdns ---
+# mjansson/mdns is a public-domain, single-header C library implementing
+# the wire-level mDNS / DNS-SD protocols from RFC 6762 + RFC 6763.  It is
+# the protocol backend for the promeki::Mdns* family (MdnsManager,
+# MdnsBrowser, MdnsResolver, MdnsPublisher) wired up in src/network/.
+# The library is header-only — the upstream mdns.c is an example/test
+# executable that we don't build.  We expose it as an INTERFACE target
+# carrying just the include directory; the one source file that
+# instantiates the implementation (src/network/mjanssonmdnsbackend.cpp,
+# added in a follow-up step) #includes "mdns.h" and uses the inline
+# implementation directly.
+if(PROMEKI_ENABLE_MDNS)
+    if(PROMEKI_USE_SYSTEM_MDNS)
+        # Distros do not package mjansson/mdns; PROMEKI_USE_SYSTEM_MDNS=ON
+        # only makes sense for users who installed the header by hand into
+        # a system include path.  Probe and fail loudly if it is missing.
+        find_path(PROMEKI_MDNS_INCLUDE_DIR mdns.h)
+        if(NOT PROMEKI_MDNS_INCLUDE_DIR)
+            message(FATAL_ERROR
+                "PROMEKI_USE_SYSTEM_MDNS=ON but mdns.h was not found on the "
+                "system include path. Install mjansson/mdns or unset the flag.")
+        endif()
+        add_library(promeki_mdns_vendor INTERFACE)
+        target_include_directories(promeki_mdns_vendor INTERFACE
+            ${PROMEKI_MDNS_INCLUDE_DIR})
+    else()
+        add_library(promeki_mdns_vendor INTERFACE)
+        target_include_directories(promeki_mdns_vendor INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/mdns>)
+    endif()
+    set(PROMEKI_MDNS_TARGET promeki_mdns_vendor)
 endif()
 
 # Cross-build detection (used by the cirf block below and by the
@@ -2841,6 +2881,7 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/rtppayloadrawvideo.h
         include/promeki/jxsmarker.h
         include/promeki/st2110tx.h
+        include/promeki/st2110trafficcalc.h
         include/promeki/st2110video.h
         include/promeki/st2110vrxmonitor.h
         include/promeki/rtpseqreorderbuffer.h
@@ -2912,6 +2953,7 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/rtppayloadrawvideo.cpp
         src/network/jxsmarker.cpp
         src/network/st2110tx.cpp
+        src/network/st2110trafficcalc.cpp
         src/network/st2110video.cpp
         src/network/st2110vrxmonitor.cpp
         src/network/rtpseqreorderbuffer.cpp
@@ -2973,6 +3015,44 @@ if(PROMEKI_ENABLE_SRT)
         src/network/srtsockettransport.cpp
         src/network/srtepoll.cpp
         src/network/srtgroup.cpp
+    )
+endif()
+
+# mDNS / DNS-SD sources (subset of network; vendored mjansson/mdns).
+# Step 2 lands the pure value types — @ref MdnsServiceType,
+# @ref MdnsTxtRecord, @ref MdnsServiceInstance — plus the abstract
+# Bundled mDNS / DNS-SD implementation on top of the vendored
+# mjansson/mdns packet parser.  The @c promeki_mdns_vendor target is
+# wired up alongside the other vendored deps near the top of this
+# file.  Public headers expose value types (MdnsServiceType,
+# MdnsTxtRecord, MdnsServiceInstance, MdnsRecord) and the engine
+# classes (MdnsManager, MdnsBrowser, MdnsResolver, MdnsPublisher).
+if(PROMEKI_ENABLE_MDNS)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/mdnsbrowser.h
+        include/promeki/mdnsmanager.h
+        include/promeki/mdnspacket.h
+        include/promeki/mdnspublisher.h
+        include/promeki/mdnsrecord.h
+        include/promeki/mdnsresolver.h
+        include/promeki/mdnsname.h
+        include/promeki/mdnsservicetype.h
+        include/promeki/mdnstxtrecord.h
+        include/promeki/mdnsserviceinstance.h
+        include/promeki/mdnstypebrowser.h
+    )
+    list(APPEND PROMEKI_SOURCES
+        src/network/mdnsbrowser.cpp
+        src/network/mdnsmanager.cpp
+        src/network/mdnsname.cpp
+        src/network/mdnspacket.cpp
+        src/network/mdnspublisher.cpp
+        src/network/mdnsrecord.cpp
+        src/network/mdnsresolver.cpp
+        src/network/mdnsservicetype.cpp
+        src/network/mdnstxtrecord.cpp
+        src/network/mdnsserviceinstance.cpp
+        src/network/mdnstypebrowser.cpp
     )
 endif()
 
@@ -3563,6 +3643,14 @@ endif()
 # the cirf_runtime static archive does not need to participate
 # in the promeki export set. Both links stay PRIVATE.
 target_link_libraries(promeki PRIVATE ${PROMEKI_CIRF_RUNTIME_TARGET})
+
+# mjansson/mdns is a header-only library used internally by the
+# mDNS packet parser (src/network/mdnspacket.cpp); the include
+# directory carried by the INTERFACE target reaches that one TU and
+# never leaks into the promeki public surface.  Link stays PRIVATE.
+if(PROMEKI_ENABLE_MDNS)
+    target_link_libraries(promeki PRIVATE ${PROMEKI_MDNS_TARGET})
+endif()
 
 # Built-in :/.PROMEKI/ resource set. cirf_add_resources() was brought
 # into scope above. The static library it creates is whole-archive
@@ -4362,6 +4450,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/rtppayloadrawvideo.cpp
             tests/unit/network/jxsmarker.cpp
             tests/unit/network/st2110tx.cpp
+            tests/unit/network/st2110trafficcalc.cpp
             tests/unit/network/st2110video.cpp
             tests/unit/network/st2110vrxmonitor.cpp
             tests/unit/network/phcclock.cpp
@@ -4398,6 +4487,22 @@ if(PROMEKI_BUILD_TESTS)
     if(PROMEKI_ENABLE_SRT)
         list(APPEND UNITTEST_SOURCES
             tests/unit/network/srtsocket.cpp
+        )
+    endif()
+
+    if(PROMEKI_ENABLE_MDNS)
+        list(APPEND UNITTEST_SOURCES
+            tests/unit/network/mdnsbrowser.cpp
+            tests/unit/network/mdnsmanager.cpp
+            tests/unit/network/mdnsname.cpp
+            tests/unit/network/mdnspacket.cpp
+            tests/unit/network/mdnspublisher.cpp
+            tests/unit/network/mdnsrecord.cpp
+            tests/unit/network/mdnsresolver.cpp
+            tests/unit/network/mdnsservicetype.cpp
+            tests/unit/network/mdnstxtrecord.cpp
+            tests/unit/network/mdnsserviceinstance.cpp
+            tests/unit/network/mdnstypebrowser.cpp
         )
     endif()
 
@@ -4707,7 +4812,7 @@ if(PROMEKI_BUILD_TESTS)
         set_source_files_properties(tests/unit/doctest_main.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
     endif()
     add_test(NAME unittest-promeki COMMAND unittest-promeki)
-    set_tests_properties(unittest-promeki PROPERTIES TIMEOUT 60)
+    set_tests_properties(unittest-promeki PROPERTIES TIMEOUT 180)
 
     if(PROMEKI_BUILD_TUI)
         set(UNITTEST_TUI_SOURCES

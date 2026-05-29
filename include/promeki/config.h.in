@@ -65,6 +65,7 @@
 #cmakedefine01 PROMEKI_ENABLE_NDI
 #cmakedefine01 PROMEKI_ENABLE_NTV2
 #cmakedefine01 PROMEKI_ENABLE_SRT
+#cmakedefine01 PROMEKI_ENABLE_MDNS
 #cmakedefine01 PROMEKI_ENABLE_MEMFD
 
 /**

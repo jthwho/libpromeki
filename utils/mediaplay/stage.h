@@ -28,20 +28,19 @@ namespace mediaplay {
         // Synthetic stage names
         // --------------------------------------------------------------------------
         //
-        // mediaplay recognises two stage identifiers that do not map to a
-        // registered MediaIO backend:
-        //
-        //   "SDL"      — the SDL player sink, constructed via
-        //                createSDLPlayer() with the utility's own
-        //                SDLVideoWidget / SDLAudioOutput.  Not a registered
-        //                backend because it needs UI handles.
+        // mediaplay recognises one stage identifier here that does not map
+        // to a registered MediaIO backend:
         //
         //   "__file__" — used internally to mark a stage whose argument is a
         //                filesystem path that should be routed through
         //                MediaIO::createForFile{Read,Write}().  Never typed
         //                directly on the CLI; classifyStageArg() inserts it
         //                when it sees a path-shaped argument.
-        extern const char *const kStageSdl;
+        //
+        // The other synthetic stage name, "SDL", lives entirely behind
+        // @ref SdlSupport (see @c sdlsupport.h): its canonical name, schema,
+        // and runtime hooks are queried through that class so this file
+        // (and @c stage.cpp) need not mention SDL at all.
         extern const char *const kStageFile;
 
         /**
@@ -67,33 +66,6 @@ namespace mediaplay {
                         // @c rawKeyValues is parsed against @c defaultConfig().
                         promeki::StringList rawMetaKeyValues;
         };
-
-        // --------------------------------------------------------------------------
-        // SDL pseudo-backend schema
-        // --------------------------------------------------------------------------
-        //
-        // The SDL player is a special case: it can't be a registry-managed
-        // MediaIO backend because SDLWindow / SDLVideoWidget / SDLAudioOutput
-        // have to be constructed on the main thread (and the main thread is
-        // blocked inside MediaIO::open when the strand worker runs Open, so a
-        // post-callable-and-wait pattern would deadlock).  Instead, mediaplay
-        // keeps the synthetic kStageSdl marker and exposes SDL's config /
-        // metadata schemas via these helpers, so from the user's perspective
-        // it still looks like any other `-o NAME` backend: it shows up in the
-        // `--i list` / `--o list` registry dump, the `--help` schema table,
-        // and accepts `--oc Key:Value` just like TPG / ImageFile / QuickTime.
-
-        /** @brief Returns the SDL player's config schema with empty / default values. */
-        promeki::MediaIO::Config sdlDefaultConfig();
-
-        /** @brief Returns the SDL player's config specs. */
-        promeki::MediaIO::Config::SpecMap sdlConfigSpecs();
-
-        /** @brief Returns the SDL player's metadata schema (currently empty). */
-        promeki::Metadata sdlDefaultMetadata();
-
-        /** @brief Human-readable description for the SDL entry in listings. */
-        const char *sdlDescription();
 
         // --------------------------------------------------------------------------
         // Listing helpers (value == "list" sentinel, and --in list)

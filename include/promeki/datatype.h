@@ -169,6 +169,9 @@ enum DataTypeID : uint16_t {
         DataTypePixelAspect           = 0x72,
         DataTypeTranscript            = 0x73,
         DataTypeTranscriptWord        = 0x74,
+        DataTypeMdnsServiceType       = 0x75,
+        DataTypeMdnsTxtRecord         = 0x76,
+        DataTypeMdnsServiceInstance   = 0x77,
 };
 
 /** @brief First @ref DataTypeID value available for user-defined types. */

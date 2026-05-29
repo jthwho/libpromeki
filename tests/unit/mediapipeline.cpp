@@ -6,6 +6,7 @@
  */
 
 #include <atomic>
+#include <promeki/application.h>
 #include <chrono>
 #include <thread>
 
@@ -58,14 +59,18 @@ namespace {
 } // namespace
 
 TEST_CASE("MediaPipeline_DefaultStateIsEmpty") {
-        EventLoop     loop; // gives the pipeline an owner event loop.
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         CHECK(p.state() == MediaPipeline::State::Empty);
         CHECK(p.stageNames().isEmpty());
 }
 
 TEST_CASE("MediaPipeline_BuildRejectsInvalidConfig") {
-        EventLoop           loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline       p;
         MediaPipelineConfig cfg; // empty
         Error               err = p.build(cfg);
@@ -74,7 +79,9 @@ TEST_CASE("MediaPipeline_BuildRejectsInvalidConfig") {
 }
 
 TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
-        EventLoop                  loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipelineConfig        cfg = makeTpgToCsc();
         MediaPipelineConfig::Stage extraSrc;
         extraSrc.name = "src2";
@@ -88,7 +95,9 @@ TEST_CASE("MediaPipeline_BuildRejectsFanIn") {
 }
 
 TEST_CASE("MediaPipeline_BuildSucceedsAndInstantiatesStages") {
-        EventLoop           loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline       p;
         MediaPipelineConfig cfg = makeTpgToCsc();
         REQUIRE(p.build(cfg).isOk());
@@ -109,7 +118,9 @@ TEST_CASE("MediaPipeline_StageNameSeedsMediaIOName") {
         // name so logs, stats, and downstream tooling key off the same
         // identifier the pipeline graph uses, even when the stage
         // config supplies a different (or no) Name.
-        EventLoop           loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline       p;
         MediaPipelineConfig cfg = makeTpgToCsc();
         // Deliberately stamp a different Name on the stage config —
@@ -128,7 +139,9 @@ TEST_CASE("MediaPipeline_StageNameSeedsMediaIOName") {
 }
 
 TEST_CASE("MediaPipeline_OpenAndClose") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -141,7 +154,9 @@ TEST_CASE("MediaPipeline_OpenAndClose") {
 }
 
 TEST_CASE("MediaPipeline_StatsAfterOpen") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -160,7 +175,9 @@ TEST_CASE("MediaPipeline_StatsAfterOpen") {
 }
 
 TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -177,7 +194,9 @@ TEST_CASE("MediaPipeline_DescribeIncludesLiveState") {
 }
 
 TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
-        EventLoop           loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipelineConfig orig = makeTpgToCsc();
         JsonObject          j = orig.toJson();
         Error               err;
@@ -193,7 +212,9 @@ TEST_CASE("MediaPipeline_BuildFromJsonRoundTrip") {
 }
 
 TEST_CASE("MediaPipeline_StartDrainsFramesThroughChain") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -220,7 +241,9 @@ TEST_CASE("MediaPipeline_FrameCountCapClosesPipelineCleanly") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount(3));
 
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -249,7 +272,9 @@ TEST_CASE("MediaPipeline_DefaultFrameCountRunsUncapped") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         CHECK(cfg.frameCount().isUnknown()); // default-constructed
 
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -271,7 +296,9 @@ TEST_CASE("MediaPipeline_FrameCountInfinityRunsUncapped") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount::infinity());
 
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -290,7 +317,9 @@ TEST_CASE("MediaPipeline_FrameCountEmptyRunsUncapped") {
         MediaPipelineConfig cfg = makeTpgToCsc();
         cfg.setFrameCount(FrameCount::empty());
 
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(cfg).isOk());
         REQUIRE(p.open().isOk());
@@ -304,7 +333,9 @@ TEST_CASE("MediaPipeline_FrameCountEmptyRunsUncapped") {
 }
 
 TEST_CASE("MediaPipeline_CloseFromBuiltStateIsSafe") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         // No open / start — close should still tear things down cleanly.
@@ -313,7 +344,9 @@ TEST_CASE("MediaPipeline_CloseFromBuiltStateIsSafe") {
 }
 
 TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         // Build a stand-alone CSC that we'll inject under a
         // fabricated "External" type name — without injection the
@@ -355,7 +388,9 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
 }
 
 TEST_CASE("MediaPipeline_InjectStageAdoptsIONameWhenSet") {
-        EventLoop       loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaIO::Config cfg = MediaIOFactory::defaultConfig("CSC");
         cfg.set(MediaConfig::Type, String("CSC"));
         cfg.set(MediaConfig::Name, String("my-csc"));
@@ -370,7 +405,9 @@ TEST_CASE("MediaPipeline_InjectStageAdoptsIONameWhenSet") {
 }
 
 TEST_CASE("MediaPipeline_InjectStageRenamesOnCollision") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         MediaIO::Config c1 = MediaIOFactory::defaultConfig("CSC");
         c1.set(MediaConfig::Type, String("CSC"));
@@ -397,7 +434,9 @@ TEST_CASE("MediaPipeline_InjectStageRenamesOnCollision") {
 }
 
 TEST_CASE("MediaPipeline_InjectStageAutoNamesByRole") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         // Inspector advertises canBeSink=true via its factory, so the
         // unnamed inject path must produce "sink<N>" auto-names.
@@ -449,7 +488,9 @@ namespace {
 } // namespace
 
 TEST_CASE("MediaPipeline_CloseAsyncEmitsClosedSignal") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -474,7 +515,9 @@ TEST_CASE("MediaPipeline_CloseSyncPumpsEventsFromOwnEventLoop") {
         // When called from the pipeline's own EventLoop, close(true)
         // must pump events while waiting for the future so the
         // cross-thread closedSignal dispatches actually run.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -496,7 +539,9 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
         // EOF but sinks might still be writing.  With the cascade,
         // finishedSignal only fires alongside closedSignal after
         // every stage has emitted its own closedSignal.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -528,7 +573,9 @@ TEST_CASE("MediaPipeline_CloseFinishedFiresAtEndOfCascade") {
 }
 
 TEST_CASE("MediaPipeline_DoubleCloseRejected") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -553,7 +600,9 @@ TEST_CASE("MediaPipeline_DoubleCloseRejected") {
 TEST_CASE("MediaPipeline_CloseOnBuiltStateCascadesWithoutDrain") {
         // Built but not opened: every stage is not-open, so initiateClose
         // must finalize synchronously via the alreadyClosed path.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
 
@@ -576,7 +625,9 @@ TEST_CASE("MediaPipeline_CloseFromRunningEmitsNoSpuriousError") {
         // stage whose _mode had already reset to NotOpen and surface
         // the NotOpen readFrame return as a pipelineError.  Verifies
         // that the full async close cycle emits zero pipeline errors.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         REQUIRE(p.open().isOk());
@@ -628,7 +679,9 @@ namespace {
 } // namespace
 
 TEST_CASE("MediaPipeline_SubscribeReceivesStateAndStageEvents") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
 
         EventCounts counts;
@@ -654,7 +707,9 @@ TEST_CASE("MediaPipeline_SubscribeReceivesStateAndStageEvents") {
 }
 
 TEST_CASE("MediaPipeline_SubscribeBeforeBuildReceivesPlanResolved") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         EventCounts   counts;
         const int     subId = p.subscribe([&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
@@ -671,7 +726,9 @@ TEST_CASE("MediaPipeline_SubscribeBeforeBuildReceivesPlanResolved") {
 }
 
 TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         EventCounts   counts;
         const int     subId = p.subscribe([&counts](const PipelineEvent &ev) { countEvent(counts, ev); });
@@ -700,7 +757,9 @@ TEST_CASE("MediaPipeline_SetStatsIntervalEmitsTickEvents") {
 }
 
 TEST_CASE("MediaPipeline_UnsubscribeStopsEventsToThatSubscriber") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
 
         EventCounts countsA;
@@ -729,7 +788,9 @@ TEST_CASE("MediaPipeline_UnsubscribeStopsEventsToThatSubscriber") {
 }
 
 TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
 
         Thread worker;
@@ -782,7 +843,9 @@ TEST_CASE("MediaPipeline_SubscriberOnAnotherThreadReceivesOnThatThread") {
 }
 
 TEST_CASE("MediaPipeline_LogEntryMirroredAsLogEvent") {
-        EventLoop         loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline     p;
         EventCounts       counts;
         std::atomic<bool> seenMessage{false};
@@ -805,7 +868,9 @@ TEST_CASE("MediaPipeline_LogEntryMirroredAsLogEvent") {
 }
 
 TEST_CASE("MediaPipeline_CloseOnClosedStateIsNoOp") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeTpgToCsc()).isOk());
         CHECK(p.close().isOk());
@@ -860,13 +925,17 @@ namespace {
 } // namespace
 
 TEST_CASE("MediaPipeline_Transport_DefaultPlaybackStateIsIdle") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         CHECK(p.playbackState() == MediaPipeline::PlaybackState::Idle);
 }
 
 TEST_CASE("MediaPipeline_Transport_StartLandsInPlayingForPlaybackKind") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -878,7 +947,9 @@ TEST_CASE("MediaPipeline_Transport_StartLandsInPlayingForPlaybackKind") {
 }
 
 TEST_CASE("MediaPipeline_Transport_StartPausedLandsInPaused") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig(/*startPaused=*/true)).isOk());
         REQUIRE(p.open().isOk());
@@ -888,7 +959,9 @@ TEST_CASE("MediaPipeline_Transport_StartPausedLandsInPaused") {
 }
 
 TEST_CASE("MediaPipeline_Transport_PauseAndPlayFlipState") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -908,7 +981,9 @@ TEST_CASE("MediaPipeline_Transport_PauseAndPlayFlipState") {
 }
 
 TEST_CASE("MediaPipeline_Transport_TogglePlayPauseFlipsBetweenPlayingAndPaused") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -923,7 +998,9 @@ TEST_CASE("MediaPipeline_Transport_TogglePlayPauseFlipsBetweenPlayingAndPaused")
 }
 
 TEST_CASE("MediaPipeline_Transport_RejectsPlayPauseOutsideRunning") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         // Empty pipeline rejects with NotOpen — there's no Running
         // state to act on.
@@ -949,7 +1026,9 @@ TEST_CASE("MediaPipeline_Transport_RejectsPlayPauseOutsideRunning") {
 }
 
 TEST_CASE("MediaPipeline_Transport_CapturePipelineRejectsPlayPause") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -965,7 +1044,9 @@ TEST_CASE("MediaPipeline_Transport_CapturePipelineRejectsPlayPause") {
 }
 
 TEST_CASE("MediaPipeline_Transport_PlaybackStateChangedSubscriberSeesEvents") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -996,7 +1077,9 @@ TEST_CASE("MediaPipeline_Transport_PlaybackStateChangedSubscriberSeesEvents") {
 // ============================================================================
 
 TEST_CASE("MediaPipeline_Transport_RateDefaultsToOne") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1006,7 +1089,9 @@ TEST_CASE("MediaPipeline_Transport_RateDefaultsToOne") {
 }
 
 TEST_CASE("MediaPipeline_Transport_SetRateForwardsToPacingGroup") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1027,7 +1112,9 @@ TEST_CASE("MediaPipeline_Transport_SetRateForwardsToPacingGroup") {
 }
 
 TEST_CASE("MediaPipeline_Transport_SetRateRejectsNonFinite") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1042,7 +1129,9 @@ TEST_CASE("MediaPipeline_Transport_SetRateRejectsNonFinite") {
 }
 
 TEST_CASE("MediaPipeline_Transport_SetRateRejectsCaptureKind") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1055,7 +1144,9 @@ TEST_CASE("MediaPipeline_Transport_SeekRejectsNonSeekableGroup") {
         // TPG → CSC where CSC paces.  Neither stage's port group reports
         // canSeek=true, so seek must surface Error::IllegalSeek without
         // touching the backend.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1068,7 +1159,9 @@ TEST_CASE("MediaPipeline_Transport_SeekRejectsNonSeekableGroup") {
 }
 
 TEST_CASE("MediaPipeline_Transport_SeekRejectsCaptureAndOutsideRunning") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         // Outside Running.
         CHECK(p.seek(FrameNumber(0)) == Error::NotOpen);
@@ -1085,7 +1178,9 @@ TEST_CASE("MediaPipeline_Transport_StepForwardPausesEvenWhenSeekFails") {
         // seek fails (e.g. non-seekable TPG), the transport must end up
         // in Paused so the caller has a defined state — matches the
         // user-stated contract that stepping always lands paused.
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1099,7 +1194,9 @@ TEST_CASE("MediaPipeline_Transport_StepForwardPausesEvenWhenSeekFails") {
 }
 
 TEST_CASE("MediaPipeline_Transport_StepForwardWithZeroIsNoOp") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1112,7 +1209,9 @@ TEST_CASE("MediaPipeline_Transport_StepForwardWithZeroIsNoOp") {
 }
 
 TEST_CASE("MediaPipeline_Transport_StepBackwardForwardsToStepForward") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1130,13 +1229,17 @@ TEST_CASE("MediaPipeline_Transport_StepBackwardForwardsToStepForward") {
 // ============================================================================
 
 TEST_CASE("MediaPipeline_Transport_DefaultCaptureStateIsIdle") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         CHECK(p.captureState() == MediaPipeline::CaptureState::Idle);
 }
 
 TEST_CASE("MediaPipeline_Transport_StartCaptureMovesIdleToRecording") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1163,7 +1266,9 @@ TEST_CASE("MediaPipeline_Transport_StartCaptureMovesIdleToRecording") {
 }
 
 TEST_CASE("MediaPipeline_Transport_ArmWithoutTriggerCollapsesToRecording") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1175,7 +1280,9 @@ TEST_CASE("MediaPipeline_Transport_ArmWithoutTriggerCollapsesToRecording") {
 }
 
 TEST_CASE("MediaPipeline_Transport_ArmWithTriggerStaysArmedUntilMatch") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1199,7 +1306,9 @@ TEST_CASE("MediaPipeline_Transport_ArmWithTriggerStaysArmedUntilMatch") {
 }
 
 TEST_CASE("MediaPipeline_Transport_TriggerFiresTransitionsToRecording") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1222,7 +1331,9 @@ TEST_CASE("MediaPipeline_Transport_TriggerFiresTransitionsToRecording") {
 }
 
 TEST_CASE("MediaPipeline_Transport_QueryStringTriggerParses") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1237,7 +1348,9 @@ TEST_CASE("MediaPipeline_Transport_QueryStringTriggerParses") {
 }
 
 TEST_CASE("MediaPipeline_Transport_ClearCaptureTriggerLeavesArmedRecording") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1253,7 +1366,9 @@ TEST_CASE("MediaPipeline_Transport_ClearCaptureTriggerLeavesArmedRecording") {
 }
 
 TEST_CASE("MediaPipeline_Transport_PlaybackKindRejectsCaptureCalls") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makePlaybackConfig()).isOk());
         REQUIRE(p.open().isOk());
@@ -1318,7 +1433,9 @@ namespace {
 } // namespace
 
 TEST_CASE("MediaPipeline_Transport_PauseResumeFanIngestHook") {
-        EventLoop     loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaPipeline p;
         REQUIRE(p.build(makeCaptureConfig()).isOk());
         REQUIRE(p.open().isOk());

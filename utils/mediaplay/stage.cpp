@@ -7,6 +7,7 @@
 
 #include "stage.h"
 #include "helpformat.h"
+#include "sdlsupport.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -30,53 +31,15 @@ using namespace promeki;
 
 namespace mediaplay {
 
-        const char *const kStageSdl = "SDL";
         const char *const kStageFile = "__file__";
 
-        // --------------------------------------------------------------------------
-        // SDL pseudo-backend schema
-        // --------------------------------------------------------------------------
-
-        // SDL player config IDs live on @ref MediaConfig (SdlTimingSource /
-        // SdlWindowSize / SdlWindowTitle).  The CLI surfaces the unprefixed
-        // string aliases below in --help text, but the actual MediaConfig
-        // keys carry the Sdl prefix to avoid colliding with non-SDL options.
-
-        MediaIO::Config::SpecMap sdlConfigSpecs() {
-                MediaIO::Config::SpecMap specs;
-                auto                     s = [&specs](MediaConfig::ID id, const Variant &def) {
-                        const VariantSpec *gs = MediaConfig::spec(id);
-                        specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
-                };
-                s(MediaConfig::SdlTimingSource, String("audio"));
-                s(MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
-                s(MediaConfig::SdlWindowTitle, String("mediaplay"));
-                return specs;
-        }
-
-        MediaIO::Config sdlDefaultConfig() {
-                MediaIO::Config cfg;
-                cfg.setValidation(SpecValidation::None);
-                MediaIO::Config::SpecMap specs = sdlConfigSpecs();
-                for (auto it = specs.cbegin(); it != specs.cend(); ++it) {
-                        const Variant &def = it->second.defaultValue();
-                        if (def.isValid()) cfg.set(it->first, def);
-                }
-                cfg.setValidation(SpecValidation::Warn);
-                cfg.set(MediaConfig::Type, String(kStageSdl));
-                return cfg;
-        }
-
-        Metadata sdlDefaultMetadata() {
-                // The SDL player doesn't consume container-level metadata —
-                // it just renders images and plays audio.  The schema is
-                // intentionally empty so the --help dump says "(none)".
-                return Metadata();
-        }
-
-        const char *sdlDescription() {
-                return "SDL video + audio player (real-time display sink)";
-        }
+        // The SDL pseudo-backend's name, description, and schema accessors
+        // are owned by @ref SdlSupport (in @c sdlsupport.h / .cpp) so this
+        // file does not have to know SDL exists at compile time.  When
+        // mediaplay is built without SDL, @c SdlSupport::isAvailable()
+        // returns @c false and @c isSdlStage() always returns @c false,
+        // so every SDL branch below short-circuits cleanly without any
+        // preprocessor gating.
 
         // --------------------------------------------------------------------------
         // Listing helpers
@@ -121,8 +84,12 @@ namespace mediaplay {
                 // SDL is a mediaplay-local pseudo-backend (see the note in
                 // stage.h): not in MediaIOFactory::registeredFactories() but
                 // it accepts the same -d / --dc CLI surface, so list it here
-                // too to keep the picture honest.
-                rows.pushToBack({String(kStageSdl), String("I"), String(sdlDescription())});
+                // too to keep the picture honest.  Omitted entirely when
+                // mediaplay was built without SDL — SdlSupport::isAvailable()
+                // returns false and the user would not be able to select it.
+                if (SdlSupport::isAvailable()) {
+                        rows.pushToBack({SdlSupport::sdlStageName(), String("I"), SdlSupport::sdlDescription()});
+                }
 
                 // Alphabetical by name so the registry order (which
                 // depends on static-init sequencing) doesn't leak into
@@ -167,12 +134,15 @@ namespace mediaplay {
         }
 
         void listMediaIOConfigAndExit(const String &backendName) {
-                // Resolve the SpecMap.  SDL is a pseudo-backend so we have
-                // to special-case it; everything else goes through the
-                // registered factory's configSpecs().
+                // Resolve the SpecMap.  SDL is a pseudo-backend so it
+                // routes through SdlSupport; everything else goes through
+                // the registered factory's configSpecs().  In a non-SDL
+                // build SdlSupport::isSdlStage() returns false and the
+                // user gets the standard "unknown backend" error if they
+                // ask for SDL.
                 MediaIO::Config::SpecMap specs;
-                if (backendName == kStageSdl) {
-                        specs = sdlConfigSpecs();
+                if (SdlSupport::isSdlStage(backendName)) {
+                        specs = SdlSupport::sdlConfigSpecs();
                 } else {
                         const MediaIOFactory *factory = MediaIOFactory::findByName(backendName);
                         if (factory == nullptr) {
@@ -469,8 +439,8 @@ namespace mediaplay {
 
                 // Load the config specs for this backend.
                 MediaIO::Config::SpecMap specs;
-                if (stage.type == kStageSdl) {
-                        specs = sdlConfigSpecs();
+                if (SdlSupport::isSdlStage(stage.type)) {
+                        specs = SdlSupport::sdlConfigSpecs();
                 } else if (stage.type != kStageFile) {
                         specs = MediaIOFactory::configSpecs(stage.type);
                 }
@@ -562,9 +532,9 @@ namespace mediaplay {
                 // after the per-key loop is a user typo — fail the open rather
                 // than let it reach a backend that will silently ignore the
                 // key.  Uses the same spec set as the per-key loop (backend
-                // specs for MediaIO backends, sdlConfigSpecs() for SDL); both
-                // fall back to the global MediaConfig registry via
-                // VariantDatabase::unknownKeys.
+                // specs for MediaIO backends, SdlSupport::sdlConfigSpecs()
+                // for the SDL pseudo-backend); both fall back to the global
+                // MediaConfig registry via VariantDatabase::unknownKeys.
                 StringList unknown = stage.config.unknownKeys(specs);
                 if (!unknown.isEmpty()) {
                         for (size_t i = 0; i < unknown.size(); ++i) {
@@ -610,8 +580,12 @@ namespace mediaplay {
         }
 
         Error classifyStageArg(const String &arg, StageSpec &stage) {
-                if (arg == kStageSdl) {
-                        stage.type = kStageSdl;
+                // SDL pseudo-backend?  SdlSupport::isSdlStage returns
+                // false in builds without SDL, so the user's "SDL"
+                // argument falls through to the file-path fallback and
+                // is rejected later by the backend lookup.
+                if (SdlSupport::isSdlStage(arg)) {
+                        stage.type = SdlSupport::sdlStageName();
                         return Error::Ok;
                 }
                 // Registered backend by name?
@@ -816,8 +790,8 @@ namespace mediaplay {
                         // No backend defaults available — applyStageConfig
                         // falls back to the global MediaConfig registry for
                         // spec lookup.
-                } else if (working.type == kStageSdl) {
-                        working.config = sdlDefaultConfig();
+                } else if (SdlSupport::isSdlStage(working.type)) {
+                        working.config = SdlSupport::sdlDefaultConfig();
                 } else {
                         MediaIO::Config cfg = MediaIOFactory::defaultConfig(working.type);
                         cfg.set(MediaConfig::Type, working.type);

@@ -21,6 +21,9 @@
 #if PROMEKI_ENABLE_HTTP
 #include <promeki/debugserver.h>
 #endif
+#if PROMEKI_ENABLE_MDNS
+#include <promeki/mdnsmanager.h>
+#endif
 
 #ifdef PROMEKI_PLATFORM_WINDOWS
 #include <process.h>
@@ -61,6 +64,7 @@ Application::Application(int argc, char **argv) {
 }
 
 Application::~Application() {
+        stopMdnsManager();
         stopCpuMonitor();
         stopDebugServer();
         SignalHandler::uninstall();
@@ -343,5 +347,46 @@ void Application::stopCpuMonitor() {
 CpuMonitor *Application::cpuMonitor() {
         return data().cpuMonitor.get();
 }
+
+#if PROMEKI_ENABLE_MDNS
+
+MdnsManager *Application::mdnsManager() {
+        Data &d = data();
+        if (!d.mdnsManager) {
+                d.mdnsManager = UniquePtr<MdnsManager>::create();
+                // Best-effort auto-start.  Hosts without any
+                // multicast-capable interface (some containers, a
+                // few Linux loopback configurations, locked-down
+                // sandboxes) take the warning path and the engine is
+                // returned idle.  Callers that need certainty about
+                // the active state should check
+                // @ref MdnsManager::isActive and retry @ref start
+                // themselves.
+                Error err = d.mdnsManager->start();
+                if (err.isError()) {
+                        promekiWarn("Application::mdnsManager: auto-start failed (%s); "
+                                    "engine returned idle — call MdnsManager::start() to retry",
+                                    err.name().cstr());
+                }
+        }
+        return d.mdnsManager.get();
+}
+
+void Application::stopMdnsManager() {
+        Data &d = data();
+        if (!d.mdnsManager) return;
+        d.mdnsManager->stop();
+        d.mdnsManager.clear();
+}
+
+#else // !PROMEKI_ENABLE_MDNS
+
+MdnsManager *Application::mdnsManager() {
+        return nullptr;
+}
+
+void Application::stopMdnsManager() {}
+
+#endif // PROMEKI_ENABLE_MDNS
 
 PROMEKI_NAMESPACE_END

@@ -74,3 +74,6 @@
 [submodule "thirdparty/lame"]
 	path = thirdparty/lame
 	url = https://github.com/lameproject/lame.git
+[submodule "thirdparty/mdns"]
+	path = thirdparty/mdns
+	url = https://github.com/mjansson/mdns.git

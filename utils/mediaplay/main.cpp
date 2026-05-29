@@ -57,14 +57,8 @@
 #include <promeki/size2d.h>
 #include <promeki/string.h>
 
-#include <promeki/sdl/sdlsubsystem.h>
-#include <promeki/sdl/sdlaudiooutput.h>
-#include <promeki/sdl/sdlplayer.h>
-#include <promeki/sdl/sdlplayerwidget.h>
-#include <promeki/sdl/sdlvideowidget.h>
-#include <promeki/sdl/sdlwindow.h>
-
 #include "cli.h"
+#include "sdlsupport.h"
 #include "stage.h"
 
 using namespace promeki;
@@ -252,65 +246,6 @@ namespace {
                 return Error::Ok;
         }
 
-        /**
- * @brief Lazily constructs the shared SDL window / audio output for
- *        the first SDL stage encountered, reusing them for later SDL
- *        stages that share the same pipeline.  A fresh
- *        @ref SDLPlayerWidget is created per stage.
- */
-        struct SdlUi {
-                        SDLWindow      *window = nullptr;
-                        SDLAudioOutput *audioOutput = nullptr;
-        };
-
-        /**
- * @brief Builds an @ref SDLPlayerWidget-backed MediaIO for @p stage so
- *        it can be injected into the pipeline.
- *
- * SDL requires widget pointers that live on the main thread, so it is
- * the one backend @ref MediaPipeline cannot instantiate through the
- * normal factory — callers pre-build it and inject it.  The first SDL
- * stage lazily allocates the shared window / audio output in @p ui;
- * every subsequent SDL stage reuses them, matching the pre-pipeline
- * mediaplay behaviour.  The returned MediaIO is owned by the widget
- * (parented to @c ui.window), so the caller must NOT delete it —
- * window deletion at shutdown frees everything in one shot.
- */
-        MediaIO *createSdlStage(const MediaPipelineConfig::Stage &stage, SdlUi &ui) {
-                const String    sdlTiming = stage.config.getAs<String>(MediaConfig::SdlTimingSource, String("audio"));
-                const bool      useAudioClock = (sdlTiming == String("audio"));
-                const Size2Du32 sdlWinSize =
-                        stage.config.getAs<Size2Du32>(MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
-                const String sdlWinTitle = stage.config.getAs<String>(MediaConfig::SdlWindowTitle, String("mediaplay"));
-
-                if (ui.window == nullptr) {
-                        if (!sdlWinSize.isValid()) {
-                                fprintf(stderr, "Error: invalid SDL WindowSize\n");
-                                return nullptr;
-                        }
-                        ui.window = new SDLWindow(sdlWinTitle, static_cast<int>(sdlWinSize.width()),
-                                                  static_cast<int>(sdlWinSize.height()));
-                        ui.window->show();
-                        ui.audioOutput = new SDLAudioOutput(ui.window);
-                }
-
-                const Rect2Di32 fullRect(0, 0, static_cast<int>(sdlWinSize.width()),
-                                         static_cast<int>(sdlWinSize.height()));
-
-                auto *w = new SDLPlayerWidget(ui.audioOutput, useAudioClock, ui.window);
-                w->setGeometry(fullRect);
-                ui.window->resizedSignal.connect(
-                        [w](Size2Di32 sz) { w->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height())); });
-                w->setFocus();
-                SdlSubsystem::instance()->setFocusedWidget(w);
-                MediaIO *player = w->mediaIO();
-                if (player == nullptr) {
-                        fprintf(stderr, "Error: SDL player creation failed for stage '%s'\n", stage.name.cstr());
-                        return nullptr;
-                }
-                return player;
-        }
-
 } // namespace
 
 int main(int argc, char **argv) {
@@ -350,8 +285,12 @@ int main(int argc, char **argv) {
                 return ExitGeneric;
         }
 
-        Application  app(argc, argv);
-        SdlSubsystem sdl;
+        Application app(argc, argv);
+        // RAII helper for every SDL touchpoint mediaplay needs.  In a
+        // build without SDL it is a trivial stub whose methods say "no
+        // SDL available", so the rest of main() can call into it
+        // unconditionally and the linker drops the SDL paths entirely.
+        SdlSupport sdlSupport;
 
         // Optional per-thread CPU sampler.  Started early so the
         // first tick covers everything from configure through
@@ -375,13 +314,20 @@ int main(int argc, char **argv) {
                         Duration::fromMicroseconds(static_cast<int64_t>(opts.elStatsInterval * 1.0e6)));
         }
 
-        // Default SDL sink when the user did not pass any -d and did
-        // not ask to load a preset.  Saved presets carry their own
-        // sink set, so never inject a default on the load path.
+        // Default sink when the user did not pass any -d and did not
+        // ask to load a preset.  Saved presets carry their own sink
+        // set, so never inject a default on the load path.  The SDL
+        // helper does the right thing per build: it adds an SDL stage
+        // when SDL is linked, otherwise returns false and main bails
+        // with a diagnostic rather than producing a sink-less pipeline.
         if (opts.loadPipelinePath.isEmpty() && !opts.explicitDst) {
-                StageSpec sdlSpec;
-                sdlSpec.type = kStageSdl;
-                opts.sinks.pushToBack(sdlSpec);
+                if (!sdlSupport.injectDefaultSink(opts)) {
+                        fprintf(stderr,
+                                "Error: no destination specified and this mediaplay was built without "
+                                "SDL, so there is no default display sink.  Pass -d <NAME|PATH> "
+                                "(see --list-io for available backends).\n");
+                        return ExitGeneric;
+                }
         }
 
         if (opts.probe) return runProbe(opts);
@@ -418,14 +364,16 @@ int main(int argc, char **argv) {
         // injected SDL stages so the planner can call describe() /
         // proposeInput on the live SDLPlayerTask instance instead of
         // failing to build a stand-in from the registry.  Build the
-        // SDL UI now (lazily — only when the config actually mentions
-        // an SDL stage) so both early-exit paths and the normal
-        // build path see the same injected map.
-        SdlUi ui;
+        // SDL UI now (lazily, inside sdlSupport.createStage — only
+        // when the config actually mentions an SDL stage) so both
+        // early-exit paths and the normal build path see the same
+        // injected map.
+        //
         // Each injected SDL stage is owned by an SDLPlayerWidget
-        // parented to ui.window, so deleting the window at shutdown
-        // frees the whole chain.  We only need the name→MediaIO map
-        // so the planner and --describe paths can reach the live
+        // parented to the helper's shared window, so the helper's
+        // destructor (or an explicit sdlSupport.teardown()) frees the
+        // whole chain in one shot.  We only need the name→MediaIO map
+        // here so the planner and --describe paths can reach the live
         // instances.
         promeki::Map<String, MediaIO *> injectedMap;
         // Inspector stages mediaplay injected itself — we keep typed
@@ -436,11 +384,10 @@ int main(int argc, char **argv) {
         promeki::Map<String, InspectorMediaIO *> inspectorTasks;
         for (size_t i = 0; i < pipelineCfg.stages().size(); ++i) {
                 const MediaPipelineConfig::Stage &s = pipelineCfg.stages()[i];
-                if (s.type == kStageSdl) {
-                        MediaIO *player = createSdlStage(s, ui);
+                if (SdlSupport::isSdlStage(s.type)) {
+                        MediaIO *player = sdlSupport.createStage(s);
                         if (player == nullptr) {
-                                delete ui.audioOutput;
-                                delete ui.window;
+                                sdlSupport.teardown();
                                 return ExitGeneric;
                         }
                         injectedMap.insert(s.name, player);
@@ -453,10 +400,9 @@ int main(int argc, char **argv) {
                         // requested number of frames, so a separate
                         // "expected frames" flag is no longer needed.
                         InspectorMediaIO *task = nullptr;
-                        MediaIO               *io = createInspectorStage(s, &task);
+                        MediaIO          *io = createInspectorStage(s, &task);
                         if (io == nullptr) {
-                                delete ui.audioOutput;
-                                delete ui.window;
+                                sdlSupport.teardown();
                                 return ExitGeneric;
                         }
                         injectedMap.insert(s.name, io);
@@ -466,13 +412,12 @@ int main(int argc, char **argv) {
 
         // Cleanup helper for the --plan / --describe early-exit paths
         // — they don't transfer ownership to a MediaPipeline so they
-        // have to tear down the injected window themselves.
+        // have to tear down the injected resources themselves.  The
+        // sdlSupport.teardown() call is idempotent and a no-op when
+        // SDL is not built or no SDL stage was created.
         auto cleanupInjected = [&]() {
                 injectedMap.clear();
-                delete ui.audioOutput;
-                ui.audioOutput = nullptr;
-                delete ui.window;
-                ui.window = nullptr;
+                sdlSupport.teardown();
         };
 
         // ---- --plan: run the planner and print the resolved config ----
@@ -606,8 +551,7 @@ int main(int argc, char **argv) {
                 // user a single concise summary on stderr.
                 fprintf(stderr, "Error: pipeline build failed: %s%s\n", berr.desc().cstr(),
                         opts.autoplan ? " (planner enabled — see logs above for details)" : "");
-                delete ui.audioOutput;
-                delete ui.window;
+                sdlSupport.teardown();
                 return ExitPipelineBuild;
         }
 
@@ -615,8 +559,7 @@ int main(int argc, char **argv) {
         if (oerr.isError()) {
                 fprintf(stderr, "Error: pipeline open failed: %s\n", oerr.desc().cstr());
                 (void)pipeline.close();
-                delete ui.audioOutput;
-                delete ui.window;
+                sdlSupport.teardown();
                 return ExitPipelineOpen;
         }
 
@@ -695,9 +638,8 @@ int main(int argc, char **argv) {
                 return true;
         });
 
-        if (ui.window != nullptr) {
-                ui.window->closedSignal.connect([]() { Application::quit(0); });
-        }
+        // No-op when SDL is not built in or no SDL stage was created.
+        sdlSupport.connectWindowClosedToQuit();
         if (opts.duration > 0.0 && mainEL != nullptr) {
                 mainEL->startTimer(
                         static_cast<unsigned int>(opts.duration * 1000.0), []() { Application::quit(0); }, true);
@@ -754,8 +696,7 @@ int main(int argc, char **argv) {
         if (serr.isError()) {
                 fprintf(stderr, "Error: pipeline start failed: %s\n", serr.desc().cstr());
                 (void)pipeline.close();
-                delete ui.audioOutput;
-                delete ui.window;
+                sdlSupport.teardown();
                 if (statsFile != nullptr) {
                         statsFile->close();
                         delete statsFile;
@@ -782,8 +723,7 @@ int main(int argc, char **argv) {
 
         (void)pipeline.close();
 
-        delete ui.audioOutput;
-        delete ui.window;
+        sdlSupport.teardown();
 
         if (statsFile != nullptr) {
                 statsFile->close();

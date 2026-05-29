@@ -360,10 +360,23 @@ class ObjectBase {
                 PROMEKI_SIGNAL(aboutToDestroy, ObjectBase *);
 
                 /**
-                 * @brief Returns the EventLoop this object is affiliated with.
-                 * @return The EventLoop set at construction time, or nullptr.
+                 * @brief Returns the EventLoop this object dispatches from.
+                 *
+                 * Derived from this object's @ref Thread — there is no
+                 * separately-tracked EventLoop pointer.  The result is
+                 * always @c _thread->threadEventLoop(), or @c nullptr
+                 * if the object has no @ref Thread affinity (which is
+                 * almost certainly a programming error if the object
+                 * needs to dispatch — see @ref startTimer,
+                 * @ref deleteLater, and the @c PROMEKI_WARN sites in
+                 * @c objectbase.cpp).
+                 *
+                 * Out-of-line because @ref Thread is forward-declared
+                 * in this header.
+                 *
+                 * @return The owning Thread's EventLoop, or nullptr.
                  */
-                EventLoop *eventLoop() const { return _eventLoop; }
+                EventLoop *eventLoop() const;
 
                 /**
                  * @brief Returns the @ref Thread this object is affiliated with.
@@ -514,7 +527,6 @@ class ObjectBase {
                 ObjectBase    *_parent = nullptr;
                 ObjectBase    *_signalSender = nullptr;
                 Thread        *_thread = nullptr;
-                EventLoop     *_eventLoop = nullptr;
                 ObjectBaseList _childList;
                 List<SlotItem> _slotList;
 
@@ -543,7 +555,7 @@ class ObjectBase {
                 // doomed pointer at all.
                 static Mutex &objectBasePtrMutex();
 
-                void setOwnerThreadRecursive(Thread *t, EventLoop *loop);
+                void setOwnerThreadRecursive(Thread *t);
 
                 void addChild(ObjectBase *c) {
                         _childList += c;

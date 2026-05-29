@@ -256,6 +256,51 @@ class UdpSocket : public AbstractSocket {
                 int64_t readDatagram(void *data, size_t maxSize, SocketAddress *sender = nullptr);
 
                 /**
+                 * @brief Enables per-packet ingress interface reporting.
+                 *
+                 * Sets @c IP_PKTINFO on IPv4 sockets or
+                 * @c IPV6_RECVPKTINFO on IPv6 sockets so the kernel
+                 * stamps each inbound datagram with the ingress
+                 * interface's index.  The reported index is delivered
+                 * via the @c ifindex out-parameter on
+                 * @ref readDatagramWithIfIndex.
+                 *
+                 * mDNS receivers binding to the wildcard address use
+                 * this to identify which interface a packet arrived
+                 * on without needing per-interface sockets.
+                 *
+                 * @param enable @c true to enable, @c false to disable.
+                 * @return @ref Error::Ok on success, or an error on
+                 *         failure.
+                 */
+                Error setReceivePktInfo(bool enable);
+
+                /**
+                 * @brief Receives a datagram and reports the ingress
+                 *        interface index.
+                 *
+                 * Requires a prior @ref setReceivePktInfo(true) call.
+                 * Uses @c recvmsg() to retrieve the ingress
+                 * @c struct in_pktinfo / @c struct in6_pktinfo
+                 * control message; the @c ipi_ifindex /
+                 * @c ipi6_ifindex field is copied into
+                 * @p ifindex.  When the control message is not
+                 * present (e.g. on a platform that does not stamp
+                 * it) @p ifindex is set to @c 0.
+                 *
+                 * @param data    Buffer to receive into.
+                 * @param maxSize Maximum bytes to receive.
+                 * @param[out] sender   If not null, receives the sender's
+                 *                      address.
+                 * @param[out] ifindex  If not null, receives the
+                 *                      ingress interface's OS index.
+                 * @return Bytes received, or @c -1 on error.
+                 */
+                int64_t readDatagramWithIfIndex(void *data, size_t maxSize,
+                                                SocketAddress *sender = nullptr,
+                                                unsigned int  *ifindex = nullptr);
+
+                /**
                  * @brief Returns true if there are pending datagrams to read.
                  * @return True if a datagram is available.
                  */

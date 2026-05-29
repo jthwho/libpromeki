@@ -19,23 +19,45 @@ For each submodule listed in .gitmodules this script:
 
 Config file (CMake syntax)
 --------------------------
-  set(PROMEKI_MIRROR_API "https://gitlab.example.com")
   set(PROMEKI_MIRRORS
       "https://github.com/some/repo.git"
           "ssh://git@gitlab.example.com:22/mirror-group/repo.git"
+      "https://github.com/other/repo.git"
+          "ssh://git@gitlab.other.com/mirror-group/repo.git"
       ...
   )
 
-PROMEKI_MIRROR_API is consumed only by this script (CMake ignores it).
-PROMEKI_MIRRORS entries that don't exactly match a submodule upstream URL
-are also ignored by this script — they may still be used by CMake (e.g.
-prefix rewrites).
+  # Optional: per-host GitLab API URL overrides.  When a mirror push URL
+  # references a host not listed here, the API base defaults to
+  # `https://<host>`, which works for any GitLab on the standard HTTPS port.
+  set(PROMEKI_MIRROR_APIS
+      "gitlab.example.com"  "https://gitlab.example.com:8443"
+      ...
+  )
+
+  # Legacy single-API form (still accepted): treated as an entry in
+  # PROMEKI_MIRROR_APIS for the host implied by the URL itself.
+  set(PROMEKI_MIRROR_API "https://gitlab.example.com")
+
+PROMEKI_MIRROR_API / PROMEKI_MIRROR_APIS are consumed only by this script
+(CMake ignores them).  PROMEKI_MIRRORS entries that don't exactly match a
+submodule upstream URL are also ignored by this script — they may still
+be used by CMake (e.g. prefix rewrites).
 
 Auth
 ----
-GitLab API token (required for existence-check / auto-create):
-  - $GITLAB_TOKEN              env var, or
-  - ~/.config/promeki/gitlab-token   single-line file (chmod 600)
+GitLab API tokens (required for existence-check / auto-create) are looked
+up per host.  For host `H`, the search order is:
+  1. $GITLAB_TOKEN_<H>   env var; `H` uppercased with every non-alphanumeric
+                         character replaced by `_`, so the token for
+                         `git.howardlogic.com` lives in
+                         $GITLAB_TOKEN_GIT_HOWARDLOGIC_COM
+  2. $GITLAB_TOKEN       env var (generic fallback for any host)
+  3. ~/.config/promeki/gitlab-tokens   multi-line file (chmod 600); one
+                         entry per line as `host token` or `host=token`,
+                         `#` line comments allowed
+  4. ~/.config/promeki/gitlab-token-<host>   single-line per-host file
+  5. ~/.config/promeki/gitlab-token   single-line generic fallback file
 The token needs `api` scope.  SSH push uses your existing agent / keys.
 
 Config discovery
@@ -165,13 +187,102 @@ def info(msg: str = "") -> None:
     print(msg, flush=True)
 
 
-def load_token() -> Optional[str]:
+def _host_env_suffix(host: str) -> str:
+    """Convert a hostname to an env-var-safe uppercase suffix.
+
+    `git.howardlogic.com` -> `GIT_HOWARDLOGIC_COM`
+    """
+    return re.sub(r"[^A-Za-z0-9]", "_", host).upper()
+
+
+# Paths we've already complained about (so a single tokens file gets one
+# warning even when load_token_for_host() is called once per host).
+_warned_perm_paths: set[Path] = set()
+
+
+def _check_token_file_perms(path: Path) -> None:
+    """Warn (once per path) if a token file is group- or world-accessible.
+
+    POSIX only — Windows ACLs don't map to a sensible mode check, and the
+    Python stdlib's `st_mode` on Windows reports only the read-only bit.
+    """
+    if sys.platform == "win32":
+        return
+    if path in _warned_perm_paths:
+        return
+    try:
+        st = path.stat()
+    except OSError:
+        return
+    mode = st.st_mode & 0o777
+    if mode & 0o077:
+        _warned_perm_paths.add(path)
+        info(
+            f"warning: {path} has permissions {mode:04o}; tokens are "
+            f"readable by group/other. Run `chmod 600 {path}` to fix."
+        )
+
+
+def _parse_tokens_file(path: Path) -> dict[str, str]:
+    """Parse a multi-line `host token` / `host=token` file.
+
+    Blank lines and `#` line comments are ignored.  Later entries for the
+    same host override earlier ones.
+    """
+    result: dict[str, str] = {}
+    if not path.exists():
+        return result
+    _check_token_file_perms(path)
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        # Prefer `=` split if present; otherwise split on whitespace.
+        # GitLab tokens (`glpat-...`) never contain `=`.
+        if "=" in line:
+            host, _, tok = line.partition("=")
+        else:
+            parts = line.split(None, 1)
+            if len(parts) != 2:
+                continue
+            host, tok = parts
+        host = host.strip()
+        tok = tok.strip()
+        if host and tok:
+            result[host] = tok
+    return result
+
+
+def load_token_for_host(host: str) -> Optional[str]:
+    """Look up a GitLab API token for `host`.  See module docstring for
+    the full search order."""
+    env_specific = f"GITLAB_TOKEN_{_host_env_suffix(host)}"
+    tok = os.environ.get(env_specific)
+    if tok and tok.strip():
+        return tok.strip()
     tok = os.environ.get("GITLAB_TOKEN")
-    if tok:
-        return tok.strip() or None
-    path = Path.home() / ".config" / "promeki" / "gitlab-token"
-    if path.exists():
-        return path.read_text().strip() or None
+    if tok and tok.strip():
+        return tok.strip()
+
+    config_dir = Path.home() / ".config" / "promeki"
+    multi = _parse_tokens_file(config_dir / "gitlab-tokens")
+    if host in multi:
+        return multi[host]
+
+    per_host = config_dir / f"gitlab-token-{host}"
+    if per_host.exists():
+        _check_token_file_perms(per_host)
+        t = per_host.read_text().strip()
+        if t:
+            return t
+
+    legacy = config_dir / "gitlab-token"
+    if legacy.exists():
+        _check_token_file_perms(legacy)
+        t = legacy.read_text().strip()
+        if t:
+            return t
+
     return None
 
 
@@ -246,27 +357,79 @@ def list_submodules() -> list[tuple[str, str]]:
     return mods
 
 
-def parse_push_url(push_url: str) -> tuple[str, str]:
-    """Given a mirror push URL, return (group_path, project_name).
+def parse_push_url(push_url: str) -> tuple[str, str, str]:
+    """Given a mirror push URL, return (host, group_path, project_name).
     Supports `ssh://user@host[:port]/group/.../name[.git]` and the SCP
     syntax `user@host:group/.../name[.git]`."""
+    host: str
     rest: str
-    m = re.match(r"^ssh://(?:[^@/]+@)?[^/]+/(.+)$", push_url)
+    m = re.match(r"^ssh://(?:[^@/]+@)?([^/:]+)(?::\d+)?/(.+)$", push_url)
     if m:
-        rest = m.group(1)
+        host = m.group(1)
+        rest = m.group(2)
     else:
         # SCP-like form: user@host:path
-        m = re.match(r"^(?:[^@/]+@)?[^:/]+:(.+)$", push_url)
+        m = re.match(r"^(?:[^@/]+@)?([^:/]+):(.+)$", push_url)
         if not m:
             die(f"can't parse push URL: {push_url}")
-        rest = m.group(1)
+        host = m.group(1)
+        rest = m.group(2)
     if rest.endswith(".git"):
         rest = rest[:-4]
     rest = rest.strip("/")
     if "/" not in rest:
         die(f"push URL has no namespace: {push_url}")
     group, _, name = rest.rpartition("/")
-    return group, name
+    return host, group, name
+
+
+def _api_url_host(url: str) -> Optional[str]:
+    """Extract the hostname from an `http[s]://host[:port]/...` URL."""
+    m = re.match(r"^https?://([^/:]+)", url)
+    return m.group(1) if m else None
+
+
+def build_api_map(
+    config: dict[str, Union[str, list[str]]], path: Path
+) -> dict[str, str]:
+    """Build the host -> GitLab-API-base-URL map.
+
+    Combines PROMEKI_MIRROR_APIS (the new pairs-list form) with the
+    legacy PROMEKI_MIRROR_API single-URL form.  The legacy entry is
+    folded in under the host implied by its own URL.  Hosts that appear
+    in neither fall back to `https://<host>` at lookup time.
+    """
+    api_map: dict[str, str] = {}
+
+    apis = config.get("PROMEKI_MIRROR_APIS")
+    if apis is not None:
+        if isinstance(apis, str):
+            die(
+                f"PROMEKI_MIRROR_APIS in {path} must be a flat list of "
+                f"(host, api-url) pairs"
+            )
+        if len(apis) % 2 != 0:
+            die(
+                f"PROMEKI_MIRROR_APIS in {path} must be a flat list of "
+                f"(host, api-url) pairs; got {len(apis)} entries"
+            )
+        for i in range(0, len(apis), 2):
+            api_map[apis[i]] = apis[i + 1]
+
+    legacy = config.get("PROMEKI_MIRROR_API")
+    if isinstance(legacy, str) and legacy:
+        host = _api_url_host(legacy)
+        if not host:
+            die(f"PROMEKI_MIRROR_API in {path} is not a valid http(s) URL: {legacy}")
+        api_map.setdefault(host, legacy)
+
+    return api_map
+
+
+def api_url_for_host(host: str, api_map: dict[str, str]) -> str:
+    """Look up the GitLab API base URL for `host`.  Defaults to
+    `https://<host>` when no explicit override is configured."""
+    return api_map.get(host, f"https://{host}")
 
 
 class GitLab:
@@ -541,9 +704,10 @@ def main() -> None:
         "--config",
         type=Path,
         default=None,
-        help="path to a CMake mirrors file defining PROMEKI_MIRROR_API and "
-             "PROMEKI_MIRRORS; if omitted, the script searches well-known "
-             "locations (see the module docstring or --help epilog)",
+        help="path to a CMake mirrors file defining PROMEKI_MIRRORS (and "
+             "optionally PROMEKI_MIRROR_APIS / PROMEKI_MIRROR_API); if "
+             "omitted, the script searches well-known locations (see the "
+             "module docstring or --help epilog)",
     )
     ap.add_argument(
         "--cache",
@@ -589,20 +753,31 @@ def main() -> None:
         info(f"using auto-discovered config: {config_path}")
 
     config = parse_cmake_config(config_path)
-    api_url = config.get("PROMEKI_MIRROR_API")
-    if not isinstance(api_url, str) or not api_url:
-        die(f"PROMEKI_MIRROR_API not set in {config_path}")
     mirror_map = build_mirror_map(config, config_path)
+    api_map = build_api_map(config, config_path)
 
-    token = load_token()
-    if not token:
-        info(
-            "warning: no GitLab token found; skipping API checks "
-            "(set GITLAB_TOKEN or ~/.config/promeki/gitlab-token to enable existence "
-            "checks and auto-create)"
-        )
+    # Per-host GitLab client cache + a set of hosts we've already warned
+    # about (so the "no token" notice fires at most once per host).
+    clients: dict[str, GitLab] = {}
+    warned_hosts: set[str] = set()
 
-    gl = GitLab(api_url, token)
+    def client_for(host: str) -> GitLab:
+        cached = clients.get(host)
+        if cached is not None:
+            return cached
+        api = api_url_for_host(host, api_map)
+        tok = load_token_for_host(host)
+        if not tok and host not in warned_hosts:
+            info(
+                f"warning: no GitLab token found for {host}; skipping API "
+                f"checks for this host (set $GITLAB_TOKEN_{_host_env_suffix(host)} "
+                f"or add an entry in ~/.config/promeki/gitlab-tokens to enable "
+                f"existence checks and auto-create)"
+            )
+            warned_hosts.add(host)
+        gl = GitLab(api, tok)
+        clients[host] = gl
+        return gl
 
     mods = list_submodules()
     if not mods:
@@ -633,19 +808,20 @@ def main() -> None:
             skipped.append(basename)
             continue
 
-        group, project_name = parse_push_url(push_url)
+        host, group, project_name = parse_push_url(push_url)
         full_path = f"{group}/{project_name}"
+        gl = client_for(host)
 
         info(f"\n=== {path} ===")
         info(f"  upstream: {upstream}")
-        info(f"  mirror:   {api_url}/{full_path}")
+        info(f"  mirror:   {gl.base}/{full_path}")
 
         if push_url in completed_pushes:
             info(f"  status:   shares mirror with {completed_pushes[push_url]}; skipping (already done this run)")
             shared.append(basename)
             continue
 
-        if token:
+        if gl.token:
             project = gl.get_project(full_path)
             if project is None:
                 if args.no_create:

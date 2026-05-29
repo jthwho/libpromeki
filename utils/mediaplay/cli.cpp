@@ -7,6 +7,7 @@
 
 #include "cli.h"
 #include "helpformat.h"
+#include "sdlsupport.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -128,9 +129,16 @@ namespace mediaplay {
                                 {"--cm <K:V>",
                                  "Set one metadata key on the most recently declared -c.  Repeatable."},
                                 {"-d, --dst <NAME|PATH|list>",
-                                 "Add a destination stage — a backend name (SDL, QuickTime, ImageFile, "
-                                 "...) or a file path auto-detected via MediaIO::createForFileWrite.  "
-                                 "Default destination is SDL.  Repeatable (fan-out)."},
+                                 SdlSupport::isAvailable()
+                                         ? "Add a destination stage — a backend name (SDL, QuickTime, "
+                                           "ImageFile, ...) or a file path auto-detected via "
+                                           "MediaIO::createForFileWrite.  Default destination is SDL.  "
+                                           "Repeatable (fan-out)."
+                                         : "Add a destination stage — a backend name (QuickTime, "
+                                           "ImageFile, ...) or a file path auto-detected via "
+                                           "MediaIO::createForFileWrite.  Required: this mediaplay was "
+                                           "built without SDL, so there is no default display sink.  "
+                                           "Repeatable (fan-out)."},
                                 {"--dc <K:V>",
                                  "Set one config key on the most recently declared -d.  Repeatable."},
                                 {"--dm <K:V>",
@@ -270,16 +278,24 @@ namespace mediaplay {
                 out.setAnsiEnabled(helpUseColor());
 
                 const String title = "Usage: mediaplay [OPTIONS]";
+                const String pacingProse =
+                        SdlSupport::isAvailable()
+                                ? "if an SDL destination is present it drives the pipeline at video "
+                                  "rate (audio-led clock), otherwise frames flow as fast as the file "
+                                  "sinks can consume them."
+                                : "this build has no SDL display sink, so frames always flow as fast "
+                                  "as the file sinks can consume them.";
                 const String intro =
-                        "Pumps media frames from one MediaIO source, through zero or more intermediate "
-                        "transform stages (CSC, SRC, VideoEncoder, etc.), out to one or more MediaIO "
-                        "sinks.  Every stage is configured via generic Key:Value options whose values "
-                        "are parsed against the backend's default config.  Pacing is implicit: if an "
-                        "SDL destination is present it drives the pipeline at video rate (audio-led "
-                        "clock), otherwise frames flow as fast as the file sinks can consume them.\n"
+                        String("Pumps media frames from one MediaIO source, through zero or more "
+                               "intermediate transform stages (CSC, SRC, VideoEncoder, etc.), out to "
+                               "one or more MediaIO sinks.  Every stage is configured via generic "
+                               "Key:Value options whose values are parsed against the backend's "
+                               "default config.  Pacing is implicit: ") +
+                        pacingProse +
                         "\n"
-                        "Use --list-io for the registry of available MediaIO backends and --list-config "
-                        "<NAME> for one backend's config schema.";
+                        "\n"
+                        "Use --list-io for the registry of available MediaIO backends and "
+                        "--list-config <NAME> for one backend's config schema.";
 
                 renderHelp(out, title, intro, buildHelpSections());
         }
@@ -367,7 +383,10 @@ namespace mediaplay {
                                  return 0;
                          })},
 
-                        {'d', "dst", "Add a destination stage (backend name, 'SDL', 'list', or path)",
+                        {'d', "dst",
+                         SdlSupport::isAvailable()
+                                 ? "Add a destination stage (backend name, 'SDL', 'list', or path)"
+                                 : "Add a destination stage (backend name, 'list', or path)",
                          CmdLineParser::OptionStringCallback([&](const String &s) {
                                  if (s == "list") listMediaIOBackendsAndExit();
                                  StageSpec sp;

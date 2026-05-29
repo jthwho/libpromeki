@@ -36,9 +36,10 @@ if(PROMEKI_ENABLE_PROAV)
     add_subdirectory(imgtest)
     add_subdirectory(pmdf-inspect)
     add_subdirectory(promeki-test)
-    if(PROMEKI_BUILD_SDL)
-        add_subdirectory(mediaplay)
-    endif()
+    # mediaplay builds with or without SDL: when promeki-sdl is
+    # available it provides the default SDL display sink, otherwise
+    # the user must supply an explicit -d destination.
+    add_subdirectory(mediaplay)
 endif()
 
 # promeki-fetch-model — downloads ML model files (currently
@@ -47,4 +48,11 @@ endif()
 # HTTP / HTTPS client used to fetch from Hugging Face.
 if(PROMEKI_ENABLE_HTTP AND PROMEKI_ENABLE_WHISPER)
     add_subdirectory(promeki-fetch-model)
+endif()
+
+# promeki-2110-calc — SMPTE ST 2110-21 traffic-shaping calculator CLI.
+# Needs the network stack (St2110Tx / St2110Video) and proav
+# (VideoFormat / PixelFormat).
+if(PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
+    add_subdirectory(promeki-2110-calc)
 endif()

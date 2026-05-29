@@ -69,7 +69,7 @@ void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
                 ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
                 ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
 
-                EventLoop *slotLoop = slotObject->_eventLoop;
+                EventLoop *slotLoop = slotObject->eventLoop();
                 EventLoop *currentLoop = EventLoop::current();
 
                 // Same thread or no event loop: direct call (zero overhead path)

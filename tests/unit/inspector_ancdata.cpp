@@ -13,6 +13,7 @@
 
 #include <doctest/doctest.h>
 #include <atomic>
+#include <promeki/application.h>
 #include <chrono>
 #include <cstdio>
 #include <thread>
@@ -105,7 +106,9 @@ namespace {
 } // namespace
 
 TEST_CASE("Inspector: AncData test dumps per-frame JSONL with CEA-708 packets from TPG") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         const String  ancJsonlPath = uniqueAncJsonlPath();
         const String  captionText = "PROMEKI";
@@ -245,7 +248,9 @@ TEST_CASE("Inspector: AncData test dumps per-frame JSONL with CEA-708 packets fr
 // feeding it through @ref Cea708Decoder must recover the cue text.
 
 TEST_CASE("Inspector: AncData JSONL surfaces CEA-708 DTVCC packets from TPG codec=Cea708") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
 
         const String  ancJsonlPath = uniqueAncJsonlPath();
         const String  captionText = "PROMEKI";

@@ -27,7 +27,7 @@ TEST_CASE("Main EventLoop: worker-thread quit wakes exec() promptly") {
         char        arg0[] = "tuisubsystem-test";
         char       *argv[] = {arg0};
         Application app(1, argv);
-        EventLoop   loop;
+        EventLoop  &loop = *Application::mainEventLoop();
 
         std::thread worker([&] {
                 BasicThread::sleepMs(30);

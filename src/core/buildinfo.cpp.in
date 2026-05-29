@@ -241,6 +241,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_SRT
         features += "SRT";
 #endif
+#if PROMEKI_ENABLE_MDNS
+        features += "MDNS";
+#endif
 #if PROMEKI_ENABLE_MEMFD
         features += "MEMFD";
 #endif

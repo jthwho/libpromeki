@@ -6,6 +6,7 @@
  */
 
 #include <atomic>
+#include <promeki/application.h>
 #include <chrono>
 #include <thread>
 
@@ -322,7 +323,9 @@ TEST_CASE("MediaIOReadCache: synthetic EOS surfaces through readFrame after clos
 // ============================================================================
 
 TEST_CASE("MediaIOReadCache: pushSyntheticResult re-arms frameReady on close") {
-        EventLoop      loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         MediaIO       *io = makeTpg();
         MediaIOSource *src = io->source(0);
 

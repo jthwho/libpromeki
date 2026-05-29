@@ -199,6 +199,31 @@ devplan/
    vendored `.so` families (preserving symlink chains) into `build/lib/`
    so the build tree mirrors the install layout.  `PROMEKI_FORCE_BUNDLED_LIBS`
    CMake option available to switch to legacy `DT_RPATH` if needed.
+19. **mDNS/DNS-SD + St2110TrafficCalc + ObjectBase EventLoop refactor** — SHIPPED 2026-05-29.
+   *mDNS:* Native mDNS/DNS-SD (RFC 6762/6763) built on `UdpSocket` + `MulticastManager`.
+   `MdnsManager` (Thread subclass) owns dual IPv4+IPv6 sockets, multicast joins on
+   `224.0.0.251` / `ff02::fb`, `IP_PKTINFO`/`IPV6_PKTINFO` ingress attribution, and fan-out
+   under mutex to registered consumers. Consumer classes: `MdnsBrowser` (PTR-driven cache,
+   continuous-query backoff RFC 6762 §5.2, KAS RFC 6762 §7.1, cache-flush semantics),
+   `MdnsTypeBrowser` (RFC 6763 §9 meta-query `_services._dns-sd._udp.local.`),
+   `MdnsResolver` (one-shot wrapper over `MdnsBrowser`), `MdnsPublisher` (full state machine
+   Idle→Probing→Announcing→Published→Conflicted/Withdrawing; auto-rename RFC 6762 §9;
+   KAS on responder side). Value types: `MdnsServiceType`, `MdnsTxtRecord` (RFC 6763 §6,
+   `Presence` enum), `MdnsServiceInstance`, `MdnsRecord` (publish-side RR + named factories).
+   Wire layer: `MdnsPacket` + mjansson/mdns single-header parser (new `thirdparty/mdns`
+   submodule); `mdnsBuildAnnounce`/`mdnsBuildGoodbye`/`mdnsBuildProbe` outbound encoders;
+   `mdnsname.h` label escape/unescape helpers (RFC 1035 §5.1). `Application::mdnsManager()`
+   lazy-create global. Feature flag `PROMEKI_ENABLE_MDNS`. DataTypes: 0x75–0x77.
+   ~150 doctest cases across 12 per-class test files.
+   *St2110TrafficCalc:* `St2110TrafficCalc` aggregator + `promeki-2110-calc` CLI — given
+   (VideoFormat, sampling/depth or PixelFormat, senderType) derives the complete ST 2110-21
+   Result (packet geometry, rates, VRX/CMAX, TRO_DEFAULT, TP/TROFF params); 8 test cases.
+   *ObjectBase EventLoop refactor:* `eventLoop()` now out-of-line; derived from
+   `_thread->threadEventLoop()` rather than a cached `_eventLoop` pointer captured at
+   construction — eliminates stale-pointer risk after `moveToThread()`. `UdpSocket` gains
+   `setReceivePktInfo(bool)` + `readDatagramWithIfIndex()` for per-packet ingress attribution.
+   *Mirror script:* `scripts/mirror-thirdparty.py` enhanced with multi-host GitLab token
+   support and `PROMEKI_MIRROR_APIS` environment variable for selective API activation.
 18. **`MediaIOParams` transactional get/set + build infra** — SHIPPED 2026-05-27.
    `MediaIOParams` replaces the old `VariantDatabase`-based `(name, params)`
    verb form with an ordered `Get`/`Set` block (`include/promeki/mediaioparams.h`).
@@ -243,6 +268,7 @@ devplan/
 | 3A    | Sockets                              | COMPLETE                            |
 | 3B    | HTTP / WebSocket / TLS               | COMPLETE                            |
 | 3C    | AV-over-IP (RTP / SDP / multicast)   | mostly complete; PtpClock pending   |
+| 3E    | mDNS / DNS-SD                        | COMPLETE (see network/mdns.md; NSEC, per-iface sockets, Windows pktinfo deferred) |
 | 3D    | SRT (Secure Reliable Transport)      | shipped; SrtMediaIO backend deferred |
 | 4     | ProAV — MediaIO framework + backends | framework + 18 backends shipped;<br>NTV2 scaffolding landed; backend pending; follow-ups in `proav/` |
 | 4A    | MediaPipeline                        | shipped; docs + tests pending       |

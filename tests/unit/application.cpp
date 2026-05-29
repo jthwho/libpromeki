@@ -10,6 +10,9 @@
 #include <promeki/eventloop.h>
 #include <promeki/iodevice.h>
 #include <promeki/thread.h>
+#if PROMEKI_ENABLE_MDNS
+#include <promeki/mdnsmanager.h>
+#endif
 
 #include <atomic>
 #include <chrono>
@@ -211,6 +214,69 @@ TEST_CASE("Application: quit from another thread wakes the main EventLoop") {
         CHECK(Application::shouldQuit());
         CHECK(Application::exitCode() == 7);
 }
+
+#if PROMEKI_ENABLE_MDNS
+
+TEST_CASE("Application: mdnsManager lazy-creates and best-effort auto-starts") {
+        // Make sure no prior test left the singleton lying around.
+        Application::stopMdnsManager();
+
+        MdnsManager *first = Application::mdnsManager();
+        REQUIRE(first != nullptr);
+        // Auto-start is best-effort.  Hosts with at least one
+        // multicast-capable interface (most macOS / Windows
+        // configurations) leave the engine active; hosts with none
+        // (some Linux CI containers, this Linux box where the
+        // loopback iface does not carry IFF_MULTICAST) leave it
+        // idle with a warning logged.  Either outcome is correct;
+        // callers that need certainty consult isActive() and call
+        // start() themselves.
+        if (first->isActive()) {
+                MESSAGE("auto-start: active");
+        } else {
+                MESSAGE("auto-start: idle (host lacks multicast iface)");
+        }
+
+        // Subsequent calls return the same pointer.
+        MdnsManager *second = Application::mdnsManager();
+        CHECK(second == first);
+
+        Application::stopMdnsManager();
+}
+
+TEST_CASE("Application: stopMdnsManager wipes the singleton and re-creates on next call") {
+        Application::stopMdnsManager();
+        MdnsManager *first = Application::mdnsManager();
+        REQUIRE(first != nullptr);
+        // Configure the engine so the post-stop construction is
+        // visible — a fresh engine starts at the default port and
+        // ignores any state we wrote here.
+        first->setPort(6353);
+        CHECK(first->port() == 6353);
+
+        Application::stopMdnsManager();
+        // After stop the next call yields a freshly-constructed
+        // engine, default-configured.  The new heap allocation may
+        // happen to land at the same address as the prior one
+        // (malloc reuses freed regions), so we identify "freshness"
+        // by the configuration state rather than by pointer
+        // identity.
+        MdnsManager *second = Application::mdnsManager();
+        REQUIRE(second != nullptr);
+        CHECK(second->port() == MdnsManager::DefaultPort);
+
+        Application::stopMdnsManager();
+}
+
+TEST_CASE("Application: stopMdnsManager is idempotent") {
+        Application::stopMdnsManager();
+        Application::stopMdnsManager();
+        // Repeated stop calls without an intervening mdnsManager()
+        // must be safe.
+        CHECK(true);
+}
+
+#endif // PROMEKI_ENABLE_MDNS
 
 TEST_CASE("Application: quit-request handler cleared with nullptr") {
         char        arg0[] = "test";

@@ -81,6 +81,11 @@
 #include <promeki/macaddress.h>
 #include <promeki/eui64.h>
 #endif
+#if PROMEKI_ENABLE_MDNS
+#include <promeki/mdnsservicetype.h>
+#include <promeki/mdnstxtrecord.h>
+#include <promeki/mdnsserviceinstance.h>
+#endif
 #if PROMEKI_ENABLE_TLS
 #include <promeki/sslcontext.h>
 #endif
@@ -346,6 +351,11 @@ void registerBuiltinDataTypes() {
                 registerDataType<SdpSession>();
                 registerDataType<MacAddress>();
                 registerDataType<EUI64>();
+#endif
+#if PROMEKI_ENABLE_MDNS
+                registerDataType<MdnsServiceType>();
+                registerDataType<MdnsTxtRecord>();
+                registerDataType<MdnsServiceInstance>();
 #endif
 #if PROMEKI_ENABLE_TLS
                 // @ref SslContext carries the @ref PROMEKI_DATATYPE

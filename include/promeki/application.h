@@ -31,6 +31,7 @@ class IODevice;
 class DebugServer;
 class SocketAddress;
 class CpuMonitor;
+class MdnsManager;
 PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
@@ -480,6 +481,61 @@ class Application {
                 static CpuMonitor *cpuMonitor();
 
                 /**
+                 * @brief Returns the application-wide @ref MdnsManager.
+                 *
+                 * Lazy-constructs an @ref MdnsManager on first call
+                 * and immediately best-effort starts it on every
+                 * multicast-capable interface available at that
+                 * moment.  Subsequent calls return the same engine.
+                 * Returns @c nullptr when the library was built with
+                 * @c PROMEKI_ENABLE_MDNS off.
+                 *
+                 * The auto-start is best-effort: on a host with no
+                 * multicast-capable interfaces (some containers,
+                 * locked-down sandboxes) the start fails with a
+                 * warning and the engine is returned in the idle
+                 * state.  Callers that need to know whether the
+                 * engine is live can consult
+                 * @ref MdnsManager::isActive and call
+                 * @ref MdnsManager::start themselves to retry.
+                 *
+                 * Callers that need to configure the engine before
+                 * it goes online (custom port, packet hook,
+                 * tick interval) can flip this around by calling
+                 * @ref stopMdnsManager first to drop the lazy
+                 * default, configuring a fresh
+                 * @ref MdnsManager directly, and then sharing it
+                 * through application-private wiring.  The lazy
+                 * accessor is intended for zero-config callers; tests
+                 * and tunable production setups should always own
+                 * their own @ref MdnsManager.
+                 *
+                 * Multiple processes can run multiple @ref MdnsManager
+                 * instances; this accessor is the @b canonical
+                 * application-wide one.  Tests that need an isolated
+                 * engine should construct one directly rather than
+                 * leaning on the global.
+                 */
+                static MdnsManager *mdnsManager();
+
+                /**
+                 * @brief Tears down the application-wide @ref MdnsManager.
+                 *
+                 * Calls @ref MdnsManager::stop on the cached engine
+                 * (no-op if it was never started) and destroys the
+                 * @ref UniquePtr backing the global.  A subsequent
+                 * @ref mdnsManager call constructs a fresh engine.
+                 * Idempotent — safe to call repeatedly, including
+                 * when the global was never created.
+                 *
+                 * Invoked automatically as part of @ref Application
+                 * destruction; expose for explicit test teardown so
+                 * a test run that touches the global engine does not
+                 * leak the singleton into the next test case.
+                 */
+                static void stopMdnsManager();
+
+                /**
                  * @brief Installs an @ref EventLoop monitor on the main loop and arms every future
                  *        @ref EventLoop construction to install one too.
                  *
@@ -587,6 +643,7 @@ class Application {
                                 QuitRequestHandler     quitHandler;
                                 UniquePtr<DebugServer> debugServer;
                                 UniquePtr<CpuMonitor>  cpuMonitor;
+                                UniquePtr<MdnsManager> mdnsManager;
 
                                 // Auto-install hook for new
                                 // EventLoops.  Guarded by

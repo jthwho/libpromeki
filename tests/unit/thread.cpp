@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/application.h>
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
@@ -91,7 +92,9 @@ TEST_CASE("Thread: started and finished signals") {
 }
 
 TEST_CASE("Thread: eventLoop affinity for objects") {
-        EventLoop loop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
         TestOne   obj;
         // Object created with an EventLoop should have it set
         CHECK(obj.eventLoop() == &loop);
@@ -108,7 +111,9 @@ TEST_CASE("Thread: object created without EventLoop has nullptr") {
 }
 
 TEST_CASE("Thread: cross-thread signal/slot delivery") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
 
         Thread t;
         t.start();
@@ -146,7 +151,9 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
 }
 
 TEST_CASE("Thread: moveToThread changes affinity") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread   *mainThread = Thread::adoptCurrentThread();
         Thread    t;
         t.start();
@@ -180,7 +187,9 @@ TEST_CASE("Thread: moveToThread changes affinity") {
 }
 
 TEST_CASE("Thread: moveToThread moves children recursively") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread   *mainThread = Thread::adoptCurrentThread();
         Thread    t;
         t.start();
@@ -258,7 +267,9 @@ TEST_CASE("Thread: timed wait returns Ok when thread finishes in time") {
 }
 
 TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -653,7 +664,9 @@ TEST_CASE("Thread: setAffinity returns Invalid when not running") {
 }
 
 TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -887,7 +900,9 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
 // ============================================================================
 
 TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         TestOne   owner;
         CHECK(owner.eventLoop() == &mainLoop);
 
@@ -913,7 +928,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch")
 }
 
 TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread    worker;
         worker.start();
 
@@ -986,7 +1003,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // to invoke the slot.  With an ObjectBase context anchored to
         // a single EventLoop, all invocations must run serially on
         // that loop — no interleaving, no missed calls.
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread    coordinator;
         coordinator.start();
 
@@ -1061,7 +1080,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
         // overload asserts rather than silently falling back.
         // Callers that want the raw, same-thread-only behaviour must
         // call the @c void*-owner overload with @c nullptr explicitly.
-        EventLoop   mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Signal<int> sig;
         CHECK_THROWS_AS(sig.connect([](int) {}, static_cast<ObjectBase *>(nullptr)), std::runtime_error);
 }
@@ -1077,7 +1098,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
 // post-callable.  These tests verify each of those guarantees.
 
 TEST_CASE("Signal::connect(Function, ObjectBase): auto-disconnect on receiver destruction") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         TestOne   sender;
         std::atomic<int> calls{0};
 
@@ -1098,7 +1121,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase): auto-disconnect on receiver de
 }
 
 TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable drops after receiver destruction") {
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -1223,7 +1248,9 @@ TEST_CASE("Signal::connect(Function, ObjectBase): same-thread emit drops after r
         // really do that without the framework's help; what we CAN
         // do is verify that the auto-disconnect leaves the signal
         // empty after destruction, by emitting and counting.
-        EventLoop mainLoop;
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &mainLoop = *Application::mainEventLoop();
         TestOne   sender;
         std::atomic<int> calls{0};
         {
