@@ -107,7 +107,7 @@ TEST_CASE("mdnsBuildAnnounce: PTR cache-flush bit is masked off per RFC 6762 §1
         ptr.setCacheFlush(true);    // try to force it on — encoder must suppress
         recs += ptr;
         Buffer pkt = mdnsBuildAnnounce(recs);
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         CHECK_FALSE(r.first().records()[0].cacheFlush);
@@ -118,7 +118,7 @@ TEST_CASE("mdnsBuildAnnounce: encoded SRV round-trips through MdnsPacket::parse"
         recs += MdnsRecord::srv("inst._http._tcp.local.", "host.local.",
                                 8080, 10, 20, Duration::fromSeconds(120));
         Buffer pkt = mdnsBuildAnnounce(recs);
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &got = r.first().records()[0];
@@ -137,7 +137,7 @@ TEST_CASE("mdnsBuildAnnounce: encoded TXT round-trips") {
         List<MdnsRecord> recs;
         recs += MdnsRecord::txt("inst._http._tcp.local.", t, Duration::fromSeconds(60));
         Buffer pkt = mdnsBuildAnnounce(recs);
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsTxtRecord &back = r.first().records()[0].txt;
@@ -153,7 +153,7 @@ TEST_CASE("mdnsBuildAnnounce: encoded A and AAAA round-trip") {
         recs += MdnsRecord::aaaa("host.local.", Ipv6Address(v6),
                                  Duration::fromSeconds(60));
         Buffer pkt = mdnsBuildAnnounce(recs);
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 2);
         CHECK(r.first().records()[0].a == Ipv4Address(192, 168, 1, 7));
@@ -167,7 +167,7 @@ TEST_CASE("mdnsBuildGoodbye: every record has TTL=0") {
         recs += MdnsRecord::srv("inst._http._tcp.local.", "host.local.", 80, 0, 0,
                                 Duration::fromSeconds(120));
         Buffer pkt = mdnsBuildGoodbye(recs);
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 2);
         CHECK(r.first().records()[0].ttl == Duration::zero());

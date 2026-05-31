@@ -21,7 +21,7 @@ SRT support has shipped. The full vendoring + symbol-isolation pipeline, public 
 
 ## Deferred Items
 
-- [ ] **SrtMediaIO backend** — expose SRT as a source/sink for the MediaIO framework (wraps `SrtSocketTransport` so `RtpSession` can ride over SRT unchanged)
+- [x] **SrtMediaIO backend** — `SrtMediaIO` shipped (2026-05-31).  Bidirectional MediaIO wrapping `SrtSocketTransport` + `MpegTsFramer`.  Caller / Listener / Rendezvous modes, H.264 / HEVC video + AAC audio payloads, `MediaConfig` key surface aligned with `MpegTsFileMediaIO`.  Unit test in `tests/unit/srtmediaio.cpp`.
 - [ ] **Listener-side bonded handshake** — managed `SrtGroup` built from `SrtSocket::groupHandle()` on the first accepted member of an incoming bonded caller; libsrt auto-creates the group mirror but nothing promotes it to an owned `SrtGroup` yet
 - [ ] **Data-path functional tests** — SRT live-mode TSBPD timing is too racy at unit scope; full send/receive coverage belongs in `utils/promeki-test/`
 - [ ] **`PROMEKI_USE_SYSTEM_SRT`** — the system-libsrt path (`find_package(SRT)`) compiles but symbol-isolation guarantees only apply to the vendored bundle; document the trade-off

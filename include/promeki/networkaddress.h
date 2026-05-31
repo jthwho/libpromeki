@@ -216,6 +216,36 @@ class NetworkAddress {
                  *         or 0 if the address is null or unresolved.
                  */
                 size_t toSockAddr(struct sockaddr_storage *storage) const;
+
+                /** @brief Address family preference for @ref resolve. */
+                enum FamilyPreference {
+                        PreferIPv4,   ///< Pick the first IPv4 record; fall back to IPv6.
+                        PreferIPv6,   ///< Pick the first IPv6 record; fall back to IPv4.
+                        AnyFamily     ///< Pick whatever @c getaddrinfo returns first.
+                };
+
+                /**
+                 * @brief Resolves a @ref Hostname address to an IPv4 or IPv6 literal.
+                 *
+                 * Performs a synchronous @c getaddrinfo lookup.  When the
+                 * stored value is already a resolved IPv4 / IPv6 literal
+                 * the call is a no-op that returns the same address.
+                 * Null addresses propagate as @ref Error::Invalid.
+                 *
+                 * The string "localhost" is recognised without a DNS
+                 * round-trip — it is rewritten to 127.0.0.1 (or ::1 when
+                 * @p prefer is @ref PreferIPv6) so the loopback case
+                 * works even on hosts whose resolver cannot reach DNS.
+                 *
+                 * @param prefer Family preference when more than one
+                 *               record is returned.  Default
+                 *               @ref PreferIPv4 because the rest of
+                 *               libpromeki is IPv4-first.
+                 * @return The resolved address on success, or
+                 *         @ref Error::HostNotFound /
+                 *         @ref Error::Invalid on failure.
+                 */
+                Result<NetworkAddress> resolve(FamilyPreference prefer = PreferIPv4) const;
 #endif
 
                 /** @brief Equality comparison. */

@@ -456,6 +456,39 @@ class MdnsManager : public Thread {
                 void setPacketHook(PacketHook hook);
 
                 /**
+                 * @brief Registers an additional per-datagram observer.
+                 *
+                 * Multi-listener equivalent of @ref setPacketHook.
+                 * Where @ref setPacketHook replaces the single
+                 * inspection hook, this call appends to a list of
+                 * observers that are all called for every inbound
+                 * datagram in addition to the (single) packet hook.
+                 *
+                 * The returned handle is unique within this manager
+                 * for the lifetime of the process.  Pass it to
+                 * @ref unregisterPacketObserver to remove the
+                 * observer.  Safe to call from any thread; takes
+                 * effect on the next inbound datagram.
+                 *
+                 * @param observer Per-datagram callable.  Must be
+                 *                 non-empty.
+                 * @return A handle @c &gt;= 0 on success, @c -1 on
+                 *         failure (empty observer).
+                 */
+                int registerPacketObserver(PacketHook observer);
+
+                /**
+                 * @brief Removes a previously registered observer.
+                 *
+                 * Idempotent — unknown / already-removed handles are
+                 * silently ignored.  Blocks until any in-flight call
+                 * into the observer returns, so the caller can safely
+                 * destroy any state the observer captures by
+                 * reference after this call returns.
+                 */
+                void unregisterPacketObserver(int handle);
+
+                /**
                  * @brief Brings the engine online on all multicast-capable interfaces.
                  *
                  * Snapshots the result of @ref NetworkInterface::enumerate,
@@ -602,6 +635,13 @@ class MdnsManager : public Thread {
                 Map<unsigned int, NetworkInterface> _byIfIndex;
                 mutable Mutex                      _interfacesMtx;
                 PacketHook                         _packetHook;
+                struct PacketObserver {
+                                int        handle = -1;
+                                PacketHook hook;
+                };
+                List<PacketObserver>               _packetObservers;
+                mutable Mutex                      _packetObserversMtx;
+                Atomic<int>                        _nextObserverHandle;
                 List<MdnsBrowser *>                _browsers;
                 mutable Mutex                      _browsersMtx;
                 List<MdnsPublisher *>              _publishers;

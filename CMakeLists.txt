@@ -2559,6 +2559,7 @@ set(PROMEKI_HEADERS
     include/promeki/enums_clock.h
     include/promeki/enums_codec.h
     include/promeki/enums_color.h
+    include/promeki/enums_dns.h
     include/promeki/enums_jxs.h
     include/promeki/enums_mediaio.h
     include/promeki/enums_ndi.h
@@ -2842,6 +2843,12 @@ set(PROMEKI_SOURCES
 if(PROMEKI_ENABLE_NETWORK)
     list(APPEND PROMEKI_HEADERS
         include/promeki/abstractsocket.h
+        include/promeki/dnscache.h
+        include/promeki/dnsconfig.h
+        include/promeki/dnsname.h
+        include/promeki/dnspacket.h
+        include/promeki/dnsrecord.h
+        include/promeki/dnsresolver.h
         include/promeki/ipv4subnet.h
         include/promeki/ipv6subnet.h
         include/promeki/klvframe.h
@@ -2912,6 +2919,12 @@ if(PROMEKI_ENABLE_NETWORK)
     )
     list(APPEND PROMEKI_SOURCES
         src/network/abstractsocket.cpp
+        src/network/dnscache.cpp
+        src/network/dnsconfig.cpp
+        src/network/dnsname.cpp
+        src/network/dnspacket.cpp
+        src/network/dnsrecord.cpp
+        src/network/dnsresolver.cpp
         src/network/sslcontext.cpp
         src/network/ipv4subnet.cpp
         src/network/ipv6subnet.cpp
@@ -3178,6 +3191,13 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/pcmaudiopayload.h
         include/promeki/pcmsilencefiller.h
         include/promeki/compressedaudiopayload.h
+        include/promeki/mpegts.h
+        include/promeki/mpegtsmuxer.h
+        include/promeki/mpegtsdemuxer.h
+        include/promeki/mpegtsframer.h
+        include/promeki/mpegtsfilemediaio.h
+        include/promeki/smpte302m.h
+        include/promeki/jpegxsbitstream.h
         include/promeki/nvencvideoencoder.h
         include/promeki/nvdecvideodecoder.h
         include/promeki/imagefilemediaio.h
@@ -3324,6 +3344,13 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/videodecodermediaio.cpp
         src/proav/audioencodermediaio.cpp
         src/proav/audiodecodermediaio.cpp
+        src/proav/mpegts.cpp
+        src/proav/mpegtsmuxer.cpp
+        src/proav/mpegtsdemuxer.cpp
+        src/proav/mpegtsframer.cpp
+        src/proav/mpegtsfilemediaio.cpp
+        src/proav/smpte302m.cpp
+        src/proav/jpegxsbitstream.cpp
         src/proav/rawbitstreammediaio.cpp
         src/proav/imagefilemediaio.cpp
         src/proav/inspectormediaio.cpp
@@ -3428,6 +3455,13 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_V4L2)
         list(APPEND PROMEKI_HEADERS include/promeki/v4l2mediaio.h)
         list(APPEND PROMEKI_SOURCES src/proav/v4l2mediaio.cpp)
+    endif()
+    if(PROMEKI_ENABLE_SRT)
+        # SrtMediaIO: composes MpegTsFramer with SrtSocketTransport so
+        # the same single-program MPEG-TS pipeline that drives
+        # MpegTsFileMediaIO also rides over an SRT connection.
+        list(APPEND PROMEKI_HEADERS include/promeki/srtmediaio.h)
+        list(APPEND PROMEKI_SOURCES src/proav/srtmediaio.cpp)
     endif()
     if(PROMEKI_ENABLE_NDI)
         # NDI MediaIO backend: see docs/ndi.md.  The NDI SDK is loaded
@@ -4411,6 +4445,11 @@ if(PROMEKI_BUILD_TESTS)
     if(PROMEKI_ENABLE_NETWORK)
         list(APPEND UNITTEST_SOURCES
             tests/unit/network/abstractsocket.cpp
+            tests/unit/network/dnscache.cpp
+            tests/unit/network/dnsconfig.cpp
+            tests/unit/network/dnsname.cpp
+            tests/unit/network/dnspacket.cpp
+            tests/unit/network/dnsresolver.cpp
             tests/unit/network/ipv4address.cpp
             tests/unit/network/ipv6address.cpp
             tests/unit/network/eui64.cpp
@@ -4663,6 +4702,13 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/mediaiotask_burn.cpp
             tests/unit/mediaiotask_debugmedia.cpp
             tests/unit/mediaiotask_rawbitstream.cpp
+            tests/unit/mpegts.cpp
+            tests/unit/mpegtsmuxer.cpp
+            tests/unit/mpegtsframer.cpp
+            tests/unit/mediaiotask_mpegtsfile.cpp
+            tests/unit/smpte302m.cpp
+            tests/unit/jpegxsbitstream.cpp
+            $<$<BOOL:${PROMEKI_ENABLE_SRT}>:tests/unit/srtmediaio.cpp>
             tests/unit/mediaiotask_framebridge.cpp
             tests/unit/mediaiotask_framesync.cpp
             tests/unit/mediaiotask_videoencoder.cpp

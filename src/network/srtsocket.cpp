@@ -221,15 +221,28 @@ Error SrtSocket::bind(const SocketAddress &address) {
                 promekiWarn("SrtSocket::bind(%s) on closed socket", address.toString().cstr());
                 return Error::NotOpen;
         }
+        // Resolve hostnames once up front so bind("any-host.local", 0)
+        // and bind("localhost", 4200) both work without callers
+        // having to pre-resolve.
+        SocketAddress dest = address;
+        if (!dest.address().isResolved() && !dest.address().isNull()) {
+                auto [resolved, rerr] = dest.resolve();
+                if (rerr.isError()) {
+                        promekiWarn("SrtSocket::bind: resolve('%s') failed (%s)",
+                                    address.toString().cstr(), rerr.name().cstr());
+                        return rerr;
+                }
+                dest = resolved;
+        }
         struct sockaddr_storage storage;
-        const size_t            len = address.toSockAddr(&storage);
+        const size_t            len = dest.toSockAddr(&storage);
         if (len == 0) {
-                promekiWarn("SrtSocket::bind invalid address '%s'", address.toString().cstr());
+                promekiWarn("SrtSocket::bind invalid address '%s'", dest.toString().cstr());
                 return Error::Invalid;
         }
         if (srt_bind(_sock, reinterpret_cast<struct sockaddr *>(&storage), static_cast<int>(len)) == SRT_ERROR) {
                 captureLastError();
-                promekiWarn("SrtSocket::bind(%s) failed: %s", address.toString().cstr(), _lastError.cstr());
+                promekiWarn("SrtSocket::bind(%s) failed: %s", dest.toString().cstr(), _lastError.cstr());
                 return Error::LibraryFailure;
         }
         updateLocalAddress();
@@ -241,10 +254,20 @@ Error SrtSocket::connectToHost(const SocketAddress &address) {
                 promekiWarn("SrtSocket::connectToHost(%s) on closed socket", address.toString().cstr());
                 return Error::NotOpen;
         }
+        SocketAddress dest = address;
+        if (!dest.address().isResolved() && !dest.address().isNull()) {
+                auto [resolved, rerr] = dest.resolve();
+                if (rerr.isError()) {
+                        promekiWarn("SrtSocket::connectToHost: resolve('%s') failed (%s)",
+                                    address.toString().cstr(), rerr.name().cstr());
+                        return rerr;
+                }
+                dest = resolved;
+        }
         struct sockaddr_storage storage;
-        const size_t            len = address.toSockAddr(&storage);
+        const size_t            len = dest.toSockAddr(&storage);
         if (len == 0) {
-                promekiWarn("SrtSocket::connectToHost invalid address '%s'", address.toString().cstr());
+                promekiWarn("SrtSocket::connectToHost invalid address '%s'", dest.toString().cstr());
                 return Error::Invalid;
         }
         const int rc = srt_connect(_sock, reinterpret_cast<struct sockaddr *>(&storage), static_cast<int>(len));
@@ -253,7 +276,7 @@ Error SrtSocket::connectToHost(const SocketAddress &address) {
                 // Map a few well-known SRT error codes to our enum.  Anything
                 // else falls back to a generic ConnectionFailed-equivalent.
                 const int err = srt_getlasterror(nullptr);
-                promekiWarn("SrtSocket::connectToHost(%s) failed (srtErr=%d): %s", address.toString().cstr(), err,
+                promekiWarn("SrtSocket::connectToHost(%s) failed (srtErr=%d): %s", dest.toString().cstr(), err,
                             _lastError.cstr());
                 switch (err) {
                         case SRT_ECONNREJ: return Error::ConnectionRefused;
@@ -263,7 +286,7 @@ Error SrtSocket::connectToHost(const SocketAddress &address) {
                         default:           return Error::LibraryFailure;
                 }
         }
-        _peerAddress = address;
+        _peerAddress = dest;
         if (state() == Connected) {
                 connectedSignal.emit();
         }

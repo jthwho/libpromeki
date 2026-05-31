@@ -56,10 +56,29 @@ namespace {
                         return MediaIO::create(cfg);
                 }
                 if (!s.path.isEmpty()) {
+                        MediaIO *io = nullptr;
                         if (s.role == MediaPipelineConfig::StageRole::Source) {
-                                return MediaIO::createForFileRead(s.path);
+                                io = MediaIO::createForFileRead(s.path);
+                        } else {
+                                io = MediaIO::createForFileWrite(s.path);
                         }
-                        return MediaIO::createForFileWrite(s.path);
+                        // Merge any user-supplied config keys (e.g. --dc /
+                        // --sc overrides for file URLs) on top of the
+                        // backend defaults the file factory selected.
+                        // Without this, proposeInput / describe would see
+                        // the bare defaults — e.g. @c MpegTsAudioCodec = AAC
+                        // — and the planner would pick AAC even when the
+                        // user asked for Opus / PCM / etc.  Mirrors
+                        // @ref MediaPipeline::instantiateStage's merge so
+                        // the planner's stand-in IO sees the same effective
+                        // config the runtime sink will eventually see.
+                        if (io != nullptr && !s.config.isEmpty()) {
+                                MediaConfig merged = io->config();
+                                s.config.forEach(
+                                        [&merged](MediaConfig::ID id, const Variant &val) { merged.set(id, val); });
+                                io->setConfig(merged);
+                        }
+                        return io;
                 }
                 return nullptr;
         }

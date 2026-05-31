@@ -166,6 +166,23 @@ class SocketAddress {
                  * @return The size of the filled sockaddr structure, or 0 on failure.
                  */
                 size_t toSockAddr(struct sockaddr_storage *storage) const;
+
+                /**
+                 * @brief Resolves the hostname component to an IP literal,
+                 *        preserving the port.
+                 *
+                 * Thin wrapper over @ref NetworkAddress::resolve.  Returns
+                 * @c *this unchanged when the address component is already
+                 * a resolved IPv4 / IPv6 literal.
+                 *
+                 * @param prefer Address-family preference (default
+                 *               @ref NetworkAddress::PreferIPv4).
+                 * @return A SocketAddress with a resolved address and the
+                 *         original port, or an error result on lookup
+                 *         failure.
+                 */
+                Result<SocketAddress>
+                resolve(NetworkAddress::FamilyPreference prefer = NetworkAddress::PreferIPv4) const;
 #endif
 
                 /** @brief Equality comparison. */

@@ -8,14 +8,14 @@
 #include <promeki/rtmpclient.h>
 
 #include <cstring>
-#include <netdb.h>
-#include <sys/socket.h>
 
 #include <promeki/buffer.h>
+#include <promeki/dnsresolver.h>
 #include <promeki/elapsedtimer.h>
 #include <promeki/iodevice.h>
 #include <promeki/ipv4address.h>
 #include <promeki/logger.h>
+#include <promeki/networkaddress.h>
 #include <promeki/socketaddress.h>
 #include <promeki/tcpsocket.h>
 #include <promeki/thread.h>
@@ -34,25 +34,17 @@ constexpr uint16_t kDefaultRtmpPort  = 1935;
 constexpr uint16_t kDefaultRtmpsPort = 443;
 
 /**
- * @brief Resolves @p host to an IPv4 address.
+ * @brief Resolves @p host to an IPv4 address via the library's
+ *        own DNS resolver.
  *
- * Synchronous; for the common localhost / LAN / cached cases the
- * lookup is effectively instantaneous.  Async DNS is out of scope
- * for v1.
+ * Synchronous; cache-resident lookups are effectively instantaneous.
+ * No fallback to the host's @c getaddrinfo().
  */
 Error resolveHost(const String &host, uint32_t &outIPv4) {
-        struct addrinfo  hints{};
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        struct addrinfo *res = nullptr;
-        const int        rc = ::getaddrinfo(host.cstr(), nullptr, &hints, &res);
-        if (rc != 0 || res == nullptr) {
-                if (res != nullptr) ::freeaddrinfo(res);
-                return Error::HostNotFound;
-        }
-        const struct sockaddr_in *sin = reinterpret_cast<const sockaddr_in *>(res->ai_addr);
-        outIPv4 = ntohl(sin->sin_addr.s_addr);
-        ::freeaddrinfo(res);
+        auto r = DnsResolver::resolveSync(host, NetworkAddress::PreferIPv4);
+        if (r.second().isError())       return Error::HostNotFound;
+        if (!r.first().isIPv4())        return Error::HostNotFound;
+        outIPv4 = r.first().toIpv4().toUint32();
         return Error::Ok;
 }
 

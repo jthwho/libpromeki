@@ -118,7 +118,7 @@ void MdnsTypeBrowser::onManagerTick(const TimeStamp &now) {
 
 void MdnsTypeBrowser::handlePacket(const Buffer &data, const SocketAddress & /*sender*/,
                                    const NetworkInterface & /*iface*/) {
-        auto r = MdnsPacket::parse(data);
+        auto r = MdnsPacket::parseMdns(data);
         if (!r.second().isOk()) return;
 
         const String metaName = MdnsManager::metaBrowseFqdn();

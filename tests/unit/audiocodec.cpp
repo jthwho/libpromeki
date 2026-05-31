@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/audiocodec.h>
 #include <promeki/audioformat.h>
+#include <promeki/fourcc.h>
 
 using namespace promeki;
 
@@ -21,6 +22,11 @@ TEST_CASE("AudioCodec: well-known codecs resolve by ID") {
         CHECK(opus.isValid());
         CHECK(opus.name() == "Opus");
         CHECK(opus != aac);
+
+        AudioCodec pcm(AudioCodec::PCM);
+        CHECK(pcm.isValid());
+        CHECK(pcm.name() == "PCM");
+        CHECK(pcm != aac);
 }
 
 TEST_CASE("AudioCodec: lookup by name returns the registered entry") {
@@ -29,6 +35,7 @@ TEST_CASE("AudioCodec: lookup by name returns the registered entry") {
         CHECK(value(AudioCodec::lookup("FLAC")) == AudioCodec(AudioCodec::FLAC));
         CHECK(value(AudioCodec::lookup("MP3")) == AudioCodec(AudioCodec::MP3));
         CHECK(value(AudioCodec::lookup("AC3")) == AudioCodec(AudioCodec::AC3));
+        CHECK(value(AudioCodec::lookup("PCM")) == AudioCodec(AudioCodec::PCM));
         CHECK(error(AudioCodec::lookup("not-a-real-codec")).isError());
 }
 
@@ -39,14 +46,17 @@ TEST_CASE("AudioCodec: registeredIDs() enumerates every well-known codec") {
         CHECK(ids.contains(AudioCodec::FLAC));
         CHECK(ids.contains(AudioCodec::MP3));
         CHECK(ids.contains(AudioCodec::AC3));
+        CHECK(ids.contains(AudioCodec::PCM));
         for (auto id : ids) CHECK(id != AudioCodec::Invalid);
 }
 
-TEST_CASE("AudioCodec: does not claim any PCM sample formats") {
-        // PCM is represented by AudioFormat, not AudioCodec.  Every
-        // registered AudioCodec should be a real (compressed) codec.
-        // This test catches regressions where someone tries to add PCM
-        // entries back into the codec registry.
+TEST_CASE("AudioCodec: does not claim any per-AudioFormat PCM entries") {
+        // PCM sample layouts (PCMI_S16LE, PCMP_Float32LE, ...) live on
+        // AudioFormat, not AudioCodec.  AudioCodec::PCM is a single
+        // codec-family entry that picks "carry raw PCM" in containers
+        // that have a first-class PCM mapping (SMPTE 302M for MPEG-TS,
+        // LPCM for MOV/MP4).  Catches regressions that try to mirror
+        // every PCMI_*/PCMP_* sample layout as its own codec ID.
         auto ids = AudioCodec::registeredIDs();
         for (auto id : ids) {
                 AudioCodec c(id);
@@ -54,6 +64,27 @@ TEST_CASE("AudioCodec: does not claim any PCM sample formats") {
                 CHECK_FALSE(c.name().startsWith("PCMI_"));
                 CHECK_FALSE(c.name().startsWith("PCMP_"));
         }
+}
+
+TEST_CASE("AudioCodec::PCM: linear-PCM facts") {
+        AudioCodec pcm(AudioCodec::PCM);
+        REQUIRE(pcm.isValid());
+        CHECK(pcm.name() == "PCM");
+        // Compression: lossless (bit-exact).
+        CHECK(pcm.compressionType() == AudioCodec::CompressionLossless);
+        // Each packet decodes standalone — no inter-packet state.
+        CHECK(pcm.packetIndependence() == AudioCodec::PacketIndependenceEvery);
+        // Streamable in the planner's sense: low startup latency,
+        // packet-independent.
+        CHECK(pcm.isStreamable());
+        // No rate-control modes — PCM is fixed-rate.
+        CHECK(pcm.rateControlModes().isEmpty());
+        // FourCC list contains 'lpcm' (MP4/MOV LPCM).
+        const auto fcs = pcm.fourccList();
+        bool       hasLpcm = false;
+        for (const auto &fc : fcs)
+                if (fc == FourCC("lpcm")) hasLpcm = true;
+        CHECK(hasLpcm);
 }
 
 TEST_CASE("AudioCodec: Opus carries libopus's documented format restrictions") {

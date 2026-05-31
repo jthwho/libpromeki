@@ -220,7 +220,7 @@ bool MdnsBrowser::isAddressable(const MdnsServiceInstance &inst) {
 
 void MdnsBrowser::handlePacket(const Buffer &data, const SocketAddress & /*sender*/,
                                const NetworkInterface &iface) {
-        auto r = MdnsPacket::parse(data);
+        auto r = MdnsPacket::parseMdns(data);
         if (!r.second().isOk()) return;
         // Collect directed follow-up queries across every record in
         // this packet, dedupe them, and issue them off-lock once

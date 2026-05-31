@@ -1,4 +1,4 @@
-# mDNS / DNS-SD — IN PROGRESS
+# mDNS / DNS-SD — IN PROGRESS (wire layer generalised → DNS; see `dns.md`)
 
 **Library:** `promeki` (feature flag `PROMEKI_ENABLE_MDNS`, requires `_NETWORK`)
 **Vendored dep:** `thirdparty/mdns` (mjansson/mdns — single-header packet parser)
@@ -21,8 +21,8 @@ type browsers share the same packet-fan-out infrastructure.
 
 ### Wire layer
 
-- `MdnsPacket` + `MdnsParsedQuestion` + `MdnsParsedRecord` — parsed inbound packets.  Uses `mdns_get_next_substring` directly so names come back as RFC 1035 §5.1 escape-aware text (`\.` for embedded dots, `\\` for embedded backslashes).
-- `mdnsBuildAnnounce` / `mdnsBuildGoodbye` / `mdnsBuildProbe` — outbound packet encoders.  Uncompressed name encoding (no DNS pointer compression).  PTR cache-flush bit forcibly suppressed per RFC 6762 §10.2.
+- `MdnsPacket`, `MdnsParsedRecord`, `MdnsParsedQuestion` are now **using-aliases** of `DnsPacket`, `DnsRecord`, `DnsQuestion` (generalised 2026-05-31; see `dns.md`).  All mDNS callers remain source-compatible; no rename required.
+- `mdnsBuildAnnounce` / `mdnsBuildGoodbye` / `mdnsBuildProbe` — outbound packet encoders using the new `DnsPacket::Builder`.  Uncompressed name encoding.  PTR cache-flush bit forcibly suppressed per RFC 6762 §10.2.
 - `mdnsname.h` — `mdnsEscapeLabel` / `mdnsUnescapeLabel` / `mdnsSplitName` / `mdnsJoinName` helpers.  Numeric `\DDD` byte escapes accepted on input but not generated.
 
 ### Engine

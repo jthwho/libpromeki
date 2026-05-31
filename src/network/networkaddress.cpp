@@ -8,6 +8,9 @@
 #include <promeki/datastream.h>
 #include <promeki/networkaddress.h>
 #include <promeki/textstream.h>
+#if PROMEKI_ENABLE_NETWORK && !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
+#include <promeki/dnsresolver.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -109,6 +112,20 @@ size_t NetworkAddress::toSockAddr(struct sockaddr_storage *storage) const {
                 return sizeof(struct sockaddr_in6);
         }
         return 0;
+}
+
+Result<NetworkAddress> NetworkAddress::resolve(FamilyPreference prefer) const {
+        if (isNull()) return makeError<NetworkAddress>(Error::Invalid);
+        if (isResolved()) return makeResult(*this);
+
+        const String host = hostname();
+        if (host.isEmpty()) return makeError<NetworkAddress>(Error::Invalid);
+
+        // Delegate to the library's own DNS resolver — same
+        // localhost / IP-literal shortcuts live in resolveSync, so
+        // this call covers both the offline-loopback and the live
+        // DNS cases without going through the host's getaddrinfo().
+        return DnsResolver::resolveSync(host, prefer);
 }
 #endif
 

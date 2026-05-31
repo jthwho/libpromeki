@@ -175,14 +175,14 @@ namespace {
 TEST_CASE("MdnsPacket: rejects truncated packets") {
         // Under-length header.
         uint8_t bytes[8] = { 0 };
-        auto r = MdnsPacket::parse(bytes, sizeof(bytes));
+        auto r = MdnsPacket::parseMdns(bytes, sizeof(bytes));
         CHECK_FALSE(r.second().isOk());
 }
 
 TEST_CASE("MdnsPacket: parses an empty response header") {
         PacketBuilder b;
         b.writeHeader(0x1234, 0x8400, 0, 0, 0, 0);
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         const MdnsPacket &p = r.first();
         CHECK(p.transactionId() == 0x1234);
@@ -199,7 +199,7 @@ TEST_CASE("MdnsPacket: parses a single PTR answer") {
         b.writeHeader(0, 0x8400, 0, 1, 0, 0);
         b.writePtr("_http._tcp.local.", 0x0001, 4500, "Studio Camera._http._tcp.local.");
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         const MdnsPacket &p = r.first();
         REQUIRE(p.records().size() == 1);
@@ -220,7 +220,7 @@ TEST_CASE("MdnsPacket: parses a SRV answer with target / port / priority / weigh
         b.writeSrv("Studio Camera._http._tcp.local.",
                    0x8001 /* cache-flush + IN */, 120, 10, 5, 9000, "camera.local.");
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &rec = r.first().records()[0];
@@ -256,7 +256,7 @@ TEST_CASE("MdnsPacket: parses a TXT answer with all three Presence shapes") {
         // the new length.
         (void)rdLen;
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &rec = r.first().records()[0];
@@ -271,7 +271,7 @@ TEST_CASE("MdnsPacket: parses an A answer") {
         b.writeHeader(0, 0x8400, 0, 1, 0, 0);
         b.writeA("camera.local.", 0x8001, 120, 192, 168, 1, 42);
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &rec = r.first().records()[0];
@@ -288,7 +288,7 @@ TEST_CASE("MdnsPacket: parses an AAAA answer") {
         };
         b.writeAaaa("camera.local.", 0x8001, 120, v6);
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &rec = r.first().records()[0];
@@ -304,7 +304,7 @@ TEST_CASE("MdnsPacket: parses a query with QU bit set") {
         b.writeHeader(0, 0x0000, 1, 0, 0, 0);
         b.writeQuestion("_http._tcp.local.", 12, 0x8001);   // PTR + QU + IN
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         const MdnsPacket &p = r.first();
         CHECK_FALSE(p.isResponse());
@@ -324,7 +324,7 @@ TEST_CASE("MdnsPacket: parses a multi-section packet") {
         b.writeSrv("Studio Camera._http._tcp.local.", 0x8001, 120, 0, 0, 80, "camera.local.");
         b.writeA("camera.local.", 0x8001, 120, 10, 0, 0, 7);
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         const MdnsPacket &p = r.first();
         REQUIRE(p.records().size() == 3);
@@ -344,7 +344,7 @@ TEST_CASE("MdnsPacket: zero-TTL Goodbye record survives the parse") {
         b.writeHeader(0, 0x8400, 0, 1, 0, 0);
         b.writePtr("_http._tcp.local.", 0x0001, 0, "Old Camera._http._tcp.local.");
 
-        auto r = MdnsPacket::parse(b.data(), b.size());
+        auto r = MdnsPacket::parseMdns(b.data(), b.size());
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 1);
         const MdnsParsedRecord &rec = r.first().records()[0];

@@ -346,4 +346,58 @@ Error AdtsParser::strip(const BufferView &in, Buffer &outRaw, AacDecoderConfig &
         return Error::Ok;
 }
 
+Error AdtsParser::wrapFrame(const AacDecoderConfig &cfg, const BufferView &rawFrame, Buffer &out) {
+        if (rawFrame.count() > 1) return Error::NotSupported;
+        const size_t rawSize = rawFrame.size();
+        const size_t framed = rawSize + 7;
+        if (framed > 0x1FFF) return Error::OutOfRange; // 13-bit aac_frame_length cap
+
+        // Resolve a sample-rate index: prefer the stored one, fall
+        // back to the rate lookup when it's the 0xF explicit marker
+        // or out of range.  ADTS doesn't have a place for the 24-bit
+        // explicit-frequency field, so a rate not in the standard
+        // table degrades to the closest index returned by
+        // frequencyToIndex (which then encodes 15 — accepted by the
+        // ETSI spec but not by every decoder; the encoder really
+        // should be configured to a standard rate).
+        uint8_t sfi = cfg.samplingFrequencyIndex;
+        if (sfi >= 13) sfi = AacDecoderConfig::frequencyToIndex(cfg.samplingFrequency);
+
+        // Profile in ADTS is @c (AudioObjectType - 1) clamped to 2 bits.
+        // AAC-LC (AOT=2) → profile=1.  Most other AOTs aren't legal
+        // here; the field can't represent AOT > 4.
+        uint8_t aot = cfg.audioObjectType > 0 ? cfg.audioObjectType : uint8_t(2);
+        if (aot < 1) aot = 1;
+        if (aot > 4) aot = 2; // SBR/PS not representable; downgrade to LC
+        const uint8_t profile = static_cast<uint8_t>((aot - 1) & 0x03);
+        const uint8_t cc = cfg.channelConfiguration & 0x07;
+
+        Buffer buf(framed);
+        if (!buf.isValid()) return Error::NoMem;
+        buf.setSize(framed);
+        uint8_t *p = static_cast<uint8_t *>(buf.data());
+
+        // syncword (12) + ID=0 (1, MPEG-4) + layer=00 (2) + protection_absent=1 (1)
+        p[0] = 0xFF;
+        p[1] = 0xF1; // 1111 0001
+        // profile (2) + sfi (4) + private (1) + channel_config high bit (1)
+        p[2] = static_cast<uint8_t>((profile << 6) | ((sfi & 0x0F) << 2) | ((cc >> 2) & 0x01));
+        // channel_config low 2 bits (2) + original (1) + home (1) + copy_id (1) + copy_start (1)
+        // + aac_frame_length top 2 bits (2)
+        p[3] = static_cast<uint8_t>(((cc & 0x03) << 6) | static_cast<uint8_t>((framed >> 11) & 0x03));
+        // aac_frame_length middle 8 bits
+        p[4] = static_cast<uint8_t>((framed >> 3) & 0xFF);
+        // aac_frame_length low 3 bits + adts_buffer_fullness top 5 bits (0x7FF VBR sentinel)
+        p[5] = static_cast<uint8_t>(((framed & 0x07) << 5) | 0x1F);
+        // adts_buffer_fullness low 6 bits (continuing 0x7FF) + num_raw_data_blocks=0 (2)
+        p[6] = 0xFC;
+
+        if (rawSize > 0 && rawFrame.data() != nullptr) {
+                std::memcpy(p + 7, rawFrame.data(), rawSize);
+        }
+
+        out = buf;
+        return Error::Ok;
+}
+
 PROMEKI_NAMESPACE_END

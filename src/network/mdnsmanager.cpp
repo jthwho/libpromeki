@@ -71,6 +71,31 @@ void MdnsManager::setPacketHook(PacketHook hook) {
         _packetHook = std::move(hook);
 }
 
+int MdnsManager::registerPacketObserver(PacketHook observer) {
+        if (!observer) {
+                promekiWarn("MdnsManager::registerPacketObserver: empty observer");
+                return -1;
+        }
+        const int     handle = _nextObserverHandle.fetchAndAdd(1) + 1;
+        Mutex::Locker lock(_packetObserversMtx);
+        PacketObserver entry;
+        entry.handle = handle;
+        entry.hook   = std::move(observer);
+        _packetObservers += std::move(entry);
+        return handle;
+}
+
+void MdnsManager::unregisterPacketObserver(int handle) {
+        if (handle < 0) return;
+        // Hold the lock through the removal so a concurrent fan-out
+        // either dispatches the observer before we remove it (and
+        // returns first, blocking us on the same mutex) or doesn't
+        // see it at all on the next datagram.
+        Mutex::Locker lock(_packetObserversMtx);
+        _packetObservers.removeIf(
+            [handle](const PacketObserver &e) { return e.handle == handle; });
+}
+
 Buffer MdnsManager::buildQuery(const String &name, uint16_t recordType, uint16_t transactionId,
                                bool unicastResponse) {
         return buildQueryWithKnownAnswers(name, recordType, List<MdnsRecord>(),
@@ -646,6 +671,26 @@ void MdnsManager::handleSocketEvents(UdpSocket *sock, uint32_t events) {
 
                 if (_packetHook) {
                         _packetHook(ingress, sender, datagram);
+                }
+
+                // Fan out to per-handle observers under their own
+                // mutex.  Take a snapshot copy of the hook list so
+                // observer bodies that call back into
+                // @ref unregisterPacketObserver don't deadlock on
+                // @ref _packetObserversMtx (the unregister blocks
+                // until in-flight calls return; that contract holds
+                // because the snapshot keeps the hook callable alive
+                // for the duration of the dispatch even if the
+                // underlying entry is removed mid-iteration).
+                {
+                        List<PacketObserver> snapshot;
+                        {
+                                Mutex::Locker lock(_packetObserversMtx);
+                                snapshot = _packetObservers;
+                        }
+                        for (const PacketObserver &obs : snapshot) {
+                                if (obs.hook) obs.hook(ingress, sender, datagram);
+                        }
                 }
 
                 // Hold each fan-out mutex through the entire

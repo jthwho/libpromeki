@@ -126,6 +126,12 @@ Error SrtSocketTransport::open() {
                 _listener.reset();
                 return Error::Timeout;
         }
+        // SrtServer::accept flips the listener's SRTO_RCVSYN to
+        // non-blocking for its polling loop and the accepted socket
+        // inherits that state.  Force it back to blocking so the
+        // transport's send / receive surface behaves synchronously
+        // as documented.
+        (void)_socket->setNonBlocking(false);
         _peerAddress = _socket->peerAddress();
         // The listener has done its job — close it so it doesn't keep
         // refusing further callers in the background.  Future

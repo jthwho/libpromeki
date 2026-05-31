@@ -107,6 +107,13 @@ size_t SocketAddress::toSockAddr(struct sockaddr_storage *storage) const {
         }
         return len;
 }
+
+Result<SocketAddress> SocketAddress::resolve(NetworkAddress::FamilyPreference prefer) const {
+        if (_address.isResolved()) return makeResult(*this);
+        auto [resolved, err] = _address.resolve(prefer);
+        if (err.isError()) return makeError<SocketAddress>(err);
+        return makeResult(SocketAddress(resolved, _port));
+}
 #endif
 
 TextStream &operator<<(TextStream &stream, const SocketAddress &addr) {

@@ -198,7 +198,7 @@ TEST_CASE("MdnsManager: receive plumbing — unicast datagram round-trip") {
 TEST_CASE("MdnsManager: buildQuery encodes header + question correctly") {
         Buffer pkt = MdnsManager::buildQuery("_http._tcp.local.", /*PTR*/ 12, /*txid*/ 0x1234);
 
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         const MdnsPacket &p = r.first();
         CHECK(p.transactionId() == 0x1234);
@@ -267,7 +267,7 @@ TEST_CASE("MdnsManager: buildQueryWithKnownAnswers stamps ancount and "
         // The known-answer records should round-trip through the
         // parser intact — proves the splice from mdnsBuildAnnounce
         // landed at the right offset.
-        auto r = MdnsPacket::parse(pkt);
+        auto r = MdnsPacket::parseMdns(pkt);
         REQUIRE(r.second().isOk());
         REQUIRE(r.first().records().size() == 2);
         CHECK(r.first().records()[0].type == MdnsParsedRecord::Type::Ptr);

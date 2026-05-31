@@ -39,15 +39,9 @@ namespace {
         // Returns the on-the-wire record type code the
         // @ref MdnsParsedRecord::Type enum carries.
         uint16_t parsedTypeCode(MdnsParsedRecord::Type t) {
-                switch (t) {
-                        case MdnsParsedRecord::Type::A:    return 1;
-                        case MdnsParsedRecord::Type::Ptr:  return 12;
-                        case MdnsParsedRecord::Type::Txt:  return 16;
-                        case MdnsParsedRecord::Type::Aaaa: return 28;
-                        case MdnsParsedRecord::Type::Srv:  return 33;
-                        case MdnsParsedRecord::Type::Unknown: return 0;
-                }
-                return 0;
+                // Cast through the wire-form enum's underlying type;
+                // the on-the-wire RFC 1035 code is the enum's value.
+                return static_cast<uint16_t>(t);
         }
 
         // RFC 1035 §3.2.2 QTYPE codes the publisher cares about.
@@ -337,7 +331,7 @@ void MdnsPublisher::advance(const TimeStamp &now) {
 }
 
 bool MdnsPublisher::detectConflict(const Buffer &data) {
-        auto r = MdnsPacket::parse(data);
+        auto r = MdnsPacket::parseMdns(data);
         if (!r.second().isOk()) return false;
 
         // Only ANSWER + AUTHORITY sections constitute claims that
@@ -387,7 +381,7 @@ bool MdnsPublisher::detectConflict(const Buffer &data) {
 }
 
 void MdnsPublisher::respondToQueries(const Buffer &data) {
-        auto r = MdnsPacket::parse(data);
+        auto r = MdnsPacket::parseMdns(data);
         if (!r.second().isOk()) return;
         const MdnsPacket &pkt = r.first();
         if (pkt.isResponse()) return;  // not a query
@@ -478,7 +472,7 @@ void MdnsPublisher::respondToQueries(const Buffer &data) {
 
 List<MdnsRecord> MdnsPublisher::filterByKnownAnswers(const List<MdnsRecord> &answers,
                                                      const Buffer &inboundQuery) {
-        auto r = MdnsPacket::parse(inboundQuery);
+        auto r = MdnsPacket::parseMdns(inboundQuery);
         if (!r.second().isOk()) return answers;
         const MdnsPacket &pkt = r.first();
 

@@ -29,8 +29,9 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class DnsRecord;
 class MdnsManager;
-struct MdnsParsedRecord;
+using MdnsParsedRecord = DnsRecord;
 
 /**
  * @brief Discovers services of a given @ref MdnsServiceType on the local network.

@@ -7,6 +7,7 @@
 
 #include <promeki/websocket.h>
 #include <promeki/tcpsocket.h>
+#include <promeki/dnsresolver.h>
 #include <promeki/eventloop.h>
 #include <promeki/application.h>
 #include <promeki/socketaddress.h>
@@ -19,10 +20,6 @@
 #if PROMEKI_ENABLE_TLS
 #include <promeki/sslsocket.h>
 #endif
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <algorithm>
 
@@ -120,23 +117,22 @@ namespace {
                 buf.setSize(usedSize);
         }
 
-        // Synchronous IPv4 hostname resolution (matches HttpClient).  Async
-        // DNS is out of scope for v1.
+        // Synchronous IPv4 hostname resolution via the library's
+        // own DNS resolver — same drop-in semantics as HttpClient's
+        // helper, no fallback to the host's getaddrinfo().
         static Error resolveHost(const String &host, uint32_t &outIPv4) {
-                struct addrinfo hints{};
-                hints.ai_family = AF_INET;
-                hints.ai_socktype = SOCK_STREAM;
-                struct addrinfo *res = nullptr;
-                const int        rc = ::getaddrinfo(host.cstr(), nullptr, &hints, &res);
-                if (rc != 0 || res == nullptr) {
-                        promekiWarn("WebSocket: getaddrinfo('%s') failed (rc=%d %s)", host.cstr(), rc,
-                                    gai_strerror(rc));
-                        if (res != nullptr) ::freeaddrinfo(res);
+                auto r = DnsResolver::resolveSync(host, NetworkAddress::PreferIPv4);
+                if (r.second().isError()) {
+                        promekiWarn("WebSocket: DNS lookup '%s' failed: %s", host.cstr(),
+                                    r.second().name().cstr());
                         return Error::HostNotFound;
                 }
-                const struct sockaddr_in *sin = reinterpret_cast<const sockaddr_in *>(res->ai_addr);
-                outIPv4 = ntohl(sin->sin_addr.s_addr);
-                ::freeaddrinfo(res);
+                if (!r.first().isIPv4()) {
+                        promekiWarn("WebSocket: DNS lookup '%s' returned non-IPv4 address",
+                                    host.cstr());
+                        return Error::HostNotFound;
+                }
+                outIPv4 = r.first().toIpv4().toUint32();
                 return Error::Ok;
         }
 

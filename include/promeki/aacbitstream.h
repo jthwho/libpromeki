@@ -151,6 +151,47 @@ class AdtsParser {
 
                 /** @brief True iff @p in begins with the ADTS @c 0xFFF syncword. */
                 static bool isAdts(const BufferView &in);
+
+                /**
+                 * @brief Wrap a single raw AAC access unit in a 7-byte
+                 *        ADTS header.
+                 *
+                 * Inverse of @ref strip for one frame.  Used by the
+                 * MPEG-TS muxer to satisfy ETSI / ISO @c stream_type
+                 * @c 0x0F (AAC ADTS): the elementary stream inside the
+                 * PES MUST begin each AAC frame with a @c 0xFFF
+                 * syncword.  fdk-aac encoders emit raw AAC by default
+                 * (TT_MP4_RAW), so without this wrap the downstream
+                 * decoder (MediaMTX, ffplay, tsduck) fails with
+                 * "invalid syncword" on the first frame.
+                 *
+                 * Builds AAC-LC profile (other AOTs aren't supported
+                 * by the on-wire ADTS profile field), looks up
+                 * @c sampling_frequency_index from
+                 * @c cfg.samplingFrequencyIndex (or
+                 * @ref AacDecoderConfig::frequencyToIndex when the
+                 * stored index is the 0xF explicit marker), and
+                 * stamps @c channel_configuration straight from
+                 * @c cfg.channelConfiguration.
+                 *
+                 * @param cfg     Config used to fill profile, SFI, and
+                 *                channel_configuration.  Only those
+                 *                three fields are read.
+                 * @param rawFrame Single raw AAC access unit (no ADTS
+                 *                header).  Size must fit in the 13-bit
+                 *                @c aac_frame_length field after
+                 *                adding the 7-byte header.
+                 * @param out     Receives @c 7 + @c rawFrame.size()
+                 *                bytes — the ADTS header followed by
+                 *                the verbatim raw frame.  Logical
+                 *                size of @p out is set; existing
+                 *                contents are overwritten.
+                 * @return @ref Error::Ok on success, or
+                 *         @ref Error::OutOfRange when the frame is
+                 *         too large for the 13-bit length field
+                 *         (8191 - 7 = 8184 bytes).
+                 */
+                static Error wrapFrame(const AacDecoderConfig &cfg, const BufferView &rawFrame, Buffer &out);
 };
 
 PROMEKI_NAMESPACE_END

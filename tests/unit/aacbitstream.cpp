@@ -367,6 +367,96 @@ TEST_CASE("AdtsParser: invalid layer field is CorruptData") {
         CHECK(AdtsParser::strip(BufferView(bad, 0, bad.size()), raw, cfg) == Error::CorruptData);
 }
 
+TEST_CASE("AdtsParser: wrapFrame builds a valid 7-byte header") {
+        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(AudioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2u));
+        Buffer rawIn  = makePayload({0x10, 0x20, 0x30, 0x40});
+        Buffer framed;
+        REQUIRE(AdtsParser::wrapFrame(cfg, BufferView(rawIn, 0, rawIn.size()), framed).isOk());
+
+        REQUIRE(framed.size() == 7 + 4);
+        const uint8_t *p = static_cast<const uint8_t *>(framed.data());
+        // Syncword 0xFFF and MPEG-4 ID + layer=00 + protection_absent=1
+        CHECK(p[0] == 0xFF);
+        CHECK((p[1] & 0xF0) == 0xF0);
+        CHECK((p[1] & 0x06) == 0x00);
+        CHECK((p[1] & 0x01) == 0x01);
+
+        // aac_frame_length spans p[3].low2 | p[4] | p[5].high3 = 11 bytes.
+        const uint32_t frameLen = (static_cast<uint32_t>(p[3] & 0x03) << 11) |
+                                  (static_cast<uint32_t>(p[4]) << 3) |
+                                  (static_cast<uint32_t>(p[5] >> 5) & 0x07);
+        CHECK(frameLen == 11);
+
+        // Payload bytes follow the header verbatim.
+        CHECK(p[7] == 0x10);
+        CHECK(p[10] == 0x40);
+
+        // isAdts agrees on the wrapped output.
+        CHECK(AdtsParser::isAdts(BufferView(framed, 0, framed.size())));
+}
+
+TEST_CASE("AdtsParser: wrapFrame → strip round-trip recovers raw + config") {
+        // 48 kHz stereo AAC-LC config → ADTS profile=1, sfi=3, cc=2.
+        AacDecoderConfig srcCfg = AacDecoderConfig::fromAudioDesc(AudioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2u));
+        Buffer rawIn = makePayload({0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02, 0x03});
+
+        Buffer framed;
+        REQUIRE(AdtsParser::wrapFrame(srcCfg, BufferView(rawIn, 0, rawIn.size()), framed).isOk());
+
+        Buffer           rawOut;
+        AacDecoderConfig outCfg;
+        REQUIRE(AdtsParser::strip(BufferView(framed, 0, framed.size()), rawOut, outCfg).isOk());
+
+        REQUIRE(rawOut.size() == rawIn.size());
+        const uint8_t *a = static_cast<const uint8_t *>(rawIn.data());
+        const uint8_t *b = static_cast<const uint8_t *>(rawOut.data());
+        for (size_t i = 0; i < rawIn.size(); ++i) {
+                CHECK(a[i] == b[i]);
+        }
+        CHECK(outCfg.audioObjectType == srcCfg.audioObjectType);
+        CHECK(outCfg.samplingFrequencyIndex == srcCfg.samplingFrequencyIndex);
+        CHECK(outCfg.samplingFrequency == srcCfg.samplingFrequency);
+        CHECK(outCfg.channelConfiguration == srcCfg.channelConfiguration);
+}
+
+TEST_CASE("AdtsParser: wrapFrame round-trip across rate × channel matrix") {
+        // Walk the standard SFI table; pair each rate with mono / stereo / 5.1.
+        const float    rates[]    = {44100.0f, 48000.0f, 32000.0f, 24000.0f, 22050.0f, 16000.0f, 8000.0f};
+        const unsigned chans[]    = {1u, 2u, 6u};
+        Buffer         rawIn      = makePayload({0xA5, 0x5A, 0xC3, 0x3C});
+
+        for (float r : rates) {
+                for (unsigned c : chans) {
+                        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(
+                                AudioDesc(AudioFormat(AudioFormat::AAC), r, c));
+
+                        Buffer framed;
+                        REQUIRE(AdtsParser::wrapFrame(cfg, BufferView(rawIn, 0, rawIn.size()), framed).isOk());
+
+                        Buffer           rawOut;
+                        AacDecoderConfig outCfg;
+                        REQUIRE(AdtsParser::strip(BufferView(framed, 0, framed.size()), rawOut, outCfg).isOk());
+
+                        REQUIRE(rawOut.size() == rawIn.size());
+                        CHECK(outCfg.samplingFrequency == static_cast<uint32_t>(r));
+                        CHECK(outCfg.channelConfiguration == static_cast<uint8_t>(c));
+                }
+        }
+}
+
+TEST_CASE("AdtsParser: wrapFrame rejects oversize frame") {
+        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(AudioDesc(AudioFormat(AudioFormat::AAC), 48000.0f, 2u));
+
+        // 13-bit aac_frame_length tops out at 0x1FFF = 8191 bytes total
+        // (header + payload).  A payload of 8185 already overflows.
+        Buffer big(8200);
+        big.setSize(8185);
+        std::memset(big.data(), 0xAB, 8185);
+
+        Buffer framed;
+        CHECK(AdtsParser::wrapFrame(cfg, BufferView(big, 0, big.size()), framed) == Error::OutOfRange);
+}
+
 TEST_CASE("AdtsParser: truncated frame returns OutOfRange") {
         Buffer adts = makeAdtsFrame(1, 4, 2, {0xAA, 0xBB, 0xCC, 0xDD});
         // Trim two bytes off — frame_length still claims the original size.

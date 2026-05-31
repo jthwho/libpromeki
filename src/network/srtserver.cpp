@@ -156,10 +156,24 @@ Error SrtServer::listen(const SocketAddress &address, int backlog) {
                 }
         }
 
+        // Resolve any hostname component so listen("localhost:4200") /
+        // listen("myhost.local:4200") both work without callers
+        // having to pre-resolve.
+        SocketAddress dest = address;
+        if (!dest.address().isResolved() && !dest.address().isNull()) {
+                auto [resolved, rerr] = dest.resolve();
+                if (rerr.isError()) {
+                        promekiWarn("SrtServer::listen: resolve('%s') failed (%s)",
+                                    address.toString().cstr(), rerr.name().cstr());
+                        return rerr;
+                }
+                dest = resolved;
+        }
+
         struct sockaddr_storage storage;
-        const size_t            len = address.toSockAddr(&storage);
+        const size_t            len = dest.toSockAddr(&storage);
         if (len == 0) {
-                promekiWarn("SrtServer::listen: invalid address '%s'", address.toString().cstr());
+                promekiWarn("SrtServer::listen: invalid address '%s'", dest.toString().cstr());
                 return Error::Invalid;
         }
 

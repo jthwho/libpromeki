@@ -107,6 +107,23 @@ class AudioCodec {
                         FLAC = 3,          ///< Free Lossless Audio Codec.
                         MP3 = 4,           ///< MPEG-1 Audio Layer III.
                         AC3 = 5,           ///< Dolby Digital (AC-3).
+                        /**
+                         * @brief Linear PCM "codec" — selects uncompressed
+                         *        carriage in containers that have a
+                         *        first-class PCM mapping (SMPTE 302M for
+                         *        MPEG-TS, LPCM for WAV/MOV/MP4).
+                         *
+                         * Has no compressed @ref AudioFormat bound to it
+                         * (PCM is exposed through the @c PCMI_S* / @c PCMP_S*
+                         * uncompressed @ref AudioFormat values directly),
+                         * so encoder bridges that look up "compressed
+                         * representative for this codec" find nothing and
+                         * the planner leaves an uncompressed audio
+                         * descriptor alone.  The container-specific muxer
+                         * (e.g. @ref MpegTsFramer) then packs the PCM
+                         * samples in the format the container expects.
+                         */
+                        PCM = 6,
                         UserDefined = 1024 ///< First ID available for user-registered codecs.
                 };
 

@@ -205,6 +205,36 @@ inline const QuickTimeLayout QuickTimeLayout::Classic{0};
 inline const QuickTimeLayout QuickTimeLayout::Fragmented{1};
 
 /**
+ * @brief Well-known Enum type for the MPEG-TS AAC framing mode.
+ *
+ * Used as the value type for the @ref MediaConfig::MpegTsAacFraming
+ * config key.  Drives the @c stream_type written into the PMT for the
+ * audio elementary stream:
+ *
+ *  - @c Adts maps to @c stream_type @c 0x0F (ISO/IEC 13818-7).  The
+ *    encoded bytes are passed verbatim — ADTS sync words and all —
+ *    inside each PES packet.
+ *  - @c Latm maps to @c stream_type @c 0x11 (ISO/IEC 14496-3
+ *    LOAS / LATM).  The PMT signals LATM but the library's AAC
+ *    encoder still emits ADTS today, so the on-wire bytes are
+ *    unchanged.  Full ADTS → LATM transcoding is a follow-up.
+ */
+class MpegTsAacFraming : public TypedEnum<MpegTsAacFraming> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("MpegTsAacFraming", "MPEG-TS AAC Framing", 0,
+                                           {"Adts", 0, "ADTS (stream_type 0x0F)"},
+                                           {"Latm", 1, "LATM (stream_type 0x11)"}); // default: Adts
+
+                using TypedEnum<MpegTsAacFraming>::TypedEnum;
+
+                static const MpegTsAacFraming Adts;
+                static const MpegTsAacFraming Latm;
+};
+
+inline const MpegTsAacFraming MpegTsAacFraming::Adts{0};
+inline const MpegTsAacFraming MpegTsAacFraming::Latm{1};
+
+/**
  * @brief Well-known Enum type for @c .imgseq sidecar path mode.
  *
  * Controls whether the directory written into an @c .imgseq sidecar
@@ -226,6 +256,67 @@ class ImgSeqPathMode : public TypedEnum<ImgSeqPathMode> {
 
 inline const ImgSeqPathMode ImgSeqPathMode::Relative{0};
 inline const ImgSeqPathMode ImgSeqPathMode::Absolute{1};
+
+/**
+ * @brief Well-known Enum type for the SRT video pacing mode.
+ *
+ * Mirrors @ref RtmpVideoPacing so the SRT sink can rate-limit
+ * upstream-produced frames against a wall (or external) clock
+ * before they hit the SRT message path.
+ *
+ * - @c Internal — bind a fresh wall clock at @c open() and pace
+ *   each video frame against it.  Default — matches RTMP/RTP.
+ * - @c External — leave the gate unbound at @c open(); arm only
+ *   when a clock arrives via @c executeCmd(SetClock).
+ * - @c None     — never pace; ship every video frame as soon as
+ *   the strand picks it up.
+ */
+class SrtVideoPacing : public TypedEnum<SrtVideoPacing> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("SrtVideoPacing", "SRT Video Pacing", 0,
+                                           {"Internal", 0, "Internal Wall Clock"},
+                                           {"External", 1, "External Clock"},
+                                           {"None", 2, "None (Unpaced)"}); // default: Internal
+
+                using TypedEnum<SrtVideoPacing>::TypedEnum;
+
+                static const SrtVideoPacing Internal;
+                static const SrtVideoPacing External;
+                static const SrtVideoPacing None;
+};
+
+inline const SrtVideoPacing SrtVideoPacing::Internal{0};
+inline const SrtVideoPacing SrtVideoPacing::External{1};
+inline const SrtVideoPacing SrtVideoPacing::None{2};
+
+/**
+ * @brief Well-known Enum type for the SRT connection role.
+ *
+ * Drives @ref SrtSocketTransport's @c Mode in @ref SrtMediaIO.  The
+ * three values map 1:1 onto libsrt's SRT_TRANSTYPE roles:
+ *
+ *  - @c Caller — actively dial out to a remote SRT listener.
+ *  - @c Listener — bind locally and accept a single inbound caller.
+ *  - @c Rendezvous — peer-to-peer simultaneous open against a
+ *    prearranged peer (NAT traversal scenario).
+ */
+class SrtMode : public TypedEnum<SrtMode> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("SrtMode", "SRT Mode", 0,
+                                           {"Caller", 0, "Caller (dial out)"},
+                                           {"Listener", 1, "Listener (accept one peer)"},
+                                           {"Rendezvous", 2, "Rendezvous (peer-to-peer)"}); // default: Caller
+
+                using TypedEnum<SrtMode>::TypedEnum;
+
+                static const SrtMode Caller;
+                static const SrtMode Listener;
+                static const SrtMode Rendezvous;
+};
+
+inline const SrtMode SrtMode::Caller{0};
+inline const SrtMode SrtMode::Listener{1};
+inline const SrtMode SrtMode::Rendezvous{2};
 
 /** @} */
 

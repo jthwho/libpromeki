@@ -135,6 +135,19 @@ static AudioCodec::Data makeAC3() {
         return d;
 }
 
+static AudioCodec::Data makePCM() {
+        AudioCodec::Data d;
+        d.id = AudioCodec::PCM;
+        d.name = "PCM";
+        d.desc = "Linear PCM (uncompressed)";
+        d.fourccList = {"lpcm", "twos"};
+        d.compressionType = AudioCodec::CompressionLossless;
+        // Empty rateControlModes — PCM is fixed-rate / fixed-quality.
+        d.packetIndependence = AudioCodec::PacketIndependenceEvery;
+        d.isStreamable = true;
+        return d;
+}
+
 // ---------------------------------------------------------------------------
 // Construct-on-first-use registry.  Uniquely named to avoid linker-
 // level collisions with sibling TypeRegistry helpers.
@@ -151,6 +164,7 @@ struct AudioCodecRegistry {
                         add(makeFLAC());
                         add(makeMP3());
                         add(makeAC3());
+                        add(makePCM());
                 }
 
                 void add(AudioCodec::Data d) {

@@ -204,5 +204,30 @@ TEST_CASE("NetworkAddress") {
                 auto [addr, err] = NetworkAddress::fromSockAddr(nullptr, 0);
                 CHECK(err.isError());
         }
+
+        SUBCASE("resolve: already-resolved address passes through") {
+                NetworkAddress orig(Ipv4Address(10, 0, 0, 1));
+                auto [resolved, err] = orig.resolve();
+                CHECK(err.isOk());
+                CHECK(resolved == orig);
+        }
+
+        SUBCASE("resolve: 'localhost' short-circuits to 127.0.0.1 (no DNS round-trip)") {
+                NetworkAddress hn(String("localhost"));
+                auto [v4, e4] = hn.resolve(NetworkAddress::PreferIPv4);
+                CHECK(e4.isOk());
+                CHECK(v4.isIPv4());
+                CHECK(v4.toIpv4() == Ipv4Address::loopback());
+
+                auto [v6, e6] = hn.resolve(NetworkAddress::PreferIPv6);
+                CHECK(e6.isOk());
+                CHECK(v6.isIPv6());
+        }
+
+        SUBCASE("resolve: null address fails") {
+                NetworkAddress na;
+                auto [r, err] = na.resolve();
+                CHECK(err.isError());
+        }
 #endif
 }

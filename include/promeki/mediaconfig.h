@@ -1937,6 +1937,235 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                .setDescription("Call fdatasync after each flush."));
 
                 // ============================================================
+                // MPEG-TS (MpegTsFileMediaIO and any future TS-shaped sink/source)
+                // ============================================================
+
+                /// @brief int — PID used for the program's video elementary stream.
+                /// Default: 0x100 (@c MpegTs::DefaultVideoPid).
+                PROMEKI_DECLARE_ID(MpegTsVideoPid, VariantSpec()
+                                                          .setType(DataTypeInt32)
+                                                          .setDefault(int32_t(0x0100))
+                                                          .setMin(int32_t(0x0020))
+                                                          .setMax(int32_t(0x1FFE))
+                                                          .setDescription("MPEG-TS video elementary-stream PID."));
+
+                /// @brief int — PID used for the program's audio elementary stream.
+                /// Default: 0x101 (@c MpegTs::DefaultAudioPid).
+                PROMEKI_DECLARE_ID(MpegTsAudioPid, VariantSpec()
+                                                          .setType(DataTypeInt32)
+                                                          .setDefault(int32_t(0x0101))
+                                                          .setMin(int32_t(0x0020))
+                                                          .setMax(int32_t(0x1FFE))
+                                                          .setDescription("MPEG-TS audio elementary-stream PID."));
+
+                /// @brief int — PID carrying the PMT.  Default 0x1000.
+                PROMEKI_DECLARE_ID(MpegTsPmtPid, VariantSpec()
+                                                        .setType(DataTypeInt32)
+                                                        .setDefault(int32_t(0x1000))
+                                                        .setMin(int32_t(0x0020))
+                                                        .setMax(int32_t(0x1FFE))
+                                                        .setDescription("MPEG-TS PMT PID."));
+
+                /// @brief int — @c program_number written into the PAT / PMT.
+                /// Default 1.
+                PROMEKI_DECLARE_ID(MpegTsProgramNumber, VariantSpec()
+                                                               .setType(DataTypeInt32)
+                                                               .setDefault(int32_t(1))
+                                                               .setMin(int32_t(1))
+                                                               .setMax(int32_t(0xFFFF))
+                                                               .setDescription("MPEG-TS program_number."));
+
+                /// @brief int — minimum interval, in milliseconds, between
+                /// PAT and PMT re-emissions.  Default 100 ms (ETSI TR 101 290).
+                PROMEKI_DECLARE_ID(MpegTsPatPmtIntervalMs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(100))
+                                           .setMin(int32_t(0))
+                                           .setDescription("MPEG-TS PAT / PMT emission interval in ms."));
+
+                /// @brief int — minimum interval, in milliseconds, between
+                /// PCR insertions on the PCR PID.  Default 20 ms — small
+                /// enough that PCR fires on every video access unit at
+                /// 30 / 29.97 fps frame rates, which keeps decoders'
+                /// clock estimates from drifting against the audio PTS
+                /// stream.
+                PROMEKI_DECLARE_ID(MpegTsPcrIntervalMs,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(20))
+                                           .setMin(int32_t(0))
+                                           .setDescription("MPEG-TS PCR insertion interval in ms."));
+
+                /// @brief int64_t — CBR mux rate in bits per second.
+                /// @c 0 (default) disables NULL-packet padding.
+                PROMEKI_DECLARE_ID(MpegTsMuxRateBps, VariantSpec()
+                                                            .setType(DataTypeInt64)
+                                                            .setDefault(int64_t(0))
+                                                            .setMin(int64_t(0))
+                                                            .setDescription("MPEG-TS CBR target in bits per second."));
+
+                /// @brief Enum @ref MpegTsAacFraming — how AAC is framed in
+                /// the PMT @c stream_type.  Default @c Adts.
+                PROMEKI_DECLARE_ID(MpegTsAacFraming, VariantSpec()
+                                                            .setType(DataTypeEnum)
+                                                            .setDefault(promeki::MpegTsAacFraming::Adts)
+                                                            .setEnumType(promeki::MpegTsAacFraming::Type)
+                                                            .setDescription("MPEG-TS AAC framing (ADTS or LATM)."));
+
+                /// @brief Enum @ref VideoCodec — preferred video codec for
+                /// uncompressed inputs.  Default @c H264.  Drives the
+                /// stream_type the muxer picks for the video PID and lets
+                /// the planner know which encoder to splice in.
+                PROMEKI_DECLARE_ID(MpegTsVideoCodec, VariantSpec()
+                                                            .setType(DataTypeVideoCodec)
+                                                            .setDefault(promeki::VideoCodec(promeki::VideoCodec::H264))
+                                                            .setDescription("MPEG-TS preferred video codec."));
+
+                /// @brief Enum @ref AudioCodec — preferred audio codec for
+                /// uncompressed inputs.  Default @c AAC.
+                PROMEKI_DECLARE_ID(MpegTsAudioCodec, VariantSpec()
+                                                            .setType(DataTypeAudioCodec)
+                                                            .setDefault(promeki::AudioCodec(promeki::AudioCodec::AAC))
+                                                            .setDescription("MPEG-TS preferred audio codec."));
+
+                // ============================================================
+                // SRT (SrtMediaIO and any future SRT-shaped sink/source)
+                // ============================================================
+
+                /// @brief Enum @ref SrtMode — Caller / Listener / Rendezvous.
+                /// Default @c Caller.
+                PROMEKI_DECLARE_ID(SrtMode, VariantSpec()
+                                                    .setType(DataTypeEnum)
+                                                    .setDefault(promeki::SrtMode::Caller)
+                                                    .setEnumType(promeki::SrtMode::Type)
+                                                    .setDescription("SRT connection role."));
+
+                /// @brief String — peer host (used by Caller and Rendezvous).
+                /// Accepts IPv4, IPv6, or hostname.  Empty in Listener mode.
+                PROMEKI_DECLARE_ID(SrtPeerHost, VariantSpec()
+                                                        .setType(DataTypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("SRT peer host (caller/rendezvous)."));
+
+                /// @brief int — peer port (Caller / Rendezvous).  Required when
+                /// in Caller or Rendezvous mode.  Range 1..65535.
+                PROMEKI_DECLARE_ID(SrtPeerPort, VariantSpec()
+                                                        .setType(DataTypeInt32)
+                                                        .setDefault(int32_t(0))
+                                                        .setMin(int32_t(0))
+                                                        .setMax(int32_t(65535))
+                                                        .setDescription("SRT peer port."));
+
+                /// @brief String — local bind host.  Defaults to @c 0.0.0.0
+                /// (any).  Listener uses this as the listen address;
+                /// Caller / Rendezvous as the source address.
+                PROMEKI_DECLARE_ID(SrtLocalHost, VariantSpec()
+                                                         .setType(DataTypeString)
+                                                         .setDefault(String())
+                                                         .setDescription("SRT local bind host."));
+
+                /// @brief int — local bind port.  Required in Listener and
+                /// Rendezvous modes; optional (0 = ephemeral) in Caller.
+                PROMEKI_DECLARE_ID(SrtLocalPort, VariantSpec()
+                                                         .setType(DataTypeInt32)
+                                                         .setDefault(int32_t(0))
+                                                         .setMin(int32_t(0))
+                                                         .setMax(int32_t(65535))
+                                                         .setDescription("SRT local bind port."));
+
+                /// @brief int — symmetric latency in milliseconds.  Default 120.
+                PROMEKI_DECLARE_ID(SrtLatencyMs, VariantSpec()
+                                                         .setType(DataTypeInt32)
+                                                         .setDefault(int32_t(120))
+                                                         .setMin(int32_t(0))
+                                                         .setMax(int32_t(60000))
+                                                         .setDescription("SRT receive / peer latency in ms."));
+
+                /// @brief String — AES passphrase.  Empty disables encryption.
+                /// Length must be 10..79 bytes when non-empty.
+                PROMEKI_DECLARE_ID(SrtPassphrase, VariantSpec()
+                                                          .setType(DataTypeString)
+                                                          .setDefault(String())
+                                                          .setDescription("SRT AES passphrase (10..79 bytes)."));
+
+                /// @brief int — AES key length.  0 = auto, 16 / 24 / 32.
+                PROMEKI_DECLARE_ID(SrtEncryptionKeyLength, VariantSpec()
+                                                                  .setType(DataTypeInt32)
+                                                                  .setDefault(int32_t(0))
+                                                                  .setDescription("SRT AES key length (0=auto, 16/24/32)."));
+
+                /// @brief String — SRT stream identifier.  Up to 512 bytes.
+                /// Sent by Caller during handshake; available to a
+                /// listen-callback / accepted listener-side socket.
+                PROMEKI_DECLARE_ID(SrtStreamId, VariantSpec()
+                                                        .setType(DataTypeString)
+                                                        .setDefault(String())
+                                                        .setDescription("SRT stream ID (SRTO_STREAMID)."));
+
+                /// @brief int64 — @c SRTO_MAXBW ceiling in bytes per second.
+                /// 0 = unlimited (default), -1 = relative-to-input.
+                PROMEKI_DECLARE_ID(SrtMaxBandwidthBps, VariantSpec()
+                                                              .setType(DataTypeInt64)
+                                                              .setDefault(int64_t(0))
+                                                              .setDescription("SRT max bandwidth in bytes/sec."));
+
+                /// @brief int — live-mode payload size in bytes.  Default 1316
+                /// (7 × 188 = ideal for MPEG-TS).  Range 32..1456.  0 leaves
+                /// the libsrt default in place.
+                PROMEKI_DECLARE_ID(SrtPayloadSize, VariantSpec()
+                                                          .setType(DataTypeInt32)
+                                                          .setDefault(int32_t(1316))
+                                                          .setMin(int32_t(0))
+                                                          .setMax(int32_t(1456))
+                                                          .setDescription("SRT live-mode payload size."));
+
+                /// @brief int — accept-wait timeout for Listener mode in ms.
+                /// 0 = wait forever (default).
+                PROMEKI_DECLARE_ID(SrtAcceptTimeoutMs, VariantSpec()
+                                                              .setType(DataTypeInt32)
+                                                              .setDefault(int32_t(0))
+                                                              .setMin(int32_t(0))
+                                                              .setDescription("SRT accept timeout in ms (Listener mode)."));
+
+                /// @brief Enum @ref SrtVideoPacing — Internal / External / None.
+                /// Default @c Internal (matches RTMP/RTP sinks).
+                PROMEKI_DECLARE_ID(SrtVideoPacing, VariantSpec()
+                                                          .setType(DataTypeEnum)
+                                                          .setDefault(promeki::SrtVideoPacing::Internal)
+                                                          .setEnumType(promeki::SrtVideoPacing::Type)
+                                                          .setDescription("SRT sink video pacing mode."));
+
+                /// @brief int — skip-frame threshold in ms.  0 = never drop.
+                PROMEKI_DECLARE_ID(SrtPaceSkipThresholdMs, VariantSpec()
+                                                                  .setType(DataTypeInt32)
+                                                                  .setDefault(int32_t(0))
+                                                                  .setMin(int32_t(0))
+                                                                  .setDescription("Drop video frames when lagging past this many ms."));
+
+                /// @brief int — re-anchor threshold in ms.  0 = never reanchor.
+                PROMEKI_DECLARE_ID(SrtPaceReanchorThresholdMs, VariantSpec()
+                                                                      .setType(DataTypeInt32)
+                                                                      .setDefault(int32_t(0))
+                                                                      .setMin(int32_t(0))
+                                                                      .setDescription("Re-anchor pacing clock after lag past this many ms."));
+
+                /// @brief Enum @ref VideoCodec — preferred video codec for
+                /// uncompressed inputs.  Default @c H264.  Drives the
+                /// stream_type the muxer picks for the video PID.
+                PROMEKI_DECLARE_ID(SrtVideoCodec, VariantSpec()
+                                                         .setType(DataTypeVideoCodec)
+                                                         .setDefault(promeki::VideoCodec(promeki::VideoCodec::H264))
+                                                         .setDescription("SRT sink preferred video codec."));
+
+                /// @brief Enum @ref AudioCodec — preferred audio codec for
+                /// uncompressed inputs.  Default @c AAC.
+                PROMEKI_DECLARE_ID(SrtAudioCodec, VariantSpec()
+                                                         .setType(DataTypeAudioCodec)
+                                                         .setDefault(promeki::AudioCodec(promeki::AudioCodec::AAC))
+                                                         .setDescription("SRT sink preferred audio codec."));
+
+                // ============================================================
                 // SDL display sink (mediaplay)
                 // ============================================================
 
