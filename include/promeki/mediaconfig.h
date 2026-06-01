@@ -1412,6 +1412,18 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                        .setDescription("Codec-specific level name "
                                                                        "(empty = codec default / auto)."));
 
+                /// @brief PixelAspect — sample (pixel) aspect ratio the
+                /// encoder signals in the bitstream (H.264 / HEVC VUI
+                /// @c aspect_ratio_idc / SAR).  Default 1:1 (square) is
+                /// not signalled; anamorphic sources set the explicit
+                /// width:height ratio (e.g. 16:11 for 4:3 DV / SD).
+                PROMEKI_DECLARE_ID(VideoPixelAspect, VariantSpec()
+                                                             .setType(DataTypePixelAspect)
+                                                             .setDefault(PixelAspect())
+                                                             .setDescription("Sample aspect ratio (SAR) "
+                                                                             "signalled in the bitstream "
+                                                                             "(default 1:1 = square)."));
+
                 /// @brief int — constant quantization parameter used when
                 /// @ref VideoRcMode is @c CQP.  Lower values = higher
                 /// quality and higher bitrate.  Typical range 18..40 for

@@ -37,6 +37,9 @@ promeki_config_option(PROMEKI_ENABLE_MUSIC     OFF)
 promeki_config_option(PROMEKI_ENABLE_PNG       OFF)
 promeki_config_option(PROMEKI_ENABLE_JPEG      OFF)
 promeki_config_option(PROMEKI_ENABLE_JPEGXS    OFF)
+# x264 H.264 software encoder — off (also requires PROAV, which is off).
+# Keeps this minimal build non-GPL.
+promeki_config_option(PROMEKI_ENABLE_X264      OFF)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  OFF)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     OFF)
 promeki_config_option(PROMEKI_ENABLE_OPUS      OFF)

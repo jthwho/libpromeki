@@ -37,6 +37,9 @@ promeki_config_option(PROMEKI_ENABLE_PROAV     ON)
 promeki_config_option(PROMEKI_ENABLE_MUSIC     ON)
 promeki_config_option(PROMEKI_ENABLE_PNG       ON)
 promeki_config_option(PROMEKI_ENABLE_JPEG      ON)
+# x264 software H.264 encoder — a CPU codec, ON for desktop dev.
+# GPL-2.0-or-later: enabling it makes this build GPL (set OFF to avoid).
+promeki_config_option(PROMEKI_ENABLE_X264      ON)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  ON)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     ON)
 promeki_config_option(PROMEKI_ENABLE_OPUS      ON)

@@ -1085,6 +1085,20 @@ class MediaPipeline : public ObjectBase {
                 void finalizeClose();
 
                 /**
+                 * @brief Detaches a caller-owned injected stage from the
+                 *        pipeline's stage maps.
+                 *
+                 * Registered as an @ref ObjectBase destruction cleanup on
+                 * every injected stage so that a stage the caller deletes
+                 * while the pipeline still references it is nulled out of
+                 * @ref _stages (and dropped from @ref _injected) before any
+                 * close path can dereference the freed pointer.
+                 *
+                 * @param name The injected stage's resolved name.
+                 */
+                void detachInjectedStage(const String &name);
+
+                /**
                  * @brief Wires a @ref MediaIOStatsCollector onto @p io
                  *        when stats collection is enabled.
                  *

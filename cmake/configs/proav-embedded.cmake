@@ -44,6 +44,10 @@ promeki_config_option(PROMEKI_ENABLE_MUSIC     OFF)
 promeki_config_option(PROMEKI_ENABLE_PNG       OFF)
 promeki_config_option(PROMEKI_ENABLE_JPEG      OFF)
 promeki_config_option(PROMEKI_ENABLE_JPEGXS    OFF)
+# x264 is a GPL software H.264 encoder — off for this "PROAV on, codecs
+# off" preset.  Keeps the build non-GPL and preserves the codecs-off link
+# coverage (NVENC covers H.264 on GPU appliances when needed).
+promeki_config_option(PROMEKI_ENABLE_X264      OFF)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  OFF)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     OFF)
 # FLAC / Vorbis / MP3 ride on libsndfile (AUDIO) — off when AUDIO is off.

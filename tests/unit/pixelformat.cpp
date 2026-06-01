@@ -1471,3 +1471,84 @@ TEST_CASE("PixelFormat: HDR variants report correct H.273 transfer via ColorMode
                 CHECK(h.matrix == 0);     // RGB
         }
 }
+
+// ============================================================================
+// Video-coding geometry (chromaFormatIDC / bit depth)
+// ============================================================================
+
+TEST_CASE("PixelFormat: chroma / bit-depth geometry accessors") {
+        SUBCASE("8-bit 4:2:0 planar") {
+                PixelFormat pf(PixelFormat::YUV8_420_Planar_Rec709);
+                CHECK(pf.chromaFormatIDC() == 1);
+                CHECK(pf.bitsPerComponent() == 8);
+                CHECK(pf.bytesPerComponent() == 1);
+        }
+        SUBCASE("10-bit 4:2:2 planar LE") {
+                PixelFormat pf(PixelFormat::YUV10_422_Planar_LE_Rec709);
+                CHECK(pf.chromaFormatIDC() == 2);
+                CHECK(pf.bitsPerComponent() == 10);
+                CHECK(pf.bytesPerComponent() == 2);
+        }
+        SUBCASE("8-bit 4:4:4 planar") {
+                PixelFormat pf(PixelFormat::YUV8_444_Planar_Rec709);
+                CHECK(pf.chromaFormatIDC() == 3);
+                CHECK(pf.bitsPerComponent() == 8);
+        }
+        SUBCASE("Invalid format reports zero geometry") {
+                PixelFormat pf(PixelFormat::Invalid);
+                CHECK(pf.chromaFormatIDC() == 0);
+                CHECK(pf.bitsPerComponent() == 0);
+                CHECK(pf.bytesPerComponent() == 0);
+        }
+}
+
+// ============================================================================
+// H.273 colour resolution + VUI signalling
+// ============================================================================
+
+TEST_CASE("PixelFormat::resolveH273 honours Auto and explicit overrides") {
+        const PixelFormat      pf(PixelFormat::YUV8_420_Planar_Rec709);
+        const ColorModel::H273 expect = ColorModel::toH273(pf.colorModel().id());
+
+        SUBCASE("Auto fields derive from the format's ColorModel / range") {
+                auto r = pf.resolveH273(); // all Auto, range Unknown
+                CHECK(r.primaries == expect.primaries);
+                CHECK(r.transfer == expect.transfer);
+                CHECK(r.matrix == expect.matrix);
+                CHECK(r.range == static_cast<uint32_t>(pf.videoRange().value()));
+        }
+        SUBCASE("Explicit overrides pass through untouched") {
+                auto r = pf.resolveH273(/*BT.2020*/ 9, /*PQ*/ 16, /*BT.2020nc*/ 9, /*Full*/ 2);
+                CHECK(r.primaries == 9);
+                CHECK(r.transfer == 16);
+                CHECK(r.matrix == 9);
+                CHECK(r.range == 2);
+        }
+}
+
+TEST_CASE("PixelFormat::vuiColorSignal computes the VUI flags") {
+        SUBCASE("Nothing present → no signalling") {
+                auto s = PixelFormat::vuiColorSignal({0, 0, 0, 0});
+                CHECK_FALSE(s.signalTypePresent);
+                CHECK_FALSE(s.colorDescriptionPresent);
+        }
+        SUBCASE("Concrete colour description present") {
+                auto s = PixelFormat::vuiColorSignal({9, 16, 9, /*Limited*/ 1});
+                CHECK(s.signalTypePresent);
+                CHECK(s.colorDescriptionPresent);
+                CHECK_FALSE(s.fullRange);
+                CHECK(s.primaries == 9);
+                CHECK(s.transfer == 16);
+                CHECK(s.matrix == 9);
+        }
+        SUBCASE("Range-only (full) with no colour description") {
+                auto s = PixelFormat::vuiColorSignal({0, 0, 0, /*Full*/ 2});
+                CHECK(s.signalTypePresent);
+                CHECK_FALSE(s.colorDescriptionPresent);
+                CHECK(s.fullRange);
+        }
+        SUBCASE("Unspecified-only (2) is not a colour description") {
+                auto s = PixelFormat::vuiColorSignal({2, 2, 2, 0});
+                CHECK_FALSE(s.signalTypePresent);
+        }
+}

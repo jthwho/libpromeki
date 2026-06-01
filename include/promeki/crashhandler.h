@@ -26,7 +26,10 @@ PROMEKI_NAMESPACE_BEGIN
  * all header output uses raw @c write() calls, the crash log path is
  * pre-built at install time (no heap allocation until the stack
  * trace stage), and thread enumeration on Linux uses direct syscalls
- * against @c /proc/self/task.
+ * against @c /proc/self/task.  The report is written to stderr and the
+ * log file simultaneously, and the very first line printed to stderr is
+ * the path of the log file being written — so the location is known even
+ * if a later stage stalls.
  *
  * The crash report includes:
  * - Signal name and number
@@ -43,7 +46,16 @@ PROMEKI_NAMESPACE_BEGIN
  * allocate), but it runs after all critical header and thread
  * information has already been written via signal-safe primitives.
  * A failure during demangling costs us a prettier trace — nothing
- * more.
+ * more.  Because that allocation can deadlock outright when the
+ * crashing thread already holds the malloc arena lock (the classic
+ * heap-corruption @c SIGABRT), the crash path arms a @c SIGALRM
+ * watchdog around it: on timeout the handler unwinds back to the
+ * trace site, dumps the raw frame addresses with signal-safe
+ * primitives, and lets the rest of the report finish.  The timeout is
+ * @ref LibraryOptions::CrashStackTraceTimeout seconds (default 10; 0
+ * disables the watchdog).  The log file is also @c fsync()'d
+ * immediately before the stack trace so the report so far is durable
+ * even in the worst case.
  *
  * After the stack trace, a best-effort @c promekiLogSync() flushes
  * any buffered logger output.

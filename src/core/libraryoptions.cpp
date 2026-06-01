@@ -25,6 +25,7 @@ LibraryOptions &LibraryOptions::instance() {
                                   CoreDumps,
                                   CrashLogDir,
                                   CaptureEnvironment,
+                                  CrashStackTraceTimeout,
                                   TempDir,
                                   IpcDir,
                                   TerminationSignalHandler,

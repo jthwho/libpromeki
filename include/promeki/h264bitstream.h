@@ -242,6 +242,15 @@ class H264Bitstream {
                                 uint8_t  chromaFormatIdc = 1;
                                 uint8_t  bitDepthLumaMinus8 = 0;
                                 uint8_t  bitDepthChromaMinus8 = 0;
+                                uint8_t  profileIdc = 0; ///< SPS @c profile_idc (66=Baseline, 77=Main, 100=High, 110=High10, 122=High422, 244=High444).
+                                uint8_t  levelIdc = 0;   ///< SPS @c level_idc (level × 10; @c 9 = level 1b).
+                                bool     frameMbsOnly = true; ///< SPS @c frame_mbs_only_flag — @c false signals an interlaced (field/MBAFF-capable) stream.
+                                /// Sample aspect ratio from the VUI
+                                /// @c aspect_ratio_info (Table E-1 resolved to
+                                /// width:height, or Extended_SAR).  @c 0/0 when
+                                /// no VUI aspect ratio is signalled.
+                                uint16_t sarWidth = 0;
+                                uint16_t sarHeight = 0;
                 };
 
                 /**

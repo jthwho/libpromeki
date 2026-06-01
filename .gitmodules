@@ -77,3 +77,6 @@
 [submodule "thirdparty/mdns"]
 	path = thirdparty/mdns
 	url = https://github.com/mjansson/mdns.git
+[submodule "thirdparty/x264"]
+	path = thirdparty/x264
+	url = https://code.videolan.org/videolan/x264.git

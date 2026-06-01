@@ -103,6 +103,26 @@ namespace {
                 return true;
         }
 
+        // Resolve the encoder backend the way @ref VideoEncoder::create
+        // will at open time, so planner-time introspection
+        // (@ref VideoCodec::encoderSupportedInputs) reflects the backend
+        // that is actually instantiated.  Precedence mirrors create():
+        // an explicit backend already pinned on the VideoCodec wins;
+        // otherwise a @c MediaConfig::CodecBackend soft-pin is applied;
+        // otherwise the codec is left unpinned and supportedInputsFor
+        // falls back to the highest-weight backend (== create()'s default
+        // choice).  Keeping these consistent is what stops the planner
+        // from skipping a CSC the chosen backend actually needs.
+        VideoCodec resolveEncoderBackend(VideoCodec codec, const MediaConfig &cfg) {
+                if (!codec.isValid()) return codec;
+                if (codec.backend().isValid()) return codec;
+                const String name = cfg.getAs<String>(MediaConfig::CodecBackend);
+                if (name.isEmpty()) return codec;
+                auto bk = VideoCodec::lookupBackend(name);
+                if (error(bk).isError()) return codec;
+                return VideoCodec(codec.id(), value(bk));
+        }
+
 } // namespace
 
 MediaIOFactory::Config::SpecMap VideoEncoderFactory::configSpecs() const {
@@ -470,6 +490,9 @@ Error VideoEncoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
         VideoCodec codec = _codec;
         if (!codec.isValid() && true) {
                 codec = config().getAs<VideoCodec>(MediaConfig::VideoCodec);
+                // Fold in the CodecBackend soft-pin so encoderSupportedInputs
+                // below reflects the backend create() will instantiate.
+                codec = resolveEncoderBackend(codec, config());
         }
 
         // Without a codec we can't know which inputs the concrete

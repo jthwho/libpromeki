@@ -16,9 +16,18 @@
 #include <promeki/error.h>
 #include <promeki/file.h>
 #include <promeki/filepath.h>
+#include <promeki/libraryoptions.h>
 #include <promeki/memspace.h>
+#include <promeki/platform.h>
 #include <promeki/set.h>
 #include <promeki/string.h>
+
+#if defined(PROMEKI_PLATFORM_POSIX)
+#include <csignal>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#endif
 
 using namespace promeki;
 
@@ -261,3 +270,106 @@ TEST_CASE("CrashHandler: setConsoleTraceEnabled round-trips") {
         CrashHandler::setConsoleTraceEnabled(saved);
         CHECK(CrashHandler::consoleTraceEnabled() == saved);
 }
+
+// ============================================================================
+// End-to-end crash path (forked child)
+// ============================================================================
+
+#if defined(PROMEKI_PLATFORM_POSIX)
+
+namespace {
+
+        /// Reads an entire file into a String.
+        String slurp(const FilePath &p) {
+                File f(p);
+                f.open(IODevice::ReadOnly);
+                Buffer c = f.readAll();
+                f.close();
+                return String::fromUtf8(reinterpret_cast<const char *>(c.data()), c.size());
+        }
+
+} // namespace
+
+// Forks a child that actually crashes (raises SIGABRT) so we exercise the
+// real signal-handler path — not just writeTrace().  Verifies that:
+//   1. the crash log path is announced on stderr *before* the crash header
+//      (so the location is visible even if a later stage stalls), and
+//   2. the on-disk log is complete end-to-end (header → stack trace → END).
+TEST_CASE("CrashHandler: crash path announces the log path first and writes a complete report") {
+        const bool   wasInstalled = CrashHandler::isInstalled();
+        const String savedDir = LibraryOptions::instance().getAs<String>(LibraryOptions::CrashLogDir);
+        const int32_t savedTimeout =
+                LibraryOptions::instance().getAs<int32_t>(LibraryOptions::CrashStackTraceTimeout);
+
+        // Dedicated scratch dir so the only crash file present is ours.
+        Dir scratch(Dir::temp().path() / String::sprintf("promeki-crashtest-%d", static_cast<int>(getpid())));
+        REQUIRE(scratch.mkpath() == Error::Ok);
+
+        // Keep the worst case fast: if a forked-from-multithreaded malloc lock
+        // makes symbolization stall, the watchdog falls back after this many
+        // seconds.  The path/log assertions hold either way.
+        LibraryOptions::instance().set(LibraryOptions::CrashStackTraceTimeout, 3);
+        // Guard against the watchdog being silently disabled: getAs() falls
+        // back to T{} (==0) when the option is unresolved, which would make the
+        // crash handler symbolize unguarded.
+        CHECK(LibraryOptions::instance().getAs<int32_t>(LibraryOptions::CrashStackTraceTimeout, 10) == 3);
+        // The handler captures its log path (and PID) at install() time, so
+        // the file the child writes carries *this* PID — we therefore know its
+        // location without re-installing in the (post-fork) child.
+        LibraryOptions::instance().set(LibraryOptions::CrashLogDir, scratch.path().toString());
+        CrashHandler::install();
+
+        const String errPath = String::sprintf("%s/child-stderr.txt", scratch.path().toString().cstr());
+
+        pid_t pid = fork();
+        REQUIRE(pid >= 0);
+        if (pid == 0) {
+                // CHILD — only async-signal-safe calls before the crash, since
+                // we may have forked a multithreaded runner.  Suppress the core
+                // dump the re-raised signal would produce, redirect stderr to a
+                // file we can inspect, then crash for real.
+                struct rlimit rl;
+                rl.rlim_cur = 0;
+                rl.rlim_max = 0;
+                setrlimit(RLIMIT_CORE, &rl);
+                int efd = ::open(errPath.cstr(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (efd >= 0) {
+                        dup2(efd, STDERR_FILENO);
+                        ::close(efd);
+                }
+                ::raise(SIGABRT);
+                _exit(0); // not reached — handler re-raises with SIG_DFL
+        }
+
+        int status = 0;
+        REQUIRE(waitpid(pid, &status, 0) == pid);
+        CHECK(WIFSIGNALED(status));
+
+        // Exactly one crash log should exist in the scratch dir.
+        List<FilePath> logs = scratch.entryList("promeki-crash-*.log");
+        REQUIRE(logs.size() == 1);
+
+        const String log = slurp(logs[0]);
+        CHECK(log.find("=== CRASH") != String::npos);
+        CHECK(log.find("--- Stack Trace ---") != String::npos);
+        CHECK(log.find("=== END OF REPORT ===") != String::npos);
+
+        // The child's stderr must announce the log path before the crash
+        // header, and the announced path must be the file we found.
+        const String err = slurp(FilePath(errPath));
+        const size_t announce = err.find("Writing crash log to:");
+        const size_t header = err.find("=== CRASH");
+        CHECK(announce != String::npos);
+        CHECK(header != String::npos);
+        CHECK(announce < header);
+        CHECK(err.find(logs[0].toString()) != String::npos);
+
+        // Cleanup + restore global state for later tests.
+        scratch.removeRecursively();
+        LibraryOptions::instance().set(LibraryOptions::CrashLogDir, savedDir);
+        LibraryOptions::instance().set(LibraryOptions::CrashStackTraceTimeout, savedTimeout);
+        CrashHandler::install(); // rebuild snapshot for the restored options
+        if (!wasInstalled) CrashHandler::uninstall();
+}
+
+#endif // PROMEKI_PLATFORM_POSIX

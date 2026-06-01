@@ -84,6 +84,26 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                                            .setDefault(true)
                                            .setDescription("Include environment variables in crash reports."));
 
+                /// @brief int — seconds to allow crash-path stack-trace
+                /// symbolization before giving up and dumping raw frame
+                /// addresses instead (default 10; 0 disables the watchdog).
+                ///
+                /// Symbolization (@c backtrace_symbols / C++ demangling)
+                /// allocates, so if the crashing thread already holds the
+                /// malloc arena lock — the classic heap-corruption SIGABRT —
+                /// it can deadlock and wedge the handler forever.  The
+                /// watchdog bounds that wait via @c alarm so the remainder of
+                /// the crash report (memory map, environment, end marker)
+                /// still gets written.  Only applies to the crash signal
+                /// path; @ref CrashHandler::writeTrace runs in normal context
+                /// and is left unguarded.
+                PROMEKI_DECLARE_ID(CrashStackTraceTimeout,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(10)
+                                           .setDescription("Seconds before crash stack-trace symbolization "
+                                                           "times out (0 disables)."));
+
                 // ============================================================
                 // Filesystem
                 // ============================================================

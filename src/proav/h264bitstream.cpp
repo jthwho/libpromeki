@@ -578,9 +578,10 @@ Error H264Bitstream::parseSpsResolution(const BufferView &sps, SpsInfo &out) {
         BitReader r(static_cast<const uint8_t *>(rbsp.data()), rbsp.size());
 
         const uint8_t profileIdc = static_cast<uint8_t>(r.readBits(8));
-        r.readBits(8); // constraint_set flags + reserved zero bits
-        r.readBits(8); // level_idc
-        r.readUe();    // seq_parameter_set_id
+        r.readBits(8);                                       // constraint_set flags + reserved zero bits
+        out.profileIdc = profileIdc;
+        out.levelIdc = static_cast<uint8_t>(r.readBits(8)); // level_idc
+        r.readUe();                                          // seq_parameter_set_id
 
         uint8_t chromaFormatIdc = 1;
         if (isH264HighProfile(profileIdc)) {
@@ -615,6 +616,7 @@ Error H264Bitstream::parseSpsResolution(const BufferView &sps, SpsInfo &out) {
         const uint32_t picWidthInMbsMinus1 = r.readUe();
         const uint32_t picHeightInMapUnitsMinus1 = r.readUe();
         const bool     frameMbsOnlyFlag = r.readBits(1) != 0;
+        out.frameMbsOnly = frameMbsOnlyFlag;
         if (!frameMbsOnlyFlag) r.readBits(1); // mb_adaptive_frame_field_flag
         r.readBits(1); // direct_8x8_inference_flag
         const bool frameCroppingFlag = r.readBits(1) != 0;
@@ -647,6 +649,31 @@ Error H264Bitstream::parseSpsResolution(const BufferView &sps, SpsInfo &out) {
 
         out.width = widthSamples - cropX;
         out.height = heightSamples - cropY;
+
+        // VUI parameters — only the leading aspect_ratio_info is decoded
+        // (everything a SAR-aware muxer / RTP PAR signaller needs).  The
+        // bit reader returns 0 past the RBSP end, so a truncated / absent
+        // VUI simply leaves sarWidth/sarHeight at 0 (unspecified).
+        if (r.readBits(1) != 0) {                 // vui_parameters_present_flag
+                if (r.readBits(1) != 0) {         // aspect_ratio_info_present_flag
+                        const uint32_t idc = r.readBits(8); // aspect_ratio_idc
+                        if (idc == 255) {                   // Extended_SAR
+                                out.sarWidth = static_cast<uint16_t>(r.readBits(16));
+                                out.sarHeight = static_cast<uint16_t>(r.readBits(16));
+                        } else {
+                                // H.264 Table E-1 predefined SARs.
+                                static const uint16_t kSarTable[][2] = {
+                                        {0, 0},   {1, 1},   {12, 11}, {10, 11}, {16, 11},
+                                        {40, 33}, {24, 11}, {20, 11}, {32, 11}, {80, 33},
+                                        {18, 11}, {15, 11}, {64, 33}, {160, 99}, {4, 3},
+                                        {3, 2},   {2, 1}};
+                                if (idc >= 1 && idc < (sizeof(kSarTable) / sizeof(kSarTable[0]))) {
+                                        out.sarWidth = kSarTable[idc][0];
+                                        out.sarHeight = kSarTable[idc][1];
+                                }
+                        }
+                }
+        }
         return Error::Ok;
 }
 

@@ -387,6 +387,60 @@ TEST_CASE("MediaPipeline_InjectStageSkipsFactory") {
         delete external;
 }
 
+TEST_CASE("MediaPipeline_DeletingInjectedStageBeforeCloseIsSafe") {
+        // Regression guard: a caller-owned injected stage may be deleted
+        // while the pipeline still references it in _stages — e.g. a
+        // stalled close cascade left finalizeClose from clearing the
+        // maps, then the owner's scope ends and frees the stage before
+        // the pipeline's own teardown.  injectStage registers an
+        // ObjectBase destruction cleanup (detachInjectedStage) that nulls
+        // the entry out of _stages / _injected so the close path never
+        // dereferences the freed pointer.  Without the cleanup this
+        // crashed in initiateClose's connect(stage->closedSignal, …)
+        // (use-after-free; trips ASAN).
+        char       *argv[] = {(char *)"test"};
+        Application app(1, argv);
+        EventLoop  &loop = *Application::mainEventLoop();
+
+        MediaIO::Config cfg = MediaIOFactory::defaultConfig("CSC");
+        cfg.set(MediaConfig::Type, String("CSC"));
+        MediaIO *external = MediaIO::create(cfg);
+        REQUIRE(external != nullptr);
+
+        MediaPipelineConfig        mpc;
+        MediaPipelineConfig::Stage src;
+        src.name = "src";
+        src.type = "TPG";
+        src.role = MediaPipelineConfig::StageRole::Source;
+        src.config.set(MediaConfig::VideoFormat, VideoFormat(VideoFormat::Smpte1080p29_97));
+        src.config.set(MediaConfig::VideoEnabled, true);
+        src.config.set(MediaConfig::AudioEnabled, false);
+        mpc.addStage(src);
+
+        MediaPipelineConfig::Stage ext;
+        ext.name = "xtr";
+        ext.type = "External"; // not registered — must be injected
+        ext.role = MediaPipelineConfig::StageRole::Transform;
+        mpc.addStage(ext);
+        mpc.addRoute("src", "xtr");
+
+        MediaPipeline p;
+        external->setName(String("xtr"));
+        REQUIRE(p.injectStage(external).isOk());
+        REQUIRE(p.build(mpc).isOk());
+        REQUIRE(p.stage("xtr") == external);
+
+        // Delete the injected stage while the pipeline still holds it.
+        // The destruction cleanup must detach it, so the stage entry
+        // reads back null.
+        delete external;
+        CHECK(p.stage("xtr") == nullptr);
+
+        // Close walks the now-null entry without touching freed memory.
+        CHECK(p.close().isOk());
+        CHECK(p.state() == MediaPipeline::State::Closed);
+}
+
 TEST_CASE("MediaPipeline_InjectStageAdoptsIONameWhenSet") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);

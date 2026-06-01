@@ -20,10 +20,52 @@ are distributed in one of two ways, depending on their license:
     transport library is likewise shipped as a separate shared object
     (libpromeki_srt.so).
 
+  * GPL-licensed libraries (currently libx264; libx265 is planned) are
+    likewise built as *separate shared objects* shipped alongside
+    libpromeki.so and dynamically linked.  Enabling any of them makes the
+    resulting libpromeki build a work subject to the GNU General Public
+    License — see the "GPL-Licensed Components — Compliance Notice" section
+    immediately below.
+
 Vendored headers are distributed under the promeki/thirdparty/ include
 path.
 
 This software is based in part on the work of the Independent JPEG Group.
+
+
+==========================================================================
+ GPL-Licensed Components — Compliance Notice
+==========================================================================
+
+Some optional components of libpromeki are licensed under the GNU General
+Public License (GPL).  They are OFF-by-default unless noted otherwise, and
+each is gated behind its own PROMEKI_ENABLE_* CMake flag:
+
+  * libx264  — H.264 software encoder.  License: GPL-2.0-or-later (or a
+    separate commercial license from x264 LLC).  Flag: PROMEKI_ENABLE_X264
+    (default ON).  See the libx264 entry below.
+
+  * libx265  — H.265/HEVC software encoder (PLANNED, not yet vendored).
+    License: GPL-2.0-or-later (or commercial).  Flag: PROMEKI_ENABLE_X265.
+
+IMPORTANT: If ONE OR MORE of these GPL components is enabled in your build,
+the resulting libpromeki shared object is, as a whole, a work governed by
+the GPL (v2.0 or later).  If you distribute that build, you must comply
+with the GPL — including making the complete corresponding source code of
+libpromeki and the GPL component(s) available to recipients under the same
+license.  The CMake configure step prints a prominent "GPL COMPLIANCE
+NOTICE" listing exactly which GPL components are enabled.
+
+To produce a libpromeki that is NOT subject to the GPL, reconfigure with
+the relevant component(s) disabled, e.g.:
+
+    cmake -DPROMEKI_ENABLE_X264=OFF ...
+
+Vendoring each GPL library as its own dynamically-linked shared object (as
+with the LGPL libraries above) keeps the boundary explicit and lets an end
+user substitute their own build of the GPL component.  It does NOT, by
+itself, exempt a distributor of the combined work from GPL obligations.
+This notice is informational and is not legal advice.
 
 Portions of this software are copyright (c) 2025 The FreeType Project
 (https://freetype.org).  All rights reserved.
@@ -493,6 +535,34 @@ Redistribution in binary form must reproduce the above copyright notice,
 this list of conditions, and the disclaimer.  The full license text,
 including the patent grant, is in the source tree at
 thirdparty/svt-jpeg-xs/LICENSE.md.
+
+
+==========================================================================
+ x264  (vendored; pinned release TBD)
+ License: GPL-2.0-or-later (or commercial license from x264 LLC)
+ https://www.videolan.org/developers/x264.html
+==========================================================================
+
+Copyright (C) 2003-2024 x264 project
+  Authors: Laurent Aimar, Loren Merritt, Fiona Glaser, and contributors.
+
+x264 is a software H.264/MPEG-4 AVC encoder.  It is licensed under the GNU
+General Public License, version 2 or later; a separate commercial license
+is available from x264 LLC for distributors who cannot meet the GPL terms.
+libpromeki uses x264 under the GPL.
+
+** ENABLING x264 PLACES THE libpromeki BUILD UNDER THE GPL. **  See the
+"GPL-Licensed Components — Compliance Notice" section near the top of this
+file.  x264 is gated behind the PROMEKI_ENABLE_X264 CMake flag (default
+ON); build with -DPROMEKI_ENABLE_X264=OFF to produce a non-GPL libpromeki.
+
+x264 is distributed as a separate shared object (libx264.so) shipped
+alongside libpromeki.so, dynamically linked and located at runtime via an
+$ORIGIN-relative RPATH, so an end user can substitute their own build.
+This packaging does not, by itself, relieve a distributor of the combined
+work of its GPL obligations.
+
+The full GPL-2.0 text is in the source tree at thirdparty/x264/COPYING.
 
 
 ==========================================================================

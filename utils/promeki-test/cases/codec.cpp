@@ -76,9 +76,10 @@ namespace promekitest {
                 // -------------------------------------------------------------------
 
                 struct Case {
-                                String              name;     // dotted identifier registered with TestRunner
+                                String              name;       // dotted identifier registered with TestRunner
                                 VideoCodec::ID      codecId = VideoCodec::Invalid;
-                                VideoCodec::Backend backend;  // pinned backend handle
+                                VideoCodec::Backend encBackend; // pinned encoder backend handle
+                                VideoCodec::Backend decBackend; // pinned decoder backend handle
                 };
 
                 // -------------------------------------------------------------------
@@ -101,8 +102,16 @@ namespace promekitest {
                         return out;
                 }
 
-                String buildCaseName(const VideoCodec &codec, const VideoCodec::Backend &backend) {
-                        return String("codec.") + slug(codec.name()) + String(".") + slug(backend.name());
+                // Matched pairs keep the historic single-token name
+                // (@c codec.<codec>.<backend>); cross-backend pairs spell
+                // out both ends (@c codec.<codec>.<enc>-<dec>) so the
+                // intent — e.g. x264-encode decoded by NVDEC — is legible
+                // in the test ID.
+                String buildCaseName(const VideoCodec &codec, const VideoCodec::Backend &encBackend,
+                                     const VideoCodec::Backend &decBackend) {
+                        String tail = slug(encBackend.name());
+                        if (!(encBackend == decBackend)) tail += String("-") + slug(decBackend.name());
+                        return String("codec.") + slug(codec.name()) + String(".") + tail;
                 }
 
                 // -------------------------------------------------------------------
@@ -110,12 +119,17 @@ namespace promekitest {
                 // -------------------------------------------------------------------
 
                 // Walk every registered video codec and emit one Case per
-                // backend that has BOTH an encoder and a decoder
-                // implementation registered.  Encode-only and decode-only
-                // backends would never round-trip cleanly, so they are
-                // excluded entirely (the @c codec suite advertises only
-                // runnable cases — the user can audit codec coverage via
-                // @c mediaplay --list-codecs).
+                // (encoder backend × decoder backend) pair.  A codec with
+                // one encoder and one decoder yields a single matched pair;
+                // a codec with multiple encoder backends (e.g. H.264 with
+                // NVENC + x264, both decoded by NVDEC) yields every
+                // cross-backend combination — so the matrix deliberately
+                // exercises both nvenc→nvdec and x264→nvdec rather than only
+                // matched same-backend pairs.  Encode-only / decode-only
+                // backends drop out naturally: a codec missing either side
+                // contributes an empty cross-product (the @c codec suite
+                // advertises only runnable round-trips — audit full codec
+                // coverage via @c mediaplay --list-codecs).
                 List<Case> buildMatrix() {
                         List<Case>         matrix;
                         VideoCodec::IDList ids = VideoCodec::registeredIDs();
@@ -127,21 +141,14 @@ namespace promekitest {
                                 VideoCodec::BackendList decBackends = codec.availableDecoderBackends();
 
                                 for (size_t j = 0; j < encBackends.size(); ++j) {
-                                        const VideoCodec::Backend &b = encBackends[j];
-                                        bool                       hasDecoder = false;
                                         for (size_t k = 0; k < decBackends.size(); ++k) {
-                                                if (decBackends[k] == b) {
-                                                        hasDecoder = true;
-                                                        break;
-                                                }
+                                                Case c;
+                                                c.codecId = codec.id();
+                                                c.encBackend = encBackends[j];
+                                                c.decBackend = decBackends[k];
+                                                c.name = buildCaseName(codec, c.encBackend, c.decBackend);
+                                                matrix.pushToBack(c);
                                         }
-                                        if (!hasDecoder) continue;
-
-                                        Case c;
-                                        c.codecId = codec.id();
-                                        c.backend = b;
-                                        c.name = buildCaseName(codec, b);
-                                        matrix.pushToBack(c);
                                 }
                         }
                         return matrix;
@@ -152,22 +159,23 @@ namespace promekitest {
                 // -------------------------------------------------------------------
 
                 // TPG → encoder → decoder → Inspector, fully in-memory.
-                // The encoder and decoder both pin the same backend so a
-                // codec with multiple implementations (e.g. an NVENC
-                // encoder and an x264 decoder) is tested in matched
-                // pairs.  When @p tpgPixelFormat is valid (typically
-                // set via the @c Codec.TpgPixelFormat CLI parameter)
-                // TPG produces frames in that format directly; the
-                // planner adds a CSC stage if the encoder needs a
+                // The encoder and decoder pin their own backends, which may
+                // differ (e.g. an x264 encoder feeding an NVDEC decoder) so
+                // cross-backend interop is exercised, not just matched
+                // same-backend pairs.  When @p tpgPixelFormat is valid
+                // (typically set via the @c Codec.TpgPixelFormat CLI
+                // parameter) TPG produces frames in that format directly;
+                // the planner adds a CSC stage if the encoder needs a
                 // different input.
                 MediaPipelineConfig buildPipelineConfig(const Case &c, int frames, uint32_t streamId,
                                                         const PixelFormat &tpgPixelFormat) {
-                        VideoCodec codec(c.codecId, c.backend);
+                        VideoCodec encCodec(c.codecId, c.encBackend);
+                        VideoCodec decCodec(c.codecId, c.decBackend);
 
                         MediaPipelineConfig cfg;
                         cfg.addStage(makeTpgStage(streamId, tpgPixelFormat));
-                        cfg.addStage(makeEncoderStage(codec));
-                        cfg.addStage(makeDecoderStage(codec));
+                        cfg.addStage(makeEncoderStage(encCodec));
+                        cfg.addStage(makeDecoderStage(decCodec));
                         cfg.addStage(makeInspectorStage());
                         cfg.addRoute(String("tpg"), String("enc"));
                         cfg.addRoute(String("enc"), String("dec"));
@@ -220,9 +228,10 @@ namespace promekitest {
                                 }
                         }
 
-                        VideoCodec codec(c.codecId, c.backend);
+                        VideoCodec codec(c.codecId);
                         ctx.setDetail(String("codec"), codec.name());
-                        ctx.setDetail(String("backend"), c.backend.name());
+                        ctx.setDetail(String("encBackend"), c.encBackend.name());
+                        ctx.setDetail(String("decBackend"), c.decBackend.name());
                         ctx.setDetail(String("frames"), int64_t(frames));
                         if (tpgPixelFormat.isValid()) {
                                 ctx.setDetail(String("tpgPixelFormat"), tpgPixelFormat.name());
@@ -350,9 +359,12 @@ namespace promekitest {
                 List<Case> matrix = buildMatrix();
                 for (size_t i = 0; i < matrix.size(); ++i) {
                         Case c = matrix[i];
-                        VideoCodec codec(c.codecId, c.backend);
-                        String     desc = String("Codec roundtrip: ") + codec.name() + String(" / ") +
-                                      c.backend.name() + String(" (TPG → encoder → decoder → Inspector)");
+                        VideoCodec codec(c.codecId);
+                        String     pair = c.encBackend == c.decBackend
+                                                  ? c.encBackend.name()
+                                                  : c.encBackend.name() + String(" → ") + c.decBackend.name();
+                        String     desc = String("Codec roundtrip: ") + codec.name() + String(" / ") + pair +
+                                      String(" (TPG → encoder → decoder → Inspector)");
                         TestRunner::registerCase(TestCase(c.name, desc,
                                                           [c](TestContext &ctx) { runCodecCase(c, ctx); }));
                 }

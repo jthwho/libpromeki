@@ -200,6 +200,36 @@ class EventLoop {
                 void postCallable(Label label, Function<void()> func);
 
                 /**
+                 * @brief Posts a callable guarded by an owner's lifetime.
+                 *
+                 * Like @ref postCallable(Label, Function<void()>) but the
+                 * callable only runs if @p owner is still alive when the
+                 * loop dispatches it.  Internally the post captures an
+                 * @ref ObjectBasePtr to @p owner — that handle is atomically
+                 * nulled (under @ref ObjectBase::objectBasePtrMutex) when the
+                 * owner is destructed, including from another thread — so a
+                 * callable that was queued just before the owner died, or
+                 * that outlives it during teardown, becomes a safe no-op
+                 * instead of touching freed memory.
+                 *
+                 * Use this for every deferred self-invocation
+                 * (@c [this]{ method(); }) whose target ObjectBase may be
+                 * destroyed while the callable is still queued — the common
+                 * case being a worker that reposts itself across loop turns
+                 * and is torn down mid-flight.  Prefer it over a raw
+                 * @c this capture, which is a use-after-free waiting to
+                 * happen.
+                 *
+                 * Thread-safe.  A null @p owner makes the call equivalent to
+                 * the plain labelled overload (no guard).
+                 *
+                 * @param owner The ObjectBase whose liveness gates the call.
+                 * @param label Per-call-site tag (see the labelled overload).
+                 * @param func  The callable to execute if @p owner is alive.
+                 */
+                void postCallable(ObjectBase *owner, Label label, Function<void()> func);
+
+                /**
                  * @brief Posts an Event to this EventLoop for delivery to a receiver.
                  *
                  * Takes ownership of @p event.  Thread-safe.  The event will be

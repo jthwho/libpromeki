@@ -733,6 +733,120 @@ class PixelFormat {
                 /** @brief Returns the number of planes. */
                 size_t planeCount() const { return d->memLayout.planeCount(); }
 
+                /**
+                 * @brief Returns the H.264 / HEVC @c chroma_format_idc for this format.
+                 *
+                 * Derived from the @ref PixelMemLayout chroma sampling:
+                 * @c 0 = monochrome / unknown, @c 1 = 4:2:0, @c 2 = 4:2:2,
+                 * @c 3 = 4:4:4.  4:1:1 and undefined sampling (e.g.
+                 * interleaved RGB) return @c 0 — the temporal codecs that
+                 * read this value don't accept those.  This is the number a
+                 * bitstream SPS or a codec config struct wants directly.
+                 */
+                int chromaFormatIDC() const {
+                        switch (d->memLayout.sampling()) {
+                                case PixelMemLayout::Sampling444: return 3;
+                                case PixelMemLayout::Sampling422: return 2;
+                                case PixelMemLayout::Sampling420: return 1;
+                                default: return 0;
+                        }
+                }
+
+                /**
+                 * @brief Returns the bits per component sample (8, 10, 12, …).
+                 *
+                 * Read from the first (luma / red) component descriptor;
+                 * the YUV / RGB families share one depth across components.
+                 * Returns @c 0 for a format with no components.
+                 */
+                int bitsPerComponent() const {
+                        return compCount() ? static_cast<int>(d->memLayout.compDesc(0).bits) : 0;
+                }
+
+                /**
+                 * @brief Returns the storage bytes per component sample.
+                 *
+                 * @c ceil(bitsPerComponent / 8) — @c 1 for ≤8-bit, @c 2 for
+                 * 9–16-bit.  Returns @c 0 when the format has no components.
+                 */
+                int bytesPerComponent() const {
+                        const int bits = bitsPerComponent();
+                        return bits ? (bits + 7) / 8 : 0;
+                }
+
+                // ---- H.273 colour signalling (encoder VUI policy) ----
+                //
+                // Video encoders turn the caller's colour-description
+                // preferences plus this format's ColorModel / videoRange
+                // into the H.273 codepoints written on the bitstream VUI.
+                // The resolution lives here so every backend (NVENC, x264,
+                // …) signals colour identically.
+
+                /** @brief Config sentinel for @ref resolveH273: derive the field from this format's ColorModel. */
+                static constexpr uint32_t ColorAuto = 255;
+
+                /**
+                 * @brief The concrete H.273 codepoints chosen for a stream.
+                 *
+                 * @c range is the numeric @ref VideoRange value
+                 * (0 = Unknown, 1 = Limited, 2 = Full).  A primaries /
+                 * transfer / matrix field of @c 0 means "unset" and of
+                 * @c 2 means "Unspecified" per ISO/IEC 23091.
+                 */
+                struct H273ColorDescription {
+                                uint32_t primaries = 0; ///< H.273 colour_primaries.
+                                uint32_t transfer = 0;  ///< H.273 transfer_characteristics.
+                                uint32_t matrix = 0;    ///< H.273 matrix_coefficients.
+                                uint32_t range = 0;     ///< VideoRange numeric (0/1/2).
+                };
+
+                /**
+                 * @brief The VUI signalling decision derived from a @ref H273ColorDescription.
+                 *
+                 * Mirrors the H.264 / HEVC VUI fields a backend populates.
+                 * When neither a colour description nor a range is present
+                 * every flag is @c false and the backend omits the block.
+                 */
+                struct VuiColorSignal {
+                                bool     signalTypePresent = false;       ///< video_signal_type_present_flag.
+                                bool     fullRange = false;               ///< video_full_range_flag.
+                                bool     colorDescriptionPresent = false; ///< colour_description_present_flag.
+                                uint32_t primaries = 2;                   ///< Normalised colour_primaries (Unspecified = 2).
+                                uint32_t transfer = 2;                    ///< Normalised transfer_characteristics.
+                                uint32_t matrix = 2;                      ///< Normalised matrix_coefficients.
+                };
+
+                /**
+                 * @brief Resolves caller colour overrides against this format.
+                 *
+                 * Each of @p cfgPrimaries / @p cfgTransfer / @p cfgMatrix is
+                 * either an explicit H.273 codepoint (passed through), @c 0
+                 * ("unset", stays 0), or @ref ColorAuto (derived from this
+                 * format's @c ColorModel::toH273).  @p cfgRange of @c 0
+                 * (@c VideoRange::Unknown) derives from this format's
+                 * @c videoRange(); otherwise it passes through.
+                 *
+                 * @param cfgPrimaries Config primaries (@ref ColorAuto / 0 / 1..255).
+                 * @param cfgTransfer  Config transfer (@ref ColorAuto / 0 / 1..255).
+                 * @param cfgMatrix    Config matrix (@ref ColorAuto / 0 / 1..255).
+                 * @param cfgRange     Config range (0 = Unknown / 1 = Limited / 2 = Full).
+                 */
+                H273ColorDescription resolveH273(uint32_t cfgPrimaries = ColorAuto, uint32_t cfgTransfer = ColorAuto,
+                                                 uint32_t cfgMatrix = ColorAuto, uint32_t cfgRange = 0) const;
+
+                /**
+                 * @brief Computes the VUI signalling flags for a resolved description.
+                 *
+                 * A colour description is present when any of
+                 * primaries / transfer / matrix is concrete (not @c 0
+                 * "unset" and not @c 2 "Unspecified"); range is present when
+                 * it is Limited or Full.  When a colour description is
+                 * present, unset (0) fields are normalised to @c 2
+                 * (Unspecified) so the on-wire block is self-consistent.
+                 * Pure — independent of any particular format.
+                 */
+                static VuiColorSignal vuiColorSignal(const H273ColorDescription &desc);
+
                 // The following methods depend on proav types (ImageDesc, Image,
                 // PaintEngine) — defined in pixelformat.cpp.
 

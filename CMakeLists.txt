@@ -284,6 +284,7 @@ include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(ExternalProject)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiGplComponents.cmake)
 
 # Warning interface library ####################################################
 #
@@ -409,6 +410,13 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
     endif()
 endif()
 option(PROMEKI_ENABLE_JPEGXS   "Include JPEG XS codec (SVT-JPEG-XS, x86-64 + nasm/yasm)" ${PROMEKI_ENABLE_JPEGXS_DEFAULT})
+# x264 — H.264 software encoder.  GPL-2.0-or-later (or a commercial license
+# from x264 LLC); enabling it makes the libpromeki build subject to the GPL
+# (see THIRD-PARTY-LICENSES and the configure-time GPL COMPLIANCE NOTICE).
+# Default ON per project direction.  x86-64 builds use nasm/yasm for the asm
+# kernels and fall back to --disable-asm when neither is present; ARM /
+# aarch64 assembles its NEON kernels with the C toolchain (no nasm needed).
+option(PROMEKI_ENABLE_X264     "Include x264 H.264 software encoder (GPL; vendored libx264)" ON)
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
@@ -607,6 +615,7 @@ option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zli
 option(PROMEKI_USE_SYSTEM_LIBSPNG       "Use system libspng instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   "Use system SVT-JPEG-XS instead of vendored"    OFF)
+option(PROMEKI_USE_SYSTEM_X264          "Use system libx264 instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
@@ -711,6 +720,9 @@ if(PROMEKI_ENABLE_JPEG AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_JPEGXS AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_JPEGXS requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_X264 AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_X264 requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_FREETYPE requires PROMEKI_ENABLE_PROAV")
@@ -1065,6 +1077,16 @@ check_cxx_source_compiles("
         return 0;
     }
 " PROMEKI_HAVE_CXA_DEMANGLE)
+
+# GPL-licensed component registration + compliance notice.  Each GPL
+# dependency registers itself here (inside its enable guard); the notice is
+# emitted once and PROMEKI_GPL_BUILD is set before config.h is generated so
+# the flag is mirrored into the header.  libx265 will add its own register
+# line here when it lands.
+if(PROMEKI_ENABLE_X264)
+    promeki_register_gpl_component("libx264" "GPL-2.0-or-later")
+endif()
+promeki_emit_gpl_notice()
 
 # Generate config.h
 configure_file(
@@ -1831,6 +1853,83 @@ if(PROMEKI_ENABLE_JPEGXS)
         )
         add_dependencies(promeki_jpegxs_vendored svt-jpeg-xs-ep)
         set(PROMEKI_JPEGXS_TARGET promeki_jpegxs_vendored)
+    endif()
+endif()
+
+# --- x264 (H.264 software encoder, GPL) ---
+# x264 uses its own shell ./configure (not CMake), like lame/mpg123, so it is
+# wired as an autotools-style ExternalProject built in-source into a copy.
+# It is shipped as a separate shared object (libx264.so) alongside
+# libpromeki.so so an end user can drop in their own build — and because the
+# GPL makes the substitutability matter.  --bit-depth=all + --chroma-format=all
+# yield one runtime-selectable library covering 8/10-bit and 4:2:0 / 4:2:2 /
+# 4:4:4 (param.i_bitdepth / i_csp choose per session).
+if(PROMEKI_ENABLE_X264)
+    if(PROMEKI_USE_SYSTEM_X264)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(X264 REQUIRED IMPORTED_TARGET x264)
+        set(PROMEKI_X264_TARGET PkgConfig::X264)
+    else()
+        # x86-64 assembles its SIMD kernels with nasm/yasm; fall back to
+        # --disable-asm when neither is found (slower, but builds).  ARM /
+        # aarch64 assembles NEON with the C toolchain and needs no probe.
+        set(_PROMEKI_X264_ASM_ARGS)
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+            find_program(PROMEKI_X264_ASM NAMES nasm yasm)
+            if(NOT PROMEKI_X264_ASM)
+                set(_PROMEKI_X264_ASM_ARGS --disable-asm)
+            endif()
+        endif()
+
+        # Translate the cross-build toolchain into x264's autotools vocabulary
+        # (--host / --cross-prefix), derived from the C compiler name.
+        set(_PROMEKI_X264_CROSS_ARGS)
+        if(_PROMEKI_IS_CROSS_BUILD)
+            get_filename_component(_x264_cc_name "${CMAKE_C_COMPILER}" NAME)
+            string(REGEX REPLACE "-?[gc]cc(-[0-9.]+)?$" "" _x264_triple "${_x264_cc_name}")
+            if(_x264_triple)
+                list(APPEND _PROMEKI_X264_CROSS_ARGS
+                    --host=${_x264_triple} --cross-prefix=${_x264_triple}-)
+            endif()
+        endif()
+
+        set(PROMEKI_X264_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/x264)
+        ExternalProject_Add(
+            libx264-ep
+            DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/x264 ${PROMEKI_X264_SRC_COPY}
+            SOURCE_DIR ${PROMEKI_X264_SRC_COPY}
+            BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND
+                ${CMAKE_COMMAND} -E env "CFLAGS=-fPIC -O2"
+                ${PROMEKI_X264_SRC_COPY}/configure
+                    --prefix=${PROMEKI_THIRDPARTY_PREFIX}
+                    --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    --enable-shared --disable-static --enable-pic
+                    --disable-cli --disable-opencl
+                    --bit-depth=all --chroma-format=all
+                    ${_PROMEKI_X264_ASM_ARGS}
+                    ${_PROMEKI_X264_CROSS_ARGS}
+            BUILD_COMMAND make
+            INSTALL_COMMAND make install
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libx264.so
+        )
+        # Shared (GPL): shipped alongside libpromeki.so, dynamically linked
+        # and user-replaceable.  IMPORTED_LOCATION points at the bare .so dev
+        # symlink; the linker reads the real DT_SONAME (libx264.so.NNN) from
+        # the file.
+        add_library(promeki_x264_vendored SHARED IMPORTED)
+        # The interface include dir won't exist until x264's `make install`
+        # runs; create it now so the imported target's
+        # INTERFACE_INCLUDE_DIRECTORIES passes the generate-time existence
+        # check (x264.h lands there during the build).
+        file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        set_target_properties(promeki_x264_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libx264.so
+            INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_THIRDPARTY_PREFIX}/include
+        )
+        add_dependencies(promeki_x264_vendored libx264-ep)
+        set(PROMEKI_X264_TARGET promeki_x264_vendored)
     endif()
 endif()
 
@@ -3158,6 +3257,9 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/basicfont.h
         include/promeki/videoencoder.h
         include/promeki/videodecoder.h
+        include/promeki/videoencodersei.h
+        include/promeki/h264profilelevel.h
+        include/promeki/x264videoencoder.h
         include/promeki/encodeddesc.h
         include/promeki/fastfont.h
         include/promeki/flvtag.h
@@ -3219,7 +3321,9 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/audioformat.cpp
         src/proav/audiolevel.cpp
         src/proav/h264bitstream.cpp
+        src/proav/h264profilelevel.cpp
         src/proav/hevcbitstream.cpp
+        src/proav/videoencodersei.cpp
         src/proav/pixelformat.cpp
         src/proav/pixelmemlayout.cpp
         src/proav/videocodec.cpp
@@ -3405,6 +3509,12 @@ if(PROMEKI_ENABLE_PROAV)
         # directly, so the whole file is gated — stubs are not useful
         # when nvEncodeAPI.h is missing.
         list(APPEND PROMEKI_SOURCES src/proav/nvencvideoencoder.cpp)
+    endif()
+    if(PROMEKI_ENABLE_X264)
+        # libx264 (GPL) software H.264 encoder backend.  The whole file is
+        # gated because it includes <x264.h> directly; without the vendored
+        # or system libx264 there is no header to include.
+        list(APPEND PROMEKI_SOURCES src/proav/x264videoencoder.cpp)
     endif()
     if(PROMEKI_ENABLE_OPUS)
         # Native libopus AudioEncoder / AudioDecoder backend.  Gated on
@@ -3596,6 +3706,9 @@ if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG
 endif()
 if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_USE_SYSTEM_OPUS)
     list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libopus.so*")
+endif()
+if(PROMEKI_ENABLE_X264 AND NOT PROMEKI_USE_SYSTEM_X264)
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libx264.so*")
 endif()
 
 # Stage those shared deps into build/lib after promeki links so the build
@@ -3805,6 +3918,14 @@ if(PROMEKI_ENABLE_PROAV)
             m
         )
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_JPEGXS)
+    endif()
+    if(PROMEKI_ENABLE_X264)
+        # libx264 is a shared object shipped beside libpromeki.so (GPL).
+        # Linking the imported target makes libx264-ep a build dependency so
+        # the .so is produced and staged even before a consumer TU exists
+        # (the encoder backend lands in a follow-up milestone).
+        target_link_libraries(promeki PRIVATE ${PROMEKI_X264_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_X264)
     endif()
     if(PROMEKI_ENABLE_PNG)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SPNG_TARGET} ${PROMEKI_ZLIB_TARGET})
@@ -4581,7 +4702,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/audiolevel.cpp
             tests/unit/audiomarker.cpp
             tests/unit/h264bitstream.cpp
+            tests/unit/h264profilelevel.cpp
             tests/unit/hevcbitstream.cpp
+            tests/unit/videoencodersei.cpp
             tests/unit/pixelmemlayout.cpp
             tests/unit/videoformat.cpp
             tests/unit/videoformatdetails.cpp
@@ -4757,6 +4880,11 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_NVENC)
             list(APPEND UNITTEST_SOURCES
                 tests/unit/nvencvideoencoder.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_X264)
+            list(APPEND UNITTEST_SOURCES
+                tests/unit/x264videoencoder.cpp
             )
         endif()
         if(PROMEKI_ENABLE_NVDEC)

@@ -74,6 +74,25 @@ namespace {
                 return true;
         }
 
+        // Resolve the encoder backend the way @ref AudioEncoder::create
+        // will at open time, so planner-time introspection
+        // (@ref AudioCodec::encoderSupportedInputs) reflects the backend
+        // that is actually instantiated.  Precedence mirrors create():
+        // an explicit backend already pinned on the AudioCodec wins;
+        // otherwise a @c MediaConfig::CodecBackend soft-pin is applied;
+        // otherwise the codec is left unpinned and supportedInputsFor
+        // falls back to the highest-weight backend (== create()'s default
+        // choice).  Mirrors resolveEncoderBackend in videoencodermediaio.cpp.
+        AudioCodec resolveEncoderBackend(AudioCodec codec, const MediaConfig &cfg) {
+                if (!codec.isValid()) return codec;
+                if (codec.backend().isValid()) return codec;
+                const String name = cfg.getAs<String>(MediaConfig::CodecBackend);
+                if (name.isEmpty()) return codec;
+                auto bk = AudioCodec::lookupBackend(name);
+                if (error(bk).isError()) return codec;
+                return AudioCodec(codec.id(), value(bk));
+        }
+
 } // namespace
 
 MediaIOFactory::Config::SpecMap AudioEncoderFactory::configSpecs() const {
@@ -386,6 +405,9 @@ Error AudioEncoderMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *pre
         AudioCodec codec = _codec;
         if (!codec.isValid()) {
                 codec = config().getAs<AudioCodec>(MediaConfig::AudioCodec);
+                // Fold in the CodecBackend soft-pin so encoderSupportedInputs
+                // below reflects the backend create() will instantiate.
+                codec = resolveEncoderBackend(codec, config());
         }
 
         // Without a codec we can't know which inputs the concrete

@@ -12,6 +12,23 @@ pre-panic fixes, the second interlaced-panic investigation, and the
 detailed list of files touched — lives in git history (commit
 `44c696f` and earlier). What remains is the follow-up backlog.
 
+## Bug fixes (landed 2026-06-01)
+
+### NVDEC decode-surface starvation on low-reference streams
+
+`NvdecVideoDecoder::Impl::createSession` was applying `min_num_decode_surfaces`
+from the parsed SPS unchanged to `CUVIDDECODECREATEINFO::ulNumDecodeSurfaces`.
+For all-intra streams (x264 with `keyint=1`), the SPS signals
+`max_num_ref_frames = 0`, so `min_num_decode_surfaces = 1`.  A single decode
+surface leaves `cuvidDecodePicture` no working buffer, causing it to fail with
+`CUDA_ERROR_INVALID_VALUE` (error code 1).  NVENC's level-derived SPS signals
+a larger DPB, so its streams decoded cleanly and masked the defect.
+Fixed: `ulNumDecodeSurfaces` is now `std::max(min_num_decode_surfaces,
+kMinDecodeSurfaces)` where `kMinDecodeSurfaces = 4` (a `static constexpr`
+on `Impl` with an explanatory block comment).
+
+---
+
 ## Remaining work
 
 ### Encoder / pipeline plumbing

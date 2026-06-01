@@ -265,7 +265,32 @@ Error MediaPipeline::injectStage(MediaIO *io) {
         // future MediaIODescription snapshot all see the same name).
         io->setName(chosen);
         _injected.insert(chosen, io);
+
+        // Injected stages are caller-owned: the pipeline only observes
+        // the raw pointer and never deletes it (see @ref destroyStages).
+        // A caller is therefore free to destroy an injected stage while
+        // the pipeline still holds it in @c _stages / @c _injected — and
+        // if that happens before the pipeline's own teardown (e.g. the
+        // close cascade stalled because a downstream stage errored on
+        // every frame, so @ref finalizeClose never ran to clear the
+        // maps), the destructor's @ref close → @ref initiateClose would
+        // dereference the freed pointer.  Register a destruction cleanup
+        // on the injected stage, gated on this pipeline still being
+        // alive, that detaches it from both maps so the close path never
+        // touches a dangling stage.
+        io->registerCleanup(this, [this, chosen](ObjectBase *) { detachInjectedStage(chosen); });
         return Error::Ok;
+}
+
+void MediaPipeline::detachInjectedStage(const String &name) {
+        // Null the entry rather than removing it: a concurrent
+        // @ref initiateClose may be iterating @c _stages, and every
+        // consumer already skips null stage pointers.  _injected is
+        // only read for ownership decisions, so dropping the key there
+        // is safe.
+        auto sit = _stages.find(name);
+        if (sit != _stages.end()) sit->second = nullptr;
+        _injected.remove(name);
 }
 
 Error MediaPipeline::build(const MediaPipelineConfig &config, bool autoplan) {

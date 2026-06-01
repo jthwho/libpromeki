@@ -129,6 +129,11 @@ promeki_config_option(PROMEKI_ENABLE_MUSIC     OFF)
 promeki_config_option(PROMEKI_ENABLE_PNG       ON)
 promeki_config_option(PROMEKI_ENABLE_JPEG      ON)
 promeki_config_option(PROMEKI_ENABLE_JPEGXS    OFF)  # SVT-JPEG-XS is x86-only.
+# x264 cross-builds for aarch64 — its NEON kernels assemble with the C
+# toolchain (no nasm/yasm), and the build derives --host / --cross-prefix
+# from the toolchain automatically.  GPL-2.0-or-later: enabling it makes
+# this build GPL.
+promeki_config_option(PROMEKI_ENABLE_X264      ON)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  ON)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     ON)
 promeki_config_option(PROMEKI_ENABLE_OPUS      ON)

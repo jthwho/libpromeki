@@ -148,7 +148,11 @@ void MediaIOPortConnection::schedulePump() {
         EventLoop *loop = EventLoop::current();
         if (loop != nullptr) {
                 static const auto kPumpLabel = EventLoop::Label{"PortConnection.pump"};
-                loop->postCallable(kPumpLabel, [this]() { pump(); });
+                // Owner-guarded: the connection can be stopped and deleted
+                // (MediaPipeline::destroyStages) while a pump callable is
+                // still queued on this loop — the guard makes that stale
+                // callable a no-op instead of a use-after-free on `this`.
+                loop->postCallable(this, kPumpLabel, [this]() { pump(); });
         } else {
                 // No loop on this thread — fall back to a synchronous
                 // call.  This typically only happens when a test

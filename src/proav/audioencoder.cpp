@@ -166,14 +166,15 @@ List<int> AudioEncoder::supportedInputsFor(AudioCodec::ID codecId, AudioCodec::B
                 }
                 return {};
         }
-        Set<int> acc;
-        for (const auto &r : it->second) {
-                for (int fmt : r.supportedInputs) acc.insert(fmt);
-        }
-        List<int> out;
-        out.reserve(acc.size());
-        for (int fmt : acc) out.pushToBack(fmt);
-        return out;
+        // Unpinned: report the highest-weight backend's inputs only — that
+        // is exactly the backend @ref create selects by default (the record
+        // list is kept sorted highest-weight-first by registerBackend, and
+        // create falls back to list.front()).  Reporting the union across
+        // every backend would be unsound: a planner that treats any listed
+        // format as "no conversion needed" could hand the chosen backend a
+        // format only a lower-weight sibling accepts, and the encoder would
+        // reject it at runtime.  Mirrors VideoEncoder::supportedInputsFor.
+        return it->second.front().supportedInputs;
 }
 
 Result<AudioEncoder *> AudioEncoder::create(AudioCodec::ID codecId, AudioCodec::Backend pinned,

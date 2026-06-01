@@ -47,6 +47,7 @@
 #cmakedefine01 PROMEKI_ENABLE_PNG
 #cmakedefine01 PROMEKI_ENABLE_JPEG
 #cmakedefine01 PROMEKI_ENABLE_JPEGXS
+#cmakedefine01 PROMEKI_ENABLE_X264
 #cmakedefine01 PROMEKI_ENABLE_FREETYPE
 #cmakedefine01 PROMEKI_ENABLE_AUDIO
 #cmakedefine01 PROMEKI_ENABLE_FLAC
@@ -67,6 +68,10 @@
 #cmakedefine01 PROMEKI_ENABLE_SRT
 #cmakedefine01 PROMEKI_ENABLE_MDNS
 #cmakedefine01 PROMEKI_ENABLE_MEMFD
+
+/* Set when any GPL-licensed component (e.g. x264) is enabled; the build is
+ * then subject to the GPL.  See THIRD-PARTY-LICENSES. */
+#cmakedefine01 PROMEKI_GPL_BUILD
 
 /**
  * @brief Always-on marker for the library's core surface.

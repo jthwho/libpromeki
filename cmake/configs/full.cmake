@@ -41,6 +41,9 @@ promeki_config_option(PROMEKI_ENABLE_MUSIC     ON)
 promeki_config_option(PROMEKI_ENABLE_PNG       ON)
 promeki_config_option(PROMEKI_ENABLE_JPEG      ON)
 promeki_config_option(PROMEKI_ENABLE_JPEGXS    ON)
+# x264 H.264 software encoder — GPL-2.0-or-later, so this full build is a
+# GPL artifact (configure prints a GPL COMPLIANCE NOTICE).
+promeki_config_option(PROMEKI_ENABLE_X264      ON)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  ON)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     ON)
 promeki_config_option(PROMEKI_ENABLE_OPUS      ON)

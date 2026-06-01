@@ -489,12 +489,14 @@ TEST_CASE("AudioDecoder::registerBackend rejects malformed records") {
 // supportedInputs / supportedOutputs union & pinned variants
 // ---------------------------------------------------------------------------
 
-TEST_CASE("AudioEncoder::supportedInputsFor: union vs pinned-backend") {
-        // Unpinned (invalid handle) returns the union across both
-        // Passthrough backends — both registered PCMI_S16LE so the
-        // union has a single entry.
-        auto unionList = AudioEncoder::supportedInputsFor(gPassthroughCodecId, AudioCodec::Backend());
-        CHECK(unionList.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
+TEST_CASE("AudioEncoder::supportedInputsFor: unpinned (highest-weight) vs pinned-backend") {
+        // Unpinned (invalid handle) returns the highest-weight backend's
+        // inputs — both Passthrough backends registered PCMI_S16LE, so the
+        // observable result is the same single entry either way.  (The
+        // dedicated disjoint-input test below proves it's highest-weight
+        // and not a union.)
+        auto unpinned = AudioEncoder::supportedInputsFor(gPassthroughCodecId, AudioCodec::Backend());
+        CHECK(unpinned.contains(static_cast<int>(AudioFormat::PCMI_S16LE)));
 
         // Pinned to a registered backend returns just that backend's list.
         auto pinned = AudioEncoder::supportedInputsFor(gPassthroughCodecId, gVendoredBackend);
@@ -509,6 +511,57 @@ TEST_CASE("AudioEncoder::supportedInputsFor: union vs pinned-backend") {
         // Unknown codec ID returns empty regardless of backend pin.
         auto bogus = AudioEncoder::supportedInputsFor(static_cast<AudioCodec::ID>(0xDEADBEEF), AudioCodec::Backend());
         CHECK(bogus.isEmpty());
+}
+
+TEST_CASE("AudioEncoder::supportedInputsFor: unpinned returns the highest-weight backend's inputs only") {
+        // Regression guard mirroring the VideoEncoder fix: with two
+        // encoder backends whose accepted formats are disjoint, the
+        // unpinned list must be exactly the highest-weight backend's
+        // inputs (== AudioEncoder::create's default choice), never the
+        // union of both — otherwise the planner could route the chosen
+        // backend a format only its lower-weight sibling accepts.
+        AudioCodec::ID   codecId = AudioCodec::registerType();
+        AudioCodec::Data d;
+        d.id = codecId;
+        d.name = "AudioEncTest_WeightCodec";
+        d.desc = "Two-backend codec for supportedInputs weight test";
+        AudioCodec::registerData(std::move(d));
+
+        auto lowBk = AudioCodec::registerBackend("AudioEncTest_LowWeight");
+        auto highBk = AudioCodec::registerBackend("AudioEncTest_HighWeight");
+        REQUIRE(isOk(lowBk));
+        REQUIRE(isOk(highBk));
+
+        auto nullFactory = []() -> AudioEncoder * { return nullptr; };
+
+        REQUIRE(AudioEncoder::registerBackend({
+                        .codecId = codecId,
+                        .backend = value(lowBk),
+                        .weight = BackendWeight::Vendored,
+                        .supportedInputs = {static_cast<int>(AudioFormat::PCMI_S32LE)},
+                        .factory = nullFactory,
+                }) == Error::Ok);
+        REQUIRE(AudioEncoder::registerBackend({
+                        .codecId = codecId,
+                        .backend = value(highBk),
+                        .weight = BackendWeight::User,
+                        .supportedInputs = {static_cast<int>(AudioFormat::PCMI_S16LE)},
+                        .factory = nullFactory,
+                }) == Error::Ok);
+
+        // Unpinned: the high-weight backend's input only — NOT the union.
+        auto unpinned = AudioEncoder::supportedInputsFor(codecId, AudioCodec::Backend());
+        REQUIRE(unpinned.size() == 1);
+        CHECK(unpinned[0] == static_cast<int>(AudioFormat::PCMI_S16LE));
+
+        // Pinning each backend yields exactly that backend's inputs.
+        auto high = AudioEncoder::supportedInputsFor(codecId, value(highBk));
+        REQUIRE(high.size() == 1);
+        CHECK(high[0] == static_cast<int>(AudioFormat::PCMI_S16LE));
+
+        auto low = AudioEncoder::supportedInputsFor(codecId, value(lowBk));
+        REQUIRE(low.size() == 1);
+        CHECK(low[0] == static_cast<int>(AudioFormat::PCMI_S32LE));
 }
 
 TEST_CASE("AudioDecoder::supportedOutputsFor: union vs pinned-backend") {

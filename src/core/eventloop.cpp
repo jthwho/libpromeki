@@ -277,6 +277,25 @@ void EventLoop::postCallable(Label label, Function<void()> func) {
         return;
 }
 
+void EventLoop::postCallable(ObjectBase *owner, Label label, Function<void()> func) {
+        if (owner == nullptr) {
+                postCallable(label, std::move(func));
+                return;
+        }
+        // Capture a weak handle to the owner.  ObjectBasePtr is nulled
+        // atomically when the owner is destructed (runCleanup, under
+        // objectBasePtrMutex), so a callable still queued — or queued
+        // just before the owner died on another thread — sees a null
+        // guard and no-ops instead of touching freed memory.  Mirrors
+        // the liveness gate ObjectBase::deleteLater and the cross-thread
+        // connect() marshalling already use.
+        postCallable(label, [guard = ObjectBasePtr<>(owner), func = std::move(func)]() mutable {
+                if (guard.data() == nullptr) return;
+                func();
+        });
+        return;
+}
+
 void EventLoop::postEvent(ObjectBase *receiver, Event *event) {
         _queue.push(Item{EventItem{receiver, event}});
         wakeSelf();

@@ -8,9 +8,9 @@
 #pragma once
 
 
+#include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
 #include <promeki/namespace.h>
-#include <promeki/config.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/sharedptr.h>
 #include <promeki/audiomarker.h>

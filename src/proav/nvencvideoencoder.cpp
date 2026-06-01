@@ -37,6 +37,8 @@
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslator.h>
 #include <promeki/anctranslateconfig.h>
+#include <promeki/videoencodersei.h>
+#include <promeki/h264profilelevel.h>
 
 #include <cstring>
 #include <cstdint>
@@ -205,14 +207,19 @@ namespace {
         // ---------------------------------------------------------------------------
 
         GUID h264ProfileGuid(const String &name, const FormatEntry *fmt) {
-                if (name == "baseline") return NV_ENC_H264_PROFILE_BASELINE_GUID;
-                if (name == "main") return NV_ENC_H264_PROFILE_MAIN_GUID;
-                if (name == "high") return NV_ENC_H264_PROFILE_HIGH_GUID;
-                if (name == "high10") return NV_ENC_H264_PROFILE_HIGH_10_GUID;
-                if (name == "high422") return NV_ENC_H264_PROFILE_HIGH_422_GUID;
-                if (name == "high444") return NV_ENC_H264_PROFILE_HIGH_444_GUID;
-                if (name == "progressive") return NV_ENC_H264_PROFILE_PROGRESSIVE_HIGH_GUID;
-                if (!name.isEmpty()) return NV_ENC_CODEC_PROFILE_AUTOSELECT_GUID;
+                // Profile-name vocabulary is shared with the x264 backend via
+                // H264ProfileLevel / the H264Profile TypedEnum; the GUID
+                // mapping and the NVENC-specific Auto fallback (which prefers
+                // AUTOSELECT over HIGH for plain 8-bit 4:2:0) stay here.
+                const H264Profile p = H264ProfileLevel::profileFromWire(name);
+                if (p == H264Profile::Baseline) return NV_ENC_H264_PROFILE_BASELINE_GUID;
+                if (p == H264Profile::Main) return NV_ENC_H264_PROFILE_MAIN_GUID;
+                if (p == H264Profile::High) return NV_ENC_H264_PROFILE_HIGH_GUID;
+                if (p == H264Profile::High10) return NV_ENC_H264_PROFILE_HIGH_10_GUID;
+                if (p == H264Profile::High422) return NV_ENC_H264_PROFILE_HIGH_422_GUID;
+                if (p == H264Profile::High444) return NV_ENC_H264_PROFILE_HIGH_444_GUID;
+                if (p == H264Profile::ProgressiveHigh) return NV_ENC_H264_PROFILE_PROGRESSIVE_HIGH_GUID;
+                // p == Auto (empty or unrecognised): derive from input geometry.
                 if (fmt->chromaFormatIDC == 3) return NV_ENC_H264_PROFILE_HIGH_444_GUID;
                 if (fmt->chromaFormatIDC == 2) return NV_ENC_H264_PROFILE_HIGH_422_GUID;
                 if (fmt->inputBitDepth == NV_ENC_BIT_DEPTH_10) return NV_ENC_H264_PROFILE_HIGH_10_GUID;
@@ -350,24 +357,22 @@ namespace {
         // decoder interprets as "assume the default for the content type".
         void populateVuiColorDescription(NV_ENC_CONFIG_H264_VUI_PARAMETERS &vui, uint32_t primaries, uint32_t transfer,
                                          uint32_t matrix, uint32_t videoRange) {
-                const bool haveAny = (primaries != 0 && primaries != 2) || (transfer != 0 && transfer != 2) ||
-                                     (matrix != 0 && matrix != 2);
-                const bool haveRange = (videoRange == 1 /*Limited*/ || videoRange == 2 /*Full*/);
-                if (!haveAny && !haveRange) return;
+                // The present/normalise decision is shared with the x264
+                // backend via PixelFormat::vuiColorSignal; only the copy into
+                // the NVENC struct is codec-specific here.
+                const PixelFormat::VuiColorSignal s =
+                        PixelFormat::vuiColorSignal({primaries, transfer, matrix, videoRange});
+                if (!s.signalTypePresent) return;
 
                 vui.videoSignalTypePresentFlag = 1;
                 vui.videoFormat = NV_ENC_VUI_VIDEO_FORMAT_UNSPECIFIED;
-                // videoFullRangeFlag is a single bit — map Limited→0, Full→1,
-                // Unknown→0 (safest SDR default when only colour description
-                // is present).
-                vui.videoFullRangeFlag = (videoRange == 2 /*Full*/) ? 1 : 0;
+                vui.videoFullRangeFlag = s.fullRange ? 1 : 0;
 
-                if (haveAny) {
+                if (s.colorDescriptionPresent) {
                         vui.colourDescriptionPresentFlag = 1;
-                        vui.colourPrimaries = static_cast<NV_ENC_VUI_COLOR_PRIMARIES>((primaries != 0) ? primaries : 2);
-                        vui.transferCharacteristics =
-                                static_cast<NV_ENC_VUI_TRANSFER_CHARACTERISTIC>((transfer != 0) ? transfer : 2);
-                        vui.colourMatrix = static_cast<NV_ENC_VUI_MATRIX_COEFFS>((matrix != 0) ? matrix : 2);
+                        vui.colourPrimaries = static_cast<NV_ENC_VUI_COLOR_PRIMARIES>(s.primaries);
+                        vui.transferCharacteristics = static_cast<NV_ENC_VUI_TRANSFER_CHARACTERISTIC>(s.transfer);
+                        vui.colourMatrix = static_cast<NV_ENC_VUI_MATRIX_COEFFS>(s.matrix);
                 }
         }
 
@@ -647,48 +652,33 @@ class NvencVideoEncoder::Impl {
                         // or unbound (-1) is in scope.  When the source
                         // Frame has no matching ANC the call returns an
                         // empty list and the feature is silent.
-                        slot->captionSeiPayloads.clear();
+                        slot->captionSei.clear();
                         slot->captionSeiArray.clear();
                         if (_seiCaptionsEnabled && _codec != Codec_AV1) {
-                                static const AncFormat::IDList kCaptionFormats{AncFormat::Cea708};
-                                AncPacket::List ancPackets =
-                                        VideoEncoder::selectAncForSei(source, /*pairedVideoStreamIndex=*/0,
-                                                                       kCaptionFormats);
-                                for (const AncPacket &pkt : ancPackets) {
-                                        AncTranslator::PacketsResult r =
-                                                _ancTranslator.translate(pkt, AncTransport::HlsSei);
-                                        if (error(r).isError()) {
-                                                promekiWarn("NvencVideoEncoder: AncTranslator::translate("
-                                                            "Cea708, %s → HlsSei) failed: %s",
-                                                            pkt.transport().toString().cstr(),
-                                                            error(r).name().cstr());
-                                                continue;
-                                        }
-                                        for (const AncPacket &out : value(r)) {
-                                                const Buffer &b = out.data();
-                                                if (b.size() == 0) continue;
-                                                List<uint8_t> bytes(b.size());
-                                                std::memcpy(bytes.data(), b.data(), b.size());
-                                                slot->captionSeiPayloads.pushToBack(std::move(bytes));
-                                        }
-                                }
-                                if (!slot->captionSeiPayloads.isEmpty()) {
-                                        slot->captionSeiArray.reserve(slot->captionSeiPayloads.size());
-                                        for (auto &p : slot->captionSeiPayloads) {
+                                // The ANC → HlsSei extraction is shared with
+                                // the x264 backend via VideoEncoderSei::captions
+                                // (stream index 0 — the NVENC backend is
+                                // single-stream, so any ANC paired to stream 0
+                                // or unbound is in scope).
+                                slot->captionSei =
+                                        VideoEncoderSei::captions(source, /*videoStreamIndex=*/0, _ancTranslator);
+                                if (!slot->captionSei.isEmpty()) {
+                                        slot->captionSeiArray.reserve(slot->captionSei.size());
+                                        for (auto &p : slot->captionSei) {
+                                                if (p.bytes.size() == 0) continue;
                                                 NV_ENC_SEI_PAYLOAD entry{};
-                                                // SEI payloadType 4 =
-                                                // user_data_registered_itu_t_t35
-                                                // (ITU-T H.264 / H.265 Annex D).
                                                 // NVENC writes the SEI message
                                                 // header + emulation-prevention
                                                 // bytes; we supply the
                                                 // application-layer payload
                                                 // bytes only.
-                                                entry.payloadType = 4;
-                                                entry.payloadSize = static_cast<uint32_t>(p.size());
-                                                entry.payload = p.data();
+                                                entry.payloadType = static_cast<uint32_t>(p.type);
+                                                entry.payloadSize = static_cast<uint32_t>(p.bytes.size());
+                                                entry.payload = static_cast<uint8_t *>(p.bytes.data());
                                                 slot->captionSeiArray.pushToBack(entry);
                                         }
+                                }
+                                if (!slot->captionSeiArray.isEmpty()) {
                                         if (_codec == Codec_H264) {
                                                 pic.codecPicParams.h264PicParams.seiPayloadArray =
                                                         slot->captionSeiArray.data();
@@ -818,24 +808,22 @@ class NvencVideoEncoder::Impl {
                                 bool                   hasMd = false;
                                 bool                   hasCll = false;
 
-                                // Per-frame closed-caption SEI payloads.  Each
-                                // entry holds the @c user_data_registered_itu_t_t35
-                                // body bytes produced by
-                                // @c AncTranslator::translate(pkt, AncTransport::HlsSei)
-                                // — i.e. the bytes that go inside the SEI
-                                // payload (NVENC adds the SEI NAL framing,
-                                // payloadType, and emulation prevention).
-                                // Storage lives on the Slot so it outlives
-                                // the @c nvEncEncodePicture call (NVENC may
-                                // defer reading these across NEED_MORE_INPUT
-                                // returns when B-frames or lookahead are
-                                // active).  The parallel
-                                // @c captionSeiArray of NV_ENC_SEI_PAYLOAD
-                                // descriptors is rebuilt on every submit so
-                                // its @c payload pointers always reference
-                                // the current @c captionSeiPayloads vector.
-                                List<List<uint8_t>> captionSeiPayloads;
-                                List<NV_ENC_SEI_PAYLOAD>   captionSeiArray;
+                                // Per-frame closed-caption SEI payloads, built
+                                // by the shared @ref VideoEncoderSei::captions
+                                // helper (each carries the
+                                // @c user_data_registered_itu_t_t35 body bytes
+                                // — NVENC adds the SEI NAL framing, payloadType,
+                                // and emulation prevention).  Storage lives on
+                                // the Slot so it outlives the
+                                // @c nvEncEncodePicture call (NVENC may defer
+                                // reading these across NEED_MORE_INPUT returns
+                                // when B-frames or lookahead are active).  The
+                                // parallel @c captionSeiArray of
+                                // NV_ENC_SEI_PAYLOAD descriptors is rebuilt on
+                                // every submit so its @c payload pointers always
+                                // reference the current @c captionSei buffers.
+                                List<VideoEncoderSei::SeiPayload> captionSei;
+                                List<NV_ENC_SEI_PAYLOAD>          captionSeiArray;
                 };
 
                 struct Caps {
@@ -1004,23 +992,18 @@ class NvencVideoEncoder::Impl {
                 // through untouched so a downstream HDR10 override is
                 // always honoured.  Must be called after _fmt is set.
                 ResolvedColorDesc resolveColorDescription() const {
-                        ResolvedColorDesc      out;
-                        const PixelFormat      pd(_fmt->pixelFormatId);
-                        const ColorModel::H273 h = ColorModel::toH273(pd.colorModel().id());
-
-                        out.primaries = (_colorPrimaries == 255u) ? h.primaries : _colorPrimaries;
-                        out.transfer = (_transferCharacteristics == 255u) ? h.transfer : _transferCharacteristics;
-                        out.matrix = (_matrixCoefficients == 255u) ? h.matrix : _matrixCoefficients;
-
-                        if (_videoRange == 0u /*Unknown*/) {
-                                const VideoRange pdr = pd.videoRange();
-                                // Map VideoRange::Limited(1) / Full(2)
-                                // through; anything else stays at 0 so
-                                // the VUI omits the range signalling.
-                                out.range = static_cast<uint32_t>(pdr.value());
-                        } else {
-                                out.range = _videoRange;
-                        }
+                        // Auto/Unknown sentinel resolution is shared with the
+                        // x264 backend via PixelFormat::resolveH273
+                        // (_colorPrimaries == 255 is PixelFormat::ColorAuto;
+                        // _videoRange == 0 is VideoRange::Unknown).
+                        const PixelFormat                       pd(_fmt->pixelFormatId);
+                        const PixelFormat::H273ColorDescription r = pd.resolveH273(
+                                _colorPrimaries, _transferCharacteristics, _matrixCoefficients, _videoRange);
+                        ResolvedColorDesc out;
+                        out.primaries = r.primaries;
+                        out.transfer = r.transfer;
+                        out.matrix = r.matrix;
+                        out.range = r.range;
                         return out;
                 }
 

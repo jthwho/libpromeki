@@ -22,6 +22,39 @@ the `setMediaDesc → setExpectedDesc` migration, the deletion of
 
 ---
 
+## Bug fixes (landed 2026-06-01)
+
+### Unpinned `supportedInputsFor` returned the wrong format set
+
+`VideoEncoder::supportedInputsFor(codecId, invalid_backend)` and the
+`AudioEncoder` mirror were returning the union of every registered backend's
+accepted formats.  `VideoEncoder::create` (and `AudioEncoder::create`) pick
+the *highest-weight* backend, so the planner's proposeInput short-circuit
+("no CSC needed") could take a format that only a lower-weight sibling
+accepts and hand it to the chosen backend, which then rejected it with
+`PixelFormatNotSupported` at encode time.  Fixed: unpinned now returns only
+the highest-weight backend's inputs (the record list is kept
+highest-weight-first by `registerBackend`; returning `list.front().supportedInputs`
+is therefore sound and consistent with what `create` picks).
+
+### `proposeInput` ignored `MediaConfig::CodecBackend` soft-pin
+
+`VideoEncoderMediaIO::proposeInput` and `AudioEncoderMediaIO::proposeInput`
+were resolving the codec from `MediaConfig::VideoCodec` / `AudioCodec` but
+not folding in the `MediaConfig::CodecBackend` name before calling
+`encoderSupportedInputs`.  If a caller pinned `CodecBackend = "x264"` in
+config, proposeInput still used the unpinned (highest-weight) backend's
+inputs for the CSC-skip test.  Fixed by the new `resolveEncoderBackend`
+anonymous-namespace helper in each `.cpp` file, which applies the same
+backend-resolution precedence as `create()`: explicit pin on the codec
+wrapper wins, then `CodecBackend` string, then highest-weight default.
+
+Both bugs were exposed by the `codec.h264.x264-nvidia` functional test
+(x264 encode → NVDEC decode), added in the codec test cross-product
+generalisation.
+
+---
+
 ## Future work
 
 ### Generic Dijkstra bridge solver

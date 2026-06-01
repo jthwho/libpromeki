@@ -108,6 +108,58 @@ inline const VideoEncoderPreset VideoEncoderPreset::Balanced{2};
 inline const VideoEncoderPreset VideoEncoderPreset::HighQuality{3};
 inline const VideoEncoderPreset VideoEncoderPreset::Lossless{4};
 
+/**
+ * @brief Well-known Enum type for H.264 / AVC profiles.
+ *
+ * H.264 profiles are codec-specific (HEVC and AV1 have their own), so
+ * this is the backend-internal vocabulary the H.264 encoders share — it
+ * is not the type of the generic @ref MediaConfig::VideoProfile config
+ * key, which stays a codec-agnostic String.  The String ↔ enum mapping
+ * (lowercase x264 / ffmpeg wire tokens such as @c "high422") and the
+ * geometry-based auto-selection live in the serialization helper
+ * @ref H264ProfileLevel.
+ *
+ * - @c Auto            — derive a concrete profile from the input
+ *   geometry (chroma / bit depth).
+ * - @c Baseline        — Constrained Baseline / Baseline.
+ * - @c Main            — Main profile.
+ * - @c High            — High profile (8-bit 4:2:0).
+ * - @c High10          — High 10 (10-bit 4:2:0).
+ * - @c High422         — High 4:2:2 (up to 10-bit 4:2:2).
+ * - @c High444         — High 4:4:4 Predictive.
+ * - @c ProgressiveHigh — Progressive High (frame-only High).
+ */
+class H264Profile : public TypedEnum<H264Profile> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("H264Profile", "H.264 Profile", 0,
+                                                   {"Auto", 0, "Auto (derive from input)"},
+                                                   {"Baseline", 1, "Constrained Baseline"}, {"Main", 2, "Main"},
+                                                   {"High", 3, "High"}, {"High10", 4, "High 10"},
+                                                   {"High422", 5, "High 4:2:2"},
+                                                   {"High444", 6, "High 4:4:4 Predictive"},
+                                                   {"ProgressiveHigh", 7, "Progressive High"}); // default: Auto
+
+                using TypedEnum<H264Profile>::TypedEnum;
+
+                static const H264Profile Auto;
+                static const H264Profile Baseline;
+                static const H264Profile Main;
+                static const H264Profile High;
+                static const H264Profile High10;
+                static const H264Profile High422;
+                static const H264Profile High444;
+                static const H264Profile ProgressiveHigh;
+};
+
+inline const H264Profile H264Profile::Auto{0};
+inline const H264Profile H264Profile::Baseline{1};
+inline const H264Profile H264Profile::Main{2};
+inline const H264Profile H264Profile::High{3};
+inline const H264Profile H264Profile::High10{4};
+inline const H264Profile H264Profile::High422{5};
+inline const H264Profile H264Profile::High444{6};
+inline const H264Profile H264Profile::ProgressiveHigh{7};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

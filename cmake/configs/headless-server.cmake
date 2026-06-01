@@ -37,6 +37,10 @@ promeki_config_option(PROMEKI_ENABLE_PNG       ON)
 promeki_config_option(PROMEKI_ENABLE_JPEG      ON)
 # JPEGXS is x86-only + needs nasm/yasm — leave probe-driven.
 # promeki_config_option(PROMEKI_ENABLE_JPEGXS  ON)
+# x264 software H.264 encoder — useful for server-side transcode.
+# GPL-2.0-or-later: enabling it makes this build GPL.  Set OFF if you need
+# to ship a non-GPL server binary (NVENC still covers H.264 on GPU hosts).
+promeki_config_option(PROMEKI_ENABLE_X264      ON)
 promeki_config_option(PROMEKI_ENABLE_FREETYPE  OFF)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     ON)
 promeki_config_option(PROMEKI_ENABLE_OPUS      ON)

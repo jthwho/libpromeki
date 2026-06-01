@@ -27,6 +27,53 @@ PixelFormat::ID PixelFormat::registerType() {
 }
 
 // ---------------------------------------------------------------------------
+// H.273 colour signalling — resolve caller overrides against the format's
+// ColorModel / videoRange, then decide the VUI flags.  Shared by every
+// video encoder backend so colour is signalled identically.
+// ---------------------------------------------------------------------------
+
+PixelFormat::H273ColorDescription PixelFormat::resolveH273(uint32_t cfgPrimaries, uint32_t cfgTransfer,
+                                                           uint32_t cfgMatrix, uint32_t cfgRange) const {
+        H273ColorDescription   out;
+        const ColorModel::H273 h = ColorModel::toH273(colorModel().id());
+
+        out.primaries = (cfgPrimaries == ColorAuto) ? h.primaries : cfgPrimaries;
+        out.transfer = (cfgTransfer == ColorAuto) ? h.transfer : cfgTransfer;
+        out.matrix = (cfgMatrix == ColorAuto) ? h.matrix : cfgMatrix;
+
+        if (cfgRange == 0u /*Unknown*/) {
+                // Map VideoRange::Limited(1) / Full(2) through; anything
+                // else stays at 0 so the VUI omits range signalling.
+                out.range = static_cast<uint32_t>(videoRange().value());
+        } else {
+                out.range = cfgRange;
+        }
+        return out;
+}
+
+PixelFormat::VuiColorSignal PixelFormat::vuiColorSignal(const H273ColorDescription &desc) {
+        VuiColorSignal s;
+        const bool     haveAny = (desc.primaries != 0 && desc.primaries != 2) ||
+                             (desc.transfer != 0 && desc.transfer != 2) || (desc.matrix != 0 && desc.matrix != 2);
+        const bool haveRange = (desc.range == 1u /*Limited*/ || desc.range == 2u /*Full*/);
+        if (!haveAny && !haveRange) return s;
+
+        s.signalTypePresent = true;
+        // video_full_range_flag is a single bit — Full → 1, Limited /
+        // Unknown → 0 (safest SDR default when only colour description is
+        // present).
+        s.fullRange = (desc.range == 2u /*Full*/);
+
+        if (haveAny) {
+                s.colorDescriptionPresent = true;
+                s.primaries = (desc.primaries != 0) ? desc.primaries : 2;
+                s.transfer = (desc.transfer != 0) ? desc.transfer : 2;
+                s.matrix = (desc.matrix != 0) ? desc.matrix : 2;
+        }
+        return s;
+}
+
+// ---------------------------------------------------------------------------
 // Factory functions for well-known pixel descriptions
 // ---------------------------------------------------------------------------
 

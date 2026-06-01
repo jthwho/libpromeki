@@ -201,15 +201,19 @@ List<int> VideoEncoder::supportedInputsFor(VideoCodec::ID codecId, VideoCodec::B
                 }
                 return {};
         }
-        // Union across every registered backend for this codec.
-        Set<int> acc;
-        for (const auto &r : it->second) {
-                for (int pd : r.supportedInputs) acc.insert(pd);
-        }
-        List<int> out;
-        out.reserve(acc.size());
-        for (int pd : acc) out.pushToBack(pd);
-        return out;
+        // Unpinned: report the highest-weight backend's inputs only — that
+        // is exactly the backend @ref create selects by default (the record
+        // list is kept sorted highest-weight-first by registerBackend, and
+        // create falls back to list.front()).  Reporting the union across
+        // every backend would be unsound: the planner's proposeInput
+        // short-circuit treats any listed format as "no CSC needed", but a
+        // format that only a lower-weight backend accepts (e.g. x264's
+        // planar 4:2:0) would then be handed to the higher-weight backend
+        // that create actually instantiates (NVENC, which wants NV12) and
+        // rejected at encode time with PixelFormatNotSupported.  Keeping
+        // introspection consistent with instantiation forces the planner to
+        // insert the CSC the chosen backend really needs.
+        return it->second.front().supportedInputs;
 }
 
 Result<VideoEncoder *> VideoEncoder::create(VideoCodec::ID codecId, VideoCodec::Backend pinned,

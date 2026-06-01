@@ -41,6 +41,11 @@ promeki_config_option(PROMEKI_ENABLE_PROAV     ON)
 promeki_config_option(PROMEKI_ENABLE_MUSIC     ON)
 promeki_config_option(PROMEKI_ENABLE_PNG       ON)
 promeki_config_option(PROMEKI_ENABLE_JPEG      ON)
+# x264 H.264 software encoder.  Default ON per project direction, but
+# GPL-2.0-or-later: enabling it makes the whole libpromeki build subject
+# to the GPL (configure prints a GPL COMPLIANCE NOTICE; see
+# THIRD-PARTY-LICENSES).  Set OFF to keep a non-GPL build.
+promeki_config_option(PROMEKI_ENABLE_X264      ON)
 # PROMEKI_ENABLE_JPEGXS / V4L2 / MEMFD / CUDA / NVENC / NVDEC / NDI default
 # ON only when the corresponding host capability or SDK is detected.  Leave
 # them unset here to honour the probe, or pin them explicitly below.
@@ -70,6 +75,7 @@ promeki_config_option(PROMEKI_USE_SYSTEM_ZLIB          OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_LIBSPNG       OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_LIBJPEG       OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   OFF)
+promeki_config_option(PROMEKI_USE_SYSTEM_X264          OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_FREETYPE      OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_SNDFILE       OFF)
 promeki_config_option(PROMEKI_USE_SYSTEM_OPUS          OFF)

@@ -54,6 +54,7 @@
 #include <promeki/mutex.h>
 #include <promeki/pair.h>
 #include <promeki/frame.h>
+#include <algorithm>
 #include <cstring>
 #include <dlfcn.h>
 
@@ -446,6 +447,19 @@ namespace {
 
 class NvdecVideoDecoder::Impl {
         public:
+                // Floor on the decode-surface pool (CUVIDDECODECREATEINFO::
+                // ulNumDecodeSurfaces / CUVIDPARSERPARAMS::ulMaxNumDecodeSurfaces).
+                // The parser derives min_num_decode_surfaces from the SPS
+                // max_num_ref_frames, which for an all-intra (zero-reference)
+                // stream — e.g. libx264 with keyint=1 — is 1.  A single
+                // decode surface leaves cuvidDecodePicture no working buffer
+                // and it fails with CUDA_ERROR_INVALID_VALUE (== 1).  NVENC's
+                // level-derived SPS happens to signal a larger DPB so its
+                // streams decode, masking the defect.  Clamp to a small pool
+                // so any conformant H.264/HEVC stream decodes regardless of
+                // its signalled reference count.
+                static constexpr unsigned int kMinDecodeSurfaces = 4;
+
                 Impl(Codec codec, NvdecVideoDecoder &outer) : _codec(codec), _outer(outer) {}
 
                 ~Impl() { destroySession(); }
@@ -801,7 +815,7 @@ class NvdecVideoDecoder::Impl {
                         ci.ChromaFormat = fmt->chroma_format;
                         ci.OutputFormat = surfaceFmt;
                         ci.DeinterlaceMode = cudaVideoDeinterlaceMode_Weave;
-                        ci.ulNumDecodeSurfaces = (fmt->min_num_decode_surfaces > 0) ? fmt->min_num_decode_surfaces : 8;
+                        ci.ulNumDecodeSurfaces = std::max<unsigned int>(fmt->min_num_decode_surfaces, kMinDecodeSurfaces);
                         ci.ulNumOutputSurfaces = 2;
                         ci.ulCreationFlags = cudaVideoCreate_PreferCUVID;
                         ci.bitDepthMinus8 = fmt->bit_depth_luma_minus8;

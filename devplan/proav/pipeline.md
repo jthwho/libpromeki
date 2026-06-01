@@ -90,6 +90,20 @@ lifecycle state machine.  Shipped in this commit:
   guard (e.g. a bounded RTP receiver whose last frame lands exactly on
   the limit).
 
+## Bug fixes (landed 2026-06-01)
+
+### Injected stage use-after-free during stalled close cascade
+
+`MediaPipeline::injectStage` now registers an `ObjectBase` destruction
+cleanup (gated on the pipeline still being alive) on every injected stage.
+The cleanup calls `detachInjectedStage(name)`, which nulls the entry in
+`_stages` and removes it from `_injected`.  This prevents a use-after-free
+when a caller-owned injected stage is deleted while the pipeline's close
+cascade is stalled (e.g. a downstream stage erroring on every frame so
+`finalizeClose` never ran to clear the maps).  The close path already skips
+null stage pointers, so nulling rather than erasing is safe even if a
+concurrent `initiateClose` is iterating `_stages`.
+
 ## Functional test runner — SHIPPED
 
 `utils/promeki-test/` (shipped 2026-05-05) replaces the legacy

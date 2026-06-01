@@ -12,6 +12,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_CORE
 #include <cassert>
+#include <cstddef>
 #include <type_traits>
 #include <utility>
 #include <promeki/namespace.h>

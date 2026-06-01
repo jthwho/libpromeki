@@ -18,6 +18,7 @@
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <cerrno>
+#include <csetjmp>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
@@ -107,6 +108,26 @@ namespace {
         bool               g_memSpacesTruncated = false;
 
         bool g_consoleTraceEnabled = true;
+
+        // Original crash signal number, captured at handler entry.
+        volatile sig_atomic_t g_crashSigno = 0;
+
+        // Stack-trace watchdog state (crash path only).
+        //
+        // Symbolizing the backtrace is the one report stage that can hang:
+        // backtrace_symbols()/__cxa_demangle() allocate, and if the crashing
+        // thread already holds the malloc arena lock (the classic
+        // heap-corruption SIGABRT) or the dynamic-loader lock, the allocation
+        // deadlocks and the handler wedges forever.  We bound it with alarm():
+        // on timeout SIGALRM fires, the handler siglongjmp()s back to the
+        // trace site, and we fall back to a raw (fully signal-safe) dump of
+        // the frame addresses so the rest of the report still completes.
+        //
+        // Snapshotted from LibraryOptions::CrashStackTraceTimeout at
+        // install() time (0 disables the watchdog).
+        int                   g_stackTraceTimeoutSecs = 10;
+        volatile sig_atomic_t g_stackTraceWatchActive = 0;
+        sigjmp_buf            g_stackTraceJmp;
 
         // Signals we handle.
         constexpr int CrashSignals[] = {SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL};
@@ -580,6 +601,24 @@ namespace {
                 // time.
                 safeWrite2(fd1, fd2, sym);
                 safeWrite2(fd1, fd2, "\n");
+        }
+
+        /// SIGALRM handler armed only while the crash-path stack trace is
+        /// being symbolized (see @ref g_stackTraceWatchActive).  If
+        /// symbolization deadlocks — typically on the malloc arena lock the
+        /// crashing thread already holds — the alarm fires here and we
+        /// siglongjmp() back to the trace site rather than wedge forever.
+        ///
+        /// siglongjmp out of a signal handler is async-signal-safe; it is
+        /// only safe to continue afterwards because nothing in the remainder
+        /// of @ref writeReportBody allocates (every later stage uses raw
+        /// syscalls), so abandoning the half-finished allocation while its
+        /// lock is still held cannot corrupt anything we go on to do.
+        void stackTraceTimeoutHandler(int /*signo*/) {
+                if (g_stackTraceWatchActive) {
+                        g_stackTraceWatchActive = 0;
+                        siglongjmp(g_stackTraceJmp, 1);
+                }
         }
 
         /// Writes a full backtrace to @p fd1 and @p fd2 with demangled C++
@@ -1125,12 +1164,84 @@ namespace {
                 writeThreadList(consoleFd, logFd, tid, threadMark);
 
                 // --- Stack trace ---
+                // Flush everything written so far to stable storage *before*
+                // the stack trace.  The whole trace stage is the one part of
+                // the report that can hang, so we make the report durable on
+                // disk up to this point even if we never get past it.  fsync()
+                // is on the POSIX async-signal-safe list.
+                if (logFd >= 0) fsync(logFd);
+
                 safeWrite2(consoleFd, logFd, "\n--- Stack Trace ---\n");
+
+                // The frame buffer is function-local-static (not on the stack)
+                // so its contents remain well-defined after a siglongjmp out of
+                // the watchdog: per the standard, automatic objects written
+                // between sigsetjmp/siglongjmp are indeterminate afterwards, but
+                // a static object is not.  Zeroed each entry so the timeout path
+                // can scan for however many frames were captured.
                 constexpr int MaxFrames = 100;
-                void         *frames[MaxFrames];
-                int           frameCt = backtrace(frames, MaxFrames);
-                if (frameCt > 0) {
-                        writeStackTrace(consoleFd, logFd, frames, frameCt);
+                static void  *frames[MaxFrames];
+                for (int i = 0; i < MaxFrames; ++i) frames[i] = nullptr;
+
+                // On the crash path, bound the *entire* trace stage with a
+                // SIGALRM watchdog.  Two distinct deadlocks are possible:
+                //   - backtrace() walks the loader's data and can block on the
+                //     dynamic-loader lock (e.g. a crash taken mid-dlopen, or —
+                //     in a fork()ed child — a lock another thread held at fork,
+                //     which fork does not reset the way it resets malloc), and
+                //   - backtrace_symbols()/__cxa_demangle() allocate and so
+                //     deadlock when the crashing thread already holds the malloc
+                //     arena lock (the classic heap-corruption SIGABRT).
+                // On timeout we siglongjmp back here, dump whatever raw frame
+                // addresses were captured using only signal-safe primitives,
+                // and let the rest of the report finish.  The writeTrace() path
+                // runs in normal context and must not hijack alarm()/SIGALRM, so
+                // it traces unguarded.
+                const bool useWatchdog = isCrash && g_stackTraceTimeoutSecs > 0;
+                if (useWatchdog) {
+                        struct sigaction alarmSa;
+                        std::memset(&alarmSa, 0, sizeof(alarmSa));
+                        alarmSa.sa_handler = stackTraceTimeoutHandler;
+                        sigemptyset(&alarmSa.sa_mask);
+                        alarmSa.sa_flags = 0; // no SA_RESTART — we longjmp out
+                        struct sigaction prevAlarmSa;
+                        sigaction(SIGALRM, &alarmSa, &prevAlarmSa);
+
+                        if (sigsetjmp(g_stackTraceJmp, 1) == 0) {
+                                g_stackTraceWatchActive = 1;
+                                alarm(static_cast<unsigned int>(g_stackTraceTimeoutSecs));
+                                int frameCt = backtrace(frames, MaxFrames);
+                                if (frameCt > 0) writeStackTrace(consoleFd, logFd, frames, frameCt);
+                                // Clear the flag *before* cancelling the alarm
+                                // so a race-delivered SIGALRM no-ops instead of
+                                // jumping after we've already finished.
+                                g_stackTraceWatchActive = 0;
+                                alarm(0);
+                        } else {
+                                // Timed out and longjmp'd back.  Emit whatever
+                                // frames were captured (if any) as raw addresses
+                                // using only signal-safe primitives (our own
+                                // utox + write()); cross-reference them against
+                                // the Memory Map section below to resolve
+                                // offline.
+                                alarm(0);
+                                safeWrite2(consoleFd, logFd,
+                                           "*** stack trace timed out (lock held by crashing "
+                                           "thread?) — raw frame addresses follow ***\n");
+                                char addrBuf[32];
+                                for (int i = 0; i < MaxFrames && frames[i] != nullptr; ++i) {
+                                        safeWrite2(consoleFd, logFd, "  ");
+                                        safeWrite2(consoleFd, logFd,
+                                                   utox(reinterpret_cast<uint64_t>(frames[i]), addrBuf,
+                                                        sizeof(addrBuf)));
+                                        safeWrite2(consoleFd, logFd, "\n");
+                                }
+                        }
+
+                        sigaction(SIGALRM, &prevAlarmSa, nullptr);
+                } else {
+                        int frameCt = backtrace(frames, MaxFrames);
+                        if (frameCt > 0) writeStackTrace(consoleFd, logFd, frames, frameCt);
                 }
 
 #if defined(PROMEKI_PLATFORM_LINUX)
@@ -1179,10 +1290,27 @@ namespace {
         void signalHandler(int signo, siginfo_t *info, void *ucontext) {
                 char numBuf[32];
 
+                // Remember the signal so the stack-trace watchdog can re-raise
+                // it (and so anything else downstream can reference it).
+                g_crashSigno = signo;
+
                 // Open crash log file (pre-built path).
                 int logFd = -1;
                 if (g_crashLogPath[0] != '\0') {
                         logFd = ::open(g_crashLogPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                }
+
+                // First thing on screen: where the crash log is being written.
+                // Printed up front (not just at the end) so the path is visible
+                // even if a later stage — e.g. stack-trace symbolization —
+                // stalls before we reach the trailing "saved to" confirmation.
+                if (logFd >= 0) {
+                        safeWrite(STDERR_FILENO, "\nWriting crash log to: ");
+                        safeWrite(STDERR_FILENO, g_crashLogPath);
+                        safeWrite(STDERR_FILENO, "\n");
+                } else {
+                        safeWrite(STDERR_FILENO,
+                                  "\n(no crash log file could be opened — writing to stderr only)\n");
                 }
 
                 // --- Header ---
@@ -1225,8 +1353,23 @@ namespace {
                 }
 
                 // Best-effort logger flush — NOT signal-safe, but all critical
-                // output has already been written via raw write() above.
+                // output has already been written via raw write() above.  It
+                // can still wedge (e.g. a logger mutex held by a thread that no
+                // longer exists), so arm a final dead-man SIGALRM with its
+                // default, process-terminating disposition: if the flush
+                // stalls, we die instead of hanging the handler forever.  A
+                // clean flush cancels it; the re-raise below would cancel any
+                // pending alarm anyway by terminating the process.
+                {
+                        struct sigaction dfl;
+                        std::memset(&dfl, 0, sizeof(dfl));
+                        dfl.sa_handler = SIG_DFL;
+                        sigemptyset(&dfl.sa_mask);
+                        sigaction(SIGALRM, &dfl, nullptr);
+                        alarm(g_stackTraceTimeoutSecs > 0 ? static_cast<unsigned int>(g_stackTraceTimeoutSecs) : 10);
+                }
                 promekiLogSync();
+                alarm(0);
 
                 // Restore default handler and re-raise for core dump.
                 struct sigaction sa;
@@ -1344,6 +1487,14 @@ void CrashHandler::install() {
         // Counter values are read live at crash time; only the
         // {id, name, Stats*} metadata is cached here.
         snapshotMemSpaces();
+
+        // Snapshot the stack-trace watchdog timeout (read here so the signal
+        // handler never has to touch the LibraryOptions Variant database).
+        // An explicit default is passed because getAs() falls back to T{} (==0,
+        // which would disable the watchdog) rather than the spec default when
+        // the option has never been set.
+        g_stackTraceTimeoutSecs =
+                LibraryOptions::instance().getAs<int32_t>(LibraryOptions::CrashStackTraceTimeout, 10);
 
         // Enable core dumps if requested.
         if (LibraryOptions::instance().getAs<bool>(LibraryOptions::CoreDumps)) {

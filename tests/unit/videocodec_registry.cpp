@@ -9,6 +9,7 @@
 #include <promeki/videocodec.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
+#include <promeki/backendweight.h>
 #include <promeki/config.h>
 #include <promeki/pixelformat.h>
 
@@ -328,6 +329,67 @@ TEST_CASE("VideoCodec::registerData drops malformed names") {
 // ---------------------------------------------------------------------------
 // registeredBackends — union over encoder + decoder registries
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// supportedInputsFor — must reflect the backend create() actually picks,
+// not the union of every registered backend.  Regression guard for the
+// x264-vs-NVENC planner bug: with two H.264 encoders registered, the
+// unpinned input list previously unioned both backends' formats, so the
+// planner skipped a CSC the chosen (highest-weight) backend really needed.
+// ---------------------------------------------------------------------------
+
+TEST_CASE("VideoCodec: unpinned encoderSupportedInputs returns the highest-weight backend's inputs only") {
+        // A private codec ID with two encoder backends whose accepted
+        // input formats are disjoint, so "union" vs "highest-weight" is
+        // observably different.
+        VideoCodec::ID   codecId = VideoCodec::registerType();
+        VideoCodec::Data d;
+        d.id = codecId;
+        d.name = "VideoEncTest_WeightCodec";
+        d.desc = "Two-backend codec for supportedInputs weight test";
+        VideoCodec::registerData(std::move(d));
+
+        auto lowBk = VideoCodec::registerBackend("VideoEncTest_LowWeight");
+        auto highBk = VideoCodec::registerBackend("VideoEncTest_HighWeight");
+        REQUIRE(isOk(lowBk));
+        REQUIRE(isOk(highBk));
+
+        // Factory is never invoked by this test (we only introspect
+        // supportedInputs) but registerBackend requires a non-null one.
+        auto nullFactory = []() -> VideoEncoder * { return nullptr; };
+
+        // Register low-weight first with a 4:2:2 input; high-weight second
+        // with a distinct 4:2:0 input.  registerBackend keeps the list
+        // sorted highest-weight-first regardless of insertion order.
+        REQUIRE(VideoEncoder::registerBackend({
+                        .codecId = codecId,
+                        .backend = value(lowBk),
+                        .weight = BackendWeight::Vendored,
+                        .supportedInputs = {static_cast<int>(PixelFormat::YUV8_422_Planar_Rec709)},
+                        .factory = nullFactory,
+                }) == Error::Ok);
+        REQUIRE(VideoEncoder::registerBackend({
+                        .codecId = codecId,
+                        .backend = value(highBk),
+                        .weight = BackendWeight::User,
+                        .supportedInputs = {static_cast<int>(PixelFormat::YUV8_420_Planar_Rec709)},
+                        .factory = nullFactory,
+                }) == Error::Ok);
+
+        // Unpinned: the high-weight backend's input only — NOT the union.
+        List<PixelFormat> unpinned = VideoCodec(codecId).encoderSupportedInputs();
+        REQUIRE(unpinned.size() == 1);
+        CHECK(unpinned[0] == PixelFormat(PixelFormat::YUV8_420_Planar_Rec709));
+
+        // Pinning each backend yields exactly that backend's inputs.
+        List<PixelFormat> high = VideoCodec(codecId, value(highBk)).encoderSupportedInputs();
+        REQUIRE(high.size() == 1);
+        CHECK(high[0] == PixelFormat(PixelFormat::YUV8_420_Planar_Rec709));
+
+        List<PixelFormat> low = VideoCodec(codecId, value(lowBk)).encoderSupportedInputs();
+        REQUIRE(low.size() == 1);
+        CHECK(low[0] == PixelFormat(PixelFormat::YUV8_422_Planar_Rec709));
+}
 
 TEST_CASE("VideoCodec::registeredBackends: includes every backend with a wired session") {
         // The Passthrough backend (registered by tests/unit/videocodec.cpp)
