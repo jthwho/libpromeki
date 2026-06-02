@@ -13,6 +13,10 @@
 #include <promeki/string.h>
 #include <promeki/util.h>
 
+#if PROMEKI_ENABLE_DMABUF
+#include <promeki/dmabufbufferimpl.h>
+#endif
+
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <Windows.h>
 #else
@@ -42,6 +46,32 @@ Buffer Buffer::wrapHost(void *p, size_t sz, size_t an, const MemSpace &ms) {
         if (p == nullptr || sz == 0) return b;
         b._d = BufferImplPtr::takeOwnership(new WrappedHostBufferImpl(ms, p, sz, an));
         return b;
+}
+
+Buffer Buffer::wrapDmabuf(int fd, size_t sz, size_t an) {
+        Buffer b;
+#if PROMEKI_ENABLE_DMABUF
+        if (fd < 0 || sz == 0) return b;
+        b._d = BufferImplPtr::takeOwnership(
+                new DmabufBufferImpl(MemSpace(MemSpace::Dmabuf), fd, sz, an, DmabufFdOwnership::Dup));
+        if (!b.isValid()) b = Buffer(); // dup failed — return a clean empty handle
+#else
+        (void)fd;
+        (void)sz;
+        (void)an;
+        promekiWarn("Buffer::wrapDmabuf: build configured without PROMEKI_ENABLE_DMABUF");
+#endif
+        return b;
+}
+
+int Buffer::dmabufFd() const {
+#if PROMEKI_ENABLE_DMABUF
+        if (!_d.isValid()) return -1;
+        const auto *d = dynamic_cast<const DmabufBufferImpl *>(_d.ptr());
+        return d != nullptr ? d->dmabufFd() : -1;
+#else
+        return -1;
+#endif
 }
 
 namespace {

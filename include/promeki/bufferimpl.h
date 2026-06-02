@@ -12,9 +12,11 @@
 #if PROMEKI_ENABLE_CORE
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/error.h>
+#include <promeki/function.h>
 #include <promeki/mutex.h>
 #include <promeki/map.h>
 #include <promeki/memspace.h>
@@ -81,8 +83,28 @@ class BufferImpl {
                  */
                 PROMEKI_SHARED_BASE(BufferImpl)
 
+                /**
+                 * @brief Callback fired once when the impl is destroyed.
+                 *
+                 * See @ref setReleaseCallback.
+                 */
+                using ReleaseCallback = Function<void()>;
+
                 BufferImpl() = default;
-                virtual ~BufferImpl() = default;
+
+                /**
+                 * @brief Destroys the impl and fires the release callback.
+                 *
+                 * If a @ref ReleaseCallback was armed via
+                 * @ref setReleaseCallback it runs here, after the
+                 * derived backend's destructor has already torn down its
+                 * own state (closed fds, freed allocations).  The
+                 * callback therefore observes the buffer as gone and
+                 * must not touch it.
+                 */
+                virtual ~BufferImpl() {
+                        if (_onRelease) _onRelease();
+                }
 
                 BufferImpl(const BufferImpl &) = default;
                 BufferImpl &operator=(const BufferImpl &) = default;
@@ -274,6 +296,35 @@ class BufferImpl {
                  */
                 virtual bool isCowBacked() const { return false; }
 
+                // ---- Release notification ----
+
+                /**
+                 * @brief Arms a callback fired once when this impl is destroyed.
+                 *
+                 * A @ref Buffer is a value handle over a refcounted
+                 * @c SharedPtr<BufferImpl>; the impl is destroyed when
+                 * its last handle is dropped.  Arming a release callback
+                 * turns that final-reference teardown into an event,
+                 * letting a producer learn when every consumer has
+                 * finished with a buffer without polling
+                 * @c referenceCount().
+                 *
+                 * The callback runs exactly once, from the destructor
+                 * (@ref ~BufferImpl), on whatever thread drops the last
+                 * reference — which may not be the thread that armed it.
+                 * It must be self-contained: by the time it fires the
+                 * buffer (and any derived backend state) is gone, so it
+                 * must not capture or dereference the impl / @ref Buffer.
+                 *
+                 * The primary user is the V4L2 dma-buf capture pool,
+                 * which re-queues a kernel capture buffer to the driver
+                 * once the exported dma-buf's last reference is released.
+                 *
+                 * @param cb The callback to fire on destruction.  Pass an
+                 *           empty @ref ReleaseCallback to disarm.
+                 */
+                void setReleaseCallback(ReleaseCallback cb) { _onRelease = std::move(cb); }
+
         protected:
                 /**
                  * @brief Subclass helper: increments the refcount for @p domain.
@@ -336,6 +387,7 @@ class BufferImpl {
         private:
                 mutable Mutex          _mapMutex;
                 Map<MemDomain::ID, int> _mapRefcounts;
+                ReleaseCallback         _onRelease;
 };
 
 PROMEKI_NAMESPACE_END

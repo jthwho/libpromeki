@@ -328,6 +328,43 @@ struct MemSpaceRegistry {
                                         return Error::Ok;
                                 },
                                 .stats = makeStats()};
+
+                        // Dmabuf.  Buffers are imported from an existing
+                        // dma-buf fd via Buffer::wrapDmabuf and backed by
+                        // DmabufBufferImpl (see dmabufbufferimpl.cpp); there is
+                        // no generic MemSpace::alloc path until the dma-heap
+                        // allocator lands.  The Ops entry exists so the MemSpace
+                        // resolves to the Dmabuf domain and surfaces a name +
+                        // stats line in operator dashboards.  Registered
+                        // unconditionally — on builds without
+                        // PROMEKI_ENABLE_DMABUF the ID is valid metadata but no
+                        // backend can be constructed.
+                        entries[MemSpace::Dmabuf] = {
+                                .id = MemSpace::Dmabuf,
+                                .name = "Dmabuf",
+                                // Native fd is not directly CPU-addressable; a
+                                // host view requires an explicit mapAcquire(Host).
+                                .isHostAccessible = [](const MemAllocation &) -> bool { return false; },
+                                .alloc = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::Dmabuf has no alloc path; import via Buffer::wrapDmabuf");
+                                },
+                                .release = [](MemAllocation &) -> void {
+                                        PROMEKI_ASSERT(false && "MemSpace::Dmabuf has no release path; managed by DmabufBufferImpl");
+                                },
+                                .copy = [](const MemAllocation &, const MemAllocation &dst, size_t bytes) -> Error {
+                                        promekiWarn("MemSpace::Dmabuf copy refused: dst memspace id=%d unsupported (bytes=%llu)",
+                                                    (int)dst.ms.id(), (unsigned long long)bytes);
+                                        return Error::NotSupported;
+                                },
+                                .fill = [](void *, size_t, char) -> Error {
+                                        // Raw MemSpace::fill is never the path for a
+                                        // dma-buf — callers map to Host and fill the
+                                        // mapped view.  Refuse rather than touch an
+                                        // address we do not own.
+                                        return Error::NotSupported;
+                                },
+                                .stats = makeStats(),
+                                .domainId = MemDomain::Dmabuf};
                 }
 };
 

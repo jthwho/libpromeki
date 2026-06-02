@@ -68,6 +68,7 @@
 #cmakedefine01 PROMEKI_ENABLE_SRT
 #cmakedefine01 PROMEKI_ENABLE_MDNS
 #cmakedefine01 PROMEKI_ENABLE_MEMFD
+#cmakedefine01 PROMEKI_ENABLE_DMABUF
 
 /* Set when any GPL-licensed component (e.g. x264) is enabled; the build is
  * then subject to the GPL.  See THIRD-PARTY-LICENSES. */

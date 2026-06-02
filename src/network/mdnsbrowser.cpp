@@ -481,7 +481,10 @@ void MdnsBrowser::processRecord(const MdnsParsedRecord &rec, const NetworkInterf
                                 break;
                         }
 
-                        case MdnsParsedRecord::Type::Unknown:
+                        // Every other DNS record type (NS, CNAME, SOA,
+                        // MX, SVCB, DNSSEC records, etc.) is irrelevant
+                        // to service browsing and is silently ignored.
+                        default:
                                 break;
                 }
         }

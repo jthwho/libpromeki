@@ -241,6 +241,27 @@ class BufferMapCommand : public BufferCommand {
 };
 
 /**
+ * @brief BufferMapCommand carrying a dma-buf fd for a @ref MemDomain::Dmabuf map.
+ * @ingroup util
+ *
+ * Resolved by @c DmabufBufferImpl::mapAcquire when @ref target is
+ * @ref MemDomain::Dmabuf.  @ref dmabufFd is the file descriptor a
+ * consumer hands to another DMA-capable subsystem (e.g. a V4L2
+ * @c VIDIOC_QBUF with @c V4L2_MEMORY_DMABUF).  The fd is owned by the
+ * backing @c DmabufBufferImpl — the consumer must not close it, and
+ * must keep the mapping acquired (hold the @ref BufferRequest /
+ * matching @c mapRelease) for as long as the fd is in flight.
+ *
+ * Reports @c kind() == @ref Map (inherited): it is a map command with a
+ * richer typed output, reached via @c BufferRequest::commandAs.
+ */
+class BufferDmabufMapCommand : public BufferMapCommand {
+        public:
+                /** @brief The dma-buf file descriptor, or -1 on error. */
+                int dmabufFd = -1;
+};
+
+/**
  * @brief Command to copy a byte range from one Buffer to another.
  * @ingroup util
  *

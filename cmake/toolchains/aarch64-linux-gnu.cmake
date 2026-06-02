@@ -103,6 +103,7 @@ macro(_promeki_xc_resolve var doc)
 endmacro()
 
 _promeki_xc_resolve(PROMEKI_CROSS_TOOLCHAIN_PREFIX "Cross compiler binary prefix")
+_promeki_xc_resolve(PROMEKI_CROSS_TOOLCHAIN_SUFFIX "Cross compiler binary version suffix (e.g. -12)")
 _promeki_xc_resolve(PROMEKI_SYSROOT                "Target sysroot for cross-compilation")
 _promeki_xc_resolve(PROMEKI_STAGING_PREFIX         "Cross-install staging prefix (CMAKE_STAGING_PREFIX)")
 _promeki_xc_resolve(PROMEKI_TARGET_ARCH            "Cross-target -march value")
@@ -113,13 +114,22 @@ _promeki_xc_resolve(PROMEKI_TARGET_TUNE            "Cross-target -mtune value")
 # Compiler selection.  Default to Debian's aarch64-linux-gnu-{gcc,g++};
 # override via PROMEKI_CROSS_TOOLCHAIN_PREFIX for Yocto / Buildroot /
 # vendor SDKs.
+#
+# PROMEKI_CROSS_TOOLCHAIN_SUFFIX pins a specific compiler *version* by
+# appending to the gcc/g++ name — e.g. "-12" selects
+# aarch64-linux-gnu-g++-12.  This matters when the target's runtime
+# libstdc++ is older than the host's default cross g++: a binary built
+# with a newer g++ demands GLIBCXX/CXXABI symbol versions the target's
+# libstdc++.so.6 doesn't export and fails to load.  Pinning the cross
+# compiler to the target distro's GCC major (e.g. Raspberry Pi OS /
+# Debian Bookworm → GCC 12) keeps the produced binaries loadable.
 # ---------------------------------------------------------------------------
 if(NOT PROMEKI_CROSS_TOOLCHAIN_PREFIX)
     set(PROMEKI_CROSS_TOOLCHAIN_PREFIX "aarch64-linux-gnu-"
         CACHE STRING "Cross compiler binary prefix" FORCE)
 endif()
-set(CMAKE_C_COMPILER   "${PROMEKI_CROSS_TOOLCHAIN_PREFIX}gcc")
-set(CMAKE_CXX_COMPILER "${PROMEKI_CROSS_TOOLCHAIN_PREFIX}g++")
+set(CMAKE_C_COMPILER   "${PROMEKI_CROSS_TOOLCHAIN_PREFIX}gcc${PROMEKI_CROSS_TOOLCHAIN_SUFFIX}")
+set(CMAKE_CXX_COMPILER "${PROMEKI_CROSS_TOOLCHAIN_PREFIX}g++${PROMEKI_CROSS_TOOLCHAIN_SUFFIX}")
 
 # Useful auxiliary tools — set these so CMake doesn't fall back to the
 # host's ar/ranlib/strip on the cross binaries.  CMake will quietly skip

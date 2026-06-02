@@ -28,6 +28,8 @@
 #include <promeki/timecode.h>
 #include <promeki/compressedvideopayload.h>
 #include <promeki/uncompressedvideopayload.h>
+#include <promeki/buffer.h>
+#include <promeki/list.h>
 
 using namespace promeki;
 
@@ -92,6 +94,57 @@ static UncompressedVideoPayload::Ptr createPlanarImage(int width, int height, Pi
                 std::memset(img.modify()->data()[p].data(), 128, pSize);
         }
         return img;
+}
+
+// ---------------------------------------------------------------------------
+// Abbreviated Motion-JPEG helper
+//
+// Walk a JFIF bitstream marker-by-marker and drop every DHT (0xFFC4)
+// segment, reproducing exactly what USB / V4L2 cameras emit: a JPEG
+// frame whose standard Huffman tables are omitted and assumed by the
+// decoder.  Everything from the SOS marker onward (entropy-coded data)
+// is copied verbatim.
+// ---------------------------------------------------------------------------
+
+static List<uint8_t> stripDhtSegments(const uint8_t *data, size_t size) {
+        List<uint8_t> out;
+        size_t        i = 0;
+        while (i + 1 < size) {
+                if (data[i] != 0xFF) {
+                        out.pushToBack(data[i]);
+                        i++;
+                        continue;
+                }
+                uint8_t marker = data[i + 1];
+                // 0xFF fill byte — emit and advance one.
+                if (marker == 0xFF) {
+                        out.pushToBack(data[i]);
+                        i++;
+                        continue;
+                }
+                // Standalone markers (SOI, EOI, TEM, RSTn) carry no length.
+                if (marker == 0xD8 || marker == 0xD9 || marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
+                        out.pushToBack(data[i]);
+                        out.pushToBack(data[i + 1]);
+                        i += 2;
+                        continue;
+                }
+                // SOS: copy the marker and all following entropy data verbatim.
+                if (marker == 0xDA) {
+                        for (size_t j = i; j < size; j++) out.pushToBack(data[j]);
+                        break;
+                }
+                // Length-bearing segment: [FF][marker][len_hi][len_lo][body…].
+                if (i + 3 >= size) break;
+                size_t segLen = (size_t(data[i + 2]) << 8) | data[i + 3];
+                size_t total  = 2 + segLen;
+                if (i + total > size) break;
+                if (marker != 0xC4) { // keep everything except DHT
+                        for (size_t j = 0; j < total; j++) out.pushToBack(data[i + j]);
+                }
+                i += total;
+        }
+        return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -386,6 +439,92 @@ TEST_CASE("JpegVideoCodec_RoundTripYUYV") {
         REQUIRE(pkt);
         auto decoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::YUV8_422_Rec709), 320, 240);
         CHECK(decoded.isValid());
+}
+
+// ---------------------------------------------------------------------------
+// Abbreviated Motion-JPEG (no DHT) — real-world V4L2 webcam coverage
+//
+// USB cameras commonly emit MJPEG frames that omit the Huffman tables
+// entirely, relying on the decoder to supply the standard Annex K tables
+// per the Motion-JPEG convention.  Vendored libjpeg-turbo already handles
+// this (jinit_huff_decoder calls std_huff_tables for any undefined slot),
+// so these decode without special handling on our side — but a webcam is
+// our single most common JPEG source, so lock the behaviour in here in
+// case the libjpeg build / config ever changes underfoot.
+// ---------------------------------------------------------------------------
+
+// Helper: re-wrap arbitrary JPEG bytes as a CompressedVideoPayload that
+// mirrors what V4l2MediaIO hands the decoder for an MJPEG capture.
+static CompressedVideoPayload::Ptr wrapJpegBytes(const List<uint8_t> &bytes, const ImageDesc &desc) {
+        Buffer buf(bytes.size());
+        std::memcpy(buf.data(), bytes.data(), bytes.size());
+        buf.setSize(bytes.size());
+        return CompressedVideoPayload::Ptr::create(desc, buf);
+}
+
+TEST_CASE("JpegVideoCodec_DecodeAbbreviatedMjpeg_NoDHT_YUYV") {
+        auto                        src = createTestYCbCrImage(320, 240, PixelFormat::YUV8_422_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        REQUIRE(pkt);
+
+        // Sanity: the encoded stream actually contains a DHT to strip.
+        const uint8_t *full     = static_cast<const uint8_t *>(pkt->plane(0).data());
+        size_t         fullSize = pkt->plane(0).size();
+        List<uint8_t>  stripped = stripDhtSegments(full, fullSize);
+        REQUIRE(stripped.size() < fullSize); // at least one DHT segment removed
+
+        auto abbrev = wrapJpegBytes(stripped, pkt->desc());
+        auto decoded =
+                decodeOneFrame(abbrev, PixelFormat(PixelFormat::YUV8_422_Rec709), 320, 240);
+        REQUIRE(decoded.isValid());
+        CHECK(decoded->desc().width() == 320);
+        CHECK(decoded->desc().height() == 240);
+}
+
+TEST_CASE("JpegVideoCodec_DecodeAbbreviatedMjpeg_NoDHT_RGB") {
+        // Same recovery must work on the RGB (non-raw) decode path too.
+        auto                        src = createTestImage(160, 120);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        REQUIRE(pkt);
+
+        const uint8_t *full     = static_cast<const uint8_t *>(pkt->plane(0).data());
+        size_t         fullSize = pkt->plane(0).size();
+        List<uint8_t>  stripped = stripDhtSegments(full, fullSize);
+        REQUIRE(stripped.size() < fullSize);
+
+        auto abbrev  = wrapJpegBytes(stripped, pkt->desc());
+        auto decoded =
+                decodeOneFrame(abbrev, PixelFormat(PixelFormat::RGB8_sRGB), 160, 120);
+        REQUIRE(decoded.isValid());
+        CHECK(decoded->desc().pixelFormat().id() == PixelFormat::RGB8_sRGB);
+}
+
+TEST_CASE("JpegVideoCodec_DecodeAbbreviatedMjpeg_MatchesFullDecode") {
+        // Injecting the standard tables must reproduce the same pixels the
+        // full stream decodes to, because our encoder writes those very
+        // tables (optimize_coding is FALSE).
+        auto                        src = createTestYCbCrImage(64, 64, PixelFormat::YUV8_422_Rec709);
+        CompressedVideoPayload::Ptr pkt = encodeOneFrame(src, MediaConfig());
+        REQUIRE(pkt);
+
+        auto refDecoded = decodeOneFrame(pkt, PixelFormat(PixelFormat::YUV8_422_Rec709), 64, 64);
+        REQUIRE(refDecoded.isValid());
+
+        const uint8_t *full     = static_cast<const uint8_t *>(pkt->plane(0).data());
+        size_t         fullSize = pkt->plane(0).size();
+        List<uint8_t>  stripped = stripDhtSegments(full, fullSize);
+        REQUIRE(stripped.size() < fullSize);
+
+        auto abbrev      = wrapJpegBytes(stripped, pkt->desc());
+        auto abbrDecoded =
+                decodeOneFrame(abbrev, PixelFormat(PixelFormat::YUV8_422_Rec709), 64, 64);
+        REQUIRE(abbrDecoded.isValid());
+
+        const uint8_t *a = refDecoded->data()[0].data();
+        const uint8_t *b = abbrDecoded->data()[0].data();
+        size_t         n = refDecoded->data()[0].size();
+        REQUIRE(n == abbrDecoded->data()[0].size());
+        CHECK(std::memcmp(a, b, n) == 0);
 }
 
 // ---------------------------------------------------------------------------

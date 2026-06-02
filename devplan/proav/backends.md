@@ -100,7 +100,20 @@ that history now lives in git. What remains here is the open work.
   CLI `pmdf-inspect`.
 - **MjpegStreamMediaIO** — rate-limited MJPEG HTTP preview sink.
 - **NullPacingMediaIO** — wall-clock-paced null sink.
-- **V4L2MediaIO** — Linux V4L2 capture (with ALSA pairing).
+- **V4L2MediaIO** — Linux V4L2 capture (with ALSA pairing). Auto-selects
+  dma-buf zero-copy (`VIDIOC_EXPBUF` + release-callback re-queue) when the
+  driver supports it and the capture format is uncompressed; falls back to
+  MMAP + memcpy otherwise. Compressed formats (MJPEG, H.264, …) always use
+  the MMAP path so the host decoder can read bytes via `Buffer::data()`.
+  See [proav/v4l2-m2m-codec.md](v4l2-m2m-codec.md) for the codec backends.
+- **V4l2VideoEncoder / V4l2VideoDecoder** — Hardware H.264/HEVC encoder and
+  decoder over a V4L2 stateful mem2mem codec (`V4l2M2mCodec` engine). Both
+  MPLANE and single-planar drivers supported; auto-probes `/dev/video*`.
+  Supports NV12/NV16/P010 input/output via `V4l2RawFormat`. Profile/level,
+  VUI colorimetry, HDR static metadata (best-effort controls), and caption
+  SEI injection/extraction wired. Registered as backend `"V4L2"` (weight
+  above x264). Validated against kernel `vicodec` test driver; Pi 4 /
+  Xilinx VCU bring-up pending. See [proav/v4l2-m2m-codec.md](v4l2-m2m-codec.md).
 - **NTV2MediaIO** — AJA NTV2 SDI capture/playback. **Phases 1–6
   shipped (2026-05-17).** Single-link + multi-link (QL Squares / QL
   2SI / 12G) SDI capture and playout; ANC capture + insertion through

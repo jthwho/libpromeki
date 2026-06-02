@@ -25,6 +25,7 @@
 #include <promeki/periodiccallback.h>
 #include <promeki/pixelformat.h>
 #include <promeki/queue.h>
+#include <promeki/sharedptr.h>
 #include <promeki/videopayload.h>
 
 struct _snd_pcm;
@@ -32,14 +33,33 @@ typedef struct _snd_pcm snd_pcm_t;
 
 PROMEKI_NAMESPACE_BEGIN
 
+// Shared re-queue gate for the dma-buf zero-copy capture path; defined
+// in v4l2mediaio.cpp.  Held by SharedPtr so it can outlive the
+// V4l2MediaIO while in-flight frames still reference exported buffers.
+struct V4l2RequeueGate;
+
 /**
  * @brief MediaIO backend for V4L2 video capture with optional ALSA audio.
  * @ingroup proav
  *
  * Output-only MediaIO source that captures video frames from a Linux
  * V4L2 device and optionally captures synchronized audio from an ALSA
- * PCM device.  Frames are captured via V4L2 MMAP buffers for zero-copy
- * kernel-to-userspace transfer, then copied into promeki Image objects.
+ * PCM device.
+ *
+ * @par Capture buffer path (auto-selected)
+ *
+ * On open the backend probes @c VIDIOC_EXPBUF against the V4L2 capture
+ * pool:
+ *
+ * - **dma-buf zero-copy** (when the driver supports @c VIDIOC_EXPBUF
+ *   and the build has @c PROMEKI_ENABLE_DMABUF): each kernel capture
+ *   buffer is exported as a dma-buf @em once and handed downstream as a
+ *   @ref MemSpace::Dmabuf @ref Buffer with no host copy.  A per-frame
+ *   release callback re-queues the kernel buffer to the driver only
+ *   once the exported dma-buf's last reference is dropped.
+ * - **MMAP + memcpy** (fallback): each frame is copied out of the
+ *   @c mmap'd kernel buffer into a fresh host @ref Buffer and the kernel
+ *   buffer is re-queued immediately.
  *
  * @par Threading model
  *
@@ -161,6 +181,26 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 /** @brief Maps a PixelFormat::ID to a V4L2 pixel format fourcc. */
                 static uint32_t pixelFormatToV4l2(PixelFormat::ID pd);
 
+                /**
+                 * @brief Whether a capture in @p pd may use the dma-buf
+                 *        zero-copy path.
+                 *
+                 * Zero-copy hands the kernel capture buffer downstream as an
+                 * opaque dma-buf fd with no host mapping.  That only works for
+                 * formats whose downstream consumer is a device (GPU, encoder)
+                 * that takes the dma-buf directly.  A compressed capture
+                 * (MJPEG, H.264, …) must instead be CPU-decoded, and the host
+                 * decoder reads the bytes through @ref Buffer::data(), which
+                 * returns null for an unmapped dma-buf — libjpeg then reports
+                 * an "Empty input file" despite a non-zero byte count.  So
+                 * compressed formats are excluded and stay on the MMAP +
+                 * memcpy path where the bytes are genuinely host-readable.
+                 *
+                 * @param pd The negotiated capture pixel format.
+                 * @return @c true if @p pd may use zero-copy dma-buf capture.
+                 */
+                static bool captureFormatAllowsZeroCopy(const PixelFormat &pd) { return !pd.isCompressed(); }
+
         protected:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
@@ -203,14 +243,33 @@ class V4l2MediaIO : public DedicatedThreadMediaIO {
                 void audioCaptureLoop();
 
                 // -- V4L2 state --
+                //
+                // One entry per V4L2 capture (vb2) buffer.  In the MMAP
+                // path @c start / @c length describe the host mapping; in
+                // the dma-buf zero-copy path @c dmabufFd holds the
+                // device-lifetime fd exported once via VIDIOC_EXPBUF
+                // (@c start stays null), bounding open fds to pool depth.
                 struct MmapBuffer {
-                                void  *start = nullptr;
-                                size_t length = 0;
+                                void  *start    = nullptr;
+                                size_t length   = 0;
+                                int    dmabufFd = -1;
                 };
                 int              _fd = -1;
                 List<MmapBuffer> _buffers;
                 bool             _streaming = false;
                 ImageDesc        _imageDesc;
+
+                // -- dma-buf zero-copy path --
+                //
+                // _zeroCopy is set when the EXPBUF probe in openVideo
+                // succeeds; _bufLength is the per-buffer allocation size
+                // (the dma-buf plane size); _requeueGate decouples the
+                // per-frame re-queue callbacks from this object's
+                // lifetime (callbacks may fire on a downstream thread
+                // after close).
+                bool                          _zeroCopy = false;
+                size_t                        _bufLength = 0;
+                SharedPtr<V4l2RequeueGate>    _requeueGate;
 
                 // -- ALSA state --
                 snd_pcm_t *_pcm = nullptr;

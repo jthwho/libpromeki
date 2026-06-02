@@ -153,6 +153,37 @@ class Buffer {
                 static Buffer wrapHost(void *p, size_t sz, size_t an = 0, const MemSpace &ms = MemSpace::Default);
 
                 /**
+                 * @brief Imports an existing Linux dma-buf fd as a Buffer.
+                 *
+                 * The returned Buffer lives in @ref MemSpace::Dmabuf /
+                 * @ref MemDomain::Dmabuf.  Its fd is reachable via
+                 * @ref dmabufFd (or by acquiring the @ref MemDomain::Dmabuf
+                 * mapping) for handoff to another DMA subsystem — e.g. a
+                 * V4L2 @c VIDIOC_QBUF with @c V4L2_MEMORY_DMABUF.  A dma-buf
+                 * is not assumed CPU-addressable: @ref data returns
+                 * @c nullptr until the buffer is mapped to
+                 * @ref MemDomain::Host (lazy @c mmap + cache sync), and
+                 * exporters that forbid CPU mmap resolve that request with
+                 * @ref Error::NotSupported.
+                 *
+                 * The Buffer @c dup()s @p fd and owns the dup, so the
+                 * caller keeps ownership of @p fd and may @c close it at
+                 * any time after this returns — the dup is an independent
+                 * kernel reference that keeps the dma-buf alive for the
+                 * Buffer's lifetime.
+                 *
+                 * @param fd  The dma-buf file descriptor (e.g. from V4L2
+                 *            @c VIDIOC_EXPBUF).
+                 * @param sz  Size of the buffer in bytes.
+                 * @param an  Alignment hint in bytes (0 if unknown).
+                 * @return A Dmabuf-backed Buffer, or an invalid Buffer when
+                 *         @p fd is negative, @p sz is zero, the @c dup
+                 *         fails, or the build was configured without
+                 *         @c PROMEKI_ENABLE_DMABUF.
+                 */
+                static Buffer wrapDmabuf(int fd, size_t sz, size_t an = 0);
+
+                /**
                  * @brief Constructs a Buffer that takes ownership of an externally-built BufferImpl.
                  *
                  * Used by custom backends (FPGA, RDMA, mmap) and by
@@ -549,6 +580,17 @@ class Buffer {
                  * Most callers should never need this.
                  */
                 const BufferImplPtr &impl() const { return _d; }
+
+                /**
+                 * @brief Returns the backing dma-buf fd, or -1.
+                 *
+                 * Returns the file descriptor when this Buffer is backed by
+                 * a @c DmabufBufferImpl (see @ref wrapDmabuf), otherwise -1.
+                 * Always -1 on builds without @c PROMEKI_ENABLE_DMABUF.  The
+                 * fd is owned by the Buffer's backend; callers must not
+                 * @c close it.
+                 */
+                int dmabufFd() const;
 
                 /**
                  * @brief Value-equality with a cheap identity short-circuit.

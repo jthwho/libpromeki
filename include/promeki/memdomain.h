@@ -53,6 +53,19 @@ class MemDomain {
                         Host = 0,        ///< Host CPU memory (system RAM, including page-locked / secure variants).
                         CudaDevice = 1,  ///< CUDA device memory (GPU VRAM).
                         FpgaDevice = 2,  ///< FPGA on-board memory or buffer-index space.
+                        /**
+                         * @brief Memory shared as a Linux dma-buf file descriptor.
+                         *
+                         * The native representation is an fd that DMA-capable
+                         * subsystems (V4L2 capture / mem2mem codecs such as the
+                         * Xilinx VCU, DRM/KMS, GPUs) import for zero-copy access.
+                         * A dma-buf may or may not be CPU-mappable; mapping a
+                         * @ref Dmabuf-domain Buffer to @ref Host lazily mmaps the
+                         * fd and brackets CPU access with @c DMA_BUF_IOCTL_SYNC.
+                         * Backed by @c DmabufBufferImpl when
+                         * @c PROMEKI_ENABLE_DMABUF is set.
+                         */
+                        Dmabuf = 3,
                         Default = Host,  ///< Alias for Host.
                         UserDefined = 1024 ///< First ID available for user-registered domains.
                 };

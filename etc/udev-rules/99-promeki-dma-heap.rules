@@ -1,0 +1,34 @@
+# 99-promeki-dma-heap.rules
+#
+# Grant non-root access to Linux dma-heap allocators (/dev/dma_heap/*).
+#
+# By default the kernel exposes dma-heap device nodes as root-only
+# (crw------- root:root), so an unprivileged process cannot allocate
+# dma-bufs from them.  libpromeki's DmaHeap allocator — and the V4L2 /
+# Xilinx VCU zero-copy paths built on it — need to open the heap node to
+# allocate.  Without access, DmaHeap::isAvailable() reports false and
+# logs a "cannot be opened (Permission denied)" warning.
+#
+# This rule places every dma-heap node in the "video" group with group
+# read/write.  "video" is the same group used for V4L2 capture and
+# encode device nodes, so a single group membership covers the whole
+# capture -> dma-heap -> VCU pipeline.  (Opening O_RDONLY is enough for
+# allocation; 0660 matches the convention used for /dev/dri/renderD*.)
+#
+# Install:
+#   sudo cp etc/udev-rules/99-promeki-dma-heap.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger --subsystem-match=dma_heap
+#   sudo usermod -aG video "$USER"     # then log out / back in for it to take effect
+#
+# Verify:
+#   ls -l /dev/dma_heap/     # expect: crw-rw---- root video ... system
+#   id                       # expect 'video' in the group list
+#
+# Alternatives:
+#   - On a desktop with logind, replace GROUP/MODE with TAG+="uaccess" to
+#     grant the active-seat user an ACL automatically (no group add needed).
+#     That does not apply to headless / embedded targets — use the group there.
+#   - To use a different group (e.g. "render"), change GROUP below.
+
+SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"

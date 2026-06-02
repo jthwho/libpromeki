@@ -151,6 +151,27 @@ class MemSpace {
                          */
                         NumaHost =
                                 6,
+                        /**
+                         * @brief Memory shared as a Linux dma-buf file descriptor.
+                         *
+                         * Lives in @ref MemDomain::Dmabuf.  Not directly
+                         * host-accessible — a @c Buffer in this space exposes
+                         * its fd for cross-device DMA and must be explicitly
+                         * mapped to @ref MemDomain::Host (lazy @c mmap +
+                         * @c DMA_BUF_IOCTL_SYNC) before @c data() is usable.
+                         *
+                         * @par No generic allocation path (yet)
+                         * Buffers in this space are created by importing an
+                         * existing fd via @c Buffer::wrapDmabuf (e.g. from V4L2
+                         * @c VIDIOC_EXPBUF).  There is no @c BufferImpl factory
+                         * registered for direct @c Buffer(size, …, Dmabuf)
+                         * allocation; that arrives with the dma-heap allocator.
+                         * The MemSpace ID is registered unconditionally as
+                         * metadata even on builds without
+                         * @c PROMEKI_ENABLE_DMABUF.
+                         */
+                        Dmabuf =
+                                7,
                         Default = System,  ///< Alias for System memory.
                         UserDefined = 1024 ///< First ID available for user-registered types.
                 };

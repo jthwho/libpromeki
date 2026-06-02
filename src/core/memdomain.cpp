@@ -32,6 +32,7 @@ struct MemDomainRegistry {
                         entries[MemDomain::Host] = MemDomain::Data{MemDomain::Host, String("Host")};
                         entries[MemDomain::CudaDevice] = MemDomain::Data{MemDomain::CudaDevice, String("CudaDevice")};
                         entries[MemDomain::FpgaDevice] = MemDomain::Data{MemDomain::FpgaDevice, String("FpgaDevice")};
+                        entries[MemDomain::Dmabuf] = MemDomain::Data{MemDomain::Dmabuf, String("Dmabuf")};
                 }
 };
 

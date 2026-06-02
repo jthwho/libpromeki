@@ -40,10 +40,18 @@ namespace {
         struct JpegErrorMgr {
                         jpeg_error_mgr pub;
                         jmp_buf        jmpBuf;
+                        char           lastMessage[JMSG_LENGTH_MAX] = {0};
         };
 
         static void jpegErrorExit(j_common_ptr cinfo) {
                 JpegErrorMgr *mgr = reinterpret_cast<JpegErrorMgr *>(cinfo->err);
+                // Capture libjpeg's human-readable reason (e.g. "Huffman
+                // table 0x00 was not defined") before we longjmp, so the
+                // catch site can log *why* the decode failed instead of an
+                // opaque "longjmp".  The default error_exit would have
+                // printed this via output_message; our override skips that,
+                // so stash it here.
+                (*cinfo->err->format_message)(cinfo, mgr->lastMessage);
                 longjmp(mgr->jmpBuf, 1);
         }
 
@@ -472,8 +480,9 @@ namespace {
                                                          const CompressedVideoPayload &input,
                                                          PixelFormat::ID               outputPd) {
                 if (setjmp(jerr.jmpBuf)) {
-                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToRGB: libjpeg longjmp (bytes=%zu out=%s)",
-                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr());
+                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToRGB: libjpeg longjmp (bytes=%zu out=%s): %s",
+                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr(),
+                                             jerr.lastMessage);
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }
@@ -518,8 +527,10 @@ namespace {
                                                            const CompressedVideoPayload &input,
                                                            PixelFormat::ID outputPd, YCbCrInfo info) {
                 if (setjmp(jerr.jmpBuf)) {
-                        promekiWarnThrottled(1000, "JpegVideoDecoder::decodeToYCbCr: libjpeg longjmp (bytes=%zu out=%s)",
-                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr());
+                        promekiWarnThrottled(1000,
+                                             "JpegVideoDecoder::decodeToYCbCr: libjpeg longjmp (bytes=%zu out=%s): %s",
+                                             input.plane(0).size(), PixelFormat(outputPd).name().cstr(),
+                                             jerr.lastMessage);
                         jpeg_abort_decompress(&dinfo);
                         return UncompressedVideoPayload::Ptr();
                 }

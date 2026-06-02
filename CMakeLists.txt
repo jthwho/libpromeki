@@ -480,6 +480,33 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
 endif()
 option(PROMEKI_ENABLE_MEMFD "Use memfd_create-backed sealed regions for the SystemCow MemSpace (Linux only)" ${PROMEKI_ENABLE_MEMFD_DEFAULT})
+# DMABUF support: import / export of dma-buf file descriptors so Buffers can
+# be shared zero-copy between DMA-capable subsystems — V4L2 capture devices,
+# the Xilinx VCU (and other V4L2 mem2mem codecs), DRM/KMS, GPUs, etc.  The
+# DmabufBufferImpl backend wraps a dma-buf fd, mmaps it on demand for host
+# access, and brackets CPU access with the DMA_BUF_IOCTL_SYNC cache-coherency
+# ioctl.  Linux-only; needs <linux/dma-buf.h>.  Without this, Buffer::wrapDmabuf
+# returns an invalid Buffer and the MemSpace/MemDomain remain registered as
+# metadata only.
+set(PROMEKI_ENABLE_DMABUF_DEFAULT OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(CheckCXXSourceCompiles)
+    check_cxx_source_compiles("
+        #include <linux/dma-buf.h>
+        #include <sys/ioctl.h>
+        int main() {
+            struct dma_buf_sync s;
+            s.flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_RW;
+            (void)DMA_BUF_IOCTL_SYNC;
+            (void)s;
+            return 0;
+        }
+    " PROMEKI_HAVE_DMA_BUF_H)
+    if(PROMEKI_HAVE_DMA_BUF_H)
+        set(PROMEKI_ENABLE_DMABUF_DEFAULT ON)
+    endif()
+endif()
+option(PROMEKI_ENABLE_DMABUF "Enable dma-buf import/export for zero-copy buffer sharing (Linux only)" ${PROMEKI_ENABLE_DMABUF_DEFAULT})
 # CUDA support: device-memory + pinned-host MemSpace backends and the
 # per-process CudaBootstrap.  Required by every GPU-accelerated codec
 # backend that follows (NVENC, NVDEC, etc.).  Default ON when the CUDA
@@ -1381,6 +1408,13 @@ else()
 
         set(CIRF_HOST_EXECUTABLE ${_PROMEKI_CIRF_HOST_BIN} CACHE FILEPATH
             "Host-built cirf executable (set automatically by cross build)" FORCE)
+        # Name the host-build target so cirf_add_resources() can take a
+        # target-level dependency on it.  This orders EVERY resource library
+        # (the library's own, plus each demo/util that embeds resources)
+        # after cirf_host — without it, only hand-patched call sites were
+        # safe and the rest raced the host cirf build under parallel make.
+        set(CIRF_HOST_TARGET cirf_host CACHE STRING
+            "Target that builds the host-arch cirf (set automatically by cross build)" FORCE)
     else()
         # Native build: cirf can be built for the host directly in-tree.
         add_library(cirf_lib STATIC
@@ -1531,21 +1565,70 @@ set(_PROMEKI_EXTPROJ_CROSS_ARGS)
 # block) so the cirf section can branch on it too.
 if(_PROMEKI_IS_CROSS_BUILD)
     if(CMAKE_TOOLCHAIN_FILE)
+        # A toolchain file is re-read by every ExternalProject sub-build and
+        # already sets the compilers, sysroot, CMAKE_FIND_ROOT_PATH and the
+        # find-root modes itself.  Forward ONLY the toolchain file — do NOT
+        # also re-forward those vars explicitly.  CMAKE_FIND_ROOT_PATH is a
+        # *list* (sysroot + the multiarch staging dir); passing it as
+        # -DCMAKE_FIND_ROOT_PATH=a;b splits on the ';' into two CMAKE_ARGS
+        # entries, and the second ("b") lands as a stray positional argument
+        # to the sub-build's cmake, which silently drops every -D that
+        # follows it (so the sub-build falls back to a default install
+        # prefix like /usr/local and BUILD_SHARED_LIBS=OFF).
         list(APPEND _PROMEKI_EXTPROJ_CROSS_ARGS
             -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE})
+    else()
+        # No toolchain file (compilers set directly on the command line):
+        # forward the cross settings explicitly.  All scalars — note that
+        # CMAKE_FIND_ROOT_PATH is deliberately not forwarded here for the
+        # same list-separator reason; use a toolchain file if the target
+        # needs a custom find-root path.
+        list(APPEND _PROMEKI_EXTPROJ_CROSS_ARGS
+            -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+            -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
+            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER})
     endif()
-    list(APPEND _PROMEKI_EXTPROJ_CROSS_ARGS
-        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
-        -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH}
-        -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM}
-        -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=${CMAKE_FIND_ROOT_PATH_MODE_LIBRARY}
-        -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=${CMAKE_FIND_ROOT_PATH_MODE_INCLUDE}
-        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=${CMAKE_FIND_ROOT_PATH_MODE_PACKAGE})
     message(STATUS "Forwarding cross-compile toolchain to ExternalProject sub-builds "
                    "(${CMAKE_HOST_SYSTEM_PROCESSOR} -> ${CMAKE_SYSTEM_PROCESSOR})")
+endif()
+
+# ---------------------------------------------------------------------------
+# Autotools cross-compile plumbing.  The CMAKE_ARGS in
+# _PROMEKI_EXTPROJ_CROSS_ARGS only reach the CMake-based sub-builds; the
+# autotools sub-builds (mpg123, lame) run a plain ./configure that would
+# otherwise pick up the host gcc and emit x86_64 objects that won't link
+# into the aarch64 parent.  These fragments give those configures the
+# cross toolchain the same way:
+#
+#   _PROMEKI_AUTOTOOLS_CROSS_HOST  --host=<triplet> arg (flips configure
+#                                  into cross mode; empty on a host build)
+#   _PROMEKI_AUTOTOOLS_CROSS_ENV   CC / CXX / AR / RANLIB `env` overrides
+#   _PROMEKI_AUTOTOOLS_SYSROOT     " --sysroot=<path>" fragment to append
+#                                  to CFLAGS / CXXFLAGS / LDFLAGS
+#
+# All empty on a host build, so the configure lines are unchanged there.
+set(_PROMEKI_AUTOTOOLS_CROSS_HOST "")
+set(_PROMEKI_AUTOTOOLS_CROSS_ENV  "")
+set(_PROMEKI_AUTOTOOLS_SYSROOT    "")
+if(_PROMEKI_IS_CROSS_BUILD)
+    # Canonical target triplet straight from the compiler — robust across
+    # Debian (aarch64-linux-gnu), Yocto (aarch64-poky-linux), etc.
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -dumpmachine
+        OUTPUT_VARIABLE _xc_triplet
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(_PROMEKI_AUTOTOOLS_CROSS_HOST "--host=${_xc_triplet}")
+    set(_PROMEKI_AUTOTOOLS_CROSS_ENV
+        "CC=${CMAKE_C_COMPILER}"
+        "CXX=${CMAKE_CXX_COMPILER}"
+        "AR=${CMAKE_AR}"
+        "RANLIB=${CMAKE_RANLIB}")
+    if(PROMEKI_SYSROOT)
+        set(_PROMEKI_AUTOTOOLS_SYSROOT " --sysroot=${PROMEKI_SYSROOT}")
+    endif()
+    message(STATUS "Forwarding cross-compile toolchain to autotools sub-builds "
+                   "(--host=${_xc_triplet})")
 endif()
 
 # mbedtls/private/ — so SRT cannot ride on the project's main vendored
@@ -2127,9 +2210,12 @@ if(PROMEKI_ENABLE_MP3)
                     autoreconf -fi
                 COMMAND
                 ${CMAKE_COMMAND} -E env
-                    "CFLAGS=-fPIC -O2"
-                    "CXXFLAGS=-fPIC -O2"
+                    "CFLAGS=-fPIC -O2${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    "CXXFLAGS=-fPIC -O2${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    "LDFLAGS=${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    ${_PROMEKI_AUTOTOOLS_CROSS_ENV}
                 ${PROMEKI_MPG123_SRC_COPY}/configure
+                    ${_PROMEKI_AUTOTOOLS_CROSS_HOST}
                     --prefix=${PROMEKI_THIRDPARTY_PREFIX}
                     --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
                     --disable-static
@@ -2179,9 +2265,12 @@ if(PROMEKI_ENABLE_MP3)
             BUILD_IN_SOURCE 1
             CONFIGURE_COMMAND
                 ${CMAKE_COMMAND} -E env
-                    "CFLAGS=-fPIC -O2"
-                    "CXXFLAGS=-fPIC -O2"
+                    "CFLAGS=-fPIC -O2${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    "CXXFLAGS=-fPIC -O2${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    "LDFLAGS=${_PROMEKI_AUTOTOOLS_SYSROOT}"
+                    ${_PROMEKI_AUTOTOOLS_CROSS_ENV}
                 ${PROMEKI_LAME_SRC_COPY}/configure
+                    ${_PROMEKI_AUTOTOOLS_CROSS_HOST}
                     --prefix=${PROMEKI_THIRDPARTY_PREFIX}
                     --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
                     --disable-static
@@ -2204,6 +2293,49 @@ if(PROMEKI_ENABLE_MP3)
         )
         add_dependencies(promeki_lame_vendored liblame-ep)
         set(PROMEKI_LAME_TARGET promeki_lame_vendored)
+    endif()
+endif()
+
+# --- libopus ---
+# Shipped as a shared object (.so) beside libpromeki.so so promeki can
+# call it directly and an end user can drop in their own build.  opus is
+# a leaf with no other vendored deps, so it needs no RPATH.  Built with
+# all of opus's optional extras (custom modes, programs, testing,
+# framework, DRED, OSCE, pkg-config, CMake config) turned off — the codec
+# backend only needs the encoder / decoder API and we keep the build small.
+#
+# Defined ahead of libsndfile-ep because libsndfile links Opus::opus as
+# part of its external-libs path and therefore lists libopus-ep in its
+# DEPENDS (see below) — the dependency target must already exist.
+if(PROMEKI_ENABLE_OPUS)
+    if(PROMEKI_USE_SYSTEM_OPUS)
+        find_package(Opus REQUIRED)
+        set(PROMEKI_OPUS_TARGET Opus::opus)
+    else()
+        ExternalProject_Add(
+            libopus-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/opus
+            CMAKE_ARGS
+                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=ON
+                -DOPUS_BUILD_SHARED_LIBRARY=ON
+                -DOPUS_BUILD_PROGRAMS=OFF
+                -DOPUS_BUILD_TESTING=OFF
+                -DOPUS_CUSTOM_MODES=OFF
+                -DOPUS_INSTALL_PKG_CONFIG_MODULE=OFF
+                -DOPUS_INSTALL_CMAKE_CONFIG_MODULE=OFF
+                -DOPUS_DRED=OFF
+                -DOPUS_OSCE=OFF
+            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
+        )
+        add_library(promeki_opus_vendored SHARED IMPORTED)
+        set_target_properties(promeki_opus_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
+        )
+        add_dependencies(promeki_opus_vendored libopus-ep)
+        set(PROMEKI_OPUS_TARGET promeki_opus_vendored)
     endif()
 endif()
 
@@ -2256,6 +2388,16 @@ if(PROMEKI_ENABLE_AUDIO)
         if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_LAME)
             list(APPEND _promeki_sndfile_deps liblame-ep)
         endif()
+        # libsndfile gates Opus on the same flag as FLAC/Vorbis/Ogg and
+        # links Opus::opus unconditionally on its external-libs path,
+        # assuming all four xiph targets are present.  So libopus must be
+        # installed before libsndfile configures, or FindOpus misses it and
+        # the configure dies on a missing Opus::opus target.  This raced
+        # silently on incremental native builds (opus already installed); a
+        # clean cross build surfaced it deterministically.
+        if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_USE_SYSTEM_OPUS)
+            list(APPEND _promeki_sndfile_deps libopus-ep)
+        endif()
 
         ExternalProject_Add(
             libsndfile-ep
@@ -2290,45 +2432,6 @@ if(PROMEKI_ENABLE_AUDIO)
         )
         add_dependencies(promeki_sndfile_vendored libsndfile-ep)
         set(PROMEKI_SNDFILE_TARGET promeki_sndfile_vendored)
-    endif()
-endif()
-
-# --- libopus ---
-# Shipped as a shared object (.so) beside libpromeki.so so promeki can
-# call it directly and an end user can drop in their own build.  opus is
-# a leaf with no other vendored deps, so it needs no RPATH.  Built with
-# all of opus's optional extras (custom modes, programs, testing,
-# framework, DRED, OSCE, pkg-config, CMake config) turned off — the codec
-# backend only needs the encoder / decoder API and we keep the build small.
-if(PROMEKI_ENABLE_OPUS)
-    if(PROMEKI_USE_SYSTEM_OPUS)
-        find_package(Opus REQUIRED)
-        set(PROMEKI_OPUS_TARGET Opus::opus)
-    else()
-        ExternalProject_Add(
-            libopus-ep
-            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/opus
-            CMAKE_ARGS
-                ${_PROMEKI_EXTPROJ_CROSS_ARGS}
-                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DBUILD_SHARED_LIBS=ON
-                -DOPUS_BUILD_SHARED_LIBRARY=ON
-                -DOPUS_BUILD_PROGRAMS=OFF
-                -DOPUS_BUILD_TESTING=OFF
-                -DOPUS_CUSTOM_MODES=OFF
-                -DOPUS_INSTALL_PKG_CONFIG_MODULE=OFF
-                -DOPUS_INSTALL_CMAKE_CONFIG_MODULE=OFF
-                -DOPUS_DRED=OFF
-                -DOPUS_OSCE=OFF
-            BUILD_BYPRODUCTS ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
-        )
-        add_library(promeki_opus_vendored SHARED IMPORTED)
-        set_target_properties(promeki_opus_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libopus.so
-        )
-        add_dependencies(promeki_opus_vendored libopus-ep)
-        set(PROMEKI_OPUS_TARGET promeki_opus_vendored)
     endif()
 endif()
 
@@ -2704,6 +2807,8 @@ set(PROMEKI_HEADERS
     include/promeki/md5.h
     include/promeki/mediaduration.h
     include/promeki/mempool.h
+    include/promeki/dmabufbufferimpl.h
+    include/promeki/dmaheap.h
     include/promeki/memfdbufferimpl.h
     include/promeki/memfdregion.h
     include/promeki/memspace.h
@@ -2869,6 +2974,8 @@ set(PROMEKI_SOURCES
     src/core/mediaduration.cpp
     src/core/mediatimestamp.cpp
     src/core/md5.cpp
+    src/core/dmabufbufferimpl.cpp
+    src/core/dmaheap.cpp
     src/core/memfdbufferimpl.cpp
     src/core/memfdregion.cpp
     src/core/numa.cpp
@@ -3563,8 +3670,22 @@ if(PROMEKI_ENABLE_PROAV)
         list(APPEND PROMEKI_SOURCES src/proav/audioresampler.cpp)
     endif()
     if(PROMEKI_ENABLE_V4L2)
-        list(APPEND PROMEKI_HEADERS include/promeki/v4l2mediaio.h)
-        list(APPEND PROMEKI_SOURCES src/proav/v4l2mediaio.cpp)
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/v4l2mediaio.h
+            include/promeki/v4l2m2mcodec.h
+            include/promeki/v4l2rawformat.h
+            include/promeki/v4l2codecparams.h
+            include/promeki/v4l2captionsei.h
+            include/promeki/v4l2videoencoder.h
+            include/promeki/v4l2videodecoder.h)
+        list(APPEND PROMEKI_SOURCES
+            src/proav/v4l2mediaio.cpp
+            src/proav/v4l2m2mcodec.cpp
+            src/proav/v4l2rawformat.cpp
+            src/proav/v4l2codecparams.cpp
+            src/proav/v4l2captionsei.cpp
+            src/proav/v4l2videoencoder.cpp
+            src/proav/v4l2videodecoder.cpp)
     endif()
     if(PROMEKI_ENABLE_SRT)
         # SrtMediaIO: composes MpegTsFramer with SrtSocketTransport so
@@ -3809,12 +3930,9 @@ if(PROMEKI_ENABLE_CIRF)
         CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/res/resources.json
         OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
     # In a cross build the cirf generator is built as a host ExternalProject
-    # (cirf_host).  cirf_add_resources() invokes it through CIRF_HOST_EXECUTABLE,
-    # which is a plain file path — CMake has no graph edge from the resource
-    # custom-command back to cirf_host without an explicit add_dependencies().
-    if(_PROMEKI_IS_CROSS_BUILD AND TARGET cirf_host)
-        add_dependencies(promeki_resources cirf_host)
-    endif()
+    # (cirf_host); cirf_add_resources() orders every resource library after it
+    # automatically via the CIRF_HOST_TARGET we set above — no per-call-site
+    # add_dependencies() needed here or in the demos/utils.
     target_link_libraries(promeki PRIVATE promeki_resources)
     target_include_directories(promeki PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
@@ -4483,6 +4601,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/mediaduration.cpp
         tests/unit/mediatimestamp.cpp
         tests/unit/md5.cpp
+        tests/unit/dmabufbufferimpl.cpp
+        tests/unit/dmaheap.cpp
         tests/unit/memfdbufferimpl.cpp
         tests/unit/memfdregion.cpp
         tests/unit/mempool.cpp
@@ -4875,6 +4995,12 @@ if(PROMEKI_BUILD_TESTS)
             list(APPEND UNITTEST_SOURCES
                 tests/unit/jpegxsvideocodec.cpp
                 tests/unit/imagefileio_jpegxs.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_V4L2)
+            list(APPEND UNITTEST_SOURCES
+                tests/unit/v4l2mediaio.cpp
+                tests/unit/v4l2m2mcodec.cpp
             )
         endif()
         if(PROMEKI_ENABLE_NVENC)

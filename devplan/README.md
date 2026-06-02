@@ -41,6 +41,7 @@ devplan/
 │   ├── nvenc.md         NVENC / NVDEC follow-up work
 │   ├── video-signal-carriers.md  VideoPortRef / SdiSignalConfig / HdmiSignalConfig / VideoReferenceConfig
 │   ├── ntv2.md          AJA NTV2 SDI / HDMI MediaIO backend (build scaffolding shipped)
+│   ├── v4l2-m2m-codec.md  V4l2VideoEncoder/Decoder + V4l2M2mCodec engine (shipped 2026-06-01)
 │   └── quicktime.md     QuickTime writer drain-at-close (deferred)
 ├── music/               Phase 6
 │   ├── theory.md        Phase 6A/6B — unstarted
@@ -52,6 +53,7 @@ devplan/
 │   ├── promeki-test.md  Functional test runner (shipped 2026-05-05)
 │   ├── audit.md         2026-04-25 audit findings register (90 open)
 │   ├── qemu-cross-testing.md  qemu-user wiring for cross-build CI/CD (unstarted)
+│   ├── cross-rpi4.md    Raspberry Pi 4 cross-compile (sysroot + build shipped 2026-06-01)
 │   └── valgrind.md      COMPLETE; stub retained
 └── demos/
     └── promeki-pipeline.md  Vue 3 / Vue Flow demo (all phases shipped)
@@ -85,7 +87,24 @@ devplan/
 6. **ARM / cross-build robustness** — `PROMEKI_CONFIG_FILE` preset
    system, `cmake/configs/cross-aarch64-linux.cmake` + toolchain, and
    per-feature `#if PROMEKI_ENABLE_*` header guards shipped
-   (2026-05-15). Next: qemu-user CI lane (`infra/qemu-cross-testing.md`).
+   (2026-05-15). Raspberry Pi 4 cross-compile (Trixie sysroot, GCC-14,
+   `cross-rpi4.cmake` preset, `scripts/build-rpi4-sysroot.sh`) shipped
+   2026-06-01 with full clean build green. Next: run on hardware, wire
+   qemu-user CI lane. See [infra/cross-rpi4.md](infra/cross-rpi4.md)
+   and [infra/qemu-cross-testing.md](infra/qemu-cross-testing.md).
+20. **V4L2 M2M codec backend (SHIPPED 2026-06-01)** — `V4l2M2mCodec`
+   shared engine + `V4l2VideoEncoder` + `V4l2VideoDecoder` ("V4L2"
+   backend, H264/HEVC, NV12/NV16/P010). Profile/level, VUI colorimetry,
+   HDR static metadata, caption-SEI bitstream surgery. DMABUF zero-copy
+   primitives in the engine (proven on vicodec); backend wiring and Pi4
+   / VCU bring-up are next. See
+   [proav/v4l2-m2m-codec.md](proav/v4l2-m2m-codec.md).
+21. **DMABUF buffer backend + V4L2MediaIO zero-copy (SHIPPED 2026-06-01)**
+   — `DmabufBufferImpl`, `DmaHeap`, `MemDomain::Dmabuf` / `MemSpace::Dmabuf`,
+   `BufferImpl::ReleaseCallback`. `V4l2MediaIO` auto-selects dma-buf
+   zero-copy for uncompressed captures (EXPBUF probe); compressed formats
+   stay MMAP. udev rule in `etc/udev-rules/`. See
+   [proav/backends.md](proav/backends.md).
 8. **AJA NTV2 build scaffolding** — `thirdparty/libajantv2` submodule
    (ntv2_18_0_0), `PROMEKI_ENABLE_NTV2` CMake option, wired into
    `promeki` as PRIVATE link target (2026-05-16). MediaIO backend

@@ -40,6 +40,9 @@
 #include <promeki/timestamp.h>
 #include <promeki/uncompressedvideopayload.h>
 #include <promeki/v4l2mediaio.h>
+#if PROMEKI_ENABLE_DMABUF
+#include <promeki/dmabufbufferimpl.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -109,6 +112,74 @@ static int xioctl(int fd, unsigned long request, void *arg) {
         } while (r == -1 && errno == EINTR);
         return r;
 }
+
+// ============================================================================
+// dma-buf zero-copy re-queue gate
+// ============================================================================
+//
+// In the dma-buf capture path a kernel (vb2) buffer must not be
+// re-queued to the driver — letting the camera overwrite it — until
+// every downstream reference to its exported dma-buf is gone.  Each
+// handed-out Buffer carries a BufferImpl release callback (armed in
+// videoCaptureLoop) that, on final-reference teardown, calls
+// V4l2RequeueGate::requeue() to VIDIOC_QBUF the buffer back.
+//
+// That callback fires on whatever thread drops the last reference,
+// possibly after the V4l2MediaIO has closed or been destroyed.  The
+// gate is therefore a separate refcounted object that both the backend
+// and the in-flight callbacks share: the callbacks capture a SharedPtr
+// copy, so it outlives the backend.  closeVideo() calls stop() before
+// closing the device, after which late callbacks safely no-op.  Methods
+// are const with mutable members so they reach through
+// SharedPtr::operator->() const without triggering copy-on-write.
+struct V4l2RequeueGate {
+                mutable Mutex mtx;
+                mutable int   fd        = -1;
+                mutable bool  streaming = false;
+
+                // Re-queues kernel buffer @p index via VIDIOC_QBUF
+                // (MMAP memory type — EXPBUF only adds an external handle
+                // to the same vb2 memory).  No-op once the gate is
+                // stopped or the device is closed.
+                void requeue(uint32_t index) const {
+                        Mutex::Locker lock(mtx);
+                        if (!streaming || fd < 0) return;
+                        struct v4l2_buffer buf;
+                        std::memset(&buf, 0, sizeof(buf));
+                        buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        buf.memory = V4L2_MEMORY_MMAP;
+                        buf.index  = index;
+                        if (xioctl(fd, VIDIOC_QBUF, &buf) < 0) {
+                                int e = errno;
+                                // ENODEV (hot-unplug): stop re-queuing.
+                                if (e == ENODEV) streaming = false;
+                                promekiWarn("V4l2MediaIO: dma-buf re-queue of "
+                                            "buffer %u failed: %s",
+                                            index, std::strerror(e));
+                        }
+                }
+
+                // Marks the gate stopped so no further re-queues occur.
+                void stop() const {
+                        Mutex::Locker lock(mtx);
+                        streaming = false;
+                }
+
+                // Publishes the device fd and arms re-queuing.
+                void start(int deviceFd) const {
+                        Mutex::Locker lock(mtx);
+                        fd        = deviceFd;
+                        streaming = true;
+                }
+
+                // Detaches the device fd (called once the device is
+                // about to be closed).
+                void detach() const {
+                        Mutex::Locker lock(mtx);
+                        fd        = -1;
+                        streaming = false;
+                }
+};
 
 // ============================================================================
 // V4L2 CID ↔ MediaConfig mapping
@@ -770,7 +841,14 @@ Error V4l2MediaIO::openVideo(const MediaIO::Config &cfg) {
                 return Error::NoMem;
         }
 
-        // Map buffers
+        // QUERYBUF every buffer to learn its allocation size, then
+        // decide how to surface it downstream.  The dma-buf zero-copy
+        // path is auto-selected: probe VIDIOC_EXPBUF on buffer 0 and, if
+        // the driver supports it (and the build has dma-buf), export
+        // every buffer once and hand it downstream with no host copy.
+        // Otherwise fall back to mmap + per-frame memcpy.
+        _zeroCopy = false;
+        _bufLength = 0;
         _buffers.resize(static_cast<int>(req.count));
         for (uint32_t i = 0; i < req.count; i++) {
                 struct v4l2_buffer buf;
@@ -783,17 +861,101 @@ Error V4l2MediaIO::openVideo(const MediaIO::Config &cfg) {
                         return Error::DeviceError;
                 }
                 _buffers[static_cast<int>(i)].length = buf.length;
-                _buffers[static_cast<int>(i)].start =
-                        mmap(nullptr, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
-                if (_buffers[static_cast<int>(i)].start == MAP_FAILED) {
-                        _buffers[static_cast<int>(i)].start = nullptr;
-                        promekiErr("V4l2MediaIO: mmap failed for buffer %u: %s", i, std::strerror(errno));
-                        return Error::NoMem;
+        }
+        _bufLength = _buffers.isEmpty() ? 0 : _buffers[0].length;
+
+#if PROMEKI_ENABLE_DMABUF
+        // Probe EXPBUF on buffer 0.  ENOTTY/EINVAL means the driver does
+        // not support dma-buf export — fall back to MMAP.
+        //
+        // Compressed captures (MJPEG, H.264, …) are deliberately excluded
+        // from the zero-copy path — see captureFormatAllowsZeroCopy().  An
+        // opaque dma-buf fd has no host mapping, so the CPU decoder's
+        // Buffer::data() returns null and libjpeg reports "Empty input file"
+        // despite a non-zero byte count.  Keep them on MMAP + memcpy where
+        // the bytes are genuinely host-readable.
+        if (!captureFormatAllowsZeroCopy(_imageDesc.pixelFormat())) {
+                promekiDebug("V4l2MediaIO: %s is a compressed capture format — "
+                             "using MMAP + memcpy so the host decoder can read it",
+                             _imageDesc.pixelFormat().name().cstr());
+        } else {
+                struct v4l2_exportbuffer expbuf;
+                std::memset(&expbuf, 0, sizeof(expbuf));
+                expbuf.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                expbuf.index = 0;
+                expbuf.flags = O_CLOEXEC | O_RDWR;
+                if (xioctl(_fd, VIDIOC_EXPBUF, &expbuf) == 0) {
+                        _buffers[0].dmabufFd = expbuf.fd;
+                        _zeroCopy            = true;
+                } else {
+                        promekiDebug("V4l2MediaIO: VIDIOC_EXPBUF not available "
+                                     "(%s) — using MMAP + memcpy capture",
+                                     std::strerror(errno));
                 }
         }
+#endif
 
-        promekiDebug("V4l2MediaIO: mapped %zu MMAP buffers (%zu bytes each)", _buffers.size(),
-                     _buffers.isEmpty() ? size_t(0) : _buffers[0].length);
+        if (_zeroCopy) {
+#if PROMEKI_ENABLE_DMABUF
+                // Export the remaining buffers (buffer 0 already done by
+                // the probe above).  On any failure, roll back the
+                // exported fds and fall back to the MMAP path.
+                bool ok = true;
+                for (uint32_t i = 1; i < req.count && ok; i++) {
+                        struct v4l2_exportbuffer expbuf;
+                        std::memset(&expbuf, 0, sizeof(expbuf));
+                        expbuf.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        expbuf.index = i;
+                        expbuf.flags = O_CLOEXEC | O_RDWR;
+                        if (xioctl(_fd, VIDIOC_EXPBUF, &expbuf) < 0) {
+                                promekiErr("V4l2MediaIO: VIDIOC_EXPBUF failed for "
+                                           "buffer %u: %s — falling back to MMAP",
+                                           i, std::strerror(errno));
+                                ok = false;
+                                break;
+                        }
+                        _buffers[static_cast<int>(i)].dmabufFd = expbuf.fd;
+                }
+                if (!ok) {
+                        for (size_t i = 0; i < _buffers.size(); i++) {
+                                if (_buffers[i].dmabufFd >= 0) {
+                                        ::close(_buffers[i].dmabufFd);
+                                        _buffers[i].dmabufFd = -1;
+                                }
+                        }
+                        _zeroCopy = false;
+                } else {
+                        _requeueGate = SharedPtr<V4l2RequeueGate>::create();
+                        promekiDebug("V4l2MediaIO: exported %zu dma-buf capture "
+                                     "buffers (%zu bytes each) — zero-copy capture",
+                                     _buffers.size(), _bufLength);
+                }
+#endif
+        }
+
+        if (!_zeroCopy) {
+                // MMAP path: map each buffer for per-frame memcpy.
+                for (uint32_t i = 0; i < req.count; i++) {
+                        struct v4l2_buffer buf;
+                        std::memset(&buf, 0, sizeof(buf));
+                        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        buf.memory = V4L2_MEMORY_MMAP;
+                        buf.index = i;
+                        if (xioctl(_fd, VIDIOC_QUERYBUF, &buf) < 0) {
+                                promekiErr("V4l2MediaIO: VIDIOC_QUERYBUF failed for buffer %u", i);
+                                return Error::DeviceError;
+                        }
+                        _buffers[static_cast<int>(i)].start =
+                                mmap(nullptr, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, buf.m.offset);
+                        if (_buffers[static_cast<int>(i)].start == MAP_FAILED) {
+                                _buffers[static_cast<int>(i)].start = nullptr;
+                                promekiErr("V4l2MediaIO: mmap failed for buffer %u: %s", i, std::strerror(errno));
+                                return Error::NoMem;
+                        }
+                }
+                promekiDebug("V4l2MediaIO: mapped %zu MMAP buffers (%zu bytes each)", _buffers.size(),
+                             _buffers.isEmpty() ? size_t(0) : _buffers[0].length);
+        }
 
         return Error::Ok;
 }
@@ -819,12 +981,18 @@ Error V4l2MediaIO::startStreaming() {
                 return Error::DeviceError;
         }
         _streaming = true;
+        // Arm the re-queue gate so dma-buf release callbacks may QBUF
+        // their buffers back to the driver.
+        if (_requeueGate) _requeueGate->start(_fd);
         promekiDebug("V4l2MediaIO: STREAMON — capture started with %zu buffers", _buffers.size());
         return Error::Ok;
 }
 
 void V4l2MediaIO::stopStreaming() {
         if (!_streaming || _fd < 0) return;
+        // Stop the gate first so in-flight release callbacks no longer
+        // QBUF onto a stream we're about to tear down.
+        if (_requeueGate) _requeueGate->stop();
         enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         xioctl(_fd, VIDIOC_STREAMOFF, &type);
         _streaming = false;
@@ -842,8 +1010,26 @@ void V4l2MediaIO::closeVideo() {
                 if (_buffers[i].start != nullptr) {
                         munmap(_buffers[i].start, _buffers[i].length);
                 }
+                // Close the device-lifetime exported dma-buf fd.  Any
+                // in-flight handed-out Buffer still holds its own dup of
+                // this fd (an independent kernel reference), so the
+                // dma-buf memory stays alive until the consumer releases
+                // it; only then does that frame's now-no-op re-queue
+                // callback fire.
+                if (_buffers[i].dmabufFd >= 0) {
+                        ::close(_buffers[i].dmabufFd);
+                        _buffers[i].dmabufFd = -1;
+                }
         }
         _buffers.clear();
+        // Detach the gate from the device fd (under its lock) and drop
+        // our reference; outstanding callbacks keep it alive and no-op.
+        if (_requeueGate) {
+                _requeueGate->detach();
+                _requeueGate.clear();
+        }
+        _zeroCopy = false;
+        _bufLength = 0;
         if (_fd >= 0) {
                 ::close(_fd);
                 _fd = -1;
@@ -1069,9 +1255,8 @@ void V4l2MediaIO::videoCaptureLoop() {
                 }
                 _lastVbufSequence.store(vbuf.sequence, MemoryOrder::Relaxed);
 
-                int         bufIdx = static_cast<int>(vbuf.index);
-                const void *src = _buffers[bufIdx].start;
-                size_t      bytesUsed = vbuf.bytesused;
+                int    bufIdx    = static_cast<int>(vbuf.index);
+                size_t bytesUsed = vbuf.bytesused;
 
                 // Convert the V4L2 capture timestamp (CLOCK_MONOTONIC)
                 // to a TimeStamp for image metadata.
@@ -1121,17 +1306,39 @@ void V4l2MediaIO::videoCaptureLoop() {
                 TimeStamp captureTime{TimeStamp::Clock::time_point{std::chrono::nanoseconds{captureNs}}};
 
                 PixelFormat pd(_imageDesc.pixelFormat());
-                Buffer imgBuf = Buffer(bytesUsed);
-                std::memcpy(imgBuf.data(), src, bytesUsed);
-                imgBuf.setSize(bytesUsed);
-
-                // Re-queue the buffer immediately
-                if (xioctl(_fd, VIDIOC_QBUF, &vbuf) < 0) {
-                        int e = errno;
-                        promekiErr("V4l2MediaIO: VIDIOC_QBUF re-queue failed: %s", std::strerror(e));
-                        if (e == ENODEV) {
-                                _deviceError.store(e, MemoryOrder::Release);
-                                break;
+                Buffer      imgBuf;
+                if (_zeroCopy) {
+#if PROMEKI_ENABLE_DMABUF
+                        // Zero-copy: hand the exported dma-buf downstream
+                        // as a reference and defer the re-queue.  Mint a
+                        // fresh DmabufBufferImpl that dups the device-
+                        // lifetime fd and carries a release callback; the
+                        // kernel buffer is NOT re-queued here — the
+                        // callback does it once the last reference to
+                        // this frame's dma-buf is dropped (possibly on a
+                        // downstream thread).
+                        auto *impl = new DmabufBufferImpl(MemSpace(MemSpace::Dmabuf), _buffers[bufIdx].dmabufFd,
+                                                          _bufLength, 0, DmabufFdOwnership::Dup);
+                        SharedPtr<V4l2RequeueGate> gate = _requeueGate;
+                        uint32_t                   idx  = vbuf.index;
+                        impl->setReleaseCallback([gate, idx]() { gate->requeue(idx); });
+                        imgBuf = Buffer::fromImpl(impl);
+                        imgBuf.setSize(bytesUsed);
+#endif
+                } else {
+                        // MMAP: copy out of the kernel buffer and
+                        // re-queue it immediately.
+                        const void *src = _buffers[bufIdx].start;
+                        imgBuf          = Buffer(bytesUsed);
+                        std::memcpy(imgBuf.data(), src, bytesUsed);
+                        imgBuf.setSize(bytesUsed);
+                        if (xioctl(_fd, VIDIOC_QBUF, &vbuf) < 0) {
+                                int e = errno;
+                                promekiErr("V4l2MediaIO: VIDIOC_QBUF re-queue failed: %s", std::strerror(e));
+                                if (e == ENODEV) {
+                                        _deviceError.store(e, MemoryOrder::Release);
+                                        break;
+                                }
                         }
                 }
 

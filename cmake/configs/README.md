@@ -76,6 +76,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/asan.cmake)
 | File                            | Target                                                              |
 | ------------------------------- | ------------------------------------------------------------------- |
 | `cross-aarch64-linux.cmake`     | Linux / aarch64 via Debian's `aarch64-linux-gnu-{gcc,g++}` toolchain. |
+| `cross-rpi4.cmake`              | Raspberry Pi 4 (BCM2711 / Cortex-A72, 64-bit) — the aarch64 preset tuned `-mcpu=cortex-a72` with V4L2 + DMABUF on. |
 
 Cross configs set `CMAKE_C_COMPILER` / `CMAKE_CXX_COMPILER` /
 `CMAKE_SYSTEM_NAME` / `CMAKE_SYSTEM_PROCESSOR` and force off the
