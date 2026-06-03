@@ -15,7 +15,9 @@
 #include <promeki/map.h>
 #include <promeki/mutex.h>
 #include <promeki/result.h>
+#include <promeki/st291packet.h>
 #include <promeki/util.h>
+#include <promeki/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -96,6 +98,14 @@ namespace {
                 return r;
         }
 
+        // Detailer registry is keyed on (format, transport) like the parser
+        // registry — the human-readable decode is as wire-format-specific as
+        // the machine decode.
+        Map<ParserKey, AncTranslator::DetailerFn> &detailerRegistry() {
+                static Map<ParserKey, AncTranslator::DetailerFn> r;
+                return r;
+        }
+
         // Snapshot lookups: copy the function pointer out under the lock, then
         // call without holding it.  Keeps the lock window minimal and matches
         // MediaPayload's createEmpty pattern.
@@ -141,6 +151,15 @@ namespace {
                 Mutex::Locker  lock(registryMutex());
                 auto          &r = syncPolicyRegistry();
                 auto           it = r.find(format);
+                if (it == r.end()) return nullptr;
+                return it->second;
+        }
+
+        AncTranslator::DetailerFn findDetailer(AncFormat::ID format, const AncTransport &src) {
+                ParserKey            key{format, src.value()};
+                Mutex::Locker        lock(registryMutex());
+                auto                &r = detailerRegistry();
+                auto                 it = r.find(key);
                 if (it == r.end()) return nullptr;
                 return it->second;
         }
@@ -265,6 +284,20 @@ void AncTranslator::registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn) {
         r.insert(format, fn);
 }
 
+void AncTranslator::registerDetailer(AncFormat::ID format, const AncTransport &src, DetailerFn fn) {
+        if (fn == nullptr) return;
+        ParserKey      key{format, src.value()};
+        Mutex::Locker  lock(registryMutex());
+        auto          &r = detailerRegistry();
+        if (checkRegistryCollision(r, key, fn, "detailer",
+                                   String::sprintf("format=%d transport=%s",
+                                                    static_cast<int>(format),
+                                                    src.valueName().cstr()))) {
+                return;
+        }
+        r.insert(key, fn);
+}
+
 // ============================================================================
 // Dispatch
 // ============================================================================
@@ -283,6 +316,95 @@ AncTranslator::ParseResult AncTranslator::parse(const AncPacket &pkt) const {
         ParserFn fn = findParser(fmtId, pkt.transport());
         if (fn == nullptr) return makeError<Variant>(Error::NotSupported);
         return fn(pkt, _cfg);
+}
+
+String AncTranslator::describe(const AncPacket &pkt, Error *err) const {
+        ParseResult r = parse(pkt);
+        if (r.second().isError()) {
+                if (err != nullptr) *err = r.second();
+                return String();
+        }
+        Error  strErr;
+        String out = r.first().toString(&strErr);
+        if (strErr.isError()) {
+                if (err != nullptr) *err = strErr;
+                return String();
+        }
+        if (err != nullptr) *err = Error::Ok;
+        return out;
+}
+
+AncDetails AncTranslator::details(const AncPacket &pkt) const {
+        const AncFormat    &fmt   = pkt.format();
+        const AncTransport &xport = pkt.transport();
+
+        // A registered codec-level detailer wins: it spells out every wire
+        // field with proper enum stringification and raises its own
+        // conformance issues.
+        if (DetailerFn fn = findDetailer(fmt.id(), xport); fn != nullptr) {
+                return fn(pkt, _cfg);
+        }
+
+        // -- Generic fallback ------------------------------------------------
+        // No codec opted in to a bespoke detailer for this (format,
+        // transport).  Produce a useful AncDetails anyway: the
+        // transport-level header (which the library can always decode) plus
+        // whatever the registered parser yields rendered through its own
+        // toString.  This guarantees details() returns something meaningful
+        // for every packet.
+        AncDetails d;
+
+        d.addField("Format", fmt.name().isEmpty()
+                                     ? String::sprintf("ID %d", static_cast<int>(fmt.id()))
+                                     : fmt.name());
+        if (!fmt.desc().isEmpty()) d.addField("Description", fmt.desc());
+        d.addField("Category", fmt.category().valueName());
+        d.addField("Transport", xport.valueName());
+
+        // ST 291 has a well-defined wire header we can always spell out, even
+        // when no semantic decode exists.  Parse with the default
+        // (non-strict) policy so a bad checksum surfaces as a warning here
+        // rather than aborting the whole framing decode.
+        if (xport == AncTransport::St291) {
+                Result<St291Packet> rp = St291Packet::from(pkt);
+                if (rp.second().isOk()) {
+                        const St291Packet &p = rp.first();
+                        d.addField("DID", String::sprintf("0x%02X", p.did()));
+                        d.addField("SDID", String::sprintf("0x%02X", p.sdid()));
+                        d.addField("DataCount", String::number(p.dataCount()));
+                        d.addField("Line", String::number(p.line()));
+                        d.addField("Checksum", String::sprintf("0x%03X", p.checksum()));
+                        if (!p.checksumValid()) {
+                                d.addWarning(String::sprintf(
+                                        "Stored checksum 0x%03X does not match computed 0x%03X",
+                                        p.checksum(), p.computedChecksum()));
+                        }
+                } else {
+                        d.addError(String("ST 291 framing decode failed: ") +
+                                   rp.second().desc());
+                }
+        }
+
+        // Semantic decode + one-line render when a parser exists.  Every
+        // in-tree ANC value type (AncAfd, AncAtc, Cea708Cdp, …) carries a
+        // Variant toString op, so this renders the decoded payload; a type
+        // without one simply contributes no "Decoded" line rather than
+        // failing.
+        ParseResult parsed = parse(pkt);
+        if (parsed.second().isOk()) {
+                Error  strErr;
+                String s = parsed.first().toString(&strErr);
+                if (strErr.isOk() && !s.isEmpty()) {
+                        d.addField("Decoded", s);
+                }
+        } else if (parsed.second().code() == Error::NotSupported) {
+                d.addInfo("No decoder registered for this format/transport; "
+                          "showing wire header only");
+        } else {
+                d.addError(String("Decode failed: ") + parsed.second().desc());
+        }
+
+        return d;
 }
 
 AncTranslator::ParseResult AncTranslator::parseGroup(const AncPacket::List &pkts) const {
@@ -378,6 +500,10 @@ bool AncTranslator::hasDirectTranslator(const AncFormat &format, const AncTransp
 
 bool AncTranslator::hasSyncPolicy(const AncFormat &format) {
         return findSyncPolicy(format.id()) != nullptr;
+}
+
+bool AncTranslator::hasDetailer(const AncFormat &format, const AncTransport &src) {
+        return findDetailer(format.id(), src) != nullptr;
 }
 
 bool AncTranslator::canTranslate(const AncFormat &format, const AncTransport &src, const AncTransport &dst) {

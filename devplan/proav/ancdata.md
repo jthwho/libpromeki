@@ -16,7 +16,7 @@ parsers/builders on top so application code (closed-caption
 overlay, SCTE-104 driven splicers, AFD-aware scalers, ATC
 round-trip, HDR pass-through) does not have to touch raw bytes.
 
-## Status at a glance (2026-05-24)
+## Status at a glance (2026-06-02)
 
 | Phase | What | Status |
 |------:|------|--------|
@@ -26,6 +26,7 @@ round-trip, HDR pass-through) does not have to touch raw bytes.
 | 2     | `AncTranslateConfig` + `AncTranslator` + 3 registries + macros + initial ATC and AFD ← → St291 codecs | **Landed** |
 | 2b    | CEA-708 ← → St291 + `Cea708Cdp` + TPG caption injection + Inspector AncData JSONL dump | **Landed** |
 | P2    | Second-pass conformance audit (Phases A/B/C wire bugs, per-codec deep audits, registry / docs) — `devplan/proav/ancaudit.md` | **Complete — all F1–F10 findings landed; audit file retired 2026-05-20** |
+| P4    | Detailer registry + `AncDetails` + `AncTranslator::details()` / `describe()` + CEA-608 detailer | **Landed 2026-06-02** — `AncDetails` value type (`AncDetailSeverity` enum, `Issue` struct, `toString`/`toJson`); fifth `AncTranslator` registry (`DetailerFn`, `registerDetailer`, `hasDetailer`, `PROMEKI_REGISTER_ANC_DETAILER`); `details()` dispatch with generic header+parse fallback; `describe()` one-line convenience; `anccodec_cea608.cpp` CEA-608 detailer (DID 0x61/SDID 0x02: byte-pairs, G0 text, PAC, misc control codes, odd-parity check). ATC model corrected: ST 12-2 carries literal BCD (no pair-rate frame-math); `AtcVitcLegacyFieldMark` config key removed; `docs/anc.md` and `devplan` updated accordingly. |
 | 3     | Remaining typed parsers (full AFD value type, Atc helpers, Scte104, HdrStatic2086 St291, HDR dynamic, KLV) | **Partial** — HdrStatic2086 HdmiInfoFrame + St291 (ST 2108-1) codecs landed 2026-05-15; HdrDynamic2094_40 value type + HdmiInfoFrame + St291 (ST 2108-2 KLV, multi-packet) codecs landed 2026-05-15; AncOp47Sdp value type + OP-47 SDP codec (RDD 8, DID 0x43/SDID 0x02) landed 2026-05-20; AncSt2020Audio value type + ST 2020-2 Method A codec (DID 0x45, SDIDs 0x01–0x09) landed 2026-05-20; VPID codec (SdiVpid ← → AncTranslator, DID 0x41/SDID 0x01) landed 2026-05-20; Scte104 codec still pending |
 | 3.5   | Subtitle file I/O + CEA-608 codec (Subtitle/SubtitleList/SubRip, Scc, Cea608Encoder/Decoder all three modes, TPG injection, round-trip func test) | **Landed** |
 | P3    | CEA-608 conformance audit — ANSI/CTA-608-E S-2019 (60+ findings across XDS, wire/charset, decoder, encoder) | **Complete — all findings landed 2026-05-23; 3 post-audit follow-ons landed 2026-05-24** |

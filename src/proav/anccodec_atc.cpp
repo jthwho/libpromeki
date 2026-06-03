@@ -8,9 +8,9 @@
  * the three flavours (LTC, VITC1, VITC2) carried on
  * @c AncTransport::St291.  Decodes / encodes the 16-UDW SMPTE ST 12-2
  * payload to and from an @ref AncAtc — the libvtc-backed @ref Timecode
- * plus the binary-group user-bit nibbles, the colour-frame / polarity
- * flags, the three BGF bits, and the DBB2 status byte that
- * @ref Timecode itself does not model.
+ * plus the binary-group user-bit nibbles, the colour-frame flag, the
+ * three BGF bits, and the DBB2 status byte that @ref Timecode itself
+ * does not model.
  *
  * Wire layout per ST 12-2:2014 §5–6.  Every ATC packet is a Type-2
  * ST 291 packet (ST 12-2 §5 explicit) with DID=0x60, SDID one of
@@ -48,16 +48,22 @@
  * user-bits process bit (b7).  Round-trips through
  * @ref AncAtc::dbb2.
  *
- * Parse-time rate-hint precedence (per ATC audit decision Q4):
- *   1. @c AncMeta::Atc::Rate on the packet's meta sidecar.  Stamped
- *      by the capture path when the paired video desc is known.
- *   2. @c AncTranslateConfig::AtcParseRateHint — application-level
- *      override for sources where the capture didn't stamp the rate
- *      (raw RTP receive, SDP-only context, file replay).
- *   3. Fail with @c Error::InsufficientContext.  We deliberately do
- *      not silently default to 30 fps — the eight time-code bytes
- *      alone cannot disambiguate 24 / 25 / 30 NDF, so a wrong
- *      default produces quiet wrong answers.
+ * Parse-time rate hint (optional for ST 12-2):
+ *   The eight BCD time-code nibbles are a self-contained HH:MM:SS:FF
+ *   time address — decoding them needs no frame rate.  The rate hint
+ *   only refines the resulting @ref Timecode::Mode (so @c fps() and the
+ *   drop-frame separator report precisely), with this precedence:
+ *     1. @c AncMeta::Atc::Rate on the packet's meta sidecar.  Stamped
+ *        by the capture path when the paired video desc is known.
+ *     2. @c AncTranslateConfig::AtcParseRateHint — application-level
+ *        override (raw RTP receive, SDP-only context, file replay).
+ *   When neither is present the parse still succeeds, carrying the
+ *   literal digits with an unspecified-rate mode (@c fps() == 0).  We
+ *   never silently default to 30 fps — the time-code bytes alone can't
+ *   disambiguate 24 / 25 / 30 NDF, so a guessed rate would be a quiet
+ *   wrong answer; "rate unknown" is the honest result instead.  (The
+ *   ST 12-3 ATC_HFRTC codec, by contrast, genuinely needs its format
+ *   context to recover per-physical-frame timecode.)
  */
 
 #include <promeki/ancatc.h>
@@ -112,11 +118,9 @@ namespace {
         // bit narrows 30 → 29.97-DF and 60 → 59.94-DF, so the rate hint
         // (Q4) must come from somewhere external.
         //
-        // Explicit pair-HFR cases (48/50/60) are kept here for
-        // documentation: Phase 2's Mode(fps, flags) walk already
-        // resolves them via the standard-formats table, but spelling
-        // them out makes the parser's pair-rate intent obvious at the
-        // call site below.
+        // The 48/50/60 cases are spelled out explicitly so the mode
+        // mapping is obvious at a glance; Mode(fps, flags) would resolve
+        // them via the standard-formats table anyway.
         Timecode::Mode modeForRate(uint32_t fps, bool df) {
                 if (fps == 0) return Timecode::Mode();
                 if (df && fps == 30) return Timecode::Mode(Timecode::DF30);
@@ -175,11 +179,13 @@ namespace {
                 bool    df              = (frameTensNibble & 0x04) != 0;
                 bool    colorFrame      = (frameTensNibble & 0x08) != 0;
 
-                // Second digits + polarity flag.
+                // Second digits.  Bit 3 of the sec-tens nibble (UDW 7 b7)
+                // is the LTC polarity slot — informational-only for ATC and
+                // never part of the displayed time address, so it is not
+                // decoded here.
                 uint8_t secUnits      = udwNibble(udw[IdxSecUnits]);
                 uint8_t secTensNibble = udwNibble(udw[IdxSecTens]);
                 uint8_t secTens       = static_cast<uint8_t>(secTensNibble & 0x07);
-                bool    polarity      = (secTensNibble & 0x08) != 0;
 
                 // Minute digits + BGF0 flag.
                 uint8_t minUnits      = udwNibble(udw[IdxMinUnits]);
@@ -205,39 +211,32 @@ namespace {
                 uint32_t metaRate = pkt.meta().get(AncMeta::Atc::Rate).get<uint32_t>();
                 uint32_t cfgHint  = cfg.getAs<uint32_t>(AncTranslateConfig::AtcParseRateHint, uint32_t(0));
                 uint32_t fps      = metaRate != 0 ? metaRate : cfgHint;
-                if (fps == 0) {
-                        return makeError<Variant>(Error::InsufficientContext);
-                }
 
-                // Pair-rate HFR (ST 12-1 §12 / ST 12-2 §9.2 Am1:2013):
-                // at 48/50/60 fps the FF wire slots carry pair_index
-                // (0..fps/2-1) and the polarity bit slot (UDW 7 bit 7,
-                // = sub-frame_1 in ST 12-1 §12) carries the field-mark.
-                // The physical frame is reconstructed as
-                //   physical_frame = pair_index * 2 + field_mark.
-                // Re-uses the "polarity" bit we decoded above as the
-                // field-mark per the ST 12-2 Am1 reinterpretation —
-                // the pre-Am1 meaning (LTC polarity) is non-sensical
-                // for ATC anyway (ATC has no biphase mark to
-                // polarity-correct).
-                if (ancAtcIsPairHfrRate(fps)) {
-                        uint32_t pairIndex = static_cast<uint32_t>(frm);
-                        uint32_t fieldMark = polarity ? 1u : 0u;
-                        frm = static_cast<Timecode::DigitType>(pairIndex * 2u + fieldMark);
-                }
-
-                Timecode tc(modeForRate(fps, df), hour, min, sec, frm);
+                // ST 12-2 (DID=0x60 / SDID=0x60) carries a plain, self-
+                // contained BCD time address: the eight time-code nibbles
+                // are HH:MM:SS:FF exactly as encoded on the wire, and
+                // reading them needs no frame rate at all.  When a rate hint
+                // is available (AncMeta::Atc::Rate or AtcParseRateHint) we
+                // stamp the precise Timecode::Mode so fps() and the
+                // drop-frame ':' / ';' separator report correctly; when it
+                // is absent we still decode the literal digits with an
+                // unspecified-rate mode (Timecode::toString lays the digits
+                // out directly when the mode has no libvtc format) rather
+                // than failing.  The wire DF bit can't be pinned to 29.97 vs
+                // 59.94 without the rate, so it is only reflected in the mode
+                // when the rate is known.  (Genuine per-physical-frame HFR
+                // timecode is the separate ST 12-3 ATC_HFRTC codec's job —
+                // that codec does still need its format context.)
+                Timecode tc = (fps != 0) ? Timecode(modeForRate(fps, df), hour, min, sec, frm)
+                                         : Timecode(hour, min, sec, frm);
 
                 // Phase 4: BGF + color-frame + user bits ride on the
                 // Timecode now, not on the AncAtc envelope.  Polarity
-                // (UDW 7 b7) is not surfaced — at non-pair-rates the
-                // captured bit has no semantic meaning (libvtc
-                // recomputes the LTC polarity-correction bit at pack
-                // time per ST 12-1 §9.2.3, and ATC itself has no
-                // biphase mark to polarity-correct).  At pair-rate HFR
-                // the same wire bit is reinterpreted as the ST 12-2
-                // Am1 §9.2 field-mark and consumed above to recover
-                // the physical-frame index.
+                // (UDW 7 b7) is not surfaced — the captured bit has no
+                // semantic meaning for ATC (libvtc recomputes the LTC
+                // polarity-correction bit at pack time per ST 12-1
+                // §9.2.3, and ATC itself has no biphase mark to
+                // polarity-correct).
                 tc.setColorFrame(colorFrame);
                 TimecodeUserbits::Nibbles ubNibs{};
                 for (size_t i = 0; i < UserBitCount; ++i) {
@@ -290,12 +289,11 @@ namespace {
         // @c AtcVitc2 choice wins over any stale value rooted in the
         // value type.
         //
-        // @p legacyFieldMark forces the ST 12-2 §9.2 field-mark bit
-        // to 0 at pair-rate HFR — see AncTranslateConfig::
-        // AtcVitcLegacyFieldMark for the rationale.  Has no effect at
-        // non-pair-rates (the polarity slot is already always zero
-        // at those rates).
-        List<uint16_t> packAtcUdw(const AncAtc &atc, bool legacyFieldMark) {
+        // ST 12-2 carries a plain BCD time address — the FF wire slots
+        // hold the literal frame digit, with no pair-index / field-mark
+        // encoding.  (Per-physical-frame timecode above 30 fps is the
+        // ST 12-3 ATC_HFRTC codec's job, not this one.)
+        List<uint16_t> packAtcUdw(const AncAtc &atc) {
                 const Timecode &tc       = atc.timecode();
                 uint8_t         hour     = static_cast<uint8_t>(tc.hour());
                 uint8_t         min      = static_cast<uint8_t>(tc.min());
@@ -304,25 +302,11 @@ namespace {
                 uint8_t         dbb1     = atc.payloadType();
                 uint8_t         dbb2     = atc.dbb2();
 
-                // Pair-rate HFR (ST 12-1 §12 / ST 12-2 §9.2 Am1:2013):
-                // the FF wire slots carry pair_index (= super-frame
-                // index, 0..fps/2-1) rather than the raw physical
-                // frame, and the polarity bit slot becomes the
-                // field-mark.  See parseAtcSt291Impl for the inverse.
-                //
-                // At non-pair-rates @c frm carries the raw frame
-                // digit (0..fps-1 at base rates) and @c fieldMark is
-                // forced to zero — both libvtc-side LTC polarity
-                // computation and the ATC informational slot keep the
-                // bit clear.
-                const bool isPair    = ancAtcIsPairHfrRate(tc.fps());
-                uint8_t    frm       = isPair
-                                              ? static_cast<uint8_t>(tc.superFrameIndex())
-                                              : static_cast<uint8_t>(tc.frame());
-                bool       fieldMark = false;
-                if (isPair && !legacyFieldMark) {
-                        fieldMark = (tc.subFrameIndex() & 1u) != 0u;
-                }
+                // ST 12-2 BCD time address: the FF slot holds the literal
+                // frame digit straight off the Timecode.  No pair-index
+                // rescale and no field-mark bit — the time address is
+                // displayed exactly as carried.
+                uint8_t frm = static_cast<uint8_t>(tc.frame());
 
                 // Phase 4: BGF + color-frame + user bits ride on the
                 // Timecode now.  Polarity is left at zero on the wire
@@ -358,12 +342,9 @@ namespace {
                 if (df) frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x04);
                 if (colorFrame) frameTensNibble = static_cast<uint8_t>(frameTensNibble | 0x08);
                 uint8_t secTensNibble = static_cast<uint8_t>((sec / 10) & 0x07);
-                // bit 3 of secTens is the polarity slot — at non-pair-rates
-                // this is left clear (libvtc handles polarity on the LTC
-                // wire and ATC carries no biphase mark).  At pair-rate
-                // HFR (48/50/60) the same bit is repurposed as the
-                // ST 12-2 Am1 §9.2 field-mark.
-                if (fieldMark) secTensNibble = static_cast<uint8_t>(secTensNibble | 0x08);
+                // Bit 3 of secTens is the LTC polarity slot — left clear:
+                // libvtc handles polarity on the LTC wire and ATC carries no
+                // biphase mark, so the bit has no meaning here.
                 uint8_t minTensNibble = static_cast<uint8_t>((min / 10) & 0x07);
                 if (bgf0) minTensNibble = static_cast<uint8_t>(minTensNibble | 0x08);
                 uint8_t hourTensNibble = static_cast<uint8_t>((hour / 10) & 0x03);
@@ -426,9 +407,7 @@ namespace {
         // resolution); all three ATC IDs resolve to (0x60,0x60).
         AncTranslator::PacketsResult buildAtcSt291Impl(AncFormat::ID fmtId, const AncAtc &atc,
                                                        const AncTranslateConfig &cfg) {
-                bool legacyFieldMark = cfg.getAs<bool>(
-                        AncTranslateConfig::AtcVitcLegacyFieldMark, false);
-                List<uint16_t> udw = packAtcUdw(atc, legacyFieldMark);
+                List<uint16_t> udw = packAtcUdw(atc);
 
                 uint16_t line   = cfg.getAs<uint16_t>(AncTranslateConfig::St291BuildLine,
                                                       St291Packet::UnspecifiedLine);
@@ -517,6 +496,127 @@ namespace {
                 return buildAtcSt291Impl(fmtId, atc, overrideCfg);
         }
 
+        // -- Detailer ---------------------------------------------------------
+
+        // Renders the DBB1 payload-type byte as its standards name rather
+        // than a raw hex value — the whole point of the Details path
+        // ("Payload = VITC1", not "Payload = 0x1").  Values outside the
+        // three ST 12-2 flavours and the ST 12-3 HFRTC range are reported
+        // as raw hex so a reserved future assignment still surfaces.
+        String atcPayloadName(uint8_t dbb1) {
+                switch (dbb1) {
+                        case AncAtc::Ltc:   return String("LTC");
+                        case AncAtc::Vitc1: return String("VITC1");
+                        case AncAtc::Vitc2: return String("VITC2");
+                        default:
+                                if (dbb1 >= 0x80u && dbb1 <= 0x8Fu) {
+                                        return String::sprintf("HFRTC (bitstream %u)",
+                                                               static_cast<unsigned>(dbb1 & 0x0Fu));
+                                }
+                                return String::sprintf("Unknown (0x%02X)", dbb1);
+                }
+        }
+
+        // Full human-readable analysis of an ST 12-2 / ST 12-3 ATC packet.
+        // Always returns a populated AncDetails — a packet that cannot be
+        // fully decoded still surfaces its framing fields plus an Error /
+        // Warning issue explaining what went wrong.
+        AncDetails detailAtcSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                AncDetails d;
+
+                Result<St291Packet> rp = St291Packet::from(pkt);
+                if (rp.second().isError()) {
+                        d.addError(String("ST 291 framing decode failed: ") + rp.second().desc());
+                        return d;
+                }
+                const St291Packet &p   = rp.first();
+                List<uint16_t>     udw = p.udw();
+
+                d.addField("DID", String::sprintf("0x%02X", p.did()));
+                d.addField("SDID", String::sprintf("0x%02X", p.sdid()));
+                d.addField("DataCount", String::number(p.dataCount()));
+                d.addField("Line", String::number(p.line()));
+                if (!p.checksumValid()) {
+                        d.addWarning(String::sprintf(
+                                "Stored checksum 0x%03X does not match computed 0x%03X",
+                                p.checksum(), p.computedChecksum()));
+                }
+
+                // ST 12-2 §5: DC shall be 0x10 (16 UDWs).
+                if (udw.size() < AtcUdwCount) {
+                        d.addError(String::sprintf(
+                                "ST 12-2 §5 mandates DC=16; got %zu UDWs — payload truncated",
+                                udw.size()));
+                        return d;
+                }
+                if (udw.size() != AtcUdwCount) {
+                        d.addWarning(String::sprintf(
+                                "ST 12-2 §5 mandates DC=16; got %zu UDWs", udw.size()));
+                }
+
+                // DBB1 (UDW 1..8 b3, LSB-first) — the only on-wire signal for
+                // the LTC / VITC1 / VITC2 flavour.
+                uint8_t dbb1 = 0;
+                for (size_t i = 0; i < 8; ++i) {
+                        if ((udw[i] & 0x08u) != 0) dbb1 = static_cast<uint8_t>(dbb1 | (1u << i));
+                }
+                d.addField("Payload", atcPayloadName(dbb1));
+
+                // The eight BCD time-code nibbles are self-contained — they
+                // decode to a literal HH:MM:SS:FF with no rate.  The rate
+                // hint only refines the Timecode::Mode (precise fps + the
+                // drop-frame separator); when it is absent we still surface
+                // the literal time address and note that fps isn't pinned.
+                AncTranslator::ParseResult parsed = parseAtcSt291Impl(pkt, cfg);
+                if (parsed.second().isOk()) {
+                        const AncAtc   &atc = parsed.first().get<AncAtc>();
+                        const Timecode &tc  = atc.timecode();
+                        d.addField("Timecode", tc.toString());
+                        // The DF flag is carried on the wire (UDW 3 b6)
+                        // independent of the rate, so surface it even when
+                        // the exact fps is unknown.
+                        d.addField("DropFrame",
+                                   String::number((udwNibble(udw[IdxFrameTens]) & 0x04) != 0));
+                        if (tc.fps() != 0) {
+                                d.addField("Rate", String::sprintf("%u fps", tc.fps()));
+                        } else {
+                                d.addField("Rate", String("unknown"));
+                                d.addInfo("No rate hint (AncMeta::Atc::Rate / AtcParseRateHint); "
+                                          "time address shown literally, exact fps not pinned");
+                        }
+                        d.addField("ColorFrame", String::number(tc.colorFrame()));
+                        d.addField("Userbits", tc.userbits().toString());
+                } else {
+                        d.addError(String("Timecode decode failed: ") + parsed.second().desc());
+                }
+
+                // DBB2 (UDW 9..16 b3, LSB-first) — bit semantics depend on the
+                // payload type.
+                uint8_t dbb2 = 0;
+                for (size_t i = 0; i < 8; ++i) {
+                        if ((udw[8 + i] & 0x08u) != 0) dbb2 = static_cast<uint8_t>(dbb2 | (1u << i));
+                }
+                if (dbb1 >= 0x80u && dbb1 <= 0x8Fu) {
+                        AncAtc::HfrtcDbb2 h = AncAtc::dbb2DecodeHfrtc(dbb2);
+                        static const uint16_t kSfcRate[4] = {24, 25, 30, 0};
+                        d.addField("HfrtcN", String::number(h.n));
+                        d.addField("HfrtcSuperFrameRate",
+                                   String::sprintf("%u fps", kSfcRate[h.superFrameCount & 0x03u]));
+                } else {
+                        AncAtc::VitcDbb2 v = AncAtc::dbb2DecodeVitc(dbb2);
+                        d.addField("VitcLineSelect", String::number(v.line));
+                        d.addField("LineDuplication", String::number(v.duplicate));
+                        d.addField("TimecodeValid", String::number(v.valid));
+                        d.addField("Processed", String::number(v.processed));
+                        if (!v.valid) {
+                                d.addWarning("DBB2 validity bit set: source flagged the timecode "
+                                             "as interpolated / invalid");
+                        }
+                }
+
+                return d;
+        }
+
 } // namespace
 
 PROMEKI_NAMESPACE_END
@@ -543,3 +643,10 @@ PROMEKI_REGISTER_ANC_BUILDER(AtcVitc2_St291, AtcVitc2, ::promeki::AncTransport::
 PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcLtc, AtcLtc, ::promeki::syncPolicyAtc)
 PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcVitc1, AtcVitc1, ::promeki::syncPolicyAtc)
 PROMEKI_REGISTER_ANC_SYNC_POLICY(AtcVitc2, AtcVitc2, ::promeki::syncPolicyAtc)
+
+PROMEKI_REGISTER_ANC_DETAILER(AtcLtc_St291, AtcLtc, ::promeki::AncTransport::St291,
+                              ::promeki::detailAtcSt291)
+PROMEKI_REGISTER_ANC_DETAILER(AtcVitc1_St291, AtcVitc1, ::promeki::AncTransport::St291,
+                              ::promeki::detailAtcSt291)
+PROMEKI_REGISTER_ANC_DETAILER(AtcVitc2_St291, AtcVitc2, ::promeki::AncTransport::St291,
+                              ::promeki::detailAtcSt291)

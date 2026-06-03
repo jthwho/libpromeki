@@ -167,6 +167,81 @@ namespace {
                 return makeResult<AncPacket::List>(std::move(out));
         }
 
+        // -- Detailer ---------------------------------------------------------
+
+        // Maps the 4-bit AFD code to its ST 2016-1 active-image description
+        // (the descriptions assume a 16:9 coded frame — the common case;
+        // the coded-frame aspect itself is reported separately from the AR
+        // flag).  Reserved codes surface as raw hex.
+        String afdCodeName(uint8_t code) {
+                switch (code & 0x0F) {
+                        case 0x00: return String("Undefined");
+                        case 0x02: return String("Box 16:9 (top)");
+                        case 0x03: return String("Box 14:9 (top)");
+                        case 0x04: return String("Box > 16:9 (center)");
+                        case 0x08: return String("Full frame (same as coded frame)");
+                        case 0x09: return String("4:3 (center)");
+                        case 0x0A: return String("16:9 (center)");
+                        case 0x0B: return String("14:9 (center)");
+                        case 0x0D: return String("4:3 (with alternative 14:9 center)");
+                        case 0x0E: return String("16:9 (with alternative 14:9 center)");
+                        case 0x0F: return String("16:9 (with alternative 4:3 center)");
+                        default:   return String::sprintf("Reserved (0x%X)", code & 0x0F);
+                }
+        }
+
+        // Full human-readable analysis of an ST 2016-3 AFD packet.  Always
+        // returns a populated AncDetails — a packet that cannot be decoded
+        // still surfaces its framing fields plus an Error issue.
+        AncDetails detailAfdSt291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                AncDetails d;
+
+                Result<St291Packet> rp = St291Packet::from(pkt);
+                if (rp.second().isError()) {
+                        d.addError(String("ST 291 framing decode failed: ") + rp.second().desc());
+                        return d;
+                }
+                const St291Packet &p = rp.first();
+                d.addField("DID", String::sprintf("0x%02X", p.did()));
+                d.addField("SDID", String::sprintf("0x%02X", p.sdid()));
+                d.addField("DataCount", String::number(p.dataCount()));
+                d.addField("Line", String::number(p.line()));
+                if (!p.checksumValid()) {
+                        d.addWarning(String::sprintf(
+                                "Stored checksum 0x%03X does not match computed 0x%03X",
+                                p.checksum(), p.computedChecksum()));
+                }
+                if (p.udw().size() != kAfdUdwCount) {
+                        d.addWarning(String::sprintf(
+                                "ST 2016-3 §4 mandates DC=8; got %zu UDWs — bar data omitted on "
+                                "short packets", p.udw().size()));
+                }
+
+                AncTranslator::ParseResult parsed = parseAfdSt291(pkt, cfg);
+                if (parsed.second().isError()) {
+                        d.addError(String("AFD decode failed: ") + parsed.second().desc());
+                        return d;
+                }
+                AncAfd afd = parsed.first().get<AncAfd>();
+
+                d.addField("AfdCode", String::sprintf("0x%X (%s)", afd.afdCode(),
+                                                      afdCodeName(afd.afdCode()).cstr()));
+                d.addField("CodedFrameAspect", afd.arFlag() ? String("16:9") : String("4:3"));
+                d.addField("BarDataPresent", String::number(afd.hasBarData()));
+                if (afd.hasBarData()) {
+                        StringList edges;
+                        if (afd.topBar())    edges.pushToBack(String("Top"));
+                        if (afd.bottomBar()) edges.pushToBack(String("Bottom"));
+                        if (afd.leftBar())   edges.pushToBack(String("Left"));
+                        if (afd.rightBar())  edges.pushToBack(String("Right"));
+                        d.addField("BarEdges", edges.join(", "));
+                        d.addField("BarValue1", String::number(afd.barValue1()));
+                        d.addField("BarValue2", String::number(afd.barValue2()));
+                }
+
+                return d;
+        }
+
 } // namespace
 
 PROMEKI_NAMESPACE_END
@@ -174,3 +249,4 @@ PROMEKI_NAMESPACE_END
 PROMEKI_REGISTER_ANC_PARSER(Afd_St291, Afd, ::promeki::AncTransport::St291, ::promeki::parseAfdSt291)
 PROMEKI_REGISTER_ANC_BUILDER(Afd_St291, Afd, ::promeki::AncTransport::St291, ::promeki::buildAfdSt291)
 PROMEKI_REGISTER_ANC_SYNC_POLICY(Afd, Afd, ::promeki::syncPolicyAfd)
+PROMEKI_REGISTER_ANC_DETAILER(Afd_St291, Afd, ::promeki::AncTransport::St291, ::promeki::detailAfdSt291)

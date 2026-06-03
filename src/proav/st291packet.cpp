@@ -336,7 +336,10 @@ St291Packet St291Packet::buildRaw(uint8_t did, uint8_t sdid, const List<uint16_t
         }
 
         Buffer    wire = buildWireBytes(did, sdid, udw);
-        AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid);
+        // Pass the UDWs so the ST 12-2 ATC trio (0x60/0x60) resolves to
+        // its true flavour (LTC / VITC1 / VITC2) from the DBB1 byte rather
+        // than anchoring to the lowest-ID AtcLtc.
+        AncFormat fmt = AncFormat::fromSt291DidSdid(did, sdid, &udw);
 
         AncPacket pkt(fmt, AncTransport::St291, std::move(wire));
         pkt.setSt291Line(line);

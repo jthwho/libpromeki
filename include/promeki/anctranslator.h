@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
+#include <promeki/ancdetails.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
@@ -18,6 +19,7 @@
 #include <promeki/framesyncdisposition.h>
 #include <promeki/list.h>
 #include <promeki/result.h>
+#include <promeki/string.h>
 #include <promeki/variant.h>
 #include <promeki/util.h>
 
@@ -216,6 +218,35 @@ class AncTranslator {
                                                         uint8_t repeatIndex,
                                                         const AncTranslateConfig &);
 
+                /**
+                 * @brief Detailer: fully decode one packet's wire bytes
+                 *        into a human-readable @ref AncDetails for analysis.
+                 *
+                 * A detailer is the verbose counterpart to a @ref ParserFn:
+                 * rather than producing a machine-typed @ref Variant, it
+                 * spells out every wire field as a decoded line (enumerated
+                 * values rendered as their names — @c "Payload = VITC1", not
+                 * @c "Payload = 0x1") and raises @ref AncDetails::Issue notes
+                 * for anything suspect about the packet.
+                 *
+                 * Unlike a parser, a detailer @em always returns a value:
+                 * a packet it cannot fully decode still yields an
+                 * @c AncDetails carrying whatever could be recovered plus an
+                 * @ref AncDetailSeverity::Error issue.  There is therefore no
+                 * @c Result wrapper — failure is expressed in the issue list,
+                 * not the return type.
+                 *
+                 * Registration is per @c (format, transport), exactly like a
+                 * parser, because the human-readable decode is as
+                 * wire-format-specific as the machine decode.  Formats with
+                 * no registered detailer fall back to
+                 * @ref AncTranslator::details's generic decode (packet header
+                 * fields + the parsed Variant's own @c toString), so a useful
+                 * @c AncDetails is produced for every packet whether or not a
+                 * codec has opted in to a bespoke detailer.
+                 */
+                using DetailerFn = AncDetails (*)(const AncPacket &, const AncTranslateConfig &);
+
                 // -- Construction --------------------------------------------
 
                 /** @brief Constructs a translator with a default-constructed config. */
@@ -245,6 +276,71 @@ class AncTranslator {
                  *         registered.
                  */
                 ParseResult parse(const AncPacket &pkt) const;
+
+                /**
+                 * @brief Human-readable one-line decode of a packet.
+                 *
+                 * Convenience over @ref parse: decodes @p pkt to its typed
+                 * @ref Variant and renders it via the format's registered
+                 * @c toString (e.g. an @ref AncAtc timecode, an @ref AncAfd
+                 * code, ST 2020 audio metadata).  Intended for inspectors,
+                 * loggers, and CLI dumps that want the semantic content
+                 * without unpacking the Variant themselves.
+                 *
+                 * @param pkt The packet to describe (its @ref AncFormat /
+                 *            @ref AncTransport select the parser).
+                 * @param err Optional out-parameter set to the reason
+                 *            decoding produced no string: @c Error::Ok on
+                 *            success, @c Error::NotSupported when no parser
+                 *            is registered, or the parser's own error (e.g.
+                 *            @c Error::InsufficientContext when the ATC
+                 *            parser needs a rate hint that was not supplied
+                 *            in the @ref AncTranslateConfig).  Lets callers
+                 *            show *why* a packet did not decode rather than
+                 *            silently dropping it.
+                 * @return The decoded value as a String, or an empty String
+                 *         when no parser is registered for the packet's
+                 *         format / transport or decoding fails (see @p err).
+                 */
+                String describe(const AncPacket &pkt, Error *err = nullptr) const;
+
+                /**
+                 * @brief Fully decodes a packet into a human-readable
+                 *        @ref AncDetails for analysis.
+                 *
+                 * The verbose counterpart to @ref describe.  Where
+                 * @c describe returns a one-line summary and @ref parse
+                 * returns a machine-typed @ref Variant, @c details returns a
+                 * structured, fully-spelled-out decode: every wire field as a
+                 * @c "Name = Value" line with enumerated values rendered as
+                 * their names, plus a list of warnings and errors about
+                 * anything suspect (non-conformant Data Count, checksum
+                 * mismatch, reserved bits set, missing rate hint, …).
+                 *
+                 * Dispatch:
+                 *
+                 *  - When a @ref DetailerFn is registered for
+                 *    @c (pkt.format(), pkt.transport()), it is called and its
+                 *    @c AncDetails returned verbatim.
+                 *  - Otherwise a generic fallback runs: it emits the packet's
+                 *    transport-level header fields (format, category,
+                 *    transport, and — for ST 291 — DID / SDID / DataCount /
+                 *    line / checksum validity), then attempts @ref parse and
+                 *    appends the decoded Variant's own @c toString.  A parse
+                 *    failure is recorded as an @ref AncDetailSeverity::Error
+                 *    issue rather than discarded.
+                 *
+                 * Unlike every other dispatch entry point, this method @em
+                 * always succeeds: there is no error channel because a
+                 * packet that cannot be decoded still produces an
+                 * @c AncDetails describing why.  This makes it safe for a
+                 * packet inspector to call on every packet unconditionally.
+                 *
+                 * @param pkt The packet to analyse.
+                 * @return A fully-populated @ref AncDetails (never empty for
+                 *         a valid packet).
+                 */
+                AncDetails details(const AncPacket &pkt) const;
 
                 /**
                  * @brief Decodes a sequence of related packets carrying
@@ -396,6 +492,19 @@ class AncTranslator {
                  */
                 static void registerSyncPolicy(AncFormat::ID format, SyncPolicyFn fn);
 
+                /**
+                 * @brief Registers a detailer for @c (format, src).
+                 *
+                 * Same registration policy as @ref registerParser.  A
+                 * registered detailer overrides the generic fallback in
+                 * @ref details for that @c (format, transport).
+                 *
+                 * @param format ID of the ANC format the detailer handles.
+                 * @param src    Source wire transport the detailer decodes from.
+                 * @param fn     Free function pointer; must be non-null.
+                 */
+                static void registerDetailer(AncFormat::ID format, const AncTransport &src, DetailerFn fn);
+
                 // -- Static capability queries -------------------------------
 
                 /**
@@ -418,6 +527,17 @@ class AncTranslator {
 
                 /** @brief True when a frame-sync policy is registered for @p format. */
                 static bool hasSyncPolicy(const AncFormat &format);
+
+                /**
+                 * @brief True when a bespoke detailer is registered for
+                 *        @c (format, src).
+                 *
+                 * A @c false result does not mean @ref details cannot
+                 * analyse the packet — it only means the generic fallback
+                 * (header fields + parsed Variant @c toString) is used
+                 * instead of a codec-specific decode.
+                 */
+                static bool hasDetailer(const AncFormat &format, const AncTransport &src);
 
                 /**
                  * @brief True when a path exists from @p src to @p dst for @p format.
@@ -556,6 +676,30 @@ PROMEKI_NAMESPACE_END
                                 }                                                                                      \
                 };                                                                                                     \
                 static AncSyncPolicyRegistrar_##Tag s_anc_sync_policy_registrar_##Tag;                                 \
+        }
+
+/**
+ * @brief Registers a free function as an ANC detailer at static-init time.
+ * @ingroup proav
+ *
+ * Mirror of @ref PROMEKI_REGISTER_ANC_PARSER for the verbose
+ * human-readable analysis path (@ref AncTranslator::details).  Place at
+ * the top level of a codec @c .cpp file.
+ *
+ * @param Tag       Unique suffix (typically <Format>_<Transport>).
+ * @param Format    The @c AncFormat::ID enumerator.
+ * @param Transport The source @c AncTransport static.
+ * @param Fn        Free function with @c AncTranslator::DetailerFn signature.
+ */
+#define PROMEKI_REGISTER_ANC_DETAILER(Tag, Format, Transport, Fn)                                                       \
+        namespace {                                                                                                    \
+                struct AncDetailerRegistrar_##Tag {                                                                    \
+                                AncDetailerRegistrar_##Tag() {                                                         \
+                                        ::promeki::AncTranslator::registerDetailer(::promeki::AncFormat::Format,        \
+                                                                                    Transport, Fn);                     \
+                                }                                                                                      \
+                };                                                                                                     \
+                static AncDetailerRegistrar_##Tag s_anc_detailer_registrar_##Tag;                                      \
         }
 
 #endif // PROMEKI_ENABLE_PROAV

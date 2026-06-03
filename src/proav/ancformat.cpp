@@ -378,9 +378,12 @@ struct AncFormatRegistry {
                         // the flavour; the ATC codec stamps that on the
                         // returned @c AncAtc::payloadType.  All three
                         // AncFormat IDs are kept so callers can drive
-                        // the build path with an explicit flavour; the
-                        // (DID,SDID) → ID lookup is anchored to
-                        // @c AtcLtc (lowest ID wins the wildcard match).
+                        // the build path with an explicit flavour.  The
+                        // bare (DID,SDID) → ID lookup anchors to
+                        // @c AtcLtc (lowest ID wins the wildcard match);
+                        // capture paths that hand @ref fromSt291DidSdid
+                        // the UDW payload get the real flavour resolved
+                        // from DBB1 (see @c atcFormatFromDbb1).
                         add(makeAtc(AncFormat::AtcLtc, "AtcLtc", "SMPTE 12M-2 Ancillary Timecode — LTC", 0x60));
                         add(makeAtc(AncFormat::AtcVitc1, "AtcVitc1", "SMPTE 12M-2 Ancillary Timecode — VITC 1", 0x60));
                         add(makeAtc(AncFormat::AtcVitc2, "AtcVitc2", "SMPTE 12M-2 Ancillary Timecode — VITC 2", 0x60));
@@ -534,7 +537,27 @@ AncFormat::ID AncFormat::idFromName(const String &name) {
 
 AncFormat::AncFormat(const String &name) : d(lookupData(idFromName(name))) {}
 
-AncFormat AncFormat::fromSt291DidSdid(uint8_t did, uint8_t sdid) {
+// ST 12-2:2014 §5 / Table 2: the LTC / VITC1 / VITC2 flavours all share
+// DID=0x60 / SDID=0x60 and are discriminated only by the DBB1
+// payload-type byte, carried in bit 3 of UDWs 1..8 (LSB-first):
+// 0x00=ATC_LTC, 0x01=ATC_VITC1, 0x02=ATC_VITC2.  Recovers the matching
+// AncFormat::ID from a captured ATC packet's user-data words so a
+// receiver labels VITC1 / VITC2 correctly instead of anchoring to the
+// lowest-ID AtcLtc that the (DID,SDID) lookup resolves to.
+static AncFormat::ID atcFormatFromDbb1(const List<uint16_t> &udw) {
+        if (udw.size() < 8) return AncFormat::AtcLtc;
+        uint8_t dbb1 = 0;
+        for (size_t i = 0; i < 8; ++i) {
+                if ((udw[i] & 0x08u) != 0) dbb1 = static_cast<uint8_t>(dbb1 | (1u << i));
+        }
+        switch (dbb1) {
+                case 0x01: return AncFormat::AtcVitc1;
+                case 0x02: return AncFormat::AtcVitc2;
+                default:   return AncFormat::AtcLtc; // 0x00 = LTC; reserved values → LTC
+        }
+}
+
+AncFormat AncFormat::fromSt291DidSdid(uint8_t did, uint8_t sdid, const List<uint16_t> *udw) {
         if (did == 0) return AncFormat(Invalid);
         // F9 hot-path lookup: O(1) probes against the byDidSdid /
         // byDidWildcard indexes maintained by AncFormatRegistry::add.
@@ -548,11 +571,24 @@ AncFormat AncFormat::fromSt291DidSdid(uint8_t did, uint8_t sdid) {
         auto          &reg = registry();
         const uint16_t key = static_cast<uint16_t>(
                 (static_cast<uint16_t>(did) << 8) | static_cast<uint16_t>(sdid));
-        auto exactIt = reg.byDidSdid.find(key);
-        if (exactIt != reg.byDidSdid.end()) return AncFormat(exactIt->second);
-        auto wildcardIt = reg.byDidWildcard.find(did);
-        if (wildcardIt != reg.byDidWildcard.end()) return AncFormat(wildcardIt->second);
-        return AncFormat(Invalid);
+        ID   resolved = Invalid;
+        auto exactIt  = reg.byDidSdid.find(key);
+        if (exactIt != reg.byDidSdid.end()) {
+                resolved = exactIt->second;
+        } else {
+                auto wildcardIt = reg.byDidWildcard.find(did);
+                if (wildcardIt != reg.byDidWildcard.end()) resolved = wildcardIt->second;
+        }
+        if (resolved == Invalid) return AncFormat(Invalid);
+
+        // The (0x60,0x60) ATC slot resolves to the lowest-ID AtcLtc for
+        // all three flavours; when the caller supplies the payload, refine
+        // to the real flavour from the DBB1 byte.
+        if (udw != nullptr && did == 0x60 && sdid == 0x60 &&
+            (resolved == AtcLtc || resolved == AtcVitc1 || resolved == AtcVitc2)) {
+                resolved = atcFormatFromDbb1(*udw);
+        }
+        return AncFormat(resolved);
 }
 
 AncFormat AncFormat::fromHdmiInfoFrameType(uint8_t type) {

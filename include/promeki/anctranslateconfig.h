@@ -298,28 +298,6 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                                            .setDefault(uint32_t(0))
                                            .setDescription("ATC parse-time frame-rate hint (24/25/30; 0 = no hint)."));
 
-                /// @brief bool — when @c true the ATC builder emits the
-                /// ST 12-1 §12 / ST 12-2 §9.2 field-mark bit as @c 0
-                /// regardless of the source @ref Timecode's sub-frame
-                /// index.  Default @c false (modern ST 12-2 Am1:2013
-                /// behaviour: bit reflects the first/second frame of
-                /// the frame pair).
-                ///
-                /// ST 12-2 Am1 §9.2 grandfathers "always field-mark = 0"
-                /// legacy implementations as compliant.  Setting this
-                /// to @c true lets callers downgrade output for
-                /// receivers that reject Am1-conformant streams (rare
-                /// but observed on some pre-Am1 broadcast gear).  Has
-                /// no effect at non-pair-rates — the slot is reserved
-                /// (polarity in LTC, unused in ATC) at ≤30 fps and
-                /// HFRTC rates.
-                PROMEKI_DECLARE_ID(AtcVitcLegacyFieldMark,
-                                   VariantSpec()
-                                           .setType(DataTypeBool)
-                                           .setDefault(false)
-                                           .setDescription("Force the ST 12-2 §9.2 field-mark bit to 0 in built ATC "
-                                                           "packets (legacy pre-Am1 behaviour)."));
-
                 /// @brief uint8_t — ATC_HFRTC bitstream number (low
                 /// nibble of DBB1; range 0..15) the @c AtcHfrtc builder
                 /// stamps when the source @c AncAtc carries the default

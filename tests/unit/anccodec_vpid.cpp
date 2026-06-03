@@ -7,6 +7,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/ancdetails.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
@@ -199,4 +200,52 @@ TEST_CASE("Vpid: registered at DID 0x41 / SDID 0x01 with ST 352 description") {
         CHECK(f.category() == AncCategory::PayloadId);
         CHECK(f.canonicalTransport() == AncTransport::St291);
         CHECK(f.desc().contains("352"));
+}
+
+// ===========================================================================
+// Details path — full human-readable analysis with enum stringification.
+// ===========================================================================
+
+TEST_CASE("VPID details: decodes link standard, rate, scan, and sampling") {
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(makeReferenceVpid()), AncFormat(AncFormat::Vpid), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        AncPacket pkt = built.first().front();
+
+        AncDetails d = t.details(pkt);
+
+        // The reference VPID is 1080p59.94 / 3G Level A / 4:2:2 / 10-bit.
+        CHECK(d.lines().contains(String("DID = 0x41")));
+        CHECK(d.lines().contains(String("SDID = 0x01")));
+        CHECK(d.lines().contains(String("Bytes = 89:ca:80:01")));
+        CHECK(d.lines().contains(String("Version = ST 352:2013 (current)")));
+        CHECK(d.lines().contains(String("ScanMode = ") +
+                                 makeReferenceVpid().videoScanMode().valueName()));
+        CHECK(d.lines().contains(String("LinkStandard = ") +
+                                 makeReferenceVpid().linkStandard().valueName()));
+        CHECK(d.lines().contains(String("Sampling = Y'CbCr 4:2:2")));
+        CHECK(d.lines().contains(String("BitDepth = 10-bit")));
+        CHECK(d.lines().contains(String("AspectRatio = 16:9")));
+        CHECK_FALSE(d.hasErrors());
+}
+
+TEST_CASE("VPID details: 6G/12G extended schema surfaces HDR / colorimetry fields") {
+        // Byte 1 = 0xCE (12G 2160-line) selects the extended schema; byte 2
+        // [5:4] = PQ transfer, byte 3 [5:4] = UHDTV colorimetry.
+        SdiVpid v(SdiVpid::Byte1_SL_12G_2160, 0x00, 0x00, 0x00);
+        v.setTransferCode(SdiVpid::Transfer_PQ);
+        v.setColorimetryCode(SdiVpid::Colorimetry_UHDTV);
+        REQUIRE(v.isExtendedSchema());
+
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(v), AncFormat(AncFormat::Vpid), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncDetails d = t.details(built.first().front());
+        CHECK(d.lines().contains(String("Transfer = ") +
+                                 v.transferCharacteristic().valueName()));
+        CHECK(d.lines().contains(String("Colorimetry = ") + v.colorimetry().valueName()));
+        CHECK(d.lines().contains(String("SignalType = Y'CbCr")));
 }

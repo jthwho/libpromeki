@@ -19,6 +19,7 @@
 #include <promeki/list.h>
 #include <promeki/result.h>
 #include <promeki/st291packet.h>
+#include <promeki/stringlist.h>
 #include <promeki/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -131,6 +132,125 @@ namespace {
                 return buildCea708St291(Variant(cdp), overrideCfg);
         }
 
+        // -- Detailer ---------------------------------------------------------
+
+        // Maps the 4-bit cdp_frame_rate code (SMPTE 334-2 §5.1.4 Table) to
+        // its frame rate in fps.  Reserved / unknown codes surface as raw
+        // hex so a non-conformant encoder still shows up in diagnostics.
+        String cdpFrameRateName(uint8_t code) {
+                switch (code & 0x0F) {
+                        case 1: return String("23.976 fps");
+                        case 2: return String("24 fps");
+                        case 3: return String("25 fps");
+                        case 4: return String("29.97 fps");
+                        case 5: return String("30 fps");
+                        case 6: return String("50 fps");
+                        case 7: return String("59.94 fps");
+                        case 8: return String("60 fps");
+                        default: return String::sprintf("Unknown (0x%X)", code & 0x0F);
+                }
+        }
+
+        // Full human-readable analysis of a SMPTE 334-2 CDP packet.  Always
+        // returns a populated AncDetails — a packet that cannot be decoded
+        // still surfaces its framing fields plus an Error issue.  The
+        // cc_data triples are summarised by carriage type (608 F1/F2, 708)
+        // rather than dumped byte-for-byte; the per-byte caption decode is
+        // the job of the CEA-608 / CEA-708 caption decoders downstream.
+        AncDetails detailCea708St291(const AncPacket &pkt, const AncTranslateConfig &cfg) {
+                AncDetails d;
+
+                Result<St291Packet> rp = St291Packet::from(pkt);
+                if (rp.second().isError()) {
+                        d.addError(String("ST 291 framing decode failed: ") + rp.second().desc());
+                        return d;
+                }
+                const St291Packet &p = rp.first();
+                d.addField("DID", String::sprintf("0x%02X", p.did()));
+                d.addField("SDID", String::sprintf("0x%02X", p.sdid()));
+                d.addField("DataCount", String::number(p.dataCount()));
+                d.addField("Line", String::number(p.line()));
+                if (!p.checksumValid()) {
+                        d.addWarning(String::sprintf(
+                                "Stored checksum 0x%03X does not match computed 0x%03X",
+                                p.checksum(), p.computedChecksum()));
+                }
+
+                AncTranslator::ParseResult parsed = parseCea708St291(pkt, cfg);
+                if (parsed.second().isError()) {
+                        d.addError(String("CDP decode failed: ") + parsed.second().desc());
+                        return d;
+                }
+                Cea708Cdp cdp = parsed.first().get<Cea708Cdp>();
+
+                d.addField("CdpFrameRate", cdpFrameRateName(cdp.frameRateCode));
+                d.addField("SequenceCounter", String::number(cdp.sequenceCounter));
+
+                StringList flags;
+                if (cdp.timeCodePresent)      flags.pushToBack(String("TimeCode"));
+                if (cdp.ccDataPresent)        flags.pushToBack(String("CcData"));
+                if (cdp.svcInfoPresent)       flags.pushToBack(String("SvcInfo"));
+                if (cdp.captionServiceActive) flags.pushToBack(String("ServiceActive"));
+                d.addField("Flags", flags.isEmpty() ? String("(none)") : flags.join(", "));
+
+                if (cdp.timeCodePresent) {
+                        d.addField("Timecode", cdp.timeCode.toString());
+                }
+
+                if (cdp.ccDataPresent) {
+                        d.addField("CcDataTriples", String::number(cdp.ccData.size()));
+                        size_t n608f1 = 0, n608f2 = 0, n708 = 0, npad = 0;
+                        for (const Cea708Cdp::CcData &cc : cdp.ccData) {
+                                if (!cc.valid) {
+                                        ++npad;
+                                        continue;
+                                }
+                                switch (cc.type & 0x03) {
+                                        case 0:  ++n608f1; break;
+                                        case 1:  ++n608f2; break;
+                                        default: ++n708;   break;
+                                }
+                        }
+                        StringList breakdown;
+                        if (n608f1) breakdown.pushToBack(String::sprintf("608-F1=%zu", n608f1));
+                        if (n608f2) breakdown.pushToBack(String::sprintf("608-F2=%zu", n608f2));
+                        if (n708)   breakdown.pushToBack(String::sprintf("708=%zu", n708));
+                        if (npad)   breakdown.pushToBack(String::sprintf("padding=%zu", npad));
+                        if (!breakdown.isEmpty()) {
+                                d.addField("CcDataBreakdown", breakdown.join(", "));
+                        }
+                }
+
+                if (cdp.svcInfoPresent && !cdp.ccSvcInfo.isEmpty()) {
+                        d.addField("ServiceCount", String::number(cdp.ccSvcInfo.size()));
+                        for (size_t i = 0; i < cdp.ccSvcInfo.size(); ++i) {
+                                const Cea708Cdp::CcSvcInfoEntry &e = cdp.ccSvcInfo[i];
+                                String lang = String::sprintf("%c%c%c",
+                                                              e.languageCode[0] ? e.languageCode[0] : '?',
+                                                              e.languageCode[1] ? e.languageCode[1] : '?',
+                                                              e.languageCode[2] ? e.languageCode[2] : '?');
+                                String svc = e.digitalCc
+                                                     ? String::sprintf("DTVCC svc %u",
+                                                                       e.captionServiceNumber)
+                                                     : String::sprintf("Line-21 %s",
+                                                                       e.line21Field ? "F2" : "F1");
+                                d.addField(String::sprintf("Service[%zu]", i),
+                                           String::sprintf("%s, lang=%s%s%s", svc.cstr(), lang.cstr(),
+                                                           e.easyReader ? ", easy-reader" : "",
+                                                           e.wideAspect ? ", 16:9" : ""));
+                        }
+                }
+
+                if (cdp.svcInfoMismatches > 0) {
+                        d.addWarning(String::sprintf(
+                                "%u svcinfo entr%s had a service-number mismatch between the entry "
+                                "flag and svc_data_byte_4 (ATSC A/65 §6.9.2)",
+                                cdp.svcInfoMismatches, cdp.svcInfoMismatches == 1 ? "y" : "ies"));
+                }
+
+                return d;
+        }
+
 } // namespace
 
 PROMEKI_NAMESPACE_END
@@ -140,3 +260,5 @@ PROMEKI_REGISTER_ANC_PARSER(Cea708_St291, Cea708, ::promeki::AncTransport::St291
 PROMEKI_REGISTER_ANC_BUILDER(Cea708_St291, Cea708, ::promeki::AncTransport::St291,
                               ::promeki::buildCea708St291)
 PROMEKI_REGISTER_ANC_SYNC_POLICY(Cea708, Cea708, ::promeki::syncPolicyCea708)
+PROMEKI_REGISTER_ANC_DETAILER(Cea708_St291, Cea708, ::promeki::AncTransport::St291,
+                              ::promeki::detailCea708St291)

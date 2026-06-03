@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 #include <doctest/doctest.h>
+#include <promeki/ancafd.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/ancst2020audio.h>
@@ -304,6 +305,51 @@ TEST_CASE("AncTranslator: translate returns NotSupported when no path exists") {
 }
 
 // ============================================================================
+// describe()
+// ============================================================================
+
+namespace {
+// A parser that returns a real decoded ANC value type (AncAfd) — one
+// whose Variant carries a wired toString op, unlike a bare String
+// payload — so describe() exercises the genuine render path.
+AncTranslator::ParseResult afdStubParse(const AncPacket & /*pkt*/, const AncTranslateConfig & /*cfg*/) {
+        return makeResult<Variant>(Variant(AncAfd(0x09, true)));
+}
+} // namespace
+
+TEST_CASE("AncTranslator: describe renders the decoded value type as a string") {
+        const AncFormat::ID id = AncFormat::registerType();
+        AncFormat::Data d;
+        d.id = id;
+        d.name = String("DescribeTestFormat");
+        d.category = AncCategory::UserDefined;
+        d.canonicalTransport = AncTransport::St291;
+        AncFormat::registerData(std::move(d));
+        AncTranslator::registerParser(id, AncTransport::St291, &afdStubParse);
+
+        Buffer    payload(static_cast<size_t>(0));
+        AncPacket pkt(AncFormat(id), AncTransport::St291, payload);
+        AncTranslator t;
+        CHECK(t.describe(pkt) == AncAfd(0x09, true).toString());
+        CHECK_FALSE(t.describe(pkt).isEmpty());
+}
+
+TEST_CASE("AncTranslator: describe returns empty when no parser is registered") {
+        const AncFormat::ID id = AncFormat::registerType();
+        AncFormat::Data d;
+        d.id = id;
+        d.name = String("DescribeNoParserFormat");
+        d.category = AncCategory::UserDefined;
+        d.canonicalTransport = AncTransport::St291;
+        AncFormat::registerData(std::move(d));
+
+        Buffer    payload(static_cast<size_t>(0));
+        AncPacket pkt(AncFormat(id), AncTransport::St291, payload);
+        AncTranslator t;
+        CHECK(t.describe(pkt).isEmpty());
+}
+
+// ============================================================================
 // Config plumbing
 // ============================================================================
 
@@ -441,4 +487,71 @@ TEST_CASE("AncTranslator: P2-23 parse on a DOUBLE_PKT packet returns Insufficien
         AncTranslator t;
         AncTranslator::ParseResult r = t.parse(p.packet());
         CHECK(r.second().code() == Error::InsufficientContext);
+}
+
+// ============================================================================
+// details() — registered detailer dispatch + generic fallback
+// ============================================================================
+
+namespace {
+// A bespoke detailer that ignores the wire bytes and emits a fixed
+// analysis — lets the test prove the registered detailer wins over the
+// generic fallback.
+AncDetails stubDetailer(const AncPacket & /*pkt*/, const AncTranslateConfig & /*cfg*/) {
+        AncDetails d;
+        d.addField("Stub", "DETAILED");
+        d.addWarning("stub warning");
+        return d;
+}
+} // namespace
+
+TEST_CASE("AncTranslator: details dispatches to a registered detailer") {
+        const AncFormat::ID id = p2_31_allocFormatId("detailer");
+        AncTranslator::registerDetailer(id, AncTransport::St291, &stubDetailer);
+        CHECK(AncTranslator::hasDetailer(AncFormat(id), AncTransport::St291));
+
+        Buffer    payload(static_cast<size_t>(0));
+        AncPacket pkt(AncFormat(id), AncTransport::St291, payload);
+        AncTranslator t;
+        AncDetails    d = t.details(pkt);
+
+        CHECK(d.lines().contains(String("Stub = DETAILED")));
+        CHECK(d.hasWarnings());
+        CHECK(d.issueCount(AncDetailSeverity::Warning) == 1);
+}
+
+TEST_CASE("AncTranslator: details generic fallback renders header + parsed value") {
+        // A format with a parser (returning a real AncAfd value, which has a
+        // Variant toString op) but no detailer: details() takes the generic
+        // fallback, which spells out the header and renders the parsed value.
+        const AncFormat::ID id = p2_31_allocFormatId("fallback");
+        AncTranslator::registerParser(id, AncTransport::St291, &afdStubParse);
+        CHECK_FALSE(AncTranslator::hasDetailer(AncFormat(id), AncTransport::St291));
+
+        Buffer        payload(static_cast<size_t>(0));
+        AncPacket     pkt(AncFormat(id), AncTransport::St291, payload);
+        AncTranslator t;
+        AncDetails    d = t.details(pkt);
+
+        // Transport-level header fields are always spelled out, with enum
+        // values stringified (Category / Transport names, not raw ints).
+        CHECK(d.lines().contains(String("Category = UserDefined")));
+        CHECK(d.lines().contains(String("Transport = St291")));
+        // The registered parser's value rendered through its toString.
+        CHECK(d.lines().contains(String("Decoded = ") + AncAfd(0x09, true).toString()));
+}
+
+TEST_CASE("AncTranslator: details fallback notes when no decoder is registered") {
+        // A format with neither a detailer nor a parser for the transport:
+        // the fallback still emits the header and an Info issue rather than
+        // failing.
+        const AncFormat::ID id = p2_31_allocFormatId("nodecoder");
+        Buffer        payload(static_cast<size_t>(0));
+        AncPacket     pkt(AncFormat(id), AncTransport::RtmpAmf, payload);
+        AncTranslator t;
+        AncDetails    d = t.details(pkt);
+
+        CHECK(d.lines().contains(String("Transport = RtmpAmf")));
+        CHECK(d.issueCount(AncDetailSeverity::Info) >= 1);
+        CHECK_FALSE(d.hasErrors());
 }

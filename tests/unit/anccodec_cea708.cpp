@@ -7,6 +7,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <promeki/ancdetails.h>
 #include <promeki/ancformat.h>
 #include <promeki/ancpacket.h>
 #include <promeki/anctranslateconfig.h>
@@ -228,4 +229,53 @@ TEST_CASE("CEA-708 sync policy: Repeat[idx>0] preserves the source packet's line
         REQUIRE(rp.second().isOk());
         CHECK(rp.first().line() == 13);
         CHECK(rp.first().fieldB() == true);
+}
+
+// ===========================================================================
+// Details path — full human-readable analysis with enum stringification.
+// ===========================================================================
+
+TEST_CASE("CEA-708 details: decodes frame rate, flags, and cc_data breakdown") {
+        AncTranslator                t;
+        Cea708Cdp                    cdp = makeSampleCdp(0x1234);
+        AncTranslator::PacketsResult built =
+                t.build(Variant(cdp), AncFormat(AncFormat::Cea708), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncDetails d = t.details(built.first().front());
+
+        // makeSampleCdp uses frame-rate code 4 (29.97) and three valid
+        // type-0 (CEA-608 field 1) triples.
+        CHECK(d.lines().contains(String("DID = 0x61")));
+        CHECK(d.lines().contains(String("SDID = 0x01")));
+        CHECK(d.lines().contains(String("CdpFrameRate = 29.97 fps")));
+        CHECK(d.lines().contains(String("SequenceCounter = 4660")));  // 0x1234
+        CHECK(d.lines().contains(String("Flags = CcData, ServiceActive")));
+        CHECK(d.lines().contains(String("CcDataTriples = 3")));
+        CHECK(d.lines().contains(String("CcDataBreakdown = 608-F1=3")));
+        CHECK_FALSE(d.hasErrors());
+}
+
+TEST_CASE("CEA-708 details: surfaces the timecode section when present") {
+        Cea708Cdp cdp = makeSampleCdp(1);
+        cdp.timeCodePresent = true;
+        cdp.timeCode        = Timecode(Timecode::NDF30, 1, 2, 3, 4);
+
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(cdp), AncFormat(AncFormat::Cea708), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+
+        AncDetails d = t.details(built.first().front());
+        // The CDP timecode mode is re-resolved from the frame-rate code on
+        // parse, so assert on the section's presence + the time digits
+        // rather than an exact mode-sensitive string match.
+        bool sawTimeCodeLine = false;
+        bool sawTimeCodeFlag = false;
+        for (const String &line : d.lines()) {
+                if (line.startsWith("Timecode = ") && line.contains("01:02:03")) sawTimeCodeLine = true;
+                if (line.startsWith("Flags = ") && line.contains("TimeCode")) sawTimeCodeFlag = true;
+        }
+        CHECK(sawTimeCodeLine);
+        CHECK(sawTimeCodeFlag);
 }

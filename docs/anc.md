@@ -109,7 +109,7 @@ five bytes total:
 
 | Namespace                  | Keys                              | When stamped                                                                                                          |
 |----------------------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `AncMeta::Atc`             | `Rate`                            | Capture stamps the source frame rate so the ATC parser can resolve a Timecode::Mode without `AtcParseRateHint`.       |
+| `AncMeta::Atc`             | `Rate`                            | Capture stamps the source frame rate so the ATC parser can resolve a precise Timecode::Mode without `AtcParseRateHint`.  Optional for ST 12-2 — the digits decode literally without it.       |
 | `AncMeta::HdmiInfoFrame`   | `Type`, `Version`, `Length`       | HDMI ingest stamps the InfoFrame header bytes.                                                                        |
 | `AncMeta::RtmpAmf`         | `ScriptName`                      | RTMP ingest preserves the AMF0 script-tag name.                                                                       |
 | `AncMeta::NdiXml`          | `ElementName`                     | NDI ingest preserves the top-level XML element.                                                                       |
@@ -135,7 +135,7 @@ five bytes total:
 
 | Helper                                                                  | Purpose                                                                |
 |-------------------------------------------------------------------------|------------------------------------------------------------------------|
-| @ref promeki::AncFormat::fromSt291DidSdid                               | Resolve a captured (DID, SDID) byte pair to an `AncFormat`.            |
+| @ref promeki::AncFormat::fromSt291DidSdid                               | Resolve a captured (DID, SDID) byte pair to an `AncFormat`.  Pass the optional UDW payload to disambiguate the ST 12-2 ATC trio (LTC / VITC1 / VITC2, all on 0x60/0x60) from its DBB1 byte. |
 | @ref promeki::AncFormat::fromHdmiInfoFrameType                          | Resolve an HDMI InfoFrame type byte (0x82 = AVI, 0x84 = Audio, ...).   |
 | @ref promeki::AncFormat::fromMpegTsTableId                              | Resolve an MPEG-TS private-section table_id.                           |
 | @ref promeki::AncFormat::fromName / @ref promeki::AncFormat::fromString | Resolve by registered name (the DataStream wire form).                 |
@@ -400,34 +400,38 @@ ATC (Ancillary Timecode) covers two related-but-distinct ST 291
 carriages.  Both share DID=0x60 and the 16-UDW data layout, but
 they target different frame-rate regimes:
 
-- **ST 12-2:2014 + Am1:2013** — the classical carriage.  SDID=0x60
-  for all three flavours (LTC / VITC1 / VITC2).  Discriminator is
-  the DBB1 payload-type byte (0x00 / 0x01 / 0x02).  Covers base
-  rates (≤30 fps) and the four "pair-rate" HFR cases (48 / 50 /
-  60 / 59.94) via the §9.2 Am1 frame-mark mechanism.
+- **ST 12-2:2014** — the classical carriage.  SDID=0x60 for all
+  three flavours (LTC / VITC1 / VITC2).  Discriminator is the DBB1
+  payload-type byte (0x00 / 0x01 / 0x02).  Carries a plain BCD time
+  address — the eight time-code nibbles are HH:MM:SS:FF exactly as
+  encoded, with **no frame-rate math applied to the FF digits**.
+  The frame-tens field is only 2 bits, so the time address spans
+  frame 0..39; at 48 / 50 / 60 fps the VITC1 / VITC2 flavours still
+  alternate per frame, but each packet carries its literal frame
+  digit (no pair-index rescale, no field-mark bit).
 - **ST 12-3:2016** — the high-frame-rate carriage.  SDID=0x61.
   DBB1 = 0x80..0x8F where the low nibble is the bitstream number
   (multiple parallel HFR timecode streams can coexist per video
-  frame).  Covers the ≥72 fps rates (72 / 96 / 100 / 120 /
-  119.88) where the single-bit field-mark of ST 12-2 Am1 can't
-  disambiguate N>2 sub-frames per super-frame.
+  frame).  This is the conformant path for per-physical-frame
+  timecode at the ≥72 fps rates (72 / 96 / 100 / 120 / 119.88),
+  and the only place frame-rate sub-frame math lives.
 
 ### Carriage decision tree {#anc_atc_carriage_decision}
 
 | Wall-clock rate   | Carriage                          | DID  | SDID | DBB1 range  |
 |-------------------|-----------------------------------|------|------|-------------|
 | ≤30 fps           | ST 12-2 (LTC / VITC1 / VITC2)     | 0x60 | 0x60 | 0x00 / 0x01 / 0x02 |
-| 48, 50, 59.94, 60 | ST 12-2 pair-rate (VITC1 + VITC2) | 0x60 | 0x60 | 0x01 / 0x02 |
+| 48, 50, 59.94, 60 | ST 12-2 literal (VITC1 / VITC2 alt.) | 0x60 | 0x60 | 0x01 / 0x02 |
 | 72, 96, 100       | ST 12-3 ATC_HFRTC                 | 0x60 | 0x61 | 0x80..0x8F  |
 | 119.88, 120       | ST 12-3 ATC_HFRTC                 | 0x60 | 0x61 | 0x80..0x8F  |
 
 The library uses @ref promeki::ancAtcIsPairHfrRate and @ref
 promeki::ancAtcIsHfrtcRate to express the split at the codec
 layer.  The @ref promeki::AncAtc::atcVitcFormatForFrame helper
-returns the right VITC1/VITC2 alternation index for pair-rate
-emission; at HFRTC rates it returns the same alternation but the
-result is informational only (ATC_HFRTC is the conformant path
-at those rates).
+returns the VITC1/VITC2 alternation index per frame so emitters
+can pick the flavour; the ST 12-2 codec itself applies no
+frame-rate math — the FF digits are carried literally regardless
+of rate.
 
 ### DBB1 reference {#anc_atc_dbb1}
 
@@ -485,34 +489,24 @@ The single ambiguity (NDF120 vs DF120 — both have super-frame
 count = 30 and N = 4) is broken by the codeword's drop-frame bit
 at codeword position 10.
 
-### Worked example — 60p pair-rate {#anc_atc_60p_pair_example}
+### Worked example — 60p ST 12-2 {#anc_atc_60p_pair_example}
 
-At 60p one wall-clock second contains 60 physical frames numbered
-0..59.  ST 12-1 §12 / ST 12-2 §9.2 Am1 packs them as 30 pairs
-sharing the same BCD super-frame digits (= pair-index in the
-0..29 range), distinguished by a single field-mark bit in the
-codeword.
+ST 12-2 carries a plain BCD time address; **no frame-rate math is
+applied to the FF digits**.  A timecode of `01:00:00:09` at 60 fps
+is encoded and decoded as frame 9, full stop:
 
-Mapping for physical frame 9 (the example used in the round-trip
-test suite):
+- `frame_units = 9`, `frame_tens = 0` → UDW 1 / UDW 3.
+- UDW 7 b7 (the LTC polarity slot) is left clear — ST 12-2 carries
+  no field-mark.
+- Format ID = `AtcVitc2` for an odd frame (per
+  `atcVitcFormatForFrame(60, 9)` — even frames use VITC1, odd use
+  VITC2).  The flavour alternates per frame, but it does not change
+  the time-address digits.
 
-- `pair_index = 9 / 2 = 4` → wire frame_tens = 0, frame_units = 4.
-- `field_mark = 9 % 2 = 1` → UDW 7 b7 = 1 (the "polarity slot"
-  that ST 12-2 Am1 reinterprets as the field-mark at pair-rate).
-- Format ID = `AtcVitc2` (per `atcVitcFormatForFrame(60, 9)` —
-  even frames use VITC1, odd use VITC2).
-
-The receiver reads:
-
-- frame digits (0, 4) → `pair_index = 4`.
-- UDW 7 b7 → `field_mark = 1`.
-- `physical_frame = 4 × 2 + 1 = 9`.
-
-If `AncTranslateConfig::AtcVitcLegacyFieldMark` is set, the
-encoder clears the field-mark bit unconditionally (ST 12-2 Am1
-grandfathers this as compliant for pre-Am1 receivers).  Round-trip
-through such a stream loses one bit of sub-frame phase: pair 9
-collapses to pair 8 on decode.
+The receiver reads the digits `(0, 9)` → frame 9 directly.  Because
+the frame-tens field is only 2 bits, the time address spans frame
+0..39; per-physical-frame timecode above that range is the job of
+the ST 12-3 ATC_HFRTC carriage (next example), not ST 12-2.
 
 ### Worked example — 120p HFRTC {#anc_atc_120p_hfrtc_example}
 
@@ -584,18 +578,23 @@ Notable design choices the library makes:
   or planned backend ingests composite-domain SDI.
 - ST 2110-40 §5.5 keep-alives are emitted for every video frame
   / field with no ANC payload.
-- ATC rate hint: sideband via `AncMeta::Atc::Rate`, fallback to
-  `AncTranslateConfig::AtcParseRateHint`, then
-  @ref promeki::Error::InsufficientContext rather than a silent
-  30-fps default.
+- ATC rate hint (ST 12-2): **optional**.  The eight BCD time-code
+  nibbles are a self-contained `HH:MM:SS:FF` address, so the parser
+  decodes them with no rate.  A hint — sideband via
+  `AncMeta::Atc::Rate`, else `AncTranslateConfig::AtcParseRateHint` —
+  only refines the `Timecode::Mode` (precise `fps()` + the drop-frame
+  separator).  Absent any hint the parse still succeeds with an
+  unspecified-rate mode (`fps() == 0`); the codec never guesses a
+  rate.  (ST 12-3 ATC_HFRTC, by contrast, does need its format
+  context.)
 - ATC carries its non-Timecode fields in a dedicated
   @ref promeki::AncAtc value type rather than overloading
   @ref promeki::Timecode (whose fields cover the time-address
   word, including the BGF mode triple and color-frame flag — see
   @ref timecode_physical_frame).
-- ATC supports both ST 12-2 (≤30 + pair-rate HFR) and ST 12-3
-  (≥72 fps) carriages.  The codec picks per source rate; receivers
-  parse both.  See @ref anc_atc_carriage.
+- ATC supports both ST 12-2 (literal BCD time address) and ST 12-3
+  (≥72 fps per-physical-frame HFR) carriages.  The codec picks per
+  source rate; receivers parse both.  See @ref anc_atc_carriage.
 - Default checksum policy is `PreserveOrRecompute` (see
   @ref anc_st291_checksum).
 - `AncFormat::PanScan` (DID 0x41 / SDID 0x06) carries the

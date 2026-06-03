@@ -190,6 +190,46 @@ TEST_CASE("AncFormat: P2-1 ATC family collapses onto (0x60, 0x60) per ST 12-2:20
         CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
 }
 
+TEST_CASE("AncFormat: fromSt291DidSdid refines the ATC trio from the DBB1 byte") {
+        // Build a 16-UDW ATC payload with the requested DBB1 byte encoded
+        // LSB-first into bit 3 of UDWs 1..8 (ST 12-2 Table 2).
+        auto makeAtcUdw = [](uint8_t dbb1) {
+                List<uint16_t> udw;
+                udw.resize(16);
+                for (size_t i = 0; i < 8; ++i) {
+                        if ((dbb1 >> i) & 1u) udw[i] = 0x08; // DBB bit = bit 3 of UDW i
+                }
+                return udw;
+        };
+
+        // No payload supplied → legacy behaviour (lowest-ID AtcLtc).
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60).id() == AncFormat::AtcLtc);
+
+        // DBB1 0x00 / 0x01 / 0x02 → LTC / VITC1 / VITC2.
+        List<uint16_t> ltc = makeAtcUdw(0x00);
+        List<uint16_t> v1  = makeAtcUdw(0x01);
+        List<uint16_t> v2  = makeAtcUdw(0x02);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60, &ltc).id() == AncFormat::AtcLtc);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60, &v1).id() == AncFormat::AtcVitc1);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60, &v2).id() == AncFormat::AtcVitc2);
+
+        // Reserved DBB1 values fall back to LTC.
+        List<uint16_t> reserved = makeAtcUdw(0x05);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60, &reserved).id() == AncFormat::AtcLtc);
+
+        // The refinement is scoped to the (0x60,0x60) slot — a supplied
+        // payload must not perturb any other format, including the
+        // (0x60,0x61) ATC_HFRTC slot.
+        CHECK(AncFormat::fromSt291DidSdid(0x61, 0x01, &v1).id() == AncFormat::Cea708);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x61, &v1).id() == AncFormat::AtcHfrtc);
+
+        // A short UDW list (< 8 words) can't carry a full DBB1 — fall
+        // back to LTC rather than reading out of bounds.
+        List<uint16_t> shortUdw;
+        shortUdw.resize(4);
+        CHECK(AncFormat::fromSt291DidSdid(0x60, 0x60, &shortUdw).id() == AncFormat::AtcLtc);
+}
+
 TEST_CASE("AncFormat: fromHdmiInfoFrameType for every HDMI-canonical format") {
         CHECK(AncFormat::fromHdmiInfoFrameType(0x82).id() == AncFormat::AviInfoFrame);
         CHECK(AncFormat::fromHdmiInfoFrameType(0x83).id() == AncFormat::SpdInfoFrame);

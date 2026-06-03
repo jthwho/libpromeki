@@ -241,6 +241,43 @@ inline const AncFidelity AncFidelity::Strict{1};
 inline const AncFidelity AncFidelity::Full{2};
 
 /**
+ * @brief Well-known Enum classifying the severity of one @ref AncDetails
+ *        diagnostic issue.
+ *
+ * Stamped on each @c AncDetails::Issue raised while fully decoding an
+ * @ref AncPacket for analysis.  Lets an inspector colour-code or filter
+ * the issue list ("show me only the errors") without string-matching the
+ * message text.
+ *
+ * - @c Info    — Purely informational observation about the packet that
+ *                is not a defect (e.g. "bar data present").  Never
+ *                indicates a problem.
+ * - @c Warning — The packet decodes, but something diverges from the
+ *                governing standard or is otherwise suspect (e.g. a
+ *                non-conformant Data Count the decoder Postel-tolerated,
+ *                a reserved bit set, a rate hint that had to be guessed).
+ * - @c Error   — The packet could not be fully decoded: a truncated or
+ *                structurally invalid payload, a checksum mismatch under
+ *                strict validation, or missing required context.
+ */
+class AncDetailSeverity : public TypedEnum<AncDetailSeverity> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("AncDetailSeverity", "ANC Detail Severity", 0,
+                                           {"Info", 0, "Info"}, {"Warning", 1, "Warning"},
+                                           {"Error", 2, "Error"}); // default: Info
+
+                using TypedEnum<AncDetailSeverity>::TypedEnum;
+
+                static const AncDetailSeverity Info;
+                static const AncDetailSeverity Warning;
+                static const AncDetailSeverity Error;
+};
+
+inline const AncDetailSeverity AncDetailSeverity::Info{0};
+inline const AncDetailSeverity AncDetailSeverity::Warning{1};
+inline const AncDetailSeverity AncDetailSeverity::Error{2};
+
+/**
  * @brief Well-known Enum governing how @ref AncTransport::St291
  *        builders handle the per-packet checksum.
  *

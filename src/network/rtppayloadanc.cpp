@@ -495,7 +495,27 @@ Error RtpPayloadAnc::unpackAncPackets(const RtpPacket::List &in, AncPacket::List
                         if (cpyErr.isError()) return cpyErr;
                         data.setSize(bodyBytes);
 
-                        const AncFormat fmt = AncFormat::fromSt291DidSdid(didByte, sdidByte);
+                        // The ST 12-2 ATC trio (LTC / VITC1 / VITC2) all
+                        // share DID=0x60 / SDID=0x60 and are discriminated
+                        // only by the DBB1 byte (UDWs 1..8 bit 3).  On that
+                        // slot, unpack the eight DBB1-bearing words so the
+                        // resolver labels the real flavour; every other
+                        // format resolves from (DID, SDID) alone with no
+                        // extra unpack on the hot path.
+                        AncFormat fmt;
+                        if (didByte == 0x60 && sdidByte == 0x60 && dataCount >= 8) {
+                                List<uint16_t> dbbUdw;
+                                dbbUdw.reserve(8);
+                                for (size_t i = 0; i < 8; ++i) {
+                                        // UDW i starts at bit (3 + i) * 10 — after the
+                                        // DID / SDID / DataCount header words at bits
+                                        // 0 / 10 / 20, so the first UDW is at bit 30.
+                                        dbbUdw.pushToBack(readWord10(body, (3u + i) * 10u));
+                                }
+                                fmt = AncFormat::fromSt291DidSdid(didByte, sdidByte, &dbbUdw);
+                        } else {
+                                fmt = AncFormat::fromSt291DidSdid(didByte, sdidByte);
+                        }
 
                         AncPacket pkt(fmt, AncTransport::St291, std::move(data));
                         // F9 hot-path: one CoW detach for all five

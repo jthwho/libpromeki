@@ -276,11 +276,25 @@ class AncFormat {
                  *
                  * @param did  The DID byte from the packet.
                  * @param sdid The SDID byte from the packet.
+                 * @param udw  Optional pointer to the packet's user-data
+                 *             words.  When supplied, families that share a
+                 *             single (DID, SDID) but discriminate their
+                 *             flavour in the payload are refined to the
+                 *             correct format: the ST 12-2 ATC trio
+                 *             (@c AtcLtc / @c AtcVitc1 / @c AtcVitc2, all
+                 *             on 0x60/0x60) is resolved from its DBB1
+                 *             payload-type byte (UDWs 1..8 bit 3,
+                 *             LSB-first) instead of anchoring to the
+                 *             lowest-ID @c AtcLtc.  Pass @c nullptr (the
+                 *             default) when only the DID/SDID is available
+                 *             — the result then matches the legacy
+                 *             two-argument behaviour.
                  * @return The matching format, or an invalid @c AncFormat
                  *         when the (DID, SDID) pair has no registered
                  *         mapping.
                  */
-                static AncFormat fromSt291DidSdid(uint8_t did, uint8_t sdid);
+                static AncFormat fromSt291DidSdid(uint8_t did, uint8_t sdid,
+                                                  const List<uint16_t> *udw = nullptr);
 
                 /**
                  * @brief Looks up the @c AncFormat for an HDMI InfoFrame

@@ -24,6 +24,7 @@ devplan/
 │   ├── sockets.md       Phase 3A — complete; deferred items
 │   ├── avoverip.md      Phase 3C — PtpClock + RTP follow-ups
 │   ├── 2110.md          SMPTE ST 2110 conformance plan (-10/-20/-21/-30/-31/-40)
+│   ├── pcap.md          pcap/pcapng reader + L2/L3/L4 demux + SDP-labeled ST 2110-40 decode (P1-P4 shipped 2026-06-02; P5 writer deferred)
 │   ├── srt.md           Phase 3D — SRT shipped; MediaIO backend + bonded listener deferred
 │   ├── rtmp.md          Phase 3F/5 — RTMP / RTMPS publisher + subscriber (Phases 0-5 shipped; Phase 6 docs/CMake next)
 │   └── tls.md           mbedTLS audit follow-ups — OCSP, 4.x upgrade triggers, deferred items

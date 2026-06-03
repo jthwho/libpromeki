@@ -120,7 +120,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(InvalidChecksum, NONE,
                      "Stored ST 291 checksum word does not match the value recomputed over the packet (StrictValidate)"),
         DEFINE_ERROR(TransactionAborted, NONE,
-                     "Action belonged to an all-or-nothing parameter block that was aborted; no side effect was committed")};
+                     "Action belonged to an all-or-nothing parameter block that was aborted; no side effect was committed"),
+        DEFINE_ERROR(TruncatedData, NONE,
+                     "A length-prefixed record or block was cut short by the end of its container (truncated capture)")};
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
         static StructDatabase<int, Error::Code> sysdb = []() {

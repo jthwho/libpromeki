@@ -56,3 +56,10 @@ endif()
 if(PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
     add_subdirectory(promeki-2110-calc)
 endif()
+
+# promeki-pcap — offline pcap / pcapng decoder for SMPTE ST 2110-40 ANC.
+# Needs the network stack (PcapReader / PacketDemux / PcapFlowRouter)
+# and proav (AncPacket / St291Packet / AncFormat).
+if(PROMEKI_ENABLE_NETWORK AND PROMEKI_ENABLE_PROAV)
+    add_subdirectory(promeki-pcap)
+endif()

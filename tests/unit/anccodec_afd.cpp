@@ -358,3 +358,32 @@ TEST_CASE("PanScan: legacy 'BarData' name no longer resolves") {
         CHECK(isError(r));
         CHECK(error(r) == Error::IdNotFound);
 }
+
+// ============================================================================
+// Details path — AFD code + bar data fully decoded for analysis
+// ============================================================================
+
+TEST_CASE("AFD details: decodes AFD code, coded-frame aspect, and bar data") {
+        AncAfd afd(0x09, true); // "4:3 (center)" in a 16:9 coded frame
+        afd.setTopBar(true);
+        afd.setBottomBar(true);
+        afd.setBarValue1(60);
+        afd.setBarValue2(420);
+
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(afd), AncFormat(AncFormat::Afd), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        AncPacket pkt = built.first().front();
+
+        AncDetails d = t.details(pkt);
+        CHECK(d.lines().contains(String("AfdCode = 0x9 (4:3 (center))")));
+        CHECK(d.lines().contains(String("CodedFrameAspect = 16:9")));
+        CHECK(d.lines().contains(String("BarDataPresent = true")));
+        CHECK(d.lines().contains(String("BarEdges = Top, Bottom")));
+        CHECK(d.lines().contains(String("BarValue1 = 60")));
+        CHECK(d.lines().contains(String("BarValue2 = 420")));
+        CHECK_FALSE(d.hasErrors());
+        // A conformant AFD packet (DC=8, valid checksum) raises no warnings.
+        CHECK_FALSE(d.hasWarnings());
+}

@@ -2793,6 +2793,7 @@ set(PROMEKI_HEADERS
     include/promeki/h264bitstream.h
     include/promeki/hdmisignalconfig.h
     include/promeki/hevcbitstream.h
+    include/promeki/hexdump.h
     include/promeki/hmac.h
     include/promeki/iodevice.h
     include/promeki/json.h
@@ -2933,6 +2934,7 @@ set(PROMEKI_SOURCES
     src/core/masteringdisplay.cpp
     src/core/xyzcolor.cpp
     src/core/base64.cpp
+    src/core/hexdump.cpp
     src/core/crashhandler.cpp
     src/core/crc.cpp
     src/core/cuda.cpp
@@ -3067,6 +3069,11 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/networkinterface.h
         include/promeki/networkinterfacebackend.h
         include/promeki/networkinterfaceimpl.h
+        include/promeki/enums_pcap.h
+        include/promeki/pcapreader.h
+        include/promeki/packetdemux.h
+        include/promeki/pcapsdpmap.h
+        include/promeki/pcapflowrouter.h
         include/promeki/packettransport.h
         include/promeki/prioritysocket.h
         include/promeki/ntptime.h
@@ -3147,6 +3154,10 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/networkinterfacebackend.cpp
         src/network/networkinterfacemonitor.cpp
         src/network/networkrouting.cpp
+        src/network/pcapreader.cpp
+        src/network/packetdemux.cpp
+        src/network/pcapsdpmap.cpp
+        src/network/pcapflowrouter.cpp
         src/network/packettransport.cpp
         src/network/posixnetworkinterfacebackend.cpp
         src/network/posixnetworkrouting.cpp
@@ -3441,6 +3452,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/anccodec_afd.cpp
         src/proav/anccodec_atc.cpp
         src/proav/anccodec_atc_hfrtc.cpp
+        src/proav/anccodec_cea608.cpp
         src/proav/anccodec_cea708.cpp
         src/proav/anccodec_cea708_hlssei.cpp
         src/proav/anccodec_hdrdynamic2094_40.cpp
@@ -3451,6 +3463,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/anccodec_st2020audio.cpp
         src/proav/anccodec_vpid.cpp
         src/proav/ancdesc.cpp
+        src/proav/ancdetails.cpp
         src/proav/ancformat.cpp
         src/proav/ancop47sdp.cpp
         src/proav/ancpacket.cpp
@@ -4587,6 +4600,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/unit/gate.cpp
         tests/unit/hashmap.cpp
         tests/unit/hashset.cpp
+        tests/unit/hexdump.cpp
         tests/unit/histogram.cpp
         tests/unit/hmac.cpp
         tests/unit/iodevice.cpp
@@ -4706,6 +4720,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/network/networkrouting.cpp
             tests/unit/network/prioritysocket.cpp
             tests/unit/network/packetscheduler.cpp
+            tests/unit/network/packetdemux.cpp
+            tests/unit/network/pcapsdpmap.cpp
+            tests/unit/network/pcapflowrouter.cpp
+            tests/unit/network/pcapreader.cpp
             tests/unit/network/rawsocket.cpp
             tests/unit/network/rfc7273refclk.cpp
             tests/unit/network/rtcppacket.cpp
@@ -4831,6 +4849,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/anccodec_afd.cpp
             tests/unit/anccodec_atc.cpp
             tests/unit/anccodec_atc_hfrtc.cpp
+            tests/unit/anccodec_cea608.cpp
             tests/unit/anccodec_cea708.cpp
             tests/unit/anccodec_cea708_hlssei.cpp
             tests/unit/anccodec_hdrdynamic2094_40.cpp
@@ -4841,6 +4860,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/anccodec_st2020audio.cpp
             tests/unit/anccodec_vpid.cpp
             tests/unit/ancdesc.cpp
+            tests/unit/ancdetails.cpp
             tests/unit/ancformat.cpp
             tests/unit/ancframesync.cpp
             tests/unit/ancpacket.cpp
