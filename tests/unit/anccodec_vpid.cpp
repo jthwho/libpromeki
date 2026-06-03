@@ -218,16 +218,100 @@ TEST_CASE("VPID details: decodes link standard, rate, scan, and sampling") {
         // The reference VPID is 1080p59.94 / 3G Level A / 4:2:2 / 10-bit.
         CHECK(d.lines().contains(String("DID = 0x41")));
         CHECK(d.lines().contains(String("SDID = 0x01")));
+        CHECK(d.lines().contains(String("DataCount = 4")));
         CHECK(d.lines().contains(String("Bytes = 89:ca:80:01")));
+        // Instrument-style packed word (big-endian byte 1 in MSB).
+        CHECK(d.lines().contains(String("PackedWord = 0x89CA8001")));
         CHECK(d.lines().contains(String("Version = ST 352:2013 (current)")));
+        CHECK(d.lines().contains(String("Byte1 = 0x89")));
+        CHECK(d.lines().contains(String("Standard = SMPTE ST 425-1 - 1080-line on Level A 3 Gb/s SDI")));
         CHECK(d.lines().contains(String("ScanMode = ") +
                                  makeReferenceVpid().videoScanMode().valueName()));
         CHECK(d.lines().contains(String("LinkStandard = ") +
                                  makeReferenceVpid().linkStandard().valueName()));
+        // 0x89/0xCA: progressive transport + progressive picture.
+        CHECK(d.lines().contains(String("Transport = Progressive")));
+        CHECK(d.lines().contains(String("Picture = Progressive")));
         CHECK(d.lines().contains(String("Sampling = Y'CbCr 4:2:2")));
         CHECK(d.lines().contains(String("BitDepth = 10-bit")));
         CHECK(d.lines().contains(String("AspectRatio = 16:9")));
+        CHECK(d.lines().contains(String("Channel = 1 (single-link or ch1 of multi-channel)")));
         CHECK_FALSE(d.hasErrors());
+}
+
+TEST_CASE("VPID details: full Table 3 sampling codes are all named") {
+        struct Case {
+                uint8_t code;
+                const char *name;
+        };
+        // Every defined ST 352:2013 Table 3 code, including the
+        // data-channel ("D") variants, ST 2048-2 FS, and X'Y'Z'.
+        const Case cases[] = {
+                {0x0, "Y'CbCr 4:2:2"},
+                {0x1, "Y'CbCr 4:4:4"},
+                {0x2, "R'G'B' 4:4:4"},
+                {0x3, "Y'CbCr 4:2:0"},
+                {0x4, "Y'CbCr+A 4:2:2:4"},
+                {0x7, "SMPTE ST 2048-2 FS"},
+                {0x8, "Y'CbCr+D 4:2:2:4"},
+                {0xA, "R'G'B'+D 4:4:4:4"},
+                {0xE, "X'Y'Z' 4:4:4"},
+                {0xB, "Reserved (0xB)"},
+        };
+        AncTranslator t;
+        for (const Case &c : cases) {
+                // 1080-line 3G Level A, byte 3 = sampling code (aspect 4:3),
+                // 10-bit so the rest of the packet is well-formed.
+                SdiVpid v(0x89, 0xCA, c.code, 0x01);
+                AncTranslator::PacketsResult built =
+                        t.build(Variant(v), AncFormat(AncFormat::Vpid), AncTransport::St291);
+                REQUIRE(built.second().isOk());
+                AncDetails d = t.details(built.first().front());
+                CHECK(d.lines().contains(String("Sampling = ") + String(c.name)));
+        }
+}
+
+TEST_CASE("VPID details: SD (Annex B.1) surfaces horizontal luma sample count") {
+        // Byte 1 = 0x81 SD; byte 2 = 0x05 (25 Hz); byte 3 b6 = 1 (960 samples),
+        // 16:9, 4:2:2; byte 4 = 0x01 (10-bit).
+        SdiVpid                      v(0x81, 0x05, 0xC0, 0x01);
+        REQUIRE(v.isSdSchema());
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(v), AncFormat(AncFormat::Vpid), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        AncDetails d = t.details(built.first().front());
+        CHECK(d.lines().contains(String("HorizontalLumaSamples = 960")));
+        // The SD schema does not carry a meaningful transport bit.
+        CHECK_FALSE(d.lines().contains(String("Transport = Progressive")));
+        CHECK_FALSE(d.lines().contains(String("Transport = Interlaced")));
+}
+
+TEST_CASE("VPID details: extended schema surfaces sub-image width and range") {
+        // Byte 1 = 0xC0 (6G 2160-line); byte 3 b6 = 1 → 2048-wide sub-image;
+        // byte 4 [1:0] = 0 → 10-bit Full Range under the extended schema.
+        SdiVpid                      v(SdiVpid::Byte1_SL_6G_2160, 0x00, 0x40, 0x00);
+        REQUIRE(v.isExtendedSchema());
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(v), AncFormat(AncFormat::Vpid), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        AncDetails d = t.details(built.first().front());
+        CHECK(d.lines().contains(String("SubImageWidth = 2048")));
+        CHECK(d.lines().contains(String("QuantizationRange = Full")));
+}
+
+TEST_CASE("VPID details: pre-2008 historical code warns about Annex C layout") {
+        // Byte 1 = 0x04 (Annex C.4, ST 274) — version bit 7 = 0.
+        SdiVpid                      v(SdiVpid::Byte1_AnnexC_ST274, 0x00, 0x00, 0x00);
+        REQUIRE_FALSE(v.isCurrentVersion());
+        AncTranslator                t;
+        AncTranslator::PacketsResult built =
+                t.build(Variant(v), AncFormat(AncFormat::Vpid), AncTransport::St291);
+        REQUIRE(built.second().isOk());
+        AncDetails d = t.details(built.first().front());
+        CHECK(d.lines().contains(String("Version = Pre-2008 (Annex C)")));
+        CHECK(d.hasWarnings());
 }
 
 TEST_CASE("VPID details: 6G/12G extended schema surfaces HDR / colorimetry fields") {

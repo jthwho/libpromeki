@@ -84,6 +84,28 @@ TEST_CASE("Logger_ConsoleLoggingToggle") {
 }
 
 // ============================================================================
+// Console stream selection (stdout vs stderr)
+// ============================================================================
+
+TEST_CASE("Logger_ConsoleUseStderrToggle") {
+        Logger &logger = Logger::defaultLogger();
+        bool    savedUseStderr = logger.consoleUseStderr();
+
+        // Default is stderr so diagnostic chatter stays out of stdout payload.
+        logger.setConsoleUseStderr(true);
+        CHECK(logger.consoleUseStderr());
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "This should appear on stderr");
+        logger.sync();
+
+        logger.setConsoleUseStderr(false);
+        CHECK_FALSE(logger.consoleUseStderr());
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "This should appear on stdout");
+        logger.sync();
+
+        logger.setConsoleUseStderr(savedUseStderr);
+}
+
+// ============================================================================
 // Force level always logs
 // ============================================================================
 

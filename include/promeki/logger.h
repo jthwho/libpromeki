@@ -374,11 +374,33 @@ class Logger {
                 bool consoleLoggingEnabled() const { return _consoleLogging.value(); }
 
                 /**
-                 * @brief Enables or disables console (stderr) log output.
+                 * @brief Enables or disables console log output.
                  * @param val true to enable console logging, false to disable.
                  */
                 void setConsoleLoggingEnabled(bool val) {
                         _consoleLogging.setValue(val);
+                        return;
+                }
+
+                /**
+                 * @brief Returns whether console output is routed to stderr.
+                 * @return true if console log lines go to stderr, false for stdout.
+                 */
+                bool consoleUseStderr() const { return _consoleUseStderr.value(); }
+
+                /**
+                 * @brief Selects which standard stream receives console log output.
+                 *
+                 * The default is @c stderr, which keeps diagnostic chatter
+                 * out of a program's real @c stdout payload.  This can also
+                 * be set library-wide via @ref LibraryOptions::LogToStderr
+                 * (applied by the @ref Application constructor) or the
+                 * @c PROMEKI_OPT_LogToStderr environment variable.
+                 *
+                 * @param val true to route console output to stderr, false for stdout.
+                 */
+                void setConsoleUseStderr(bool val) {
+                        _consoleUseStderr.setValue(val);
                         return;
                 }
 
@@ -546,6 +568,7 @@ class Logger {
                 BasicThread           _thread;
                 Atomic<int>           _level;
                 Atomic<bool>          _consoleLogging;
+                Atomic<bool>          _consoleUseStderr;
                 Atomic<bool>          _terminating{false};
                 Atomic<size_t>        _historySize{DefaultHistorySize};
                 Atomic<uint64_t>      _nextListenerHandle{0};

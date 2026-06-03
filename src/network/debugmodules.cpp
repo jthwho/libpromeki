@@ -209,6 +209,7 @@ namespace {
                 body.set("level", logger.level());
                 body.set("levelName", String(1, Logger::levelToChar(static_cast<Logger::LogLevel>(logger.level()))));
                 body.set("consoleLogging", logger.consoleLoggingEnabled());
+                body.set("consoleStream", logger.consoleUseStderr() ? "stderr" : "stdout");
                 body.set("historySize", static_cast<uint64_t>(logger.historySize()));
 
                 JsonArray channels;

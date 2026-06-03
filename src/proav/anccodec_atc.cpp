@@ -149,6 +149,19 @@ namespace {
                 return static_cast<uint8_t>((udw >> 4) & 0x0F);
         }
 
+        // Reads the SMPTE 12M-1 §9.2 polarity-correction / field-mark slot.
+        // The slot sits at bit 27 (UDW 7 b3) for every rate except 25 fps,
+        // where it moves to bit 59 (UDW 15 b3) and bit 27 instead carries
+        // BGF0 (libvtc ltc_pack.h; SMPTE 12M-1 §9.2).  Returns the raw slot
+        // bit — its meaning is payload-dependent (biphase-mark polarity
+        // correction for LTC, field-mark flag for VITC) and is labelled by
+        // the caller.  When the rate is unknown (fps == 0) the bit-27
+        // position is assumed, which is correct for every rate but 25.
+        inline bool atcFieldPolaritySlot(const List<uint16_t> &udw, uint32_t fps) {
+                const size_t idx = (fps == 25u) ? IdxHourTens : IdxSecTens;
+                return (udwNibble(udw[idx]) & 0x08u) != 0u;
+        }
+
         // Builds the 10-bit UDW value for a time-code-bearing or binary-
         // group-bearing slot: time-code nibble in bits 4-7, DBB in bit 3,
         // bits 0-2 zero per §6.1.4, parity (bits 8-9) left at zero so
@@ -586,6 +599,31 @@ namespace {
                         }
                         d.addField("ColorFrame", String::number(tc.colorFrame()));
                         d.addField("Userbits", tc.userbits().toString());
+
+                        // SMPTE 12M-1 §9.2 polarity-correction / field-mark
+                        // slot.  Surfaced so two ATC packets that decode to
+                        // the same time address but differ only in this bit —
+                        // a field-marked HFR pair, or a duplicated sub-frame
+                        // when a sender stalls the timecode — are
+                        // distinguishable in the decode.  Not shown for
+                        // ST 12-3 HFRTC payloads (different time-address
+                        // model).  LTC has no field concept: the slot is the
+                        // biphase-mark polarity-correction bit; for VITC it is
+                        // the field-mark flag (0 = field 1, 1 = field 2).
+                        if (dbb1 < 0x80u) {
+                                bool slot = atcFieldPolaritySlot(udw, tc.fps());
+                                d.addField(dbb1 == AncAtc::Ltc ? "Polarity" : "FieldMark",
+                                           String::number(slot));
+                                // The BGF / field-mark bit positions also
+                                // swap at 25 fps; the binary-group-flag decode
+                                // folded into Userbits assumes the non-25
+                                // layout, so flag the ambiguity.
+                                if (tc.fps() == 25u) {
+                                        d.addInfo("At 25 fps the BGF / field-mark bit positions differ "
+                                                  "(SMPTE 12M-1 §9.2); the binary-group-flag decode assumes "
+                                                  "the non-25 layout");
+                                }
+                        }
                 } else {
                         d.addError(String("Timecode decode failed: ") + parsed.second().desc());
                 }

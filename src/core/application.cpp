@@ -53,6 +53,8 @@ Application::Application(int argc, char **argv) {
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
         data().mainThread = Thread::adoptCurrentThread();
         LibraryOptions::instance().loadFromEnvironment();
+        Logger::defaultLogger().setConsoleUseStderr(
+                LibraryOptions::instance().getAs<bool>(LibraryOptions::LogToStderr));
         if (LibraryOptions::instance().getAs<bool>(LibraryOptions::CrashHandler)) {
                 CrashHandler::install();
         }

@@ -124,11 +124,14 @@ static uint64_t cachedThreadId() {
 }
 
 Logger::Logger()
-    : _level(Info), _consoleLogging(true), _fileFormatter(defaultFileFormatter()),
+    : _level(Info), _consoleLogging(true), _consoleUseStderr(true), _fileFormatter(defaultFileFormatter()),
       _consoleFormatter(defaultConsoleFormatter()) {
         // Force stdio singletons to initialize before this Logger,
         // ensuring they outlive the Logger at static destruction time.
+        // Both streams are touched because the console target is
+        // runtime-selectable (see _consoleUseStderr / LogToStderr).
         FileIODevice::stdoutDevice();
+        FileIODevice::stderrDevice();
         _thread.setName("logger");
         _thread.start([this]() { worker(); });
 }
@@ -255,8 +258,12 @@ Logger::LogFormatter Logger::defaultFileFormatter() {
 Logger::LogFormatter Logger::defaultConsoleFormatter() {
         return [](const LogFormat &fmt) -> String {
                 const LogEntry &entry = *fmt.entry;
-                bool            ansi = AnsiStream::stdoutSupportsANSI();
-                char            lvl = levelToChar(entry.level);
+                // ANSI eligibility must track the stream we actually write
+                // to — stderr by default — so escape codes are emitted only
+                // when that specific stream is a terminal.
+                bool ansi = defaultLogger().consoleUseStderr() ? AnsiStream::stderrSupportsANSI()
+                                                               : AnsiStream::stdoutSupportsANSI();
+                char lvl = levelToChar(entry.level);
 
                 // Build source:line and pad to a fixed column width.
                 //
@@ -451,7 +458,8 @@ void Logger::writeLog(const LogEntry &entry, FileIODevice *logFile) {
                 logFile->flush();
         }
         if (_consoleLogging.value()) {
-                FileIODevice *out = FileIODevice::stdoutDevice();
+                FileIODevice *out =
+                        _consoleUseStderr.value() ? FileIODevice::stderrDevice() : FileIODevice::stdoutDevice();
                 String        line = _consoleFormatter(fmt) + "\033[0m\n";
                 out->write(line.cstr(), static_cast<int64_t>(line.length()));
                 out->flush();

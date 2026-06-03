@@ -113,32 +113,114 @@ TEST_CASE("SdiVpid::wireFormat: maps every sampling+bit-depth combo to SdiWireFo
                           static_cast<uint8_t>(depth & 0x03));
                 return v.wireFormat();
         };
-        CHECK(wf(SdiVpid::Sampling_YCbCr_422, SdiVpid::BitDepth_10) == SdiWireFormat::YCbCr_422_10);
-        CHECK(wf(SdiVpid::Sampling_YCbCr_422, SdiVpid::BitDepth_12) == SdiWireFormat::YCbCr_422_12);
-        CHECK(wf(SdiVpid::Sampling_YCbCr_444, SdiVpid::BitDepth_10) == SdiWireFormat::YCbCr_444_10);
-        CHECK(wf(SdiVpid::Sampling_YCbCr_444, SdiVpid::BitDepth_12) == SdiWireFormat::YCbCr_444_12);
-        CHECK(wf(SdiVpid::Sampling_RGB_444,   SdiVpid::BitDepth_10) == SdiWireFormat::RGB_444_10);
-        CHECK(wf(SdiVpid::Sampling_RGB_444,   SdiVpid::BitDepth_12) == SdiWireFormat::RGB_444_12);
-        CHECK(wf(SdiVpid::Sampling_RGBA_4444, SdiVpid::BitDepth_10) == SdiWireFormat::RGBA_444_10);
+        CHECK(wf(VpidSampling::YCbCr_422.value(), SdiVpid::BitDepth_10) == SdiWireFormat::YCbCr_422_10);
+        CHECK(wf(VpidSampling::YCbCr_422.value(), SdiVpid::BitDepth_12) == SdiWireFormat::YCbCr_422_12);
+        CHECK(wf(VpidSampling::YCbCr_444.value(), SdiVpid::BitDepth_10) == SdiWireFormat::YCbCr_444_10);
+        CHECK(wf(VpidSampling::YCbCr_444.value(), SdiVpid::BitDepth_12) == SdiWireFormat::YCbCr_444_12);
+        CHECK(wf(VpidSampling::RGB_444.value(),   SdiVpid::BitDepth_10) == SdiWireFormat::RGB_444_10);
+        CHECK(wf(VpidSampling::RGB_444.value(),   SdiVpid::BitDepth_12) == SdiWireFormat::RGB_444_12);
+        CHECK(wf(VpidSampling::RGBA_4444.value(), SdiVpid::BitDepth_10) == SdiWireFormat::RGBA_444_10);
 }
 
 TEST_CASE("SdiVpid::wireFormat: 8-bit payloads are SDI-legal but not modelled as SdiWireFormat") {
         SdiVpid v(SdiVpid::Byte1_SL_SD, 0,
-                  SdiVpid::Sampling_YCbCr_422, SdiVpid::BitDepth_8);
+                  VpidSampling::YCbCr_422.value(), SdiVpid::BitDepth_8);
         CHECK(v.wireFormat() == SdiWireFormat::Auto);
         CHECK(v.bitDepth() == 8);
 }
 
 TEST_CASE("SdiVpid::wireFormat: 12-bit RGBA is not standardised — returns Auto") {
         SdiVpid v(SdiVpid::Byte1_SL_3GA_1080, 0,
-                  SdiVpid::Sampling_RGBA_4444, SdiVpid::BitDepth_12);
+                  VpidSampling::RGBA_4444.value(), SdiVpid::BitDepth_12);
         CHECK(v.wireFormat() == SdiWireFormat::Auto);
 }
 
 TEST_CASE("SdiVpid::wireFormat: 4:2:0 / YCbCrA samplings return Auto") {
         SdiVpid yuv420(SdiVpid::Byte1_SL_3GA_1080, 0,
-                       SdiVpid::Sampling_YCbCr_420, SdiVpid::BitDepth_10);
+                       VpidSampling::YCbCr_420.value(), SdiVpid::BitDepth_10);
         CHECK(yuv420.wireFormat() == SdiWireFormat::Auto);
+}
+
+// ============================================================================
+// sampling / setSampling (byte 3 [3:0], VpidSampling enum)
+// ============================================================================
+
+TEST_CASE("SdiVpid::sampling: decodes every defined ST 352 Table 3 code") {
+        auto samp = [](uint8_t code) -> VpidSampling {
+                return SdiVpid(SdiVpid::Byte1_SL_3GA_1080, 0,
+                               static_cast<uint8_t>(code & 0x0F), 0)
+                        .sampling();
+        };
+        CHECK(samp(0x0) == VpidSampling::YCbCr_422);
+        CHECK(samp(0x1) == VpidSampling::YCbCr_444);
+        CHECK(samp(0x2) == VpidSampling::RGB_444);
+        CHECK(samp(0x3) == VpidSampling::YCbCr_420);
+        CHECK(samp(0x4) == VpidSampling::YCbCrA_4224);
+        CHECK(samp(0x5) == VpidSampling::YCbCrA_4444);
+        CHECK(samp(0x6) == VpidSampling::RGBA_4444);
+        CHECK(samp(0x7) == VpidSampling::ST2048_2_FS);
+        CHECK(samp(0x8) == VpidSampling::YCbCrD_4224);
+        CHECK(samp(0x9) == VpidSampling::YCbCrD_4444);
+        CHECK(samp(0xA) == VpidSampling::RGBD_4444);
+        CHECK(samp(0xE) == VpidSampling::XYZ_444);
+}
+
+TEST_CASE("SdiVpid::sampling: reserved codes decode to Unknown") {
+        auto samp = [](uint8_t code) -> VpidSampling {
+                return SdiVpid(SdiVpid::Byte1_SL_3GA_1080, 0,
+                               static_cast<uint8_t>(code & 0x0F), 0)
+                        .sampling();
+        };
+        CHECK(samp(0xB) == VpidSampling::Unknown);
+        CHECK(samp(0xC) == VpidSampling::Unknown);
+        CHECK(samp(0xD) == VpidSampling::Unknown);
+        CHECK(samp(0xF) == VpidSampling::Unknown);
+}
+
+TEST_CASE("SdiVpid::sampling: enum integer values are the on-wire Table 3 nibbles") {
+        CHECK(VpidSampling::YCbCr_422.value() == 0x0);
+        CHECK(VpidSampling::XYZ_444.value() == 0xE);
+        // The display label is the human-readable form used by the detailer.
+        CHECK(VpidSampling::YCbCr_422.valueDisplayName() == String("Y'CbCr 4:2:2"));
+        CHECK(VpidSampling::XYZ_444.valueDisplayName() == String("X'Y'Z' 4:4:4"));
+}
+
+TEST_CASE("SdiVpid::setSampling: writes the nibble and preserves aspect + reserved bits") {
+        // Byte 3 starts as 0xF0: aspect 16:9 (b7), reserved b6:4 = 0b111,
+        // sampling nibble 0h.
+        SdiVpid v(SdiVpid::Byte1_SL_3GA_1080, 0, 0xF0, 0);
+        v.setSampling(VpidSampling::XYZ_444);
+        CHECK(v.samplingCode() == 0xE);
+        CHECK(v.sampling() == VpidSampling::XYZ_444);
+        // The upper nibble (aspect + reserved bits) is untouched.
+        CHECK((v.byte3() & 0xF0) == 0xF0);
+        // Round-trips back.
+        v.setSampling(VpidSampling::YCbCr_422);
+        CHECK(v.samplingCode() == 0x0);
+}
+
+TEST_CASE("SdiVpid::setSampling: Unknown clears the nibble to 4:2:2") {
+        SdiVpid v(SdiVpid::Byte1_SL_3GA_1080, 0, 0x8E, 0); // nibble Eh
+        v.setSampling(VpidSampling::Unknown);
+        CHECK(v.samplingCode() == 0x0);
+}
+
+// ============================================================================
+// payloadDescription (byte 1 reference standard)
+// ============================================================================
+
+TEST_CASE("SdiVpid::payloadDescription: names the reference standard per byte 1") {
+        CHECK(SdiVpid(SdiVpid::Byte1_SL_3GA_1080, 0, 0, 0).payloadDescription() ==
+              String("SMPTE ST 425-1 - 1080-line on Level A 3 Gb/s SDI"));
+        CHECK(SdiVpid(SdiVpid::Byte1_SL_12G_2160, 0, 0, 0).payloadDescription() ==
+              String("SMPTE ST 2082-10 Mode 1 - 2160-line on 12G-SDI"));
+        CHECK(SdiVpid(SdiVpid::Byte1_AnnexC_ST274, 0, 0, 0).payloadDescription() ==
+              String("SMPTE ST 274 1125-line on ST 292-1 HD-SDI (historical, Annex C.4)"));
+}
+
+TEST_CASE("SdiVpid::payloadDescription: unregistered byte 1 points at the SMPTE-RA register") {
+        const String d = SdiVpid(0x42, 0, 0, 0).payloadDescription();
+        CHECK(d.contains(String("SMPTE-RA")));
 }
 
 // ============================================================================
@@ -292,7 +374,7 @@ TEST_CASE("SdiVpid::encode: 1080p59.94 RGB 4:4:4 12-bit over 6G-SDI") {
         CHECK(v.byte1() == SdiVpid::Byte1_SL_6G_1080);
         CHECK(v.pictureRateCode() == SdiVpid::Rate_59_94);
         CHECK(v.videoScanMode() == VideoScanMode::Progressive);
-        CHECK(v.samplingCode() == SdiVpid::Sampling_RGB_444);
+        CHECK(v.sampling() == VpidSampling::RGB_444);
         CHECK(v.bitDepth() == 12);
         CHECK(v.wireFormat() == SdiWireFormat::RGB_444_12);
 }

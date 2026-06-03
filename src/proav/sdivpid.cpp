@@ -128,8 +128,6 @@ SdiWireFormat SdiVpid::wireFormat() const {
         // doesn't claim a fabricated wire payload.
         if (!isValid()) return SdiWireFormat::Auto;
 
-        const uint8_t samp = samplingCode();
-
         // Bit-depth decoding depends on schema: ST 352:2013 has
         // 0=8/1=10/2=12, while ST 2081-10 / ST 2082-10 have
         // 0=10-Full/1=10/2=12/3=12-Full.  Use bitDepth() to fold both
@@ -143,26 +141,102 @@ SdiWireFormat SdiVpid::wireFormat() const {
         // Auto.
         if (!is10 && !is12) return SdiWireFormat::Auto;
 
-        switch (samp) {
-                case Sampling_YCbCr_422:
-                        return is10 ? SdiWireFormat::YCbCr_422_10 : SdiWireFormat::YCbCr_422_12;
-                case Sampling_YCbCr_444:
-                        return is10 ? SdiWireFormat::YCbCr_444_10 : SdiWireFormat::YCbCr_444_12;
-                case Sampling_RGB_444:
-                        return is10 ? SdiWireFormat::RGB_444_10 : SdiWireFormat::RGB_444_12;
-                case Sampling_RGBA_4444:
-                        // Only the 10-bit RGBA wire format is defined;
-                        // 12-bit RGBA is not standardised on SDI.
-                        return is10 ? SdiWireFormat::RGBA_444_10 : SdiWireFormat::Auto;
-                case Sampling_YCbCr_420:
-                case Sampling_YCbCrA_4224:
-                case Sampling_YCbCrA_4444:
+        const VpidSampling samp = sampling();
+        if (samp == VpidSampling::YCbCr_422)
+                return is10 ? SdiWireFormat::YCbCr_422_10 : SdiWireFormat::YCbCr_422_12;
+        if (samp == VpidSampling::YCbCr_444)
+                return is10 ? SdiWireFormat::YCbCr_444_10 : SdiWireFormat::YCbCr_444_12;
+        if (samp == VpidSampling::RGB_444)
+                return is10 ? SdiWireFormat::RGB_444_10 : SdiWireFormat::RGB_444_12;
+        if (samp == VpidSampling::RGBA_4444)
+                // Only the 10-bit RGBA wire format is defined; 12-bit
+                // RGBA is not standardised on SDI.
+                return is10 ? SdiWireFormat::RGBA_444_10 : SdiWireFormat::Auto;
+        // 4:2:0, YCbCr+A/+D, ST 2048-2 FS, X'Y'Z' and reserved codes
+        // exist in ST 352 but the library doesn't expose them as
+        // SdiWireFormat enumerators — no SDI carrier defined at this
+        // layer.
+        return SdiWireFormat::Auto;
+}
+
+VpidSampling SdiVpid::sampling() const {
+        // ST 352:2013 Table 3 (also ST 2081-10 / 2082-10 Table 5).  The
+        // VpidSampling integer values are the on-wire nibbles, so the
+        // reserved codes (Bh, Ch, Dh, Fh) simply have no entry and fall
+        // through to Unknown.
+        switch (samplingCode()) {
+                case 0x0: return VpidSampling::YCbCr_422;
+                case 0x1: return VpidSampling::YCbCr_444;
+                case 0x2: return VpidSampling::RGB_444;
+                case 0x3: return VpidSampling::YCbCr_420;
+                case 0x4: return VpidSampling::YCbCrA_4224;
+                case 0x5: return VpidSampling::YCbCrA_4444;
+                case 0x6: return VpidSampling::RGBA_4444;
+                case 0x7: return VpidSampling::ST2048_2_FS;
+                case 0x8: return VpidSampling::YCbCrD_4224;
+                case 0x9: return VpidSampling::YCbCrD_4444;
+                case 0xA: return VpidSampling::RGBD_4444;
+                case 0xE: return VpidSampling::XYZ_444;
+                default:  return VpidSampling::Unknown;
+        }
+}
+
+void SdiVpid::setSampling(const VpidSampling &sampling) {
+        // Unknown has no wire encoding — clear the nibble to 0h (4:2:2).
+        const uint8_t code = (sampling == VpidSampling::Unknown)
+                                     ? 0u
+                                     : static_cast<uint8_t>(sampling.value() & 0x0F);
+        _bytes[2] = static_cast<uint8_t>((_bytes[2] & 0xF0) | code);
+}
+
+String SdiVpid::payloadDescription() const {
+        // Reference standard + active-line description per the SMPTE-RA
+        // ST 352 byte 1 register (ST 352:2013 §5.2 + Annex B / C).
+        switch (_bytes[0]) {
+                case Byte1_AnnexC_BT601:
+                        return String("ITU-R BT.601 on ST 259 SD-SDI (historical, Annex C.1)");
+                case Byte1_AnnexC_BT1358:
+                        return String("ITU-R BT.1358-1 525P/625P on BT.1362 270 Mb/s dual-link "
+                                      "(historical, Annex C.2)");
+                case Byte1_AnnexC_ST347:
+                        return String("SMPTE ST 347 525/625-line on 540 Mb/s SDI "
+                                      "(historical, Annex C.3)");
+                case Byte1_AnnexC_ST274:
+                        return String("SMPTE ST 274 1125-line on ST 292-1 HD-SDI "
+                                      "(historical, Annex C.4)");
+                case Byte1_AnnexC_ST296:
+                        return String("SMPTE ST 296 750-line on ST 292-1 HD-SDI "
+                                      "(historical, Annex C.5)");
+                case Byte1_AnnexC_ST349:
+                        return String("SMPTE ST 349 SD mapped into ST 292-1 HD-SDI "
+                                      "(historical, Annex C.6)");
+                case Byte1_SL_SD:
+                        return String("SMPTE ST 352 Annex B.1 - 483/576-line interlaced on "
+                                      "270/360 Mb/s SD-SDI");
+                case Byte1_SL_HD_720:
+                        return String("SMPTE ST 292-1 - 720-line on 1.5 Gb/s HD-SDI");
+                case Byte1_SL_HD_1080:
+                        return String("SMPTE ST 292-1 - 1080-line on 1.5 Gb/s HD-SDI");
+                case Byte1_DL_HD:
+                        return String("SMPTE ST 372 - 1080-line on dual-link 1.5 Gb/s HD-SDI");
+                case Byte1_SL_3GA_720:
+                        return String("SMPTE ST 425-1 - 720-line on Level A 3 Gb/s SDI");
+                case Byte1_SL_3GA_1080:
+                        return String("SMPTE ST 425-1 - 1080-line on Level A 3 Gb/s SDI");
+                case Byte1_SL_3GB:
+                        return String("SMPTE ST 425-1 - ST 372 dual-link 1080-line on "
+                                      "Level B 3 Gb/s SDI");
+                case Byte1_SL_6G_2160:
+                        return String("SMPTE ST 2081-10 Mode 1 - 2160-line on 6G-SDI");
+                case Byte1_SL_6G_1080:
+                        return String("SMPTE ST 2081-10 Mode 2/3 - 1080-line on 6G-SDI");
+                case Byte1_SL_12G_2160:
+                        return String("SMPTE ST 2082-10 Mode 1 - 2160-line on 12G-SDI");
+                case Byte1_SL_12G_1080:
+                        return String("SMPTE ST 2082-10 Mode 2 - 1080-line HFR on 12G-SDI");
                 default:
-                        // 4:2:0 and YCbCr+alpha samplings exist in ST
-                        // 352 but the library doesn't expose them as
-                        // SdiWireFormat enumerators — no SDI carrier
-                        // defined at this layer.
-                        return SdiWireFormat::Auto;
+                        return String("Unregistered code - consult the SMPTE-RA ST 352 byte 1 "
+                                      "register (www.smpte-ra.org)");
         }
 }
 
@@ -398,20 +472,20 @@ uint8_t encodeByte2(uint8_t byte1, uint8_t rateCode, VideoScanMode scan) {
 // widescreen.  SD 4:3 callers can clear the bit via setByte3.
 uint8_t encodeByte3(const SdiWireFormat &wf) {
         if (wf == SdiWireFormat::Auto) return 0x00;
-        uint8_t samp = 0;
+        VpidSampling samp = VpidSampling::Unknown;
         if (wf == SdiWireFormat::YCbCr_422_10 || wf == SdiWireFormat::YCbCr_422_12) {
-                samp = SdiVpid::Sampling_YCbCr_422;
+                samp = VpidSampling::YCbCr_422;
         } else if (wf == SdiWireFormat::YCbCr_444_10 || wf == SdiWireFormat::YCbCr_444_12) {
-                samp = SdiVpid::Sampling_YCbCr_444;
+                samp = VpidSampling::YCbCr_444;
         } else if (wf == SdiWireFormat::RGB_444_10 || wf == SdiWireFormat::RGB_444_12) {
-                samp = SdiVpid::Sampling_RGB_444;
+                samp = VpidSampling::RGB_444;
         } else if (wf == SdiWireFormat::RGBA_444_10) {
-                samp = SdiVpid::Sampling_RGBA_4444;
+                samp = VpidSampling::RGBA_4444;
         } else {
                 return 0x00;
         }
         // 0x80 bit = 16:9 aspect default.
-        return static_cast<uint8_t>(0x80 | (samp & 0x0F));
+        return static_cast<uint8_t>(0x80 | (samp.value() & 0x0F));
 }
 
 // Build byte 4 from a wire format.

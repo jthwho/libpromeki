@@ -28,6 +28,8 @@ LibraryOptions &LibraryOptions::instance() {
                                   CrashStackTraceTimeout,
                                   TempDir,
                                   IpcDir,
+                                  ModelsDir,
+                                  LogToStderr,
                                   TerminationSignalHandler,
                                   SignalDoubleTapExit};
                 for (const ID &id : ids) {

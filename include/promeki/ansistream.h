@@ -373,6 +373,12 @@ class AnsiStream {
                 static bool stdoutSupportsANSI();
 
                 /**
+                 * @brief Returns true if the current STDERR can support ANSI signaling.
+                 * @return True if STDERR supports ANSI escape sequences.
+                 */
+                static bool stderrSupportsANSI();
+
+                /**
                  * @brief Constructs an AnsiStream writing to the given device.
                  * @param device The IODevice to write to. Must be open for writing.
                  */

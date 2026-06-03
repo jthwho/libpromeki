@@ -235,7 +235,7 @@ silently treated as whole.
 
 ---
 
-## Phase P3 — flow routing + SDP labeling (`PcapFlowRouter`) — SHIPPED 2026-06-02
+## Phase P3 — flow routing + SDP labeling (`PcapFlowRouter`) — SHIPPED 2026-06-02; RTP health extension 2026-06-03
 
 Landed: `PcapFlowKind` (added to `enums_pcap.h`), `pcapsdpmap.h/cpp`
 (`PcapSdpMap` + `PcapFlow`), `pcapflowrouter.h/cpp` (`PcapFlowRouter`,
@@ -250,6 +250,9 @@ existing `RxAncFrame` bundle (wrapped with pcap context: src/dst
 suffix stripped, `smpte291` → ANC); auto-discovery `FlowStat`s are the
 no-SDP fallback. PT-mismatch and SSRC/timestamp-change handling
 implemented; audio/video dispatch seam present but not yet decoding.
+**2026-06-03 extension:** RFC 3550 RTP health tracking added per-destination;
+`FlowStat` gains cumulative health counters; `RtpAnomaly` struct + `onRtpAnomaly` callback;
+`setJitterWarnThreshold`; 9 new unit test cases covering all anomaly classes.
 
 **Required reading before executing:**
 - `sdpsession.h`, `mediadesc.h` (`MediaDesc::fromSdp`), `ancdesc.h`
@@ -294,11 +297,12 @@ implemented; audio/video dispatch seam present but not yet decoding.
 - [x] Dispatch seam for audio/video flows (recognised + tallied, not yet decoded)
 - [x] No-SDP auto-discovery flow listing (`FlowStat`)
 - [x] doctest: synthetic 2110-40 capture fixture + SDP → decoded ANC (full round-trip)
+- [x] RFC 3550 RTP health tracking per destination: `RtpAnomaly` (SsrcChange / PayloadTypeChange / PacketLoss / Reorder / Duplicate / TimestampRegression / JitterExceeded), `onRtpAnomaly` callback, `setJitterWarnThreshold`, cumulative `FlowStat` health counters (`lostPackets`, `duplicatePackets`, `reorderedPackets`, `timestampRegressions`, `maxJitter`); `LibraryOptions::LogToStderr` + `Logger::setConsoleUseStderr` added so the CLI's log output routes to stderr by default
 - [ ] audio (-30/-31) and video (-20/-22) offline decode at the dispatch seam (follow-up)
 
 ---
 
-## Phase P4 — `promeki-pcap` CLI — SHIPPED 2026-06-02
+## Phase P4 — `promeki-pcap` CLI — SHIPPED 2026-06-02; follow-on enhancements 2026-06-03
 
 Landed: `utils/promeki-pcap/` (`main.cpp` + `CMakeLists.txt`), registered
 in `utils/CMakeLists.txt` under `PROMEKI_ENABLE_NETWORK AND
@@ -344,7 +348,7 @@ SDP-labelled and manual-flow paths).
 - [x] `AncTranslator::describe` reports *why* a packet did not decode via an `Error*` out-param; the CLI shows `<undecoded: ...>` (text) / `"decodeError"` (JSON) so missing context is visible instead of silently dropped
 - [x] generic parser-context injection: `--cfg <Key:Value>` sets any `AncTranslateConfig` key (parsed against its registered `VariantSpec`); e.g. `--cfg AtcParseRateHint:30` lets the ATC timecode parser run (verified end-to-end on a real 40_TC_Stream.pcap)
 - [x] `--cfg list` enumerates every `AncTranslateConfig` key (type, default, description via `writeSpecMapHelp`) plus the allowed values for enum-typed keys (`Enum::values`)
-- [ ] richer per-type detail — VPID field decode (currently 4-byte hex), CEA-608 parser (currently `Not Supported`), and fuller ATC userbits/flags; possibly a multiline `StringList describe()` on the ANC value types — follow-up
+- [x] richer per-type detail — VPID field decode: `SdiVpid::payloadDescription()` + `VpidSampling` typed enum; detailer now renders all ST 352 fields (byte-by-byte packed word, transport/picture scan, sampling, quantization range, sub-image width, reserved-bit warnings); ATC `Polarity`/`FieldMark` slot surfaced; CEA-608 parser still shows `Not Supported` — follow-up
 - [x] `--anc <host:port[/pt]>` manual ANC-flow designation with optional PT pin
 - [x] `--type <name>` filter to dump only specific ANC formats (e.g. `Atc`, `Cea708`)
 - [x] full-nanosecond capture timestamps in `info` and `anc` (floored, no `to_time_t` rounding); RTP timestamp shown decimal + hex

@@ -302,6 +302,85 @@ inline const SdiWireFormat SdiWireFormat::RGB_444_12{6};
 inline const SdiWireFormat SdiWireFormat::RGBA_444_10{7};
 
 /**
+ * @brief SMPTE ST 352 VPID byte 3 [3:0] sampling-structure identification.
+ *
+ * The horizontal sampling structure carried in byte 3, bits 3-0 of a
+ * SMPTE ST 352 Video Payload Identifier (see @ref SdiVpid).  The
+ * enumerator integer values are the on-wire 4-bit codes from
+ * ST 352:2013 Table 3 (also referenced by ST 2081-10 / ST 2082-10
+ * Table 5), so @ref Enum::value round-trips directly to and from the
+ * wire nibble.
+ *
+ * The @c +A and @c +D variants differ only in what the fourth
+ * component carries: @c +A is a picture (alpha) channel, while @c +D
+ * is a non-picture data channel (ST 352:2013 Table 3, note 2).
+ *
+ * - @c Unknown      — reserved / unrecognised code (Bh, Ch, Dh, Fh, or
+ *                     anything not assigned).  The sole non-wire-code
+ *                     value (16); the default.
+ * - @c YCbCr_422    — @c 0h Y'CbCr 4:2:2.  The canonical SDI payload.
+ * - @c YCbCr_444    — @c 1h Y'CbCr 4:4:4.
+ * - @c RGB_444      — @c 2h R'G'B' 4:4:4 (spec name G/B/R).
+ * - @c YCbCr_420    — @c 3h Y'CbCr 4:2:0.
+ * - @c YCbCrA_4224  — @c 4h Y'CbCr+A 4:2:2:4 (alpha picture channel).
+ * - @c YCbCrA_4444  — @c 5h Y'CbCr+A 4:4:4:4 (alpha picture channel).
+ * - @c RGBA_4444    — @c 6h R'G'B'+A 4:4:4:4 (alpha picture channel).
+ * - @c ST2048_2_FS  — @c 7h SMPTE ST 2048-2 full-screen sampling
+ *                     (Reserved in the 6G/12G schema variant).
+ * - @c YCbCrD_4224  — @c 8h Y'CbCr+D 4:2:2:4 (non-picture data channel).
+ * - @c YCbCrD_4444  — @c 9h Y'CbCr+D 4:4:4:4 (non-picture data channel).
+ * - @c RGBD_4444    — @c Ah R'G'B'+D 4:4:4:4 (non-picture data channel).
+ * - @c XYZ_444      — @c Eh X'Y'Z' 4:4:4 (digital cinema).
+ */
+class VpidSampling : public TypedEnum<VpidSampling> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("VpidSampling", "VPID Sampling Structure", 16,
+                                                   {"Unknown",     16,  "Unknown / Reserved"},
+                                                   {"YCbCr_422",   0x0, "Y'CbCr 4:2:2"},
+                                                   {"YCbCr_444",   0x1, "Y'CbCr 4:4:4"},
+                                                   {"RGB_444",     0x2, "R'G'B' 4:4:4"},
+                                                   {"YCbCr_420",   0x3, "Y'CbCr 4:2:0"},
+                                                   {"YCbCrA_4224", 0x4, "Y'CbCr+A 4:2:2:4"},
+                                                   {"YCbCrA_4444", 0x5, "Y'CbCr+A 4:4:4:4"},
+                                                   {"RGBA_4444",   0x6, "R'G'B'+A 4:4:4:4"},
+                                                   {"ST2048_2_FS", 0x7, "SMPTE ST 2048-2 FS"},
+                                                   {"YCbCrD_4224", 0x8, "Y'CbCr+D 4:2:2:4"},
+                                                   {"YCbCrD_4444", 0x9, "Y'CbCr+D 4:4:4:4"},
+                                                   {"RGBD_4444",   0xA, "R'G'B'+D 4:4:4:4"},
+                                                   {"XYZ_444",     0xE, "X'Y'Z' 4:4:4"}); // default: Unknown
+
+                using TypedEnum<VpidSampling>::TypedEnum;
+
+                static const VpidSampling Unknown;
+                static const VpidSampling YCbCr_422;
+                static const VpidSampling YCbCr_444;
+                static const VpidSampling RGB_444;
+                static const VpidSampling YCbCr_420;
+                static const VpidSampling YCbCrA_4224;
+                static const VpidSampling YCbCrA_4444;
+                static const VpidSampling RGBA_4444;
+                static const VpidSampling ST2048_2_FS;
+                static const VpidSampling YCbCrD_4224;
+                static const VpidSampling YCbCrD_4444;
+                static const VpidSampling RGBD_4444;
+                static const VpidSampling XYZ_444;
+};
+
+inline const VpidSampling VpidSampling::Unknown{16};
+inline const VpidSampling VpidSampling::YCbCr_422{0x0};
+inline const VpidSampling VpidSampling::YCbCr_444{0x1};
+inline const VpidSampling VpidSampling::RGB_444{0x2};
+inline const VpidSampling VpidSampling::YCbCr_420{0x3};
+inline const VpidSampling VpidSampling::YCbCrA_4224{0x4};
+inline const VpidSampling VpidSampling::YCbCrA_4444{0x5};
+inline const VpidSampling VpidSampling::RGBA_4444{0x6};
+inline const VpidSampling VpidSampling::ST2048_2_FS{0x7};
+inline const VpidSampling VpidSampling::YCbCrD_4224{0x8};
+inline const VpidSampling VpidSampling::YCbCrD_4444{0x9};
+inline const VpidSampling VpidSampling::RGBD_4444{0xA};
+inline const VpidSampling VpidSampling::XYZ_444{0xE};
+
+/**
  * @brief HDMI specification version hint for an HDMI signal carrier.
  *
  * Tracks the version of the HDMI / CTA spec the source / sink is

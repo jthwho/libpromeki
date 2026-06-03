@@ -12,6 +12,7 @@
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
+#include <promeki/duration.h>
 #include <promeki/enums_anc.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
@@ -335,6 +336,22 @@ class AncTranslateConfig : public VariantDatabase<"AncTranslateConfig"> {
                                            .setType(DataTypeUInt32)
                                            .setDefault(uint32_t(0))
                                            .setDescription("ATC_HFRTC parse-time format-rate fallback (72/96/100/120; 0 = none)."));
+
+                /// @brief Duration — RTP interarrival-jitter warning
+                /// threshold (zero / invalid = disabled).  Consumers that
+                /// observe RTP-level health (e.g. the pcap flow router /
+                /// promeki-pcap) raise a warning when a flow's RFC 3550 §A.8
+                /// interarrival jitter rises above this Duration.  As a
+                /// Duration it accepts human-friendly input through the
+                /// @c --cfg parser (e.g. @c "10ms", @c "500us").  Jitter is
+                /// computed against the ANC 90 kHz media clock.  Read-only
+                /// here — the value is plumbed to the observing component by
+                /// the caller (this config carries no RTP machinery itself).
+                PROMEKI_DECLARE_ID(RtpJitterWarnThreshold,
+                                   VariantSpec()
+                                           .setType(DataTypeDuration)
+                                           .setDefault(Duration::zero())
+                                           .setDescription("RTP interarrival-jitter warning threshold (e.g. 10ms; 0 = off)."));
 
                 // ============================================================
                 // String round-trip (JSON)

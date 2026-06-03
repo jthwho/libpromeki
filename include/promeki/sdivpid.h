@@ -248,23 +248,14 @@ class SdiVpid {
                 static constexpr uint8_t Rate_120           = 0xF;
 
                 // ------------------------------------------------------------
-                // Well-known byte 3 sampling-structure codes ([3:0] field, Table 3)
+                // Byte 3 sampling-structure codes ([3:0] field, Table 3)
                 // ------------------------------------------------------------
-
-                /// @brief Y'CbCr 4:2:2 sampling.
-                static constexpr uint8_t Sampling_YCbCr_422  = 0x0;
-                /// @brief Y'CbCr 4:4:4 sampling.
-                static constexpr uint8_t Sampling_YCbCr_444  = 0x1;
-                /// @brief R'G'B' 4:4:4 sampling (spec name @c G/B/R 4:4:4).
-                static constexpr uint8_t Sampling_RGB_444    = 0x2;
-                /// @brief Y'CbCr 4:2:0 sampling.
-                static constexpr uint8_t Sampling_YCbCr_420  = 0x3;
-                /// @brief Y'CbCr+alpha 4:2:2:4 sampling.
-                static constexpr uint8_t Sampling_YCbCrA_4224 = 0x4;
-                /// @brief Y'CbCr+alpha 4:4:4:4 sampling.
-                static constexpr uint8_t Sampling_YCbCrA_4444 = 0x5;
-                /// @brief R'G'B'A 4:4:4:4 sampling (spec name @c G/B/R/A 4:4:4:4).
-                static constexpr uint8_t Sampling_RGBA_4444  = 0x6;
+                //
+                // The well-known sampling-structure codes are modelled by
+                // the @ref VpidSampling enum (its integer values are the
+                // on-wire ST 352:2013 Table 3 nibbles).  Use @ref sampling
+                // / @ref setSampling for the decoded structure and
+                // @ref samplingCode for the raw nibble.
 
                 // ------------------------------------------------------------
                 // Well-known byte 4 bit-depth codes ([1:0] field)
@@ -477,6 +468,21 @@ class SdiVpid {
                 SdiLinkStandard linkStandard() const;
 
                 /**
+                 * @brief Returns a human-readable description of the
+                 *        byte 1 payload-and-interface identification code.
+                 *
+                 * Names the reference standard and active-line
+                 * description for every code the library models (the
+                 * @c Byte1_* constants), e.g.
+                 * @c "SMPTE ST 425-1 - 1080-line on Level A 3 Gb/s SDI".
+                 * Unregistered codes return a string pointing at the
+                 * SMPTE-RA ST 352 byte 1 register, since byte 1 is an
+                 * open, registry-administered namespace (ST 352:2013
+                 * §5.2 / Annex A).
+                 */
+                String payloadDescription() const;
+
+                /**
                  * @brief Returns the sampling+bit-depth combination as
                  *        an @ref SdiWireFormat.
                  *
@@ -612,10 +618,37 @@ class SdiVpid {
 
                 /**
                  * @brief Returns the raw sampling code from byte 3
-                 *        @c [3:0] (one of the @c Sampling_* constants
-                 *        when recognised).
+                 *        @c [3:0] (the on-wire ST 352:2013 Table 3
+                 *        nibble).
+                 *
+                 * See @ref sampling for the decoded @ref VpidSampling.
                  */
                 uint8_t samplingCode() const { return static_cast<uint8_t>(_bytes[2] & 0x0F); }
+
+                /**
+                 * @brief Returns the decoded byte 3 @c [3:0] sampling
+                 *        structure as a @ref VpidSampling.
+                 *
+                 * Maps the raw nibble through ST 352:2013 Table 3.
+                 * Reserved / unrecognised codes (@c Bh, @c Ch, @c Dh,
+                 * @c Fh) return @c VpidSampling::Unknown; use
+                 * @ref samplingCode to recover the raw nibble in that
+                 * case.
+                 */
+                VpidSampling sampling() const;
+
+                /**
+                 * @brief Writes the byte 3 @c [3:0] sampling structure
+                 *        from a @ref VpidSampling.
+                 *
+                 * The aspect-ratio bit (byte 3 @c [7]) and the reserved
+                 * bits (byte 3 @c [6:4]) are preserved.  Passing
+                 * @c VpidSampling::Unknown clears the nibble to @c 0h
+                 * (Y'CbCr 4:2:2) since "Unknown" has no wire encoding.
+                 *
+                 * @param sampling  The sampling structure to encode.
+                 */
+                void setSampling(const VpidSampling &sampling);
 
                 /**
                  * @brief Returns the bit-depth code from byte 4

@@ -406,26 +406,42 @@ AnsiStream &AnsiStream::setBackground(const Color &color, int maxIndex) {
         return setBackground(findClosestAnsiColor(color, maxIndex));
 }
 
+namespace {
+        // Shared implementation behind stdoutSupportsANSI / stderrSupportsANSI.
+        // @p isTerminal is the platform isatty result for the fd in question.
+        bool consoleSupportsANSI(bool isTerminal) {
+                // Even when env vars say the terminal supports color, redirecting
+                // the stream to a pipe / file / CI log should drop the escape
+                // codes — they show up as `^[[36m` garbage in saved logs and
+                // break downstream parsers that don't know to strip them.  isatty
+                // is the cheapest signal for "the stream is actually a terminal".
+                if (!isTerminal) return false;
+                // NO_COLOR (https://no-color.org/) is "no ANSI codes at all".
+                // Terminal::colorSupport degrades to a grayscale level when
+                // NO_COLOR is set so TUIs that want to keep some structure can
+                // still render — but raw-text users (help output, log lines)
+                // expect zero escape sequences, so we treat NO_COLOR as a hard
+                // off here.  Presence-only per the spec.
+                const char *noColor = std::getenv("NO_COLOR");
+                if (noColor != nullptr && *noColor != '\0') return false;
+                return Terminal::colorSupport() > Terminal::NoColor;
+        }
+} // namespace
+
 bool AnsiStream::stdoutSupportsANSI() {
-        // Even when env vars say the terminal supports color, redirecting
-        // stdout to a pipe / file / CI log should drop the escape codes —
-        // they show up as `^[[36m` garbage in saved logs and break
-        // downstream parsers that don't know to strip them.  isatty is
-        // the cheapest signal for "stdout is actually a terminal".
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-        if (_isatty(_fileno(stdout)) == 0) return false;
+        return consoleSupportsANSI(_isatty(_fileno(stdout)) != 0);
 #else
-        if (::isatty(STDOUT_FILENO) == 0) return false;
+        return consoleSupportsANSI(::isatty(STDOUT_FILENO) != 0);
 #endif
-        // NO_COLOR (https://no-color.org/) is "no ANSI codes at all".
-        // Terminal::colorSupport degrades to a grayscale level when
-        // NO_COLOR is set so TUIs that want to keep some structure can
-        // still render — but raw-text users (help output, log lines)
-        // expect zero escape sequences, so we treat NO_COLOR as a hard
-        // off here.  Presence-only per the spec.
-        const char *noColor = std::getenv("NO_COLOR");
-        if (noColor != nullptr && *noColor != '\0') return false;
-        return Terminal::colorSupport() > Terminal::NoColor;
+}
+
+bool AnsiStream::stderrSupportsANSI() {
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        return consoleSupportsANSI(_isatty(_fileno(stderr)) != 0);
+#else
+        return consoleSupportsANSI(::isatty(STDERR_FILENO) != 0);
+#endif
 }
 
 bool AnsiStream::stdoutWindowSize(int &rows, int &cols) {

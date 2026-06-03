@@ -225,6 +225,45 @@ class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
                                            .setDescription("Override for Dir::models() (empty = platform default)."));
 
                 // ============================================================
+                // Logging
+                // ============================================================
+
+                /// @brief bool — route the @ref Logger console stream to
+                /// @c stderr instead of @c stdout (default @c true).
+                ///
+                /// The asynchronous @ref Logger writes its console output
+                /// to one of the two standard streams.  Logging to
+                /// @c stderr by default keeps diagnostic chatter out of a
+                /// program's real @c stdout payload, so a tool's piped
+                /// output stays clean for downstream consumers while its
+                /// log lines remain visible on the terminal.  Set this
+                /// option to @c false to send console log output to
+                /// @c stdout instead.
+                ///
+                /// Set via code:
+                ///
+                /// @code
+                /// LibraryOptions::instance().set(
+                ///     LibraryOptions::LogToStderr, false);
+                /// @endcode
+                ///
+                /// ...or via the environment:
+                ///
+                /// @code
+                /// export PROMEKI_OPT_LogToStderr=false
+                /// @endcode
+                ///
+                /// The @ref Application constructor applies this option to
+                /// the default logger after loading the environment.  The
+                /// stream can also be changed at any time directly via
+                /// @ref Logger::setConsoleUseStderr.
+                PROMEKI_DECLARE_ID(LogToStderr,
+                                   VariantSpec()
+                                           .setType(DataTypeBool)
+                                           .setDefault(true)
+                                           .setDescription("Route Logger console output to stderr (else stdout)."));
+
+                // ============================================================
                 // Termination signal handling
                 // ============================================================
 
