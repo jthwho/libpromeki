@@ -1237,6 +1237,11 @@ endif()
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiSubmodules.cmake)
 promeki_init_submodules()
 
+# `thirdparty-info` target: report each vendored submodule's used/pulled
+# status and the (possibly mirrored) URL the build fetches it from.
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/PromekiThirdpartyInfo.cmake)
+promeki_add_thirdparty_info_target()
+
 # Prefix for vendored thirdparty builds
 set(PROMEKI_THIRDPARTY_PREFIX ${CMAKE_BINARY_DIR}/thirdparty-install)
 file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)

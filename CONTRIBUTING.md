@@ -111,6 +111,19 @@ off on precommit until that finishes — one at a time.
 The script exits non-zero on the first failed step and prints a
 clear summary at the end.
 
+If a precommit run trips over a vendored dependency — an unexpected
+fetch URL, a submodule that didn't check out, or a stale pin — run
+the `thirdparty-info` target to report each `thirdparty/*`
+submodule's used/pulled/mirrored state, its `git describe` version,
+and the URL the build fetches it from:
+
+```sh
+cmake --build build --target thirdparty-info   # or: build thirdparty-info
+```
+
+See [Inspecting the dependency set](docs/building.md#building_thirdparty_info)
+for the column reference.
+
 ---
 
 ## Warning Policy

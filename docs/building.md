@@ -316,6 +316,31 @@ flag set — the script auto-discovers the same config file CMake
 does, so a single file drives both build-time fetch overrides and
 mirror maintenance.
 
+### Inspecting the dependency set {#building_thirdparty_info}
+
+The `thirdparty-info` target prints a report of every vendored
+`thirdparty/*` submodule so you can see, at a glance, what the
+active configuration pulls in and where it fetches it from:
+
+```sh
+cmake --build build --target thirdparty-info   # or: build thirdparty-info
+```
+
+Each row covers one submodule:
+
+| Column | Meaning |
+|--------|---------|
+| `used` | Whether this configuration's feature flags actually build it (same gating as the auto-init above). |
+| `pulled` | Whether the submodule is checked out in the working tree — re-checked live each run. |
+| `mirrored` | Whether the discovered mirrors file rewrote the fetch URL. |
+| `version` | `git describe` of the checked-out submodule (nearest tag + offset, or short SHA; `-dirty` when locally modified) — live. |
+| `fetch URL` | The URL the build fetches from: the mirror URL when one is configured, otherwise the upstream URL from `.gitmodules`. |
+
+`used`, `mirrored`, and `fetch URL` are fixed by the current
+configure (feature flags plus the discovered mirrors file);
+`pulled` and `version` reflect the working tree every time the
+target runs.
+
 ---
 
 ## Build Targets {#building_build_targets}

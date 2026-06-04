@@ -189,17 +189,24 @@ devplan/
    Tests: `once.cpp` (new), `atomic.cpp` extended, `uniqueptr.cpp`
    extended.  Audit finding #19 partial: `compareExchangeWeak` added;
    `requires` constraint on arithmetic ops remains open.
-12. **Submodule auto-init system**
-   — SHIPPED 2026-05-18. `cmake/PromekiSubmodules.cmake` maps each
-   `thirdparty/` submodule to the CMake feature flag(s) that require
-   it and runs `git submodule update --init --recursive` on first
-   configure.  Mirror URL rewriting via `PROMEKI_MIRRORS_FILE` or
-   well-known per-user / system config paths (shared search order with
-   the companion script).  `scripts/mirror-thirdparty.py` handles
-   GitLab project auto-create + `git push --mirror` for self-hosted
-   mirrors; reads the same CMake-syntax config file.
-   `cmake/mirrors.example.cmake` documents the config format.
-   Replaces deleted `scripts/mirrors.conf` + `scripts/setup-mirrors.sh`.
+12. **Submodule auto-init system + `thirdparty-info` target**
+   — SHIPPED 2026-05-18 (auto-init); extended 2026-06-04 (info target).
+   `cmake/PromekiSubmodules.cmake` maps each `thirdparty/` submodule to
+   the CMake feature flag(s) that require it and runs
+   `git submodule update --init --recursive` on first configure.  Mirror
+   URL rewriting via `PROMEKI_MIRRORS_FILE` or well-known per-user /
+   system config paths (shared search order with the companion script).
+   `scripts/mirror-thirdparty.py` handles GitLab project auto-create +
+   `git push --mirror` for self-hosted mirrors; reads the same
+   CMake-syntax config file.  `cmake/mirrors.example.cmake` documents
+   the config format.  Replaces deleted `scripts/mirrors.conf` +
+   `scripts/setup-mirrors.sh`.  Extension (2026-06-04): x264 and
+   whisper.cpp requirement gates added to `_promeki_submodule_required`;
+   `cmake/PromekiThirdpartyInfo.cmake` introduces the `thirdparty-info`
+   custom target (`build thirdparty-info`) that prints a per-submodule
+   report (used / pulled / mirrored / version / fetch URL) with live
+   `git describe` version column; documented in `docs/building.md` §
+   "Inspecting the dependency set" and `CONTRIBUTING.md`.
 14. **Speech-to-text (TranscriptionEngine + WhisperCpp Phase 1)** —
    SHIPPED 2026-05-25. `TranscriptionEngine` abstract base + backend
    registry; `Transcript` / `TranscriptWord` / `TranscriptList` value
