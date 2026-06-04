@@ -33,6 +33,17 @@ File::File(const char *fn, ObjectBase *parent) : BufferedIODevice(parent), _file
 
 File::File(const FilePath &fp, ObjectBase *parent) : BufferedIODevice(parent), _filename(fp.toString()) {}
 
+File::File(FileHandle handle, OpenMode mode, bool ownsHandle, ObjectBase *parent)
+    : BufferedIODevice(parent), _ownsHandle(ownsHandle), _handle(handle) {
+        // Adopt an already-open handle: the device is immediately open.  A
+        // readable adopt pre-allocates the read buffer to mirror open(); a
+        // write-only adopt (e.g. a tty wrapped for output) skips it.
+        if (_handle != FileHandleClosedValue) {
+                setOpenMode(mode);
+                if (isReadable()) ensureReadBuffer();
+        }
+}
+
 File::~File() {
         if (isOpen()) close();
 }
@@ -56,7 +67,9 @@ Error File::close() {
         return Error();
 }
 
-int64_t File::write(const void *data, int64_t maxSize) {
+int64_t File::writeToDevice(const void *data, int64_t maxSize) {
+        (void)data;
+        (void)maxSize;
         return -1;
 }
 
@@ -242,14 +255,21 @@ Error File::open(OpenMode mode, int fileFlags) {
 
 Error File::close() {
         if (!isOpen()) return Error();
+        // Drain any buffered output before releasing the handle, otherwise
+        // write-behind bytes would be lost.
+        if (isWritable()) flush();
         aboutToCloseSignal.emit();
         Error err;
         if (_resourceFile != nullptr) {
                 _resourceFile = nullptr;
                 _resourcePos = 0;
         } else {
-                int ret = ::close(_handle);
-                err = (ret != 0) ? Error::syserr() : Error();
+                // A borrowed (adopted, non-owned) handle is left open — only
+                // close handles this File actually owns.
+                if (_ownsHandle) {
+                        int ret = ::close(_handle);
+                        err = (ret != 0) ? Error::syserr() : Error();
+                }
                 _handle = FileHandleClosedValue;
         }
         _fileFlags = NoFlags;
@@ -258,7 +278,7 @@ Error File::close() {
         return err;
 }
 
-int64_t File::write(const void *data, int64_t maxSize) {
+int64_t File::writeToDevice(const void *data, int64_t maxSize) {
         if (_resourceFile != nullptr) {
                 promekiWarn("File::write('%s', %lld) refused: resource files are read-only",
                             _filename.cstr(), (long long)maxSize);
@@ -321,6 +341,9 @@ Error File::seek(int64_t offset) {
                 promekiWarn("File::seek('%s', %lld) refused: not open", _filename.cstr(), (long long)offset);
                 return Error(Error::NotOpen);
         }
+        // Land any buffered output at the current offset before moving it,
+        // otherwise write-behind bytes would be written at the wrong place.
+        if (isWritable()) flush();
         resetReadBuffer();
         if (_resourceFile != nullptr) {
                 if (offset < 0 || offset > static_cast<int64_t>(_resourceFile->size)) {
@@ -346,10 +369,13 @@ int64_t File::pos() const {
         if (_resourceFile != nullptr) return _resourcePos;
         if (!isOpen()) return 0;
         int64_t rawPos = ::lseek64(_handle, 0, SEEK_CUR);
-        // Subtract any bytes that the read buffer has consumed from
-        // the device but not yet delivered to the caller, so that
-        // pos() reflects the logical read position.
-        return rawPos - static_cast<int64_t>(bufferedBytesUnconsumed());
+        // Reconcile the raw device offset with both buffers so pos() reflects
+        // the logical position: read-ahead leaves the device ahead of where
+        // the caller has consumed (subtract unconsumed read bytes), while
+        // write-behind leaves it behind where the caller has written (add
+        // pending write bytes).  At most one is non-zero in normal use.
+        return rawPos - static_cast<int64_t>(bufferedBytesUnconsumed()) +
+               static_cast<int64_t>(bufferedBytesPending());
 }
 
 Result<int64_t> File::size() const {
@@ -434,6 +460,9 @@ int64_t File::writev(const IOVec *iov, int count) {
                 return -1;
         }
         if (!isOpen()) return -1;
+        // writev bypasses the write buffer, so drain it first to preserve the
+        // order of bytes already handed to write().
+        if (isWritable()) flush();
         // Convert platform-neutral IOVec to POSIX iovec
         struct iovec posixIov[count];
         for (int i = 0; i < count; ++i) {
@@ -672,6 +701,10 @@ int64_t File::writeBulk(const void *data, int64_t size) {
                 setError(Error(Error::ReadOnly));
                 return -1;
         }
+
+        // writeBulk writes at the current file offset, bypassing the write
+        // buffer, so drain it first to keep byte order consistent.
+        flush();
 
         int64_t fileOffset = ::lseek64(_handle, 0, SEEK_CUR);
         if (fileOffset < 0) {

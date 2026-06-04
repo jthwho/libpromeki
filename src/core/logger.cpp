@@ -317,25 +317,26 @@ Logger::LogFormatter Logger::defaultConsoleFormatter() {
                 String thread = fmt.threadName != nullptr ? *fmt.threadName : String::dec(entry.threadId);
 
                 String result;
-                if (ansi) result += "\033[0;36m"; // Dim cyan
+                if (ansi) result += AnsiStream::foregroundSeq(AnsiStream::Teal); // Cyan timestamp
                 result += entry.ts.toString("%T.3");
-                if (ansi) result += "\033[0m";
+                if (ansi) result += AnsiStream::resetSeq();
                 result += ' ';
                 result += String::sprintf("%-25s", source.cstr());
                 result += ' ';
-                if (ansi) result += "\033[0;35m";
+                if (ansi) result += AnsiStream::foregroundSeq(AnsiStream::Purple);
                 result += String::sprintf("%-10s", thread.cstr());
                 result += ' ';
                 if (ansi) {
+                        result += AnsiStream::styleSeq(AnsiStream::Bold);
                         switch (entry.level) {
-                                case Warn: result += "\033[1;33m"; break;
-                                case Err: result += "\033[1;31m"; break;
-                                default: result += "\033[1;32m"; break;
+                                case Warn: result += AnsiStream::foregroundSeq(AnsiStream::Olive); break;
+                                case Err: result += AnsiStream::foregroundSeq(AnsiStream::Maroon); break;
+                                default: result += AnsiStream::foregroundSeq(AnsiStream::Green); break;
                         }
                 }
                 result += lvl;
                 result += ' ';
-                if (ansi) result += "\033[0m";
+                if (ansi) result += AnsiStream::resetSeq();
                 result += entry.msg;
                 return result;
         };
@@ -460,7 +461,7 @@ void Logger::writeLog(const LogEntry &entry, FileIODevice *logFile) {
         if (_consoleLogging.value()) {
                 FileIODevice *out =
                         _consoleUseStderr.value() ? FileIODevice::stderrDevice() : FileIODevice::stdoutDevice();
-                String        line = _consoleFormatter(fmt) + "\033[0m\n";
+                String        line = _consoleFormatter(fmt) + AnsiStream::resetSeq() + "\n";
                 out->write(line.cstr(), static_cast<int64_t>(line.length()));
                 out->flush();
         }

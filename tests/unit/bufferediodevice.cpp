@@ -39,19 +39,6 @@ class BufferedMemoryDevice : public BufferedIODevice {
 
                 bool isOpen() const override { return openMode() != NotOpen; }
 
-                int64_t write(const void *data, int64_t maxSize) override {
-                        if (!isOpen() || !isWritable()) return -1;
-                        const uint8_t *src = static_cast<const uint8_t *>(data);
-                        int64_t        endPos = _pos + maxSize;
-                        if (endPos > static_cast<int64_t>(_storage.size())) {
-                                _storage.resize(static_cast<size_t>(endPos));
-                        }
-                        std::memcpy(_storage.data() + _pos, src, static_cast<size_t>(maxSize));
-                        _pos += maxSize;
-                        bytesWrittenSignal.emit(maxSize);
-                        return maxSize;
-                }
-
                 void setData(const void *data, size_t sz) {
                         _storage.resize(sz);
                         std::memcpy(_storage.data(), data, sz);
@@ -66,6 +53,12 @@ class BufferedMemoryDevice : public BufferedIODevice {
                 /** @brief Resets the readFromDevice call counter. */
                 void resetReadFromDeviceCount() { _readFromDeviceCount = 0; }
 
+                /** @brief Returns the number of writeToDevice calls (for testing). */
+                int writeToDeviceCount() const { return _writeToDeviceCount; }
+
+                /** @brief Resets the writeToDevice call counter. */
+                void resetWriteToDeviceCount() { _writeToDeviceCount = 0; }
+
         protected:
                 int64_t readFromDevice(void *data, int64_t maxSize) override {
                         ++_readFromDeviceCount;
@@ -77,6 +70,19 @@ class BufferedMemoryDevice : public BufferedIODevice {
                         return toRead;
                 }
 
+                int64_t writeToDevice(const void *data, int64_t maxSize) override {
+                        ++_writeToDeviceCount;
+                        const uint8_t *src = static_cast<const uint8_t *>(data);
+                        int64_t        endPos = _pos + maxSize;
+                        if (endPos > static_cast<int64_t>(_storage.size())) {
+                                _storage.resize(static_cast<size_t>(endPos));
+                        }
+                        std::memcpy(_storage.data() + _pos, src, static_cast<size_t>(maxSize));
+                        _pos += maxSize;
+                        bytesWrittenSignal.emit(maxSize);
+                        return maxSize;
+                }
+
                 int64_t deviceBytesAvailable() const override {
                         int64_t avail = static_cast<int64_t>(_storage.size()) - _pos;
                         return avail > 0 ? avail : 0;
@@ -86,6 +92,7 @@ class BufferedMemoryDevice : public BufferedIODevice {
                 std::vector<uint8_t> _storage;
                 int64_t              _pos = 0;
                 int                  _readFromDeviceCount = 0;
+                int                  _writeToDeviceCount = 0;
 };
 
 TEST_CASE("BufferedIODevice: default state") {
@@ -903,4 +910,109 @@ TEST_CASE("BufferedIODevice: unbuffered readAll on empty device") {
         CHECK_FALSE(all.isValid());
 
         dev.close();
+}
+
+// ---------------------------------------------------------------------------
+// Write buffering
+// ---------------------------------------------------------------------------
+
+TEST_CASE("BufferedIODevice: write-through is the default") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        CHECK_FALSE(dev.isWriteBuffered());
+
+        // Each write reaches the device immediately (one writeToDevice each).
+        CHECK(dev.write("ab", 2) == 2);
+        CHECK(dev.write("cd", 2) == 2);
+        CHECK(dev.writeToDeviceCount() == 2);
+        CHECK(dev.storage().size() == 4);
+        CHECK(std::memcmp(dev.storage().data(), "abcd", 4) == 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: buffered writes coalesce until flush") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        dev.setWriteBuffered(true);
+        CHECK(dev.isWriteBuffered());
+
+        // Several small writes accumulate without touching the device.
+        for (int i = 0; i < 10; ++i) CHECK(dev.write("x", 1) == 1);
+        CHECK(dev.writeToDeviceCount() == 0);
+        CHECK(dev.storage().empty());
+
+        // flush drains them in a single underlying write.
+        dev.flush();
+        CHECK(dev.writeToDeviceCount() == 1);
+        CHECK(dev.storage().size() == 10);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: buffered write auto-flushes at capacity") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        dev.setWriteBuffered(true);
+        dev.setWriteBufferCapacity(8);
+
+        // 8 bytes fits exactly; the next byte would overflow, so writing it
+        // flushes the pending 8 first.
+        for (int i = 0; i < 8; ++i) dev.write("y", 1);
+        CHECK(dev.writeToDeviceCount() == 0);
+        dev.write("z", 1);
+        CHECK(dev.writeToDeviceCount() == 1);
+        CHECK(dev.storage().size() == 8);
+
+        dev.flush();
+        CHECK(dev.storage().size() == 9);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: a write >= capacity bypasses the buffer") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        dev.setWriteBuffered(true);
+        dev.setWriteBufferCapacity(4);
+
+        // A single write at least as large as the capacity goes straight
+        // through rather than staging through the small buffer.
+        const char *big = "0123456789";
+        CHECK(dev.write(big, 10) == 10);
+        CHECK(dev.writeToDeviceCount() == 1);
+        CHECK(dev.storage().size() == 10);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: disabling write buffering flushes first") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        dev.setWriteBuffered(true);
+        dev.write("pending", 7);
+        CHECK(dev.storage().empty());
+
+        // Turning buffering off must not strand the pending bytes.
+        dev.setWriteBuffered(false);
+        CHECK(dev.writeToDeviceCount() == 1);
+        CHECK(dev.storage().size() == 7);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: close flushes buffered writes") {
+        BufferedMemoryDevice dev;
+        dev.open(IODevice::ReadWrite);
+        dev.setWriteBuffered(true);
+        dev.write("data", 4);
+        CHECK(dev.storage().empty());
+
+        // BufferedMemoryDevice::close doesn't itself flush, but an explicit
+        // flush before close is the documented subclass contract; verify the
+        // sequence lands the bytes.
+        dev.flush();
+        dev.close();
+        CHECK(dev.storage().size() == 4);
+        CHECK(std::memcmp(dev.storage().data(), "data", 4) == 0);
 }

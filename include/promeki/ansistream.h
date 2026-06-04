@@ -15,6 +15,7 @@
 #include <promeki/string.h>
 #include <promeki/util.h>
 #include <promeki/color.h>
+#include <promeki/terminal.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -33,13 +34,42 @@ class AnsiStream {
                  * @brief ANSI text styles.
                  */
                 enum TextStyle {
-                        Bold = 1,       ///< Bold or increased intensity.
-                        Dim = 2,        ///< Faint or decreased intensity.
-                        Italic = 3,     ///< Italic text.
-                        Underlined = 4, ///< Underlined text.
-                        Blink = 5,      ///< Blinking text.
-                        Inverted = 7,   ///< Swapped foreground and background colors.
-                        Hidden = 8      ///< Hidden (invisible) text.
+                        Bold = 1,         ///< Bold or increased intensity.
+                        Dim = 2,          ///< Faint or decreased intensity.
+                        Italic = 3,       ///< Italic text.
+                        Underlined = 4,   ///< Underlined text.
+                        Blink = 5,        ///< Blinking text.
+                        Inverted = 7,     ///< Swapped foreground and background colors.
+                        Hidden = 8,       ///< Hidden (invisible) text.
+                        Strikethrough = 9 ///< Struck-through (crossed-out) text.
+                };
+
+                /**
+                 * @brief Mouse-tracking detail level.
+                 *
+                 * All levels use the SGR (1006) extended coordinate encoding;
+                 * they differ only in which motion events the terminal reports.
+                 */
+                enum MouseTracking {
+                        MouseButtons, ///< Press / release only (mode 1000).
+                        MouseDrag,    ///< Press / release + motion while a button is held (1000 + 1002).
+                        MouseAny      ///< Press / release + all motion, even with no button (1000 + 1003).
+                };
+
+                /**
+                 * @brief Cursor shape styles (DECSCUSR).
+                 *
+                 * Not all terminals honour every value; unsupported shapes
+                 * typically fall back to the terminal default.
+                 */
+                enum CursorStyle {
+                        DefaultCursor = 0,       ///< Terminal default shape.
+                        BlinkingBlock = 1,       ///< Blinking block.
+                        SteadyBlock = 2,         ///< Steady block.
+                        BlinkingUnderline = 3,   ///< Blinking underline.
+                        SteadyUnderline = 4,     ///< Steady underline.
+                        BlinkingBar = 5,         ///< Blinking vertical bar.
+                        SteadyBar = 6            ///< Steady vertical bar.
                 };
 
                 /**
@@ -358,6 +388,71 @@ class AnsiStream {
                  */
                 static AnsiColor findClosestAnsiColor(const Color &color, int maxIndex = 255);
 
+                // ---------------------------------------------------------------
+                // Static escape-sequence builders.
+                //
+                // These produce the raw escape bytes as a String without needing
+                // an IODevice, so code paths that compose styled text into a
+                // buffer (the Logger console formatter, TUI cell flushing, help
+                // text colorizers) can share the single source of truth instead
+                // of hand-rolling "\033[...m" literals.  The instance methods
+                // below are thin wrappers that write() these sequences.
+                // ---------------------------------------------------------------
+
+                /**
+                 * @brief Returns the full-reset sequence (SGR 0).
+                 * @return The escape sequence String.
+                 */
+                static String resetSeq();
+
+                /**
+                 * @brief Returns the SGR sequence for a single text style.
+                 * @param style The text style.
+                 * @param enable True to enable the style, false to emit its
+                 *        corresponding off code (e.g. Bold/Dim share 22).
+                 * @return The escape sequence String.
+                 */
+                static String styleSeq(TextStyle style, bool enable = true);
+
+                /** @brief Returns the foreground SGR sequence for a palette color. */
+                static String foregroundSeq(AnsiColor color);
+                /** @brief Returns the background SGR sequence for a palette color. */
+                static String backgroundSeq(AnsiColor color);
+                /** @brief Returns the foreground SGR sequence for a 256-color index. */
+                static String foreground256Seq(uint8_t index);
+                /** @brief Returns the background SGR sequence for a 256-color index. */
+                static String background256Seq(uint8_t index);
+                /** @brief Returns the foreground SGR sequence for a 24-bit RGB color. */
+                static String foregroundRGBSeq(uint8_t r, uint8_t g, uint8_t b);
+                /** @brief Returns the background SGR sequence for a 24-bit RGB color. */
+                static String backgroundRGBSeq(uint8_t r, uint8_t g, uint8_t b);
+
+                /**
+                 * @brief Returns the foreground sequence for an RGB color at a
+                 *        given color-support level.
+                 *
+                 * Emits 24-bit truecolor, a nearest 256-cube match, a nearest
+                 * 16-color match, or a grayscale approximation, degrading to an
+                 * empty String for Terminal::NoColor.  This is the single place
+                 * the library decides how to render an arbitrary RGB color for a
+                 * terminal's capability.
+                 *
+                 * @param color The RGB color.
+                 * @param support The terminal color-support level.
+                 * @return The escape sequence String (empty for NoColor).
+                 */
+                static String foregroundSeq(const Color &color, Terminal::ColorSupport support);
+                /** @brief Background counterpart to foregroundSeq(const Color&, Terminal::ColorSupport). */
+                static String backgroundSeq(const Color &color, Terminal::ColorSupport support);
+
+                /**
+                 * @brief Returns an OSC 8 hyperlink sequence wrapping @p text.
+                 * @param url The target URI.
+                 * @param text The visible, clickable text.
+                 * @return The escape sequence String.
+                 */
+                static String hyperlinkSeq(const String &url, const String &text);
+
                 /**
                  * @brief Returns the window size of the current STDOUT device.
                  * @param[out] rows Number of rows in window.
@@ -430,6 +525,30 @@ class AnsiStream {
                 AnsiStream &write(int val);
 
                 /**
+                 * @brief Writes a 64-bit signed integer (formatted as decimal).
+                 * @param val The value to write.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &write(int64_t val);
+
+                /**
+                 * @brief Writes a 64-bit unsigned integer (formatted as decimal).
+                 *
+                 * Also covers @c size_t on LP64 platforms.
+                 *
+                 * @param val The value to write.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &write(uint64_t val);
+
+                /**
+                 * @brief Writes a floating-point value (shortest round-trip form).
+                 * @param val The value to write.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &write(double val);
+
+                /**
                  * @brief Flushes the underlying device.
                  */
                 void flush();
@@ -442,6 +561,12 @@ class AnsiStream {
                 AnsiStream &operator<<(char ch) { return write(ch); }
                 /** @brief Writes an integer via operator<<. */
                 AnsiStream &operator<<(int val) { return write(val); }
+                /** @brief Writes a 64-bit signed integer via operator<<. */
+                AnsiStream &operator<<(int64_t val) { return write(val); }
+                /** @brief Writes a 64-bit unsigned integer via operator<<. */
+                AnsiStream &operator<<(uint64_t val) { return write(val); }
+                /** @brief Writes a floating-point value via operator<<. */
+                AnsiStream &operator<<(double val) { return write(val); }
 
                 /**
                  * @brief Sets the foreground to an ANSI palette color.
@@ -473,7 +598,7 @@ class AnsiStream {
                  * @param maxIndex Maximum palette index (15 for 16-color, 255 for 256-color).
                  * @return Reference to this stream for chaining.
                  */
-                AnsiStream &setForeground(const Color &color, int maxIndex = 255);
+                AnsiStream &setForeground(const Color &color, int maxIndex);
 
                 /**
                  * @brief Sets the background to the closest ANSI palette match.
@@ -481,7 +606,59 @@ class AnsiStream {
                  * @param maxIndex Maximum palette index (15 for 16-color, 255 for 256-color).
                  * @return Reference to this stream for chaining.
                  */
-                AnsiStream &setBackground(const Color &color, int maxIndex = 255);
+                AnsiStream &setBackground(const Color &color, int maxIndex);
+
+                /**
+                 * @brief Sets the foreground to an RGB color, degrading to the
+                 *        terminal's color capability.
+                 *
+                 * Emits truecolor, 256-color, 16-color, or grayscale as
+                 * appropriate for @p support.  Prefer this over manually
+                 * choosing setForegroundRGB / setForeground256 / setForeground —
+                 * it keeps the capability decision in one place.
+                 *
+                 * @param color The RGB color.
+                 * @param support The terminal color-support level.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &setForeground(const Color &color, Terminal::ColorSupport support);
+
+                /** @brief Background counterpart to setForeground(const Color&, Terminal::ColorSupport). */
+                AnsiStream &setBackground(const Color &color, Terminal::ColorSupport support);
+
+                /**
+                 * @brief Sets the foreground to an RGB color using the
+                 *        auto-detected terminal color capability.
+                 * @param color The RGB color.
+                 * @return Reference to this stream for chaining.
+                 * @see Terminal::colorSupport()
+                 */
+                AnsiStream &setForeground(const Color &color) {
+                        return setForeground(color, Terminal::colorSupport());
+                }
+
+                /**
+                 * @brief Sets the background to an RGB color using the
+                 *        auto-detected terminal color capability.
+                 * @param color The RGB color.
+                 * @return Reference to this stream for chaining.
+                 * @see Terminal::colorSupport()
+                 */
+                AnsiStream &setBackground(const Color &color) {
+                        return setBackground(color, Terminal::colorSupport());
+                }
+
+                /**
+                 * @brief Enables or disables a single text style.
+                 * @param style The text style to change.
+                 * @param enable True to enable, false to emit the matching off
+                 *        code (Bold/Dim share off code 22).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &setStyle(TextStyle style, bool enable = true) {
+                        if (!_enabled) return *this;
+                        return write(styleSeq(style, enable));
+                }
 
                 /**
                  * @brief Moves the cursor up N rows.
@@ -528,6 +705,60 @@ class AnsiStream {
                 }
 
                 /**
+                 * @brief Moves the cursor down N rows to the start of that line (CNL).
+                 * @param[in] n Number of rows to move down.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &cursorNextLine(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "E";
+                        return *this;
+                }
+
+                /**
+                 * @brief Moves the cursor up N rows to the start of that line (CPL).
+                 * @param[in] n Number of rows to move up.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &cursorPrevLine(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "F";
+                        return *this;
+                }
+
+                /**
+                 * @brief Moves the cursor to an absolute column on the current row (CHA).
+                 * @param[in] c Column (1-based).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &setCursorColumn(int c) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << c << "G";
+                        return *this;
+                }
+
+                /**
+                 * @brief Moves the cursor to the home position (row 1, column 1).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &cursorHome() {
+                        if (!_enabled) return *this;
+                        *this << "\033[H";
+                        return *this;
+                }
+
+                /**
+                 * @brief Sets the cursor shape (DECSCUSR).
+                 * @param[in] style The cursor shape.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &setCursorStyle(CursorStyle style) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << static_cast<int>(style) << " q";
+                        return *this;
+                }
+
+                /**
                  * @brief Sets the absolute cursor position.
                  * @param[in] r Row to move cursor.
                  * @param[in] c Column to move cursor.
@@ -546,6 +777,90 @@ class AnsiStream {
                 AnsiStream &clearScreen() {
                         if (!_enabled) return *this;
                         *this << "\033[2J";
+                        return *this;
+                }
+
+                /**
+                 * @brief Clears the entire screen and homes the cursor.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &clearScreenAndHome() {
+                        if (!_enabled) return *this;
+                        *this << "\033[2J\033[H";
+                        return *this;
+                }
+
+                /**
+                 * @brief Clears from the cursor to the start of the screen.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &clearScreenBeforeCursor() {
+                        if (!_enabled) return *this;
+                        *this << "\033[1J";
+                        return *this;
+                }
+
+                /**
+                 * @brief Clears from the cursor to the end of the screen.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &clearScreenAfterCursor() {
+                        if (!_enabled) return *this;
+                        *this << "\033[0J";
+                        return *this;
+                }
+
+                /**
+                 * @brief Clears the scrollback buffer (xterm extension).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &clearScrollback() {
+                        if (!_enabled) return *this;
+                        *this << "\033[3J";
+                        return *this;
+                }
+
+                /**
+                 * @brief Inserts N blank lines at the cursor, scrolling lines down.
+                 * @param[in] n Number of lines to insert.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &insertLines(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "L";
+                        return *this;
+                }
+
+                /**
+                 * @brief Deletes N lines at the cursor, scrolling lines up.
+                 * @param[in] n Number of lines to delete.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &deleteLines(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "M";
+                        return *this;
+                }
+
+                /**
+                 * @brief Inserts N blank characters at the cursor, shifting the rest right.
+                 * @param[in] n Number of characters to insert.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &insertCharacters(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "@";
+                        return *this;
+                }
+
+                /**
+                 * @brief Deletes N characters at the cursor, shifting the rest left.
+                 * @param[in] n Number of characters to delete.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &deleteCharacters(int n) {
+                        if (!_enabled) return *this;
+                        *this << "\033[" << n << "P";
                         return *this;
                 }
 
@@ -683,6 +998,16 @@ class AnsiStream {
                 }
 
                 /**
+                 * @brief Resets the scrolling region to the full screen.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &resetScrollingRegion() {
+                        if (!_enabled) return *this;
+                        *this << "\033[r";
+                        return *this;
+                }
+
+                /**
                  * @brief Causes the scrolling region to scroll up N rows.
                  * @param[in] n Number of rows to scroll.
                  * @return Reference to this stream for chaining.
@@ -727,8 +1052,7 @@ class AnsiStream {
                  */
                 AnsiStream &setForeground256(uint8_t index) {
                         if (!_enabled) return *this;
-                        *this << "\033[38;5;" << static_cast<int>(index) << "m";
-                        return *this;
+                        return write(foreground256Seq(index));
                 }
 
                 /**
@@ -743,8 +1067,7 @@ class AnsiStream {
                  */
                 AnsiStream &setBackground256(uint8_t index) {
                         if (!_enabled) return *this;
-                        *this << "\033[48;5;" << static_cast<int>(index) << "m";
-                        return *this;
+                        return write(background256Seq(index));
                 }
 
                 /**
@@ -756,9 +1079,7 @@ class AnsiStream {
                  */
                 AnsiStream &setForegroundRGB(uint8_t r, uint8_t g, uint8_t b) {
                         if (!_enabled) return *this;
-                        *this << "\033[38;2;" << static_cast<int>(r) << ";" << static_cast<int>(g) << ";"
-                              << static_cast<int>(b) << "m";
-                        return *this;
+                        return write(foregroundRGBSeq(r, g, b));
                 }
 
                 /**
@@ -770,19 +1091,175 @@ class AnsiStream {
                  */
                 AnsiStream &setBackgroundRGB(uint8_t r, uint8_t g, uint8_t b) {
                         if (!_enabled) return *this;
-                        *this << "\033[48;2;" << static_cast<int>(r) << ";" << static_cast<int>(g) << ";"
-                              << static_cast<int>(b) << "m";
+                        return write(backgroundRGBSeq(r, g, b));
+                }
+
+                /**
+                 * @brief Writes a clickable hyperlink (OSC 8).
+                 *
+                 * Terminals that don't understand OSC 8 render @p text as plain
+                 * text and ignore the link, so this is always safe to emit.
+                 *
+                 * @param[in] url The target URI.
+                 * @param[in] text The visible, clickable text.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &hyperlink(const String &url, const String &text);
+
+                /**
+                 * @brief Sets the terminal window / tab title (OSC 2).
+                 * @param[in] title The title text.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &setWindowTitle(const String &title);
+
+                /**
+                 * @brief Copies text to the system clipboard (OSC 52).
+                 *
+                 * Requires terminal support (often disabled by default for
+                 * security).  The payload is base64-encoded per the protocol.
+                 *
+                 * @param[in] text The text to place on the clipboard.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &copyToClipboard(const String &text);
+
+                /**
+                 * @brief Enables SGR mouse tracking at the given detail level.
+                 *
+                 * Always enables the SGR (1006) coordinate encoding so the
+                 * input parser receives the unambiguous extended form.
+                 *
+                 * @param[in] mode Which motion events to report.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &enableMouseTracking(MouseTracking mode = MouseDrag) {
+                        if (!_enabled) return *this;
+                        *this << "\033[?1000h";
+                        if (mode == MouseDrag) *this << "\033[?1002h";
+                        if (mode == MouseAny) *this << "\033[?1003h";
+                        *this << "\033[?1006h";
                         return *this;
                 }
 
                 /**
-                 * @brief Enables strike-through mode if supported.
-                 * @param[in] enable True if strike-through should be enabled.
+                 * @brief Disables SGR mouse tracking.
+                 *
+                 * Emits the off codes for every motion mode, so it cleanly
+                 * undoes any level passed to enableMouseTracking().
+                 *
                  * @return Reference to this stream for chaining.
                  */
-                AnsiStream &setStrikethrough(bool enable) {
+                AnsiStream &disableMouseTracking() {
                         if (!_enabled) return *this;
-                        *this << "\033[" << (enable ? "9" : "29") << "m";
+                        *this << "\033[?1006l\033[?1003l\033[?1002l\033[?1000l";
+                        return *this;
+                }
+
+                /**
+                 * @brief Begins a synchronized output frame (mode 2026).
+                 *
+                 * Terminals that support synchronized output buffer everything
+                 * between begin and end and present it atomically, eliminating
+                 * tearing / flicker during a full-screen redraw.  Terminals
+                 * that don't support it ignore the sequence, so it is always
+                 * safe to emit.  Pair with endSynchronizedUpdate().
+                 *
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &beginSynchronizedUpdate() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?2026h";
+                        return *this;
+                }
+
+                /**
+                 * @brief Ends a synchronized output frame (mode 2026).
+                 * @return Reference to this stream for chaining.
+                 * @see beginSynchronizedUpdate()
+                 */
+                AnsiStream &endSynchronizedUpdate() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?2026l";
+                        return *this;
+                }
+
+                /**
+                 * @brief Enables bracketed paste mode (mode 2004).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &enableBracketedPaste() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?2004h";
+                        return *this;
+                }
+
+                /**
+                 * @brief Disables bracketed paste mode.
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &disableBracketedPaste() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?2004l";
+                        return *this;
+                }
+
+                /**
+                 * @brief Enables focus in/out reporting (mode 1004).
+                 *
+                 * The terminal then emits @c \\033[I when the window gains focus
+                 * and @c \\033[O when it loses focus.  The input parser decodes
+                 * these into focus events; without this, those bytes are never
+                 * sent.
+                 *
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &enableFocusReporting() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?1004h";
+                        return *this;
+                }
+
+                /**
+                 * @brief Disables focus in/out reporting (mode 1004).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &disableFocusReporting() {
+                        if (!_enabled) return *this;
+                        *this << "\033[?1004l";
+                        return *this;
+                }
+
+                /**
+                 * @brief Rings the terminal bell (BEL).
+                 *
+                 * Emitted regardless of the ANSI-enabled flag, since the bell
+                 * is a control character rather than an escape sequence.
+                 *
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &bell() {
+                        *this << '\a';
+                        return *this;
+                }
+
+                /**
+                 * @brief Performs a soft terminal reset (DECSTR).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &softReset() {
+                        if (!_enabled) return *this;
+                        *this << "\033[!p";
+                        return *this;
+                }
+
+                /**
+                 * @brief Performs a full terminal reset (RIS).
+                 * @return Reference to this stream for chaining.
+                 */
+                AnsiStream &hardReset() {
+                        if (!_enabled) return *this;
+                        *this << "\033c";
                         return *this;
                 }
 
@@ -814,6 +1291,34 @@ class AnsiStream {
                  * @return True if successful.
                  */
                 bool getCursorPosition(IODevice *input, int &row, int &col);
+
+                /**
+                 * @brief Scoped style guard that resets the stream on destruction.
+                 *
+                 * Emits AnsiStream::reset() when it goes out of scope, so a block
+                 * that sets colors / styles can't leak them into later output
+                 * (the classic "the shell prompt is now red" bug).
+                 *
+                 * @code
+                 * {
+                 *     AnsiStream::StyleScope guard(stream);
+                 *     stream.setForeground(AnsiStream::Red).setStyle(AnsiStream::Bold);
+                 *     stream << "error!";
+                 * } // reset() emitted here
+                 * @endcode
+                 */
+                class StyleScope {
+                        public:
+                                /** @brief Captures the stream to reset on destruction. */
+                                explicit StyleScope(AnsiStream &stream) : _stream(stream) {}
+                                /** @brief Emits reset() on the captured stream. */
+                                ~StyleScope() { _stream.reset(); }
+                                StyleScope(const StyleScope &) = delete;
+                                StyleScope &operator=(const StyleScope &) = delete;
+
+                        private:
+                                AnsiStream &_stream;
+                };
 
         private:
                 IODevice *_device;

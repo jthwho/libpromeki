@@ -12,23 +12,38 @@
 #if PROMEKI_ENABLE_CORE
 #include <promeki/iodevice.h>
 #include <promeki/buffer.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Abstract IODevice with an internal read buffer.
+ * @brief Abstract IODevice with internal read and (optional) write buffers.
  * @ingroup io
  *
- * Derives from IODevice and overrides read() to serve data from an
- * internal Buffer. Subclasses implement readFromDevice() for raw I/O;
- * the remaining pure virtuals (open, close, isOpen, write) stay pure
- * for concrete subclasses like File to provide.
+ * Derives from IODevice and provides buffering in both directions.
+ * Subclasses implement the raw transfer primitives readFromDevice()
+ * and writeToDevice(); this class layers read-ahead and write-behind
+ * buffering on top.  open(), close() and isOpen() stay pure for
+ * concrete subclasses like File to provide.
  *
- * The read buffer is allocated lazily on first open (default 8192 bytes)
- * or can be replaced via setReadBuffer() before opening.
+ * @par Read buffering
+ * read() serves from an internal Buffer, allocated lazily on first
+ * open (default 8192 bytes) or replaceable via setReadBuffer() before
+ * opening.  setUnbuffered() makes all reads bypass the buffer and go
+ * straight to readFromDevice().
  *
- * When unbuffered mode is enabled via setUnbuffered(), all reads
- * bypass the internal buffer and go directly to readFromDevice().
+ * @par Write buffering
+ * Disabled by default, so write() passes straight through to
+ * writeToDevice() and existing subclass semantics are unchanged.  When
+ * enabled via setWriteBuffered(), write() accumulates into an internal
+ * buffer that is drained to writeToDevice() on flush(), or
+ * automatically once it reaches the write-buffer capacity.  This
+ * coalesces a burst of small writes — the classic case being an
+ * @ref AnsiStream emitting an escape sequence a few bytes at a time per
+ * cell — into far fewer underlying writes.  A subclass that may buffer
+ * writes MUST flush() before it releases its descriptor in close() and
+ * before any path that bypasses write() (e.g. a positional or vectored
+ * write), so buffered bytes are not lost or reordered.
  *
  * @par Thread Safety
  * Inherits @ref IODevice &mdash; thread-affine.  A single instance must
@@ -164,6 +179,64 @@ class BufferedIODevice : public IODevice {
                  */
                 bool isUnbuffered() const { return _unbuffered; }
 
+                /**
+                 * @brief Writes up to maxSize bytes from data.
+                 *
+                 * When write buffering is enabled, the bytes are appended to
+                 * the internal write buffer (auto-flushing once it reaches
+                 * capacity) and @p maxSize is returned even though the bytes
+                 * have not yet reached the device.  When disabled, the write
+                 * passes straight through to writeToDevice().
+                 *
+                 * @param data Pointer to the data to write.
+                 * @param maxSize Number of bytes to write.
+                 * @return The number of bytes accepted, or -1 on error.
+                 */
+                int64_t write(const void *data, int64_t maxSize) override;
+
+                /**
+                 * @brief Drains any buffered output to the device.
+                 *
+                 * A no-op when write buffering is disabled or the buffer is
+                 * empty.  On a non-blocking device that cannot accept all of
+                 * it, the unwritten tail is retained for a later flush rather
+                 * than dropped.
+                 */
+                void flush() override;
+
+                /**
+                 * @brief Enables or disables output (write) buffering.
+                 *
+                 * Disabling flushes any currently buffered output first, so no
+                 * bytes are lost or reordered across the switch.
+                 *
+                 * @param enable true to buffer writes, false to write through.
+                 */
+                void setWriteBuffered(bool enable);
+
+                /**
+                 * @brief Returns true if output (write) buffering is enabled.
+                 * @return true if writes accumulate until flushed.
+                 */
+                bool isWriteBuffered() const { return _writeBuffered; }
+
+                /**
+                 * @brief Returns the write buffer capacity in bytes.
+                 * @return The capacity at which a buffered write auto-flushes.
+                 */
+                size_t writeBufferCapacity() const { return _writeBufCapacity; }
+
+                /**
+                 * @brief Sets the write buffer capacity.
+                 *
+                 * Buffered output is auto-flushed once the pending bytes reach
+                 * this many bytes; a single write larger than the capacity is
+                 * sent directly after flushing whatever was pending.
+                 *
+                 * @param bytes The new capacity (a zero is treated as 1).
+                 */
+                void setWriteBufferCapacity(size_t bytes);
+
         protected:
                 /**
                  * @brief Reads raw data from the underlying device.
@@ -175,6 +248,20 @@ class BufferedIODevice : public IODevice {
                  * @return The number of bytes read, or -1 on error.
                  */
                 virtual int64_t readFromDevice(void *data, int64_t maxSize) = 0;
+
+                /**
+                 * @brief Writes raw data to the underlying device.
+                 *
+                 * Subclasses must implement this to perform actual I/O.  It is
+                 * called directly by write() in write-through mode and by
+                 * flush() when draining the write buffer.
+                 *
+                 * @param data Pointer to the data to write.
+                 * @param maxSize Number of bytes to write.
+                 * @return The number of bytes written (which may be less than
+                 *         @p maxSize on a non-blocking device), or -1 on error.
+                 */
+                virtual int64_t writeToDevice(const void *data, int64_t maxSize) = 0;
 
                 /**
                  * @brief Returns the number of bytes available from the device.
@@ -199,6 +286,19 @@ class BufferedIODevice : public IODevice {
                 size_t bufferedBytesUnconsumed() const { return _readBufFill - _readBufPos; }
 
                 /**
+                 * @brief Returns the number of buffered output bytes not yet written.
+                 *
+                 * The write-behind counterpart to bufferedBytesUnconsumed():
+                 * these bytes have been accepted by write() but not yet handed
+                 * to writeToDevice(), so the device position lags the logical
+                 * write position by this much.  Subclasses that override pos()
+                 * should add this value to the raw device position.
+                 *
+                 * @return The number of pending bytes in the write buffer.
+                 */
+                size_t bufferedBytesPending() const { return _writeBuf.size(); }
+
+                /**
                  * @brief Ensures the read buffer is allocated.
                  *
                  * Called during open(). If no custom buffer has been set,
@@ -218,11 +318,18 @@ class BufferedIODevice : public IODevice {
                 /** @brief Default read buffer size in bytes. */
                 static constexpr size_t DefaultReadBufSize = 8192;
 
-                bool   _unbuffered = false;      ///< Unbuffered option storage.
+                /** @brief Default write buffer capacity in bytes. */
+                static constexpr size_t DefaultWriteBufSize = 8192;
+
+                bool   _unbuffered = false;      ///< Unbuffered (read) option storage.
                 Buffer _readBuf;                 ///< The read buffer (replaceable).
                 size_t _readBufPos = 0;          ///< Read cursor within buffer.
                 size_t _readBufFill = 0;         ///< Bytes of valid data in buffer.
                 bool   _bufferAllocated = false; ///< True after buffer is ready.
+
+                bool       _writeBuffered = false;                 ///< Write-buffering option storage.
+                size_t     _writeBufCapacity = DefaultWriteBufSize; ///< Auto-flush threshold.
+                List<char> _writeBuf;                              ///< Pending output bytes.
 
                 /**
                  * @brief Fills the internal read buffer from the device.

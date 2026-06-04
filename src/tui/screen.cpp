@@ -5,36 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <cmath>
 #include <promeki/tui/screen.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-// Convert a Color to its perceptual grayscale value (Rec. 709).
-static uint8_t colorToGray(const Color &color) {
-        return static_cast<uint8_t>(std::round(255.0 * (0.2126 * color.r() + 0.7152 * color.g() + 0.0722 * color.b())));
-}
-
-// Map a grayscale value to one of the 4 gray levels in the 16-color palette.
-// Only exact black (0) maps to Black; everything else maps to DarkGray, Silver, or White.
-static AnsiStream::AnsiColor grayToAnsi16(uint8_t gray) {
-        if (gray == 0) return AnsiStream::Black;
-        if (gray <= 96) return AnsiStream::DarkGray;
-        if (gray <= 192) return AnsiStream::Silver;
-        return AnsiStream::White;
-}
-
-// Map a grayscale value to the closest entry in the 256-color grayscale ramp.
-// Uses Black (0) and White (15) for extremes, and the 24-entry ramp (232-255)
-// which covers gray levels 8, 18, 28, ..., 238 in steps of 10.
-static AnsiStream::AnsiColor grayToAnsi256(uint8_t gray) {
-        if (gray < 4) return AnsiStream::Black;
-        if (gray > 246) return AnsiStream::White;
-        int idx = static_cast<int>(std::round((gray - 8.0) / 10.0));
-        if (idx < 0) idx = 0;
-        if (idx > 23) idx = 23;
-        return static_cast<AnsiStream::AnsiColor>(232 + idx);
-}
 
 TuiScreen::TuiScreen() = default;
 TuiScreen::~TuiScreen() = default;
@@ -74,38 +47,6 @@ void TuiScreen::invalidate() {
         _fullRedraw = true;
 }
 
-static void emitForeground(AnsiStream &stream, const Color &color, Terminal::ColorSupport mode) {
-        switch (mode) {
-                case Terminal::NoColor: break;
-                case Terminal::Grayscale16: stream.setForeground(grayToAnsi16(colorToGray(color))); break;
-                case Terminal::Grayscale256: stream.setForeground(grayToAnsi256(colorToGray(color))); break;
-                case Terminal::GrayscaleTrue: {
-                        uint8_t g = colorToGray(color);
-                        stream.setForegroundRGB(g, g, g);
-                        break;
-                }
-                case Terminal::TrueColor: stream.setForegroundRGB(color.r8(), color.g8(), color.b8()); break;
-                case Terminal::Color256: stream.setForeground(AnsiStream::findClosestAnsiColor(color, 255)); break;
-                case Terminal::Basic: stream.setForeground(AnsiStream::findClosestAnsiColor(color, 15)); break;
-        }
-}
-
-static void emitBackground(AnsiStream &stream, const Color &color, Terminal::ColorSupport mode) {
-        switch (mode) {
-                case Terminal::NoColor: break;
-                case Terminal::Grayscale16: stream.setBackground(grayToAnsi16(colorToGray(color))); break;
-                case Terminal::Grayscale256: stream.setBackground(grayToAnsi256(colorToGray(color))); break;
-                case Terminal::GrayscaleTrue: {
-                        uint8_t g = colorToGray(color);
-                        stream.setBackgroundRGB(g, g, g);
-                        break;
-                }
-                case Terminal::TrueColor: stream.setBackgroundRGB(color.r8(), color.g8(), color.b8()); break;
-                case Terminal::Color256: stream.setBackground(AnsiStream::findClosestAnsiColor(color, 255)); break;
-                case Terminal::Basic: stream.setBackground(AnsiStream::findClosestAnsiColor(color, 15)); break;
-        }
-}
-
 void TuiScreen::emitCell(AnsiStream &stream, const TuiCell &cell, int &cursorX, int &cursorY, int x, int y,
                          Color &lastFg, Color &lastBg, uint8_t &lastStyle) {
         // Move cursor if needed
@@ -126,25 +67,25 @@ void TuiScreen::emitCell(AnsiStream &stream, const TuiCell &cell, int &cursorX, 
                 lastBg = Color();
                 lastStyle = TuiStyle::None;
 
-                if (cellAttrs & TuiStyle::Bold) stream << "\033[1m";
-                if (cellAttrs & TuiStyle::Dim) stream << "\033[2m";
-                if (cellAttrs & TuiStyle::Italic) stream << "\033[3m";
-                if (cellAttrs & TuiStyle::Underline) stream << "\033[4m";
-                if (cellAttrs & TuiStyle::Blink) stream << "\033[5m";
-                if (cellAttrs & TuiStyle::Inverse) stream << "\033[7m";
-                if (cellAttrs & TuiStyle::Strikethrough) stream << "\033[9m";
+                if (cellAttrs & TuiStyle::Bold) stream.setStyle(AnsiStream::Bold);
+                if (cellAttrs & TuiStyle::Dim) stream.setStyle(AnsiStream::Dim);
+                if (cellAttrs & TuiStyle::Italic) stream.setStyle(AnsiStream::Italic);
+                if (cellAttrs & TuiStyle::Underline) stream.setStyle(AnsiStream::Underlined);
+                if (cellAttrs & TuiStyle::Blink) stream.setStyle(AnsiStream::Blink);
+                if (cellAttrs & TuiStyle::Inverse) stream.setStyle(AnsiStream::Inverted);
+                if (cellAttrs & TuiStyle::Strikethrough) stream.setStyle(AnsiStream::Strikethrough);
                 lastStyle = cellAttrs;
         }
 
         // Update foreground if changed
         if (cellFg != lastFg) {
-                emitForeground(stream, cellFg, _colorMode);
+                stream.setForeground(cellFg, _colorMode);
                 lastFg = cellFg;
         }
 
         // Update background if changed
         if (cellBg != lastBg) {
-                emitBackground(stream, cellBg, _colorMode);
+                stream.setBackground(cellBg, _colorMode);
                 lastBg = cellBg;
         }
 
@@ -170,6 +111,13 @@ void TuiScreen::flush(AnsiStream &stream) {
                 for (int x = 0; x < _cols; ++x) {
                         int idx = index(x, y);
                         if (_fullRedraw || _back[idx] != _front[idx]) {
+                                // Open the synchronized-output span lazily on the
+                                // first changed cell so an idle flush (nothing
+                                // changed) emits nothing at all.  Terminals that
+                                // support mode 2026 present everything between
+                                // begin/end atomically (no tearing); others
+                                // ignore the sequences.
+                                if (!emittedAny) stream.beginSynchronizedUpdate();
                                 emitCell(stream, _back[idx], cursorX, cursorY, x, y, lastFg, lastBg, lastStyle);
                                 emittedAny = true;
                         }
@@ -178,6 +126,7 @@ void TuiScreen::flush(AnsiStream &stream) {
 
         if (emittedAny) {
                 stream.reset();
+                stream.endSynchronizedUpdate();
                 stream.flush();
         }
 

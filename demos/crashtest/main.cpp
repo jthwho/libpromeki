@@ -21,6 +21,7 @@
  *                         and exit normally (no crash)
  */
 
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <promeki/application.h>
@@ -34,6 +35,21 @@ using namespace promeki;
 static constexpr int     NumWorkers = 4;
 static Atomic<bool> g_running{true};
 static Atomic<int>  g_crashTarget{-1}; // -1 = main, 0..N-1 = worker index
+
+// The faulting address is laundered through this volatile, externally
+// visible global so the optimizer can't prove it's a compile-time null.
+// GCC 15 at -O2 otherwise deletes a store through a literal null pointer
+// — even a volatile one — as undefined behaviour under
+// -fdelete-null-pointer-checks, which silently elides the whole crash
+// and defeats the point of this demo.  Reading a volatile global forces
+// a runtime load the compiler must treat as unknown, so the store stays.
+volatile std::uintptr_t g_faultAddr = 0;
+
+// Performs a genuine null-pointer write -> SIGSEGV.  Kept noinline so it
+// shows up as its own frame in the crash trace.
+[[gnu::noinline]] static void faultNow(int val) {
+        *reinterpret_cast<volatile int *>(g_faultAddr) = val;
+}
 
 // --------------------------------------------------------------------
 // Worker thread — loops until told to stop or asked to crash.
@@ -75,10 +91,7 @@ class WorkerThread : public Thread {
 
                 [[gnu::noinline]] void crashLevelA() { crashLevelB(42); }
 
-                [[gnu::noinline]] void crashLevelB(int val) {
-                        volatile int *bad = nullptr;
-                        *bad = val; // SIGSEGV
-                }
+                [[gnu::noinline]] void crashLevelB(int val) { faultNow(val); } // SIGSEGV
 };
 
 // Same nested-call trick for a main-thread crash.
@@ -90,8 +103,7 @@ static void mainCrashA() {
 }
 
 static void mainCrashB(int val) {
-        volatile int *bad = nullptr;
-        *bad = val;
+        faultNow(val);
 }
 
 // --------------------------------------------------------------------

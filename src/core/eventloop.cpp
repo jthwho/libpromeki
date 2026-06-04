@@ -137,6 +137,32 @@ void EventLoopWakeFd::drain() {}
 #endif
 
 // ============================================================================
+// EventLoopPollCache
+// ============================================================================
+//
+// Caches the pollfd array passed to poll() in waitOnSources.  The
+// array changes only when an IoSource is added or removed, yet
+// waitOnSources runs on every wake — rebuilding an N-entry array
+// (plus the wake fd at index 0) each time makes a loop servicing
+// many descriptors do O(N) work per wake even when nothing changed.
+// The cache holds the last-built array and a dirty flag; the loop
+// thread rebuilds only when the flag is set.  Index 0 is always the
+// wake fd; index i+1 mirrors _ioSources[i] — the alignment
+// waitOnSources relies on when mapping ready revents back to sources.
+//
+// pollfd is POSIX-only.  On other platforms the struct is empty so
+// the UniquePtr member still has a complete type to construct and
+// destroy; waitOnSources never touches it there.
+#if defined(PROMEKI_PLATFORM_POSIX)
+struct EventLoopPollCache {
+        List<pollfd> pfds;
+        bool         dirty = true;
+};
+#else
+struct EventLoopPollCache {};
+#endif
+
+// ============================================================================
 // EventLoop
 // ============================================================================
 
@@ -149,6 +175,7 @@ EventLoop *EventLoop::current() {
 EventLoop::EventLoop() {
         _current = this;
         _wake = WakeFdUPtr::create();
+        _pollCache = PollCacheUPtr::create();
         // Self-install if Application::startEventLoopMonitors has
         // armed the auto-install hook.  No-op in the common case
         // where no monitoring is configured.  Doing this in the
@@ -455,6 +482,7 @@ int EventLoop::addIoSource(int fd, uint32_t events, IoCallback cb) {
         {
                 Mutex::Locker lock(_ioMutex);
                 _ioSources += src;
+                _pollCache->dirty = true;
         }
         // Wake the loop so the next poll() picks up the new fd.
         wakeSelf();
@@ -483,6 +511,7 @@ void EventLoop::removeIoSource(int handle) {
                                 // invalidating a dispatch snapshot that
                                 // may be mid-iteration.
                                 _ioSources[i].pendingRemove = true;
+                                _pollCache->dirty = true;
                                 break;
                         }
                 }
@@ -519,47 +548,58 @@ void EventLoop::waitOnSources(unsigned int waitMs) {
                 return;
         }
 
-        // Phase 1: sweep pendingRemove entries and build the poll
-        // set under the ioMutex.  We also snapshot (handle, cb,
-        // events, fd) for each live source so callbacks can be
-        // fired outside the lock.
+        // Phase 1: under the ioMutex, (re)build the cached poll set
+        // only when it is dirty — i.e. a source was added or removed
+        // since the last wake.  In the steady state the cache is
+        // clean and this is just a lock + flag check, not an O(N)
+        // rebuild.  pendingRemove is only ever set together with the
+        // dirty flag (in removeIoSource), so a clean cache has no
+        // entries to sweep and skipping removeIf is safe.  Index 0 is
+        // always the wake fd; index i+1 mirrors _ioSources[i].
         struct Ready {
                         int        handle;
                         int        fd;
                         uint32_t   readyEvents;
                         IoCallback cb;
         };
-        List<pollfd> pfds;
-        List<Ready>  snapshot;
+        List<Ready>         snapshot;
+        EventLoopPollCache &cache = *_pollCache;
         {
                 Mutex::Locker lock(_ioMutex);
-                _ioSources.removeIf([](const IoSource &s) { return s.pendingRemove; });
-                pfds.reserve(_ioSources.size() + 1);
-                pollfd wakePfd;
-                wakePfd.fd = _wake->pollFd();
-                wakePfd.events = POLLIN;
-                wakePfd.revents = 0;
-                pfds += wakePfd;
-                for (size_t i = 0; i < _ioSources.size(); i++) {
-                        const IoSource &src = _ioSources[i];
-                        pollfd          pfd;
-                        pfd.fd = src.fd;
-                        pfd.events = 0;
-                        if (src.events & IoRead) pfd.events |= POLLIN;
-                        if (src.events & IoWrite) pfd.events |= POLLOUT;
-                        pfd.revents = 0;
-                        pfds += pfd;
+                if (cache.dirty) {
+                        _ioSources.removeIf([](const IoSource &s) { return s.pendingRemove; });
+                        cache.pfds.clear();
+                        cache.pfds.reserve(_ioSources.size() + 1);
+                        pollfd wakePfd;
+                        wakePfd.fd = _wake->pollFd();
+                        wakePfd.events = POLLIN;
+                        wakePfd.revents = 0;
+                        cache.pfds += wakePfd;
+                        for (size_t i = 0; i < _ioSources.size(); i++) {
+                                const IoSource &src = _ioSources[i];
+                                pollfd          pfd;
+                                pfd.fd = src.fd;
+                                pfd.events = 0;
+                                if (src.events & IoRead) pfd.events |= POLLIN;
+                                if (src.events & IoWrite) pfd.events |= POLLOUT;
+                                pfd.revents = 0;
+                                cache.pfds += pfd;
+                        }
+                        cache.dirty = false;
                 }
         }
 
         // Phase 2: poll outside the lock.  Bracket the syscall into
         // _sleepNs so the snapshot reflects how much wallclock the
-        // loop spent waiting for work versus dispatching it.
+        // loop spent waiting for work versus dispatching it.  cache.pfds
+        // is owned exclusively by the loop thread (only Phase 1 rebuilds
+        // it; add/removeIoSource merely flip the dirty flag), so it is
+        // safe to read here without the lock.
         int pollTimeout = (waitMs == 0) ? -1 : static_cast<int>(waitMs);
         int rc;
         {
                 StatsBracket sleepBracket(this, &_sleepNs, nullptr);
-                rc = ::poll(pfds.data(), pfds.size(), pollTimeout);
+                rc = ::poll(cache.pfds.data(), cache.pfds.size(), pollTimeout);
         }
         if (rc < 0) {
                 if (errno == EINTR) return;
@@ -570,7 +610,7 @@ void EventLoop::waitOnSources(unsigned int waitMs) {
 
         // Phase 3: drain wake fd, drain queue, snapshot ready
         // callbacks under the lock, fire outside the lock.
-        if (pfds[0].revents & (POLLIN | POLLERR | POLLHUP)) {
+        if (cache.pfds[0].revents & (POLLIN | POLLERR | POLLHUP)) {
                 _wake->drain();
         }
 
@@ -592,15 +632,17 @@ void EventLoop::waitOnSources(unsigned int waitMs) {
         // so we skip those.
         {
                 Mutex::Locker lock(_ioMutex);
-                // pfds built from _ioSources under the same lock.
-                // Positions are stable as long as the list hasn't
-                // been mutated since — which is guaranteed because
-                // addIoSource only appends and pendingRemove doesn't
-                // change positions.  Any new addIoSource calls
-                // happened outside the lock and aren't yet in pfds.
+                // cache.pfds was built from _ioSources under this same
+                // lock (Phase 1).  Positions stay aligned across the
+                // poll window because addIoSource only appends (new
+                // entries are beyond cache.pfds.size(), so the bound
+                // skips them) and removeIoSource only flags
+                // pendingRemove without shifting positions (the sweep
+                // is deferred to the next dirty rebuild).  A source
+                // flagged for removal during the poll is skipped below.
                 size_t n = _ioSources.size();
-                for (size_t i = 0; i < n && (i + 1) < pfds.size(); i++) {
-                        const pollfd &pfd = pfds[i + 1];
+                for (size_t i = 0; i < n && (i + 1) < cache.pfds.size(); i++) {
+                        const pollfd &pfd = cache.pfds[i + 1];
                         if (pfd.revents == 0) continue;
                         const IoSource &src = _ioSources[i];
                         if (src.pendingRemove) continue;

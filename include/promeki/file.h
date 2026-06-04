@@ -121,6 +121,30 @@ class File : public BufferedIODevice {
                  */
                 File(const FilePath &fp, ObjectBase *parent = nullptr);
 
+                /**
+                 * @brief Adopts an already-open OS file descriptor / handle.
+                 *
+                 * The File is immediately open with the given mode, wrapping an
+                 * existing native handle (a POSIX @c int fd, or a Win32
+                 * @c HANDLE) rather than opening a path.  This is how a
+                 * descriptor that did not come from a filename — a tty, a pipe,
+                 * an inherited fd, one of the standard streams — gets the full
+                 * File interface, including the optional write buffering of
+                 * @ref BufferedIODevice.
+                 *
+                 * Ownership is controlled by @p ownsHandle: when false (the
+                 * right choice for a borrowed descriptor such as
+                 * @c STDOUT_FILENO) close()/destruction flush but do not close
+                 * the handle; when true the handle is closed like a
+                 * filename-opened File.
+                 *
+                 * @param handle      The native handle to adopt.
+                 * @param mode        The open mode (ReadOnly, WriteOnly, or ReadWrite).
+                 * @param ownsHandle  Whether the File closes the handle on close.
+                 * @param parent      The parent object, or nullptr.
+                 */
+                File(FileHandle handle, OpenMode mode, bool ownsHandle = true, ObjectBase *parent = nullptr);
+
                 /** @brief Destructor. Closes the file if it is open. */
                 ~File();
 
@@ -173,14 +197,6 @@ class File : public BufferedIODevice {
 
                 /** @brief Returns true if the file is currently open. */
                 bool isOpen() const override;
-
-                /**
-                 * @brief Writes data to the file at the current position.
-                 * @param data Pointer to the data to write.
-                 * @param maxSize Number of bytes to write.
-                 * @return The number of bytes written, or -1 on error.
-                 */
-                int64_t write(const void *data, int64_t maxSize) override;
 
                 /** @brief Returns false (files are seekable). */
                 bool isSequential() const override;
@@ -447,6 +463,9 @@ class File : public BufferedIODevice {
                 /** @brief Reads raw data from the file descriptor. */
                 int64_t readFromDevice(void *data, int64_t maxSize) override;
 
+                /** @brief Writes raw data to the file descriptor. */
+                int64_t writeToDevice(const void *data, int64_t maxSize) override;
+
                 /** @brief Returns bytes available from the device (file). */
                 int64_t deviceBytesAvailable() const override;
 
@@ -454,6 +473,7 @@ class File : public BufferedIODevice {
                 bool               _directIO = false;    ///< Direct I/O mode.
                 bool               _synchronous = false; ///< Synchronous write mode.
                 bool               _nonBlocking = false; ///< Non-blocking mode.
+                bool               _ownsHandle = true;   ///< False for an adopted (non-owned) handle.
                 String             _filename;
                 int                _fileFlags = NoFlags;
                 FileHandle         _handle = FileHandleClosedValue;

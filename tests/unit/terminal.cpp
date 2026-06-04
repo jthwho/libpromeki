@@ -190,6 +190,27 @@ TEST_CASE("Terminal: bracketed paste toggle and state") {
         CHECK(err.isOk());
 }
 
+TEST_CASE("Terminal: focus reporting toggle and state") {
+        Terminal t(nullFd(), nullFd());
+        CHECK_FALSE(t.isFocusReportingEnabled());
+
+        Error err = t.enableFocusReporting();
+        CHECK(err.isOk());
+        CHECK(t.isFocusReportingEnabled());
+
+        err = t.enableFocusReporting();
+        CHECK(err.isOk());
+        CHECK(t.isFocusReportingEnabled());
+
+        err = t.disableFocusReporting();
+        CHECK(err.isOk());
+        CHECK_FALSE(t.isFocusReportingEnabled());
+
+        err = t.disableFocusReporting();
+        CHECK(err.isOk());
+        CHECK_FALSE(t.isFocusReportingEnabled());
+}
+
 TEST_CASE("Terminal: alternate screen toggle and state") {
         Terminal t(nullFd(), nullFd());
 
@@ -204,20 +225,6 @@ TEST_CASE("Terminal: alternate screen toggle and state") {
 
         err = t.disableAlternateScreen();
         CHECK(err.isOk());
-}
-
-TEST_CASE("Terminal: setResizeCallback accepts and clears") {
-        Terminal t;
-
-        bool called = false;
-        t.setResizeCallback([&called](int, int) { called = true; });
-
-        t.setResizeCallback(nullptr);
-}
-
-TEST_CASE("Terminal: installSignalHandlers does not crash") {
-        Terminal t;
-        t.installSignalHandlers();
 }
 
 TEST_CASE("Terminal: readInput on non-TTY") {

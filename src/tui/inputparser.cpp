@@ -105,10 +105,13 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                 } else if ((c >= '0' && c <= '9') || c == ';') {
                                         _buf += c;
                                 } else {
-                                        // End of CSI sequence
+                                        // End of CSI sequence.  parseCSI may switch
+                                        // us into Paste mode (ESC [ 200 ~); only
+                                        // fall back to Normal if it didn't change
+                                        // the state out from under us.
                                         _buf += c;
                                         parseCSI(_buf, events);
-                                        _state = Normal;
+                                        if (_state == CSIParam) _state = Normal;
                                 }
                                 break;
 
@@ -126,6 +129,34 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
                                         _buf += c;
                                 }
                                 break;
+
+                        case Paste: {
+                                // Collect raw paste content until the end marker
+                                // ESC [ 201 ~ arrives, then emit it as one event.
+                                // The content may legitimately contain ESC bytes,
+                                // so we match on the full terminator suffix.
+                                _pasteBuf += c;
+                                if (_pasteBuf.endsWith("\033[201~")) {
+                                        ParsedEvent ev;
+                                        ev.type = ParsedEvent::Paste;
+                                        ev.text = _pasteBuf.left(_pasteBuf.length() - 6);
+                                        events += ev;
+                                        _pasteBuf.clear();
+                                        _state = Normal;
+                                } else if (_pasteBuf.length() > kMaxPasteBytes) {
+                                        // Defensive bail-out: a paste that never
+                                        // terminates (terminal bug / disconnect)
+                                        // must not grow the buffer or wedge the
+                                        // parser forever.  Flush what we have.
+                                        ParsedEvent ev;
+                                        ev.type = ParsedEvent::Paste;
+                                        ev.text = _pasteBuf;
+                                        events += ev;
+                                        _pasteBuf.clear();
+                                        _state = Normal;
+                                }
+                                break;
+                        }
 
                         default: _state = Normal; break;
                 }
@@ -166,6 +197,29 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
 
         int code = nums.isEmpty() ? 0 : nums[0];
         int modifier = nums.size() > 1 ? nums[1] : 0;
+
+        // Bracketed paste start (ESC [ 200 ~): switch to paste-collection mode.
+        // The matching ESC [ 201 ~ is consumed by the Paste state, not here.
+        if (final == '~' && code == 200) {
+                _state = Paste;
+                _pasteBuf.clear();
+                return;
+        }
+
+        // Focus events (ESC [ I / ESC [ O, mode 1004).  These reach CSI parsing
+        // because 'I' / 'O' are non-numeric CSI finals.
+        if (final == 'I') {
+                ParsedEvent ev;
+                ev.type = ParsedEvent::FocusIn;
+                events += ev;
+                return;
+        }
+        if (final == 'O') {
+                ParsedEvent ev;
+                ev.type = ParsedEvent::FocusOut;
+                events += ev;
+                return;
+        }
 
         ParsedEvent ev;
         ev.type = ParsedEvent::Key;

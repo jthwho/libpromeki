@@ -15,15 +15,17 @@
  * analysis path can describe a captured 334-1 packet even though the
  * translate path can't (yet) round-trip it.
  *
- * Each 334-1 packet carries the two NTSC line-21 data bytes as its
- * user-data words (one data byte per 10-bit UDW).  The detailer walks
- * them in pairs, validates the odd-parity stamp every received byte
- * carries, strips parity, and classifies each pair as a control code
- * (PAC / mid-row / Tab Offset / misc) or printable G0 characters.  The
- * NTSC field a pair belongs to is not derivable from the raw packet
- * alone (it depends on the carriage line / external context), so the
- * detailer reports the intra-field channel (CC1 vs CC2) but not the
- * absolute CC1..CC4 channel.
+ * Per ST 334-1 Annex B (Normative) the CEA-608 ANC packet is fixed
+ * length with DataCount = 3: the first user-data word is a @em LINE
+ * byte that names the NTSC field and VBI insertion line, and the
+ * following two words are the field's two line-21 data bytes.  The
+ * detailer decodes the LINE byte (field number + 525-line insertion
+ * line), then validates the odd-parity stamp the two caption bytes
+ * carry, strips parity, and classifies the pair as a control code
+ * (PAC / mid-row / Tab Offset / misc) or printable G0 characters.
+ * Because the LINE byte names the field, the absolute CC channel is
+ * resolvable: field 1 carries CC1/CC2 and field 2 carries CC3/CC4,
+ * with bit 3 of the control byte selecting the second channel.
  */
 
 #include <promeki/ancformat.h>
@@ -154,49 +156,71 @@ namespace {
                 }
 
                 if (udw.isEmpty()) {
-                        d.addWarning("No user-data words present — empty line-21 payload");
+                        d.addWarning("No user-data words present — empty CEA-608 payload");
                         return d;
                 }
-                if ((udw.size() & 1u) != 0) {
+
+                // ST 334-1 Annex B: the first UDW is the LINE byte naming the
+                // NTSC field and VBI insertion line; the two line-21 caption
+                // bytes follow.  Bit 7 selects the field (1 = field 1, 0 =
+                // field 2), bits 6..5 are zero, and bits 4..0 are the insertion
+                // line as an offset from the field's base line.  CEA-608 is a
+                // 525-line / NTSC format: field 1 base = line 9, field 2 base =
+                // line 272.
+                uint8_t  lineByte   = static_cast<uint8_t>(udw[0] & 0xFF);
+                bool     field1     = (lineByte & 0x80) != 0;
+                uint8_t  lineOff    = lineByte & 0x1F;
+                uint16_t baseLine   = field1 ? 9 : 272;
+                uint16_t insertLine = static_cast<uint16_t>(baseLine + lineOff);
+                d.addField("Field", String::number(field1 ? 1 : 2));
+                d.addField("InsertLine", String::sprintf("%u (525-line)", insertLine));
+
+                if (udw.size() < 3) {
                         d.addWarning(String::sprintf(
-                                "Odd UDW count %zu — line-21 data is carried as byte pairs; the "
-                                "trailing byte is unpaired", udw.size()));
+                                "Truncated CEA-608 packet: DataCount %zu, expected 3 (LINE byte "
+                                "+ 2 caption bytes per ST 334-1 Annex B)", udw.size()));
+                        return d;
+                }
+                if (udw.size() > 3) {
+                        d.addWarning(String::sprintf(
+                                "Unexpected DataCount %zu — ST 334-1 Annex B fixes the CEA-608 "
+                                "packet at 3 words; decoding the first caption pair only",
+                                udw.size()));
                 }
 
-                // Walk the line-21 bytes in pairs.  Each received byte
-                // carries odd parity on bit 7; a parity failure means the
-                // pair is corrupt and the decode below is unreliable.
-                for (size_t i = 0; i + 1 < udw.size(); i += 2) {
-                        uint8_t rawB1 = static_cast<uint8_t>(udw[i] & 0xFF);
-                        uint8_t rawB2 = static_cast<uint8_t>(udw[i + 1] & 0xFF);
-                        String  label = String::sprintf("Pair[%zu]", i / 2);
+                // The two caption bytes each carry odd parity on bit 7; a
+                // parity failure means the pair is corrupt and the decode
+                // below is unreliable.
+                uint8_t rawB1 = static_cast<uint8_t>(udw[1] & 0xFF);
+                uint8_t rawB2 = static_cast<uint8_t>(udw[2] & 0xFF);
 
-                        bool    parityOk = Cea608::checkOddParityPair(rawB1, rawB2);
-                        uint8_t b1       = Cea608::stripParity(rawB1);
-                        uint8_t b2       = Cea608::stripParity(rawB2);
+                bool    parityOk = Cea608::checkOddParityPair(rawB1, rawB2);
+                uint8_t b1       = Cea608::stripParity(rawB1);
+                uint8_t b2       = Cea608::stripParity(rawB2);
 
-                        String desc;
-                        if (b1 == 0x00 && b2 == 0x00) {
-                                desc = String("Null (padding)");
-                        } else if (Cea608::isControlPair(b1, b2)) {
-                                // Bit 3 of the control byte selects the second
-                                // channel of the field (CC2 / CC4).  The
-                                // absolute field isn't in the raw packet, so
-                                // report the intra-field channel only.
-                                bool   secondChan = (b1 & 0x08) != 0;
-                                String ch = secondChan ? String("CC2/CC4") : String("CC1/CC3");
-                                desc = ch + ": " + cea608ControlName(b1, b2);
-                        } else {
-                                desc = cea608TextName(b1, b2);
-                        }
+                String desc;
+                bool   isNull = (b1 == 0x00 && b2 == 0x00);
+                if (isNull) {
+                        desc = String("Null (padding)");
+                } else if (Cea608::isControlPair(b1, b2)) {
+                        // Bit 3 of the control byte selects the second channel
+                        // of the field.  The LINE byte gives us the field, so
+                        // the absolute CC1..CC4 channel is resolvable.
+                        bool secondChan = (b1 & 0x08) != 0;
+                        int  cc         = (field1 ? 1 : 3) + (secondChan ? 1 : 0);
+                        desc = String::sprintf("CC%d: ", cc) + cea608ControlName(b1, b2);
+                } else {
+                        desc = cea608TextName(b1, b2);
+                }
 
-                        d.addField(label, String::sprintf("%02X %02X — %s", rawB1, rawB2,
-                                                          desc.cstr()));
-                        if (!parityOk) {
-                                d.addWarning(String::sprintf(
-                                        "Pair[%zu] (%02X %02X) failed odd-parity check; decode is "
-                                        "best-effort", i / 2, rawB1, rawB2));
-                        }
+                d.addField("Data", String::sprintf("%02X %02X — %s", rawB1, rawB2, desc.cstr()));
+                // A null-padding pair (typically 0x80 0x80, but 0x00 0x00 zero-
+                // fill is common) carries no caption data, so a parity complaint
+                // there is noise — only flag parity on a pair we actually decode.
+                if (!parityOk && !isNull) {
+                        d.addWarning(String::sprintf(
+                                "Caption pair (%02X %02X) failed odd-parity check; decode is "
+                                "best-effort", rawB1, rawB2));
                 }
 
                 return d;

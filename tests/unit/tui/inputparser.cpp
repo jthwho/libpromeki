@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/tui/inputparser.h>
 #include <promeki/keyevent.h>
@@ -408,4 +409,52 @@ TEST_CASE("TuiInputParser: state preserved across feed calls") {
         auto events2 = parser.feed("a", 1);
         REQUIRE(events2.size() == 1);
         CHECK(events2[0].key == static_cast<KeyEvent::Key>('a'));
+}
+
+TEST_CASE("TuiInputParser: bracketed paste produces one Paste event") {
+        TuiInputParser parser;
+
+        SUBCASE("simple paste") {
+                const char *seq = "\033[200~hello\033[201~";
+                auto        events = parser.feed(seq, static_cast<int>(std::strlen(seq)));
+                REQUIRE(events.size() == 1);
+                CHECK(events[0].type == TuiInputParser::ParsedEvent::Paste);
+                CHECK(events[0].text == "hello");
+        }
+
+        SUBCASE("paste with embedded newline does not become Key_Enter") {
+                const char *seq = "\033[200~a\nb\033[201~";
+                auto        events = parser.feed(seq, static_cast<int>(std::strlen(seq)));
+                REQUIRE(events.size() == 1);
+                CHECK(events[0].type == TuiInputParser::ParsedEvent::Paste);
+                CHECK(events[0].text == "a\nb");
+        }
+
+        SUBCASE("paste split across feed calls") {
+                parser.feed("\033[200~ab", 8);
+                auto events = parser.feed("cd\033[201~", 8);
+                REQUIRE(events.size() == 1);
+                CHECK(events[0].type == TuiInputParser::ParsedEvent::Paste);
+                CHECK(events[0].text == "abcd");
+        }
+
+        SUBCASE("content containing ESC is preserved") {
+                const char *seq = "\033[200~a\033b\033[201~";
+                auto        events = parser.feed(seq, static_cast<int>(std::strlen(seq)));
+                REQUIRE(events.size() == 1);
+                CHECK(events[0].type == TuiInputParser::ParsedEvent::Paste);
+                CHECK(events[0].text == "a\033b");
+        }
+}
+
+TEST_CASE("TuiInputParser: focus in/out events") {
+        TuiInputParser parser;
+
+        auto in = parser.feed("\033[I", 3);
+        REQUIRE(in.size() == 1);
+        CHECK(in[0].type == TuiInputParser::ParsedEvent::FocusIn);
+
+        auto out = parser.feed("\033[O", 3);
+        REQUIRE(out.size() == 1);
+        CHECK(out[0].type == TuiInputParser::ParsedEvent::FocusOut);
 }

@@ -33,7 +33,10 @@ class TuiInputParser {
                                 enum Type {
                                         None,
                                         Key,
-                                        Mouse
+                                        Mouse,
+                                        Paste,   ///< Bracketed-paste content; payload in @c text.
+                                        FocusIn, ///< Terminal window gained focus (mode 1004).
+                                        FocusOut ///< Terminal window lost focus (mode 1004).
                                 };
                                 Type          type = None;
                                 KeyEvent::Key key = KeyEvent::Key_Unknown;
@@ -63,12 +66,19 @@ class TuiInputParser {
                         CSI,
                         SS3,
                         CSIParam,
-                        MouseSGR
+                        MouseSGR,
+                        Paste ///< Accumulating bracketed-paste content until ESC [ 2 0 1 ~.
                 };
+
+                // Upper bound on a single bracketed-paste payload.  Guards
+                // against an unterminated paste (missing ESC [ 201 ~) growing
+                // the buffer without bound or wedging the parser in Paste state.
+                static constexpr size_t kMaxPasteBytes = 8 * 1024 * 1024;
 
                 State   _state = Normal;
                 String  _buf;
-                uint8_t _buttonState = 0; ///< Accumulated button press state.
+                String  _pasteBuf;           ///< Accumulates bracketed-paste content.
+                uint8_t _buttonState = 0;    ///< Accumulated button press state.
 
                 void                 parseCSI(const String &seq, List<ParsedEvent> &events);
                 void                 parseSS3(char ch, List<ParsedEvent> &events);

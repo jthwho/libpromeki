@@ -9,6 +9,7 @@
 #include <promeki/layout.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
+#include <promeki/windowfocusevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -118,6 +119,8 @@ void Widget::focusInEvent(Event *) {}
 
 void Widget::focusOutEvent(Event *) {}
 
+void Widget::windowFocusEvent(WindowFocusEvent *) {}
+
 void Widget::event(Event *e) {
         if (e->type() == PaintEvent::Paint) {
                 paintEvent(static_cast<PaintEvent *>(e));
@@ -131,6 +134,8 @@ void Widget::event(Event *e) {
                 keyReleaseEvent(static_cast<KeyEvent *>(e));
         } else if (e->type() == MouseEvent::Mouse) {
                 mouseEvent(static_cast<MouseEvent *>(e));
+        } else if (e->type() == WindowFocusEvent::WindowFocus) {
+                windowFocusEvent(static_cast<WindowFocusEvent *>(e));
         } else {
                 ObjectBase::event(e);
         }

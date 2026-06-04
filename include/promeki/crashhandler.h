@@ -126,6 +126,52 @@ class CrashHandler {
                 static bool isInstalled();
 
                 /**
+                 * @brief Callback invoked from the crash signal handler.
+                 *
+                 * @warning Runs in async-signal context on the crashing thread.
+                 * It MUST be async-signal-safe: only raw @c write / @c tcsetattr
+                 * and the like — no heap allocation, no locks, no @ref String /
+                 * @ref AnsiStream.  Keep it tiny.  @p userdata is the pointer
+                 * passed to @ref addCleanupHandler and must outlive the
+                 * registration.
+                 */
+                using CleanupCallback = void (*)(void *userdata);
+
+                /**
+                 * @brief Registers an async-signal-safe cleanup run before the crash report.
+                 *
+                 * Cleanup handlers fire at the very top of the crash signal
+                 * handler — before any report output — so a subsystem can put
+                 * the world back into a sane state first.  The motivating case
+                 * is a TUI restoring the terminal (leaving the alternate
+                 * screen, showing the cursor, disabling raw mode) so the crash
+                 * report is actually visible and the shell is usable afterward.
+                 *
+                 * Handlers run in registration order.  They fire only on the
+                 * real crash path (a re-raised fatal signal); @ref writeTrace
+                 * deliberately does not run them, so taking a diagnostic
+                 * snapshot never tears down a live TUI's terminal state.
+                 *
+                 * @param cb       The async-signal-safe callback (see
+                 *                 @ref CleanupCallback).  Must be non-null.
+                 * @param userdata Opaque pointer passed to @p cb; must outlive
+                 *                 the registration.
+                 * @return A handle @c >= 0 on success, or @c -1 if @p cb is null
+                 *         or the fixed handler table is full.
+                 */
+                static int addCleanupHandler(CleanupCallback cb, void *userdata);
+
+                /**
+                 * @brief Removes a cleanup handler registered via @ref addCleanupHandler.
+                 *
+                 * Must be called before @p userdata is destroyed.  Unknown or
+                 * already-removed handles are ignored.
+                 *
+                 * @param handle The handle returned by @ref addCleanupHandler.
+                 */
+                static void removeCleanupHandler(int handle);
+
+                /**
                  * @brief Writes a diagnostic trace report to a unique file.
                  *
                  * Produces the same report a crash would produce — process

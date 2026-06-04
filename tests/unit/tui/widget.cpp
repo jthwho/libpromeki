@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/tui/widget.h>
+#include <promeki/windowfocusevent.h>
 
 using namespace promeki;
 
@@ -96,4 +97,47 @@ TEST_CASE("TuiWidget: dirty tracking") {
 
         w.update();
         CHECK(w.isDirty());
+}
+
+namespace {
+        // Probe that records WindowFocusEvent delivery through the normal
+        // Widget::event() dispatch path.
+        class FocusProbe : public TuiWidget {
+                public:
+                        int  count     = 0;
+                        bool lastGained = false;
+
+                protected:
+                        void windowFocusEvent(WindowFocusEvent *e) override {
+                                count++;
+                                lastGained = e->gained();
+                                e->accept();
+                        }
+        };
+} // namespace
+
+TEST_CASE("WindowFocusEvent: gained / lost accessors and type") {
+        WindowFocusEvent in(true);
+        CHECK(in.type() == WindowFocusEvent::WindowFocus);
+        CHECK(in.gained());
+        CHECK_FALSE(in.lost());
+
+        WindowFocusEvent out(false);
+        CHECK_FALSE(out.gained());
+        CHECK(out.lost());
+}
+
+TEST_CASE("TuiWidget: windowFocusEvent dispatched via event()") {
+        FocusProbe w;
+
+        WindowFocusEvent in(true);
+        w.sendEvent(&in);
+        CHECK(w.count == 1);
+        CHECK(w.lastGained);
+        CHECK(in.isAccepted());
+
+        WindowFocusEvent out(false);
+        w.sendEvent(&out);
+        CHECK(w.count == 2);
+        CHECK_FALSE(w.lastGained);
 }

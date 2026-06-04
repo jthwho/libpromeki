@@ -7,7 +7,10 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cerrno>
 #include <promeki/terminal.h>
+#include <promeki/ansistream.h>
+#include <promeki/file.h>
 #include <promeki/env.h>
 #include <promeki/logger.h>
 
@@ -15,35 +18,13 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <signal.h>
 #include <fcntl.h>
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
+#include <io.h>
 #include <windows.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
-
-#if defined(PROMEKI_PLATFORM_POSIX)
-
-// Global pointer for signal handler cleanup
-static Terminal *g_activeTerminal = nullptr;
-
-static void signalHandler(int sig) {
-        if (g_activeTerminal) {
-                g_activeTerminal->disableMouseTracking();
-                g_activeTerminal->disableAlternateScreen();
-                g_activeTerminal->disableRawMode();
-        }
-        // Re-raise to get default behavior
-        signal(sig, SIG_DFL);
-        raise(sig);
-}
-
-static void sigwinchHandler(int) {
-        // The resize callback is checked during the next input poll
-}
-
-#endif
 
 Terminal::Terminal() : _inputFd(STDIN_FILENO), _outputFd(STDOUT_FILENO) {
         init();
@@ -54,19 +35,54 @@ Terminal::Terminal(int inputFd, int outputFd) : _inputFd(inputFd), _outputFd(out
 }
 
 void Terminal::init() {
+        // Build the single ordered write path: a File adopting the output fd,
+        // with the AnsiStream layered over it.  ownsHandle is false so the
+        // device flushes but never closes the borrowed _outputFd (e.g.
+        // STDOUT_FILENO).  Write buffering is enabled so a full-screen redraw
+        // — which emits an escape sequence a few bytes at a time per cell
+        // through the AnsiStream — coalesces into a handful of write syscalls
+        // rather than thousands.  Every Terminal mode change and the TUI
+        // screen flush call AnsiStream::flush(), which drains the buffer, so
+        // nothing lingers unwritten across a point where the loop would block.
+        _outDevice = UniquePtr<File>::create(_outputFd, IODevice::WriteOnly, /*ownsHandle=*/false);
+        _outDevice->setWriteBuffered(true);
+        _ansi = UniquePtr<AnsiStream>::create(_outDevice.get());
 #if defined(PROMEKI_PLATFORM_POSIX)
         _origState = new ::termios;
         std::memset(_origState, 0, sizeof(::termios));
 #endif
 }
 
+AnsiStream &Terminal::ansiStream() {
+        return *_ansi;
+}
+
+void Terminal::emergencyRestore() {
+#if defined(PROMEKI_PLATFORM_POSIX)
+        // Constant cleanup sequence written with a single raw ::write so the
+        // whole thing is async-signal-safe (no allocation, no AnsiStream).
+        static const char cleanup[] = "\033[?2026l"                                   // end synchronized update
+                                      "\033[?1006l\033[?1003l\033[?1002l\033[?1000l" // mouse tracking off
+                                      "\033[?2004l"                                   // bracketed paste off
+                                      "\033[?1004l"                                   // focus reporting off
+                                      "\033[?1049l"                                   // leave alternate screen
+                                      "\033[?25h"                                     // show cursor
+                                      "\033[0m";                                      // reset attributes
+        ssize_t r = ::write(_outputFd, cleanup, sizeof(cleanup) - 1);
+        (void)r;
+        // Only restore termios if we actually captured it via enableRawMode;
+        // otherwise _origState is zero-initialized and would corrupt the tty.
+        if (_rawMode) tcsetattr(_inputFd, TCSAFLUSH, static_cast<::termios *>(_origState));
+#endif
+}
+
 Terminal::~Terminal() {
         if (_mouseTracking) disableMouseTracking();
         if (_bracketedPaste) disableBracketedPaste();
+        if (_focusReporting) disableFocusReporting();
         if (_alternateScreen) disableAlternateScreen();
         if (_rawMode) disableRawMode();
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if (g_activeTerminal == this) g_activeTerminal = nullptr;
         delete static_cast<::termios *>(_origState);
 #endif
 }
@@ -148,11 +164,6 @@ Error Terminal::disableRawMode() {
 
 Result<int> Terminal::readInput(char *buf, int maxLen) {
 #if defined(PROMEKI_PLATFORM_POSIX)
-        // Check for resize
-        if (_resizeCallback) {
-                int cols, rows;
-                windowSize(cols, rows);
-        }
         ssize_t n = read(_inputFd, buf, maxLen);
         if (n == -1) {
                 if (errno == EAGAIN || errno == EWOULDBLOCK) return makeResult(0);
@@ -198,77 +209,66 @@ Size2Di32 Terminal::size() const {
 
 Error Terminal::enableMouseTracking() {
         if (_mouseTracking) return Error();
-        const char *seq = "\033[?1000h\033[?1003h\033[?1006h";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->enableMouseTracking(AnsiStream::MouseDrag);
+        _ansi->flush();
         _mouseTracking = true;
         return Error();
 }
 
 Error Terminal::disableMouseTracking() {
         if (!_mouseTracking) return Error();
-        const char *seq = "\033[?1006l\033[?1003l\033[?1000l";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->disableMouseTracking();
+        _ansi->flush();
         _mouseTracking = false;
         return Error();
 }
 
 Error Terminal::enableBracketedPaste() {
         if (_bracketedPaste) return Error();
-        const char *seq = "\033[?2004h";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->enableBracketedPaste();
+        _ansi->flush();
         _bracketedPaste = true;
         return Error();
 }
 
 Error Terminal::disableBracketedPaste() {
         if (!_bracketedPaste) return Error();
-        const char *seq = "\033[?2004l";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->disableBracketedPaste();
+        _ansi->flush();
         _bracketedPaste = false;
+        return Error();
+}
+
+Error Terminal::enableFocusReporting() {
+        if (_focusReporting) return Error();
+        _ansi->enableFocusReporting();
+        _ansi->flush();
+        _focusReporting = true;
+        return Error();
+}
+
+Error Terminal::disableFocusReporting() {
+        if (!_focusReporting) return Error();
+        _ansi->disableFocusReporting();
+        _ansi->flush();
+        _focusReporting = false;
         return Error();
 }
 
 Error Terminal::enableAlternateScreen() {
         if (_alternateScreen) return Error();
-        const char *seq = "\033[?1049h";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->useAlternateScreenBuffer();
+        _ansi->flush();
         _alternateScreen = true;
         return Error();
 }
 
 Error Terminal::disableAlternateScreen() {
         if (!_alternateScreen) return Error();
-        const char *seq = "\033[?1049l";
-        auto [n, err] = writeOutput(seq, std::strlen(seq));
-        if (err.isError()) return err;
+        _ansi->useMainScreenBuffer();
+        _ansi->flush();
         _alternateScreen = false;
         return Error();
-}
-
-void Terminal::setResizeCallback(ResizeCallback cb) {
-        _resizeCallback = std::move(cb);
-#if defined(PROMEKI_PLATFORM_POSIX)
-        if (_resizeCallback) {
-                signal(SIGWINCH, sigwinchHandler);
-        } else {
-                signal(SIGWINCH, SIG_DFL);
-        }
-#endif
-}
-
-void Terminal::installSignalHandlers() {
-#if defined(PROMEKI_PLATFORM_POSIX)
-        g_activeTerminal = this;
-        signal(SIGTERM, signalHandler);
-        signal(SIGINT, signalHandler);
-        signal(SIGQUIT, signalHandler);
-        signal(SIGHUP, signalHandler);
-#endif
 }
 
 Terminal::ColorSupport Terminal::colorSupport() {
@@ -358,19 +358,16 @@ Terminal::ColorSupport Terminal::colorSupport() {
 }
 
 Result<int> Terminal::writeOutput(const char *data, int len) {
-#if defined(PROMEKI_PLATFORM_POSIX)
-        ssize_t n = write(_outputFd, data, len);
+        // Route through the same raw-fd device the internal AnsiStream uses,
+        // so raw byte writes and escape sequences share one ordered buffer.
+        int64_t n = _outDevice->write(data, len);
         if (n < 0) return makeError<int>(Error::syserr());
+        // writeOutput is the low-level "put these bytes on the terminal now"
+        // call, so flush rather than leave them in the output buffer.  This
+        // also drains any AnsiStream-buffered bytes ahead of them, preserving
+        // call order across the two write paths.
+        _outDevice->flush();
         return makeResult(static_cast<int>(n));
-#elif defined(PROMEKI_PLATFORM_WINDOWS)
-        DWORD written = 0;
-        if (!WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), data, len, &written, nullptr)) {
-                return makeError<int>(Error::syserr());
-        }
-        return makeResult(static_cast<int>(written));
-#else
-        return makeError<int>(Error::NotSupported);
-#endif
 }
 
 PROMEKI_NAMESPACE_END

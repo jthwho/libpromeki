@@ -14,6 +14,7 @@
 #include <promeki/logger.h>
 #include <promeki/atomic.h>
 #include <promeki/memspace.h>
+#include <promeki/mutex.h>
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
@@ -132,6 +133,38 @@ namespace {
         // Signals we handle.
         constexpr int CrashSignals[] = {SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL};
         constexpr int NumCrashSignals = sizeof(CrashSignals) / sizeof(CrashSignals[0]);
+
+        // ---- Async-signal-safe cleanup hooks -------------------------------
+        //
+        // A small fixed table of callbacks run at the very top of the crash
+        // handler, before any report output.  A TUI registers one to restore
+        // the terminal (leave the alternate screen, show the cursor, disable
+        // raw mode) so the crash report is visible and the shell is left sane.
+        //
+        // Registration / removal happen in normal context under g_cleanupMutex.
+        // The signal handler reads the table WITHOUT locking, which is safe
+        // because: slots are published cb-last, removal only tombstones (sets
+        // cb=nullptr) and never compacts, and g_cleanupHighWater (a
+        // sig_atomic_t) only ever grows.  A torn read at worst skips or
+        // double-runs an idempotent handler — never dereferences garbage.
+        constexpr size_t MaxCleanupHandlers = 8;
+        struct CleanupSlot {
+                        CrashHandler::CleanupCallback cb = nullptr;
+                        void                         *ud = nullptr;
+        };
+        CleanupSlot           g_cleanups[MaxCleanupHandlers];
+        volatile sig_atomic_t g_cleanupHighWater = 0; ///< One past the highest slot ever used.
+        Mutex                 g_cleanupMutex;
+
+        /// Runs all registered cleanup handlers.  Async-signal-safe provided
+        /// every registered callback is.
+        void runCleanupHandlers() {
+                sig_atomic_t n = g_cleanupHighWater;
+                for (sig_atomic_t i = 0; i < n; ++i) {
+                        CrashHandler::CleanupCallback cb = g_cleanups[i].cb;
+                        if (cb != nullptr) cb(g_cleanups[i].ud);
+                }
+        }
 
         /// Signal-safe write of a C string to a file descriptor.
         void safeWrite(int fd, const char *s) {
@@ -1294,6 +1327,12 @@ namespace {
                 // it (and so anything else downstream can reference it).
                 g_crashSigno = signo;
 
+                // Restore the world before printing anything: a TUI's cleanup
+                // hook leaves the alternate screen, shows the cursor, and
+                // disables raw mode so the crash report below lands on the
+                // normal screen and the shell is usable afterward.
+                runCleanupHandlers();
+
                 // Open crash log file (pre-built path).
                 int logFd = -1;
                 if (g_crashLogPath[0] != '\0') {
@@ -1586,6 +1625,29 @@ void CrashHandler::writeTrace(const char *reason) {
         promekiLogSync();
 }
 
+int CrashHandler::addCleanupHandler(CleanupCallback cb, void *userdata) {
+        if (cb == nullptr) return -1;
+        Mutex::Locker lock(g_cleanupMutex);
+        for (size_t i = 0; i < MaxCleanupHandlers; ++i) {
+                if (g_cleanups[i].cb == nullptr) {
+                        g_cleanups[i].ud = userdata;
+                        g_cleanups[i].cb = cb; // publish cb last
+                        if (static_cast<sig_atomic_t>(i + 1) > g_cleanupHighWater) {
+                                g_cleanupHighWater = static_cast<sig_atomic_t>(i + 1);
+                        }
+                        return static_cast<int>(i);
+                }
+        }
+        return -1; // table full
+}
+
+void CrashHandler::removeCleanupHandler(int handle) {
+        if (handle < 0 || handle >= static_cast<int>(MaxCleanupHandlers)) return;
+        Mutex::Locker lock(g_cleanupMutex);
+        g_cleanups[handle].cb = nullptr;
+        g_cleanups[handle].ud = nullptr;
+}
+
 #else // non-POSIX platforms
 
 void CrashHandler::install() {
@@ -1597,6 +1659,12 @@ void CrashHandler::uninstall() {}
 bool CrashHandler::isInstalled() {
         return false;
 }
+
+int CrashHandler::addCleanupHandler(CleanupCallback, void *) {
+        return -1;
+}
+
+void CrashHandler::removeCleanupHandler(int) {}
 
 void CrashHandler::writeTrace(const char *reason) {
         (void)reason;

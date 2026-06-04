@@ -92,6 +92,16 @@ class TuiSubsystem {
                 /** @brief Returns the terminal. */
                 Terminal &terminal() { return _terminal; }
 
+                /**
+                 * @brief Returns whether the terminal window currently has focus.
+                 *
+                 * Tracks focus in/out reporting (mode 1004).  Defaults to true
+                 * until the first focus event arrives.
+                 *
+                 * @return True if the window is focused.
+                 */
+                bool isWindowFocused() const { return _windowFocused; }
+
                 /** @brief Returns the palette. */
                 const TuiPalette &palette() const { return _palette; }
 
@@ -175,12 +185,19 @@ class TuiSubsystem {
                 TuiScreen      _screen;
                 TuiPalette     _palette;
                 TuiInputParser _inputParser;
-                AnsiStream     _ansiStream;
+                // The terminal owns the single AnsiStream; we render through it
+                // rather than a second stream over stdout (which would be a
+                // separate, racing write path).  Reference is bound from
+                // _terminal in the constructor — _terminal is declared first so
+                // it is fully constructed before this binds.
+                AnsiStream    &_ansiStream;
                 TuiWidget     *_rootWidget = nullptr;
                 TuiWidget     *_focusWidget = nullptr;
                 TuiWidget     *_mouseGrab = nullptr;
                 int            _lastCols = 0;
                 int            _lastRows = 0;
+                bool           _windowFocused = true;
+                int            _crashCleanupHandle = -1;
 
                 // Event-loop-driven input / resize / repaint state.
                 // - _stdinSourceHandle: IoSource handle for STDIN_FILENO.
@@ -212,6 +229,11 @@ class TuiSubsystem {
                 void       handleResize();
                 void       dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev);
                 void       dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev);
+                void       dispatchPasteEvent(const TuiInputParser::ParsedEvent &ev);
+                void       dispatchWindowFocusEvent(bool gained);
+
+                // Async-signal-safe CrashHandler hook (userdata is the Terminal*).
+                static void crashRestore(void *userdata);
                 void       collectFocusable(TuiWidget *widget, List<TuiWidget *> &list);
                 TuiWidget *widgetAt(TuiWidget *widget, const Point2Di32 &globalPos);
 };

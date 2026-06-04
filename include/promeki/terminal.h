@@ -17,8 +17,19 @@
 #include <promeki/platform.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/uniqueptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+// Terminal owns an internal AnsiStream layered over a File that adopts the
+// output fd (with BufferedIODevice write buffering enabled) and routes ALL
+// escape-sequence emission through it, so there is a single ordered, buffered
+// write path to the terminal.  Both are held by UniquePtr behind forward
+// declarations: the AnsiStream one breaks a terminal.h <-> ansistream.h
+// include cycle (ansistream.h depends on Terminal::ColorSupport), and
+// forward-declaring File keeps file.h out of this header.
+class AnsiStream;
+class File;
 
 /**
  * @brief Low-level terminal I/O abstraction.
@@ -39,8 +50,6 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Terminal {
         public:
-                /** @brief Callback type for window resize notifications. */
-                using ResizeCallback = Function<void(int cols, int rows)>;
 
                 /**
                  * @brief Describes the color capability level of the terminal.
@@ -160,6 +169,25 @@ class Terminal {
                 Error disableBracketedPaste();
 
                 /**
+                 * @brief Enables focus in/out reporting (mode 1004).
+                 *
+                 * The input parser decodes the resulting @c \\033[I / @c \\033[O
+                 * sequences into focus events.  Without this they are never sent.
+                 *
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error enableFocusReporting();
+
+                /**
+                 * @brief Disables focus in/out reporting.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error disableFocusReporting();
+
+                /** @brief Returns true if focus reporting is enabled. */
+                bool isFocusReportingEnabled() const { return _focusReporting; }
+
+                /**
                  * @brief Switches to the alternate screen buffer.
                  * @return Error::Ok on success, or an error on failure.
                  */
@@ -170,20 +198,6 @@ class Terminal {
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error disableAlternateScreen();
-
-                /**
-                 * @brief Sets a callback for window resize events (SIGWINCH on POSIX).
-                 * @param cb The callback to invoke on resize.
-                 */
-                void setResizeCallback(ResizeCallback cb);
-
-                /**
-                 * @brief Installs signal handlers for clean terminal restoration.
-                 *
-                 * Ensures raw mode and alternate screen are restored on SIGTERM,
-                 * SIGINT, and other termination signals.
-                 */
-                void installSignalHandlers();
 
                 /**
                  * @brief Detects the color support level of the terminal.
@@ -212,6 +226,112 @@ class Terminal {
                  */
                 Result<int> writeOutput(const char *data, int len);
 
+                /**
+                 * @brief Returns the AnsiStream that writes to this terminal.
+                 *
+                 * This is the single ordered write path to the terminal: every
+                 * escape sequence Terminal emits goes through it, and callers
+                 * (e.g. a TUI renderer) should write through the same stream
+                 * rather than constructing their own over stdout — that would
+                 * create a second, separately-buffered path and risk
+                 * out-of-order bytes.
+                 *
+                 * @return Reference to the terminal's AnsiStream.
+                 */
+                AnsiStream &ansiStream();
+
+                /**
+                 * @brief Async-signal-safe best-effort terminal restore.
+                 *
+                 * Writes a fixed cleanup sequence (end synchronized update,
+                 * mouse off, bracketed paste off, focus reporting off, leave
+                 * the alternate screen, show cursor, reset attributes) with a
+                 * single raw @c write and, if raw mode was enabled, restores
+                 * cooked mode via @c tcsetattr.  Performs no allocation and
+                 * never touches the internal AnsiStream / String, so it is safe
+                 * to call from a signal handler.
+                 *
+                 * Intended as a @ref CrashHandler cleanup hook so a fatal
+                 * crash leaves the terminal usable.  The normal teardown path
+                 * uses the AnsiStream-backed disable* methods instead.
+                 */
+                void emergencyRestore();
+
+                /**
+                 * @brief RAII guard that enables raw mode for a scope.
+                 *
+                 * Restores the previous mode on destruction, so an exception
+                 * or early return can't leave the terminal in raw mode.
+                 */
+                class RawModeGuard {
+                        public:
+                                /** @brief Enables raw mode on @p t. */
+                                explicit RawModeGuard(Terminal &t) : _t(t) { _t.enableRawMode(); }
+                                /** @brief Restores cooked mode. */
+                                ~RawModeGuard() { _t.disableRawMode(); }
+                                RawModeGuard(const RawModeGuard &) = delete;
+                                RawModeGuard &operator=(const RawModeGuard &) = delete;
+
+                        private:
+                                Terminal &_t;
+                };
+
+                /** @brief RAII guard for the alternate screen buffer. */
+                class AlternateScreenGuard {
+                        public:
+                                /** @brief Switches to the alternate screen on @p t. */
+                                explicit AlternateScreenGuard(Terminal &t) : _t(t) { _t.enableAlternateScreen(); }
+                                /** @brief Switches back to the main screen. */
+                                ~AlternateScreenGuard() { _t.disableAlternateScreen(); }
+                                AlternateScreenGuard(const AlternateScreenGuard &) = delete;
+                                AlternateScreenGuard &operator=(const AlternateScreenGuard &) = delete;
+
+                        private:
+                                Terminal &_t;
+                };
+
+                /** @brief RAII guard for mouse tracking. */
+                class MouseTrackingGuard {
+                        public:
+                                /** @brief Enables mouse tracking on @p t. */
+                                explicit MouseTrackingGuard(Terminal &t) : _t(t) { _t.enableMouseTracking(); }
+                                /** @brief Disables mouse tracking. */
+                                ~MouseTrackingGuard() { _t.disableMouseTracking(); }
+                                MouseTrackingGuard(const MouseTrackingGuard &) = delete;
+                                MouseTrackingGuard &operator=(const MouseTrackingGuard &) = delete;
+
+                        private:
+                                Terminal &_t;
+                };
+
+                /** @brief RAII guard for bracketed paste mode. */
+                class BracketedPasteGuard {
+                        public:
+                                /** @brief Enables bracketed paste on @p t. */
+                                explicit BracketedPasteGuard(Terminal &t) : _t(t) { _t.enableBracketedPaste(); }
+                                /** @brief Disables bracketed paste. */
+                                ~BracketedPasteGuard() { _t.disableBracketedPaste(); }
+                                BracketedPasteGuard(const BracketedPasteGuard &) = delete;
+                                BracketedPasteGuard &operator=(const BracketedPasteGuard &) = delete;
+
+                        private:
+                                Terminal &_t;
+                };
+
+                /** @brief RAII guard for focus in/out reporting. */
+                class FocusReportingGuard {
+                        public:
+                                /** @brief Enables focus reporting on @p t. */
+                                explicit FocusReportingGuard(Terminal &t) : _t(t) { _t.enableFocusReporting(); }
+                                /** @brief Disables focus reporting. */
+                                ~FocusReportingGuard() { _t.disableFocusReporting(); }
+                                FocusReportingGuard(const FocusReportingGuard &) = delete;
+                                FocusReportingGuard &operator=(const FocusReportingGuard &) = delete;
+
+                        private:
+                                Terminal &_t;
+                };
+
         private:
                 void init();
 
@@ -221,7 +341,14 @@ class Terminal {
                 bool           _mouseTracking = false;
                 bool           _bracketedPaste = false;
                 bool           _alternateScreen = false;
-                ResizeCallback _resizeCallback;
+                bool           _focusReporting = false;
+
+                // Single ordered write path: a File adopting the output fd and
+                // the AnsiStream layered over it.  Created in init().  Held by
+                // UniquePtr behind forward declarations to keep this header
+                // free of the file.h / ansistream.h includes (see top of file).
+                UniquePtr<File>       _outDevice;
+                UniquePtr<AnsiStream> _ansi;
 
                 // Opaque storage for platform-specific terminal state.
                 // On POSIX this holds a struct termios.

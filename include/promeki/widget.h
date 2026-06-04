@@ -22,6 +22,7 @@ PROMEKI_NAMESPACE_BEGIN
 class Layout;
 class KeyEvent;
 class MouseEvent;
+class WindowFocusEvent;
 
 /**
  * @brief Event delivered when a widget needs to repaint.
@@ -285,6 +286,16 @@ class Widget : public ObjectBase {
 
                 /** @brief Called when the widget loses focus. */
                 virtual void focusOutEvent(Event *e);
+
+                /**
+                 * @brief Called when the terminal/window gains or loses focus.
+                 *
+                 * Distinct from focusInEvent / focusOutEvent (keyboard focus
+                 * between widgets): this reports the whole window changing
+                 * focus with the windowing system.  Default implementation is
+                 * a no-op.
+                 */
+                virtual void windowFocusEvent(WindowFocusEvent *e);
 
                 /** @brief Event dispatch override. */
                 void event(Event *e) override;

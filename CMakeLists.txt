@@ -2988,6 +2988,7 @@ set(PROMEKI_SOURCES
     src/core/memspace.cpp
     src/core/metadata.cpp
     src/core/mouseevent.cpp
+    src/core/windowfocusevent.cpp
     src/core/numname.cpp
     src/core/numnameseq.cpp
     src/core/objectbase.cpp

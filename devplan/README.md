@@ -62,6 +62,49 @@ devplan/
 
 ## Current focus
 
+22. **TUI infrastructure + terminal write-path consolidation (SHIPPED 2026-06-04)** —
+   `AnsiStream` expanded with the full modern terminal escape vocabulary:
+   `MouseTracking` / `CursorStyle` enums, `Strikethrough` style, capability-aware
+   `setForeground(Color, ColorSupport)` / `setBackground(Color, ColorSupport)`,
+   static `resetSeq` / `styleSeq` / `foregroundSeq` / `backgroundSeq` / `foreground256Seq`
+   / `foregroundRGBSeq` / `hyperlinkSeq` sequence builders (used by logger formatter and
+   TUI cell flusher), `write(int64_t/uint64_t/double)` overloads, `cursorNextLine` /
+   `cursorPrevLine` / `setCursorColumn` / `cursorHome` / `setCursorStyle` cursor primitives,
+   screen-clear variants (`clearScreenAndHome/BeforeCursor/AfterCursor/clearScrollback`),
+   line/character insert+delete, `resetScrollingRegion`, mouse tracking with `MouseTracking`
+   level enum, bracketed paste, focus reporting, synchronized output (mode 2026), OSC 8
+   hyperlinks, OSC 2 window title, OSC 52 clipboard, `softReset`/`hardReset`, `bell`.
+   `Terminal` now owns the single ordered write path: a `File` adopting the output fd
+   (write-buffered via new `BufferedIODevice` write-buffering layer) plus an `AnsiStream`
+   layered over it; `ansiStream()` accessor exposes it; `TuiSubsystem` binds its `_ansiStream`
+   reference from `_terminal.ansiStream()` rather than constructing a second stream over
+   stdout.  `Terminal` gained `enableFocusReporting` / `disableFocusReporting` + five RAII
+   guards (`RawModeGuard`, `AlternateScreenGuard`, `MouseTrackingGuard`, `BracketedPasteGuard`,
+   `FocusReportingGuard`) and `emergencyRestore()` (async-signal-safe single-`write` restore).
+   `CrashHandler` gained an async-signal-safe cleanup handler registry
+   (`addCleanupHandler` / `removeCleanupHandler`); `TuiSubsystem` registers
+   `Terminal::emergencyRestore` as a hook so a fatal crash leaves the terminal usable and
+   the crash report readable.  `BufferedIODevice` gained write buffering: `setWriteBuffered`,
+   `isWriteBuffered`, `setWriteBufferCapacity`, `writeBufferCapacity`, an abstract
+   `writeToDevice()` virtual (all concrete subclasses migrated), and `bufferedBytesPending()`;
+   `File` migrated `write()` to `writeToDevice()`, gained `File(FileHandle, mode, ownsHandle)`
+   fd-adoption constructor, and its `pos()` accounts for pending buffered bytes.
+   `EventLoop` gained an internal `EventLoopPollCache` that rebuilds the `pollfd` array only
+   when IoSources change, avoiding O(N) rebuild on every wake.  `TuiInputParser` gained
+   `ParsedEvent::Paste` + `ParsedEvent::FocusIn/FocusOut` types, bracketed-paste accumulation
+   with 8 MiB guard, and `\033[I` / `\033[O` focus-event decoding.  `TuiSubsystem` gained
+   `dispatchPasteEvent` / `dispatchWindowFocusEvent` / `crashRestore` static hook + `isWindowFocused()`.
+   `Widget` gained `windowFocusEvent(WindowFocusEvent *)` virtual; new `WindowFocusEvent`
+   class (`Event::registerType("WindowFocus")`).  Logger console formatter migrated from
+   hand-rolled `"\033[...]m"` literals to `AnsiStream::foregroundSeq` / `styleSeq` /
+   `resetSeq`.  `screen.cpp` color-emission helpers removed; `setForeground(Color, ColorSupport)`
+   / `setBackground(Color, ColorSupport)` used directly.  Tests: 6 write-buffering cases
+   (`bufferediodevice.cpp`), 3 File fd-adoption cases (`file.cpp`), focus toggle + RAII
+   guards (`terminal.cpp`), cleanup handler registry + fire-ordering in fork crash test
+   (`crashhandler.cpp`), bracketed-paste + focus events (`tui/inputparser.cpp`),
+   `WindowFocusEvent` + `windowFocusEvent` dispatch (`tui/widget.cpp`), 40+ new
+   `AnsiStream` cases.
+
 1. **MediaPipeline polish** — `docs/mediapipeline.dox` authoring
    guide, `docs/mediaplay.dox` grammar reference. The functional test
    runner (`utils/promeki-test/`) is shipped and covers roundtrip,

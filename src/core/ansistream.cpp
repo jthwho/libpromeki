@@ -8,7 +8,9 @@
 #include <climits>
 #include <cstdlib>
 #include <cstdio>
+#include <cmath>
 #include <promeki/ansistream.h>
+#include <promeki/base64.h>
 #include <promeki/hashmap.h>
 #include <promeki/iodevice.h>
 #include <promeki/platform.h>
@@ -320,6 +322,34 @@ static bool isChromatic(uint8_t r, uint8_t g, uint8_t b) {
         return maxC > 8 && (maxC - minC) > maxC / 4;
 }
 
+// Convert a Color to its perceptual grayscale value (Rec. 709).
+static uint8_t colorToGray(const Color &color) {
+        return static_cast<uint8_t>(
+                std::round(255.0 * (0.2126 * color.r() + 0.7152 * color.g() + 0.0722 * color.b())));
+}
+
+// Map a grayscale value to one of the 4 gray levels in the 16-color palette.
+// Only exact black (0) maps to Black; everything else maps to DarkGray,
+// Silver, or White.
+static AnsiStream::AnsiColor grayToAnsi16(uint8_t gray) {
+        if (gray == 0) return AnsiStream::Black;
+        if (gray <= 96) return AnsiStream::DarkGray;
+        if (gray <= 192) return AnsiStream::Silver;
+        return AnsiStream::White;
+}
+
+// Map a grayscale value to the closest entry in the 256-color grayscale ramp.
+// Uses Black (0) and White (15) for the extremes, and the 24-entry ramp
+// (232-255) which covers gray levels 8, 18, ..., 238 in steps of 10.
+static AnsiStream::AnsiColor grayToAnsi256(uint8_t gray) {
+        if (gray < 4) return AnsiStream::Black;
+        if (gray > 246) return AnsiStream::White;
+        int idx = static_cast<int>(std::round((gray - 8.0) / 10.0));
+        if (idx < 0) idx = 0;
+        if (idx > 23) idx = 23;
+        return static_cast<AnsiStream::AnsiColor>(232 + idx);
+}
+
 Color AnsiStream::ansiColor(int index) {
         if (index < 0 || index > 255) return Color();
         return Color(ansiPalette[index][0], ansiPalette[index][1], ansiPalette[index][2]);
@@ -370,30 +400,135 @@ AnsiStream::AnsiColor AnsiStream::findClosestAnsiColor(const Color &color, int m
         return static_cast<AnsiColor>(bestColorIdx);
 }
 
+// -- Static escape-sequence builders (single source of truth) --
+
+static String sgr(int code) {
+        String s("\033[");
+        s += String::number(code);
+        s += "m";
+        return s;
+}
+
+String AnsiStream::resetSeq() {
+        return String("\033[0m");
+}
+
+String AnsiStream::styleSeq(TextStyle style, bool enable) {
+        if (enable) return sgr(static_cast<int>(style));
+        int code;
+        switch (style) {
+                case Bold:
+                case Dim: code = 22; break; // Bold and Dim share a single off code.
+                case Italic: code = 23; break;
+                case Underlined: code = 24; break;
+                case Blink: code = 25; break;
+                case Inverted: code = 27; break;
+                case Hidden: code = 28; break;
+                case Strikethrough: code = 29; break;
+                default: code = 0; break;
+        }
+        return sgr(code);
+}
+
+String AnsiStream::foregroundSeq(AnsiColor color) {
+        uint8_t idx = static_cast<uint8_t>(color);
+        if (idx < 8) return sgr(30 + idx);
+        if (idx < 16) return sgr(90 + idx - 8);
+        return foreground256Seq(idx);
+}
+
+String AnsiStream::backgroundSeq(AnsiColor color) {
+        uint8_t idx = static_cast<uint8_t>(color);
+        if (idx < 8) return sgr(40 + idx);
+        if (idx < 16) return sgr(100 + idx - 8);
+        return background256Seq(idx);
+}
+
+String AnsiStream::foreground256Seq(uint8_t index) {
+        String s("\033[38;5;");
+        s += String::number(static_cast<int>(index));
+        s += "m";
+        return s;
+}
+
+String AnsiStream::background256Seq(uint8_t index) {
+        String s("\033[48;5;");
+        s += String::number(static_cast<int>(index));
+        s += "m";
+        return s;
+}
+
+String AnsiStream::foregroundRGBSeq(uint8_t r, uint8_t g, uint8_t b) {
+        String s("\033[38;2;");
+        s += String::number(static_cast<int>(r));
+        s += ";";
+        s += String::number(static_cast<int>(g));
+        s += ";";
+        s += String::number(static_cast<int>(b));
+        s += "m";
+        return s;
+}
+
+String AnsiStream::backgroundRGBSeq(uint8_t r, uint8_t g, uint8_t b) {
+        String s("\033[48;2;");
+        s += String::number(static_cast<int>(r));
+        s += ";";
+        s += String::number(static_cast<int>(g));
+        s += ";";
+        s += String::number(static_cast<int>(b));
+        s += "m";
+        return s;
+}
+
+String AnsiStream::foregroundSeq(const Color &color, Terminal::ColorSupport support) {
+        switch (support) {
+                case Terminal::NoColor: return String();
+                case Terminal::Grayscale16: return foregroundSeq(grayToAnsi16(colorToGray(color)));
+                case Terminal::Grayscale256: return foregroundSeq(grayToAnsi256(colorToGray(color)));
+                case Terminal::GrayscaleTrue: {
+                        uint8_t y = colorToGray(color);
+                        return foregroundRGBSeq(y, y, y);
+                }
+                case Terminal::TrueColor: return foregroundRGBSeq(color.r8(), color.g8(), color.b8());
+                case Terminal::Color256: return foregroundSeq(findClosestAnsiColor(color, 255));
+                case Terminal::Basic: return foregroundSeq(findClosestAnsiColor(color, 15));
+        }
+        return String();
+}
+
+String AnsiStream::backgroundSeq(const Color &color, Terminal::ColorSupport support) {
+        switch (support) {
+                case Terminal::NoColor: return String();
+                case Terminal::Grayscale16: return backgroundSeq(grayToAnsi16(colorToGray(color)));
+                case Terminal::Grayscale256: return backgroundSeq(grayToAnsi256(colorToGray(color)));
+                case Terminal::GrayscaleTrue: {
+                        uint8_t y = colorToGray(color);
+                        return backgroundRGBSeq(y, y, y);
+                }
+                case Terminal::TrueColor: return backgroundRGBSeq(color.r8(), color.g8(), color.b8());
+                case Terminal::Color256: return backgroundSeq(findClosestAnsiColor(color, 255));
+                case Terminal::Basic: return backgroundSeq(findClosestAnsiColor(color, 15));
+        }
+        return String();
+}
+
+String AnsiStream::hyperlinkSeq(const String &url, const String &text) {
+        String s("\033]8;;");
+        s += url;
+        s += "\033\\"; // ST (string terminator)
+        s += text;
+        s += "\033]8;;\033\\";
+        return s;
+}
+
 AnsiStream &AnsiStream::setForeground(AnsiColor color) {
         if (!_enabled) return *this;
-        uint8_t idx = static_cast<uint8_t>(color);
-        if (idx < 8) {
-                *this << "\033[" << (30 + idx) << "m";
-        } else if (idx < 16) {
-                *this << "\033[" << (90 + idx - 8) << "m";
-        } else {
-                setForeground256(idx);
-        }
-        return *this;
+        return write(foregroundSeq(color));
 }
 
 AnsiStream &AnsiStream::setBackground(AnsiColor color) {
         if (!_enabled) return *this;
-        uint8_t idx = static_cast<uint8_t>(color);
-        if (idx < 8) {
-                *this << "\033[" << (40 + idx) << "m";
-        } else if (idx < 16) {
-                *this << "\033[" << (100 + idx - 8) << "m";
-        } else {
-                setBackground256(idx);
-        }
-        return *this;
+        return write(backgroundSeq(color));
 }
 
 AnsiStream &AnsiStream::setForeground(const Color &color, int maxIndex) {
@@ -404,6 +539,40 @@ AnsiStream &AnsiStream::setForeground(const Color &color, int maxIndex) {
 AnsiStream &AnsiStream::setBackground(const Color &color, int maxIndex) {
         if (!_enabled) return *this;
         return setBackground(findClosestAnsiColor(color, maxIndex));
+}
+
+AnsiStream &AnsiStream::setForeground(const Color &color, Terminal::ColorSupport support) {
+        if (!_enabled) return *this;
+        return write(foregroundSeq(color, support));
+}
+
+AnsiStream &AnsiStream::setBackground(const Color &color, Terminal::ColorSupport support) {
+        if (!_enabled) return *this;
+        return write(backgroundSeq(color, support));
+}
+
+AnsiStream &AnsiStream::hyperlink(const String &url, const String &text) {
+        // When ANSI is disabled, fall back to plain visible text so callers
+        // can emit links unconditionally without leaking escape bytes into
+        // pipes / log files.
+        if (!_enabled) return write(text);
+        return write(hyperlinkSeq(url, text));
+}
+
+AnsiStream &AnsiStream::setWindowTitle(const String &title) {
+        if (!_enabled) return *this;
+        String s("\033]2;");
+        s += title;
+        s += "\033\\";
+        return write(s);
+}
+
+AnsiStream &AnsiStream::copyToClipboard(const String &text) {
+        if (!_enabled) return *this;
+        String s("\033]52;c;");
+        s += Base64::encode(text.cstr(), text.byteCount());
+        s += "\033\\";
+        return write(s);
 }
 
 namespace {
@@ -482,6 +651,27 @@ AnsiStream &AnsiStream::write(char ch) {
 AnsiStream &AnsiStream::write(int val) {
         char buf[32];
         int  len = std::snprintf(buf, sizeof(buf), "%d", val);
+        if (len > 0) _device->write(buf, len);
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(int64_t val) {
+        char buf[32];
+        int  len = std::snprintf(buf, sizeof(buf), "%lld", static_cast<long long>(val));
+        if (len > 0) _device->write(buf, len);
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(uint64_t val) {
+        char buf[32];
+        int  len = std::snprintf(buf, sizeof(buf), "%llu", static_cast<unsigned long long>(val));
+        if (len > 0) _device->write(buf, len);
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(double val) {
+        char buf[64];
+        int  len = std::snprintf(buf, sizeof(buf), "%g", val);
         if (len > 0) _device->write(buf, len);
         return *this;
 }

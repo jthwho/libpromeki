@@ -35,6 +35,12 @@ class ObjectBase;
 // interrupt poll() when new work is posted.
 class EventLoopWakeFd;
 
+// Defined in eventloop.cpp; caches the poll() descriptor set so a
+// loop servicing many I/O sources doesn't rebuild an N-entry array
+// on every wake.  Holds POSIX pollfd state we don't want to leak
+// into this header; rebuilt only when a source is added or removed.
+class EventLoopPollCache;
+
 /**
  * @brief Per-thread event loop providing event dispatch, timers, and posted callables.
  * @ingroup events
@@ -685,6 +691,15 @@ class EventLoop {
                 mutable Mutex  _ioMutex;
                 List<IoSource> _ioSources;
                 Atomic<int>    _nextIoHandle{1};
+
+                // Cached poll() descriptor set + dirty flag (see
+                // EventLoopPollCache in eventloop.cpp).  Rebuilt under
+                // _ioMutex only when an IoSource is added or removed,
+                // then reused across waitOnSources iterations so the
+                // steady-state wake path costs a lock + flag check
+                // rather than an O(number-of-sources) array rebuild.
+                using PollCacheUPtr = UniquePtr<EventLoopPollCache>;
+                PollCacheUPtr _pollCache;
 
                 /**
                  * @brief Writes to the internal wake fd unconditionally.

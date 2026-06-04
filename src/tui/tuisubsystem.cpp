@@ -11,11 +11,13 @@
 #include <promeki/tui/layout.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
+#include <promeki/windowfocusevent.h>
 #include <promeki/eventloop.h>
 #include <promeki/atomic.h>
 #include <promeki/platform.h>
 #include <promeki/logger.h>
 #include <promeki/signalhandler.h>
+#include <promeki/crashhandler.h>
 #include <promeki/util.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
@@ -27,7 +29,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 TuiSubsystem *TuiSubsystem::_instance = nullptr;
 
-TuiSubsystem::TuiSubsystem() : _eventLoop(Application::mainEventLoop()), _ansiStream(Application::stdoutDevice()) {
+TuiSubsystem::TuiSubsystem() : _eventLoop(Application::mainEventLoop()), _ansiStream(_terminal.ansiStream()) {
         // Singletons by design — constructing a second TuiSubsystem
         // while one is still live would silently clobber the instance
         // pointer and leave the terminal in an undefined state.
@@ -44,7 +46,17 @@ TuiSubsystem::TuiSubsystem() : _eventLoop(Application::mainEventLoop()), _ansiSt
         _terminal.enableAlternateScreen();
         _terminal.enableMouseTracking();
         _terminal.enableBracketedPaste();
-        _terminal.installSignalHandlers();
+        _terminal.enableFocusReporting();
+        // Termination signals (SIGINT/SIGTERM/SIGHUP/SIGQUIT) are handled by
+        // the process-wide SignalHandler (installed by Application): they call
+        // Application::quit(), exec() returns, and this subsystem's destructor
+        // restores the terminal on the normal path.  No ad-hoc per-Terminal
+        // signal handler is needed (and one would clobber SignalHandler).
+        //
+        // Fatal signals (SIGSEGV/SIGABRT/...) won't run the destructor, so
+        // arm an async-signal-safe CrashHandler hook that restores the
+        // terminal before the crash report prints.
+        _crashCleanupHandle = CrashHandler::addCleanupHandler(&TuiSubsystem::crashRestore, &_terminal);
 
         _ansiStream.hideCursor();
         _ansiStream.clearScreen();
@@ -71,10 +83,18 @@ TuiSubsystem::TuiSubsystem() : _eventLoop(Application::mainEventLoop()), _ansiSt
 }
 
 TuiSubsystem::~TuiSubsystem() {
+        // Remove the crash hook before _terminal is destroyed so the handler
+        // can never call emergencyRestore() on a dangling pointer.
+        if (_crashCleanupHandle >= 0) {
+                CrashHandler::removeCleanupHandler(_crashCleanupHandle);
+                _crashCleanupHandle = -1;
+        }
+
         teardownEventSources();
 
         _terminal.disableMouseTracking();
         _terminal.disableBracketedPaste();
+        _terminal.disableFocusReporting();
         _terminal.disableAlternateScreen();
         _terminal.disableRawMode();
         _ansiStream.reset();
@@ -216,12 +236,48 @@ void TuiSubsystem::processInput() {
         List<TuiInputParser::ParsedEvent> events = _inputParser.feed(buf, n);
         for (size_t i = 0; i < events.size(); ++i) {
                 const TuiInputParser::ParsedEvent &ev = events[i];
-                if (ev.type == TuiInputParser::ParsedEvent::Key) {
-                        dispatchKeyEvent(ev);
-                } else if (ev.type == TuiInputParser::ParsedEvent::Mouse) {
-                        dispatchMouseEvent(ev);
+                switch (ev.type) {
+                        case TuiInputParser::ParsedEvent::Key: dispatchKeyEvent(ev); break;
+                        case TuiInputParser::ParsedEvent::Mouse: dispatchMouseEvent(ev); break;
+                        case TuiInputParser::ParsedEvent::Paste: dispatchPasteEvent(ev); break;
+                        case TuiInputParser::ParsedEvent::FocusIn: dispatchWindowFocusEvent(true); break;
+                        case TuiInputParser::ParsedEvent::FocusOut: dispatchWindowFocusEvent(false); break;
+                        case TuiInputParser::ParsedEvent::None: break;
                 }
         }
+}
+
+void TuiSubsystem::dispatchPasteEvent(const TuiInputParser::ParsedEvent &ev) {
+        if (!_focusWidget) return;
+        // Deliver the whole paste as a single text-bearing key event so text
+        // widgets insert it verbatim — crucially, embedded newlines arrive as
+        // pasted text rather than a storm of Key_Enter presses that might
+        // submit a form or trigger actions.
+        KeyEvent keyEv(KeyEvent::KeyPress, KeyEvent::Key_Unknown, KeyEvent::NoModifier, ev.text);
+        TuiWidget *target = _focusWidget;
+        while (target) {
+                target->sendEvent(&keyEv);
+                if (keyEv.isAccepted()) break;
+                target = dynamic_cast<TuiWidget *>(target->parent());
+        }
+        markNeedsRepaint();
+}
+
+void TuiSubsystem::crashRestore(void *userdata) {
+        // Runs in async-signal context from CrashHandler — keep it to the
+        // Terminal's raw, allocation-free restore.
+        static_cast<Terminal *>(userdata)->emergencyRestore();
+}
+
+void TuiSubsystem::dispatchWindowFocusEvent(bool gained) {
+        _windowFocused = gained;
+        // Deliver to the root widget; applications that care override
+        // TuiWidget::windowFocusEvent (and may propagate to children).
+        if (_rootWidget) {
+                WindowFocusEvent ev(gained);
+                _rootWidget->sendEvent(&ev);
+        }
+        markNeedsRepaint();
 }
 
 void TuiSubsystem::dispatchKeyEvent(const TuiInputParser::ParsedEvent &ev) {

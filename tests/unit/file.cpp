@@ -1558,3 +1558,103 @@ TEST_CASE("File: DIO toggle during reads preserves data") {
         f.close();
         std::remove(path);
 }
+
+TEST_CASE("File: pos() reflects pending buffered writes") {
+        const char *path = testPath("pos_writebuf");
+        std::remove(path);
+
+        File f(path);
+        REQUIRE(f.open(IODevice::WriteOnly, File::Create | File::Truncate).isOk());
+        f.setWriteBuffered(true);
+
+        // Buffered writes haven't reached the device, but pos() must report the
+        // logical position as if they had.
+        CHECK(f.pos() == 0);
+        CHECK(f.write("abcdef", 6) == 6);
+        CHECK(f.pos() == 6);
+        CHECK(f.write("ghij", 4) == 4);
+        CHECK(f.pos() == 10);
+
+        // After flushing, the device offset has caught up; pos() is unchanged.
+        f.flush();
+        CHECK(f.pos() == 10);
+
+        f.close();
+
+        // The file on disk holds exactly what was written.
+        File r(path);
+        REQUIRE(r.open(IODevice::ReadOnly).isOk());
+        char buf[16] = {};
+        CHECK(r.read(buf, 16) == 10);
+        CHECK(std::memcmp(buf, "abcdefghij", 10) == 0);
+        r.close();
+
+        std::remove(path);
+}
+
+#if defined(PROMEKI_PLATFORM_POSIX)
+#include <unistd.h>
+#include <fcntl.h>
+
+TEST_CASE("File: adopt fd, non-owned, with write buffering") {
+        int fds[2];
+        REQUIRE(::pipe(fds) == 0);
+        // Non-blocking read end so we can assert "no data yet" without hanging.
+        ::fcntl(fds[0], F_SETFL, ::fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+
+        {
+                // Adopt the write end; ownsHandle=false so closing the File
+                // must NOT close the underlying fd.
+                File w(fds[1], IODevice::WriteOnly, /*ownsHandle=*/false);
+                CHECK(w.isOpen());
+                CHECK(w.handle() == fds[1]);
+
+                w.setWriteBuffered(true);
+                CHECK(w.write("hello", 5) == 5);
+
+                // Buffered: nothing has reached the pipe yet, so a non-blocking
+                // read finds no data (-1/EAGAIN).
+                char    peekBuf[8] = {};
+                ssize_t pre = ::read(fds[0], peekBuf, sizeof(peekBuf));
+                CHECK(pre < 0);
+
+                w.flush();
+
+                char    buf[8] = {};
+                ssize_t n = ::read(fds[0], buf, sizeof(buf));
+                CHECK(n == 5);
+                CHECK(std::memcmp(buf, "hello", 5) == 0);
+
+                w.close();
+        }
+
+        // ownsHandle was false, so fds[1] is still open: a write must succeed.
+        ssize_t wn = ::write(fds[1], "x", 1);
+        CHECK(wn == 1);
+        char c = 0;
+        CHECK(::read(fds[0], &c, 1) == 1);
+        CHECK(c == 'x');
+
+        ::close(fds[0]);
+        ::close(fds[1]);
+}
+
+TEST_CASE("File: adopt fd, owned, closes the descriptor") {
+        int fds[2];
+        REQUIRE(::pipe(fds) == 0);
+
+        {
+                // Adopt the read end as owned; closing the File closes fds[0].
+                File r(fds[0], IODevice::ReadOnly, /*ownsHandle=*/true);
+                CHECK(r.isOpen());
+                r.close();
+                CHECK_FALSE(r.isOpen());
+        }
+
+        // fds[0] should now be closed: writing to fds[1] and reading would
+        // fail, but simplest is to confirm a second close of fds[0] errors.
+        CHECK(::close(fds[0]) == -1); // already closed by File
+
+        ::close(fds[1]);
+}
+#endif // PROMEKI_PLATFORM_POSIX

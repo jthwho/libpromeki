@@ -297,4 +297,51 @@ Buffer BufferedIODevice::peek(size_t maxBytes) const {
         return result;
 }
 
+void BufferedIODevice::setWriteBuffered(bool enable) {
+        if (enable == _writeBuffered) return;
+        // Drain whatever is pending before changing modes so no bytes are
+        // lost or reordered across the switch.
+        flush();
+        _writeBuffered = enable;
+        return;
+}
+
+void BufferedIODevice::setWriteBufferCapacity(size_t bytes) {
+        _writeBufCapacity = bytes == 0 ? 1 : bytes;
+        return;
+}
+
+int64_t BufferedIODevice::write(const void *data, int64_t maxSize) {
+        if (!isOpen() || !isWritable()) return -1;
+        if (maxSize <= 0) return 0;
+        const char *p = static_cast<const char *>(data);
+
+        if (!_writeBuffered) return writeToDevice(p, maxSize);
+
+        // A write that would overflow the buffer flushes first; a single
+        // write at least as large as the capacity bypasses the buffer (after
+        // draining what was pending) so bulk data is not copied through a
+        // small staging buffer.
+        if (_writeBuf.size() + static_cast<size_t>(maxSize) > _writeBufCapacity) flush();
+        if (static_cast<size_t>(maxSize) >= _writeBufCapacity && _writeBuf.isEmpty()) {
+                return writeToDevice(p, maxSize);
+        }
+        _writeBuf.pushToBack(p, p + maxSize);
+        return maxSize;
+}
+
+void BufferedIODevice::flush() {
+        if (_writeBuf.isEmpty()) return;
+        int64_t n = writeToDevice(_writeBuf.data(), static_cast<int64_t>(_writeBuf.size()));
+        if (n <= 0) return; // error / would-block: keep the pending bytes
+        if (static_cast<size_t>(n) >= _writeBuf.size()) {
+                _writeBuf.clear();
+        } else {
+                // Partial drain (non-blocking device): drop the written prefix,
+                // keep the rest for the next flush.
+                _writeBuf.erase(_writeBuf.constBegin(), _writeBuf.constBegin() + n);
+        }
+        return;
+}
+
 PROMEKI_NAMESPACE_END

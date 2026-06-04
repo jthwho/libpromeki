@@ -288,7 +288,35 @@ namespace {
                 return String::fromUtf8(reinterpret_cast<const char *>(c.data()), c.size());
         }
 
+        /// Async-signal-safe cleanup hook used to prove the crash path runs
+        /// registered handlers before printing the report.
+        void crashMarkerHook(void *) {
+                static const char msg[] = "CLEANUP-HOOK-RAN\n";
+                ssize_t           r = ::write(STDERR_FILENO, msg, sizeof(msg) - 1);
+                (void)r;
+        }
+
+        void noopCleanup(void *) {}
+
 } // namespace
+
+TEST_CASE("CrashHandler: cleanup handler registration") {
+        CHECK(CrashHandler::addCleanupHandler(nullptr, nullptr) == -1);
+
+        int h = CrashHandler::addCleanupHandler(&noopCleanup, nullptr);
+        CHECK(h >= 0);
+
+        // Removal is idempotent and tolerates unknown handles.
+        CrashHandler::removeCleanupHandler(h);
+        CrashHandler::removeCleanupHandler(h);
+        CrashHandler::removeCleanupHandler(-1);
+        CrashHandler::removeCleanupHandler(99999);
+
+        // The freed slot is reusable.
+        int h2 = CrashHandler::addCleanupHandler(&noopCleanup, nullptr);
+        CHECK(h2 >= 0);
+        CrashHandler::removeCleanupHandler(h2);
+}
 
 // Forks a child that actually crashes (raises SIGABRT) so we exercise the
 // real signal-handler path — not just writeTrace().  Verifies that:
@@ -320,6 +348,12 @@ TEST_CASE("CrashHandler: crash path announces the log path first and writes a co
         CrashHandler::install();
 
         const String errPath = String::sprintf("%s/child-stderr.txt", scratch.path().toString().cstr());
+
+        // Register a cleanup hook in the PARENT so the child inherits it across
+        // fork (avoids taking the registration lock post-fork).  It must fire,
+        // and fire before the crash report is printed.
+        const int markerHandle = CrashHandler::addCleanupHandler(&crashMarkerHook, nullptr);
+        CHECK(markerHandle >= 0);
 
         pid_t pid = fork();
         REQUIRE(pid >= 0);
@@ -364,7 +398,13 @@ TEST_CASE("CrashHandler: crash path announces the log path first and writes a co
         CHECK(announce < header);
         CHECK(err.find(logs[0].toString()) != String::npos);
 
+        // The cleanup hook must have run, and before any crash report output.
+        const size_t marker = err.find("CLEANUP-HOOK-RAN");
+        CHECK(marker != String::npos);
+        CHECK(marker < announce);
+
         // Cleanup + restore global state for later tests.
+        CrashHandler::removeCleanupHandler(markerHandle);
         scratch.removeRecursively();
         LibraryOptions::instance().set(LibraryOptions::CrashLogDir, savedDir);
         LibraryOptions::instance().set(LibraryOptions::CrashStackTraceTimeout, savedTimeout);
