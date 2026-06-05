@@ -224,14 +224,13 @@ See [proav/quicktime.md](quicktime.md) for the deferred
 HighQuality-preset drain-at-close issue. Other open items are
 recorded in [`fixme/`](../fixme/):
 
-- [Little-endian float audio storage](../fixme/quicktime-lpcm-float.md)
-  (lossy promotion to s16; needs `lpcm` + `pcmC`).
 - [`raw ` 24-bit BGR / RGB byte-order](../fixme/quicktime-raw-byteorder.md)
   player disagreement.
-- [Compressed-audio pull-rate drift](../fixme/quicktime-compressed-audio-drift.md)
-  (single-packet-per-video-frame heuristic).
-- [Compressed-audio write path missing](../fixme/quicktime-compressed-audio-write.md)
-  (remux workflows blocked).
+- **Open: non-AAC compressed codecs write support.** Opus, AC-3, etc.
+  each need their own sample-entry + config-record handling — deferred
+  until a real remux workflow requires them.
+- **Open: audio track edit list / iTunSMPB gapless metadata** not yet
+  applied on read (editStartOffset parsed but unused).
 - [XMP parser matches only `bext:` prefix](../fixme/quicktime-xmp-bext.md)
   (blocked on core XML).
 - [Fragmented reader ignores `trex` default fallback](../fixme/quicktime-trex-defaults.md).

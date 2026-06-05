@@ -163,7 +163,11 @@ namespace {
                 private:
                         using PendingEntry = Pair<Frame, CompressedAudioPayload::Ptr>;
                         Deque<PendingEntry> _pending;
-                        AudioDesc           _outDesc;
+                        // Like a real codec, this decoder emits one concrete
+                        // native PCM format (S16LE) regardless of any requested
+                        // OutputAudioDataType — the AudioDecoderMediaIO wrapper
+                        // is responsible for converting to the advertised type.
+                        AudioDesc           _outDesc{AudioFormat(AudioFormat::PCMI_S16LE), 48000.0f, 2};
         };
 
         // Registers the passthrough codec exactly once per process so tests

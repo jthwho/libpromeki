@@ -295,9 +295,41 @@ void AudioDecoderMediaIO::drainDecoderInto() {
         while (true) {
                 Frame outFrame = _decoder->receiveFrame();
                 if (!outFrame.isValid()) break;
-                _outputQueue.pushToBack(std::move(outFrame));
+                _outputQueue.pushToBack(coerceOutputFormat(std::move(outFrame)));
                 _framesOut++;
         }
+}
+
+Frame AudioDecoderMediaIO::coerceOutputFormat(Frame in) {
+        // Honor the output-format contract.  We advertise
+        // @c _outputAudioDataType in the source desc (negotiated with the
+        // downstream sink), but a codec backend decodes to whatever PCM
+        // format is native to it (e.g. fdk-aac always emits PCMI_S16LE).
+        // Convert any mismatched PCM audio payload here so the frame we hand
+        // downstream matches what we promised — strict sinks (AudioFile)
+        // reject a format that differs from their configured one.
+        if (!_outputAudioDataTypeSet) return in;
+
+        // Replace mismatched PCM payloads in place so every other payload and
+        // all of the frame's state (metadata, captureTime, configUpdate, ...)
+        // survive untouched — rebuilding the Frame would silently narrow it to
+        // whatever fields we remembered to copy.
+        for (MediaPayload::Ptr &p : in.payloadList()) {
+                if (!p.isValid()) continue;
+                const auto *pcm = p->as<PcmAudioPayload>();
+                if (pcm == nullptr || pcm->desc().format().id() == _outputAudioDataType) continue;
+                PcmAudioPayload::Ptr conv = pcm->convert(AudioFormat(_outputAudioDataType));
+                if (conv.isValid()) {
+                        p = conv;
+                        continue;
+                }
+                promekiWarnThrottled(1000,
+                                     "AudioDecoderMediaIO: failed to convert decoded audio "
+                                     "from '%s' to '%s'; forwarding as-is",
+                                     pcm->desc().format().name().cstr(),
+                                     AudioFormat(_outputAudioDataType).name().cstr());
+        }
+        return in;
 }
 
 Error AudioDecoderMediaIO::executeCmd(MediaIOCommandRead &cmd) {

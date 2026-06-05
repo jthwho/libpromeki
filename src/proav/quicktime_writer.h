@@ -91,6 +91,19 @@ struct QuickTimeWriterTrack {
                 List<uint8_t>  fragPayload;        ///< Sample bytes for this track in the current fragment.
                 uint64_t       fragBaseDts = 0;    ///< dts of the first sample in the current fragment.
                 uint64_t       fragRunningDts = 0; ///< Next dts to assign (advances across fragments).
+
+                /**
+                 * @brief True for a compressed-audio track (e.g. AAC).
+                 *
+                 * Compressed audio stores one access unit per sample using the
+                 * generic per-sample tables (variable sizes, run-length stts),
+                 * exactly like a video track — NOT the canonical PCM chunk
+                 * layout.  PCM audio (where every "sample" is one interchangeable
+                 * frame) uses the chunk-based arrays instead.
+                 */
+                bool isCompressedAudio() const {
+                        return type == QuickTime::Audio && audioDesc.format().isCompressed();
+                }
 };
 
 /**

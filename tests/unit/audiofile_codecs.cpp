@@ -317,3 +317,81 @@ TEST_CASE("AudioFile MP3: AudioDataEncoder codeword round-trips intact (lossy + 
         roundTripCodec(tmpPath, desc, 0xFEEDFACEC0FFEE00ull);
 }
 #endif // PROMEKI_ENABLE_MP3
+
+namespace {
+
+/// @brief The known 24-bit signed value for sample @p i in the HB32 ramp tests.
+int32_t hb32RampValue(size_t i) {
+        int32_t v = static_cast<int32_t>((i * 8191u) & 0xFFFFFFu);
+        if (v & 0x800000) v |= ~0xFFFFFF; // sign-extend bit 23
+        return v;
+}
+
+/// @brief Writes a 24-bit HB32 ramp to @p path, reads it back, and asserts
+///        every sample survives bit-exact.  Shared by the WAV and FLAC cases
+///        since both store 24-bit through libsndfile's 32-bit int API.
+void roundTrip24BitHB32(const String &path) {
+        const size_t    samples = 1024;
+        const AudioDesc desc(AudioFormat::PCMI_S24LE_HB32, 48000.0f, 1);
+
+        {
+                Buffer   buf(desc.bufferSize(samples));
+                buf.setSize(desc.bufferSize(samples));
+                int32_t *words = static_cast<int32_t *>(buf.data());
+                // HB32 word layout: the signed 24-bit value sits in the high
+                // 24 bits (value << 8); the low byte is zero.
+                for (size_t i = 0; i < samples; ++i) words[i] = hb32RampValue(i) << 8;
+                BufferView planes;
+                planes.pushToBack(buf, 0, buf.size());
+                auto payload = PcmAudioPayload::Ptr::create(desc, samples, planes);
+
+                AudioFile w = AudioFile::createWriter(path);
+                w.setDesc(desc);
+                REQUIRE(w.open().isOk());
+                REQUIRE(w.write(*payload).isOk());
+                w.close();
+        }
+
+        {
+                AudioFile r = AudioFile::createReader(path);
+                REQUIRE(r.open().isOk());
+                // 24-bit is advertised back as HB32, not packed S24.
+                CHECK(r.desc().format().id() == AudioFormat::PCMI_S24LE_HB32);
+
+                size_t               got = 0;
+                PcmAudioPayload::Ptr out;
+                while (r.read(out, samples - got).isOk() && out.isValid() && out->sampleCount() > 0) {
+                        const void    *raw   = out->plane(0).data();
+                        const int32_t *words = static_cast<const int32_t *>(raw);
+                        for (size_t i = 0; i < out->sampleCount(); ++i) {
+                                CHECK((words[i] >> 8) == hb32RampValue(got + i));
+                        }
+                        got += out->sampleCount();
+                        if (got >= samples) break;
+                }
+                CHECK(got == samples);
+                r.close();
+        }
+
+        std::remove(path.cstr());
+}
+
+} // namespace
+
+TEST_CASE("AudioFile WAV: 24-bit (HB32) PCM round-trips bit-exact") {
+        // The libsndfile backend speaks 24-bit through its 32-bit int API,
+        // so its native 24-bit format is HB32 (the sample in the high 3
+        // bytes of each word) — exercise that passthrough through a real
+        // PCM_24 WAV file on both ends.
+        roundTrip24BitHB32(Dir::temp().path().toString() + "/promeki_wav_s24_roundtrip.wav");
+}
+
+#if PROMEKI_ENABLE_FLAC
+TEST_CASE("AudioFile FLAC: 24-bit (HB32) PCM round-trips bit-exact") {
+        // FLAC stores 24-bit natively (PCM_24) but not 32-bit; the writer
+        // advertises HB32 for 24/32-bit sources so the file opens as a
+        // valid PCM_24 FLAC.  A regression here (e.g. advertising S32)
+        // would fail at sf_open() since there is no PCM_32 FLAC.
+        roundTrip24BitHB32(Dir::temp().path().toString() + "/promeki_flac_s24_roundtrip.flac");
+}
+#endif // PROMEKI_ENABLE_FLAC

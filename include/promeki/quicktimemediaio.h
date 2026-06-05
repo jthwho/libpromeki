@@ -120,6 +120,11 @@ class QuickTimeMediaIO : public DedicatedThreadMediaIO {
                 FrameRate   _frameRate;
                 Timecode    _anchorTimecode;
                 uint64_t    _audioSampleCursor = 0;
+                // PCM samples produced by one compressed audio access unit
+                // (e.g. 1024 for AAC-LC).  Zero for PCM tracks.  Used to pace
+                // compressed-audio reads against the video timeline so the
+                // decoded PCM keeps up with the frame rate.
+                uint64_t    _audioCompressedFrameSamples = 0;
                 AudioDesc   _audioDesc;
                 AncDesc     _ancDesc;
 

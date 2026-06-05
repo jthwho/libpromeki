@@ -151,6 +151,65 @@ TEST_CASE("FdkAac: encoder/decoder round-trip preserves a sine wave within toler
         CHECK(bestErr < 0.15);
 }
 
+TEST_CASE("FdkAac: decoder trims start-up priming (output delay)") {
+        // The decoder discards its start-up output delay (CStreamInfo::
+        // outputDelay) from the head of the stream so the first real sample
+        // lands at t=0.  Observable: without trimming the decoder emits exactly
+        // one 1024-sample frame per access unit (numAUs * 1024 samples); the
+        // trim shortens the decoded total by the (sub-few-frames) output delay.
+        const float        sr     = 48000.0f;
+        const unsigned int ch     = 2;
+        const size_t       chunk  = 1024;
+        const size_t       chunks = 40;
+
+        AudioEncoder *enc = makeAacEncoder();
+        AudioDecoder *dec = makeAacDecoder();
+        REQUIRE(enc != nullptr);
+        REQUIRE(dec != nullptr);
+
+        MediaConfig decCfg;
+        decCfg.set(MediaConfig::AudioRate, sr);
+        decCfg.set(MediaConfig::AudioChannels, int32_t(ch));
+        dec->configure(decCfg);
+
+        size_t numAus       = 0;
+        size_t decodedPerCh = 0;
+        auto   drain        = [&]() {
+                while (auto out = tests::firstPcmAudio(dec->receiveFrame())) decodedPerCh += out->sampleCount();
+        };
+
+        for (size_t i = 0; i < chunks; ++i) {
+                auto frame = makeSineFrame(chunk, sr, ch, 440.0f, i * chunk * 2.0 * M_PI * 440.0 / sr);
+                REQUIRE(enc->submitFrame(tests::frameWith(frame)) == Error::Ok);
+                while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
+                        ++numAus;
+                        REQUIRE(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
+                        drain();
+                }
+        }
+        REQUIRE(enc->flush() == Error::Ok);
+        while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
+                if (pkt->isEndOfStream()) break;
+                ++numAus;
+                REQUIRE(dec->submitFrame(tests::frameWith(pkt)) == Error::Ok);
+                drain();
+        }
+        drain();
+
+        REQUIRE(numAus > 0);
+        REQUIRE(decodedPerCh > 0);
+
+        const size_t untrimmed = numAus * 1024;
+        REQUIRE(decodedPerCh < untrimmed); // priming was removed
+        const size_t removed = untrimmed - decodedPerCh;
+        INFO("AAC priming removed: " << removed << " samples (numAUs=" << numAus << ")");
+        CHECK(removed > 0);
+        CHECK(removed <= 4096); // a start-up delay, not whole frames of real audio
+
+        delete enc;
+        delete dec;
+}
+
 TEST_CASE("FdkAac: encoder rejects unsupported channel layout") {
         AudioEncoder *enc = makeAacEncoder();
         REQUIRE(enc != nullptr);

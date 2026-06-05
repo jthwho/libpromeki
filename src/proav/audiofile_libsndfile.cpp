@@ -169,10 +169,17 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                                 ret |= (SF_FORMAT_PCM_16 | leEndian);
                                                 break;
                                         case AudioFormat::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | beEndian); break;
-                                        case AudioFormat::PCMI_S24LE:
+                                        // 24-bit PCM is delivered to/from libsndfile via
+                                        // its 32-bit int API, so the backend's native
+                                        // 24-bit format is the HB32 (24-in-high-bytes)
+                                        // layout — packed 3-byte S24 is reached through
+                                        // the audio converter, never written directly.
+                                        case AudioFormat::PCMI_S24LE_HB32:
                                                 ret |= (SF_FORMAT_PCM_24 | leEndian);
                                                 break;
-                                        case AudioFormat::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | beEndian); break;
+                                        case AudioFormat::PCMI_S24BE_HB32:
+                                                ret |= (SF_FORMAT_PCM_24 | beEndian);
+                                                break;
                                         case AudioFormat::PCMI_S32LE:
                                                 ret |= (SF_FORMAT_PCM_32 | leEndian);
                                                 break;
@@ -262,7 +269,11 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                         dt = le ? AudioFormat::PCMI_S16LE : AudioFormat::PCMI_S16BE;
                                         break;
                                 case SF_FORMAT_PCM_24:
-                                        dt = le ? AudioFormat::PCMI_S24LE : AudioFormat::PCMI_S24BE;
+                                        // libsndfile hands 24-bit samples back through
+                                        // its 32-bit int API in the high 3 bytes of each
+                                        // word — advertise that HB32 layout honestly and
+                                        // let consumers convert to packed S24 if needed.
+                                        dt = le ? AudioFormat::PCMI_S24LE_HB32 : AudioFormat::PCMI_S24BE_HB32;
                                         break;
                                 case SF_FORMAT_PCM_32:
                                         dt = le ? AudioFormat::PCMI_S32LE : AudioFormat::PCMI_S32BE;
@@ -474,6 +485,20 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                         ct = sf_writef_int(_file, static_cast<const int32_t *>(data), samples);
                                         break;
 
+                                case AudioFormat::PCMI_S24LE_HB32:
+                                case AudioFormat::PCMI_S24BE_HB32:
+                                        // 24-bit-in-32: the sample sits in the high 3
+                                        // bytes of each 32-bit word, which is exactly
+                                        // the representation @c sf_writef_int stores
+                                        // into a PCM_24 file — pass it straight through.
+                                        // Packed 3-byte S24 reaches this backend already
+                                        // converted to HB32 by the audio converter (see
+                                        // @ref AudioFileMediaIO::preferredWriterDataType),
+                                        // so the repacking lives in one reusable place
+                                        // rather than here.
+                                        ct = sf_writef_int(_file, static_cast<const int32_t *>(data), samples);
+                                        break;
+
                                 default: return Error::NotSupported;
                         }
                         (void)ct;
@@ -510,6 +535,19 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
 
                                 case AudioFormat::PCMI_S32LE:
                                 case AudioFormat::PCMI_S32BE:
+                                        ct = sf_readf_int(_file, static_cast<int32_t *>(raw),
+                                                          static_cast<sf_count_t>(samples));
+                                        break;
+
+                                case AudioFormat::PCMI_S24LE_HB32:
+                                case AudioFormat::PCMI_S24BE_HB32:
+                                        // 24-bit-in-32: sf_readf_int hands back PCM_24
+                                        // samples in the high 3 bytes of each 32-bit
+                                        // word — exactly the HB32 layout — so read it
+                                        // straight into the payload.  Callers wanting
+                                        // packed 3-byte S24 go through the audio
+                                        // converter (the byte-shuffle kernels live in
+                                        // audioformat.cpp, reusable by everyone).
                                         ct = sf_readf_int(_file, static_cast<int32_t *>(raw),
                                                           static_cast<sf_count_t>(samples));
                                         break;

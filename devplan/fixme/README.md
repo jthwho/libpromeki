@@ -33,19 +33,10 @@ refactoring File to derive from IODevice).
 
 ## ProAV — QuickTime / MP4
 
-- [quicktime-lpcm-float.md](quicktime-lpcm-float.md) — little-endian
-  float audio promoted to `s16` (lossy); needs proper `lpcm` +
-  `pcmC`.
 - [quicktime-raw-byteorder.md](quicktime-raw-byteorder.md) — `raw `
   24-bit RGB / BGR byte-order disagreement across players.
 - [quicktime-trex-defaults.md](quicktime-trex-defaults.md) —
   fragmented MP4 reader ignores `trex` defaults.
-- [quicktime-compressed-audio-drift.md](quicktime-compressed-audio-drift.md)
-  — compressed-audio pull rate drifts (one packet / video frame
-  heuristic).
-- [quicktime-compressed-audio-write.md](quicktime-compressed-audio-write.md)
-  — writer accepts only PCM; remux of compressed audio not
-  possible.
 - [quicktime-xmp-bext.md](quicktime-xmp-bext.md) — XMP parser only
   matches the `bext:` prefix (blocked on core XML support).
 

@@ -357,6 +357,40 @@ TEST_CASE("MediaIO_Bridge_VideoDecoder_RejectsUncompressedSource") {
         CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
 }
 
+TEST_CASE("MediaIO_Bridge_VideoDecoder_RejectsWhenAudioFormatsDiffer") {
+        // The VideoDecoder forwards audio payloads as-is, so it cannot
+        // satisfy a target that requires a different audio format on the
+        // same hop.  The bridge must decline so the planner can insert
+        // an orthogonal AudioDecoder for the audio axis.
+        const MediaIOFactory *desc = findFactory("VideoDecoder");
+        REQUIRE(desc != nullptr);
+
+        const VideoCodec h264 = value(VideoCodec::lookup("H264"));
+        if (!h264.canDecode()) {
+                INFO("H264 decoder factory not registered in this build; skipping.");
+                return;
+        }
+
+        // from: H264 video + compressed AAC audio
+        // to:   uncompressed video + PCM audio (different audio format)
+        // The bridge must decline: video can be decoded but audio cannot.
+        MediaDesc from = makeCompressedDesc(1920, 1080, PixelFormat::H264);
+        AudioDesc fromAudio;
+        fromAudio.setFormat(AudioFormat::AAC);
+        fromAudio.setSampleRate(48000.0f);
+        fromAudio.setChannels(2);
+        from.audioList().pushToBack(fromAudio);
+
+        MediaDesc to = makeUncompressedDesc(1920, 1080, PixelFormat::YUV8_420_SemiPlanar_Rec709);
+        AudioDesc toAudio;
+        toAudio.setFormat(AudioFormat::PCMI_S16LE);
+        toAudio.setSampleRate(48000.0f);
+        toAudio.setChannels(2);
+        to.audioList().pushToBack(toAudio);
+
+        CHECK_FALSE(desc->bridge(from, to, nullptr, nullptr));
+}
+
 // ============================================================================
 // VideoEncoder bridge
 // ============================================================================

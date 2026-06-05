@@ -203,6 +203,57 @@ TEST_CASE("AudioDecoderMediaIO: end-to-end decode round-trip") {
         delete dec;
 }
 
+TEST_CASE("AudioDecoderMediaIO: coerces decoded PCM to advertised OutputAudioDataType") {
+        // The PassthroughAudio decoder always emits PCMI_S16LE (its native
+        // format), like fdk-aac.  When the caller asks for a different output
+        // type the wrapper must convert so the frame it hands downstream
+        // matches what its source desc advertised — otherwise strict sinks
+        // (e.g. AudioFile) reject the format mismatch.
+        const AudioCodec  passthrough = lookupPassthroughCodec();
+        const AudioFormat compressed = lookupPassthroughCompressedFormat();
+        REQUIRE(passthrough.isValid());
+        REQUIRE(compressed.isValid());
+
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "AudioDecoder");
+        cfg.set(MediaConfig::AudioCodec, passthrough);
+        // Ask for S32LE even though the decoder natively emits S16LE.
+        cfg.set(MediaConfig::OutputAudioDataType, AudioDataType(AudioDataType::PCMI_S32LE));
+        cfg.set(MediaConfig::AudioRate, 48000.0f);
+        cfg.set(MediaConfig::AudioChannels, int32_t(2));
+        MediaIO *dec = MediaIO::create(cfg);
+        REQUIRE(dec != nullptr);
+
+        const MediaDesc upstream = makeCompressedAudioDesc(48000.0f, 2, compressed);
+        REQUIRE(dec->setPendingMediaDesc(upstream).isOk());
+        REQUIRE(dec->open().wait().isOk());
+
+        // The advertised source desc must promise S32LE.
+        REQUIRE(dec->source(0) != nullptr);
+        const MediaDesc &srcDesc = dec->source(0)->mediaDesc();
+        REQUIRE_FALSE(srcDesc.audioList().isEmpty());
+        CHECK(srcDesc.audioList()[0].format().id() == AudioFormat::PCMI_S32LE);
+
+        Frame in;
+        in.addPayload(makeCompressedPayload(compressed, 256));
+        REQUIRE(dec->sink(0)->writeFrame(in).wait().isOk());
+
+        MediaIORequest readReq = dec->source(0)->readFrame();
+        REQUIRE(readReq.wait().isOk());
+        const auto *cr = readReq.commandAs<MediaIOCommandRead>();
+        REQUIRE(cr != nullptr);
+        REQUIRE(cr->frame.isValid());
+
+        auto auds = cr->frame.audioPayloads();
+        REQUIRE_FALSE(auds.isEmpty());
+        REQUIRE(auds[0].isValid());
+        // The delivered payload must be S32LE, not the decoder's native S16LE.
+        CHECK(auds[0]->desc().format().id() == AudioFormat::PCMI_S32LE);
+
+        REQUIRE(dec->close().wait().isOk());
+        delete dec;
+}
+
 TEST_CASE("AudioDecoderMediaIO: auto-detects codec from first packet") {
         const AudioCodec  passthrough = lookupPassthroughCodec();
         const AudioFormat compressed = lookupPassthroughCompressedFormat();

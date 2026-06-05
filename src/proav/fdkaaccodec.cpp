@@ -520,62 +520,135 @@ namespace {
 
                         Error submitFrame(const Frame &frame) override {
                                 clearError();
-                                CompressedAudioPayload::Ptr payload = selectInputPayload(frame);
-                                if (!payload.isValid() || !payload->isValid()) {
+
+                                // Collect every compressed audio access unit on the
+                                // frame.  A QuickTime/MP4 reader hands us several
+                                // AAC access units per video frame (each as its own
+                                // payload) so the audio timeline keeps pace with the
+                                // frame rate.  Each payload is one raw access unit —
+                                // raw AAC carries no sync words, so the boundaries
+                                // must arrive as separate payloads rather than one
+                                // concatenated blob.
+                                List<CompressedAudioPayload::Ptr> units;
+                                for (const AudioPayload::Ptr &ap : frame.audioPayloads()) {
+                                        if (!ap.isValid()) continue;
+                                        auto cap = sharedPointerCast<CompressedAudioPayload>(ap);
+                                        if (cap.isValid() && cap->isValid()) units.pushToBack(cap);
+                                }
+                                if (units.isEmpty()) {
                                         promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: no compressed audio payload on frame");
                                         setError(Error::Invalid, "no compressed audio payload on frame");
                                         return _lastError;
                                 }
                                 _currentSource = frame;
-                                if (!ensureDecoder(payload->desc())) return _lastError;
+                                if (!ensureDecoder(units[0]->desc())) return _lastError;
 
-                                if (payload->planeCount() == 0) return Error::Ok;
-                                auto   view = payload->plane(0);
-                                if (view.size() == 0) return Error::Ok;
+                                // Decode each access unit and accumulate all PCM
+                                // into a single payload, emitting exactly one output
+                                // frame per submitFrame — a transform stage must be
+                                // 1-in-1-out so the downstream pipeline (and
+                                // FrameSync's source-rate measurement, which keys off
+                                // one audio payload per frame) sees the full
+                                // per-frame audio span.
+                                _decodeAccum.clear();
+                                int32_t accChannels = 0;
+                                int32_t accRate = 0;
+                                int64_t accSamples = 0;
+                                for (const CompressedAudioPayload::Ptr &payload : units) {
+                                        if (payload->planeCount() == 0) continue;
+                                        auto view = payload->plane(0);
+                                        if (view.size() == 0) continue;
 
-                                // fdk-aac's Fill API takes @c UCHAR** / @c UINT*
-                                // (== unsigned char** / unsigned int*) — alias
-                                // our @c uint8_t / @c uint32_t locals at the
-                                // call boundary.
-                                uint8_t  *inPtr  = static_cast<uint8_t *>(view.data());
-                                uint32_t  inSize = static_cast<uint32_t>(view.size());
-                                uint32_t  valid  = inSize;
-                                AAC_DECODER_ERROR fillErr = aacDecoder_Fill(
-                                        _dec, reinterpret_cast<unsigned char **>(&inPtr),
-                                        reinterpret_cast<unsigned int *>(&inSize),
-                                        reinterpret_cast<unsigned int *>(&valid));
-                                if (fillErr != AAC_DEC_OK) {
-                                        promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_Fill failed: %s (size=%u)",
-                                                             aacDecErrName(fillErr), (unsigned)view.size());
-                                        setError(Error::LibraryFailure,
-                                                 String::sprintf("aacDecoder_Fill failed: %s",
-                                                                 aacDecErrName(fillErr)));
-                                        return _lastError;
+                                        // fdk-aac's Fill API takes @c UCHAR** /
+                                        // @c UINT* (== unsigned char** / unsigned
+                                        // int*) — alias our @c uint8_t / @c uint32_t
+                                        // locals at the call boundary.
+                                        uint8_t  *inPtr  = static_cast<uint8_t *>(view.data());
+                                        uint32_t  inSize = static_cast<uint32_t>(view.size());
+                                        uint32_t  valid  = inSize;
+                                        AAC_DECODER_ERROR fillErr = aacDecoder_Fill(
+                                                _dec, reinterpret_cast<unsigned char **>(&inPtr),
+                                                reinterpret_cast<unsigned int *>(&inSize),
+                                                reinterpret_cast<unsigned int *>(&valid));
+                                        if (fillErr != AAC_DEC_OK) {
+                                                promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_Fill failed: %s (size=%u)",
+                                                                     aacDecErrName(fillErr), (unsigned)view.size());
+                                                setError(Error::LibraryFailure,
+                                                         String::sprintf("aacDecoder_Fill failed: %s",
+                                                                         aacDecErrName(fillErr)));
+                                                return _lastError;
+                                        }
+
+                                        // One access unit may still expand to more
+                                        // than one decoded frame (HE-AAC), so drain.
+                                        while (true) {
+                                                constexpr int32_t kMaxPcmSamplesPerFrame = 2048 * 8; // 8ch worst case
+                                                int16_t pcm[kMaxPcmSamplesPerFrame] = {0};
+                                                AAC_DECODER_ERROR dErr =
+                                                    aacDecoder_DecodeFrame(_dec, pcm, kMaxPcmSamplesPerFrame, 0);
+                                                if (dErr == AAC_DEC_NOT_ENOUGH_BITS) break;
+                                                if (dErr != AAC_DEC_OK) {
+                                                        promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_DecodeFrame failed: %s",
+                                                                             aacDecErrName(dErr));
+                                                        setError(Error::DecodeFailed,
+                                                                 String::sprintf("aacDecoder_DecodeFrame failed: %s",
+                                                                                 aacDecErrName(dErr)));
+                                                        break;
+                                                }
+                                                CStreamInfo *info = aacDecoder_GetStreamInfo(_dec);
+                                                if (info == nullptr) {
+                                                        promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_GetStreamInfo returned null");
+                                                        setError(Error::LibraryFailure,
+                                                                 "aacDecoder_GetStreamInfo returned null");
+                                                        break;
+                                                }
+                                                // Capture the decoder's start-up priming once.
+                                                // outputDelay is the number of leading samples
+                                                // the decoder's filterbank adds before real
+                                                // content; discarding them aligns the decoded
+                                                // PCM to the stream timeline (matches what the
+                                                // edit list / gapless metadata would signal).
+                                                if (!_skipCaptured) {
+                                                        _skipSamples  = static_cast<int64_t>(info->outputDelay);
+                                                        _skipCaptured = true;
+                                                }
+                                                const int32_t n = info->frameSize * info->numChannels;
+                                                const size_t  base = _decodeAccum.size();
+                                                _decodeAccum.resize(base + static_cast<size_t>(n));
+                                                std::memcpy(_decodeAccum.data() + base, pcm,
+                                                            static_cast<size_t>(n) * sizeof(int16_t));
+                                                accChannels = info->numChannels;
+                                                accRate     = info->sampleRate;
+                                                accSamples += info->frameSize;
+                                        }
+                                }
+                                // Discard the decoder's start-up priming from the
+                                // leading samples so the first real audio aligns
+                                // to t=0.  The priming can span more than one
+                                // submitFrame's worth of audio, so the remaining
+                                // count carries across calls.
+                                if (_skipSamples > 0 && accSamples > 0 && accChannels > 0) {
+                                        const int64_t drop = (_skipSamples < accSamples) ? _skipSamples : accSamples;
+                                        _decodeAccum.erase(_decodeAccum.begin(),
+                                                           _decodeAccum.begin() +
+                                                                   static_cast<ptrdiff_t>(drop * accChannels));
+                                        accSamples -= drop;
+                                        _skipSamples -= drop;
                                 }
 
-                                // One Fill may produce multiple frames; drain.
-                                while (true) {
-                                        constexpr int32_t kMaxPcmSamplesPerFrame = 2048 * 8; // 8ch worst case
-                                        int16_t pcm[kMaxPcmSamplesPerFrame] = {0};
-                                        AAC_DECODER_ERROR dErr =
-                                            aacDecoder_DecodeFrame(_dec, pcm, kMaxPcmSamplesPerFrame, 0);
-                                        if (dErr == AAC_DEC_NOT_ENOUGH_BITS) break;
-                                        if (dErr != AAC_DEC_OK) {
-                                                promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_DecodeFrame failed: %s",
-                                                                     aacDecErrName(dErr));
-                                                setError(Error::DecodeFailed,
-                                                         String::sprintf("aacDecoder_DecodeFrame failed: %s",
-                                                                         aacDecErrName(dErr)));
-                                                break;
-                                        }
-                                        CStreamInfo *info = aacDecoder_GetStreamInfo(_dec);
-                                        if (info == nullptr) {
-                                                promekiWarnThrottled(1000, "FdkAacDecoder::submitFrame: aacDecoder_GetStreamInfo returned null");
-                                                setError(Error::LibraryFailure,
-                                                         "aacDecoder_GetStreamInfo returned null");
-                                                break;
-                                        }
-                                        emitPcm(pcm, info->frameSize, info->numChannels, info->sampleRate);
+                                if (accSamples > 0) {
+                                        emitPcm(_decodeAccum.data(), static_cast<int32_t>(accSamples), accChannels,
+                                                accRate);
+                                } else if (!_currentSource.videoPayloads().isEmpty() ||
+                                           !_currentSource.ancPayloads().isEmpty()) {
+                                        // The whole frame's audio was priming, but the
+                                        // source frame still carries video / ANC that
+                                        // must flow downstream — emit it without audio.
+                                        // (An audio-only frame with nothing left is
+                                        // simply dropped: emitting a payload-less,
+                                        // metadata-less frame would read as end-of-
+                                        // stream to the drain loop.)
+                                        _outQueue.pushToBack(buildOutputFrame(_currentSource, PcmAudioPayload::Ptr()));
                                 }
                                 return Error::Ok;
                         }
@@ -609,6 +682,11 @@ namespace {
                                         setError(Error::LibraryFailure, "aacDecoder_Open failed");
                                         return false;
                                 }
+                                // Fresh decoder — re-arm priming capture so the new
+                                // stream's start-up delay is trimmed from its first
+                                // decoded samples.
+                                _skipCaptured = false;
+                                _skipSamples  = 0;
                                 // TT_MP4_RAW requires the AudioSpecificConfig
                                 // to be set before the first DecodeFrame call.
                                 // Derive a minimal LC AudioSpecificConfig from
@@ -655,6 +733,7 @@ namespace {
                                 _outQueue.pushToBack(buildOutputFrame(_currentSource, std::move(pcm)));
                         }
 
+                        List<int16_t>     _decodeAccum; // scratch: all access units from one submitFrame
                         HANDLE_AACDECODER _dec = nullptr;
                         float             _outRate = 48000.0f;
                         unsigned int      _outChannels = 2;
@@ -664,6 +743,12 @@ namespace {
                         Deque<Frame>      _outQueue;
                         Frame             _currentSource;
                         bool              _flushed = false;
+                        // Start-up priming (decoder output delay) trim state.
+                        // _skipSamples counts PCM sample-frames still to discard
+                        // from the head of the stream; _skipCaptured latches the
+                        // one-time read of CStreamInfo::outputDelay.
+                        int64_t           _skipSamples = 0;
+                        bool              _skipCaptured = false;
         };
 
         // =============================================================================

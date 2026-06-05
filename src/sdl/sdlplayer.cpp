@@ -507,9 +507,30 @@ Error SDLPlayerMediaIO::describe(MediaIODescription *out) const {
 
 Error SDLPlayerMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
         if (preferred == nullptr) return Error::Invalid;
+
+        // Resolve the audio axis independently of video.  The runtime
+        // pull loop only plays payloads that decode to PcmAudioPayload
+        // (see pullLoop), so any compressed audio track must be turned
+        // into PCM by a planner-inserted AudioDecoder bridge.  Request
+        // interleaved native-float — the form SDLAudioOutput ultimately
+        // wants — for any compressed track so the planner detects the
+        // gap and splices the decoder in.  Uncompressed PCM is accepted
+        // verbatim; SDLAudioOutput converts to native-float at push.
+        auto resolveAudio = [](MediaDesc &desc) {
+                AudioDesc::List &auds = desc.audioList();
+                for (size_t i = 0; i < auds.size(); ++i) {
+                        if (auds[i].format().isCompressed()) {
+                                auds[i].setFormat(AudioFormat(AudioFormat::NativeFloat));
+                        }
+                }
+        };
+
         if (offered.imageList().isEmpty()) {
-                // Audio-only frame (rare for SDL sink) — accept as-is.
-                *preferred = offered;
+                // Audio-only frame (rare for SDL sink) — accept the video
+                // axis as-is but still demand decoded PCM audio.
+                MediaDesc want = offered;
+                resolveAudio(want);
+                *preferred = want;
                 return Error::Ok;
         }
 
@@ -520,19 +541,24 @@ Error SDLPlayerMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *prefer
         if (offeredPd.isCompressed()) {
                 MediaDesc want = offered;
                 want.imageList()[0].setPixelFormat(pickNativePixelFormat(offeredPd));
+                resolveAudio(want);
                 *preferred = want;
                 return Error::Ok;
         }
 
         // If the offered shape is already SDL-native we accept it
-        // verbatim — the planner doesn't need to insert a CSC.
+        // verbatim — the planner doesn't need to insert a CSC — but the
+        // audio axis may still need a decode bridge.
         if (SDLVideoWidget::mapPixelFormat(offeredPd) != 0) {
-                *preferred = offered;
+                MediaDesc want = offered;
+                resolveAudio(want);
+                *preferred = want;
                 return Error::Ok;
         }
 
         MediaDesc want = offered;
         want.imageList()[0].setPixelFormat(pickNativePixelFormat(offeredPd));
+        resolveAudio(want);
         *preferred = want;
         return Error::Ok;
 }

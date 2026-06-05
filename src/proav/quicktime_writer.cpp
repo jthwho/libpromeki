@@ -8,6 +8,7 @@
 #include "quicktime_writer.h"
 #include "quicktime_atom.h"
 
+#include <promeki/aacbitstream.h>
 #include <promeki/file.h>
 #include <promeki/h264bitstream.h>
 #include <promeki/hevcbitstream.h>
@@ -91,6 +92,53 @@ namespace {
                         case AudioFormat::PCMI_U8: return FourCC("raw ");
                         default: return FourCC('\0', '\0', '\0', '\0');
                 }
+        }
+
+        /**
+         * @brief Writes an MPEG-4 @c esds (Elementary Stream Descriptor)
+         *        box describing an AAC audio stream.
+         *
+         * Builds the ES_Descriptor → DecoderConfigDescriptor →
+         * DecoderSpecificInfo(AudioSpecificConfig) → SLConfigDescriptor
+         * nesting (ISO/IEC 14496-1).  The @p asc bytes are the AAC
+         * @c AudioSpecificConfig (see @ref AacDecoderConfig).  All
+         * descriptors are small (ASC is 2–5 bytes) so the expandable
+         * size fields fit in a single byte each.
+         *
+         * objectTypeIndication @c 0x40 = "Audio ISO/IEC 14496-3" (AAC);
+         * streamType byte @c 0x15 = AudioStream(0x05)<<2 | reserved(1).
+         */
+        void writeAacEsdsBox(AtomWriter &w, const Buffer &asc) {
+                const uint8_t ascLen = static_cast<uint8_t>(asc.size());
+                auto          esds = w.beginFullBox(FourCC("esds"), 0, 0);
+
+                // ES_Descriptor
+                w.writeU8(0x03);
+                w.writeU8(static_cast<uint8_t>(23 + ascLen));
+                w.writeU16(0x0000); // ES_ID
+                w.writeU8(0x00);    // flags (no stream dependency / URL / OCR)
+
+                // DecoderConfigDescriptor
+                w.writeU8(0x04);
+                w.writeU8(static_cast<uint8_t>(15 + ascLen));
+                w.writeU8(0x40);    // objectTypeIndication = AAC (Audio 14496-3)
+                w.writeU8(0x15);    // streamType=AudioStream, upStream=0, reserved=1
+                w.writeU8(0x00);    // bufferSizeDB (24-bit) high byte
+                w.writeU16(0x1800); // bufferSizeDB low 16 bits (6144)
+                w.writeU32(0);      // maxBitrate (0 = unspecified)
+                w.writeU32(0);      // avgBitrate (0 = unspecified)
+
+                // DecoderSpecificInfo — the AudioSpecificConfig
+                w.writeU8(0x05);
+                w.writeU8(ascLen);
+                if (ascLen > 0) w.writeBytes(asc.data(), asc.size());
+
+                // SLConfigDescriptor — predefined = 2 (MP4)
+                w.writeU8(0x06);
+                w.writeU8(0x01);
+                w.writeU8(0x02);
+
+                w.endBox(esds);
         }
 
         /** @brief Computes the CoreAudio LPCM @c formatSpecificFlags for @p fmt. */
@@ -268,6 +316,37 @@ namespace {
                                 w.endBox(cfgBox);
                         }
                         w.endBox(vse);
+                } else if (t.isCompressedAudio()) {
+                        // Compressed audio (AAC): an @c mp4a sample entry carrying
+                        // an @c esds elementary-stream descriptor.  The body is a
+                        // QuickTime v0 sound sample description (channels / sample
+                        // size / sample rate); the real codec configuration lives
+                        // in the esds AudioSpecificConfig.
+                        auto ase = w.beginBox(FourCC("mp4a"));
+                        w.writeU32(0);
+                        w.writeU16(0); // reserved[6]
+                        w.writeU16(1); // data_reference_index
+                        w.writeU16(0); // version (v0)
+                        w.writeU16(0); // revision
+                        w.writeFourCC(FourCC("    "));                              // vendor
+                        w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));  // channel count
+                        w.writeU16(16);                                            // sample size (bits, convention)
+                        w.writeU16(0);                                             // pre-defined / compression ID
+                        w.writeU16(0);                                             // packet size
+                        uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
+                        w.writeU32(srFixed); // sample rate (16.16 fixed)
+
+                        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(t.audioDesc);
+                        Buffer           asc;
+                        Error            ascErr = cfg.serialize(asc);
+                        if (ascErr.isError()) {
+                                promekiErr("QuickTime: failed to build AAC AudioSpecificConfig "
+                                           "for esds: %s",
+                                           ascErr.name().cstr());
+                        } else {
+                                writeAacEsdsBox(w, asc);
+                        }
+                        w.endBox(ase);
                 } else if (t.type == QuickTime::Audio) {
                         const AudioFormat &afmt = t.audioDesc.format();
                         const FourCC       simple = pcmSimpleFourCC(afmt.id());
@@ -549,12 +628,27 @@ Error QuickTimeWriter::addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId
         if (!_isOpen) return Error::NotOpen;
         if (!desc.isValid()) return Error::InvalidArgument;
 
+        // Compressed audio: only AAC is supported (mp4a + esds).  Other
+        // compressed codecs (Opus, AC-3, ...) would each need their own
+        // sample-entry + config-record handling — reject them loudly rather
+        // than emitting a track no player can decode.
+        if (desc.format().isCompressed() && desc.format().audioCodec().id() != AudioCodec::AAC) {
+                promekiErr("QuickTimeWriter: compressed audio codec '%s' is not "
+                           "supported for writing (only AAC)",
+                           desc.format().name().cstr());
+                return Error::NotSupported;
+        }
+
         QuickTimeWriterTrack t;
         t.id = allocateTrackId();
         t.type = QuickTime::Audio;
         t.timescale = static_cast<uint32_t>(desc.sampleRate());
         t.audioDesc = desc;
-        t.pcmBytesPerSample = static_cast<uint32_t>(desc.bytesPerSampleStride());
+        // PCM tracks need the per-sample byte stride for chunk bookkeeping;
+        // compressed tracks carry whole access units (per-sample tables) and
+        // leave this zero.
+        t.pcmBytesPerSample =
+                desc.format().isCompressed() ? 0 : static_cast<uint32_t>(desc.bytesPerSampleStride());
         _writeTracks.pushToBack(t);
         if (outTrackId != nullptr) *outTrackId = t.id;
         return Error::Ok;
@@ -649,6 +743,12 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         }
         if (idx == SIZE_MAX) return Error::IdNotFound;
         QuickTimeWriterTrack &t = _writeTracks[idx];
+
+        // Compressed audio (AAC) stores one access unit per sample via the
+        // generic per-sample tables (see @ref QuickTimeWriterTrack::isCompressedAudio).
+        // The caller supplies the per-AU duration (PCM samples, e.g. 1024) via
+        // sample.duration and marks every AU as a sync sample.
+        const bool audioCompressed = t.isCompressedAudio();
 
         // H.264 / HEVC tracks: (1) extract the codec configuration
         // record from the first keyframe and (2) rewrite the Annex-B
@@ -755,7 +855,7 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
                         t.fragBaseDts = t.fragRunningDts;
                 }
 
-                if (t.type == QuickTime::Audio) {
+                if (t.type == QuickTime::Audio && !audioCompressed) {
                         uint32_t samplesInChunk = static_cast<uint32_t>(payloadSize / t.pcmBytesPerSample);
                         // Emit one MP4 sample per writeSample call carrying
                         // the entire chunk: sample_size = chunk bytes,
@@ -796,7 +896,7 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
         if (n != payloadSize) return Error::IOError;
         int64_t chunkOffset = _mdatCursor;
         _mdatCursor += payloadSize;
-        if (t.type == QuickTime::Audio) {
+        if (t.type == QuickTime::Audio && !audioCompressed) {
                 // Audio: one writeSample call = one chunk of N PCM sample
                 // frames. The canonical QuickTime PCM layout has stsz
                 // sample_size = bytesPerSample (constant), stsc grouping
@@ -1274,7 +1374,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t, u
 
         appendStsdBox(w, t);
 
-        if (t.type == QuickTime::Audio) {
+        if (t.type == QuickTime::Audio && !t.isCompressedAudio()) {
                 // ---- Audio: canonical PCM stbl layout ----
                 // stsz: constant sample_size = bytesPerSample, sample_count = total PCM frames
                 // stsc: run-length collapse of (chunk_index, samples_per_chunk)
@@ -1778,7 +1878,12 @@ Error QuickTimeWriter::writeFragment() {
                 // their sizes/durations into one entry is lossless.
                 // The resulting trun collapses to ~24 bytes regardless
                 // of fragment length.
-                if (t.type == QuickTime::Audio && t.fragSampleSizes.size() > 1) {
+                // Compressed audio (AAC) must NOT be merged: each access unit
+                // is a distinct sample whose size defines its boundary, so the
+                // per-sample sizes have to survive into trun/stsz.  Only PCM
+                // (where every "sample" is one interchangeable frame) can be
+                // collapsed.
+                if (t.type == QuickTime::Audio && !t.isCompressedAudio() && t.fragSampleSizes.size() > 1) {
                         uint64_t totalSize = 0;
                         uint64_t totalDur = 0;
                         for (size_t i = 0; i < t.fragSampleSizes.size(); ++i) {

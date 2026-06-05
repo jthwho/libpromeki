@@ -62,6 +62,23 @@ devplan/
 
 ## Current focus
 
+23. **Compressed-audio pipeline pacing + AAC write + AudioDecoder format coercion (SHIPPED 2026-06-05)** —
+   Fixes half-speed / octave-low audio from AAC-in-MP4 through the SDL pipeline.
+   `QuickTimeMediaIO` read loop now delivers enough AAC access units per video frame to keep
+   decoded PCM aligned with the frame rate (`_audioCompressedFrameSamples`); each AU is its
+   own `CompressedAudioPayload` so the fdk-aac decoder can find boundaries. Seek handler
+   repositions the compressed-audio cursor. `QuickTimeWriter` gained a full compressed-audio
+   (AAC) write path: `mp4a` sample entry + `esds` box, per-AU variable `stsz`/`stts`,
+   fragmented trun collapse skipped for compressed audio. `AudioDecoderMediaIO` gained
+   `coerceOutputFormat` to convert decoded PCM to the negotiated `OutputAudioDataType`
+   (codec-native format can differ from the advertised sink format).
+   `FdkAacDecoder` now discards the decoder's start-up priming (`outputDelay` samples).
+   `AudioFile_LibSndFile` handles `PCMI_S24LE/BE_HB32` on both read and write sides;
+   `preferredWriterDataType` updated to advertise HB32 for S24/S32 sources (FLAC max-depth
+   and WAV). `videoDecoderBridge` declines when audio axes differ; `SDLPlayerMediaIO`
+   requests decoded PCM for any compressed audio track. See
+   [proav/quicktime.md](proav/quicktime.md).
+
 22. **TUI infrastructure + terminal write-path consolidation (SHIPPED 2026-06-04)** —
    `AnsiStream` expanded with the full modern terminal escape vocabulary:
    `MouseTracking` / `CursorStyle` enums, `Strikethrough` style, capability-aware

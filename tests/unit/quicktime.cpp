@@ -523,6 +523,101 @@ TEST_CASE("QuickTimeWriter: PCM flavors round-trip bit-exact") {
         }
 }
 
+TEST_CASE("QuickTimeWriter: AAC compressed audio round-trips (mp4a + esds)") {
+        // Each AAC access unit is written as its own sample carrying an stts
+        // duration of 1024 PCM samples; the writer emits an mp4a sample entry
+        // with an esds AudioSpecificConfig and a per-sample (variable-size)
+        // stsz/stts.  The container layer never decodes the AU bytes, so
+        // opaque payloads with distinct per-AU sizes are sufficient to verify
+        // boundaries, sizes, durations, and sample count survive a round trip
+        // in both the classic and fragmented layouts.
+        const AudioDesc adesc(AudioFormat::AAC, 48000.0f, 2);
+        REQUIRE(adesc.isValid());
+        REQUIRE(adesc.format().isCompressed());
+
+        const size_t   auSizes[] = {91, 120, 75, 200, 64}; // deliberately non-uniform
+        const size_t   numAus = sizeof(auSizes) / sizeof(auSizes[0]);
+        const uint64_t auDuration = 1024; // PCM samples per AAC-LC access unit
+
+        auto fillAu = [](size_t k, size_t sz) {
+                Buffer   b(sz);
+                uint8_t *pb = static_cast<uint8_t *>(b.data());
+                for (size_t i = 0; i < sz; ++i) pb[i] = static_cast<uint8_t>((i * 13 + k * 7 + 1) & 0xFF);
+                b.setSize(sz);
+                return b;
+        };
+
+        const QuickTime::Layout layouts[] = {QuickTime::LayoutClassic, QuickTime::LayoutFragmented};
+        for (QuickTime::Layout layout : layouts) {
+                const bool   frag = (layout == QuickTime::LayoutFragmented);
+                const String tmp = String("/tmp/qt_aac_") + (frag ? "frag" : "classic") + ".mov";
+                std::remove(tmp.cstr());
+
+                {
+                        QuickTime qt = QuickTime::createWriter(tmp);
+                        REQUIRE(qt.setLayout(layout) == Error::Ok);
+                        REQUIRE(qt.open() == Error::Ok);
+
+                        // A companion video track keeps the fragmented path on its
+                        // normal footing (fragments are driven by the video frame
+                        // cadence) and exercises mixed compressed-audio + video mux.
+                        uint32_t vid = 0, aid = 0;
+                        REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                                 FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                        REQUIRE(qt.addAudioTrack(adesc, &aid) == Error::Ok);
+
+                        for (size_t k = 0; k < numAus; ++k) {
+                                QuickTime::Sample vs;
+                                vs.data = makeFilledBuffer(256, static_cast<uint8_t>(0x40 + k));
+                                vs.duration = 1;
+                                vs.keyframe = true;
+                                REQUIRE(qt.writeSample(vid, vs) == Error::Ok);
+
+                                QuickTime::Sample as;
+                                as.data = fillAu(k, auSizes[k]);
+                                as.duration = auDuration;
+                                as.keyframe = true;
+                                REQUIRE(qt.writeSample(aid, as) == Error::Ok);
+                        }
+                        REQUIRE(qt.finalize() == Error::Ok);
+                }
+
+                {
+                        QuickTime qt = QuickTime::createReader(tmp);
+                        REQUIRE(qt.open() == Error::Ok);
+
+                        size_t audioIdx = SIZE_MAX;
+                        for (size_t i = 0; i < qt.tracks().size(); ++i) {
+                                if (qt.tracks()[i].type() == QuickTime::Audio) audioIdx = i;
+                        }
+                        REQUIRE(audioIdx != SIZE_MAX);
+                        const QuickTime::Track &a = qt.tracks()[audioIdx];
+
+                        INFO("layout=", frag ? "fragmented" : "classic");
+                        CHECK(a.audioDesc().format().id() == AudioFormat::AAC);
+                        CHECK(a.audioDesc().format().isCompressed());
+                        CHECK(a.audioDesc().channels() == 2);
+                        CHECK(a.audioDesc().sampleRate() == doctest::Approx(48000.0));
+                        CHECK(a.sampleCount() == numAus);
+
+                        // Each access unit reads back intact, with its own size and
+                        // its 1024-sample stts duration preserved.
+                        for (size_t k = 0; k < numAus; ++k) {
+                                QuickTime::Sample s;
+                                REQUIRE(qt.readSample(audioIdx, k, s) == Error::Ok);
+                                REQUIRE(s.data.size() == auSizes[k]);
+                                const uint8_t *rb = static_cast<const uint8_t *>(s.data.data());
+                                for (size_t i = 0; i < auSizes[k]; ++i) {
+                                        REQUIRE(rb[i] == static_cast<uint8_t>((i * 13 + k * 7 + 1) & 0xFF));
+                                }
+                                CHECK(s.duration == auDuration);
+                        }
+                }
+
+                std::remove(tmp.cstr());
+        }
+}
+
 TEST_CASE("QuickTimeWriter: ST 436M vanc ancillary track round-trips") {
         const String    tmp = "/tmp/qt_writer_vanc.mov";
         std::remove(tmp.cstr());

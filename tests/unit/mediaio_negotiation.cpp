@@ -538,10 +538,16 @@ TEST_CASE("MediaIO_proposeInput_ImageFile_JPEG_DropsToEightBit") {
 
 TEST_CASE("MediaIO_proposeInput_AudioFile_BWF_PassesThroughIntegerPCM") {
         // For PCM-friendly containers (.wav, .bwf, .aiff, .flac)
-        // the writer passes integer / float source data types
-        // through verbatim so bit depth is preserved.  Unsupported
-        // formats fall back to PCMI_S24LE — the production-typical
-        // sample shape.
+        // the writer passes WRITER-SUPPORTED integer / float source
+        // data types (S16 / S32 / float32) through verbatim so bit
+        // depth is preserved.  24-bit PCM is delivered to libsndfile
+        // through its 32-bit int API, so the writer's native 24-bit
+        // form is the HB32 (24-in-high-bytes) layout: packed S24
+        // sources are advertised as their HB32 variant (the audio
+        // converter repacks them), and any other unsupported source
+        // falls back to the production-typical 24-bit HB32 form.  The
+        // sink must only ever advertise a format its own writer can
+        // consume.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "AudioFile");
         cfg.set(MediaConfig::Filename, scratchPathWithExt("bwf"));
@@ -555,11 +561,14 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_BWF_PassesThroughIntegerPCM") {
         };
         const Case cases[] = {
                 {AudioFormat::PCMI_S16LE, AudioFormat::PCMI_S16LE, "S16 source stays S16"},
-                {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S24LE, "S24 source stays S24"},
+                {AudioFormat::PCMI_S32LE, AudioFormat::PCMI_S32LE, "S32 source stays S32"},
+                {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S24LE_HB32, "S24LE source advertised as HB32"},
+                {AudioFormat::PCMI_S24BE, AudioFormat::PCMI_S24BE_HB32, "S24BE source advertised as HB32"},
                 {AudioFormat::PCMI_Float32LE, AudioFormat::PCMI_Float32LE, "Float source stays Float"},
-                // Non-PCM-friendly source (e.g. PCMI_U8) should be
-                // upgraded to S24LE since BWF can't store U8 directly.
-                {AudioFormat::PCMI_U8, AudioFormat::PCMI_S24LE, "U8 source upgraded to S24"},
+                // Non-PCM-friendly source (e.g. PCMI_U8) falls back to
+                // the production-typical 24-bit HB32 form since BWF can't
+                // store U8 directly.
+                {AudioFormat::PCMI_U8, AudioFormat::PCMI_S24LE_HB32, "U8 source falls back to 24-bit HB32"},
         };
         for (const auto &c : cases) {
                 INFO(c.label);
@@ -604,12 +613,15 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_OGG_AlwaysFloat") {
 }
 
 TEST_CASE("MediaIO_proposeInput_AudioFile_FLAC_DataTypeMapping") {
-        // FLAC is integer-only: libsndfile rejects SF_FORMAT_FLAC +
-        // SF_FORMAT_FLOAT at sf_open() time.  preferredWriterDataType
-        // maps the source format as follows:
-        //   S16 / S32 → pass-through (FLAC stores both natively)
-        //   S24        → S32 (FLAC has no packed 24-bit mode;
-        //                     promote so precision is preserved)
+        // FLAC is integer-only and max 24-bit: libsndfile rejects
+        // SF_FORMAT_FLAC + SF_FORMAT_FLOAT at sf_open() time, and there is
+        // no PCM_32 FLAC.  preferredWriterDataType maps the source as:
+        //   S16        → pass-through (stored natively)
+        //   S24 / S32  → S24_HB32 (24-bit is FLAC's widest depth; the
+        //                     writer delivers it via libsndfile's 32-bit
+        //                     int API, so the HB32 layout is its native
+        //                     24-bit form and the audio converter repacks/
+        //                     narrows on the way in)
         //   Float32    → S16 (quantise to integer; S16 is the safe
         //                     fallback when the caller hasn't specified
         //                     a preferred bit depth)
@@ -627,8 +639,8 @@ TEST_CASE("MediaIO_proposeInput_AudioFile_FLAC_DataTypeMapping") {
         };
         const Case cases[] = {
                 {AudioFormat::PCMI_S16LE, AudioFormat::PCMI_S16LE, "S16 → S16 pass-through"},
-                {AudioFormat::PCMI_S32LE, AudioFormat::PCMI_S32LE, "S32 → S32 pass-through"},
-                {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S32LE, "S24 → S32 (no packed 24-bit FLAC)"},
+                {AudioFormat::PCMI_S32LE, AudioFormat::PCMI_S24LE_HB32, "S32 → S24_HB32 (FLAC max 24-bit)"},
+                {AudioFormat::PCMI_S24LE, AudioFormat::PCMI_S24LE_HB32, "S24 → S24_HB32 (native 24-bit FLAC)"},
                 {AudioFormat::PCMI_Float32LE, AudioFormat::PCMI_S16LE, "Float32 → S16 (integer-only container)"},
                 {AudioFormat::PCMI_U8, AudioFormat::PCMI_S16LE, "U8 → S16 (safe fallback)"},
         };

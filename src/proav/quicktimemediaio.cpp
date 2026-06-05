@@ -375,6 +375,25 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                                 return Error::NotSupported;
                         }
                         _audioDesc = at.audioDesc();
+
+                        // For compressed audio, derive how many PCM samples one
+                        // access unit decodes to (the stts per-sample delta,
+                        // converted into the output sample rate).  This lets the
+                        // read loop pull enough access units per video frame to
+                        // keep the decoded PCM timeline aligned with the frame
+                        // rate — reading a single AAC frame (1024 samples) per
+                        // 23.98 fps frame (which spans ~2002 samples) otherwise
+                        // under-delivers and the downstream resampler stretches
+                        // the audio to half speed / an octave low.
+                        _audioCompressedFrameSamples = 0;
+                        if (_audioDesc.isCompressed() && at.sampleCount() > 0 && at.timescale() > 0 &&
+                            at.duration() > 0) {
+                                const double ticksPerUnit =
+                                        static_cast<double>(at.duration()) / static_cast<double>(at.sampleCount());
+                                const double pcmPerUnit = ticksPerUnit * static_cast<double>(_audioDesc.sampleRate()) /
+                                                          static_cast<double>(at.timescale());
+                                _audioCompressedFrameSamples = static_cast<uint64_t>(pcmPerUnit + 0.5);
+                        }
                 }
 
                 MediaDesc mediaDesc;
@@ -469,10 +488,15 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                         if (err.isError()) return err;
                         _writerAudioTrackId = aid;
                         _writerAudioStorage = storage;
-                        _writerAudioFifo = AudioBuffer(storage);
-                        _writerAudioFifo.setInputFormat(srcDesc);
-                        // Reserve ~1 second of headroom to absorb frame-rate jitter.
-                        _writerAudioFifo.reserve(static_cast<size_t>(storage.sampleRate()));
+                        // Compressed audio (AAC) is written one access unit per
+                        // sample directly from the incoming CompressedAudioPayloads
+                        // — it does not flow through the PCM rechunking FIFO.
+                        if (!storage.isCompressed()) {
+                                _writerAudioFifo = AudioBuffer(storage);
+                                _writerAudioFifo.setInputFormat(srcDesc);
+                                // Reserve ~1 second of headroom to absorb frame-rate jitter.
+                                _writerAudioFifo.reserve(static_cast<size_t>(storage.sampleRate()));
+                        }
                 }
                 if (!cmd.pendingMediaDesc.imageList().isEmpty() && _frameRate.isValid()) {
                         _writerTracksRegistered = true;
@@ -697,7 +721,31 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 uint64_t                trackSamples = at.sampleCount();
                 size_t                  toRead = 0;
                 if (_audioDesc.isCompressed()) {
-                        if (_audioSampleCursor < trackSamples) toRead = 1;
+                        // Pull enough compressed access units so the cumulative
+                        // decoded PCM samples keep pace with the video timeline.
+                        // Each unit decodes to _audioCompressedFrameSamples PCM
+                        // samples; the target is the cumulative PCM count at the
+                        // end of the current video frame.  Without this the reader
+                        // delivers one access unit per frame regardless of how
+                        // much audio a frame actually spans, starving the
+                        // downstream resampler (half-speed / octave-low audio).
+                        if (_audioSampleCursor < trackSamples && _audioCompressedFrameSamples > 0) {
+                                const uint64_t targetPcm = static_cast<uint64_t>(_frameRate.cumulativeTicks(
+                                        static_cast<int64_t>(_audioDesc.sampleRate()), _currentFrame.value() + 1));
+                                const uint64_t remaining = trackSamples - _audioSampleCursor;
+                                uint64_t       projected = _audioSampleCursor * _audioCompressedFrameSamples;
+                                uint64_t       want = 0;
+                                while (projected < targetPcm && want < remaining) {
+                                        ++want;
+                                        projected += _audioCompressedFrameSamples;
+                                }
+                                // Never stall on a frame that still has audio left
+                                // to deliver (guards against a degenerate target).
+                                if (want == 0 && remaining > 0 && targetPcm == 0) want = 1;
+                                toRead = static_cast<size_t>(want);
+                        } else if (_audioSampleCursor < trackSamples) {
+                                toRead = 1;
+                        }
                 } else {
                         size_t want = _frameRate.samplesPerFrame(static_cast<int64_t>(_audioDesc.sampleRate()),
                                                                  _currentFrame.value());
@@ -709,10 +757,29 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                         toRead = want;
                 }
                 if (toRead > 0) {
-                        MediaPayload::Ptr audioPayload;
-                        Error             aerr = readAudioSlice(_audioSampleCursor, toRead, audioPayload);
-                        if (!aerr.isError() && audioPayload.isValid()) {
-                                frame.addPayload(audioPayload);
+                        if (_audioDesc.isCompressed()) {
+                                // Emit each compressed access unit as its own
+                                // payload so the decoder can decode them one at a
+                                // time.  Raw AAC access units carry no sync words,
+                                // so concatenating several into a single payload
+                                // would leave the decoder unable to find the
+                                // boundaries (it decodes the first and errors on
+                                // the rest).  One payload == one access unit keeps
+                                // the boundaries explicit.
+                                for (size_t k = 0; k < toRead; ++k) {
+                                        MediaPayload::Ptr audioPayload;
+                                        Error             aerr =
+                                                readAudioSlice(_audioSampleCursor + k, 1, audioPayload);
+                                        if (!aerr.isError() && audioPayload.isValid()) {
+                                                frame.addPayload(audioPayload);
+                                        }
+                                }
+                        } else {
+                                MediaPayload::Ptr audioPayload;
+                                Error             aerr = readAudioSlice(_audioSampleCursor, toRead, audioPayload);
+                                if (!aerr.isError() && audioPayload.isValid()) {
+                                        frame.addPayload(audioPayload);
+                                }
                         }
                         _audioSampleCursor += toRead;
                 }
@@ -813,9 +880,13 @@ Error QuickTimeMediaIO::setupWriterFromFrame(const Frame &frame) {
                         if (!aerr.isError()) {
                                 _writerAudioTrackId = aid;
                                 _writerAudioStorage = storage;
-                                _writerAudioFifo = AudioBuffer(storage);
-                                _writerAudioFifo.setInputFormat(ad);
-                                _writerAudioFifo.reserve(static_cast<size_t>(storage.sampleRate()));
+                                // Compressed audio bypasses the PCM rechunk FIFO
+                                // (written one access unit per sample below).
+                                if (!storage.isCompressed()) {
+                                        _writerAudioFifo = AudioBuffer(storage);
+                                        _writerAudioFifo.setInputFormat(ad);
+                                        _writerAudioFifo.reserve(static_cast<size_t>(storage.sampleRate()));
+                                }
                         }
                 }
         }
@@ -835,6 +906,9 @@ Error QuickTimeMediaIO::setupWriterFromFrame(const Frame &frame) {
 
 Error QuickTimeMediaIO::drainWriterAudio(bool flush) {
         if (_writerAudioTrackId == 0 || !_writerAudioStorage.isValid()) return Error::Ok;
+        // Compressed audio is written directly per access unit, not through the
+        // PCM FIFO — nothing to drain.
+        if (_writerAudioStorage.isCompressed()) return Error::Ok;
 
         size_t toEmit = 0;
         if (flush) {
@@ -990,7 +1064,35 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         _writerFramesSinceFlush++;
 
         auto audsWrite = frame.audioPayloads();
-        if (_writerAudioTrackId != 0 && !audsWrite.isEmpty() && audsWrite[0].isValid()) {
+        if (_writerAudioTrackId != 0 && _writerAudioStorage.isCompressed()) {
+                // Compressed audio (AAC): write every access unit on the frame
+                // as its own sample.  A single video frame can carry several
+                // access units (the reader paces them to the frame's audio
+                // span), and each must keep its own boundary — so iterate all
+                // CompressedAudioPayloads, not just the first.  stts duration
+                // is the AU's decoded PCM sample count (e.g. 1024 for AAC-LC).
+                for (const AudioPayload::Ptr &ap : audsWrite) {
+                        if (!ap.isValid()) continue;
+                        const auto *cap = ap->as<CompressedAudioPayload>();
+                        if (cap == nullptr || cap->planeCount() == 0) continue;
+                        auto view = cap->plane(0);
+                        if (view.size() == 0) continue;
+                        Buffer aubuf(view.size());
+                        std::memcpy(aubuf.data(), view.data(), view.size());
+                        aubuf.setSize(view.size());
+
+                        QuickTime::Sample as;
+                        as.trackId = _writerAudioTrackId;
+                        as.data = Buffer(std::move(aubuf));
+                        as.duration = static_cast<int64_t>(cap->sampleCount()); // PCM samples per AU
+                        as.keyframe = true;                                     // every AAC AU is a sync sample
+                        Error aerr = _qt.writeSample(_writerAudioTrackId, as);
+                        if (aerr.isError()) {
+                                promekiWarn("QuickTimeMediaIO: compressed audio writeSample failed: %s",
+                                            aerr.name().cstr());
+                        }
+                }
+        } else if (_writerAudioTrackId != 0 && !audsWrite.isEmpty() && audsWrite[0].isValid()) {
                 const auto *uap = audsWrite[0]->as<PcmAudioPayload>();
                 if (uap != nullptr && uap->planeCount() > 0) {
                         // Payload-aware push threads the payload's PTS
@@ -1069,6 +1171,22 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandSeek &cmd) {
                 target = _frameCount.value() - 1;
         }
         _currentFrame = FrameNumber(target);
+
+        // Reposition the audio read cursor to match the seek target so audio
+        // stays in sync after a seek.  The cursor counts PCM samples for PCM
+        // tracks and compressed access units for compressed tracks.
+        if (_audioTrackIndex >= 0 && _frameRate.isValid()) {
+                const int64_t cumPcm =
+                        _frameRate.cumulativeTicks(static_cast<int64_t>(_audioDesc.sampleRate()), target);
+                if (_audioDesc.isCompressed()) {
+                        _audioSampleCursor = (_audioCompressedFrameSamples > 0)
+                                                     ? static_cast<uint64_t>(cumPcm) / _audioCompressedFrameSamples
+                                                     : 0;
+                } else {
+                        _audioSampleCursor = static_cast<uint64_t>(cumPcm);
+                }
+        }
+
         cmd.currentFrame = _currentFrame;
         return Error::Ok;
 }

@@ -123,6 +123,11 @@ class AudioDecoderMediaIO : public SharedThreadMediaIO {
                 // onto each emitted Frame via the base
                 // @ref AudioDecoder::buildOutputFrame helper.
                 void  drainDecoderInto();
+                // Converts any decoded PCM audio payload on @p in to the
+                // advertised @c _outputAudioDataType when the codec emitted a
+                // different native format.  Returns @p in untouched when no
+                // conversion is needed.
+                Frame coerceOutputFormat(Frame in);
                 Error createDecoder(const AudioCodec &codec);
 
                 MediaConfig        _config;

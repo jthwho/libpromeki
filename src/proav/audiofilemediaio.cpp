@@ -337,24 +337,26 @@ AudioFormat::ID AudioFileMediaIO::preferredWriterDataType(const String &filename
                 return AudioFormat::PCMI_Float32LE;
         }
 
-        // FLAC: integer-only PCM container.  libsndfile rejects
-        // SF_FORMAT_FLAC + SF_FORMAT_FLOAT at sf_open() time, so a
-        // float-pipeline source must be quantised to integer before
-        // it reaches the writer.  The libsndfile R/W paths handle
-        // S16 and S32 directly via @c sf_writef_short /
-        // @c sf_writef_int (the latter maps to FLAC's 24-bit storage
-        // by truncating to the upper 24 bits).  S24 packed integers
-        // would need a separate pack/unpack path; until that lands,
-        // map S24LE / S24BE callers up to S32 so they still take a
-        // wider-precision FLAC path than the S16 fallback.
+        // FLAC: integer-only PCM container, max 24-bit.  libsndfile
+        // rejects SF_FORMAT_FLAC + SF_FORMAT_FLOAT at sf_open() time, so a
+        // float-pipeline source must be quantised to integer before it
+        // reaches the writer.  FLAC stores 8/16/24-bit only (there is no
+        // PCM_32 FLAC), and the libsndfile R/W paths carry 24-bit through
+        // the HB32 (24-in-32) layout.  So:
+        //   S16        → pass-through (stored natively)
+        //   S24 / S32  → S24_HB32 (24-bit is FLAC's widest depth; the
+        //                audio converter repacks/narrows on the way in)
+        //   Float / *  → S16 (safe integer fallback)
         if (ext == "flac") {
                 switch (source) {
                         case AudioFormat::PCMI_S16LE:
-                        case AudioFormat::PCMI_S16BE:
-                        case AudioFormat::PCMI_S32LE:
-                        case AudioFormat::PCMI_S32BE: return source;
+                        case AudioFormat::PCMI_S16BE: return source;
                         case AudioFormat::PCMI_S24LE:
-                        case AudioFormat::PCMI_S24BE: return AudioFormat::PCMI_S32LE;
+                        case AudioFormat::PCMI_S24LE_HB32:
+                        case AudioFormat::PCMI_S32LE: return AudioFormat::PCMI_S24LE_HB32;
+                        case AudioFormat::PCMI_S24BE:
+                        case AudioFormat::PCMI_S24BE_HB32:
+                        case AudioFormat::PCMI_S32BE: return AudioFormat::PCMI_S24BE_HB32;
                         case AudioFormat::PCMI_Float32LE:
                         case AudioFormat::PCMI_Float32BE: return AudioFormat::PCMI_S16LE;
                         default: return AudioFormat::PCMI_S16LE;
@@ -363,20 +365,29 @@ AudioFormat::ID AudioFileMediaIO::preferredWriterDataType(const String &filename
 
         // WAV / BWF / AIFF / W64 / RF64: integer-friendly PCM
         // containers that also accept float.  Pass through the
-        // source's data type when libsndfile can store it directly;
-        // otherwise fall back to 24-bit signed little-endian (the
-        // production-typical form).
+        // source's data type when the libsndfile writer can store it
+        // directly (S16 / S32 / float32 — see @ref AudioFile::write),
+        // otherwise fall back to the production-typical 24-bit form.
+        //
+        // 24-bit PCM is delivered to libsndfile through its 32-bit int
+        // API, so the backend's native 24-bit format is HB32 (24-in-the-
+        // high-bytes).  Advertise the matching HB32 variant for any 24-bit
+        // (or otherwise unsupported) source; the audio converter does the
+        // packed-S24 ⇄ HB32 repack in one reusable place rather than in
+        // the backend.
         if (ext == "wav" || ext == "bwf" || ext == "aiff" || ext == "aif" || ext == "w64" || ext == "rf64") {
                 switch (source) {
                         case AudioFormat::PCMI_S16LE:
                         case AudioFormat::PCMI_S16BE:
-                        case AudioFormat::PCMI_S24LE:
-                        case AudioFormat::PCMI_S24BE:
                         case AudioFormat::PCMI_S32LE:
                         case AudioFormat::PCMI_S32BE:
                         case AudioFormat::PCMI_Float32LE:
                         case AudioFormat::PCMI_Float32BE: return source;
-                        default: return AudioFormat::PCMI_S24LE;
+                        case AudioFormat::PCMI_S24BE:
+                        case AudioFormat::PCMI_S24BE_HB32: return AudioFormat::PCMI_S24BE_HB32;
+                        case AudioFormat::PCMI_S24LE:
+                        case AudioFormat::PCMI_S24LE_HB32:
+                        default: return AudioFormat::PCMI_S24LE_HB32;
                 }
         }
 

@@ -37,6 +37,16 @@ namespace {
                 if (!fromPd.isCompressed()) return false;
                 if (toPd.isCompressed()) return false;
 
+                // Audio side must match: the decoder forwards every audio
+                // payload as-is.  Without this the bridge would falsely
+                // claim to satisfy a target whose audio axis also differs
+                // (e.g. a file with compressed video AND compressed audio
+                // into an uncompressed sink), starving the planner of the
+                // orthogonal VideoDecoder + AudioDecoder chain it needs.
+                if (!from.audioList().isEmpty() && !to.audioList().isEmpty()) {
+                        if (from.audioList()[0].format().id() != to.audioList()[0].format().id()) return false;
+                }
+
                 const VideoCodec codec = VideoCodec::fromPixelFormat(fromPd);
                 if (!codec.isValid()) return false;
                 if (!codec.canDecode()) return false;
