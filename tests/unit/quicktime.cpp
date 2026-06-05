@@ -15,6 +15,12 @@
 #include <promeki/file.h>
 #include <promeki/fourcc.h>
 #include <promeki/list.h>
+#include <promeki/st436m.h>
+#include <promeki/ancpacket.h>
+#include <promeki/ancdesc.h>
+#include <promeki/st291packet.h>
+#include <promeki/qtclosedcaption.h>
+#include <promeki/cea708cdp.h>
 
 using namespace promeki;
 
@@ -346,6 +352,22 @@ namespace {
                 return Buffer(std::move(b));
         }
 
+        /**
+         * @brief Reads the 4-byte ftyp major brand from a written file.
+         *
+         * Layout: [4B size][4B 'ftyp'][4B major brand]. Returns an
+         * empty String on any read failure or if the first box is not
+         * an ftyp.
+         */
+        String readMajorBrand(const String &path) {
+                File   f(path);
+                if (f.open(IODevice::ReadOnly).isError()) return String();
+                uint8_t buf[12] = {};
+                if (f.read(buf, 12) != 12) return String();
+                if (std::memcmp(buf + 4, "ftyp", 4) != 0) return String();
+                return String(reinterpret_cast<const char *>(buf + 8), 4);
+        }
+
 } // namespace
 
 TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
@@ -396,6 +418,225 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
                                 REQUIRE(bytes[k] == 0x10 + i);
                         }
                 }
+        }
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: ProfileMp4 stamps an ISO-BMFF major brand") {
+        const String movPath = "/tmp/qt_brand_default.mov";
+        const String mp4Path = "/tmp/qt_brand_mp4.mp4";
+        std::remove(movPath.cstr());
+        std::remove(mp4Path.cstr());
+
+        auto writeOne = [](const String &path, bool mp4Profile) {
+                QuickTime qt = QuickTime::createWriter(path);
+                if (mp4Profile) qt.setProfile(QuickTime::ProfileMp4);
+                REQUIRE(qt.open() == Error::Ok);
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                QuickTime::Sample s;
+                s.data = makeFilledBuffer(512, 0x33);
+                s.duration = 1;
+                s.keyframe = true;
+                REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                REQUIRE(qt.finalize() == Error::Ok);
+        };
+
+        SUBCASE("default profile keeps the Apple QuickTime brand") {
+                writeOne(movPath, /*mp4Profile=*/false);
+                CHECK(readMajorBrand(movPath) == String("qt  "));
+        }
+
+        SUBCASE("ProfileMp4 advertises isom") {
+                writeOne(mp4Path, /*mp4Profile=*/true);
+                CHECK(readMajorBrand(mp4Path) == String("isom"));
+        }
+
+        std::remove(movPath.cstr());
+        std::remove(mp4Path.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: PCM flavors round-trip bit-exact") {
+        // Covers both the classic single-FourCC path (sowt/twos/in24/in32/
+        // fl32) and the v2 'lpcm' sound-description path (LE wide integer,
+        // LE float, unsigned, 24-in-32 packings).
+        const AudioFormat::ID formats[] = {
+                AudioFormat::PCMI_S16LE,      AudioFormat::PCMI_S16BE,
+                AudioFormat::PCMI_S24LE,      AudioFormat::PCMI_S24BE,
+                AudioFormat::PCMI_S32LE,      AudioFormat::PCMI_S32BE,
+                AudioFormat::PCMI_Float32LE,  AudioFormat::PCMI_Float32BE,
+                AudioFormat::PCMI_U8,         AudioFormat::PCMI_U16LE,
+                AudioFormat::PCMI_U24LE_HB32, AudioFormat::PCMI_U32LE,
+        };
+
+        for (AudioFormat::ID id : formats) {
+                const AudioDesc adesc(id, 48000.0f, 2);
+                REQUIRE(adesc.isValid());
+                const size_t frames = 200;
+                const size_t bytesPerFrame = adesc.bytesPerSample() * adesc.channels();
+                const size_t totalBytes = frames * bytesPerFrame;
+
+                Buffer payload(totalBytes);
+                uint8_t *pb = static_cast<uint8_t *>(payload.data());
+                for (size_t i = 0; i < totalBytes; ++i) pb[i] = static_cast<uint8_t>((i * 7 + 3) & 0xFF);
+                payload.setSize(totalBytes);
+
+                const String tmp = String("/tmp/qt_pcm_") + AudioFormat(id).name() + ".mov";
+                std::remove(tmp.cstr());
+
+                {
+                        QuickTime qt = QuickTime::createWriter(tmp);
+                        REQUIRE(qt.open() == Error::Ok);
+                        uint32_t aid = 0;
+                        REQUIRE(qt.addAudioTrack(adesc, &aid) == Error::Ok);
+                        QuickTime::Sample s;
+                        s.data = payload;
+                        s.duration = 0;
+                        s.keyframe = true;
+                        REQUIRE(qt.writeSample(aid, s) == Error::Ok);
+                        REQUIRE(qt.finalize() == Error::Ok);
+                }
+
+                {
+                        QuickTime qt = QuickTime::createReader(tmp);
+                        REQUIRE(qt.open() == Error::Ok);
+                        REQUIRE(qt.tracks().size() == 1);
+                        const QuickTime::Track &a = qt.tracks()[0];
+                        CHECK(a.type() == QuickTime::Audio);
+                        INFO("format=", AudioFormat(id).name().cstr());
+                        CHECK(a.audioDesc().format().id() == id);
+                        CHECK(a.audioDesc().channels() == 2);
+                        CHECK(a.sampleCount() == frames);
+
+                        QuickTime::Sample s;
+                        REQUIRE(qt.readSampleRange(0, 0, frames, s) == Error::Ok);
+                        REQUIRE(s.data.size() == totalBytes);
+                        const uint8_t *rb = static_cast<const uint8_t *>(s.data.data());
+                        for (size_t i = 0; i < totalBytes; ++i) {
+                                REQUIRE(rb[i] == static_cast<uint8_t>((i * 7 + 3) & 0xFF));
+                        }
+                }
+
+                std::remove(tmp.cstr());
+        }
+}
+
+TEST_CASE("QuickTimeWriter: ST 436M vanc ancillary track round-trips") {
+        const String    tmp = "/tmp/qt_writer_vanc.mov";
+        std::remove(tmp.cstr());
+        const FrameRate fr(FrameRate::RationalType(25, 1));
+        const int       N = 4;
+
+        // A representative ANC packet (CEA-708 CDP DID/SDID 0x61/0x01).
+        List<uint16_t> udw;
+        for (uint16_t v = 1; v <= 6; ++v) udw.pushToBack(v);
+        AncPacket anc = St291Packet::buildRaw(0x61, 0x01, udw, 9).packet();
+
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                uint32_t vid = 0, anid = 0;
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16), fr,
+                                         &vid) == Error::Ok);
+                REQUIRE(qt.addAncTrack(AncDesc(), fr, &anid) == Error::Ok);
+                CHECK(anid != 0);
+                for (int f = 0; f < N; ++f) {
+                        QuickTime::Sample vs;
+                        vs.data = makeFilledBuffer(512, static_cast<uint8_t>(0x10 + f));
+                        vs.duration = 1;
+                        vs.keyframe = true;
+                        REQUIRE(qt.writeSample(vid, vs) == Error::Ok);
+
+                        AncPacket::List pkts;
+                        pkts.pushToBack(anc);
+                        QuickTime::Sample as;
+                        as.data = St436m::encodeFrame(pkts, AncDesc());
+                        as.duration = 1;
+                        as.keyframe = true;
+                        REQUIRE(qt.writeSample(anid, as) == Error::Ok);
+                }
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+
+        {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                size_t ancIdx = SIZE_MAX;
+                for (size_t i = 0; i < qt.tracks().size(); ++i)
+                        if (qt.tracks()[i].type() == QuickTime::AncData) ancIdx = i;
+                REQUIRE(ancIdx != SIZE_MAX);
+                CHECK(qt.tracks()[ancIdx].sampleCount() == static_cast<uint64_t>(N));
+
+                QuickTime::Sample s;
+                REQUIRE(qt.readSample(ancIdx, 0, s) == Error::Ok);
+                Result<AncPacket::List> dec = St436m::decodeFrame(s.data);
+                REQUIRE(dec.second() == Error::Ok);
+                REQUIRE(dec.first().size() == 1);
+                Result<St291Packet> sp = St291Packet::from(dec.first()[0]);
+                REQUIRE(sp.second() == Error::Ok);
+                CHECK(sp.first().did() == 0x61);
+                CHECK(sp.first().sdid() == 0x01);
+                List<uint16_t> outUdw = sp.first().udw();
+                REQUIRE(outUdw.size() == udw.size());
+                for (size_t i = 0; i < udw.size(); ++i) CHECK(outUdw[i] == udw[i]);
+        }
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: CEA-608 c608 caption track round-trips") {
+        const String    tmp = "/tmp/qt_writer_c608.mov";
+        std::remove(tmp.cstr());
+        const FrameRate fr(FrameRate::RationalType(30000, 1001)); // 29.97
+        const int       N = 3;
+
+        Cea708Cdp::CcDataList cc;
+        cc.pushToBack({true, 0, 0x94, 0x2C});
+        cc.pushToBack({true, 0, 0x48, 0x69});
+
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                uint32_t vid = 0, cid = 0;
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16), fr,
+                                         &vid) == Error::Ok);
+                REQUIRE(qt.addCaptionTrack(fr, &cid) == Error::Ok);
+                CHECK(cid != 0);
+                for (int f = 0; f < N; ++f) {
+                        QuickTime::Sample vs;
+                        vs.data = makeFilledBuffer(512, static_cast<uint8_t>(0x10 + f));
+                        vs.duration = 1;
+                        vs.keyframe = true;
+                        REQUIRE(qt.writeSample(vid, vs) == Error::Ok);
+
+                        QuickTime::Sample cs;
+                        cs.data = QtClosedCaption::encode608(cc);
+                        cs.duration = 1;
+                        cs.keyframe = true;
+                        REQUIRE(qt.writeSample(cid, cs) == Error::Ok);
+                }
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+
+        {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                size_t capIdx = SIZE_MAX;
+                for (size_t i = 0; i < qt.tracks().size(); ++i)
+                        if (qt.tracks()[i].type() == QuickTime::Caption) capIdx = i;
+                REQUIRE(capIdx != SIZE_MAX);
+                CHECK(qt.tracks()[capIdx].sampleCount() == static_cast<uint64_t>(N));
+
+                QuickTime::Sample s;
+                REQUIRE(qt.readSample(capIdx, 0, s) == Error::Ok);
+                Cea708Cdp::CcDataList out = QtClosedCaption::decode608(s.data);
+                REQUIRE(out.size() == 2);
+                CHECK(out[0].b1 == 0x94);
+                CHECK(out[0].b2 == 0x2C);
+                CHECK(out[1].b1 == 0x48);
+                CHECK(out[1].b2 == 0x69);
         }
 
         std::remove(tmp.cstr());

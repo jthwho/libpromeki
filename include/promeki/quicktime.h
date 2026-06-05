@@ -23,6 +23,7 @@
 #include <promeki/size2d.h>
 #include <promeki/pixelformat.h>
 #include <promeki/audiodesc.h>
+#include <promeki/ancdesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
@@ -87,7 +88,16 @@ class QuickTime {
                         Audio,
                         TimecodeTrack,
                         Subtitle,
-                        Data
+                        Data,
+                        /** @brief SMPTE ST 436M ancillary-data track
+                         *         (@c vanc sample entry), carrying ST 291
+                         *         ANC packets one sample per video frame. */
+                        AncData,
+                        /** @brief CEA-608 closed-caption track (@c clcp
+                         *         handler, @c c608 sample entry), carrying
+                         *         line-21 caption pairs one sample per
+                         *         video frame. */
+                        Caption
                 };
 
                 /** @brief On-disk layout choice for writers. */
@@ -107,6 +117,25 @@ class QuickTime {
                          *         demuxers natural packet-buffer reset
                          *         points. */
                         LayoutFragmented = 1
+                };
+
+                /**
+                 * @brief Container brand profile for writers.
+                 *
+                 * Selects the @c ftyp major brand (and compatible-brand
+                 * list) so the file advertises itself correctly to a
+                 * player's demuxer router.  The MediaIO layer chooses
+                 * the profile from the sink filename extension
+                 * (@c .mov / @c .qt → @ref ProfileMov, @c .mp4 /
+                 * @c .m4v / @c .m4a → @ref ProfileMp4); it has no effect
+                 * on a @ref LayoutFragmented writer, which always
+                 * advertises an ISO-BMFF brand.
+                 */
+                enum Profile {
+                        /** @brief Apple QuickTime (@c .mov) — major brand @c 'qt  '. */
+                        ProfileMov = 0,
+                        /** @brief ISO-BMFF MP4 (@c .mp4 / @c .m4v) — major brand @c 'isom'. */
+                        ProfileMp4 = 1
                 };
 
                 /**
@@ -148,6 +177,8 @@ class QuickTime {
                                 const Size2Du32 &size() const { return _size; }
                                 /** @brief Returns the audio description (channel layout, rate). */
                                 const AudioDesc &audioDesc() const { return _audioDesc; }
+                                /** @brief Returns the ancillary-data stream description (AncData tracks). */
+                                const AncDesc &ancDesc() const { return _ancDesc; }
                                 /** @brief Returns the per-track metadata. */
                                 const Metadata &metadata() const { return _metadata; }
                                 /** @brief Returns the elst start offset (in this track's timescale). */
@@ -191,6 +222,8 @@ class QuickTime {
                                 void setSize(const Size2Du32 &s) { _size = s; }
                                 /** @brief Sets the audio description. */
                                 void setAudioDesc(const AudioDesc &ad) { _audioDesc = ad; }
+                                /** @brief Sets the ancillary-data stream description. */
+                                void setAncDesc(const AncDesc &ad) { _ancDesc = ad; }
                                 /** @brief Returns a mutable reference to the metadata. */
                                 Metadata &metadata() { return _metadata; }
                                 /** @brief Sets the elst start offset (in this track's timescale). */
@@ -212,6 +245,7 @@ class QuickTime {
                                 PixelFormat _pixelFormat;
                                 Size2Du32   _size;
                                 AudioDesc   _audioDesc;
+                                AncDesc     _ancDesc;
                                 Metadata    _metadata;
                                 int64_t     _editStartOffset = 0;
                                 Buffer _codecConfig;
@@ -339,6 +373,44 @@ class QuickTime {
                                 virtual Error addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId);
 
                                 /**
+                                 * @brief Adds a SMPTE ST 436M ancillary-data
+                                 *        (@c vanc) track to a writer.
+                                 *
+                                 * One sample is written per video frame; each
+                                 * sample is an ST 436M ANC Frame Element Value
+                                 * (see @ref St436m) carrying that frame's ST 291
+                                 * ANC packets.
+                                 *
+                                 * @param desc       Ancillary stream description
+                                 *                   (scan mode informs the ST 436M
+                                 *                   wrapping type).
+                                 * @param frameRate  Track frame rate (matches the
+                                 *                   video track).
+                                 * @param outTrackId If non-null, receives the
+                                 *                   assigned track ID.
+                                 * @return Error::Ok on success.
+                                 */
+                                virtual Error addAncTrack(const AncDesc &desc, const FrameRate &frameRate,
+                                                          uint32_t *outTrackId);
+
+                                /**
+                                 * @brief Adds a CEA-608 closed-caption
+                                 *        (@c clcp / @c c608) track to a writer.
+                                 *
+                                 * One sample is written per video frame; each
+                                 * sample is a QuickTime @c c608 caption sample
+                                 * (see @ref QtClosedCaption) carrying that
+                                 * frame's line-21 caption pairs.
+                                 *
+                                 * @param frameRate  Track frame rate (matches
+                                 *                   the video track).
+                                 * @param outTrackId If non-null, receives the
+                                 *                   assigned track ID.
+                                 * @return Error::Ok on success.
+                                 */
+                                virtual Error addCaptionTrack(const FrameRate &frameRate, uint32_t *outTrackId);
+
+                                /**
                                  * @brief Adds a single-sample @c tmcd timecode track to a writer.
                                  *
                                  * @param startTimecode The starting timecode (its mode determines
@@ -377,6 +449,16 @@ class QuickTime {
                                  *        @c AlreadyOpen otherwise.
                                  */
                                 virtual Error setLayout(Layout layout);
+
+                                /** @brief Returns the on-disk container brand profile. */
+                                Profile profile() const { return _profile; }
+
+                                /**
+                                 * @brief Sets the container brand profile.
+                                 *        Read only at @c open() time; set
+                                 *        it before opening the writer.
+                                 */
+                                void setProfile(Profile profile) { _profile = profile; }
 
                                 /** @brief Returns true if the writer syncs to stable storage on each flush. */
                                 bool flushSync() const { return _flushSync; }
@@ -444,6 +526,7 @@ class QuickTime {
                         protected:
                                 Operation _operation;
                                 Layout    _layout = LayoutClassic;
+                                Profile   _profile = ProfileMov;
                                 bool      _flushSync = false;
                                 String    _filename;
                                 IODevice *_device = nullptr;
@@ -521,6 +604,16 @@ class QuickTime {
                         return d.modify()->addAudioTrack(desc, outTrackId);
                 }
 
+                /** @brief Adds a SMPTE ST 436M ancillary-data (@c vanc) track to the writer. */
+                Error addAncTrack(const AncDesc &desc, const FrameRate &frameRate, uint32_t *outTrackId = nullptr) {
+                        return d.modify()->addAncTrack(desc, frameRate, outTrackId);
+                }
+
+                /** @brief Adds a CEA-608 closed-caption (@c clcp / @c c608) track to the writer. */
+                Error addCaptionTrack(const FrameRate &frameRate, uint32_t *outTrackId = nullptr) {
+                        return d.modify()->addCaptionTrack(frameRate, outTrackId);
+                }
+
                 /** @brief Adds a timecode track to the writer. */
                 Error addTimecodeTrack(const Timecode &startTimecode, const FrameRate &frameRate,
                                        uint32_t *outTrackId = nullptr) {
@@ -540,6 +633,12 @@ class QuickTime {
 
                 /** @brief Sets the on-disk layout (before open()). */
                 Error setLayout(Layout layout) { return d.modify()->setLayout(layout); }
+
+                /** @brief Returns the writer's container brand profile. */
+                Profile profile() const { return d->profile(); }
+
+                /** @brief Sets the container brand profile (before open()). */
+                void setProfile(Profile profile) { d.modify()->setProfile(profile); }
 
                 /** @brief Returns whether flushSync is enabled on the writer. */
                 bool flushSync() const { return d->flushSync(); }

@@ -10,9 +10,11 @@
 
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
+#include <promeki/ancdesc.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/dedicatedthreadmediaio.h>
+#include <promeki/enums_mediaio.h>
 #include <promeki/framecount.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
@@ -110,16 +112,22 @@ class QuickTimeMediaIO : public DedicatedThreadMediaIO {
                 String      _filename;
                 int         _videoTrackIndex = -1;
                 int         _audioTrackIndex = -1;
+                int         _ancTrackIndex = -1;
+                int         _captionTrackIndex = -1;
+                QuickTimeCaptionReadPolicy _captionReadPolicy{QuickTimeCaptionReadPolicy::Auto};
                 FrameNumber _currentFrame{0};
                 FrameCount  _frameCount{0};
                 FrameRate   _frameRate;
                 Timecode    _anchorTimecode;
                 uint64_t    _audioSampleCursor = 0;
                 AudioDesc   _audioDesc;
+                AncDesc     _ancDesc;
 
                 bool        _writerTracksRegistered = false;
                 uint32_t    _writerVideoTrackId = 0;
                 uint32_t    _writerAudioTrackId = 0;
+                uint32_t    _writerAncTrackId = 0;
+                uint32_t    _writerCaptionTrackId = 0;
                 uint32_t    _writerTimecodeTrackId = 0;
                 FrameCount  _writerFrameCount{0};
                 int         _writerFragmentFrames = DefaultFragmentFrames;

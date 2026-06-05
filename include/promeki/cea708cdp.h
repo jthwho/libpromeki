@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
+#include <promeki/framerate.h>
 #include <promeki/json.h>
 #include <promeki/list.h>
 #include <promeki/namespace.h>
@@ -384,6 +385,19 @@ class Cea708Cdp {
 
                 /** @brief Convenience overload of @ref fromBuffer accepting a @ref Buffer. */
                 static Result<Cea708Cdp> fromBuffer(const Buffer &buf);
+
+                /**
+                 * @brief Maps a @ref FrameRate to the SMPTE 334-2 §5.1.4
+                 *        @c cdp_frame_rate code (1..8).
+                 *
+                 * Returns @c 0 for rates outside the eight standard
+                 * caption frame rates (23.976/24/25/29.97/30/50/59.94/60);
+                 * a CDP with code 0 still round-trips structurally.
+                 *
+                 * @param frameRate The video frame rate.
+                 * @return The ST 334-2 frame-rate code, or 0 if unknown.
+                 */
+                static uint8_t frameRateCodeFor(const FrameRate &frameRate);
 
                 // -- JSON dump --------------------------------------------
 

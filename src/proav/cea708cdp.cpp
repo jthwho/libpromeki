@@ -455,6 +455,21 @@ Result<Cea708Cdp> Cea708Cdp::fromBuffer(const Buffer &buf) {
         return fromBuffer(buf.data(), buf.size());
 }
 
+uint8_t Cea708Cdp::frameRateCodeFor(const FrameRate &frameRate) {
+        // SMPTE 334-2 §5.1.4 cdp_frame_rate codes.
+        const unsigned int num = frameRate.numerator();
+        const unsigned int den = frameRate.denominator();
+        if (num == 24000 && den == 1001) return 1; // 23.976
+        if (num == 24 && den == 1) return 2;        // 24
+        if (num == 25 && den == 1) return 3;        // 25
+        if (num == 30000 && den == 1001) return 4;  // 29.97
+        if (num == 30 && den == 1) return 5;        // 30
+        if (num == 50 && den == 1) return 6;        // 50
+        if (num == 60000 && den == 1001) return 7;  // 59.94
+        if (num == 60 && den == 1) return 8;        // 60
+        return 0;
+}
+
 // ============================================================================
 // JSON
 // ============================================================================

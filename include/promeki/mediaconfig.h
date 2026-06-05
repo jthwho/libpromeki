@@ -1948,6 +1948,15 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                .setDefault(false)
                                                                .setDescription("Call fdatasync after each flush."));
 
+                /// @brief Enum QuickTimeCaptionReadPolicy — how a c608 caption
+                ///        track is surfaced into the ancillary-data model on read.
+                PROMEKI_DECLARE_ID(QuickTimeCaptionReadPolicy,
+                                   VariantSpec()
+                                           .setType(DataTypeEnum)
+                                           .setDefault(promeki::QuickTimeCaptionReadPolicy::Auto)
+                                           .setEnumType(promeki::QuickTimeCaptionReadPolicy::Type)
+                                           .setDescription("How a c608 caption track feeds the ANC model on read."));
+
                 // ============================================================
                 // MPEG-TS (MpegTsFileMediaIO and any future TS-shaped sink/source)
                 // ============================================================

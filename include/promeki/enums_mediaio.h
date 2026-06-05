@@ -205,6 +205,43 @@ inline const QuickTimeLayout QuickTimeLayout::Classic{0};
 inline const QuickTimeLayout QuickTimeLayout::Fragmented{1};
 
 /**
+ * @brief Well-known Enum type for how a QuickTime reader surfaces a
+ *        CEA-608 (@c c608) caption track into the ancillary-data model.
+ *
+ * Used as the value type for the @ref MediaConfig::QuickTimeCaptionReadPolicy
+ * config key (read side only — writer track emission is unaffected).
+ *
+ * - @c Auto: surface the ST 436M @c vanc track's ANC packets; if the
+ *   file also has a @c c608 caption track and the per-frame ANC carries
+ *   no CEA-608 content — counting 608 that rides inside a CEA-708 CDP as
+ *   cc_type 0/1 — inject the @c c608 captions as a reconstructed CEA-708
+ *   ANC packet (no duplication).
+ * - @c VancOnly: ignore any @c c608 track; ANC comes solely from the
+ *   @c vanc track.
+ * - @c CaptionTrackOnly: when a @c c608 track is present it is the
+ *   authoritative caption source — its captions are injected and any
+ *   caption packets from the @c vanc track are suppressed (non-caption
+ *   ANC from @c vanc is preserved).
+ */
+class QuickTimeCaptionReadPolicy : public TypedEnum<QuickTimeCaptionReadPolicy> {
+        public:
+                PROMEKI_REGISTER_ENUM_TYPE_DISPLAY("QuickTimeCaptionReadPolicy", "QuickTime Caption Read Policy", 0,
+                                           {"Auto", 0, "Auto (merge c608 only if ANC has no captions)"},
+                                           {"VancOnly", 1, "VANC only (ignore the c608 track)"},
+                                           {"CaptionTrackOnly", 2, "Caption track only (c608 is the caption source)"});
+
+                using TypedEnum<QuickTimeCaptionReadPolicy>::TypedEnum;
+
+                static const QuickTimeCaptionReadPolicy Auto;
+                static const QuickTimeCaptionReadPolicy VancOnly;
+                static const QuickTimeCaptionReadPolicy CaptionTrackOnly;
+};
+
+inline const QuickTimeCaptionReadPolicy QuickTimeCaptionReadPolicy::Auto{0};
+inline const QuickTimeCaptionReadPolicy QuickTimeCaptionReadPolicy::VancOnly{1};
+inline const QuickTimeCaptionReadPolicy QuickTimeCaptionReadPolicy::CaptionTrackOnly{2};
+
+/**
  * @brief Well-known Enum type for the MPEG-TS AAC framing mode.
  *
  * Used as the value type for the @ref MediaConfig::MpegTsAacFraming

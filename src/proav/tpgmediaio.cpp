@@ -636,29 +636,8 @@ Error TpgMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                                 _ancCaptionEncoders.pushToBack(std::move(enc));
                         }
                 }
-                // SMPTE 334-2 §5.1.4 frame-rate codes.  We pick the
-                // closest match for the configured FrameRate; unknowns
-                // emit code 0 (CDP still round-trips structurally).
-                const unsigned int num = _frameRate.numerator();
-                const unsigned int den = _frameRate.denominator();
-                if (num == 24000 && den == 1001)
-                        _ancFrameRateCode = 1; // 23.976
-                else if (num == 24 && den == 1)
-                        _ancFrameRateCode = 2; // 24
-                else if (num == 25 && den == 1)
-                        _ancFrameRateCode = 3; // 25
-                else if (num == 30000 && den == 1001)
-                        _ancFrameRateCode = 4; // 29.97
-                else if (num == 30 && den == 1)
-                        _ancFrameRateCode = 5; // 30
-                else if (num == 50 && den == 1)
-                        _ancFrameRateCode = 6; // 50
-                else if (num == 60000 && den == 1001)
-                        _ancFrameRateCode = 7; // 59.94
-                else if (num == 60 && den == 1)
-                        _ancFrameRateCode = 8; // 60
-                else
-                        _ancFrameRateCode = 0;
+                // SMPTE 334-2 §5.1.4 frame-rate code for the configured rate.
+                _ancFrameRateCode = Cea708Cdp::frameRateCodeFor(_frameRate);
 
                 // Build the per-stream descriptor advertised through MediaDesc.
                 // The CEA-708 stream is paired with TPG's single video payload

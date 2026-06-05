@@ -8,7 +8,12 @@
 #include <cstdint>
 #include <cstring>
 
+#include <promeki/ancformat.h>
+#include <promeki/ancpayload.h>
+#include <promeki/anctranslator.h>
 #include <promeki/audiopayload.h>
+#include <promeki/cea608packet.h>
+#include <promeki/cea708cdp.h>
 #include <promeki/colormodel.h>
 #include <promeki/compressedaudiopayload.h>
 #include <promeki/compressedvideopayload.h>
@@ -25,7 +30,10 @@
 #include <promeki/mediaiorequest.h>
 #include <promeki/metadata.h>
 #include <promeki/pcmaudiopayload.h>
+#include <promeki/qtclosedcaption.h>
 #include <promeki/quicktimemediaio.h>
+#include <promeki/st291packet.h>
+#include <promeki/st436m.h>
 #include <promeki/timecode.h>
 #include <promeki/uncompressedvideopayload.h>
 
@@ -43,20 +51,30 @@ PROMEKI_REGISTER_MEDIAIO_FACTORY(QuickTimeFactory)
 namespace {
 
         // Picks a QuickTime-compatible storage AudioDesc for the given
-        // source.  QuickTime's canonical PCM codec tags are sowt / twos
-        // (s16), in24 / in32 (big-endian), fl32 / fl64 (big-endian
-        // float), and raw (unsigned 8-bit).  Little-endian float lacks a
-        // single-FourCC mapping without the pcmC extension atom (which
-        // we don't currently emit), so sources in that format are
-        // promoted to PCMI_S16LE for storage.
+        // source.  The writer stores the six canonical PCM types
+        // (sowt/twos/in24/in32/fl32/raw) via their classic single-FourCC
+        // sound sample entries, and every other interleaved PCM
+        // permutation faithfully via a v2 'lpcm' sound description whose
+        // formatSpecificFlags carry endianness / signedness / float /
+        // alignment — so no lossy promotion is needed.  The only
+        // adjustment here is planar → interleaved: containers store
+        // interleaved PCM, so a planar (PCMP_*) memory layout maps to
+        // its interleaved (PCMI_*) on-disk equivalent of the same sample
+        // type.  Compressed audio passes through untouched.
         AudioDesc pickStorageFormat(const AudioDesc &src) {
                 if (!src.isValid()) return src;
-                switch (src.format().id()) {
-                        case AudioFormat::PCMI_Float32LE:
-                                // FIXME: promotes 32-bit float to 16-bit int, losing precision.
-                                return AudioDesc(AudioFormat::PCMI_S16LE, src.sampleRate(), src.channels());
-                        default: return src;
+                const AudioFormat &fmt = src.format();
+                if (fmt.isCompressed()) return src;
+                if (fmt.isPlanar()) {
+                        const String &n = fmt.name();
+                        if (n.startsWith(String("PCMP_"))) {
+                                String              iname = String("PCMI_") + n.mid(5);
+                                Result<AudioFormat> r = AudioFormat::lookup(iname);
+                                if (r.second().isOk())
+                                        return AudioDesc(r.first().id(), src.sampleRate(), src.channels());
+                        }
                 }
+                return src;
         }
 
         bool isRecognizedBrand(uint32_t brand) {
@@ -94,6 +112,115 @@ namespace {
                 return isRecognizedBrand(major);
         }
 
+        // Returns true when @p frame carries at least one ancillary packet
+        // we can derive c608 captions from — a CEA-708 CDP (AncFormat::Cea708)
+        // or a raw SMPTE 334-1 line-21 CEA-608 packet (AncFormat::Cea608).
+        bool frameHasCaptions(const Frame &frame) {
+                for (const AncPayload::Ptr &ap : frame.ancPayloads()) {
+                        if (!ap.isValid()) continue;
+                        for (const AncPacket &pkt : ap->packets()) {
+                                const AncFormat::ID fid = pkt.format().id();
+                                if (fid == AncFormat::Cea708 || fid == AncFormat::Cea608) return true;
+                        }
+                }
+                return false;
+        }
+
+        // Decodes the cc_data triples carried by a CEA-708 CDP ancillary
+        // packet (the CDP bytes are the ST 291 packet's 8-bit user-data
+        // words).  Returns an empty list for non-CEA-708 packets or on a
+        // malformed CDP.
+        Cea708Cdp::CcDataList ccDataFromCea708Packet(const AncPacket &pkt) {
+                Cea708Cdp::CcDataList out;
+                if (pkt.format().id() != AncFormat::Cea708) return out;
+                Result<St291Packet> sp = St291Packet::from(pkt);
+                if (sp.second().isError()) return out;
+                List<uint16_t> udw = sp.first().udw();
+                Buffer         cdpBuf(udw.size());
+                uint8_t       *b = static_cast<uint8_t *>(cdpBuf.data());
+                for (size_t i = 0; i < udw.size(); ++i) b[i] = static_cast<uint8_t>(udw[i] & 0xFF);
+                cdpBuf.setSize(udw.size());
+                Result<Cea708Cdp> cdp = Cea708Cdp::fromBuffer(cdpBuf);
+                if (cdp.second().isOk()) out = cdp.first().ccData;
+                return out;
+        }
+
+        // Decodes the cc_data triples carried by a raw SMPTE 334-1 line-21
+        // CEA-608 ancillary packet (AncFormat::Cea608) through the registered
+        // ANC codec.  Returns an empty list for other formats or a packet
+        // that fails to parse.
+        Cea708Cdp::CcDataList ccDataFromCea608Packet(const AncPacket &pkt) {
+                Cea708Cdp::CcDataList out;
+                if (pkt.format().id() != AncFormat::Cea608) return out;
+                AncTranslator              t;
+                AncTranslator::ParseResult parsed = t.parse(pkt);
+                if (parsed.second().isError()) return out;
+                return parsed.first().get<Cea608Packet>().ccData;
+        }
+
+        // Collects the CEA-608 (cc_type 0/1) cc_data triples from every
+        // caption-bearing ancillary packet on @p frame — both CEA-708 CDP
+        // (AncFormat::Cea708) and raw line-21 (AncFormat::Cea608) — for
+        // emission into a QuickTime c608 caption track.  (encode608() keeps
+        // only cc_type 0/1, so the 708 DTVCC triples are dropped at encode
+        // time.)
+        Cea708Cdp::CcDataList collectCaption608(const Frame &frame) {
+                Cea708Cdp::CcDataList all;
+                for (const AncPayload::Ptr &ap : frame.ancPayloads()) {
+                        if (!ap.isValid()) continue;
+                        for (const AncPacket &pkt : ap->packets()) {
+                                Cea708Cdp::CcDataList cc = ccDataFromCea708Packet(pkt);
+                                for (size_t i = 0; i < cc.size(); ++i) all.pushToBack(cc[i]);
+                                Cea708Cdp::CcDataList cc608 = ccDataFromCea608Packet(pkt);
+                                for (size_t i = 0; i < cc608.size(); ++i) all.pushToBack(cc608[i]);
+                        }
+                }
+                return all;
+        }
+
+        // True when @p pkts already carries CEA-608 caption content — either
+        // a raw CEA-608 packet or a CEA-708 CDP whose cc_data has a cc_type
+        // 0/1 (field 1/2) triple.  Used by the Auto read policy to avoid
+        // duplicating 608 that already rides inside a 708 CDP.
+        bool ancListHas608(const AncPacket::List &pkts) {
+                for (size_t i = 0; i < pkts.size(); ++i) {
+                        const AncFormat::ID fid = pkts[i].format().id();
+                        if (fid == AncFormat::Cea608) return true;
+                        if (fid == AncFormat::Cea708) {
+                                Cea708Cdp::CcDataList cc = ccDataFromCea708Packet(pkts[i]);
+                                for (size_t j = 0; j < cc.size(); ++j)
+                                        if (cc[j].valid && (cc[j].type == 0 || cc[j].type == 1)) return true;
+                        }
+                }
+                return false;
+        }
+
+        // Returns @p pkts with every CEA-608/708 caption packet removed.
+        AncPacket::List stripCaptionPackets(const AncPacket::List &pkts) {
+                AncPacket::List out;
+                for (size_t i = 0; i < pkts.size(); ++i) {
+                        const AncFormat::ID fid = pkts[i].format().id();
+                        if (fid == AncFormat::Cea708 || fid == AncFormat::Cea608) continue;
+                        out.pushToBack(pkts[i]);
+                }
+                return out;
+        }
+
+        // Reconstructs a CEA-708 CDP ANC packet from a c608 caption sample
+        // so a caption track can be surfaced into the ANC model on read.
+        AncPacket reconstructCaptionAnc(const Buffer &c608Sample, const FrameRate &frameRate) {
+                Cea708Cdp::CcDataList cc = QtClosedCaption::decode608(c608Sample);
+                if (cc.isEmpty()) return AncPacket();
+                Cea708Cdp      cdp(Cea708Cdp::frameRateCodeFor(frameRate), cc);
+                Buffer         cdpBytes = cdp.toBuffer();
+                List<uint16_t> udw;
+                const uint8_t *p = static_cast<const uint8_t *>(cdpBytes.data());
+                for (size_t i = 0; i < cdpBytes.size(); ++i) udw.pushToBack(p[i]);
+                St291Packet sp =
+                        St291Packet::build(AncFormat(AncFormat::Cea708), udw, St291Packet::UnspecifiedLine);
+                return sp.packet();
+        }
+
 } // namespace
 
 // ============================================================================
@@ -121,6 +248,7 @@ QuickTimeFactory::Config::SpecMap QuickTimeFactory::configSpecs() const {
         s(MediaConfig::QuickTimeLayout, QuickTimeLayout::Classic);
         s(MediaConfig::QuickTimeFragmentFrames, int32_t(QuickTimeMediaIO::DefaultFragmentFrames));
         s(MediaConfig::QuickTimeFlushSync, false);
+        s(MediaConfig::QuickTimeCaptionReadPolicy, QuickTimeCaptionReadPolicy::Auto);
         return specs;
 }
 
@@ -212,6 +340,29 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 _videoTrackIndex = videoIdx;
                 _audioTrackIndex = audioIdx;
 
+                // First ST 436M ancillary-data track, if any.
+                for (size_t i = 0; i < _qt.tracks().size(); ++i) {
+                        if (_qt.tracks()[i].type() == QuickTime::AncData) {
+                                _ancTrackIndex = static_cast<int>(i);
+                                _ancDesc = _qt.tracks()[i].ancDesc();
+                                break;
+                        }
+                }
+                // First CEA-608 caption track, if any, plus the read policy.
+                for (size_t i = 0; i < _qt.tracks().size(); ++i) {
+                        if (_qt.tracks()[i].type() == QuickTime::Caption) {
+                                _captionTrackIndex = static_cast<int>(i);
+                                break;
+                        }
+                }
+                {
+                        Error policyErr;
+                        Enum  policyEnum = cfg.get(MediaConfig::QuickTimeCaptionReadPolicy)
+                                                  .asEnum(QuickTimeCaptionReadPolicy::Type, &policyErr);
+                        if (!policyErr.isError() && policyEnum.hasListedValue())
+                                _captionReadPolicy = QuickTimeCaptionReadPolicy(policyEnum.value());
+                }
+
                 if (_videoTrackIndex < 0 && _audioTrackIndex < 0) {
                         promekiErr("QuickTimeMediaIO: '%s' has no video or audio tracks", _filename.cstr());
                         return Error::NotSupported;
@@ -267,6 +418,17 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 QuickTime::Layout layout = static_cast<QuickTime::Layout>(layoutEnum.value());
                 Error             err = _qt.setLayout(layout);
                 if (err.isError()) return err;
+
+                // Pick the container brand profile from the sink filename
+                // extension: .mp4 / .m4v / .m4a write a true ISO-BMFF MP4
+                // (major brand 'isom'), while .mov / .qt keep the Apple
+                // QuickTime brand. The H.26x sample entries are identical
+                // either way; only the ftyp advertisement differs.
+                const String lowerName = _filename.toLower();
+                if (lowerName.endsWith(".mp4") || lowerName.endsWith(".m4v") ||
+                    lowerName.endsWith(".m4a")) {
+                        _qt.setProfile(QuickTime::ProfileMp4);
+                }
 
                 _writerFragmentFrames = cfg.getAs<int>(MediaConfig::QuickTimeFragmentFrames, DefaultFragmentFrames);
                 if (_writerFragmentFrames < 1) _writerFragmentFrames = DefaultFragmentFrames;
@@ -556,6 +718,54 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
+        // Ancillary data + captions: assemble the per-frame ANC packet list
+        // from the ST 436M vanc track and the c608 caption track per the
+        // configured read policy (QuickTimeCaptionReadPolicy).
+        {
+                const uint64_t  fi = static_cast<uint64_t>(_currentFrame.value());
+                AncPacket::List ancPackets;
+
+                // 1. Full-fidelity ANC from the ST 436M vanc track.
+                if (_ancTrackIndex >= 0 && fi < _qt.tracks()[_ancTrackIndex].sampleCount()) {
+                        QuickTime::Sample as;
+                        if (_qt.readSample(static_cast<size_t>(_ancTrackIndex), fi, as).isOk() &&
+                            as.data.isValid()) {
+                                Result<AncPacket::List> dec = St436m::decodeFrame(as.data);
+                                if (dec.second().isOk())
+                                        for (const AncPacket &pkt : dec.first()) ancPackets.pushToBack(pkt);
+                        }
+                }
+
+                // 2. c608 caption track, per policy (VancOnly skips it).
+                if (_captionTrackIndex >= 0 && _captionReadPolicy != QuickTimeCaptionReadPolicy::VancOnly &&
+                    fi < _qt.tracks()[_captionTrackIndex].sampleCount()) {
+                        bool inject = false;
+                        if (_captionReadPolicy == QuickTimeCaptionReadPolicy::Auto) {
+                                // Only when the ANC has no 608 of its own — a 608
+                                // riding inside a 708 CDP counts, so we don't
+                                // duplicate it.
+                                inject = !ancListHas608(ancPackets);
+                        } else { // CaptionTrackOnly — the caption track is authoritative.
+                                inject = true;
+                                ancPackets = stripCaptionPackets(ancPackets);
+                        }
+                        if (inject) {
+                                QuickTime::Sample cs;
+                                if (_qt.readSample(static_cast<size_t>(_captionTrackIndex), fi, cs).isOk() &&
+                                    cs.data.isValid()) {
+                                        AncPacket cap = reconstructCaptionAnc(cs.data, _frameRate);
+                                        if (cap.isValid()) ancPackets.pushToBack(cap);
+                                }
+                        }
+                }
+
+                if (!ancPackets.isEmpty()) {
+                        AncPayload::Ptr ancPayload = AncPayload::Ptr::create(_ancDesc);
+                        for (const AncPacket &pkt : ancPackets) ancPayload.modify()->addPacket(pkt);
+                        frame.addPayload(ancPayload);
+                }
+        }
+
         cmd.frame = frame;
         cmd.currentFrame = _currentFrame;
 
@@ -669,6 +879,34 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 return err;
         }
 
+        // Lazily create the ST 436M ancillary-data track from the first
+        // frame that carries ANC payloads.  Done here (before the video
+        // writeSample) so the fragmented init-moov includes the track.
+        // Note: for the fragmented layout, ANC must appear on the first
+        // written frame; the classic layout has no such ordering need.
+        if (_writerAncTrackId == 0) {
+                auto ancsFirst = frame.ancPayloads();
+                if (!ancsFirst.isEmpty() && ancsFirst[0].isValid() && _frameRate.isValid()) {
+                        uint32_t anid = 0;
+                        Error    anerr = _qt.addAncTrack(ancsFirst[0]->desc(), _frameRate, &anid);
+                        if (!anerr.isError()) _writerAncTrackId = anid;
+                        else
+                                promekiWarn("QuickTimeMediaIO: addAncTrack failed: %s", anerr.name().cstr());
+                }
+        }
+
+        // Lazily create a player-renderable CEA-608 (c608) caption track
+        // alongside the full-fidelity ST 436M track when the first frame
+        // carries caption packets (CEA-708 CDP or raw line-21 CEA-608).
+        // Same ordering rationale as the ANC track above.
+        if (_writerCaptionTrackId == 0 && _frameRate.isValid() && frameHasCaptions(frame)) {
+                uint32_t cid = 0;
+                Error    cerr = _qt.addCaptionTrack(_frameRate, &cid);
+                if (!cerr.isError()) _writerCaptionTrackId = cid;
+                else
+                        promekiWarn("QuickTimeMediaIO: addCaptionTrack failed: %s", cerr.name().cstr());
+        }
+
         auto vidsWrite = frame.videoPayloads();
         if (vidsWrite.isEmpty()) {
                 promekiWarn("QuickTimeMediaIO: write with no image; skipping");
@@ -764,6 +1002,45 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                 }
         }
         drainWriterAudio(/*flush=*/false);
+
+        // ST 436M ancillary data: write exactly one sample per video frame
+        // (an empty 2-byte value when this frame carries no packets) so the
+        // ANC track stays sample-aligned with the video track for indexed
+        // reads.
+        if (_writerAncTrackId != 0) {
+                AncPacket::List allPackets;
+                AncDesc         ancDesc;
+                for (const AncPayload::Ptr &ap : frame.ancPayloads()) {
+                        if (!ap.isValid()) continue;
+                        if (!ancDesc.isValid()) ancDesc = ap->desc();
+                        for (const AncPacket &pkt : ap->packets()) allPackets.pushToBack(pkt);
+                }
+                Buffer            ancSample = St436m::encodeFrame(allPackets, ancDesc);
+                QuickTime::Sample asamp;
+                asamp.trackId = _writerAncTrackId;
+                asamp.data = ancSample;
+                asamp.duration = 0; // writer derives from the track frame rate
+                asamp.keyframe = true;
+                Error anerr = _qt.writeSample(_writerAncTrackId, asamp);
+                if (anerr.isError())
+                        promekiWarn("QuickTimeMediaIO: ANC writeSample failed: %s", anerr.name().cstr());
+        }
+
+        // CEA-608 caption track: one c608 sample per video frame derived
+        // from the frame's CEA-708 CDP and raw line-21 CEA-608 packets (an
+        // empty cdat atom when this frame has none), keeping it
+        // sample-aligned with the video track.
+        if (_writerCaptionTrackId != 0) {
+                Buffer            capSample = QtClosedCaption::encode608(collectCaption608(frame));
+                QuickTime::Sample csamp;
+                csamp.trackId = _writerCaptionTrackId;
+                csamp.data = capSample;
+                csamp.duration = 0; // writer derives from the track frame rate
+                csamp.keyframe = true;
+                Error cerr = _qt.writeSample(_writerCaptionTrackId, csamp);
+                if (cerr.isError())
+                        promekiWarn("QuickTimeMediaIO: caption writeSample failed: %s", cerr.name().cstr());
+        }
 
         if (_writerFragmentFrames > 0 && _writerFramesSinceFlush >= static_cast<uint64_t>(_writerFragmentFrames)) {
                 Error fe = _qt.flush();

@@ -91,6 +91,15 @@ Error QuickTime::Impl::addAudioTrack(const AudioDesc & /*desc*/, uint32_t * /*ou
         return Error::NotImplemented;
 }
 
+Error QuickTime::Impl::addAncTrack(const AncDesc & /*desc*/, const FrameRate & /*frameRate*/,
+                                   uint32_t * /*outTrackId*/) {
+        return Error::NotImplemented;
+}
+
+Error QuickTime::Impl::addCaptionTrack(const FrameRate & /*frameRate*/, uint32_t * /*outTrackId*/) {
+        return Error::NotImplemented;
+}
+
 Error QuickTime::Impl::addTimecodeTrack(const Timecode & /*startTimecode*/, const FrameRate & /*frameRate*/,
                                         uint32_t * /*outTrackId*/) {
         return Error::NotImplemented;

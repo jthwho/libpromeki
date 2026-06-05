@@ -54,6 +54,8 @@ struct QuickTimeWriterTrack {
                 // Audio specifics:
                 AudioDesc audioDesc;
                 uint32_t  pcmBytesPerSample = 0; ///< channels × bytesPerSample, for audio tracks.
+                // Ancillary-data (ST 436M) specifics:
+                AncDesc ancDesc;
                 // Timecode specifics:
                 uint32_t tcStartFrame = 0;
                 uint32_t tcFlags = 0;
@@ -119,6 +121,8 @@ class QuickTimeWriter : public QuickTime::Impl {
                 Error addVideoTrack(const PixelFormat &codec, const Size2Du32 &size, const FrameRate &frameRate,
                                     uint32_t *outTrackId) override;
                 Error addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId) override;
+                Error addAncTrack(const AncDesc &desc, const FrameRate &frameRate, uint32_t *outTrackId) override;
+                Error addCaptionTrack(const FrameRate &frameRate, uint32_t *outTrackId) override;
                 Error addTimecodeTrack(const Timecode &startTimecode, const FrameRate &frameRate,
                                        uint32_t *outTrackId) override;
                 Error writeSample(uint32_t trackId, const QuickTime::Sample &sample) override;

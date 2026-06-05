@@ -117,7 +117,7 @@ class AncFormat {
                 enum ID {
                         Invalid = 0,             ///< Default / uninitialised.
                         Cea708 = 1,              ///< SMPTE 334-2 CDP carrying CEA-708 closed captions (DID 0x61 / SDID 0x01).  Modern workflows for both 608 and 708 captions use this format — CEA-608 data rides via the CDP's cc_data triples with cc_type=0/1 (F1/F2).
-                        Cea608 = 2,              ///< SMPTE 334-1 raw line-21 byte format (DID 0x61 / SDID 0x02).  Descriptor only — the library doesn't currently parse / build this format (no codec registered).  Legacy SDI/NTSC carriage; modern broadcast workflows use the @c Cea708 (CDP) path for both 608 and 708 captions.
+                        Cea608 = 2,              ///< SMPTE 334-1 raw line-21 byte format (DID 0x61 / SDID 0x02).  Parsed / built over the typed @ref Cea608Packet value (see @c anccodec_cea608.cpp).  Legacy SDI/NTSC carriage; modern broadcast workflows use the @c Cea708 (CDP) path for both 608 and 708 captions.
                         Afd = 3,                 ///< SMPTE 2016-3 Active Format Description (with Bar Data per Table 1).
                         PanScan = 4,             ///< SMPTE 2016-4 Pan-Scan Information.
                         Scte104 = 5,             ///< SCTE-104 splice-information signal.

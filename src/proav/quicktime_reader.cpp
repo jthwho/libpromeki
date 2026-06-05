@@ -8,6 +8,7 @@
 #include "quicktime_reader.h"
 #include "quicktime_atom.h"
 
+#include <cstring>
 #include <promeki/file.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
@@ -56,8 +57,9 @@ namespace {
                 if (code == FourCC("fl32")) return AudioFormat::PCMI_Float32BE;
                 if (code == FourCC("raw ")) return AudioFormat::PCMI_U8;
                 if (code == FourCC("lpcm")) {
-                        // Best-effort guess based on bit depth; real flag handling
-                        // will land with Phase 2's full stsd parser.
+                        // Best-effort guess from a v0/v1 lpcm entry with no
+                        // formatSpecificFlags. Faithful decoding goes through the
+                        // v2 sound description path (formatForLpcmV2Flags) instead.
                         switch (bitsPerSample) {
                                 case 8: return AudioFormat::PCMI_S8;
                                 case 16: return AudioFormat::PCMI_S16LE;
@@ -65,6 +67,73 @@ namespace {
                                 case 32: return AudioFormat::PCMI_S32LE;
                                 default: break;
                         }
+                }
+                return AudioFormat::Invalid;
+        }
+
+        // CoreAudio LinearPCM format flags carried in a QuickTime v2 sound
+        // description's formatSpecificFlags field (kAudioFormatFlag*).
+        enum LpcmFlag : uint32_t {
+                kLpcmIsFloat          = 1u << 0,
+                kLpcmIsBigEndian      = 1u << 1,
+                kLpcmIsSignedInteger  = 1u << 2,
+                kLpcmIsPacked         = 1u << 3,
+                kLpcmIsAlignedHigh    = 1u << 4,
+                kLpcmIsNonInterleaved = 1u << 5,
+        };
+
+        /**
+         * @brief Reconstructs the exact interleaved @ref AudioFormat::ID from a
+         *        QuickTime v2 sound description's @c formatSpecificFlags and
+         *        @c constBitsPerChannel.
+         *
+         * Inverse of @c lpcmFormatFlags() in quicktime_writer.cpp.  Container
+         * width is derived from @p constBytesPerFrame / @p channels when
+         * available, otherwise from the bit depth.  Returns @ref Invalid for
+         * combinations we do not model (e.g. 64-bit float).
+         */
+        AudioFormat::ID formatForLpcmV2Flags(uint32_t flags, uint32_t bits, uint32_t constBytesPerFrame,
+                                             uint32_t channels) {
+                const bool isFloat = flags & kLpcmIsFloat;
+                const bool isBE = flags & kLpcmIsBigEndian;
+                const bool isSigned = flags & kLpcmIsSignedInteger;
+                const bool alignedHigh = flags & kLpcmIsAlignedHigh;
+
+                if (isFloat) {
+                        if (bits == 32) return isBE ? AudioFormat::PCMI_Float32BE : AudioFormat::PCMI_Float32LE;
+                        return AudioFormat::Invalid; // 64-bit float not modelled
+                }
+
+                uint32_t containerBytes = (channels > 0 && constBytesPerFrame > 0)
+                                                  ? (constBytesPerFrame / channels)
+                                                  : ((bits + 7u) / 8u);
+
+                switch (bits) {
+                        case 8:
+                                return isSigned ? AudioFormat::PCMI_S8 : AudioFormat::PCMI_U8;
+                        case 16:
+                                if (isSigned) return isBE ? AudioFormat::PCMI_S16BE : AudioFormat::PCMI_S16LE;
+                                return isBE ? AudioFormat::PCMI_U16BE : AudioFormat::PCMI_U16LE;
+                        case 24:
+                                if (containerBytes <= 3) {
+                                        if (isSigned)
+                                                return isBE ? AudioFormat::PCMI_S24BE : AudioFormat::PCMI_S24LE;
+                                        return isBE ? AudioFormat::PCMI_U24BE : AudioFormat::PCMI_U24LE;
+                                }
+                                // 24-bit carried in a 32-bit container.
+                                if (alignedHigh) {
+                                        if (isSigned)
+                                                return isBE ? AudioFormat::PCMI_S24BE_HB32
+                                                            : AudioFormat::PCMI_S24LE_HB32;
+                                        return isBE ? AudioFormat::PCMI_U24BE_HB32 : AudioFormat::PCMI_U24LE_HB32;
+                                }
+                                if (isSigned)
+                                        return isBE ? AudioFormat::PCMI_S24BE_LB32 : AudioFormat::PCMI_S24LE_LB32;
+                                return isBE ? AudioFormat::PCMI_U24BE_LB32 : AudioFormat::PCMI_U24LE_LB32;
+                        case 32:
+                                if (isSigned) return isBE ? AudioFormat::PCMI_S32BE : AudioFormat::PCMI_S32LE;
+                                return isBE ? AudioFormat::PCMI_U32BE : AudioFormat::PCMI_U32LE;
+                        default: break;
                 }
                 return AudioFormat::Invalid;
         }
@@ -470,15 +539,39 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                 uint32_t srFixed = stream.readU32(); // 16.16 fixed
                                 double   sr = static_cast<double>(srFixed) / 65536.0;
                                 entryRemain -= 2 + 2 + 4 + 2 + 2 + 2 + 2 + 4;
+                                // A version-2 sound description (formatSpecificFlags)
+                                // overrides the FourCC-based format guess so every
+                                // PCM permutation round-trips faithfully.
+                                bool            haveV2Format = false;
+                                AudioFormat::ID v2Format = AudioFormat::Invalid;
                                 if (sampleEntryVersion == 1) {
                                         stream.skip(4); // samples per packet
                                         stream.skip(4); // bytes per packet
                                         stream.skip(4); // bytes per frame
                                         stream.skip(4); // bytes per sample
                                         entryRemain -= 16;
+                                } else if (sampleEntryVersion == 2) {
+                                        // QuickTime "Sound Sample Description V2".
+                                        stream.skip(4);                  // sizeOfStructOnly
+                                        uint64_t srBits = stream.readU64(); // audioSampleRate (double, BE)
+                                        double   srV2 = 0.0;
+                                        std::memcpy(&srV2, &srBits, sizeof(srV2));
+                                        if (srV2 > 0) sr = srV2;
+                                        uint32_t numChannels = stream.readU32();
+                                        if (numChannels > 0) channels = static_cast<uint16_t>(numChannels);
+                                        stream.skip(4);                        // always 0x7F000000
+                                        uint32_t constBits = stream.readU32(); // constBitsPerChannel
+                                        uint32_t fmtFlags = stream.readU32();  // formatSpecificFlags
+                                        uint32_t constBytesPerPacket = stream.readU32();
+                                        stream.skip(4); // constLPCMFramesPerAudioPacket
+                                        entryRemain -= 4 + 8 + 4 + 4 + 4 + 4 + 4 + 4;
+                                        v2Format = formatForLpcmV2Flags(fmtFlags, constBits, constBytesPerPacket,
+                                                                        numChannels);
+                                        haveV2Format = (v2Format != AudioFormat::Invalid);
                                 }
                                 if (!stream.isError() && channels > 0 && sr > 0) {
-                                        AudioFormat::ID dt = pcmDataTypeForFourCC(entryType, sampleSize);
+                                        AudioFormat::ID dt =
+                                                haveV2Format ? v2Format : pcmDataTypeForFourCC(entryType, sampleSize);
                                         if (dt != AudioFormat::Invalid) {
                                                 // Recognized PCM format.
                                                 track.setAudioDesc(AudioDesc(dt, static_cast<float>(sr), channels));
@@ -496,6 +589,15 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                                 track.setAudioDesc(adesc);
                                         }
                                 }
+                        } else if (entryType == FourCC("vanc")) {
+                                // SMPTE ST 436M ancillary-data track. The handler
+                                // mapping leaves it as a generic Data track; the
+                                // 'vanc' sample entry promotes it to AncData so
+                                // the MediaIO layer surfaces an AncPayload.
+                                track.setType(QuickTime::AncData);
+                        } else if (entryType == FourCC("c608")) {
+                                // CEA-608 closed-caption track (clcp handler).
+                                track.setType(QuickTime::Caption);
                         }
                         (void)entryRemain;
                 }
@@ -552,9 +654,10 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
         }
         track.setSampleCount(sampleCount(sampleIndex));
 
-        // Compute a framerate for video/timecode tracks from duration/sampleCount.
+        // Compute a framerate for video/timecode/anc tracks from duration/sampleCount.
         if (track.timescale() > 0 && track.sampleCount() > 0 && track.duration() > 0) {
-                if (track.type() == QuickTime::Video || track.type() == QuickTime::TimecodeTrack) {
+                if (track.type() == QuickTime::Video || track.type() == QuickTime::TimecodeTrack ||
+                    track.type() == QuickTime::AncData || track.type() == QuickTime::Caption) {
                         // avg = sampleCount * timescale / duration
                         uint64_t num =
                                 static_cast<uint64_t>(track.sampleCount()) * static_cast<uint64_t>(track.timescale());
@@ -578,6 +681,15 @@ Error QuickTimeReader::parseTrak(int64_t payloadOffset, int64_t payloadEnd) {
                                 }
                         }
                 }
+        }
+
+        // Populate the AncDesc for an ST 436M ancillary track now that the
+        // frame rate is known. The raster / scan mode are not carried in the
+        // container, so they stay at their unbound defaults.
+        if (track.type() == QuickTime::AncData) {
+                AncDesc ad;
+                ad.setFrameRate(track.frameRate());
+                track.setAncDesc(ad);
         }
 
         _tracks.pushToBack(track);

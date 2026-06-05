@@ -56,22 +56,32 @@ namespace {
                 return pd.fourccList()[0];
         }
 
+        /** @brief CoreAudio LinearPCM format flags (kAudioFormatFlag*),
+         *         carried in the QuickTime v2 sound description's
+         *         @c formatSpecificFlags field. */
+        enum LpcmFlag : uint32_t {
+                kLpcmIsFloat          = 1u << 0, ///< Samples are IEEE 754 float.
+                kLpcmIsBigEndian      = 1u << 1, ///< Multi-byte samples are big-endian.
+                kLpcmIsSignedInteger  = 1u << 2, ///< Integer samples are signed.
+                kLpcmIsPacked         = 1u << 3, ///< Sample bits fully occupy the container bytes.
+                kLpcmIsAlignedHigh    = 1u << 4, ///< Sample sits in the high bytes of the container.
+                kLpcmIsNonInterleaved = 1u << 5, ///< Channels stored in separate planes.
+        };
+
         /**
- * @brief Returns the QuickTime FourCC for a PCM audio data type.
- *
- * @fixme The generic @c lpcm fallback is a silent data-format trap.
- *        QuickTime @c lpcm sample entries require a @c pcmC extension
- *        atom describing endianness + sample-is-float flags, which
- *        this writer does not currently emit. A file written with
- *        @c lpcm + missing @c pcmC is decoded by most players as
- *        big-endian signed integer of the declared bit depth — which
- *        is wrong for float or little-endian inputs. Callers that
- *        pass formats without a canonical FourCC should convert to a
- *        mapped type first (see @c pickStorageFormat() in
- *        mediaiotask_quicktime.cpp). See devplan/fixme.md entry
- *        "QuickTime: Little-Endian Float Audio Storage".
- */
-        FourCC pcmFourCCForDataType(AudioFormat::ID dt) {
+         * @brief Returns the canonical single-FourCC QuickTime sound
+         *        sample-entry type for the PCM formats that have one,
+         *        or a zero FourCC for formats that must use the generic
+         *        @c lpcm v2 sound description instead.
+         *
+         * The six mapped formats are the broadly-compatible classic
+         * QuickTime tags (sowt/twos/in24/in32/fl32/raw); everything
+         * else (little-endian wide integer, little-endian float,
+         * unsigned wide, 24-in-32 packings) is stored faithfully via
+         * the @c lpcm v2 entry whose @c formatSpecificFlags carry the
+         * endianness / signedness / float / alignment details.
+         */
+        FourCC pcmSimpleFourCC(AudioFormat::ID dt) {
                 switch (dt) {
                         case AudioFormat::PCMI_S16LE: return FourCC("sowt");
                         case AudioFormat::PCMI_S16BE: return FourCC("twos");
@@ -79,12 +89,26 @@ namespace {
                         case AudioFormat::PCMI_S32BE: return FourCC("in32");
                         case AudioFormat::PCMI_Float32BE: return FourCC("fl32");
                         case AudioFormat::PCMI_U8: return FourCC("raw ");
-                        default:
-                                // FIXME: lpcm fallback needs a pcmC extension atom to
-                                // carry endianness / float flag. Without it, players
-                                // interpret samples as big-endian integer.
-                                return FourCC("lpcm");
+                        default: return FourCC('\0', '\0', '\0', '\0');
                 }
+        }
+
+        /** @brief Computes the CoreAudio LPCM @c formatSpecificFlags for @p fmt. */
+        uint32_t lpcmFormatFlags(const AudioFormat &fmt) {
+                uint32_t flags = 0;
+                if (fmt.isFloat())
+                        flags |= kLpcmIsFloat;
+                else if (fmt.isSigned())
+                        flags |= kLpcmIsSignedInteger;
+                if (fmt.isBigEndian()) flags |= kLpcmIsBigEndian;
+                const size_t containerBits = fmt.bytesPerSample() * 8;
+                if (fmt.bitsPerSample() == containerBits)
+                        flags |= kLpcmIsPacked;
+                else if (fmt.name().contains("HB32"))
+                        // Sample occupies the high 3 bytes of a 32-bit word.
+                        flags |= kLpcmIsAlignedHigh;
+                if (fmt.isPlanar()) flags |= kLpcmIsNonInterleaved;
+                return flags;
         }
 
         // Rescales @p value from @p fromScale ticks-per-second to @p toScale,
@@ -245,21 +269,56 @@ namespace {
                         }
                         w.endBox(vse);
                 } else if (t.type == QuickTime::Audio) {
-                        FourCC codec = pcmFourCCForDataType(t.audioDesc.format().id());
-                        auto   ase = w.beginBox(codec);
+                        const AudioFormat &afmt = t.audioDesc.format();
+                        const FourCC       simple = pcmSimpleFourCC(afmt.id());
+                        const bool         useLpcmV2 = (simple.value() == 0);
+                        const FourCC       codec = useLpcmV2 ? FourCC("lpcm") : simple;
+                        auto               ase = w.beginBox(codec);
                         w.writeU32(0);
-                        w.writeU16(0);                 // reserved[6]
-                        w.writeU16(1);                 // data_reference_index
-                        w.writeU16(0);                 // version (v0)
-                        w.writeU16(0);                 // revision
-                        w.writeFourCC(FourCC("    ")); // vendor
-                        w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));
-                        w.writeU16(static_cast<uint16_t>(t.audioDesc.bytesPerSample() * 8));
-                        w.writeU16(0); // pre-defined / compression ID
-                        w.writeU16(0); // packet size
-                        // Sample rate as 16.16 fixed in the high 16 bits + 0 fraction.
-                        uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
-                        w.writeU32(srFixed);
+                        w.writeU16(0); // reserved[6]
+                        w.writeU16(1); // data_reference_index
+                        if (!useLpcmV2) {
+                                // QuickTime version-0 sound sample description — the
+                                // classic, broadly-compatible form for the six PCM
+                                // types that have a canonical single FourCC.
+                                w.writeU16(0);                 // version (v0)
+                                w.writeU16(0);                 // revision
+                                w.writeFourCC(FourCC("    ")); // vendor
+                                w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));
+                                w.writeU16(static_cast<uint16_t>(t.audioDesc.bytesPerSample() * 8));
+                                w.writeU16(0); // pre-defined / compression ID
+                                w.writeU16(0); // packet size
+                                // Sample rate as 16.16 fixed in the high 16 bits.
+                                uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
+                                w.writeU32(srFixed);
+                        } else {
+                                // QuickTime version-2 sound sample description (QTFF
+                                // "Sound Sample Descriptions V2").  Its
+                                // formatSpecificFlags carry the float / endianness /
+                                // signedness / alignment details, so every remaining
+                                // PCM permutation (LE wide integer, LE float, unsigned
+                                // wide, 24-in-32) round-trips faithfully.
+                                w.writeU16(2);                 // version 2
+                                w.writeU16(0);                 // revision
+                                w.writeFourCC(FourCC("    ")); // vendor (0)
+                                w.writeU16(3);                 // always 3
+                                w.writeU16(16);                // always 16
+                                w.writeU16(0xFFFE);            // always -2 (compression ID)
+                                w.writeU16(0);                 // always 0 (packet size)
+                                w.writeU32(0x00010000);        // always 65536
+                                w.writeU32(72);                // sizeOfStructOnly
+                                double   sr = static_cast<double>(t.audioDesc.sampleRate());
+                                uint64_t srBits = 0;
+                                std::memcpy(&srBits, &sr, sizeof(srBits));
+                                w.writeU64(srBits); // audioSampleRate (IEEE 754 double, BE)
+                                w.writeU32(static_cast<uint32_t>(t.audioDesc.channels())); // numAudioChannels
+                                w.writeU32(0x7F000000);                                    // always 0x7F000000
+                                w.writeU32(static_cast<uint32_t>(afmt.bitsPerSample()));    // constBitsPerChannel
+                                w.writeU32(lpcmFormatFlags(afmt));                          // formatSpecificFlags
+                                w.writeU32(static_cast<uint32_t>(t.audioDesc.bytesPerSample() *
+                                                                 t.audioDesc.channels())); // constBytesPerAudioPacket
+                                w.writeU32(1); // constLPCMFramesPerAudioPacket
+                        }
 
                         // 'chan' channel layout atom (CoreAudio Audio Channel Layout).
                         // Declares the exact channel ordering so demuxers don't have
@@ -296,6 +355,24 @@ namespace {
                         w.writeU8(t.tcFrameCount);
                         w.writeU8(0); // reserved
                         w.endBox(tcse);
+                } else if (t.type == QuickTime::AncData) {
+                        // SMPTE ST 436M VANC sample entry. Each sample is an ST
+                        // 436M ANC Frame Element Value; the sample description
+                        // needs only the base data sample-entry header.
+                        auto vancBox = w.beginBox(FourCC("vanc"));
+                        w.writeU32(0);
+                        w.writeU16(0); // reserved[6]
+                        w.writeU16(1); // data_reference_index
+                        w.endBox(vancBox);
+                } else if (t.type == QuickTime::Caption) {
+                        // CEA-608 closed-caption sample entry. Like ffmpeg's
+                        // MOV muxer, the c608 entry is just the base sample
+                        // entry header with no codec-specific child boxes.
+                        auto cc = w.beginBox(FourCC("c608"));
+                        w.writeU32(0);
+                        w.writeU16(0); // reserved[6]
+                        w.writeU16(1); // data_reference_index
+                        w.endBox(cc);
                 } else {
                         auto datBox = w.beginBox(FourCC("dat "));
                         w.writeU32(0);
@@ -366,6 +443,20 @@ Error QuickTimeWriter::open() {
                 ftyp.writeFourCC(FourCC("isom"));
                 ftyp.writeFourCC(FourCC("mp42"));
                 ftyp.writeFourCC(FourCC("qt  "));
+        } else if (_profile == QuickTime::ProfileMp4) {
+                // True MP4: advertise an ISO-BMFF major brand so a
+                // player routing by major_brand selects its MP4 demuxer
+                // rather than the MOV demuxer. 'isom' (ISO/IEC 14496-12)
+                // is the baseline; 'mp41'/'mp42' advertise MP4 v1/v2
+                // structures. The H.264/HEVC avc1/hvc1 sample entries are
+                // already ISO-conformant, so no codec-specific brand is
+                // required for playback.
+                ftyp.writeFourCC(FourCC("isom")); // major: ISO-BMFF
+                ftyp.writeU32(0x00000200);        // minor version
+                ftyp.writeFourCC(FourCC("isom"));
+                ftyp.writeFourCC(FourCC("iso2"));
+                ftyp.writeFourCC(FourCC("mp41"));
+                ftyp.writeFourCC(FourCC("mp42"));
         } else {
                 ftyp.writeFourCC(FourCC("qt  ")); // major: QuickTime
                 ftyp.writeU32(0x00000200);        // minor version
@@ -464,6 +555,39 @@ Error QuickTimeWriter::addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId
         t.timescale = static_cast<uint32_t>(desc.sampleRate());
         t.audioDesc = desc;
         t.pcmBytesPerSample = static_cast<uint32_t>(desc.bytesPerSampleStride());
+        _writeTracks.pushToBack(t);
+        if (outTrackId != nullptr) *outTrackId = t.id;
+        return Error::Ok;
+}
+
+Error QuickTimeWriter::addAncTrack(const AncDesc &desc, const FrameRate &frameRate, uint32_t *outTrackId) {
+        if (!_isOpen) return Error::NotOpen;
+        if (!frameRate.isValid()) return Error::NoFrameRate;
+
+        QuickTimeWriterTrack t;
+        t.id = allocateTrackId();
+        t.type = QuickTime::AncData;
+        t.frameRate = frameRate;
+        // One ANC sample per video frame: same timescale convention as the
+        // video track (numerator = timescale, denominator = per-sample duration).
+        t.timescale = frameRate.rational().numerator();
+        t.ancDesc = desc;
+        _writeTracks.pushToBack(t);
+        if (outTrackId != nullptr) *outTrackId = t.id;
+        return Error::Ok;
+}
+
+Error QuickTimeWriter::addCaptionTrack(const FrameRate &frameRate, uint32_t *outTrackId) {
+        if (!_isOpen) return Error::NotOpen;
+        if (!frameRate.isValid()) return Error::NoFrameRate;
+
+        QuickTimeWriterTrack t;
+        t.id = allocateTrackId();
+        t.type = QuickTime::Caption;
+        t.frameRate = frameRate;
+        // One caption sample per video frame: same timescale convention as
+        // the video track.
+        t.timescale = frameRate.rational().numerator();
         _writeTracks.pushToBack(t);
         if (outTrackId != nullptr) *outTrackId = t.id;
         return Error::Ok;
@@ -1073,6 +1197,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t, u
                 case QuickTime::Video: w.writeFourCC(kHdlrVide); break;
                 case QuickTime::Audio: w.writeFourCC(kHdlrSoun); break;
                 case QuickTime::TimecodeTrack: w.writeFourCC(kHdlrTmcd); break;
+                case QuickTime::Caption: w.writeFourCC(FourCC("clcp")); break;
                 default: w.writeFourCC(FourCC("data")); break;
         }
         w.writeU32(0);
@@ -1082,6 +1207,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t, u
         const char *hname = t.type == QuickTime::Video           ? "VideoHandler"
                             : t.type == QuickTime::Audio         ? "SoundHandler"
                             : t.type == QuickTime::TimecodeTrack ? "TimecodeHandler"
+                            : t.type == QuickTime::Caption       ? "ClosedCaptionHandler"
                                                                  : "DataHandler";
         w.writeBytes(hname, std::strlen(hname) + 1);
         w.endBox(hdlr);
@@ -1462,6 +1588,7 @@ void QuickTimeWriter::appendInitTrak(AtomWriter &w, const QuickTimeWriterTrack &
                 case QuickTime::Video: w.writeFourCC(kHdlrVide); break;
                 case QuickTime::Audio: w.writeFourCC(kHdlrSoun); break;
                 case QuickTime::TimecodeTrack: w.writeFourCC(kHdlrTmcd); break;
+                case QuickTime::Caption: w.writeFourCC(FourCC("clcp")); break;
                 default: w.writeFourCC(FourCC("data")); break;
         }
         w.writeU32(0);
@@ -1470,6 +1597,7 @@ void QuickTimeWriter::appendInitTrak(AtomWriter &w, const QuickTimeWriterTrack &
         const char *hname = t.type == QuickTime::Video           ? "VideoHandler"
                             : t.type == QuickTime::Audio         ? "SoundHandler"
                             : t.type == QuickTime::TimecodeTrack ? "TimecodeHandler"
+                            : t.type == QuickTime::Caption       ? "ClosedCaptionHandler"
                                                                  : "DataHandler";
         w.writeBytes(hname, std::strlen(hname) + 1);
         w.endBox(hdlr);

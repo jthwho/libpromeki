@@ -79,12 +79,40 @@ mediaplay -s TPG --frame-count 30 \
 - `src/proav/mediaiotask_videoencoder.cpp::executeCmd(Close)` —
   flush-and-strand bug B2 lives here.
 
+## Landed capabilities (2026-06-04)
+
+- **True MP4 brand mode.** `QuickTime::Profile{ProfileMov,ProfileMp4}`
+  selected from the sink filename extension by `QuickTimeMediaIO`;
+  `.mp4`/`.m4v`/`.m4a` now stamp an `isom`/`mp42` major brand,
+  `.mov`/`.qt` keep `qt  `. H.264/HEVC `avc1`/`hvc1` entries are ISO-
+  conformant in both.
+- **All flavors of PCM.** The QuickTime `lpcm` v2 sound description
+  (`formatSpecificFlags`) carries float / endianness / signedness /
+  alignment, so LE/BE 16/24/32-bit, faithful float, and 24-in-32
+  packings round-trip bit-exact. Planar maps to interleaved storage.
+  The six classic FourCCs (sowt/twos/in24/in32/fl32/raw) remain for
+  compatibility. Lossy Float32LE→S16LE promotion removed (was the
+  `quicktime-lpcm-float` fixme).
+- **SMPTE ST 436M VANC ancillary track.** `St436m` codec
+  (`st436m.{h,cpp}`, 10-bit pass-through per ST 436M-2006 §6.2) +
+  `TrackType::AncData` / `vanc` sample entry wired through writer/
+  reader/MediaIO. One sample per frame; `AncPayload` in / out.
+- **CEA-608 (`c608`) caption track.** `QtClosedCaption` codec
+  (`qtclosedcaption.{h,cpp}`, `cdat`/`cdt2` atoms, byte-exact to
+  ffmpeg's MOV muxer) + `TrackType::Caption` / `clcp` handler.
+  `QuickTimeMediaIO` emits a player-renderable `c608` track from the
+  frame's CEA-708 CDP ANC packets alongside the ST 436M track.
+  Verified end-to-end: ffmpeg decodes our `c608` track byte-exact.
+  There is **no standardized `c708` caption track** — Apple's QTFF
+  defines only `c608`, and CEA-708 DTVCC already rides the ST 436M
+  `vanc` track (full CDP). The consumer 708 path is in-stream A/53 SEI
+  (a VideoEncoder feature), not a container track — see
+  [`fixme/quicktime-cea708-caption-track.md`](../fixme/quicktime-cea708-caption-track.md).
+
 ## Other QuickTime open items
 
 Tracked in [`fixme/`](../fixme/):
 
-- [Little-endian float audio storage is lossy](../fixme/quicktime-lpcm-float.md)
-  (promoted to s16); needs proper `lpcm` + `pcmC` extension atom.
 - [`raw ` 24-bit RGB/BGR byte-order](../fixme/quicktime-raw-byteorder.md)
   player disagreement.
 - [Compressed-audio pull-rate drift](../fixme/quicktime-compressed-audio-drift.md)

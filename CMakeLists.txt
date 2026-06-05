@@ -3596,6 +3596,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/quicktime_atom.cpp
         src/proav/quicktime_reader.cpp
         src/proav/quicktime_writer.cpp
+        src/proav/st436m.cpp
+        src/proav/qtclosedcaption.cpp
         src/proav/mediadesc.cpp
         src/proav/sdivpid.cpp
         src/proav/sdiwireinference.cpp
@@ -4897,6 +4899,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/inspector_ancdata.cpp
             tests/unit/scc.cpp
             tests/unit/st291packet.cpp
+            tests/unit/st436m.cpp
+            tests/unit/qtclosedcaption.cpp
             tests/unit/subrip.cpp
             tests/unit/subtitleburnmediaio.cpp
             tests/unit/subtitlecuebuilder.cpp
