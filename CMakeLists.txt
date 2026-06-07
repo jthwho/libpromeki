@@ -2535,6 +2535,35 @@ if(PROMEKI_ENABLE_FFMPEG)
             message(STATUS "FFmpeg: no nasm/yasm found — building without x86 asm")
         endif()
 
+        # Translate the cross-build toolchain into FFmpeg's configure
+        # vocabulary.  Like x264, FFmpeg's configure is its own shell script
+        # (neither autotools nor CMake) and ignores the toolchain file, so
+        # without these it would probe the host gcc and emit host-arch
+        # objects that won't link into the cross-built parent.  Feed it
+        # --enable-cross-compile + the target arch / OS, the tool prefix for
+        # ar / nm / ranlib / strip (--cross-prefix), the explicit cross
+        # cc / cxx (the toolchain may carry a version suffix like -14 that
+        # --cross-prefix alone would miss — e.g. aarch64-linux-gnu-gcc-14),
+        # and the sysroot.  _xc_triplet is the bare target triplet computed
+        # once in the autotools cross block above (e.g. aarch64-linux-gnu).
+        set(_promeki_ffmpeg_cross "")
+        if(_PROMEKI_IS_CROSS_BUILD)
+            string(TOLOWER "${CMAKE_SYSTEM_NAME}" _promeki_ffmpeg_target_os)
+            list(APPEND _promeki_ffmpeg_cross
+                --enable-cross-compile
+                --arch=${CMAKE_SYSTEM_PROCESSOR}
+                --target-os=${_promeki_ffmpeg_target_os}
+                --cross-prefix=${_xc_triplet}-
+                --cc=${CMAKE_C_COMPILER}
+                --cxx=${CMAKE_CXX_COMPILER})
+            if(PROMEKI_SYSROOT)
+                list(APPEND _promeki_ffmpeg_cross --sysroot=${PROMEKI_SYSROOT})
+            endif()
+            message(STATUS "FFmpeg: cross-compiling for "
+                           "${CMAKE_SYSTEM_PROCESSOR}-${_promeki_ffmpeg_target_os} "
+                           "(--cross-prefix=${_xc_triplet}-)")
+        endif()
+
         ExternalProject_Add(
             ffmpeg-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/ffmpeg
@@ -2557,6 +2586,7 @@ if(PROMEKI_ENABLE_FFMPEG)
                     --extra-cflags=-I${PROMEKI_THIRDPARTY_PREFIX}/include
                     --extra-ldflags=-L${PROMEKI_THIRDPARTY_PREFIX}/lib
                     ${_promeki_ffmpeg_asm}
+                    ${_promeki_ffmpeg_cross}
                     ${_promeki_ffmpeg_extra_enables}
             BUILD_COMMAND make
             INSTALL_COMMAND make install
