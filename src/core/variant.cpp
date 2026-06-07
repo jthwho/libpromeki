@@ -178,6 +178,57 @@ SharedPtr<VariantBox> makeVariantBoxMove(const DataType::Data *typeData, void *v
         return SharedPtr<VariantBox>::takeOwnership(raw);
 }
 
+// JsonObject <-> T conversion bridges.  These live here (rather than inline
+// in variant.h) so that the JsonObject type only needs to be complete in
+// this TU.  The inline converter templates in variant.h call through these,
+// which keeps json.h out of every TU that merely instantiates
+// DataType::of<T>() for a JSON-capable type.
+DataType variantJsonObjectDataType() {
+        return DataType::byCppType(std::type_index(typeid(JsonObject)));
+}
+
+bool variantJsonToValue(const DataType &dt, const Variant &src, void *out, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const DataType jsonDt = variantJsonObjectDataType();
+        if (!jsonDt.isValid()) {
+                if (err != nullptr) *err = Error::Invalid;
+                return false;
+        }
+        const void *raw = src.payloadPtr();
+        if (raw == nullptr || src.type() != jsonDt.id()) {
+                if (err != nullptr) *err = Error::Invalid;
+                return false;
+        }
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.fromJson == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return false;
+        }
+        const JsonObject *p = static_cast<const JsonObject *>(raw);
+        Error             e;
+        if (!td->ops.fromJson(*p, out, &e)) {
+                if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
+                return false;
+        }
+        return true;
+}
+
+Variant variantValueToJson(const DataType &dt, const void *value, Error *err) {
+        if (err != nullptr) *err = Error::Ok;
+        const DataType::Data *td = dt.data();
+        if (td == nullptr || td->ops.toJson == nullptr) {
+                if (err != nullptr) *err = Error::Invalid;
+                return Variant();
+        }
+        Error      e;
+        JsonObject result = td->ops.toJson(value, &e);
+        if (e.isError()) {
+                if (err != nullptr) *err = e;
+                return Variant();
+        }
+        return Variant(std::move(result));
+}
+
 } // namespace Detail
 
 // ============================================================================

@@ -136,6 +136,20 @@ that history now lives in git. What remains here is the open work.
   [proav/ancdata.md](ancdata.md) Phase 5 for the ANC ingest
   contract.
 - **SDLPlayerTask** / **SDLPlayerWidget** — SDL display sink + widget.
+- **FfmpegMediaIO** (2026-06-07) — libavformat-backed fallback container backend.
+  Declared `isFallback()` so native backends win for formats they own (.mov/.mp4 →
+  QuickTime, .wav/.aiff → AudioFile, etc.). Auto-selected only for formats no native
+  backend claims (Matroska/WebM/AVI/FLV/Ogg/MPEG-PS/…); also reachable explicitly via
+  `MediaConfig::Type = "FFmpeg"`. Read: video → `CompressedVideoPayload` (h264/hevc
+  mp4toannexb BSF for length-prefixed sources), audio → `CompressedAudioPayload` / PCM.
+  Write: `FfmpegVideoCodec`/`FfmpegAudioCodec` config keys drive planner-spliced encoder.
+  Registered with `FfmpegFactory`. See open items below.
+- **FFmpegVideoCodec** / **FFmpegAudioCodec** backends (2026-06-07) — registered under
+  backend name `"FFmpeg"`, fallback weight. Decoders: H.264, HEVC, AV1, ProRes (all
+  variants). Encoders: ProRes 422 Proxy/LT/422/HQ + 4444/4444 XQ, MJPEG. H.264/HEVC
+  encode omitted (GPL-only; x264/NVENC own those slots). Audio: AC-3, MP3, FLAC (encode
+  and decode). Zero-copy Buffer/BufferView wrapping of AVBufferRef-backed frames/packets
+  via `ffmpegsupport.h`. `av_log` routed into promeki Logger via `ffmpegInstallLogBridge`.
 - **TPG, Inspector, Burn, SubtitleBurn, RawBitstream, FrameBridge,
   DebugMedia, Mjpeg, NullPacing** all carry full describe /
   proposeInput / proposeOutput coverage per the planner contract (see
@@ -144,6 +158,26 @@ that history now lives in git. What remains here is the open work.
   pattern generators can emit) with `Error::NotSupported`, so the planner
   inserts an audio SRC bridge rather than asking TPG to produce a format
   it can't synthesize.
+
+---
+
+## FfmpegMediaIO open items
+
+- [ ] **ProRes-in-Matroska write** is currently undecodable: FFmpeg's Matroska ProRes
+  path uses an `icpf`-atom frame-wrapping convention that `FfmpegMediaIO` does not
+  reproduce. ProRes round-trips natively through `QuickTimeMediaIO` (.mov). Fix requires
+  writing the raw ProRes frame in the standard Matroska/BMFF icpf wrapper.
+- [ ] **Compressed audio codecs needing out-of-band extradata** (AAC `AudioSpecificConfig`,
+  FLAC `STREAMINFO`, Opus `OpusHead`) are rejected at writer setup with
+  `Error::NotSupported`. The writer would need to carry the codec's `extradata` from the
+  encoder's output and stamp the stream's `AVCodecParameters::extradata` before writing the
+  file header. Route those formats through `QuickTimeMediaIO` in the meantime.
+- [ ] **Subtitle / chapter / metadata streams** not wired. Only the first video and first
+  audio stream are exposed. Multi-stream selection (`VideoTrack` / `AudioTrack` for >2
+  streams, subtitle tracks) is future work.
+- [ ] **Seek accuracy** — `av_seek_frame` seeks to the nearest keyframe; for codecs with
+  long GOP a caller expecting frame-exact seek after seek + several reads may see a small
+  discontinuity. Consider adding a post-seek discard phase (PTS-based) for non-intra codecs.
 
 ---
 

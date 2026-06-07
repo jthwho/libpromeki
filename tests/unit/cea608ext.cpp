@@ -7,6 +7,7 @@
  */
 
 #include <cstdint>
+#include <initializer_list>
 #include <doctest/doctest.h>
 #include <promeki/cea608ext.h>
 

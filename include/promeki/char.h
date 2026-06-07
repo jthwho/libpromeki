@@ -103,11 +103,34 @@ class Char {
 
                 /**
                  * @brief Decodes a single UTF-8 codepoint from the given buffer.
-                 * @param buf       Pointer to UTF-8 bytes.
+                 *
+                 * @warning @p buf must be NUL-terminated.  The decode stops at
+                 * the terminator, so a truncated trailing multibyte sequence
+                 * cannot read past it; prefer the bounded overload for
+                 * arbitrary (non-NUL-terminated) byte ranges.
+                 *
+                 * @param buf       Pointer to NUL-terminated UTF-8 bytes.
                  * @param bytesRead If non-null, set to the number of bytes consumed.
                  * @return The decoded character.
                  */
                 static Char fromUtf8(const char *buf, size_t *bytesRead = nullptr);
+
+                /**
+                 * @brief Bounds-checked UTF-8 decode of a single codepoint.
+                 *
+                 * Never reads more than @p avail bytes from @p buf.  A
+                 * multibyte sequence that would run past @p avail (truncated
+                 * input, or binary data that merely looks like a lead byte) is
+                 * treated as invalid: the result is U+FFFD and @p bytesRead is
+                 * 1 so the caller resynchronizes one byte at a time.  Use this
+                 * for arbitrary byte ranges that are not NUL-terminated.
+                 *
+                 * @param buf       Pointer to UTF-8 bytes.
+                 * @param avail     Number of valid bytes readable from @p buf.
+                 * @param bytesRead If non-null, set to the number of bytes consumed.
+                 * @return The decoded character, or U+FFFD on truncated/invalid input.
+                 */
+                static Char fromUtf8(const char *buf, size_t avail, size_t *bytesRead = nullptr);
 
                 bool operator==(Char o) const { return _cp == o._cp; }
                 bool operator==(char c) const { return _cp == static_cast<unsigned char>(c); }

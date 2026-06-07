@@ -75,6 +75,49 @@ namespace promekitest {
         void registerAudioCases();
 
         /**
+         * @brief Registers QuickTime compressed-audio roundtrip cases.
+         *
+         * One case per container-standardised audio codec (AAC, AC-3,
+         * MP3, FLAC, Opus).  Each runs TPG (UYVY video + audio) through a
+         * @ref QuickTimeMediaIO sink whose @c QuickTimeAudioCodec selects
+         * the codec — the planner splices an @ref AudioEncoder on the
+         * audio axis — then reads the @c .mov back through the source +
+         * auto-selected @ref AudioDecoder into @ref InspectorMediaIO, so
+         * the full encode → mux → demux → decode chain is validated for
+         * zero discontinuities.  A case Skips cleanly when the codec's
+         * encoder/decoder backend isn't built.
+         */
+        void registerQuickTimeAudioCases();
+
+        /**
+         * @brief Registers QuickTime compressed-video roundtrip cases.
+         *
+         * One case per ProRes variant the FFmpeg backend can encode +
+         * decode.  Each runs TPG (uncompressed UYVY video) through a
+         * @ref QuickTimeMediaIO sink whose @c QuickTimeVideoCodec selects
+         * the codec — the planner splices a @ref VideoEncoder (plus a CSC)
+         * on the video axis — then reads the @c .mov back through the
+         * source + auto-selected @ref VideoDecoder into
+         * @ref InspectorMediaIO, validating the full encode → mux → demux →
+         * decode chain for zero discontinuities.  A case Skips cleanly when
+         * the codec's encoder/decoder backend isn't built.
+         */
+        void registerQuickTimeVideoCases();
+
+        /**
+         * @brief Registers FFmpeg container compressed-video roundtrip cases.
+         *
+         * Mirrors @ref registerQuickTimeVideoCases but drives the generic
+         * FFmpeg container backend, writing into a Matroska (@c .mkv) file —
+         * a format no native backend owns, so the extension auto-routes to
+         * the fallback FFmpeg backend on both write and read.  One case per
+         * ProRes variant (deterministic FFmpeg encode + decode), validating
+         * the libavformat mux → demux container path end-to-end for zero
+         * discontinuities.  Skips cleanly when the codec backend isn't built.
+         */
+        void registerFfmpegVideoCases();
+
+        /**
          * @brief Registers RTP transport roundtrip cases.
          *
          * Each case runs two pipelines on the main event loop —

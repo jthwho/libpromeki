@@ -34,10 +34,11 @@ void MediaIOPortGroup::addPort(MediaIOPort *port) {
 }
 
 void MediaIOPortGroup::setRate(double r) {
-        // Reject non-finite rates outright.  In debug builds we trip
-        // an assert so the misuse surfaces immediately; in release we
-        // silently no-op rather than corrupt the accumulator.
-        assert(std::isfinite(r) && "MediaIOPortGroup::setRate rejects non-finite rate");
+        // Reject non-finite rates outright: silently no-op rather than
+        // corrupt the accumulator, leaving the previously-stored rate
+        // intact.  This is the contract callers rely on, so it must hold
+        // identically in debug and release — no assert (an assert would
+        // abort the very behaviour the "ignores non-finite" tests pin).
         if (!std::isfinite(r)) return;
 
         if (r == _rate) return;

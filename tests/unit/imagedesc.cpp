@@ -8,6 +8,9 @@
 
 #include <doctest/doctest.h>
 #include <promeki/imagedesc.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/datastream.h>
 #include <promeki/sdpsession.h>
 
 using namespace promeki;
@@ -80,6 +83,120 @@ TEST_CASE("ImageDesc_SetLineAlign") {
 
         desc.setLineAlign(16);
         CHECK(desc.lineAlign() == 16);
+}
+
+TEST_CASE("ImageDesc_PerPlaneLinePadAlign") {
+        // The scalar setters broadcast to every plane; the per-plane setters
+        // address a single plane.  Out-of-range indices read the defaults.
+        ImageDesc desc(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709);
+
+        desc.setLinePad(8); // broadcast
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) CHECK(desc.linePad(p) == 8);
+        CHECK(desc.linePad() == 8); // scalar getter == plane 0
+
+        desc.setLinePad(1, 32); // just the U plane
+        CHECK(desc.linePad(0) == 8);
+        CHECK(desc.linePad(1) == 32);
+        CHECK(desc.linePad(2) == 8);
+        CHECK(desc.linePad(99) == 0); // out of range -> default
+
+        desc.setLineAlign(64); // broadcast
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) CHECK(desc.lineAlign(p) == 64);
+        desc.setLineAlign(2, 1);
+        CHECK(desc.lineAlign(0) == 64);
+        CHECK(desc.lineAlign(2) == 1);
+        CHECK(desc.lineAlign(99) == 1); // out of range -> default
+}
+
+TEST_CASE("ImageDesc_PerPlaneStrideExpressesArbitraryLinesize") {
+        // The whole point of per-plane linePad: model an externally-strided
+        // layout (e.g. FFmpeg linesize) exactly, where each plane pads to a
+        // different byte count.  With lineAlign 1, linePad = target - tight.
+        const PixelFormat pf(PixelFormat::YUV8_420_Planar_Rec709);
+        ImageDesc         desc(1920, 1080, pf);
+        const size_t      tightY = pf.lineStride(0, desc);
+        const size_t      tightU = pf.lineStride(1, desc);
+        CHECK(tightY == 1920);
+        CHECK(tightU == 960);
+
+        // Target an FFmpeg-style padded linesize: Y=2048, U=V=1024.
+        desc.setLineAlign(1);
+        desc.setLinePad(0, 2048 - tightY);
+        desc.setLinePad(1, 1024 - tightU);
+        desc.setLinePad(2, 1024 - tightU);
+        CHECK(pf.lineStride(0, desc) == 2048);
+        CHECK(pf.lineStride(1, desc) == 1024);
+        CHECK(pf.lineStride(2, desc) == 1024);
+
+        // planeSize follows the per-plane stride (stride * rows).
+        CHECK(pf.planeSize(0, desc) == 2048 * 1080);
+        CHECK(pf.planeSize(1, desc) == 1024 * 540);
+}
+
+TEST_CASE("ImageDesc_LineFlipAndSignedStride") {
+        const PixelFormat pf(PixelFormat::RGBA8_sRGB);
+        ImageDesc         desc(64, 48, pf);
+        const size_t      mag = pf.lineStride(0, desc);
+        CHECK(mag == 64 * 4);
+
+        // Default: not flipped, signed == +magnitude.
+        CHECK(!desc.lineFlip(0));
+        CHECK(pf.signedLineStride(0, desc) == static_cast<int64_t>(mag));
+
+        // Flip plane 0: magnitude unchanged, signed stride goes negative.
+        desc.setLineFlip(0, true);
+        CHECK(desc.lineFlip(0));
+        CHECK(pf.lineStride(0, desc) == mag);
+        CHECK(pf.signedLineStride(0, desc) == -static_cast<int64_t>(mag));
+
+        // Broadcast flip sets/clears every plane.
+        desc.setLineFlip(false);
+        CHECK(!desc.lineFlip(0));
+        desc.setLineFlip(true);
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) CHECK(desc.lineFlip(p));
+}
+
+TEST_CASE("ImageDesc_PerPlaneStrideSerializationRoundtrip") {
+        ImageDesc desc(1920, 1080, PixelFormat::YUV8_420_Planar_Rec709);
+        desc.setLineAlign(1);
+        desc.setLinePad(0, 128);
+        desc.setLinePad(1, 64);
+        desc.setLinePad(2, 64);
+        desc.setLineAlign(2, 32);
+        desc.setLineFlip(0, true);
+        desc.setVideoScanMode(VideoScanMode::InterlacedOddFirst);
+
+        Buffer         buf(4096);
+        BufferIODevice dev(&buf);
+        REQUIRE(dev.open(IODevice::ReadWrite).isOk());
+
+        DataStream::Status writeStatus = DataStream::Ok;
+        {
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << desc;
+                writeStatus = ws.status();
+        }
+        REQUIRE(writeStatus == DataStream::Ok);
+
+        dev.seek(0);
+
+        ImageDesc          rt;
+        DataStream::Status readStatus = DataStream::Ok;
+        {
+                DataStream rs = DataStream::createReader(&dev);
+                rs >> rt;
+                readStatus = rs.status();
+        }
+        REQUIRE(readStatus == DataStream::Ok);
+
+        CHECK(rt == desc);
+        CHECK(rt.linePad(0) == 128);
+        CHECK(rt.linePad(1) == 64);
+        CHECK(rt.linePad(2) == 64);
+        CHECK(rt.lineAlign(2) == 32);
+        CHECK(rt.lineFlip(0));
+        CHECK(!rt.lineFlip(1));
+        CHECK(rt.videoScanMode() == VideoScanMode::InterlacedOddFirst);
 }
 
 TEST_CASE("ImageDesc_SetVideoScanMode") {

@@ -62,6 +62,52 @@ devplan/
 
 ## Current focus
 
+24. **FFmpeg vendored backend + ImageDesc per-plane stride (SHIPPED 2026-06-07)** —
+   Full FFmpeg (n8.1.1, LGPL build) vendored as a submodule at `thirdparty/ffmpeg`.
+   `PROMEKI_ENABLE_FFMPEG` CMake option (ON by default when PROAV is enabled);
+   `PROMEKI_USE_SYSTEM_FFMPEG` for system libav* fallback.  Three backend layers:
+   *Audio codecs:* `FfmpegAudioCodec` backend ("FFmpeg" name) registers encoders and
+   decoders for AC-3, MP3, and FLAC. AC-3/MP3 are lossy (round-trip within 10% RMS on
+   48 kHz stereo); FLAC is lossless.  Shared plumbing (`ffmpegsupport.h/cpp`): `ffmpegInstallLogBridge`
+   routes `av_log` into the promeki `Logger` (idempotent, installed by every backend's static
+   registrar), `ffmpegErrorString` formats `AVERROR` codes, `ffmpegWrapBuffer` /
+   `ffmpegWrapPacket` / `ffmpegWrapFramePlanes` provide zero-copy Buffer / BufferView
+   wrapping of AVBufferRef-backed decoded frames and encoded packets.
+   *Video codecs:* `FfmpegVideoCodec` backend registers decoders for H.264, HEVC, AV1,
+   ProRes (all profiles); encoders for all six ProRes variants (422 Proxy/LT/422/HQ,
+   4444, 4444 XQ) and MJPEG. H.264/HEVC encode deliberately omitted (GPL-only; x264/NVENC
+   own those slots). Fallback weight (lower than x264/NVENC/Turbo) so auto-dispatch prefers
+   native backends. ProRes `codec_tag` stamped on encode so the decoder recovers the
+   correct variant depth (4444/XQ → 12-bit 4:4:4). FFmpeg decode path emits per-plane
+   per-plane `linesize`-accurate `ImageDesc` (leverages the new per-plane stride).
+   H.264 from x264 → FFmpeg decoder round-trip verified (in-band SPS/PPS via `RepeatHeaders`).
+   `CodecThreads` MediaConfig key wired to `thread_count`.
+   *Container backend:* `FfmpegMediaIO` / `FfmpegFactory` — libavformat-backed fallback
+   MediaIO backend. Declared `isFallback()` so native backends (QuickTime, WAV/AIFF,
+   ImageFile, MPEG-TS) always win for the formats they own. Auto-selected only for formats
+   no native backend claims (Matroska/WebM, AVI, FLV, Ogg, MPEG-PS, …). Reachable
+   explicitly by name (`MediaConfig::Type = "FFmpeg"`). Reads: video → CompressedVideoPayload,
+   audio → CompressedAudioPayload (PCM → PcmAudioPayload); h264/hevc_mp4toannexb BSF
+   applied for length-prefixed sources. Writes: planner splices encoder for uncompressed
+   streams per `FfmpegVideoCodec`/`FfmpegAudioCodec` config; compressed streams muxed
+   as-is. Known open: ProRes-in-Matroska write produces undecodable output (icpf-atom
+   convention not reproduced); audio codecs needing out-of-band extradata (AAC, FLAC
+   Opus) rejected at write-setup with `Error::NotSupported` (use QuickTime for those).
+   *ImageDesc per-plane stride:* `MaxPlanes = 4` static constant. `linePad`/`lineAlign`/
+   `lineFlip` now stored per-plane as `Array<uint32_t, MaxPlanes>`; scalar getters/setters
+   broadcast to all planes; per-plane overloads address a single plane. `PixelFormat::lineStride`
+   / `signedLineStride` / `planeSize` use per-plane values. `ImageDesc` serialization
+   (DataStream) extended to version 2 for the new per-plane arrays. Enables zero-copy
+   ingest of externally-strided memory (FFmpeg `linesize`, V4L2 `bytesperline`,
+   CUDA/GPU row pitch) where each plane carries a different amount of trailing padding.
+   *ColorModel:* `ColorModel::fromH273(primaries, transfer, matrix)` added — inverse of
+   `toH273()`, resolves an H.273 codepoint triplet to the closest well-known `ColorModel::ID`.
+   Used by the FFmpeg video decoder to tag decoded frames with correct colorimetry.
+   Tests: `tests/unit/ffmpegaudiocodec.cpp` (7 cases), `tests/unit/ffmpegvideocodec.cpp`
+   (8 cases + conditional x264→FFmpeg fallback), `tests/unit/ffmpegmediaio.cpp` (4 cases),
+   4 new ImageDesc per-plane stride cases, 1 new ColorModel::fromH273 case.
+   Open items tracked in [proav/backends.md](proav/backends.md).
+
 23. **Compressed-audio pipeline pacing + AAC write + AudioDecoder format coercion (SHIPPED 2026-06-05)** —
    Fixes half-speed / octave-low audio from AAC-in-MP4 through the SDL pipeline.
    `QuickTimeMediaIO` read loop now delivers enough AAC access units per video frame to keep
@@ -357,7 +403,7 @@ devplan/
 | 3C    | AV-over-IP (RTP / SDP / multicast)   | mostly complete; PtpClock pending   |
 | 3E    | mDNS / DNS-SD                        | COMPLETE (see network/mdns.md; NSEC, per-iface sockets, Windows pktinfo deferred) |
 | 3D    | SRT (Secure Reliable Transport)      | shipped; SrtMediaIO backend deferred |
-| 4     | ProAV — MediaIO framework + backends | framework + 18 backends shipped;<br>NTV2 scaffolding landed; backend pending; follow-ups in `proav/` |
+| 4     | ProAV — MediaIO framework + backends | framework + 19 backends shipped (incl. FFmpeg 2026-06-07);<br>NTV2 scaffolding landed; backend pending; follow-ups in `proav/` |
 | 4A    | MediaPipeline                        | shipped; docs + tests pending       |
 | 4M    | MediaPipelinePlanner                 | shipped (single-hop + 2-hop codec)  |
 | 5     | TUI widgets                          | unstarted                           |

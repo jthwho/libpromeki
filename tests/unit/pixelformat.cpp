@@ -6,9 +6,13 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/pixelformat.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/colormodel.h>
+#include <promeki/datastream.h>
 #include <promeki/imagedesc.h>
 #include <promeki/metadata.h>
+#include <promeki/pixelformat.h>
 
 using namespace promeki;
 
@@ -1551,4 +1555,86 @@ TEST_CASE("PixelFormat::vuiColorSignal computes the VUI flags") {
                 auto s = PixelFormat::vuiColorSignal({2, 2, 2, 0});
                 CHECK_FALSE(s.signalTypePresent);
         }
+}
+
+// ============================================================================
+// Colorimetry variants — withColorModel + nameWithColorModel
+// ============================================================================
+
+TEST_CASE("PixelFormat: nameWithColorModel swaps the colorimetry token") {
+        // Replace a trailing token.
+        CHECK(PixelFormat::nameWithColorModel(String("YUV12_444_Planar_LE_Rec709"), ColorModel::YCbCr_Rec709,
+                                              ColorModel::YCbCr_Rec2020_PQ) ==
+              String("YUV12_444_Planar_LE_Rec2020_PQ"));
+        CHECK(PixelFormat::nameWithColorModel(String("YUV10_422_Planar_LE_Rec709"), ColorModel::YCbCr_Rec709,
+                                              ColorModel::YCbCr_Rec601) == String("YUV10_422_Planar_LE_Rec601"));
+        // Append when the base carries no recognised token.
+        CHECK(PixelFormat::nameWithColorModel(String("Custom"), ColorModel::Invalid, ColorModel::YCbCr_Rec2020) ==
+              String("Custom_Rec2020"));
+}
+
+TEST_CASE("PixelFormat: withColorModel reuses well-known catalog variants") {
+        PixelFormat base(PixelFormat::YUV12_444_Planar_LE_Rec709);
+        PixelFormat pq = PixelFormat::withColorModel(base, ColorModel::YCbCr_Rec2020_PQ);
+        // Lands on the pre-registered well-known variant (stable ID), not a
+        // freshly-minted runtime one.
+        CHECK(pq.id() == PixelFormat::YUV12_444_Planar_LE_Rec2020_PQ);
+        CHECK(pq.id() < PixelFormat::UserDefined);
+        CHECK(pq.colorModel().id() == ColorModel::YCbCr_Rec2020_PQ);
+        CHECK(pq.memLayout().id() == base.memLayout().id());
+        // Same ColorModel as the base is a no-op.
+        CHECK(PixelFormat::withColorModel(base, ColorModel::YCbCr_Rec709).id() == base.id());
+}
+
+TEST_CASE("PixelFormat: withColorModel registers a runtime variant on demand") {
+        // No catalog variant exists for 8-bit 4:2:0 planar Rec.2020.
+        PixelFormat base(PixelFormat::YUV8_420_Planar_Rec709);
+        PixelFormat r = PixelFormat::withColorModel(base, ColorModel::YCbCr_Rec2020);
+        CHECK(r.isValid());
+        CHECK(r.id() >= PixelFormat::UserDefined); // runtime-registered
+        CHECK(r.colorModel().id() == ColorModel::YCbCr_Rec2020);
+        CHECK(r.memLayout().id() == base.memLayout().id());
+        CHECK(r.name() == String("YUV8_420_Planar_Rec2020"));
+        // Idempotent: a second request finds the just-registered one.
+        CHECK(PixelFormat::withColorModel(base, ColorModel::YCbCr_Rec2020).id() == r.id());
+}
+
+// ============================================================================
+// DataStream v2 — well-known by ID, runtime by full Data
+// ============================================================================
+
+namespace {
+        PixelFormat dataStreamRoundTrip(const PixelFormat &in) {
+                Buffer         buf(8192);
+                BufferIODevice dev(&buf);
+                dev.open(IODevice::ReadWrite);
+                DataStream ws = DataStream::createWriter(&dev);
+                ws << in;
+                dev.seek(0);
+                DataStream  rs = DataStream::createReader(&dev);
+                PixelFormat out;
+                rs >> out;
+                return out;
+        }
+} // namespace
+
+TEST_CASE("PixelFormat: DataStream round-trips well-known formats by ID") {
+        PixelFormat in(PixelFormat::YUV12_444_Planar_LE_Rec2020_PQ);
+        PixelFormat out = dataStreamRoundTrip(in);
+        CHECK(out.id() == in.id());
+        CHECK(out.colorModel().id() == in.colorModel().id());
+}
+
+TEST_CASE("PixelFormat: DataStream round-trips runtime formats by full Data") {
+        // Mint a runtime variant, serialize, and confirm the reconstruction
+        // carries the same identity (layout + ColorModel + name).
+        PixelFormat base(PixelFormat::YUV8_422_Planar_Rec709);
+        PixelFormat runtime = PixelFormat::withColorModel(base, ColorModel::YCbCr_Rec2020_HLG);
+        REQUIRE(runtime.id() >= PixelFormat::UserDefined);
+        PixelFormat out = dataStreamRoundTrip(runtime);
+        CHECK(out.isValid());
+        CHECK(out.memLayout().id() == runtime.memLayout().id());
+        CHECK(out.colorModel().id() == runtime.colorModel().id());
+        CHECK(out.name() == runtime.name());
+        CHECK(out.isCompressed() == runtime.isCompressed());
 }

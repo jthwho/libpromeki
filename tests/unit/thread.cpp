@@ -113,7 +113,7 @@ TEST_CASE("Thread: object created without EventLoop has nullptr") {
 TEST_CASE("Thread: cross-thread signal/slot delivery") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
 
         Thread t;
         t.start();
@@ -153,7 +153,7 @@ TEST_CASE("Thread: cross-thread signal/slot delivery") {
 TEST_CASE("Thread: moveToThread changes affinity") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread   *mainThread = Thread::adoptCurrentThread();
         Thread    t;
         t.start();
@@ -189,7 +189,7 @@ TEST_CASE("Thread: moveToThread changes affinity") {
 TEST_CASE("Thread: moveToThread moves children recursively") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread   *mainThread = Thread::adoptCurrentThread();
         Thread    t;
         t.start();
@@ -269,7 +269,7 @@ TEST_CASE("Thread: timed wait returns Ok when thread finishes in time") {
 TEST_CASE("Thread: cross-thread signal delivers correct signalSender") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -666,7 +666,7 @@ TEST_CASE("Thread: setAffinity returns Invalid when not running") {
 TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -902,7 +902,7 @@ TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
 TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         TestOne   owner;
         CHECK(owner.eventLoop() == &mainLoop);
 
@@ -930,7 +930,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): same-thread direct dispatch")
 TEST_CASE("Signal::connect(Function, ObjectBase*): cross-thread auto-marshal") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread    worker;
         worker.start();
 
@@ -1005,7 +1005,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): serializes concurrent emitter
         // that loop — no interleaving, no missed calls.
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread    coordinator;
         coordinator.start();
 
@@ -1082,7 +1082,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
         // call the @c void*-owner overload with @c nullptr explicitly.
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Signal<int> sig;
         CHECK_THROWS_AS(sig.connect([](int) {}, static_cast<ObjectBase *>(nullptr)), std::runtime_error);
 }
@@ -1100,7 +1100,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase*): null owner asserts") {
 TEST_CASE("Signal::connect(Function, ObjectBase): auto-disconnect on receiver destruction") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         TestOne   sender;
         std::atomic<int> calls{0};
 
@@ -1123,7 +1123,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): auto-disconnect on receiver de
 TEST_CASE("Signal::connect(Function, ObjectBase): cross-thread queued callable drops after receiver destruction") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         Thread    t;
         t.start();
 
@@ -1250,7 +1250,7 @@ TEST_CASE("Signal::connect(Function, ObjectBase): same-thread emit drops after r
         // empty after destruction, by emitting and counting.
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &mainLoop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &mainLoop = *Application::mainEventLoop();
         TestOne   sender;
         std::atomic<int> calls{0};
         {

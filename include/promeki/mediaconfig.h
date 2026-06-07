@@ -1335,6 +1335,21 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setMin(int32_t(0))
                                            .setDescription("Peak bitrate in kbit/s (VBR only; 0 = uncapped)."));
 
+                /// @brief int — maximum worker threads a software codec may
+                /// use.  @c 0 (default) means "auto" — let the codec pick a
+                /// thread count from the host's core count (FFmpeg
+                /// @c thread_count=0, x264 @c i_threads=0).  A positive value
+                /// caps the per-session thread count, which is the lever for
+                /// avoiding core oversubscription when several encode/decode
+                /// sessions run in parallel.  Ignored by hardware backends
+                /// (NVENC / NVDEC) and by single-threaded codecs.
+                PROMEKI_DECLARE_ID(CodecThreads,
+                                   VariantSpec()
+                                           .setType(DataTypeInt32)
+                                           .setDefault(int32_t(0))
+                                           .setMin(int32_t(0))
+                                           .setDescription("Max software-codec worker threads (0 = auto)."));
+
                 /// @brief Enum @ref RateControlMode — rate-control mode.
                 /// Codec default: VBR.
                 PROMEKI_DECLARE_ID(VideoRcMode, VariantSpec()
@@ -1948,6 +1963,31 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                                                .setDefault(false)
                                                                .setDescription("Call fdatasync after each flush."));
 
+                /// @brief Enum @ref AudioCodec — preferred audio codec for the
+                ///        QuickTime writer when offered uncompressed audio.
+                ///        Default @c PCM (write an lpcm track, the historical
+                ///        behaviour).  Set to AAC / AC3 / MP3 / FLAC / Opus to
+                ///        have the planner splice an AudioEncoder and the muxer
+                ///        write the matching compressed sample entry.
+                PROMEKI_DECLARE_ID(QuickTimeAudioCodec,
+                                   VariantSpec()
+                                           .setType(DataTypeAudioCodec)
+                                           .setDefault(promeki::AudioCodec(promeki::AudioCodec::PCM))
+                                           .setDescription("QuickTime preferred audio codec (PCM = uncompressed)."));
+
+                /// @brief Enum @ref VideoCodec — preferred video codec for the
+                ///        QuickTime writer when offered uncompressed video.
+                ///        Default @c Invalid (passthrough: store whatever video
+                ///        the source offers — uncompressed, or an already-
+                ///        compressed bitstream).  Set to H264 / HEVC / ProRes_*
+                ///        to have the planner splice a VideoEncoder and the muxer
+                ///        write the matching sample entry (avc1 / hvc1 / …).
+                PROMEKI_DECLARE_ID(QuickTimeVideoCodec,
+                                   VariantSpec()
+                                           .setType(DataTypeVideoCodec)
+                                           .setDefault(promeki::VideoCodec())
+                                           .setDescription("QuickTime preferred video codec (Invalid = passthrough)."));
+
                 /// @brief Enum QuickTimeCaptionReadPolicy — how a c608 caption
                 ///        track is surfaced into the ancillary-data model on read.
                 PROMEKI_DECLARE_ID(QuickTimeCaptionReadPolicy,
@@ -1956,6 +1996,45 @@ class MediaConfig : public VariantDatabase<"MediaConfig"> {
                                            .setDefault(promeki::QuickTimeCaptionReadPolicy::Auto)
                                            .setEnumType(promeki::QuickTimeCaptionReadPolicy::Type)
                                            .setDescription("How a c608 caption track feeds the ANC model on read."));
+
+                // ============================================================
+                // FFmpeg container backend (FfmpegMediaIO)
+                // ============================================================
+
+                /// @brief String — explicit libavformat muxer name for the
+                ///        FFmpeg writer (e.g. "matroska", "webm", "avi",
+                ///        "mov").  Empty (default) lets libavformat pick the
+                ///        muxer from the output filename extension.
+                PROMEKI_DECLARE_ID(FfmpegFormat,
+                                   VariantSpec()
+                                           .setType(DataTypeString)
+                                           .setDefault(String())
+                                           .setDescription("FFmpeg muxer name (empty = derive from filename)."));
+
+                /// @brief Enum @ref VideoCodec — preferred video codec for the
+                ///        FFmpeg writer when offered uncompressed video.
+                ///        Default @c Invalid (passthrough: mux whatever
+                ///        compressed video the source offers).  Set to
+                ///        H264 / HEVC / ProRes_* / … to have the planner splice
+                ///        a VideoEncoder and the muxer write the matching
+                ///        stream.
+                PROMEKI_DECLARE_ID(FfmpegVideoCodec,
+                                   VariantSpec()
+                                           .setType(DataTypeVideoCodec)
+                                           .setDefault(promeki::VideoCodec())
+                                           .setDescription("FFmpeg preferred video codec (Invalid = passthrough)."));
+
+                /// @brief Enum @ref AudioCodec — preferred audio codec for the
+                ///        FFmpeg writer when offered uncompressed audio.
+                ///        Default @c PCM (mux an uncompressed PCM stream).
+                ///        Set to AAC / AC3 / MP3 / FLAC / Opus to have the
+                ///        planner splice an AudioEncoder and the muxer write
+                ///        the matching compressed stream.
+                PROMEKI_DECLARE_ID(FfmpegAudioCodec,
+                                   VariantSpec()
+                                           .setType(DataTypeAudioCodec)
+                                           .setDefault(promeki::AudioCodec(promeki::AudioCodec::PCM))
+                                           .setDescription("FFmpeg preferred audio codec (PCM = uncompressed)."));
 
                 // ============================================================
                 // MPEG-TS (MpegTsFileMediaIO and any future TS-shaped sink/source)

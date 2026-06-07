@@ -136,6 +136,26 @@ class MediaIOFactory {
                 /** @brief True if the backend can act as a transform (source + sink). */
                 virtual bool canBeTransform() const { return false; }
 
+                /**
+                 * @brief True if this backend is a last-resort fallback.
+                 * @ingroup mediaio_user
+                 *
+                 * Fallback factories are only auto-selected by the
+                 * filename / content dispatchers when @em no
+                 * non-fallback factory claims the resource — they
+                 * never out-race a native backend regardless of
+                 * static-init registration order.  A fallback backend
+                 * is still always reachable explicitly by name (via
+                 * @c MediaConfig::Type) or by URL scheme.
+                 *
+                 * This exists so a broad, format-agnostic backend (the
+                 * FFmpeg container backend) can advertise a wide
+                 * extension list and a catch-all content probe without
+                 * shadowing the purpose-built native backends for the
+                 * formats they own.  Default returns @c false.
+                 */
+                virtual bool isFallback() const { return false; }
+
                 // ---- Configuration ----
 
                 /**

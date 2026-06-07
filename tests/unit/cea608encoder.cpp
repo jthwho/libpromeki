@@ -14,6 +14,7 @@
 #include <promeki/cea708cdp.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
+#include <promeki/metadata.h>
 #include <promeki/subtitle.h>
 #include <promeki/timestamp.h>
 

@@ -90,7 +90,7 @@ namespace {
 TEST_CASE("NetworkInterfaceMonitor constructs idle and starts/stops cleanly") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         NetworkInterfaceMonitor monitor;
         CHECK_FALSE(monitor.isRunning());
         Error err = monitor.start();
@@ -103,7 +103,7 @@ TEST_CASE("NetworkInterfaceMonitor constructs idle and starts/stops cleanly") {
 TEST_CASE("NetworkInterfaceMonitor priming fires no signals") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         NetworkInterfaceMonitor monitor;
         std::atomic<int>        addedCount{0};
         std::atomic<int>        changedCount{0};
@@ -122,7 +122,7 @@ TEST_CASE("NetworkInterfaceMonitor priming fires no signals") {
 TEST_CASE("NetworkInterfaceMonitor testForceRescan on a new FakeBackend fires interfaceAdded") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         NetworkInterfaceMonitor monitor;
         REQUIRE(monitor.start().isOk());
 
@@ -157,7 +157,7 @@ TEST_CASE("NetworkInterfaceMonitor testForceRescan on a new FakeBackend fires in
 TEST_CASE("NetworkInterfaceMonitor address-set diff fires per-address signals") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         NetworkInterfaceMonitor monitor;
         REQUIRE(monitor.start().isOk());
 
@@ -213,7 +213,7 @@ TEST_CASE("NetworkInterfaceMonitor address-set diff fires per-address signals") 
 TEST_CASE("NetworkInterfaceMonitor handle delivered through signal compares equal to live lookup") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         NetworkInterfaceMonitor monitor;
         REQUIRE(monitor.start().isOk());
 
@@ -242,7 +242,7 @@ TEST_CASE("NetworkInterfaceMonitor handle delivered through signal compares equa
 TEST_CASE("NetworkInterfaceMonitor anyRunning returns the active monitor") {
         char       *argv[] = {(char *)"test"};
         Application app(1, argv);
-        EventLoop  &loop = *Application::mainEventLoop();
+        [[maybe_unused]] EventLoop &loop = *Application::mainEventLoop();
         // Capture the existing global state so we don't break other
         // tests that may have registered monitors first (none today).
         NetworkInterfaceMonitor *before = NetworkInterfaceMonitor::anyRunning();

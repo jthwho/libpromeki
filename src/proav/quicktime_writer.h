@@ -35,8 +35,9 @@ struct QuickTimeWriterTrack {
                 uint32_t             timescale = 0; ///< mdia.mdhd timescale.
                 FrameRate            frameRate;
                 // Video specifics:
-                PixelFormat pixelFormat;
-                Size2Du32   size;
+                PixelFormat   pixelFormat;
+                Size2Du32     size;
+                VideoScanMode scanMode; ///< Raster scan mode for the @c fiel box (default Unknown → progressive).
                 /**
          * @brief Codec-specific sample-description extension payload
          *        (e.g. serialized @c avcC or @c hvcC record).
@@ -140,6 +141,7 @@ class QuickTimeWriter : public QuickTime::Impl {
                                        uint32_t *outTrackId) override;
                 Error writeSample(uint32_t trackId, const QuickTime::Sample &sample) override;
                 void  setContainerMetadata(const Metadata &meta) override;
+                void  setVideoScanMode(VideoScanMode mode) override { _videoScanMode = mode; }
                 Error flush() override;
                 Error finalize() override;
 
@@ -197,6 +199,7 @@ class QuickTimeWriter : public QuickTime::Impl {
                 List<QuickTimeWriterTrack> _writeTracks;
                 Metadata                   _writerMetadata;
                 uint32_t                   _nextTrackId = 1;
+                VideoScanMode              _videoScanMode; ///< Applied to each video track's fiel box.
 
                 // Fragmented-mode state. Sample bytes are accumulated in
                 // per-track @c QuickTimeWriterTrack::fragPayload buffers

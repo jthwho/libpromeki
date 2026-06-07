@@ -243,10 +243,24 @@ Error AudioDecoderMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
         // internally on submitFrame.
         CompressedAudioPayload::Ptr probe = AudioDecoder::selectInputPayload(frame);
         if (!probe.isValid() || !probe->isValid()) {
+                // No compressed audio on this frame.  In an A/V mux the audio
+                // access units need not align 1:1 with video frames, so a frame
+                // may legitimately carry only video / ANC essence (or none at
+                // the audio-track tail).  Pass such frames through untouched so
+                // the video / ANC timeline survives; only a frame carrying no
+                // essence at all is a genuine pipeline error.
+                if (!frame.videoPayloads().isEmpty() || !frame.ancPayloads().isEmpty()) {
+                        _outputQueue.pushToBack(coerceOutputFormat(frame));
+                        _framesOut++;
+                        _frameCount++;
+                        cmd.currentFrame = toFrameNumber(_frameCount);
+                        cmd.frameCount = _frameCount;
+                        return Error::Ok;
+                }
                 promekiErr("AudioDecoderMediaIO: write frame carries no "
-                           "CompressedAudioPayload; upstream must emit a "
-                           "compressed audio payload for every frame that "
-                           "needs decoding");
+                           "CompressedAudioPayload and no other essence; "
+                           "upstream must emit a compressed audio payload for "
+                           "every audio-bearing frame that needs decoding");
                 return Error::InvalidArgument;
         }
 

@@ -22,6 +22,7 @@
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/pixelformat.h>
+#include <promeki/enums_video.h>
 #include <promeki/audiodesc.h>
 #include <promeki/ancdesc.h>
 #include <promeki/mediadesc.h>
@@ -175,6 +176,8 @@ class QuickTime {
                                 const PixelFormat &pixelFormat() const { return _pixelFormat; }
                                 /** @brief Returns the video dimensions in pixels. */
                                 const Size2Du32 &size() const { return _size; }
+                                /** @brief Returns the raster scan mode (from the @c fiel box). */
+                                VideoScanMode videoScanMode() const { return _videoScanMode; }
                                 /** @brief Returns the audio description (channel layout, rate). */
                                 const AudioDesc &audioDesc() const { return _audioDesc; }
                                 /** @brief Returns the ancillary-data stream description (AncData tracks). */
@@ -220,6 +223,8 @@ class QuickTime {
                                 void setPixelFormat(const PixelFormat &pd) { _pixelFormat = pd; }
                                 /** @brief Sets the video dimensions. */
                                 void setSize(const Size2Du32 &s) { _size = s; }
+                                /** @brief Sets the raster scan mode (from the @c fiel box). */
+                                void setVideoScanMode(const VideoScanMode &m) { _videoScanMode = m; }
                                 /** @brief Sets the audio description. */
                                 void setAudioDesc(const AudioDesc &ad) { _audioDesc = ad; }
                                 /** @brief Sets the ancillary-data stream description. */
@@ -242,9 +247,10 @@ class QuickTime {
                                 uint64_t    _sampleCount = 0;
                                 String      _language;
                                 String      _name;
-                                PixelFormat _pixelFormat;
-                                Size2Du32   _size;
-                                AudioDesc   _audioDesc;
+                                PixelFormat   _pixelFormat;
+                                Size2Du32     _size;
+                                VideoScanMode _videoScanMode = VideoScanMode::Unknown;
+                                AudioDesc     _audioDesc;
                                 AncDesc     _ancDesc;
                                 Metadata    _metadata;
                                 int64_t     _editStartOffset = 0;
@@ -440,6 +446,14 @@ class QuickTime {
                                 /** @brief Sets the container-level metadata (udta). */
                                 virtual void setContainerMetadata(const Metadata &meta);
 
+                                /**
+                                 * @brief Sets the raster scan mode signalled in the
+                                 *        next video track's @c fiel box.
+                                 *
+                                 * Default no-op so non-writer backends ignore it.
+                                 */
+                                virtual void setVideoScanMode(VideoScanMode) {}
+
                                 /** @brief Returns the on-disk layout used by this writer. */
                                 Layout layout() const { return _layout; }
 
@@ -627,6 +641,9 @@ class QuickTime {
 
                 /** @brief Sets container-level metadata for the writer. */
                 void setContainerMetadata(const Metadata &meta) { d.modify()->setContainerMetadata(meta); }
+
+                /** @brief Sets the scan mode for the next video track's @c fiel box. */
+                void setVideoScanMode(VideoScanMode mode) { d.modify()->setVideoScanMode(mode); }
 
                 /** @brief Returns the writer's on-disk layout. */
                 Layout layout() const { return d->layout(); }

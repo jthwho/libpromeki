@@ -295,12 +295,15 @@ TEST_CASE("AudioCodec: createDecoder resolves through the backend registry") {
 }
 
 TEST_CASE("AudioCodec: canEncode / canDecode return false for a codec without a backend") {
-        // FLAC has no backend registered in the unit-test build.  (AAC
-        // used to fit this slot before the fdk-aac backend landed.)
-        AudioCodec flac(AudioCodec::FLAC);
-        REQUIRE(flac.isValid());
-        CHECK_FALSE(flac.canEncode());
-        CHECK_FALSE(flac.canDecode());
+        // PCM is the stable "no codec backend" example: it is uncompressed
+        // and handled through the PCM AudioFormat values directly, never
+        // through an AudioEncoder / AudioDecoder.  (AAC, then FLAC, used to
+        // fill this slot until the fdk-aac and FFmpeg backends landed and
+        // gave every real compressed codec a backend.)
+        AudioCodec pcm(AudioCodec::PCM);
+        REQUIRE(pcm.isValid());
+        CHECK_FALSE(pcm.canEncode());
+        CHECK_FALSE(pcm.canDecode());
 
         // Invalid codec returns Error / false.
         AudioCodec bad;

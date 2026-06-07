@@ -141,6 +141,189 @@ namespace {
                 w.endBox(esds);
         }
 
+        /**
+         * @brief Writes an MPEG-4 @c esds box for an MP3 elementary stream.
+         *
+         * Used only for the MP4 brand (@c .mp4 / @c .m4a), where MP3 rides an
+         * @c mp4a sample entry with objectTypeIndication @c 0x6B (MPEG-1
+         * Audio).  There is no DecoderSpecificInfo for MP3 — the bitstream is
+         * self-describing.  (The QuickTime/MOV brand uses a bare @c .mp3
+         * sample entry instead, with no esds.)
+         */
+        void writeMp3EsdsBox(AtomWriter &w) {
+                auto esds = w.beginFullBox(FourCC("esds"), 0, 0);
+                // ES_Descriptor (no DSI -> total payload 21 bytes)
+                w.writeU8(0x03);
+                w.writeU8(21);
+                w.writeU16(0x0000); // ES_ID
+                w.writeU8(0x00);    // flags
+                // DecoderConfigDescriptor (no DSI -> payload 13 bytes)
+                w.writeU8(0x04);
+                w.writeU8(13);
+                w.writeU8(0x6B);    // objectTypeIndication = MPEG-1 Audio (MP3)
+                w.writeU8(0x15);    // streamType=AudioStream(0x05)<<2 | reserved(1)
+                w.writeU8(0x00);    // bufferSizeDB high byte
+                w.writeU16(0x0000); // bufferSizeDB low 16 bits
+                w.writeU32(0);      // maxBitrate
+                w.writeU32(0);      // avgBitrate
+                // SLConfigDescriptor — predefined = 2 (MP4)
+                w.writeU8(0x06);
+                w.writeU8(0x01);
+                w.writeU8(0x02);
+                w.endBox(esds);
+        }
+
+        /**
+         * @brief Writes the Opus-specific @c dOps box (OpusSpecificBox).
+         *
+         * Per the "Encapsulation of Opus in ISO Base Media File Format" spec.
+         * Channel-mapping family 0 (mono/stereo) — no mapping table.  @c dOps
+         * is NOT an ISO FullBox: its first byte is the OpusSpecificBox
+         * @c Version field (0), not a FullBox version/flags word.
+         */
+        void writeDopsBox(AtomWriter &w, const AudioDesc &desc) {
+                // libopus's default look-ahead for the AUDIO application at
+                // 48 kHz.  A precise per-stream value would come from the
+                // encoder (OPUS_GET_LOOKAHEAD); this constant is the standard
+                // default and is what players trim from the head of the stream.
+                constexpr uint16_t kOpusDefaultPreSkip = 312;
+                auto               b = w.beginBox(FourCC("dOps"));
+                w.writeU8(0);                                              // Version
+                w.writeU8(static_cast<uint8_t>(desc.channels()));         // OutputChannelCount
+                w.writeU16(kOpusDefaultPreSkip);                          // PreSkip
+                w.writeU32(static_cast<uint32_t>(desc.sampleRate()));     // InputSampleRate
+                w.writeS16(0);                                            // OutputGain (Q7.8)
+                w.writeU8(0);                                             // ChannelMappingFamily = 0
+                w.endBox(b);
+        }
+
+        /**
+         * @brief Writes the FLAC-specific @c dfLa box (FLACSpecificBox).
+         *
+         * Per xiph's "Encapsulation of FLAC in ISO Base Media File Format"
+         * (isoflac.txt): a FullBox carrying a single STREAMINFO metadata
+         * block.  Built from the @ref AudioDesc — frame headers are
+         * self-describing so the min/max block-size fields need only be a
+         * plausible default; the sample-rate / channel / bit-depth fields are
+         * authoritative.  (Our FFmpeg FLAC encode path emits 16-bit samples.)
+         */
+        void writeDflaBox(AtomWriter &w, const AudioDesc &desc) {
+                constexpr uint32_t kBitsPerSample = 16; // our encode path
+                // The muxer does not know the encoder's exact block size, and
+                // FLAC frames are self-describing (each frame header carries its
+                // own block size), so declare the permissive spec range
+                // [16, 65535].  A max smaller than an actual frame's block size
+                // makes strict decoders (e.g. FFmpeg) reject the stream.
+                constexpr uint16_t kMinBlockSize = 16;
+                constexpr uint16_t kMaxBlockSize = 65535;
+                auto               b = w.beginFullBox(FourCC("dfLa"), 0, 0);
+                // METADATA_BLOCK header: last-block flag (0x80) | type 0 (STREAMINFO)
+                w.writeU8(0x80);
+                w.writeU24(34);            // STREAMINFO length
+                // STREAMINFO body (34 bytes)
+                w.writeU16(kMinBlockSize); // min block size
+                w.writeU16(kMaxBlockSize); // max block size
+                w.writeU24(0);             // min frame size (unknown)
+                w.writeU24(0);             // max frame size (unknown)
+                // Packed 64-bit: sample_rate(20) | channels-1(3) | bps-1(5) | total(36)
+                uint64_t sr    = static_cast<uint64_t>(desc.sampleRate());
+                uint64_t ch    = static_cast<uint64_t>(desc.channels() ? desc.channels() - 1 : 0);
+                uint64_t bps   = kBitsPerSample - 1;
+                uint64_t total = 0; // unknown
+                uint64_t packed =
+                        (sr << 44) | (ch << 41) | (bps << 36) | (total & 0xFFFFFFFFFULL);
+                w.writeU64(packed);
+                uint8_t md5[16] = {0}; // unknown / not computed
+                w.writeBytes(md5, sizeof(md5));
+                w.endBox(b);
+        }
+
+        /**
+         * @brief Parses the first AC-3 syncframe into the 3-byte AC3SpecificBox
+         *        (@c dac3) payload.
+         *
+         * Per ETSI TS 102 366 Annex F.4 the dac3 record packs fscod(2),
+         * bsid(5), bsmod(3), acmod(3), lfeon(1), bit_rate_code(5), and 5
+         * reserved bits.  We read the fields directly from the AC-3 bit
+         * stream syncinfo + bsi (ETSI TS 102 366 §5).  Returns false when the
+         * buffer is too short or lacks the @c 0x0B77 syncword.
+         */
+        bool buildDac3FromSyncframe(const uint8_t *p, size_t n, Buffer &out) {
+                if (p == nullptr || n < 7 || p[0] != 0x0B || p[1] != 0x77) return false;
+                // Minimal MSB-first bit reader over the syncframe.
+                size_t bitPos = 0;
+                auto   readBits = [&](int bits) -> uint32_t {
+                        uint32_t v = 0;
+                        for (int i = 0; i < bits; ++i) {
+                                size_t byteIdx = (bitPos >> 3);
+                                if (byteIdx >= n) return v; // ran off the end
+                                int bit = 7 - static_cast<int>(bitPos & 7);
+                                v = (v << 1) | ((p[byteIdx] >> bit) & 1u);
+                                ++bitPos;
+                        }
+                        return v;
+                };
+                readBits(16); // syncword
+                readBits(16); // crc1
+                uint8_t fscod      = static_cast<uint8_t>(readBits(2));
+                uint8_t frmsizecod = static_cast<uint8_t>(readBits(6));
+                uint8_t bsid       = static_cast<uint8_t>(readBits(5));
+                uint8_t bsmod      = static_cast<uint8_t>(readBits(3));
+                uint8_t acmod      = static_cast<uint8_t>(readBits(3));
+                if ((acmod & 0x1) && acmod != 0x1) readBits(2); // cmixlev
+                if (acmod & 0x4) readBits(2);                    // surmixlev
+                if (acmod == 0x2) readBits(2);                   // dsurmod
+                uint8_t lfeon         = static_cast<uint8_t>(readBits(1));
+                uint8_t bit_rate_code = static_cast<uint8_t>(frmsizecod >> 1);
+
+                // Pack the 24-bit dac3 record MSB-first.
+                uint32_t v = 0;
+                v = (v << 2) | (fscod & 0x3);
+                v = (v << 5) | (bsid & 0x1F);
+                v = (v << 3) | (bsmod & 0x7);
+                v = (v << 3) | (acmod & 0x7);
+                v = (v << 1) | (lfeon & 0x1);
+                v = (v << 5) | (bit_rate_code & 0x1F);
+                v = (v << 5) | 0; // reserved
+                out = Buffer(3);
+                uint8_t *o = static_cast<uint8_t *>(out.data());
+                o[0] = static_cast<uint8_t>((v >> 16) & 0xFF);
+                o[1] = static_cast<uint8_t>((v >> 8) & 0xFF);
+                o[2] = static_cast<uint8_t>(v & 0xFF);
+                out.setSize(3);
+                return true;
+        }
+
+        /** @brief Returns the QuickTime sample-entry FourCC for a compressed audio codec. */
+        FourCC audioSampleEntryFourCC(AudioCodec::ID cid, QuickTime::Profile profile) {
+                switch (cid) {
+                        case AudioCodec::AAC: return FourCC("mp4a");
+                        case AudioCodec::AC3: return FourCC("ac-3");
+                        case AudioCodec::Opus: return FourCC("Opus");
+                        case AudioCodec::FLAC: return FourCC("fLaC");
+                        case AudioCodec::MP3:
+                                // MP4 brand carries MP3 as mp4a + esds (OTI 0x6B);
+                                // the QuickTime/MOV brand uses a bare .mp3 entry.
+                                return profile == QuickTime::ProfileMp4 ? FourCC("mp4a") : FourCC(".mp3");
+                        default: return FourCC('\0', '\0', '\0', '\0');
+                }
+        }
+
+        /** @brief Writes the shared QuickTime v0 sound sample description header. */
+        void writeSoundSampleEntryHeaderV0(AtomWriter &w, unsigned int channels, double sampleRate) {
+                w.writeU32(0);
+                w.writeU16(0); // reserved[6]
+                w.writeU16(1); // data_reference_index
+                w.writeU16(0); // version (v0)
+                w.writeU16(0); // revision
+                w.writeFourCC(FourCC("    "));                       // vendor
+                w.writeU16(static_cast<uint16_t>(channels));         // channel count
+                w.writeU16(16);                                      // sample size (bits, convention)
+                w.writeU16(0);                                       // pre-defined / compression ID
+                w.writeU16(0);                                       // packet size
+                w.writeU32(static_cast<uint32_t>(sampleRate) << 16); // sample rate (16.16 fixed)
+        }
+
         /** @brief Computes the CoreAudio LPCM @c formatSpecificFlags for @p fmt. */
         uint32_t lpcmFormatFlags(const AudioFormat &fmt) {
                 uint32_t flags = 0;
@@ -265,6 +448,86 @@ namespace {
         }
 
         /**
+ * @brief Maps a @ref VideoScanMode to the @c fiel box's (fields, detail)
+ *        byte pair (QuickTime / ISO 14496-12 ImageDescription).
+ *
+ * @c fields is 1 for progressive, 2 for interlaced.  For interlaced
+ * content @c detail encodes the temporal field order: @c 14 = top field
+ * first (T,B), @c 9 = bottom field first (B,T), @c 0 = ordering unknown.
+ * PsF and Unknown are signalled as progressive (single field).
+ */
+        void fielBytesForScanMode(VideoScanMode mode, uint8_t *fields, uint8_t *detail) {
+                // Detail codes per ISO 14496-12 / QuickTime (matching
+                // libavformat): 1 = TT (top first), 6 = BB (bottom first),
+                // 0 = order unspecified.
+                switch (mode.value()) {
+                        case 2 /*Interlaced (unknown order)*/:
+                                *fields = 2;
+                                *detail = 0;
+                                break;
+                        case 3 /*InterlacedEvenFirst → top field first*/:
+                                *fields = 2;
+                                *detail = 1;
+                                break;
+                        case 4 /*InterlacedOddFirst → bottom field first*/:
+                                *fields = 2;
+                                *detail = 6;
+                                break;
+                        default: // Unknown / Progressive / PsF
+                                *fields = 1;
+                                *detail = 0;
+                                break;
+                }
+        }
+
+        /**
+ * @brief Appends the @c colr (colour parameters) and @c fiel (field/frame)
+ *        extension boxes to an open visual sample entry.
+ *
+ * The H.273 primaries / transfer / matrix codes come straight from the
+ * format's @ref ColorModel via @ref ColorModel::toH273 — the same library
+ * mapping every other backend signals colour with, and the exact inverse
+ * of the reader's @c colr → @ref ColorModel::fromH273 path.  @c colr is
+ * written as @c nclx (primaries / transfer / matrix + full-range-flag
+ * byte) whenever the brand is ISO (.mp4) @em or the surface is full-range
+ * — @c nclx is the only form that can carry the range — and @c nclc
+ * otherwise (limited-range .mov, the classic ProRes form).  @c fiel
+ * carries the raster scan mode (progressive / interlaced field order).
+ */
+        void appendVisualExtensionBoxes(AtomWriter &w, const PixelFormat &pd, VideoScanMode scanMode,
+                                        QuickTime::Profile profile) {
+                if (!pd.isValid() || !pd.colorModel().isValid()) return;
+                const ColorModel::H273 h = ColorModel::toH273(pd.colorModel().id());
+                // Substitute Unspecified (2) for any axis the ColorModel can't
+                // express, so the box always carries legal codepoints.
+                const uint16_t primaries = h.primaries != 0 ? h.primaries : 2;
+                const uint16_t transfer = h.transfer != 0 ? h.transfer : 2;
+                const uint16_t matrix = h.matrix; // 0 (Identity / RGB) is valid here
+                const bool     fullRange = pd.videoRange() == VideoRange::Full;
+                // nclc cannot signal range, so any full-range surface must use
+                // nclx — even in a .mov — to stay compliant.
+                const bool nclx = (profile == QuickTime::ProfileMp4) || fullRange;
+                auto       colr = w.beginBox(FourCC("colr"));
+                w.writeFourCC(nclx ? FourCC("nclx") : FourCC("nclc"));
+                w.writeU16(primaries);
+                w.writeU16(transfer);
+                w.writeU16(matrix);
+                if (nclx) {
+                        // full_range_flag in the top bit; low 7 bits reserved 0.
+                        w.writeU8(fullRange ? 0x80 : 0x00);
+                }
+                w.endBox(colr);
+
+                uint8_t fields = 1;
+                uint8_t detail = 0;
+                fielBytesForScanMode(scanMode, &fields, &detail);
+                auto fiel = w.beginBox(FourCC("fiel"));
+                w.writeU8(fields);
+                w.writeU8(detail);
+                w.endBox(fiel);
+        }
+
+        /**
  * @brief Predicate that returns @c false for H.264 parameter-set NAL
  *        units (SPS type 7, PPS type 8) so they can be stripped out
  *        when emitting @c avc1 samples.
@@ -284,7 +547,7 @@ namespace {
                 return t < 32 || t > 34;
         }
 
-        void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t) {
+        void appendStsdBox(AtomWriter &w, const QuickTimeWriterTrack &t, QuickTime::Profile profile) {
                 auto stsd = w.beginFullBox(kStsd, 0, 0);
                 w.writeU32(1); // entry_count
                 if (t.type == QuickTime::Video) {
@@ -315,36 +578,58 @@ namespace {
                                 w.writeBytes(t.codecConfigBox.data(), t.codecConfigBox.size());
                                 w.endBox(cfgBox);
                         }
+                        // Colour parameters (colr) + field ordering (fiel) so a
+                        // downstream player / hardware codec doesn't have to guess
+                        // the track's colorimetry or scan mode.  Declared from the
+                        // PixelFormat's ColorModel + quantization range and the
+                        // track's VideoScanMode.
+                        appendVisualExtensionBoxes(w, t.pixelFormat, t.scanMode, profile);
                         w.endBox(vse);
                 } else if (t.isCompressedAudio()) {
-                        // Compressed audio (AAC): an @c mp4a sample entry carrying
-                        // an @c esds elementary-stream descriptor.  The body is a
-                        // QuickTime v0 sound sample description (channels / sample
-                        // size / sample rate); the real codec configuration lives
-                        // in the esds AudioSpecificConfig.
-                        auto ase = w.beginBox(FourCC("mp4a"));
-                        w.writeU32(0);
-                        w.writeU16(0); // reserved[6]
-                        w.writeU16(1); // data_reference_index
-                        w.writeU16(0); // version (v0)
-                        w.writeU16(0); // revision
-                        w.writeFourCC(FourCC("    "));                              // vendor
-                        w.writeU16(static_cast<uint16_t>(t.audioDesc.channels()));  // channel count
-                        w.writeU16(16);                                            // sample size (bits, convention)
-                        w.writeU16(0);                                             // pre-defined / compression ID
-                        w.writeU16(0);                                             // packet size
-                        uint32_t srFixed = static_cast<uint32_t>(t.audioDesc.sampleRate()) << 16;
-                        w.writeU32(srFixed); // sample rate (16.16 fixed)
-
-                        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(t.audioDesc);
-                        Buffer           asc;
-                        Error            ascErr = cfg.serialize(asc);
-                        if (ascErr.isError()) {
-                                promekiErr("QuickTime: failed to build AAC AudioSpecificConfig "
-                                           "for esds: %s",
-                                           ascErr.name().cstr());
-                        } else {
-                                writeAacEsdsBox(w, asc);
+                        // Compressed audio: a codec-specific sample entry (mp4a /
+                        // ac-3 / Opus / fLaC / .mp3) carrying a QuickTime v0 sound
+                        // sample description followed by the codec's configuration
+                        // child box (esds / dac3 / dOps / dfLa).  AC-3, MP3 and
+                        // FLAC frames are otherwise self-describing, so the read
+                        // side reconstructs decode config from the AudioDesc.
+                        const AudioCodec::ID cid = t.audioDesc.format().audioCodec().id();
+                        const FourCC         entryFourCC = audioSampleEntryFourCC(cid, profile);
+                        auto                 ase = w.beginBox(entryFourCC);
+                        writeSoundSampleEntryHeaderV0(w, t.audioDesc.channels(), t.audioDesc.sampleRate());
+                        switch (cid) {
+                                case AudioCodec::AAC: {
+                                        AacDecoderConfig cfg = AacDecoderConfig::fromAudioDesc(t.audioDesc);
+                                        Buffer           asc;
+                                        Error            ascErr = cfg.serialize(asc);
+                                        if (ascErr.isError()) {
+                                                promekiErr("QuickTime: failed to build AAC "
+                                                           "AudioSpecificConfig for esds: %s",
+                                                           ascErr.name().cstr());
+                                        } else {
+                                                writeAacEsdsBox(w, asc);
+                                        }
+                                        break;
+                                }
+                                case AudioCodec::MP3:
+                                        // MP4 brand: mp4a + esds(OTI 0x6B).  MOV brand:
+                                        // bare .mp3 entry, no child box.
+                                        if (profile == QuickTime::ProfileMp4) writeMp3EsdsBox(w);
+                                        break;
+                                case AudioCodec::AC3:
+                                        // dac3 record parsed from the first AC-3 syncframe
+                                        // at writeSample time and stashed on the track.
+                                        if (t.codecConfigBox && t.codecConfigBox.size() > 0) {
+                                                auto db = w.beginBox(FourCC("dac3"));
+                                                w.writeBytes(t.codecConfigBox.data(), t.codecConfigBox.size());
+                                                w.endBox(db);
+                                        } else {
+                                                promekiWarn("QuickTime: AC-3 track has no dac3 config "
+                                                            "(no samples written?)");
+                                        }
+                                        break;
+                                case AudioCodec::Opus: writeDopsBox(w, t.audioDesc); break;
+                                case AudioCodec::FLAC: writeDflaBox(w, t.audioDesc); break;
+                                default: break;
                         }
                         w.endBox(ase);
                 } else if (t.type == QuickTime::Audio) {
@@ -619,6 +904,7 @@ Error QuickTimeWriter::addVideoTrack(const PixelFormat &codec, const Size2Du32 &
         t.timescale = frameRate.rational().numerator();
         t.pixelFormat = codec;
         t.size = size;
+        t.scanMode = _videoScanMode;
         _writeTracks.pushToBack(t);
         if (outTrackId != nullptr) *outTrackId = t.id;
         return Error::Ok;
@@ -628,15 +914,24 @@ Error QuickTimeWriter::addAudioTrack(const AudioDesc &desc, uint32_t *outTrackId
         if (!_isOpen) return Error::NotOpen;
         if (!desc.isValid()) return Error::InvalidArgument;
 
-        // Compressed audio: only AAC is supported (mp4a + esds).  Other
-        // compressed codecs (Opus, AC-3, ...) would each need their own
-        // sample-entry + config-record handling — reject them loudly rather
-        // than emitting a track no player can decode.
-        if (desc.format().isCompressed() && desc.format().audioCodec().id() != AudioCodec::AAC) {
-                promekiErr("QuickTimeWriter: compressed audio codec '%s' is not "
-                           "supported for writing (only AAC)",
-                           desc.format().name().cstr());
-                return Error::NotSupported;
+        // Compressed audio: the container-standardised codecs each get a
+        // codec-specific sample entry + config child box in the stsd writer
+        // (AAC mp4a/esds, AC-3 ac-3/dac3, Opus Opus/dOps, FLAC fLaC/dfLa, MP3
+        // .mp3 or mp4a/esds by brand).  Anything else has no QuickTime mapping
+        // — reject it loudly rather than emit a track no player can decode.
+        if (desc.format().isCompressed()) {
+                switch (desc.format().audioCodec().id()) {
+                        case AudioCodec::AAC:
+                        case AudioCodec::AC3:
+                        case AudioCodec::Opus:
+                        case AudioCodec::FLAC:
+                        case AudioCodec::MP3: break;
+                        default:
+                                promekiErr("QuickTimeWriter: compressed audio codec '%s' is not "
+                                           "supported for writing",
+                                           desc.format().name().cstr());
+                                return Error::NotSupported;
+                }
         }
 
         QuickTimeWriterTrack t;
@@ -796,6 +1091,22 @@ Error QuickTimeWriter::writeSample(uint32_t trackId, const QuickTime::Sample &sa
                 if (convErr.isError()) {
                         promekiErr("QuickTime: Annex-B to AVCC conversion failed: %s", convErr.name().cstr());
                         return convErr;
+                }
+        }
+
+        // AC-3: derive the dac3 sample-entry record from the first access
+        // unit's syncframe (mirrors the H.264/HEVC avcC extraction above).  It
+        // must be captured before ensureInitMoovWritten() so the fragmented
+        // init-moov stsd carries it.
+        if (audioCompressed && t.audioDesc.format().audioCodec().id() == AudioCodec::AC3 &&
+            !t.codecConfigBox) {
+                Buffer dac3;
+                if (buildDac3FromSyncframe(static_cast<const uint8_t *>(sample.data.data()),
+                                           sample.data.size(), dac3)) {
+                        t.codecConfigBox  = dac3;
+                        t.codecConfigType = FourCC("dac3");
+                } else {
+                        promekiWarnThrottled(1000, "QuickTime: could not parse AC-3 syncframe for dac3");
                 }
         }
 
@@ -1372,7 +1683,7 @@ void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t, u
         // stbl
         auto stbl = w.beginBox(kStbl);
 
-        appendStsdBox(w, t);
+        appendStsdBox(w, t, _profile);
 
         if (t.type == QuickTime::Audio && !t.isCompressedAudio()) {
                 // ---- Audio: canonical PCM stbl layout ----
@@ -1742,7 +2053,7 @@ void QuickTimeWriter::appendInitTrak(AtomWriter &w, const QuickTimeWriterTrack &
         // stbl — sample description with real codec info, empty sample tables
         auto stbl = w.beginBox(kStbl);
 
-        appendStsdBox(w, t);
+        appendStsdBox(w, t, _profile);
 
         // Empty sample tables — all zero entry counts. Required by spec to
         // be present even for fragmented init segments.

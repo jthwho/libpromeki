@@ -247,7 +247,10 @@ struct X264VideoEncoder::Impl {
                         param.i_csp = fmt.csp;
                         param.i_bitdepth = fmt.bitDepth;
                         param.i_log_level = X264_LOG_WARNING;
-                        param.i_threads = 0; // auto
+                        // 0 = auto (x264 picks ~1.5x core count); MediaConfig::CodecThreads
+                        // caps it to avoid oversubscription with parallel sessions.
+                        const int32_t codecThreads = cfg.getAs<int32_t>(MediaConfig::CodecThreads, 0);
+                        param.i_threads = codecThreads > 0 ? codecThreads : 0;
 
                         // --- Frame rate / timebase (1 tick = 1 frame) ---
                         const FrameRate fallback(FrameRate::RationalType(30, 1));

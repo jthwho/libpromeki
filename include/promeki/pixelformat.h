@@ -132,15 +132,85 @@ class PaintEngine;
  * PaintEngine pe = pd.createPaintEngine(image);
  * @endcode
  *
- * @see PixelMemLayout, ColorModel, @ref typeregistry "TypeRegistry Pattern"
+ * @par Colour and format details live HERE — never in metadata
+ *
+ * A buffer's colour space, bit depth, chroma sampling, memory layout, and
+ * quantization range are @em intrinsic properties of its @ref PixelFormat:
+ * they are carried by the @ref ColorModel, the @ref PixelMemLayout, and
+ * the per-component ranges.  Do @b not stash any of them in side-channel
+ * @ref Metadata (no "this Rec.709 surface is really Rec.2020 / full-range"
+ * override keys).  One @ref PixelFormat is one unambiguous description, and
+ * every consumer — CSC, codecs, capture/display devices, container
+ * (de)muxers — reads colour and geometry from the format alone.  (The
+ * H.273 VUI @ref Metadata keys exist only as an encoder-side caller
+ * override for a mistagged @em compressed bitstream; they are not a colour
+ * carrier for uncompressed buffers.)
+ *
+ * @par Register the formats you need at runtime
+ *
+ * If a format you need is not in the well-known catalog, @b register it —
+ * that is the entire point of the @ref typeregistry "TypeRegistry".  For
+ * the common case of an existing layout with a different colour space, use
+ * @ref withColorModel (optionally with a @ref VideoRange): it returns the
+ * matching well-known catalog entry when one exists, and otherwise mints a
+ * new runtime format (mirroring the base, swapping ColorModel / range /
+ * name).  For a genuinely new layout, allocate an ID with
+ * @ref registerType and populate a @ref Data with @ref registerData.
+ * Runtime IDs are @em process-local (≥ @ref UserDefined) and are
+ * serialized by full @ref Data, so they round-trip through @ref DataStream
+ * but are not stable across runs/builds.
+ *
+ * @par Please upstream missing well-known formats
+ *
+ * A runtime registration means the catalog has a gap.  Every one is logged
+ * (@c "...consider adding to the well-known catalog") with its full
+ * description.  If you find yourself registering the same format
+ * repeatedly, please submit it upstream so it earns a stable, well-known
+ * @ref ID — those serialize compactly (by ID) and resolve identically in
+ * every build.  When adding a well-known ID, only ever @b append: never
+ * renumber or reuse an existing value, because persisted @ref DataStream
+ * data resolves a well-known format by that integer for all time.
+ *
+ * @par Writing CSC fast paths for the conversions you need
+ *
+ * The colour-space-conversion pipeline (@ref CSCPipeline) can convert
+ * between any two formats it can decompose into its generic
+ * unpack → colour → pack stages — and those stages are driven entirely by
+ * the @ref PixelMemLayout component descriptors and the @ref ColorModel,
+ * so a newly-registered colorimetry variant Just Works with no extra code.
+ * That generic path is correct but not always the fastest.  For a
+ * conversion that is hot in your pipeline, register a hand-tuned
+ * single-scanline kernel with
+ * @ref CSCRegistry::registerFastPath "CSCRegistry::registerFastPath(src, dst, fn)"
+ * at static-init time; @ref CSCPipeline discovers it automatically and
+ * bypasses the generic stages for that exact (source, target)
+ * @ref PixelFormat pair.  Keep the kernel SIMD-friendly — see the
+ * Highway-based kernels in @c src/proav/csc (@c fastpath.cpp,
+ * @c st2110.cpp) for the pattern.  Add fast paths only where profiling
+ * shows the generic pipeline is the bottleneck: correctness first, then
+ * accelerate the few conversions that dominate your workload.
+ *
+ * @see PixelMemLayout, ColorModel, CSCRegistry, CSCPipeline,
+ *      @ref typeregistry "TypeRegistry Pattern"
  */
 class PixelFormat {
         public:
-                PROMEKI_DATATYPE(PixelFormat, DataTypePixelFormat, 1)
+                PROMEKI_DATATYPE(PixelFormat, DataTypePixelFormat, 2)
 
-                /** @brief Writes the registered format name as a tagged String. */
+                /**
+                 * @brief Serializes the format.
+                 *
+                 * Well-known formats (@c id() < @c UserDefined, whose IDs are
+                 * stable across builds) are written as just their ID — compact
+                 * and version-proof.  A runtime-registered format (e.g. a
+                 * colorimetry variant minted by @ref withColorModel) instead
+                 * writes its full @ref Data so @ref readFromStream can
+                 * re-register an identical format in the reading process.  The
+                 * long-term intent is that almost everything is well-known, so
+                 * the heavy path is rarely taken.
+                 */
                 Error writeToStream(DataStream &s) const;
-                /** @brief Reads the registered format name and looks it up. */
+                /** @brief Reads a format written by @ref writeToStream. */
                 template <uint32_t V> static Result<PixelFormat> readFromStream(DataStream &s);
 
                 static constexpr size_t MaxComps = PixelMemLayout::MaxComps; ///< Maximum number of components.
@@ -480,6 +550,30 @@ class PixelFormat {
                         // -- Planar 4:4:4 YCbCr --
                         YUV8_444_Planar_Rec709 = 162,     ///< 8-bit YCbCr 4:4:4 planar, Rec.709, limited range.
                         YUV10_444_Planar_LE_Rec709 = 163, ///< 10-bit YCbCr 4:4:4 planar LE, Rec.709.
+                        YUV12_444_Planar_LE_Rec709 = 166, ///< 12-bit YCbCr 4:4:4 planar LE, Rec.709 (ProRes 4444 / XQ decode surface).
+
+                        // -- Planar 4:2:2 / 4:4:4 YCbCr colorimetry variants --
+                        //
+                        // Same memory layouts as the Rec.709 entries above; the
+                        // only difference is the anchored @ref ColorModel.  These
+                        // exist so a decoder can land wide-gamut / HDR / SD content
+                        // on a PixelFormat that *encodes* its colour space (rather
+                        // than tagging a Rec.709 surface with override metadata) —
+                        // the 4:2:2 / 4:4:4 planar analogue of the 4:2:0 Rec.2020 /
+                        // PQ / HLG variants.  ProRes 422 decodes to the 10-bit 4:2:2
+                        // set; ProRes 4444 / XQ to the 10/12-bit 4:4:4 set.
+                        YUV10_422_Planar_LE_Rec601 = 167,      ///< 10-bit YCbCr 4:2:2 planar LE, Rec.601.
+                        YUV10_422_Planar_LE_Rec2020 = 168,     ///< 10-bit YCbCr 4:2:2 planar LE, Rec.2020.
+                        YUV10_422_Planar_LE_Rec2020_PQ = 169,  ///< 10-bit YCbCr 4:2:2 planar LE, BT.2020 + PQ.
+                        YUV10_422_Planar_LE_Rec2020_HLG = 170, ///< 10-bit YCbCr 4:2:2 planar LE, BT.2020 + HLG.
+                        YUV10_444_Planar_LE_Rec601 = 171,      ///< 10-bit YCbCr 4:4:4 planar LE, Rec.601.
+                        YUV10_444_Planar_LE_Rec2020 = 172,     ///< 10-bit YCbCr 4:4:4 planar LE, Rec.2020.
+                        YUV10_444_Planar_LE_Rec2020_PQ = 173,  ///< 10-bit YCbCr 4:4:4 planar LE, BT.2020 + PQ.
+                        YUV10_444_Planar_LE_Rec2020_HLG = 174, ///< 10-bit YCbCr 4:4:4 planar LE, BT.2020 + HLG.
+                        YUV12_444_Planar_LE_Rec601 = 175,      ///< 12-bit YCbCr 4:4:4 planar LE, Rec.601.
+                        YUV12_444_Planar_LE_Rec2020 = 176,     ///< 12-bit YCbCr 4:4:4 planar LE, Rec.2020.
+                        YUV12_444_Planar_LE_Rec2020_PQ = 177,  ///< 12-bit YCbCr 4:4:4 planar LE, BT.2020 + PQ.
+                        YUV12_444_Planar_LE_Rec2020_HLG = 178, ///< 12-bit YCbCr 4:4:4 planar LE, BT.2020 + HLG.
 
                         // -- ST 2110-20 wire-format pixel descriptions --
                         //
@@ -515,7 +609,12 @@ class PixelFormat {
                         XYZ16_BE_2110 = 230,        ///< 16-bit XYZ cinema ST 2110-20 wire BE (6 octets / 1 pixel).
                         YUV8_420_2110_Rec709 = 231, ///< 8-bit YCbCr 4:2:0 ST 2110-20 wire (single-plane pgroup-interleaved, vSub=2), Rec.709, limited range.
 
-                        UserDefined = 1024 ///< First ID available for user-registered types.
+                        // First ID available for runtime-registered types.  Set
+                        // well clear of the well-known block (currently up to the
+                        // low 200s) so the catalog can keep growing — e.g. with
+                        // colorimetry variants — without ever colliding with the
+                        // runtime range.  Well-known < 0x10000 ≤ runtime.
+                        UserDefined = 65536 ///< First ID available for user-registered types.
                 };
 
                 /** @brief List of PixelFormat IDs. */
@@ -571,6 +670,54 @@ class PixelFormat {
                  * @see registerType()
                  */
                 static void registerData(Data &&data);
+
+                /**
+                 * @brief Returns the format identical to @p base but anchored on
+                 *        a different @ref ColorModel — registering it on demand.
+                 *
+                 * This is the single mechanism for "apply a colour space to a
+                 * pixel format": colorimetry is always carried by a singular
+                 * @ref PixelFormat (never side-channel metadata).  If a
+                 * registered format already has @p base's memory layout, codec
+                 * identity and alpha but the requested @p colorModel, it is
+                 * returned (so the well-known catalog variants are reused and
+                 * keep their stable IDs).  Otherwise a new format is registered
+                 * at runtime, mirroring @p base with the @ref ColorModel
+                 * swapped and a name generated by the library naming scheme
+                 * (the colorimetry token of @p base's name replaced — e.g.
+                 * @c YUV12_444_Planar_LE_Rec709 → @c YUV12_444_Planar_LE_Rec2020_PQ).
+                 *
+                 * @param base       Format to mirror (layout / semantics / codec).
+                 * @param colorModel The @ref ColorModel the result should carry.
+                 * @return @p base when @p colorModel already matches (or @p base
+                 *         is invalid); otherwise the existing or newly-registered
+                 *         variant.
+                 */
+                static PixelFormat withColorModel(const PixelFormat &base, ColorModel::ID colorModel);
+
+                /**
+                 * @brief Like @ref withColorModel(base, colorModel) but also
+                 *        applies a quantization range.
+                 *
+                 * @p range of @c VideoRange::Unknown keeps @p base's range;
+                 * @c Limited / @c Full recompute the component semantics to the
+                 * standard studio / full-scale values for the layout's bit depth
+                 * (and append the @c _Full naming-scheme suffix for full range).
+                 * Used to honour a @c colr atom's @c full_range_flag and a
+                 * decoder's @c color_range as a singular PixelFormat.
+                 */
+                static PixelFormat withColorModel(const PixelFormat &base, ColorModel::ID colorModel, VideoRange range);
+
+                /**
+                 * @brief Generates the canonical name for a colorimetry variant.
+                 *
+                 * Encodes the library PixelFormat naming scheme's colour-model
+                 * token: replaces the trailing colorimetry token of @p baseName
+                 * (the token for @p from) with the token for @p to, or appends
+                 * the @p to token when @p baseName carries none.  Exposed so
+                 * other registration sites can name variants consistently.
+                 */
+                static String nameWithColorModel(const String &baseName, ColorModel::ID from, ColorModel::ID to);
 
                 /**
                  * @brief Returns a list of all registered PixelFormat IDs.
@@ -857,6 +1004,26 @@ class PixelFormat {
                  * @return Line stride in bytes.
                  */
                 size_t lineStride(size_t planeIndex, const ImageDesc &desc) const;
+
+                /**
+                 * @brief Returns the @em signed line stride for a given plane.
+                 *
+                 * Identical in magnitude to @ref lineStride, but negative when the
+                 * descriptor marks the plane vertically flipped
+                 * (@ref ImageDesc::lineFlip).  A negative stride follows the
+                 * FFmpeg/libswscale and GL convention for bottom-up images: the
+                 * plane's backing slice starts at the bottom row (lowest address)
+                 * and row 0 (top of the displayed picture) is the last row in
+                 * memory.  Consumers that honour flip walk rows as
+                 * @c base + (flip ? (rows-1-r) : r) * |stride|, or equivalently
+                 * step a top-row pointer by this signed value.
+                 *
+                 * @param planeIndex Zero-based plane index.
+                 * @param desc       Image descriptor providing width, per-plane
+                 *                   linePad / lineAlign, and the flip flag.
+                 * @return Signed line stride in bytes (0 for compressed formats).
+                 */
+                int64_t signedLineStride(size_t planeIndex, const ImageDesc &desc) const;
 
                 /**
                  * @brief Returns the total byte size of a given plane, using ImageDesc for dimensions.

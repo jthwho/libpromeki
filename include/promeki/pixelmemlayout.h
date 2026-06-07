@@ -247,6 +247,7 @@ class PixelMemLayout {
                         // -- Planar 4:4:4 (RGB / YUV 4:4:4) --
                         P_444_3x8 = 79,     ///< 3 planes, 8-bit, 4:4:4 (equal-sized planes, no subsampling).
                         P_444_3x10_LE = 81, ///< 3 planes, 10-bit in 16-bit LE words, 4:4:4.
+                        P_444_3x12_LE = 94, ///< 3 planes, 12-bit in 16-bit LE words, 4:4:4 (ProRes 4444 / XQ decode surface).
 
                         // -- DPX Method B packed --
                         I_3x10_DPX_B = 80, ///< 3 components, 10 bits, DPX Method B packed (30 bits in 4 bytes).

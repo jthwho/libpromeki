@@ -586,6 +586,9 @@ int main(int argc, char **argv) {
         registerRoundtripCases();
         registerCodecCases();
         registerAudioCases();
+        registerQuickTimeAudioCases();
+        registerQuickTimeVideoCases();
+        registerFfmpegVideoCases();
         registerCaptionsCases();
         registerFrameBridgeCases();
         registerRtpCases();

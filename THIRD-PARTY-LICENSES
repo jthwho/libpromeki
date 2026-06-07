@@ -313,6 +313,30 @@ thirdparty/lame/COPYING.
 
 
 ==========================================================================
+ FFmpeg — libavcodec, libavformat, libavutil, libswresample, ...  (n8.1.1)
+ License: GNU Lesser General Public License v2.1-or-later (LGPL-2.1+)
+ https://ffmpeg.org
+==========================================================================
+
+Copyright (c) 2000-2025 the FFmpeg developers.
+
+The vendored FFmpeg suite provides the generic FFmpeg audio codec backend
+(AC-3 / MP3 / FLAC encode+decode) and is shared foundation for future
+FFmpeg-backed work.  It is configured WITHOUT --enable-gpl and WITHOUT
+--enable-nonfree, so the resulting libraries are licensed under the GNU
+Lesser General Public License, version 2.1 or later.  (libx264 and
+fdk-aac are deliberately NOT linked into FFmpeg — enabling either would
+make the FFmpeg build GPL or non-distributable respectively; libpromeki
+keeps those on standalone backends instead.)
+
+The libav* libraries are distributed as separate shared objects
+(libavcodec.so, libavutil.so, libswresample.so, ...) dynamically linked
+and user-replaceable per the LGPL re-linking requirement described in the
+libsndfile note above.  The full LGPL-2.1 text is in the source tree at
+thirdparty/ffmpeg/COPYING.LGPLv2.1.
+
+
+==========================================================================
  Xiph.Org audio codecs — libogg, libvorbis, libFLAC, libopus
  License: BSD 3-Clause License
    libogg     (v1.3.6)   https://xiph.org/ogg

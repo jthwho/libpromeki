@@ -1686,7 +1686,13 @@ void MediaPipeline::installLoggerTap() {
                         ev.setMetadata(m);
                         static const auto kLoggerTapLabel =
                                 EventLoop::Label{"MediaPipeline.loggerTap"};
-                        ownerLoop->postCallable(kLoggerTapLabel,
+                        // Guard the deferred publish() with `this`'s lifetime:
+                        // the listener fires on the logging thread and posts
+                        // here, so a callable can still be queued when the
+                        // pipeline is torn down.  The owner-guarded overload
+                        // nulls its captured ObjectBasePtr when ~MediaPipeline
+                        // runs, turning a would-be use-after-free into a no-op.
+                        ownerLoop->postCallable(this, kLoggerTapLabel,
                                                 [this, ev]() { publish(ev); });
                 },
                 0);

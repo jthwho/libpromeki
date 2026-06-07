@@ -666,6 +666,8 @@ namespace {
                         Error reset() override {
                                 _outQueue.clear();
                                 _flushed = false;
+                                _havePtsBase = false;
+                                _decodedSamples = 0;
                                 if (_dec != nullptr) {
                                         aacDecoder_Close(_dec);
                                         _dec = nullptr;
@@ -730,6 +732,25 @@ namespace {
                                 BufferView view(buf, 0, buf.size());
                                 auto       pcm = PcmAudioPayload::Ptr::create(desc, static_cast<size_t>(frameSize),
                                                                               view);
+                                // Sample-accurate, monotonic PTS (basePts +
+                                // cumulativeSamples/rate).  The muxer paces a variable
+                                // number of AAC AUs per video frame, so propagating each
+                                // AU's PTS would jitter by up to half an AU — a
+                                // continuity-checking consumer needs PTS to advance by
+                                // exactly the emitted sample count.
+                                if (!_havePtsBase && !_currentSource.audioPayloads().isEmpty()) {
+                                        _basePts     = _currentSource.audioPayloads()[0]->pts();
+                                        _havePtsBase = _basePts.isValid();
+                                }
+                                if (_havePtsBase && sampleRate > 0) {
+                                        int64_t ns = static_cast<int64_t>(static_cast<double>(_decodedSamples) *
+                                                                                  1.0e9 / static_cast<double>(sampleRate) +
+                                                                          0.5);
+                                        pcm.modify()->setPts(MediaTimeStamp(_basePts.timeStamp() +
+                                                                                    Duration::fromNanoseconds(ns),
+                                                                            _basePts.domain(), _basePts.offset()));
+                                }
+                                _decodedSamples += static_cast<int64_t>(frameSize);
                                 _outQueue.pushToBack(buildOutputFrame(_currentSource, std::move(pcm)));
                         }
 
@@ -749,6 +770,10 @@ namespace {
                         // one-time read of CStreamInfo::outputDelay.
                         int64_t           _skipSamples = 0;
                         bool              _skipCaptured = false;
+                        // Sample-accurate output PTS base + running count.
+                        MediaTimeStamp    _basePts;
+                        bool              _havePtsBase = false;
+                        int64_t           _decodedSamples = 0;
         };
 
         // =============================================================================

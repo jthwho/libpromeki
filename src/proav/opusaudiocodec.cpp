@@ -493,7 +493,26 @@ namespace {
                                 BufferView planes;
                                 planes.pushToBack(pcmBuf, 0, pcmBuf.size());
                                 auto uap = PcmAudioPayload::Ptr::create(outDesc, static_cast<size_t>(decoded), planes);
-                                uap.modify()->setPts(payload->pts());
+                                // Sample-accurate, monotonic PTS (basePts +
+                                // cumulativeSamples/rate) so a continuity-checking
+                                // consumer sees PTS advance by exactly the emitted
+                                // sample count even when the muxer paces a variable
+                                // number of Opus packets per video frame.
+                                if (!_havePtsBase) {
+                                        _basePts     = payload->pts();
+                                        _havePtsBase = _basePts.isValid();
+                                }
+                                if (_havePtsBase && _outRate > 0.0f) {
+                                        int64_t ns = static_cast<int64_t>(static_cast<double>(_decodedSamples) *
+                                                                                  1.0e9 / static_cast<double>(_outRate) +
+                                                                          0.5);
+                                        uap.modify()->setPts(MediaTimeStamp(_basePts.timeStamp() +
+                                                                                    Duration::fromNanoseconds(ns),
+                                                                            _basePts.domain(), _basePts.offset()));
+                                } else {
+                                        uap.modify()->setPts(payload->pts());
+                                }
+                                _decodedSamples += static_cast<int64_t>(decoded);
                                 _frames.pushToBack(buildOutputFrame(frame, std::move(uap)));
                                 return Error::Ok;
                         }
@@ -507,6 +526,8 @@ namespace {
 
                         Error reset() override {
                                 _frames.clear();
+                                _havePtsBase = false;
+                                _decodedSamples = 0;
                                 if (_dec != nullptr) opus_decoder_ctl(_dec, OPUS_RESET_STATE);
                                 return Error::Ok;
                         }
@@ -546,6 +567,9 @@ namespace {
                         float                       _outRate = 48000.0f;
                         unsigned int                _outChannels = 2;
                         Deque<Frame> _frames;
+                        MediaTimeStamp              _basePts;
+                        bool                        _havePtsBase = false;
+                        int64_t                     _decodedSamples = 0;
         };
 
         // =============================================================================

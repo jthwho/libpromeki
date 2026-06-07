@@ -71,13 +71,24 @@ const MediaIOFactory *MediaIOFactory::findByExtension(const String &extension) {
         String needle = extension;
         if (!needle.isEmpty() && needle[0] == '.') needle = needle.substr(1);
         needle = needle.toLower();
+        // Native (non-fallback) backends win.  A fallback backend (the
+        // FFmpeg container backend) is only chosen when no native
+        // backend claims the extension — that is what keeps `.mov`
+        // routed to QuickTime even though FFmpeg also handles it.  We
+        // walk once, returning the first native match immediately and
+        // otherwise remembering the first fallback match to use last.
+        const MediaIOFactory *fallback = nullptr;
         for (const MediaIOFactory *f : registeredFactories()) {
                 if (f == nullptr) continue;
                 for (const String &ext : f->extensions()) {
-                        if (ext.toLower() == needle) return f;
+                        if (ext.toLower() == needle) {
+                                if (!f->isFallback()) return f;
+                                if (fallback == nullptr) fallback = f;
+                                break;
+                        }
                 }
         }
-        return nullptr;
+        return fallback;
 }
 
 const MediaIOFactory *MediaIOFactory::findByScheme(const String &scheme) {

@@ -171,7 +171,13 @@ StringUnicodeData *StringUnicodeData::fromUtf8(const char *data, size_t len) {
         size_t pos = 0;
         while (pos < len) {
                 size_t bytesRead = 0;
-                Char   ch = Char::fromUtf8(data + pos, &bytesRead);
+                // Bounded decode: `data` is an arbitrary byte range (not
+                // necessarily NUL-terminated), so cap the read at the bytes
+                // that remain — otherwise a truncated trailing multibyte
+                // sequence reads past the end (e.g. a binary blob wrapped in a
+                // String).
+                Char ch = Char::fromUtf8(data + pos, len - pos, &bytesRead);
+                if (bytesRead == 0) bytesRead = 1; // defensive: always advance
                 ud->_chars.pushToBack(ch);
                 pos += bytesRead;
         }

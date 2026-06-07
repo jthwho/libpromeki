@@ -11,6 +11,7 @@
 #include <promeki/config.h>
 #if PROMEKI_ENABLE_PROAV
 #include <promeki/namespace.h>
+#include <promeki/array.h>
 #include <promeki/string.h>
 #include <promeki/sharedptr.h>
 #include <promeki/size2d.h>
@@ -46,6 +47,17 @@ class SdpMediaDescription;
 class ImageDesc {
                 PROMEKI_SHARED_FINAL(ImageDesc)
         public:
+                /**
+                 * @brief Maximum number of planes an ImageDesc can carry
+                 *        per-plane stride state for.
+                 *
+                 * Sized for the widest planar layout the library defines
+                 * (Y/U/V plus alpha).  Per-plane @ref linePad / @ref lineAlign /
+                 * @ref lineFlip are stored for this many planes; plane indices
+                 * at-or-above this bound fall back to the scalar defaults.
+                 */
+                static constexpr size_t MaxPlanes = 4;
+
                 /** @brief Shared pointer type for ImageDesc. */
                 using Ptr = SharedPtr<ImageDesc>;
 
@@ -233,32 +245,117 @@ class ImageDesc {
                 }
 
                 /**
-                 * @brief Returns the number of padding bytes appended to each scanline.
-                 * @return The line padding in bytes.
+                 * @brief Returns the padding bytes appended to scanlines of plane 0.
+                 *
+                 * Convenience that reports the plane-0 value; @ref linePad(size_t)
+                 * reads any plane.  The per-plane storage lets an ImageDesc model
+                 * externally-strided memory (FFmpeg @c linesize, V4L2
+                 * @c bytesperline, a GPU/CUDA row pitch) exactly, where each plane
+                 * may carry a different amount of trailing padding — a Y plane and
+                 * its half-width chroma planes do not generally pad to the same
+                 * byte count.  With @ref lineAlign left at 1, @c linePad alone
+                 * expresses any line stride at-or-above the tightly-packed width:
+                 * @c linePad[c] = externalStride[c] − tightStride[c].
+                 *
+                 * @return The plane-0 line padding in bytes.
                  */
-                size_t linePad() const { return _linePad; }
+                size_t linePad() const { return _linePad[0]; }
 
                 /**
-                 * @brief Sets the number of padding bytes appended to each scanline.
-                 * @param val The line padding in bytes.
+                 * @brief Returns the padding bytes appended to scanlines of @p plane.
+                 * @param plane The plane index (clamped — out-of-range returns 0).
+                 * @return The line padding in bytes for @p plane.
+                 */
+                size_t linePad(size_t plane) const { return plane < MaxPlanes ? _linePad[plane] : 0; }
+
+                /**
+                 * @brief Sets the scanline padding for @em all planes.
+                 * @param val The line padding in bytes applied to every plane.
                  */
                 void setLinePad(size_t val) {
-                        _linePad = val;
+                        for (size_t p = 0; p < MaxPlanes; ++p) _linePad[p] = static_cast<uint32_t>(val);
                         return;
                 }
 
                 /**
-                 * @brief Returns the scanline alignment requirement in bytes.
-                 * @return The line alignment (e.g. 1 for no alignment, 16 for 16-byte alignment).
+                 * @brief Sets the scanline padding for a single @p plane.
+                 * @param plane The plane index (out-of-range is ignored).
+                 * @param val   The line padding in bytes for @p plane.
                  */
-                size_t lineAlign() const { return _lineAlign; }
+                void setLinePad(size_t plane, size_t val) {
+                        if (plane < MaxPlanes) _linePad[plane] = static_cast<uint32_t>(val);
+                        return;
+                }
 
                 /**
-                 * @brief Sets the scanline alignment requirement.
-                 * @param val The alignment in bytes.
+                 * @brief Returns the scanline alignment requirement of plane 0 in bytes.
+                 * @return The plane-0 line alignment (1 = no alignment, 16 = 16-byte, …).
+                 */
+                size_t lineAlign() const { return _lineAlign[0]; }
+
+                /**
+                 * @brief Returns the scanline alignment requirement of @p plane in bytes.
+                 * @param plane The plane index (clamped — out-of-range returns 1).
+                 * @return The line alignment in bytes for @p plane.
+                 */
+                size_t lineAlign(size_t plane) const { return plane < MaxPlanes ? _lineAlign[plane] : 1; }
+
+                /**
+                 * @brief Sets the scanline alignment for @em all planes.
+                 * @param val The alignment in bytes applied to every plane.
                  */
                 void setLineAlign(size_t val) {
-                        _lineAlign = val;
+                        for (size_t p = 0; p < MaxPlanes; ++p) _lineAlign[p] = static_cast<uint32_t>(val);
+                        return;
+                }
+
+                /**
+                 * @brief Sets the scanline alignment for a single @p plane.
+                 * @param plane The plane index (out-of-range is ignored).
+                 * @param val   The alignment in bytes for @p plane.
+                 */
+                void setLineAlign(size_t plane, size_t val) {
+                        if (plane < MaxPlanes) _lineAlign[plane] = static_cast<uint32_t>(val);
+                        return;
+                }
+
+                /**
+                 * @brief Returns true when @p plane is stored bottom-to-top (flipped).
+                 *
+                 * A flipped plane's scanlines run in reverse: the slice that backs
+                 * the plane begins at the @em lowest address (the bottom row), and
+                 * row 0 (the top of the displayed image) is the @em last row in
+                 * memory.  This mirrors the negative-@c linesize convention used by
+                 * FFmpeg/libswscale and GL readback for bottom-up images.  The line
+                 * pitch magnitude is unchanged (@ref PixelFormat::lineStride still
+                 * reports a positive byte count); @ref PixelFormat::signedLineStride
+                 * reports the signed pitch, negative when flipped.
+                 *
+                 * @param plane The plane index (clamped — out-of-range returns false).
+                 * @return true if @p plane is vertically flipped in memory.
+                 */
+                bool lineFlip(size_t plane = 0) const {
+                        return plane < MaxPlanes && (_lineFlipMask & (1u << plane)) != 0;
+                }
+
+                /**
+                 * @brief Sets the vertical-flip flag for @em all planes.
+                 * @param val true to mark every plane bottom-to-top.
+                 */
+                void setLineFlip(bool val) {
+                        _lineFlipMask = val ? static_cast<uint8_t>((1u << MaxPlanes) - 1) : 0;
+                        return;
+                }
+
+                /**
+                 * @brief Sets the vertical-flip flag for a single @p plane.
+                 * @param plane The plane index (out-of-range is ignored).
+                 * @param val   true to mark @p plane bottom-to-top.
+                 */
+                void setLineFlip(size_t plane, bool val) {
+                        if (plane >= MaxPlanes) return;
+                        if (val) _lineFlipMask |= static_cast<uint8_t>(1u << plane);
+                        else _lineFlipMask &= static_cast<uint8_t>(~(1u << plane));
                         return;
                 }
 
@@ -335,21 +432,28 @@ class ImageDesc {
                  */
                 bool formatEquals(const ImageDesc &other) const {
                         return _size == other._size && _linePad == other._linePad && _lineAlign == other._lineAlign &&
-                               _videoScanMode == other._videoScanMode && _pixelFormat == other._pixelFormat;
+                               _lineFlipMask == other._lineFlipMask && _videoScanMode == other._videoScanMode &&
+                               _pixelFormat == other._pixelFormat;
                 }
 
         private:
-                Size2Du32     _size;
-                size_t        _linePad = 0;
-                size_t        _lineAlign = 1;
-                VideoScanMode _videoScanMode = VideoScanMode::Unknown;
-                PixelFormat   _pixelFormat;
-                Metadata      _metadata;
+                Size2Du32                  _size;
+                Array<uint32_t, MaxPlanes> _linePad{};               // 0 = tightly packed
+                Array<uint32_t, MaxPlanes> _lineAlign{1, 1, 1, 1};   // 1 = no extra alignment
+                uint8_t                    _lineFlipMask = 0;        // bit p set = plane p bottom-up
+                VideoScanMode              _videoScanMode = VideoScanMode::Unknown;
+                PixelFormat                _pixelFormat;
+                Metadata                   _metadata;
 };
 
 /**
- * @brief Writes an ImageDesc as tag + size + pixelFormat + linePad + lineAlign
- *        + videoScanMode + metadata.
+ * @brief Writes an ImageDesc as tag + size + pixelFormat + per-plane linePad
+ *        + per-plane lineAlign + lineFlip mask + videoScanMode + metadata.
+ *
+ * The line-padding and alignment are written one @c uint32 per plane
+ * (@ref ImageDesc::MaxPlanes entries each), followed by a @c uint32 flip
+ * mask, so an externally-strided / bottom-up layout round-trips exactly.
+ *
  * @param stream The stream to write to.
  * @param desc   The ImageDesc to serialize.
  * @return The stream, for chaining.
@@ -358,8 +462,12 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
         stream.beginFrame(DataTypeImageDesc, 1);
         stream << desc.size();
         stream << desc.pixelFormat();
-        stream << static_cast<uint64_t>(desc.linePad());
-        stream << static_cast<uint64_t>(desc.lineAlign());
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) stream << static_cast<uint32_t>(desc.linePad(p));
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) stream << static_cast<uint32_t>(desc.lineAlign(p));
+        uint32_t flipMask = 0;
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p)
+                if (desc.lineFlip(p)) flipMask |= (1u << p);
+        stream << flipMask;
         stream << static_cast<uint32_t>(desc.videoScanMode().value());
         stream << desc.metadata();
         stream.endFrame();
@@ -379,17 +487,25 @@ inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
         }
         Size2Du32   size;
         PixelFormat pd;
-        uint64_t    linePad = 0, lineAlign = 1;
+        uint32_t    linePad[ImageDesc::MaxPlanes] = {0};
+        uint32_t    lineAlign[ImageDesc::MaxPlanes] = {0};
+        uint32_t    flipMask = 0;
         uint32_t    scanValue = 0;
         Metadata    meta;
-        stream >> size >> pd >> linePad >> lineAlign >> scanValue >> meta;
+        stream >> size >> pd;
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) stream >> linePad[p];
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) stream >> lineAlign[p];
+        stream >> flipMask >> scanValue >> meta;
         if (stream.status() != DataStream::Ok) {
                 desc = ImageDesc();
                 return stream;
         }
         desc = ImageDesc(size, pd);
-        desc.setLinePad(static_cast<size_t>(linePad));
-        desc.setLineAlign(static_cast<size_t>(lineAlign));
+        for (size_t p = 0; p < ImageDesc::MaxPlanes; ++p) {
+                desc.setLinePad(p, static_cast<size_t>(linePad[p]));
+                desc.setLineAlign(p, static_cast<size_t>(lineAlign[p]));
+                desc.setLineFlip(p, (flipMask & (1u << p)) != 0);
+        }
         desc.setVideoScanMode(VideoScanMode{static_cast<int>(scanValue)});
         desc.metadata() = std::move(meta);
         return stream;

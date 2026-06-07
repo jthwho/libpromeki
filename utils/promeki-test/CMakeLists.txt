@@ -5,6 +5,9 @@ add_executable(promeki-test
     testrunner.cpp
     cases/pipeline_common.cpp
     cases/audio.cpp
+    cases/quicktime_audio.cpp
+    cases/quicktime_video.cpp
+    cases/ffmpeg_video.cpp
     cases/captions.cpp
     cases/codec.cpp
     cases/framebridge.cpp

@@ -21,6 +21,23 @@
 #include <promeki/st291packet.h>
 #include <promeki/qtclosedcaption.h>
 #include <promeki/cea708cdp.h>
+#include <promeki/config.h>
+#include <promeki/audiocodec.h>
+#include <promeki/audiodecoder.h>
+#include <promeki/audiodesc.h>
+#include <promeki/audioencoder.h>
+#include <promeki/audioformat.h>
+#include <promeki/compressedaudiopayload.h>
+#include <promeki/pcmaudiopayload.h>
+#include <promeki/quicktimemediaio.h>
+#include <promeki/mediaio.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/mediadesc.h>
+#include <promeki/imagedesc.h>
+#include <promeki/pixelformat.h>
+#include <promeki/videocodec.h>
+#include <cmath>
+#include "codectesthelpers.h"
 
 using namespace promeki;
 
@@ -423,6 +440,66 @@ TEST_CASE("QuickTimeWriter: round-trip uncompressed UYVY video") {
         std::remove(tmp.cstr());
 }
 
+TEST_CASE("QuickTimeWriter: fiel scan mode round-trips") {
+        const String tmp = "/tmp/qt_writer_fiel_roundtrip.mov";
+        std::remove(tmp.cstr());
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                qt.setVideoScanMode(VideoScanMode(VideoScanMode::InterlacedEvenFirst));
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709), Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(25, 1)), &vid) == Error::Ok);
+                QuickTime::Sample s;
+                s.data = makeFilledBuffer(512, 0x20);
+                s.duration = 1;
+                s.keyframe = true;
+                REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+        {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                REQUIRE(qt.tracks().size() == 1);
+                const QuickTime::Track &v = qt.tracks()[0];
+                CHECK(v.videoScanMode() == VideoScanMode::InterlacedEvenFirst);
+        }
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: colr full-range round-trips (nclx)") {
+        const String tmp = "/tmp/qt_writer_colr_fullrange.mov";
+        std::remove(tmp.cstr());
+        // A full-range UYVY surface (runtime colorimetry variant): the writer
+        // must emit nclx with full_range_flag set, and the reader must recover
+        // a full-range PixelFormat via withColorModel.
+        PixelFormat fullUYVY = PixelFormat::withColorModel(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
+                                                           ColorModel::YCbCr_Rec709, VideoRange(VideoRange::Full));
+        REQUIRE(fullUYVY.videoRange() == VideoRange::Full);
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(fullUYVY, Size2Du32(16, 16), FrameRate(FrameRate::RationalType(25, 1)),
+                                         &vid) == Error::Ok);
+                QuickTime::Sample s;
+                s.data = makeFilledBuffer(512, 0x30);
+                s.duration = 1;
+                s.keyframe = true;
+                REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+        {
+                QuickTime qt = QuickTime::createReader(tmp);
+                REQUIRE(qt.open() == Error::Ok);
+                REQUIRE(qt.tracks().size() == 1);
+                const QuickTime::Track &v = qt.tracks()[0];
+                CHECK(v.pixelFormat().videoRange() == VideoRange::Full);
+                CHECK(v.pixelFormat().colorModel().id() == ColorModel::YCbCr_Rec709);
+        }
+        std::remove(tmp.cstr());
+}
+
 TEST_CASE("QuickTimeWriter: ProfileMp4 stamps an ISO-BMFF major brand") {
         const String movPath = "/tmp/qt_brand_default.mov";
         const String mp4Path = "/tmp/qt_brand_mp4.mp4";
@@ -615,6 +692,168 @@ TEST_CASE("QuickTimeWriter: AAC compressed audio round-trips (mp4a + esds)") {
                 }
 
                 std::remove(tmp.cstr());
+        }
+}
+
+namespace {
+
+        // Returns the compressed AudioFormat whose codec id matches @p id.
+        AudioFormat compressedFormatForCodec(AudioCodec::ID id) {
+                for (AudioFormat::ID fid : AudioFormat::registeredIDs()) {
+                        AudioFormat f(fid);
+                        if (f.isCompressed() && f.audioCodec().id() == id) return f;
+                }
+                return AudioFormat();
+        }
+
+        // Encodes ~0.3 s of a 440 Hz tone through the registered codec backend
+        // and returns the resulting access units (one buffer per AU) plus each
+        // AU's PCM sample count.  Returns false if the codec has no encoder.
+        bool encodeToneAUs(AudioCodec::ID id, int bitrateKbps, List<Buffer> &aus, List<uint64_t> &durations) {
+                AudioCodec codec(id);
+                if (!codec.canEncode() || !codec.canDecode()) return false;
+                auto encRes = codec.createEncoder();
+                if (!isOk(encRes)) return false;
+                AudioEncoder *enc = value(encRes);
+
+                MediaConfig cfg;
+                if (bitrateKbps > 0) cfg.set(MediaConfig::BitrateKbps, int32_t(bitrateKbps));
+                enc->configure(cfg);
+
+                const float        sr = 48000.0f;
+                const unsigned int ch = 2;
+                const size_t       chunk = 2048;
+                auto               collect = [&]() {
+                        while (auto pkt = tests::firstCompressedAudio(enc->receiveFrame())) {
+                                if (pkt->isEndOfStream()) break;
+                                if (pkt->planeCount() == 0) continue;
+                                auto view = pkt->plane(0);
+                                if (view.size() == 0) continue; // skip any empty/priming AU
+                                Buffer b(view.size());
+                                std::memcpy(b.data(), view.data(), view.size());
+                                b.setSize(view.size());
+                                aus.pushToBack(b);
+                                durations.pushToBack(pkt->sampleCount());
+                        }
+                };
+
+                double phase = 0.0;
+                for (int i = 0; i < 7; ++i) {
+                        AudioDesc    desc(AudioFormat::PCMI_S16LE, sr, ch);
+                        const size_t bytes = desc.bufferSize(chunk);
+                        Buffer       buf(bytes);
+                        buf.setSize(bytes);
+                        auto *p = static_cast<int16_t *>(buf.data());
+                        for (size_t s = 0; s < chunk; ++s) {
+                                int16_t v = static_cast<int16_t>(std::sin(phase + 2.0 * M_PI * 440.0 * s / sr) *
+                                                                 0.7 * 32767.0);
+                                for (unsigned int c = 0; c < ch; ++c) *p++ = v;
+                        }
+                        phase += 2.0 * M_PI * 440.0 * chunk / sr;
+                        BufferView planes;
+                        planes.pushToBack(buf, 0, bytes);
+                        auto pcm = PcmAudioPayload::Ptr::create(desc, chunk, planes);
+                        enc->submitFrame(tests::frameWith(pcm));
+                        collect();
+                }
+                enc->flush();
+                collect();
+                delete enc;
+                return !aus.isEmpty();
+        }
+
+} // namespace
+
+TEST_CASE("QuickTimeWriter: compressed audio codecs round-trip (ac-3 / .mp3 / fLaC / Opus)") {
+        // Each codec gets its standardised sample entry + config child box.
+        // Real access units are produced by the codec backends so AC-3's dac3
+        // record (parsed from the first syncframe) is exercised for real, and
+        // the read side maps the sample-entry FourCC back to the codec.  The
+        // container stores AUs verbatim, so read-back bytes must match exactly.
+        struct Codec {
+                        AudioCodec::ID    id;
+                        int               bitrateKbps;
+                        AudioFormat::ID   fmt;
+                        const char       *name;
+        };
+        const Codec codecs[] = {
+                {AudioCodec::AC3, 192, AudioFormat::AC3, "AC-3"},
+                {AudioCodec::MP3, 192, AudioFormat::MP3, "MP3"},
+                {AudioCodec::FLAC, 0, AudioFormat::FLAC, "FLAC"},
+                {AudioCodec::Opus, 0, AudioFormat::Opus, "Opus"},
+        };
+
+        for (const Codec &c : codecs) {
+                List<Buffer>   aus;
+                List<uint64_t> durations;
+                if (!encodeToneAUs(c.id, c.bitrateKbps, aus, durations)) {
+                        MESSAGE("skipping ", c.name, " — no codec backend in this build");
+                        continue;
+                }
+                REQUIRE(compressedFormatForCodec(c.id).isValid());
+                const AudioDesc adesc(compressedFormatForCodec(c.id), 48000.0f, 2);
+                REQUIRE(adesc.format().isCompressed());
+
+                const QuickTime::Layout layouts[] = {QuickTime::LayoutClassic, QuickTime::LayoutFragmented};
+                for (QuickTime::Layout layout : layouts) {
+                        const bool   frag = (layout == QuickTime::LayoutFragmented);
+                        const String tmp =
+                                String("/tmp/qt_audio_") + c.name + (frag ? "_frag" : "_classic") + ".mov";
+                        std::remove(tmp.cstr());
+
+                        {
+                                QuickTime qt = QuickTime::createWriter(tmp);
+                                REQUIRE(qt.setLayout(layout) == Error::Ok);
+                                REQUIRE(qt.open() == Error::Ok);
+                                uint32_t vid = 0, aid = 0;
+                                REQUIRE(qt.addVideoTrack(PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709),
+                                                         Size2Du32(16, 16),
+                                                         FrameRate(FrameRate::RationalType(24, 1)), &vid) == Error::Ok);
+                                REQUIRE(qt.addAudioTrack(adesc, &aid) == Error::Ok);
+
+                                for (size_t k = 0; k < aus.size(); ++k) {
+                                        QuickTime::Sample vs;
+                                        vs.data = makeFilledBuffer(256, static_cast<uint8_t>(0x40 + k));
+                                        vs.duration = 1;
+                                        vs.keyframe = true;
+                                        REQUIRE(qt.writeSample(vid, vs) == Error::Ok);
+
+                                        QuickTime::Sample as;
+                                        as.data = aus[k];
+                                        as.duration = durations[k];
+                                        as.keyframe = true;
+                                        INFO("codec=", c.name, " layout=", frag ? "frag" : "classic", " k=", k,
+                                             " ausize=", aus[k].size());
+                                        REQUIRE(qt.writeSample(aid, as) == Error::Ok);
+                                }
+                                REQUIRE(qt.finalize() == Error::Ok);
+                        }
+
+                        {
+                                QuickTime qt = QuickTime::createReader(tmp);
+                                REQUIRE(qt.open() == Error::Ok);
+                                size_t audioIdx = SIZE_MAX;
+                                for (size_t i = 0; i < qt.tracks().size(); ++i) {
+                                        if (qt.tracks()[i].type() == QuickTime::Audio) audioIdx = i;
+                                }
+                                REQUIRE(audioIdx != SIZE_MAX);
+                                const QuickTime::Track &a = qt.tracks()[audioIdx];
+                                INFO("codec=", c.name, " layout=", frag ? "fragmented" : "classic");
+                                CHECK(a.audioDesc().format().isCompressed());
+                                CHECK(a.audioDesc().format().audioCodec().id() == c.id);
+                                CHECK(a.audioDesc().channels() == 2);
+                                CHECK(a.sampleCount() == aus.size());
+
+                                for (size_t k = 0; k < aus.size(); ++k) {
+                                        QuickTime::Sample s;
+                                        REQUIRE(qt.readSample(audioIdx, k, s) == Error::Ok);
+                                        REQUIRE(s.data.size() == aus[k].size());
+                                        CHECK(std::memcmp(s.data.data(), aus[k].data(), aus[k].size()) == 0);
+                                        CHECK(static_cast<uint64_t>(s.duration) == durations[k]);
+                                }
+                        }
+                        std::remove(tmp.cstr());
+                }
         }
 }
 
@@ -1517,4 +1756,58 @@ TEST_CASE("QuickTimeWriter: H.264 Annex-B input is stored as AVCC with avcC box"
         }
 
         std::remove(tmp.cstr());
+}
+
+// ---------------------------------------------------------------------------
+// QuickTimeVideoCodec → proposeInput wiring (the planner-splice trigger).
+// ---------------------------------------------------------------------------
+
+TEST_CASE("QuickTimeMediaIO: QuickTimeVideoCodec drives compressed-video proposeInput") {
+        auto offeredUncompressed = []() {
+                MediaDesc d;
+                d.imageList().pushToBack(
+                        ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::YUV8_422_UYVY_Rec709)));
+                return d;
+        };
+
+        SUBCASE("default (Invalid codec) leaves uncompressed video uncompressed") {
+                QuickTimeMediaIO qt;
+                MediaDesc        preferred;
+                REQUIRE(qt.proposeInput(offeredUncompressed(), &preferred) == Error::Ok);
+                REQUIRE_FALSE(preferred.imageList().isEmpty());
+                CHECK_FALSE(preferred.imageList()[0].pixelFormat().isCompressed());
+        }
+
+        SUBCASE("H264 requests a compressed PixelFormat (planner splices VideoEncoder)") {
+                QuickTimeMediaIO qt;
+                MediaIO::Config  cfg;
+                cfg.set(MediaConfig::QuickTimeVideoCodec, VideoCodec(VideoCodec::H264));
+                qt.setConfig(cfg);
+                MediaDesc preferred;
+                REQUIRE(qt.proposeInput(offeredUncompressed(), &preferred) == Error::Ok);
+                REQUIRE_FALSE(preferred.imageList().isEmpty());
+                CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::H264);
+                CHECK(preferred.imageList()[0].pixelFormat().isCompressed());
+        }
+
+        SUBCASE("ProRes 422 requests the apcn-backed compressed PixelFormat") {
+                QuickTimeMediaIO qt;
+                MediaIO::Config  cfg;
+                cfg.set(MediaConfig::QuickTimeVideoCodec, VideoCodec(VideoCodec::ProRes_422));
+                qt.setConfig(cfg);
+                MediaDesc preferred;
+                REQUIRE(qt.proposeInput(offeredUncompressed(), &preferred) == Error::Ok);
+                REQUIRE_FALSE(preferred.imageList().isEmpty());
+                CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::ProRes_422);
+        }
+
+        SUBCASE("already-compressed offered video is passthrough (not re-coerced)") {
+                QuickTimeMediaIO qt; // default Invalid codec
+                MediaDesc        d;
+                d.imageList().pushToBack(ImageDesc(Size2Du32(1920, 1080), PixelFormat(PixelFormat::HEVC)));
+                MediaDesc preferred;
+                REQUIRE(qt.proposeInput(d, &preferred) == Error::Ok);
+                REQUIRE_FALSE(preferred.imageList().isEmpty());
+                CHECK(preferred.imageList()[0].pixelFormat().id() == PixelFormat::HEVC);
+        }
 }

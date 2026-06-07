@@ -144,6 +144,20 @@ DnsResolver::~DnsResolver() {
                 if (lk != nullptr) failLookup(lk, Error(Error::Stopped));
         }
         closeSockets();
+
+        // Detach every surviving child lookup.  failLookup() only
+        // deleteLater()s the inflight ones (the event loop won't run
+        // again to honour that during teardown), and lookups created by
+        // lookup() but not yet begun were never in _byLookup at all.  All
+        // of them are ObjectBase children, so ~ObjectBase will destroy
+        // them after this derived destructor returns — by which point the
+        // DnsResolver subobject is gone.  Null their back-pointer now so
+        // ~DnsLookup doesn't call removeInflight() on a dead resolver.
+        for (ObjectBase *child : childList()) {
+                if (DnsLookup *lk = dynamic_cast<DnsLookup *>(child)) {
+                        lk->_resolver = nullptr;
+                }
+        }
 }
 
 void DnsResolver::setNameservers(const List<SocketAddress> &servers) {

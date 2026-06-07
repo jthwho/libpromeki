@@ -298,6 +298,11 @@ Enum::Type Enum::registerType(const String &typeName, const ValueList &values, i
                 std::memcpy(cursor, v.first().cstr(), v.first().byteCount() + 1);
                 entryBuf[i].name = cursor;
                 entryBuf[i].value = v.second();
+                // entryBuf points at raw operator-new memory, so Entry's
+                // default member initializers never ran.  The dynamic path
+                // has no per-entry display labels, so null it explicitly —
+                // otherwise populateStringLiterals() would strlen() garbage.
+                entryBuf[i].displayName = nullptr;
                 cursor += v.first().byteCount() + 1;
                 if (v.second() == defaultValue) defaultFound = true;
         }

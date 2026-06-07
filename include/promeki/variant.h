@@ -1146,39 +1146,34 @@ inline Variant variantConvertToFloat(const Variant &src, Error *err) {
         return Variant(static_cast<Float>(raw));
 }
 
+// Out-of-line bridges so this header never needs a complete @c JsonObject.
+// All three are defined in variant.cpp (which includes json.h); keeping the
+// JsonObject machinery there means any TU that merely instantiates
+// @ref registerAutoConverters<T> (i.e. materializes @c DataType::of<T>())
+// does not have to drag in json.h.  See also @ref variantJsonToValue /
+// @ref variantValueToJson below.
+DataType variantJsonObjectDataType();
+bool     variantJsonToValue(const DataType &dt, const Variant &src, void *out, Error *err);
+Variant  variantValueToJson(const DataType &dt, const void *value, Error *err);
+
 /**
  * @brief Auto-discoverable Variant converter helper: @c JsonObject -> @p T.
  *
  * Invoked when a (JsonObject, T) converter has been registered through
  * @ref registerAutoConverters because @p T populated its
- * @c DataType::Ops::fromJson slot.
+ * @c DataType::Ops::fromJson slot.  The JsonObject-touching work is done
+ * by the out-of-line @ref variantJsonToValue bridge so this template body
+ * never needs a complete @c JsonObject.
  */
 template <typename T>
 inline Variant variantConvertJsonObjectTo(const Variant &src, Error *err) {
-        if (err != nullptr) *err = Error::Ok;
-        const DataType jsonDt = DataType::byCppType(std::type_index(typeid(JsonObject)));
-        if (!jsonDt.isValid()) {
-                if (err != nullptr) *err = Error::Invalid;
-                return Variant();
-        }
-        const void *raw = src.payloadPtr();
-        if (raw == nullptr || src.type() != jsonDt.id()) {
-                if (err != nullptr) *err = Error::Invalid;
-                return Variant();
-        }
-        const JsonObject     *p  = static_cast<const JsonObject *>(raw);
-        const DataType        dt = DataType::of<T>();
-        const DataType::Data *td = dt.data();
-        if (td == nullptr || td->ops.fromJson == nullptr) {
-                if (err != nullptr) *err = Error::Invalid;
-                return Variant();
-        }
         T     tmp{};
         Error e;
-        if (!td->ops.fromJson(*p, &tmp, &e)) {
+        if (!variantJsonToValue(DataType::of<T>(), src, &tmp, &e)) {
                 if (err != nullptr) *err = e.isError() ? e : Error::Invalid;
                 return Variant();
         }
+        if (err != nullptr) *err = Error::Ok;
         return Variant(std::move(tmp));
 }
 
@@ -1186,30 +1181,21 @@ inline Variant variantConvertJsonObjectTo(const Variant &src, Error *err) {
  * @brief Auto-discoverable Variant converter helper: @p T -> @c JsonObject.
  *
  * Inverse of @ref variantConvertJsonObjectTo.  Pulls @p T out of
- * @p src, calls the registered @c DataType::Ops::toJson, and wraps
- * the result back in a Variant.
+ * @p src and hands it to the out-of-line @ref variantValueToJson bridge,
+ * which calls the registered @c DataType::Ops::toJson and wraps the
+ * result back in a Variant — keeping the JsonObject type out of this header.
  */
 template <typename T>
 inline Variant variantConvertToJsonObject(const Variant &src, Error *err) {
-        if (err != nullptr) *err = Error::Ok;
         const T *p = src.peek<T>();
         if (p == nullptr) {
                 if (err != nullptr) *err = Error::Invalid;
                 return Variant();
         }
-        const DataType        dt = DataType::of<T>();
-        const DataType::Data *td = dt.data();
-        if (td == nullptr || td->ops.toJson == nullptr) {
-                if (err != nullptr) *err = Error::Invalid;
-                return Variant();
-        }
-        Error      e;
-        JsonObject result = td->ops.toJson(p, &e);
-        if (e.isError()) {
-                if (err != nullptr) *err = e;
-                return Variant();
-        }
-        return Variant(std::move(result));
+        Error   e;
+        Variant out = variantValueToJson(DataType::of<T>(), p, &e);
+        if (err != nullptr) *err = e;
+        return out;
 }
 
 template <typename T> inline void registerAutoConverters(const DataType &dt) {
@@ -1230,7 +1216,7 @@ template <typename T> inline void registerAutoConverters(const DataType &dt) {
         // JsonObject <-> T auto-wiring.  Only the types that populated
         // ops.toJson / ops.fromJson get a converter; everyone else
         // continues to round-trip through String like before.
-        const DataType jsonDt = DataType::byCppType(std::type_index(typeid(JsonObject)));
+        const DataType jsonDt = variantJsonObjectDataType();
         if (jsonDt.isValid() && dt != jsonDt) {
                 if (dt.ops().fromJson != nullptr) {
                         Variant::registerConverter(jsonDt.id(), dt.id(),

@@ -56,6 +56,7 @@ promeki_config_option(PROMEKI_ENABLE_VORBIS    OFF)
 promeki_config_option(PROMEKI_ENABLE_MP3       OFF)
 promeki_config_option(PROMEKI_ENABLE_OPUS      OFF)
 promeki_config_option(PROMEKI_ENABLE_AAC       OFF)
+promeki_config_option(PROMEKI_ENABLE_FFMPEG    OFF)
 promeki_config_option(PROMEKI_ENABLE_SRC       OFF)
 # CSC (pixel-format conversion, vendored Highway) is pure compute and has
 # no external deps — keep it on so pro A/V pixel paths still work.

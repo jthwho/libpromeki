@@ -249,6 +249,12 @@ QuickTimeFactory::Config::SpecMap QuickTimeFactory::configSpecs() const {
         s(MediaConfig::QuickTimeFragmentFrames, int32_t(QuickTimeMediaIO::DefaultFragmentFrames));
         s(MediaConfig::QuickTimeFlushSync, false);
         s(MediaConfig::QuickTimeCaptionReadPolicy, QuickTimeCaptionReadPolicy::Auto);
+        // PCM = uncompressed lpcm track (historical default).  Set to a
+        // compressed codec to have the planner splice an AudioEncoder.
+        s(MediaConfig::QuickTimeAudioCodec, AudioCodec(AudioCodec::PCM));
+        // Invalid = passthrough (store the offered video as-is).  Set to a
+        // compressed codec to have the planner splice a VideoEncoder.
+        s(MediaConfig::QuickTimeVideoCodec, VideoCodec());
         return specs;
 }
 
@@ -400,6 +406,7 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 if (_videoTrackIndex >= 0) {
                         const QuickTime::Track &vt = _qt.tracks()[_videoTrackIndex];
                         ImageDesc               idesc(vt.size(), vt.pixelFormat());
+                        idesc.setVideoScanMode(vt.videoScanMode());
                         mediaDesc.imageList().pushToBack(idesc);
                         if (vt.frameRate().isValid()) {
                                 mediaDesc.setFrameRate(vt.frameRate());
@@ -476,6 +483,9 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandOpen &cmd) {
                 if (!cmd.pendingMediaDesc.imageList().isEmpty() && _frameRate.isValid()) {
                         const ImageDesc &idesc = cmd.pendingMediaDesc.imageList()[0];
                         uint32_t         vid = 0;
+                        // Scan mode for the track's fiel box: session config, or
+                        // the descriptor's own (authoritative) videoScanMode().
+                        _qt.setVideoScanMode(resolveWriteScanMode(idesc.videoScanMode()));
                         err = _qt.addVideoTrack(idesc.pixelFormat(), idesc.size(), _frameRate, &vid);
                         if (err.isError()) return err;
                         _writerVideoTrackId = vid;
@@ -576,6 +586,7 @@ Error QuickTimeMediaIO::readVideoFrame(const FrameNumber &frameIndex, Frame &out
         const size_t       sampleHeight = vt.size().height();
         ImageDesc          idesc(Size2Du32(sampleWidth, sampleHeight), samplePd);
         idesc.metadata() = vt.metadata();
+        idesc.setVideoScanMode(vt.videoScanMode());
 
         MediaPayload::Ptr videoPayload;
 
@@ -866,7 +877,12 @@ Error QuickTimeMediaIO::setupWriterFromFrame(const Frame &frame) {
                 promekiWarn("QuickTimeMediaIO: no frame rate provided; defaulting to 24/1");
         }
         uint32_t vid = 0;
-        Error    err = _qt.addVideoTrack(inferPixelFormat, inferSize, _frameRate, &vid);
+        // Scan mode for the track's fiel box: session config, or the first
+        // video payload's own (authoritative) ImageDesc::videoScanMode().
+        VideoScanMode descScan(VideoScanMode::Unknown);
+        if (!vids.isEmpty() && vids[0].isValid()) descScan = vids[0]->desc().videoScanMode();
+        _qt.setVideoScanMode(resolveWriteScanMode(descScan));
+        Error err = _qt.addVideoTrack(inferPixelFormat, inferSize, _frameRate, &vid);
         if (err.isError()) return err;
         _writerVideoTrackId = vid;
 
@@ -1013,6 +1029,29 @@ Error QuickTimeMediaIO::executeCmd(MediaIOCommandWrite &cmd) {
                         s.data = Buffer(std::move(copy));
                 }
                 s.keyframe = cvp->isKeyframe();
+
+                // The QuickTime writer builds the avc1/hvc1 avcC/hvcC config box
+                // by extracting SPS/PPS(/VPS) from the first keyframe's in-band
+                // NAL units.  A planner-spliced encoder may carry parameter sets
+                // only out-of-band — e.g. x264 with VideoRepeatHeaders off emits
+                // them solely via Metadata::CodecParameterSets — leaving keyframe
+                // AUs header-less.  Prepend the (Annex-B) parameter sets to such
+                // keyframes so the config box can be built; the writer's
+                // annexBToAvccFiltered() strips them back out of the stored
+                // sample, so they only ever feed the config record.
+                const PixelFormat::ID vpid = cvp->desc().pixelFormat().id();
+                if (s.keyframe && (vpid == PixelFormat::H264 || vpid == PixelFormat::HEVC) &&
+                    cvp->metadata().contains(Metadata::CodecParameterSets)) {
+                        const String ps = cvp->metadata().getAs<String>(Metadata::CodecParameterSets);
+                        if (!ps.isEmpty()) {
+                                Buffer merged(ps.size() + s.data.size());
+                                auto *dst = static_cast<uint8_t *>(merged.data());
+                                std::memcpy(dst, ps.cstr(), ps.size());
+                                std::memcpy(dst + ps.size(), s.data.data(), s.data.size());
+                                merged.setSize(ps.size() + s.data.size());
+                                s.data = std::move(merged);
+                        }
+                }
         } else if (const auto *uvp = vp.as<UncompressedVideoPayload>()) {
                 const size_t pc = uvp->planeCount();
                 if (pc == 0) {
@@ -1259,25 +1298,92 @@ PixelFormat QuickTimeMediaIO::pickSupportedPixelFormat(const PixelFormat &offere
 
 Error QuickTimeMediaIO::proposeInput(const MediaDesc &offered, MediaDesc *preferred) const {
         if (preferred == nullptr) return Error::Invalid;
-        if (offered.imageList().isEmpty()) {
-                *preferred = offered;
-                return Error::Ok;
-        }
-
-        const PixelFormat &offeredPd = offered.imageList()[0].pixelFormat();
-        const PixelFormat  target = pickSupportedPixelFormat(offeredPd);
-        if (target == offeredPd) {
-                *preferred = offered;
-                return Error::Ok;
-        }
 
         MediaDesc want = offered;
-        ImageDesc img(offered.imageList()[0].size(), target);
-        img.setVideoScanMode(offered.imageList()[0].videoScanMode());
-        want.imageList().clear();
-        want.imageList().pushToBack(img);
+        // Video axis, step 1: when QuickTimeVideoCodec names a compressed codec
+        // and the offered video is uncompressed, request that codec's compressed
+        // PixelFormat so the planner's CSC+VideoEncoder two-hop bridges the gap.
+        rewriteVideoForCodec(want);
+        // Video axis, step 2: coerce a still-uncompressed format the muxer can't
+        // store to the closest supported one (the planner then splices a CSC).
+        // A compressed target (codec request above, or already-compressed
+        // passthrough) is left exactly as offered.
+        if (!want.imageList().isEmpty()) {
+                const PixelFormat &pd = want.imageList()[0].pixelFormat();
+                if (!pd.isCompressed()) {
+                        const PixelFormat target = pickSupportedPixelFormat(pd);
+                        if (target != pd) {
+                                want.imageList()[0].setPixelFormat(target);
+                        }
+                }
+        }
+        // Audio axis: optionally request a compressed codec (splices an encoder).
+        rewriteAudioForCodec(want);
         *preferred = want;
         return Error::Ok;
+}
+
+void QuickTimeMediaIO::rewriteVideoForCodec(MediaDesc &desc) const {
+        // Mirror of rewriteAudioForCodec on the video axis.  Only uncompressed
+        // offered video is rewritten; an already-compressed offered stream is a
+        // passthrough request and stays untouched, as does an Invalid codec
+        // (the default — store whatever the source offers).
+        if (desc.imageList().isEmpty()) return;
+        const PixelFormat &offeredPd = desc.imageList()[0].pixelFormat();
+        if (!offeredPd.isValid() || offeredPd.isCompressed()) return;
+
+        const VideoCodec vc = config().getAs<VideoCodec>(MediaConfig::QuickTimeVideoCodec, VideoCodec());
+        if (!vc.isValid()) return;
+        const List<PixelFormat> cpfs = vc.compressedPixelFormats();
+        if (cpfs.isEmpty()) return;
+        const PixelFormat compressed = cpfs[0];
+
+        // Rewrite every image descriptor's format to the codec's compressed
+        // PixelFormat.  The planner sees an uncompressed→compressed gap and
+        // splices a VideoEncoder (whose VideoCodec is derived from this format
+        // by VideoCodec::fromPixelFormat), inserting a CSC ahead of it when the
+        // offered raster doesn't match the encoder's accepted inputs.
+        ImageDesc::List &imgs = desc.imageList();
+        for (size_t i = 0; i < imgs.size(); ++i) imgs[i].setPixelFormat(compressed);
+}
+
+void QuickTimeMediaIO::rewriteAudioForCodec(MediaDesc &desc) const {
+        // Writer audio-codec selection (mirrors MpegTsFileMediaIO::proposeInput).
+        // When QuickTimeAudioCodec names a compressed codec and the offered
+        // audio is uncompressed, rewrite each audio descriptor's format to the
+        // codec's compressed AudioFormat.  The planner's orthogonal-axes pass
+        // then sees an uncompressed→compressed gap and splices an AudioEncoder
+        // (whose AudioCodec is derived from this very format by
+        // audioEncoderBridge).  PCM / Invalid leaves the audio untouched so the
+        // muxer writes an lpcm track (the historical default).
+        if (desc.audioList().isEmpty()) return;
+        const AudioFormat &af = desc.audioList()[0].format();
+        if (!af.isValid() || af.isCompressed()) return;
+
+        const AudioCodec ac = config().getAs<AudioCodec>(MediaConfig::QuickTimeAudioCodec,
+                                                         AudioCodec(AudioCodec::PCM));
+        if (!ac.isValid() || ac.id() == AudioCodec::PCM) return;
+
+        AudioFormat compressedFmt;
+        for (AudioFormat::ID fid : AudioFormat::registeredIDs()) {
+                AudioFormat candidate(fid);
+                if (candidate.isCompressed() && candidate.audioCodec() == ac) {
+                        compressedFmt = candidate;
+                        break;
+                }
+        }
+        if (!compressedFmt.isValid()) return;
+        AudioDesc::List &auds = desc.audioList();
+        for (size_t i = 0; i < auds.size(); ++i) auds[i].setFormat(compressedFmt);
+}
+
+VideoScanMode QuickTimeMediaIO::resolveWriteScanMode(const VideoScanMode &descScanMode) const {
+        // Session config wins when it names a concrete mode; otherwise honour
+        // the source ImageDesc's own (authoritative) scan mode; otherwise
+        // progressive (Unknown).
+        VideoScanMode cfg = config().getAs<VideoScanMode>(MediaConfig::VideoScanMode, VideoScanMode::Unknown);
+        if (cfg != VideoScanMode::Unknown) return cfg;
+        return descScanMode;
 }
 
 PROMEKI_NAMESPACE_END

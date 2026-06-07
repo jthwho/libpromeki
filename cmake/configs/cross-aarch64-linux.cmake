@@ -138,6 +138,9 @@ promeki_config_option(PROMEKI_ENABLE_FREETYPE  ON)
 promeki_config_option(PROMEKI_ENABLE_AUDIO     ON)
 promeki_config_option(PROMEKI_ENABLE_OPUS      ON)
 promeki_config_option(PROMEKI_ENABLE_AAC       ON)
+# FFmpeg cross-compile (--enable-cross-compile/--cross-prefix) is a follow-up;
+# keep the vendored FFmpeg suite off for cross builds for now.
+promeki_config_option(PROMEKI_ENABLE_FFMPEG    OFF)
 promeki_config_option(PROMEKI_ENABLE_SRC       ON)
 promeki_config_option(PROMEKI_ENABLE_CSC       ON)
 promeki_config_option(PROMEKI_ENABLE_CIRF      ON)

@@ -48,6 +48,9 @@
 #include <promeki/websocket.h>
 #include <promeki/dir.h>
 #include <promeki/error.h>
+#include <promeki/mutex.h>
+#include <promeki/sharedptr.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -243,11 +246,54 @@ namespace {
         // asks for replay larger than the configured history.
         constexpr size_t MaxReplayCount = 16384;
 
+        // Tracks the Logger listener handles spawned by /log/stream
+        // WebSocket sessions so they can all be torn down when the owning
+        // HttpApi is destroyed.  A session is normally removed when its
+        // socket disconnects, but if the debug server is shut down while a
+        // socket is still attached, that disconnect never arrives — the
+        // listener would then outlive its wsLoop and, on the next log
+        // entry, post into a destroyed EventLoop (locking a freed mutex),
+        // wedging the logger thread for the whole process.  Draining the
+        // registry on HttpApi teardown — which runs on the server thread
+        // while the loop and logger are still alive — closes that hole.
+        struct LogStreamRegistry {
+                        PROMEKI_SHARED_FINAL(LogStreamRegistry)
+                        // mutable so the handle can be reached through the const
+                        // captures / const SharedPtr the route and teardown
+                        // lambdas hold; the methods are internally synchronized.
+                        mutable Mutex                        mutex;
+                        mutable List<Logger::ListenerHandle> handles;
+
+                        void track(Logger::ListenerHandle h) const {
+                                Mutex::Locker lock(mutex);
+                                handles.pushToBack(h);
+                        }
+                        void forget(Logger::ListenerHandle h) const {
+                                Mutex::Locker lock(mutex);
+                                handles.removeFirst(h);
+                        }
+                        void removeAll() const {
+                                List<Logger::ListenerHandle> snapshot;
+                                {
+                                        Mutex::Locker lock(mutex);
+                                        snapshot = handles;
+                                        handles.clear();
+                                }
+                                // removeListener blocks on the logger thread, so
+                                // never hold our mutex across it.
+                                for (Logger::ListenerHandle h : snapshot) {
+                                        Logger::defaultLogger().removeListener(h);
+                                }
+                        }
+        };
+
         // Wires a single WebSocket connection up to the Logger as a streaming
         // listener.  Uses a heap-allocated session shared between the worker-
         // thread listener and the WebSocket-loop send path so the lifetime is
-        // independent of either stack frame.
-        void attachLogWebSocket(WebSocket *ws, size_t replayCount) {
+        // independent of either stack frame.  The installed handle is tracked
+        // in @p registry so it is removed even if the socket never cleanly
+        // disconnects (see @ref LogStreamRegistry).
+        void attachLogWebSocket(WebSocket *ws, size_t replayCount, const SharedPtr<LogStreamRegistry> &registry) {
                 EventLoop               *wsLoop = EventLoop::current();
                 ObjectBasePtr<WebSocket> wsPtr(ws);
 
@@ -256,6 +302,17 @@ namespace {
 
                 Logger::ListenerHandle handle = Logger::defaultLogger().installListener(
                         [wsPtr, wsLoop](const Logger::LogEntry &entry, const String &threadName) {
+                                // The listener can outlive both the WebSocket and
+                                // wsLoop: it is only removed on disconnectedSignal,
+                                // which is missed when the debug server is torn
+                                // down before the socket cleanly disconnects.  The
+                                // WebSocket (an ObjectBase, owned by the server) is
+                                // always destroyed before wsLoop (the server thread
+                                // quits afterwards), so an invalid wsPtr means
+                                // wsLoop is gone too — touching it here (this runs
+                                // on the logger thread) would lock a destroyed
+                                // mutex and wedge the entire logger.  Bail first.
+                                if (!wsPtr.isValid()) return;
                                 const String json = logEntryToJson(entry, threadName).toString();
                                 wsLoop->postCallable(kSendLabel, [wsPtr, json]() mutable {
                                         if (!wsPtr.isValid()) return;
@@ -266,7 +323,10 @@ namespace {
                         },
                         replayCount);
 
-                ws->disconnectedSignal.connect([handle, ws, wsLoop]() {
+                if (registry) registry->track(handle);
+
+                ws->disconnectedSignal.connect([handle, ws, wsLoop, registry]() {
+                        if (registry) registry->forget(handle);
                         Logger::defaultLogger().removeListener(handle);
                         wsLoop->postCallable(kCleanupLabel, [ws]() { delete ws; });
                 });
@@ -277,6 +337,16 @@ namespace {
                 const String levelRel = base + "/level";
                 const String debugRel = base + "/debug/{name}";
                 const String wsRel = base + "/stream";
+
+                // Shared across the /log/stream route and the teardown hook
+                // below.  Drained when the HttpApi is destroyed — which, for a
+                // DebugServer, runs on the server thread before its EventLoop
+                // and the logger go away — so no log-stream listener can
+                // outlive its wsLoop.  Held alive by the route handler and the
+                // aboutToDestroy slot until both are gone.
+                auto logStreamRegistry = SharedPtr<LogStreamRegistry>::create();
+                api.aboutToDestroySignal.connect(
+                        [logStreamRegistry](ObjectBase *) { logStreamRegistry->removeAll(); });
 
                 // GET /log — full snapshot.
                 {
@@ -392,19 +462,20 @@ namespace {
                 // GET endpoint because the catalog/OpenAPI surfaces don't
                 // model WebSocket upgrades — clients learn about it via the
                 // module documentation.
-                api.server().routeWebSocket(api.resolve(wsRel), [](WebSocket *ws, const HttpRequest &req) {
-                        const String replayStr = req.queryValue("replay");
-                        size_t       replay = 100;
-                        if (!replayStr.isEmpty()) {
-                                Error   perr;
-                                int64_t parsed = replayStr.toInt(&perr);
-                                if (perr.isOk() && parsed >= 0) {
-                                        replay = static_cast<size_t>(parsed);
+                api.server().routeWebSocket(
+                        api.resolve(wsRel), [logStreamRegistry](WebSocket *ws, const HttpRequest &req) {
+                                const String replayStr = req.queryValue("replay");
+                                size_t       replay = 100;
+                                if (!replayStr.isEmpty()) {
+                                        Error   perr;
+                                        int64_t parsed = replayStr.toInt(&perr);
+                                        if (perr.isOk() && parsed >= 0) {
+                                                replay = static_cast<size_t>(parsed);
+                                        }
                                 }
-                        }
-                        if (replay > MaxReplayCount) replay = MaxReplayCount;
-                        attachLogWebSocket(ws, replay);
-                });
+                                if (replay > MaxReplayCount) replay = MaxReplayCount;
+                                attachLogWebSocket(ws, replay, logStreamRegistry);
+                        });
         }
 
         // ============================================================

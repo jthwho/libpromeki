@@ -13,6 +13,7 @@
 #include <promeki/cea708encoder.h>
 #include <promeki/framenumber.h>
 #include <promeki/framerate.h>
+#include <promeki/metadata.h>
 #include <promeki/subtitle.h>
 #include <promeki/timestamp.h>
 

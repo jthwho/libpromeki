@@ -8,6 +8,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/datastream.h>
 #include <promeki/atomic.h>
+#include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/paintengine.h>
 #include <promeki/imagedesc.h>
@@ -1887,6 +1888,94 @@ static PixelFormat::Data makeYUV10_444_Planar_LE() {
                              ycbcrSem10());
 }
 
+static PixelFormat::Data makeYUV12_444_Planar_LE() {
+        return makeYCbCrDesc(PixelFormat::YUV12_444_Planar_LE_Rec709, "YUV12_444_Planar_LE_Rec709",
+                             "12-bit YCbCr 4:4:4 planar LE, Rec.709, limited range", PixelMemLayout::P_444_3x12_LE,
+                             ycbcrSem12());
+}
+
+// Planar 4:2:2 / 4:4:4 colorimetry variants — same memory layouts as the
+// Rec.709 entries above, anchored on a different ColorModel so wide-gamut /
+// HDR / SD decoded content lands on a PixelFormat that encodes its colour
+// space (see promekiPixelFormatFor in ffmpegvideocodec.cpp).
+static PixelFormat::Data makeYUV10_422_Planar_LE_Rec601() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_Planar_LE_Rec601, "YUV10_422_Planar_LE_Rec601",
+                                      "10-bit YCbCr 4:2:2 planar LE, Rec.601, limited range",
+                                      PixelMemLayout::P_422_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec601);
+}
+
+static PixelFormat::Data makeYUV10_422_Planar_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_Planar_LE_Rec2020, "YUV10_422_Planar_LE_Rec2020",
+                                      "10-bit YCbCr 4:2:2 planar LE, Rec.2020, limited range",
+                                      PixelMemLayout::P_422_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
+}
+
+static PixelFormat::Data makeYUV10_422_Planar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_Planar_LE_Rec2020_PQ,
+                                      "YUV10_422_Planar_LE_Rec2020_PQ",
+                                      "10-bit YCbCr 4:2:2 planar LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::P_422_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV10_422_Planar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_422_Planar_LE_Rec2020_HLG,
+                                      "YUV10_422_Planar_LE_Rec2020_HLG",
+                                      "10-bit YCbCr 4:2:2 planar LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::P_422_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV10_444_Planar_LE_Rec601() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_444_Planar_LE_Rec601, "YUV10_444_Planar_LE_Rec601",
+                                      "10-bit YCbCr 4:4:4 planar LE, Rec.601, limited range",
+                                      PixelMemLayout::P_444_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec601);
+}
+
+static PixelFormat::Data makeYUV10_444_Planar_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_444_Planar_LE_Rec2020, "YUV10_444_Planar_LE_Rec2020",
+                                      "10-bit YCbCr 4:4:4 planar LE, Rec.2020, limited range",
+                                      PixelMemLayout::P_444_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020);
+}
+
+static PixelFormat::Data makeYUV10_444_Planar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_444_Planar_LE_Rec2020_PQ,
+                                      "YUV10_444_Planar_LE_Rec2020_PQ",
+                                      "10-bit YCbCr 4:4:4 planar LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::P_444_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV10_444_Planar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV10_444_Planar_LE_Rec2020_HLG,
+                                      "YUV10_444_Planar_LE_Rec2020_HLG",
+                                      "10-bit YCbCr 4:4:4 planar LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::P_444_3x10_LE, ycbcrSem10(), ColorModel::YCbCr_Rec2020_HLG);
+}
+
+static PixelFormat::Data makeYUV12_444_Planar_LE_Rec601() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_444_Planar_LE_Rec601, "YUV12_444_Planar_LE_Rec601",
+                                      "12-bit YCbCr 4:4:4 planar LE, Rec.601, limited range",
+                                      PixelMemLayout::P_444_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec601);
+}
+
+static PixelFormat::Data makeYUV12_444_Planar_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_444_Planar_LE_Rec2020, "YUV12_444_Planar_LE_Rec2020",
+                                      "12-bit YCbCr 4:4:4 planar LE, Rec.2020, limited range",
+                                      PixelMemLayout::P_444_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec2020);
+}
+
+static PixelFormat::Data makeYUV12_444_Planar_LE_Rec2020_PQ() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_444_Planar_LE_Rec2020_PQ,
+                                      "YUV12_444_Planar_LE_Rec2020_PQ",
+                                      "12-bit YCbCr 4:4:4 planar LE, BT.2020 + PQ, limited range",
+                                      PixelMemLayout::P_444_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec2020_PQ);
+}
+
+static PixelFormat::Data makeYUV12_444_Planar_LE_Rec2020_HLG() {
+        return makeYCbCrDescWithModel(PixelFormat::YUV12_444_Planar_LE_Rec2020_HLG,
+                                      "YUV12_444_Planar_LE_Rec2020_HLG",
+                                      "12-bit YCbCr 4:4:4 planar LE, BT.2020 + HLG, limited range",
+                                      PixelMemLayout::P_444_3x12_LE, ycbcrSem12(), ColorModel::YCbCr_Rec2020_HLG);
+}
+
 static PixelFormat::Data makeProRes422Desc(PixelFormat::ID id, const char *name, const char *desc, FourCC fourcc,
                                            VideoCodec::ID codec) {
         PixelFormat::Data d;
@@ -2292,6 +2381,19 @@ struct PixelFormatRegistry {
                         add(makeAV1());
                         add(makeYUV8_444_Planar());
                         add(makeYUV10_444_Planar_LE());
+                        add(makeYUV12_444_Planar_LE());
+                        add(makeYUV10_422_Planar_LE_Rec601());
+                        add(makeYUV10_422_Planar_LE_Rec2020());
+                        add(makeYUV10_422_Planar_LE_Rec2020_PQ());
+                        add(makeYUV10_422_Planar_LE_Rec2020_HLG());
+                        add(makeYUV10_444_Planar_LE_Rec601());
+                        add(makeYUV10_444_Planar_LE_Rec2020());
+                        add(makeYUV10_444_Planar_LE_Rec2020_PQ());
+                        add(makeYUV10_444_Planar_LE_Rec2020_HLG());
+                        add(makeYUV12_444_Planar_LE_Rec601());
+                        add(makeYUV12_444_Planar_LE_Rec2020());
+                        add(makeYUV12_444_Planar_LE_Rec2020_PQ());
+                        add(makeYUV12_444_Planar_LE_Rec2020_HLG());
                         add(makeRGB10_BE_2110());
                         add(makeRGB12_BE_2110());
                         add(makeYUV10_2110_Rec709());
@@ -2437,6 +2539,139 @@ PixelFormat::IDList PixelFormat::registeredIDs() {
                 if (id != Invalid) ret.pushToBack(id);
         }
         return ret;
+}
+
+// ---------------------------------------------------------------------------
+// Colorimetry variants — find-or-register a format with a given ColorModel
+// ---------------------------------------------------------------------------
+
+namespace {
+        // Canonical colorimetry token a PixelFormat name carries as its
+        // trailing suffix (the @c <colormodel>[_<hdr>] portion of the naming
+        // scheme).  Returns an empty String for models with no conventional
+        // token, in which case the caller appends a fallback.
+        String colorModelNameToken(ColorModel::ID id) {
+                switch (id) {
+                        case ColorModel::sRGB: return String("sRGB");
+                        case ColorModel::Rec709:
+                        case ColorModel::YCbCr_Rec709: return String("Rec709");
+                        case ColorModel::Rec601_PAL:
+                        case ColorModel::Rec601_NTSC:
+                        case ColorModel::YCbCr_Rec601: return String("Rec601");
+                        case ColorModel::Rec2020:
+                        case ColorModel::YCbCr_Rec2020: return String("Rec2020");
+                        case ColorModel::Rec2020_PQ:
+                        case ColorModel::YCbCr_Rec2020_PQ: return String("Rec2020_PQ");
+                        case ColorModel::Rec2020_HLG:
+                        case ColorModel::YCbCr_Rec2020_HLG: return String("Rec2020_HLG");
+                        case ColorModel::DCI_P3: return String("P3D65");
+                        case ColorModel::DCI_P3_PQ: return String("P3D65_PQ");
+                        default: return String();
+                }
+        }
+} // namespace
+
+String PixelFormat::nameWithColorModel(const String &baseName, ColorModel::ID from, ColorModel::ID to) {
+        const String toToken = colorModelNameToken(to);
+        const String suffix = toToken.isEmpty() ? (String("CM") + String::number(static_cast<int>(to))) : toToken;
+        const String fromToken = colorModelNameToken(from);
+        // Replace the trailing "_<fromToken>" when present; otherwise append.
+        if (!fromToken.isEmpty()) {
+                const String tail = String("_") + fromToken;
+                if (baseName.endsWith(tail)) {
+                        return baseName.left(baseName.length() - tail.length()) + String("_") + suffix;
+                }
+        }
+        return baseName + String("_") + suffix;
+}
+
+namespace {
+        // Recomputes a YCbCr / RGB format's component semantics for a target
+        // quantization range, in place, preserving the per-component bit depth.
+        // Full range is [0, 2^N-1]; limited (studio) range follows the standard
+        // N-bit scaling — luma/RGB [16, 235]·2^(N-8), chroma [16, 240]·2^(N-8).
+        // The alpha component (if any) is always full-scale and left untouched.
+        void applyRangeToCompSemantics(PixelFormat::Data &d, VideoRange range) {
+                if (range == VideoRange::Unknown) return;
+                const size_t comps = d.memLayout.compCount();
+                if (comps == 0) return;
+                const int  bits = static_cast<int>(d.memLayout.compDesc(0).bits);
+                if (bits < 8) return;
+                const int  shift = bits - 8;
+                const int  fullMax = (1 << bits) - 1;
+                const bool ycbcr = d.colorModel.type() == ColorModel::TypeYCbCr;
+                const bool full = (range == VideoRange::Full);
+                for (size_t i = 0; i < comps && i < PixelFormat::MaxComps; ++i) {
+                        if (d.alphaCompIndex >= 0 && static_cast<int>(i) == d.alphaCompIndex) continue;
+                        if (full) {
+                                d.compSemantics[i].rangeMin = 0.0f;
+                                d.compSemantics[i].rangeMax = static_cast<float>(fullMax);
+                        } else {
+                                const bool chroma = ycbcr && (i == 1 || i == 2);
+                                d.compSemantics[i].rangeMin = static_cast<float>(16 << shift);
+                                d.compSemantics[i].rangeMax = static_cast<float>((chroma ? 240 : 235) << shift);
+                        }
+                }
+        }
+} // namespace
+
+PixelFormat PixelFormat::withColorModel(const PixelFormat &base, ColorModel::ID colorModel) {
+        return withColorModel(base, colorModel, VideoRange(VideoRange::Unknown));
+}
+
+PixelFormat PixelFormat::withColorModel(const PixelFormat &base, ColorModel::ID colorModel, VideoRange range) {
+        if (!base.isValid()) return base;
+        const ColorModel::ID targetCm = (colorModel == ColorModel::Invalid) ? base.colorModel().id() : colorModel;
+        const VideoRange     targetRange = (range == VideoRange::Unknown) ? base.videoRange() : range;
+        // No-op when nothing actually changes.
+        if (targetCm == base.colorModel().id() &&
+            (range == VideoRange::Unknown || targetRange == base.videoRange())) {
+                return base;
+        }
+
+        // Reuse an already-registered format with the same identity (memory
+        // layout, codec, alpha) + requested ColorModel + range — this is how the
+        // well-known catalog variants keep their stable IDs.
+        for (ID id : registeredIDs()) {
+                PixelFormat pf(id);
+                if (pf.memLayout().id() == base.memLayout().id() && pf.colorModel().id() == targetCm &&
+                    pf.videoRange() == targetRange && pf.isCompressed() == base.isCompressed() &&
+                    pf.videoCodec().id() == base.videoCodec().id() && pf.hasAlpha() == base.hasAlpha()) {
+                        return pf;
+                }
+        }
+
+        // None found — mint a runtime variant mirroring base with the
+        // ColorModel / range swapped.
+        const Data *src = lookupData(base.id());
+        if (src == nullptr) return base;
+        Data     d = *src;
+        const ID newId = registerType();
+        d.id = newId;
+        d.colorModel = ColorModel(targetCm);
+        // Build the name: strip any trailing _Full off the base, swap the
+        // colour token, then re-append _Full for a full-range result.
+        String baseName = base.name();
+        if (baseName.endsWith(String("_Full"))) baseName = baseName.left(baseName.length() - 5);
+        String newName = nameWithColorModel(baseName, base.colorModel().id(), targetCm);
+        if (targetRange == VideoRange::Full) newName = newName + String("_Full");
+        d.name = newName;
+        d.desc = d.name + String(" (runtime colorimetry variant)");
+        applyRangeToCompSemantics(d, targetRange);
+        // Let registerData auto-derive videoRange from the (possibly recomputed)
+        // component semantics so it stays consistent with the data.
+        d.videoRange = VideoRange(VideoRange::Unknown);
+        registerData(std::move(d));
+
+        // Log the new runtime registration with full detail so we can spot
+        // formats worth promoting to the well-known catalog.
+        PixelFormat result(newId);
+        promekiInfo("PixelFormat: registered runtime format '%s' (id %d): layout=%s colorModel=%s range=%s "
+                    "compressed=%d codec=%s alpha=%d — consider adding to the well-known catalog",
+                    result.name().cstr(), static_cast<int>(newId), result.memLayout().name().cstr(),
+                    result.colorModel().name().cstr(), result.videoRange().toString().cstr(),
+                    result.isCompressed() ? 1 : 0, result.videoCodec().name().cstr(), result.hasAlpha() ? 1 : 0);
+        return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -2650,7 +2885,13 @@ static struct PixelFormatPaintEngineInit {
 
 size_t PixelFormat::lineStride(size_t planeIndex, const ImageDesc &desc) const {
         if (d->compressed) return 0;
-        return d->memLayout.lineStride(planeIndex, desc.width(), desc.linePad(), desc.lineAlign());
+        return d->memLayout.lineStride(planeIndex, desc.width(), desc.linePad(planeIndex),
+                                       desc.lineAlign(planeIndex));
+}
+
+int64_t PixelFormat::signedLineStride(size_t planeIndex, const ImageDesc &desc) const {
+        const int64_t mag = static_cast<int64_t>(lineStride(planeIndex, desc));
+        return desc.lineFlip(planeIndex) ? -mag : mag;
 }
 
 size_t PixelFormat::planeSize(size_t planeIndex, const ImageDesc &desc) const {
@@ -2658,7 +2899,8 @@ size_t PixelFormat::planeSize(size_t planeIndex, const ImageDesc &desc) const {
                 if (!desc.metadata().contains(Metadata::CompressedSize)) return 0;
                 return desc.metadata().get(Metadata::CompressedSize).get<size_t>();
         }
-        return d->memLayout.planeSize(planeIndex, desc.width(), desc.height(), desc.linePad(), desc.lineAlign());
+        return d->memLayout.planeSize(planeIndex, desc.width(), desc.height(), desc.linePad(planeIndex),
+                                      desc.lineAlign(planeIndex));
 }
 
 PaintEngine PixelFormat::createPaintEngine(const UncompressedVideoPayload &payload) const {
@@ -2667,13 +2909,16 @@ PaintEngine PixelFormat::createPaintEngine(const UncompressedVideoPayload &paylo
 }
 
 // ============================================================================
-// DataStream wire format (v1: tagged String holding the registered name).
+// DataStream wire format.
+//
+//   v1 — a tagged String holding the registered name (legacy; read-only).
+//   v2 — a one-byte well-known flag, then either the stable ID (well-known)
+//        or the full Data so a runtime-registered format (e.g. a colorimetry
+//        variant from withColorModel) round-trips into a fresh process.  The
+//        non-serialisable createPaintEngineFunc is intentionally omitted —
+//        runtime formats are colour variants of decode/transport surfaces that
+//        carry no paint engine; it is restored as null.
 // ============================================================================
-
-Error PixelFormat::writeToStream(DataStream &s) const {
-        s << String(name());
-        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
-}
 
 template <>
 Result<PixelFormat> PixelFormat::readFromStream<1>(DataStream &s) {
@@ -2681,6 +2926,118 @@ Result<PixelFormat> PixelFormat::readFromStream<1>(DataStream &s) {
         s >> str;
         if (s.status() != DataStream::Ok) return makeError<PixelFormat>(s.toError());
         return PixelFormat::fromString(str);
+}
+
+// Find an already-registered format with the same identity (layout / codec /
+// alpha / ColorModel) as @p d, so a v2 read dedups against the catalog and
+// against formats registered earlier this session instead of piling up
+// duplicates.  Returns Invalid when none matches.
+static PixelFormat::ID findEquivalentFormat(const PixelFormat::Data &d) {
+        for (PixelFormat::ID id : PixelFormat::registeredIDs()) {
+                PixelFormat pf(id);
+                if (pf.memLayout().id() == d.memLayout.id() && pf.colorModel().id() == d.colorModel.id() &&
+                    pf.isCompressed() == d.compressed && pf.videoCodec().id() == d.videoCodec.id() &&
+                    pf.hasAlpha() == d.hasAlpha) {
+                        return id;
+                }
+        }
+        return PixelFormat::Invalid;
+}
+
+Error PixelFormat::writeToStream(DataStream &s) const {
+        const ID         fid = id();
+        const bool       wellKnown = (fid >= 0 && fid < UserDefined);
+        s << static_cast<uint8_t>(wellKnown ? 1 : 0);
+        if (wellKnown) {
+                s << static_cast<int32_t>(fid);
+                return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+        }
+        const Data *d = lookupData(fid);
+        if (d == nullptr) return Error::Invalid;
+        s << d->name << d->desc;
+        s << d->memLayout;  // nested datatype (self-describing header)
+        s << d->colorModel; // nested datatype
+        s << static_cast<uint8_t>(d->hasAlpha ? 1 : 0);
+        s << static_cast<int32_t>(d->alphaCompIndex);
+        s << static_cast<uint8_t>(d->compressed ? 1 : 0);
+        s << d->videoCodec; // nested datatype
+        s << static_cast<uint32_t>(d->encodeSources.size());
+        for (ID e : d->encodeSources) s << static_cast<int32_t>(e);
+        s << static_cast<uint32_t>(d->decodeTargets.size());
+        for (ID t : d->decodeTargets) s << static_cast<int32_t>(t);
+        s << static_cast<uint32_t>(d->fourccList.size());
+        for (const FourCC &f : d->fourccList) s << static_cast<uint32_t>(f.value());
+        for (size_t i = 0; i < MaxComps; ++i) {
+                s << d->compSemantics[i].name << d->compSemantics[i].abbrev << d->compSemantics[i].rangeMin
+                  << d->compSemantics[i].rangeMax;
+        }
+        s << static_cast<int32_t>(d->videoRange.value());
+        return s.status() == DataStream::Ok ? Error::Ok : s.toError();
+}
+
+template <>
+Result<PixelFormat> PixelFormat::readFromStream<2>(DataStream &s) {
+        uint8_t wellKnown = 0;
+        s >> wellKnown;
+        if (s.status() != DataStream::Ok) return makeError<PixelFormat>(s.toError());
+        if (wellKnown) {
+                int32_t fid = 0;
+                s >> fid;
+                if (s.status() != DataStream::Ok) return makeError<PixelFormat>(s.toError());
+                return makeResult(PixelFormat(static_cast<ID>(fid)));
+        }
+
+        Data    d;
+        uint8_t hasAlpha = 0;
+        uint8_t compressed = 0;
+        int32_t alphaIdx = -1;
+        s >> d.name >> d.desc;
+        s >> d.memLayout;
+        s >> d.colorModel;
+        s >> hasAlpha >> alphaIdx >> compressed;
+        s >> d.videoCodec;
+        d.hasAlpha = hasAlpha != 0;
+        d.alphaCompIndex = alphaIdx;
+        d.compressed = compressed != 0;
+
+        uint32_t count = 0;
+        s >> count;
+        for (uint32_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
+                int32_t e = 0;
+                s >> e;
+                d.encodeSources.pushToBack(static_cast<ID>(e));
+        }
+        s >> count;
+        for (uint32_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
+                int32_t t = 0;
+                s >> t;
+                d.decodeTargets.pushToBack(static_cast<ID>(t));
+        }
+        s >> count;
+        for (uint32_t i = 0; i < count && s.status() == DataStream::Ok; ++i) {
+                uint32_t v = 0;
+                s >> v;
+                d.fourccList.pushToBack(FourCC(static_cast<char>((v >> 24) & 0xff),
+                                               static_cast<char>((v >> 16) & 0xff),
+                                               static_cast<char>((v >> 8) & 0xff), static_cast<char>(v & 0xff)));
+        }
+        for (size_t i = 0; i < MaxComps; ++i) {
+                s >> d.compSemantics[i].name >> d.compSemantics[i].abbrev >> d.compSemantics[i].rangeMin >>
+                        d.compSemantics[i].rangeMax;
+        }
+        int32_t range = 0;
+        s >> range;
+        if (s.status() != DataStream::Ok) return makeError<PixelFormat>(s.toError());
+        d.videoRange = VideoRange(range);
+
+        // Dedup against the catalog / formats already registered this session;
+        // only mint a fresh runtime ID when nothing equivalent exists.
+        ID existing = findEquivalentFormat(d);
+        if (existing != Invalid) return makeResult(PixelFormat(existing));
+        const ID newId = registerType();
+        d.id = newId;
+        registerData(std::move(d));
+        return makeResult(PixelFormat(newId));
 }
 
 PROMEKI_NAMESPACE_END

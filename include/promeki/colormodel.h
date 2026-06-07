@@ -395,6 +395,27 @@ class ColorModel {
                 static H273 toH273(ID id);
 
                 /**
+                 * @brief Resolves an H.273 codepoint triplet to the closest
+                 *        well-known ColorModel ID — the inverse of @ref toH273.
+                 *
+                 * Picks a Y'CbCr-family model when @p matrix names a concrete
+                 * matrix (BT.709 = 1, BT.470BG = 5, SMPTE-170M = 6,
+                 * BT.2020-NCL = 9) and an RGB-family model when @p matrix is
+                 * Identity (0); the HDR transfer codes (16 = PQ, 18 = HLG)
+                 * select the Rec.2020 PQ / HLG models regardless of matrix.
+                 * A @c 0 / @c 2 ("unset" / Unspecified) on every axis returns
+                 * @ref Invalid so the caller can keep its own default rather
+                 * than be forced onto a guess.  This is how a decoder turns a
+                 * bitstream / container colour description into the matching
+                 * @ref PixelFormat ColorModel.
+                 *
+                 * @param primaries H.273 @c colour_primaries.
+                 * @param transfer  H.273 @c transfer_characteristics.
+                 * @param matrix    H.273 @c matrix_coefficients.
+                 */
+                static ID fromH273(uint8_t primaries, uint8_t transfer, uint8_t matrix);
+
+                /**
                  * @brief Constructs a ColorModel from an ID.
                  *
                  * Resolves the ID to internal data via a construct-on-first-use

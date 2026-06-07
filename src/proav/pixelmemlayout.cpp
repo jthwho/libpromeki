@@ -1191,6 +1191,17 @@ static PixelMemLayout::Data makePlanar444_3x10LE() {
         return d;
 }
 
+static PixelMemLayout::Data makePlanar444_3x12LE() {
+        PixelMemLayout::Data d = makePlanar444_3x10LE();
+        d.id = PixelMemLayout::P_444_3x12_LE;
+        d.name = "Planar_444_3x12_LE";
+        d.desc = "3 planes, 12-bit in 16-bit LE words, 4:4:4";
+        d.comps[0].bits = 12;
+        d.comps[1].bits = 12;
+        d.comps[2].bits = 12;
+        return d;
+}
+
 // ---------------------------------------------------------------------------
 // 16-bit YCbCr additions factory functions
 // ---------------------------------------------------------------------------
@@ -1588,6 +1599,7 @@ struct PixelMemLayoutRegistry {
                         add(makeInterleavedUYVY3x16BE());
                         add(makePlanar444_3x8());
                         add(makePlanar444_3x10LE());
+                        add(makePlanar444_3x12LE());
                         add(makeSt2110_3x10BE());
                         add(makeSt2110_3x12BE());
                         add(makeSt2110_422UYVY3x10BE());

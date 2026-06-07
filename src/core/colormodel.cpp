@@ -1250,6 +1250,47 @@ ColorModel::H273 ColorModel::toH273(ID id) {
         }
 }
 
+ColorModel::ID ColorModel::fromH273(uint8_t primaries, uint8_t transfer, uint8_t matrix) {
+        // Inverse of toH273 over the well-known set.  H.273 reserves 0 and 2
+        // for "unset" / "Unspecified" on every axis; treat them as no opinion.
+        const bool concreteMatrix = (matrix != 0 && matrix != 2);
+
+        // Y'CbCr family — a concrete matrix names the luma-coefficient set.
+        // The HDR transfer codes pin the Rec.2020 PQ / HLG models (their
+        // matrix is BT.2020-NCL = 9, but we accept any concrete matrix so a
+        // mistagged-matrix HDR stream still lands on the right curve).
+        if (concreteMatrix) {
+                if (transfer == 16) return YCbCr_Rec2020_PQ; // SMPTE ST 2084 (PQ)
+                if (transfer == 18) return YCbCr_Rec2020_HLG; // ITU-R BT.2100 HLG
+                switch (matrix) {
+                        case 1: return YCbCr_Rec709;  // BT.709
+                        case 5:                       // BT.470BG (PAL)
+                        case 6: return YCbCr_Rec601;  // SMPTE-170M (NTSC)
+                        case 9: return YCbCr_Rec2020; // BT.2020 NCL
+                        default: break;
+                }
+                // Concrete-but-unrecognised matrix: infer from primaries.
+                if (primaries == 9) return YCbCr_Rec2020;
+                if (primaries == 5 || primaries == 6) return YCbCr_Rec601;
+                return YCbCr_Rec709;
+        }
+
+        // RGB family (Identity matrix, or matrix unset with a concrete
+        // primaries / transfer to go on).
+        if (transfer == 16) return Rec2020_PQ;
+        if (transfer == 18) return Rec2020_HLG;
+        switch (primaries) {
+                case 1: return (transfer == 13) ? sRGB : Rec709; // BT.709 primaries; sRGB transfer → sRGB
+                case 5: return Rec601_PAL;                        // BT.470BG
+                case 6: return Rec601_NTSC;                       // SMPTE-170M
+                case 9: return Rec2020;                           // BT.2020
+                case 12: return DCI_P3;                           // SMPTE-432 (P3-D65)
+                default: break;
+        }
+        // Nothing determinable — let the caller keep its own default.
+        return Invalid;
+}
+
 // ============================================================================
 // DataStream wire format (v1: tagged String holding the registered name).
 // ============================================================================

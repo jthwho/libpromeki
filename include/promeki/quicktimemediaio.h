@@ -101,6 +101,25 @@ class QuickTimeMediaIO : public DedicatedThreadMediaIO {
                 // the planner-inserted CSC stays cheap.
                 static PixelFormat pickSupportedPixelFormat(const PixelFormat &offered);
 
+                // Rewrites @p desc's audio descriptors to the compressed
+                // AudioFormat named by MediaConfig::QuickTimeAudioCodec when it
+                // selects a real codec, so the planner splices an AudioEncoder.
+                // PCM / Invalid leaves the audio untouched.
+                void rewriteAudioForCodec(MediaDesc &desc) const;
+
+                // Rewrites @p desc's (uncompressed) image descriptors to the
+                // compressed PixelFormat of MediaConfig::QuickTimeVideoCodec when
+                // it selects a real codec, so the planner splices a VideoEncoder
+                // (the codec is recovered via VideoCodec::fromPixelFormat).
+                // Invalid / already-compressed video is left untouched.
+                void rewriteVideoForCodec(MediaDesc &desc) const;
+
+                // Resolves the scan mode to write into the video track's fiel
+                // box: MediaConfig::VideoScanMode when it names a concrete mode,
+                // else the source ImageDesc's @p descScanMode, else Unknown
+                // (progressive).
+                VideoScanMode resolveWriteScanMode(const VideoScanMode &descScanMode) const;
+
                 Error readVideoFrame(const FrameNumber &frameIndex, Frame &outFrame);
                 Error readAudioSlice(uint64_t startSample, size_t samples, MediaPayload::Ptr &out);
                 Error setupWriterFromFrame(const Frame &frame);

@@ -150,6 +150,26 @@ class QuickTimeReader : public QuickTime::Impl {
                 Error parseVideoSampleEntry(quicktime_atom::ReadStream &stream, FourCC entryType,
                                             int64_t entryPayloadEnd, QuickTime::Track &track);
 
+                /**
+                 * @brief Parses a @c colr child box and stamps its colorimetry
+                 *        (@c nclc / @c nclx H.273 codes) onto @p track's
+                 *        metadata as the VUI colour-description override.
+                 *
+                 * Leaves @p stream positioned at the end of @p box.  Non-H.273
+                 * colour types (ICC profiles) are ignored.
+                 */
+                void parseColrBox(quicktime_atom::ReadStream &stream, const quicktime_atom::Box &box,
+                                  QuickTime::Track &track);
+
+                /**
+                 * @brief Parses a @c fiel child box and stamps its scan mode
+                 *        (@ref VideoScanMode) onto @p track's metadata.
+                 *
+                 * Leaves @p stream positioned at the end of @p box.
+                 */
+                void parseFielBox(quicktime_atom::ReadStream &stream, const quicktime_atom::Box &box,
+                                  QuickTime::Track &track);
+
                 /** @brief Parses @c udta at the given range into _containerMetadata. */
                 Error parseUdta(int64_t payloadOffset, int64_t payloadEnd);
 

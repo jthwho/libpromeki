@@ -165,33 +165,48 @@ static const MediaIOFactory *findFactoryForFileRead(const String &filename) {
                 if (f->canHandlePath(filename)) return f;
         }
 
-        // Pass 1: extension match (fast path)
+        // Pass 1: extension match (fast path).  Native (non-fallback)
+        // backends win; a fallback backend (FFmpeg) is used only when
+        // no native source claims the extension — so `.mov` stays with
+        // QuickTime regardless of static-init order.
         String ext = extractExtension(filename);
         if (!ext.isEmpty()) {
+                const MediaIOFactory *fallback = nullptr;
                 for (const MediaIOFactory *f : list) {
                         if (f == nullptr) continue;
                         if (!f->canBeSource()) continue;
                         for (const String &e : f->extensions()) {
-                                if (ext == e.toLower()) return f;
+                                if (ext == e.toLower()) {
+                                        if (!f->isFallback()) return f;
+                                        if (fallback == nullptr) fallback = f;
+                                        break;
+                                }
                         }
                 }
+                if (fallback != nullptr) return fallback;
         }
 
-        // Pass 2: content-based probe
+        // Pass 2: content-based probe, same native-first preference —
+        // a fallback backend's catch-all probe only wins when no native
+        // backend recognizes the bytes.
         File probeFile(filename);
         if (probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
         const MediaIOFactory *result = nullptr;
+        const MediaIOFactory *fallback = nullptr;
         for (const MediaIOFactory *f : list) {
                 if (f == nullptr) continue;
                 if (!f->canBeSource()) continue;
                 probeFile.seek(0);
                 if (f->canHandleDevice(&probeFile)) {
-                        result = f;
-                        break;
+                        if (!f->isFallback()) {
+                                result = f;
+                                break;
+                        }
+                        if (fallback == nullptr) fallback = f;
                 }
         }
         probeFile.close();
-        return result;
+        return result != nullptr ? result : fallback;
 }
 
 // ============================================================================

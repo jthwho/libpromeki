@@ -421,6 +421,11 @@ option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_OPUS     "Include Opus audio codec (libopus)"     ON)
 option(PROMEKI_ENABLE_AAC      "Include AAC audio codec (vendored fdk-aac)" ON)
+# Vendored full FFmpeg suite (libav*).  Provides the generic FFmpeg audio
+# codec backend (AC-3 / MP3 / FLAC encode+decode) and is shared foundation
+# for future FFmpeg-backed work.  Built LGPL-2.1+ (no --enable-gpl /
+# --enable-nonfree); it consumes our vendored libmp3lame for MP3 encode.
+option(PROMEKI_ENABLE_FFMPEG   "Include vendored FFmpeg (libav*) — AC-3/MP3/FLAC codecs + future" ON)
 # Extra codecs surfaced through libsndfile.  Each one transitively pulls
 # in its own vendored submodule(s): FLAC requires libFLAC+libogg, Vorbis
 # requires libvorbis+libogg, MP3 requires libmpg123 (read) + libmp3lame
@@ -647,6 +652,7 @@ option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_OPUS          "Use system libopus instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_FDKAAC        "Use system fdk-aac instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_FFMPEG        "Use system FFmpeg (libav*) instead of vendored" OFF)
 # libsndfile external codec deps (FLAC / Vorbis / MP3): each one
 # separately switchable between vendored submodule and a system install.
 # libogg is the shared dependency for FLAC and Vorbis.
@@ -762,6 +768,9 @@ if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AAC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AAC requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_FFMPEG AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_FFMPEG requires PROMEKI_ENABLE_PROAV")
 endif()
 # The libsndfile-fronted codecs ride on the libsndfile build (which is the
 # audio file-I/O backend), so they transitively need PROMEKI_ENABLE_AUDIO.
@@ -2481,6 +2490,99 @@ if(PROMEKI_ENABLE_AAC)
     endif()
 endif()
 
+# --- FFmpeg (libav*) ---
+# Vendored full FFmpeg suite, built shared and shipped beside libpromeki.so.
+# Provides the generic FFmpeg audio codec backend (AC-3 / MP3 / FLAC) today
+# and is shared foundation for future FFmpeg-backed work.  FFmpeg's configure
+# is a bespoke shell script (neither autotools nor CMake), but it accepts the
+# familiar --prefix / --libdir / --extra-cflags / --extra-ldflags and supports
+# out-of-tree builds, so we build in a dedicated BINARY_DIR and leave the
+# submodule checkout pristine.
+#
+# Licence posture: default LGPL-2.1+.  We deliberately do NOT pass
+# --enable-gpl (would be forced by libx264) or --enable-nonfree (would be
+# forced by libfdk-aac) — AAC stays on our standalone fdk-aac backend and
+# x264 stays standalone, so this build remains redistributable under the
+# LGPL.  The only external codec lib we wire in is our vendored libmp3lame
+# (MP3 encode); AC-3, MP3 decode and FLAC are native FFmpeg codecs.
+if(PROMEKI_ENABLE_FFMPEG)
+    if(PROMEKI_USE_SYSTEM_FFMPEG)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+            libavcodec libavutil libswresample libavformat)
+        set(PROMEKI_FFMPEG_TARGETS PkgConfig::FFMPEG)
+    else()
+        # Build FFmpeg with our vendored libmp3lame visible (header + .so) so
+        # --enable-libmp3lame's configure-time require check links cleanly.
+        set(_promeki_ffmpeg_deps "")
+        set(_promeki_ffmpeg_extra_enables "")
+        if(PROMEKI_ENABLE_MP3 AND NOT PROMEKI_USE_SYSTEM_MPG123)
+            # libmp3lame lives in the third-party prefix once liblame-ep
+            # installs; ffmpeg detects it via -I/-L (lame ships no .pc).
+            list(APPEND _promeki_ffmpeg_extra_enables --enable-libmp3lame)
+            if(NOT PROMEKI_USE_SYSTEM_LAME)
+                list(APPEND _promeki_ffmpeg_deps liblame-ep)
+            endif()
+        endif()
+
+        # x86 SIMD asm needs nasm/yasm.  Keep it when present (big speed win),
+        # but degrade gracefully to a C-only build so a host without an
+        # assembler still configures.
+        find_program(PROMEKI_NASM_EXE NAMES nasm yasm)
+        set(_promeki_ffmpeg_asm "")
+        if(NOT PROMEKI_NASM_EXE)
+            set(_promeki_ffmpeg_asm --disable-x86asm)
+            message(STATUS "FFmpeg: no nasm/yasm found — building without x86 asm")
+        endif()
+
+        ExternalProject_Add(
+            ffmpeg-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/ffmpeg
+            DEPENDS ${_promeki_ffmpeg_deps}
+            BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-build/ffmpeg
+            CONFIGURE_COMMAND
+                ${CMAKE_COMMAND} -E env
+                    "PKG_CONFIG_PATH=${PROMEKI_THIRDPARTY_PREFIX}/lib/pkgconfig"
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/ffmpeg/configure
+                    --prefix=${PROMEKI_THIRDPARTY_PREFIX}
+                    --libdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    --shlibdir=${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    --incdir=${PROMEKI_THIRDPARTY_PREFIX}/include
+                    --enable-shared
+                    --disable-static
+                    --enable-pic
+                    --disable-programs
+                    --disable-doc
+                    --disable-autodetect
+                    --extra-cflags=-I${PROMEKI_THIRDPARTY_PREFIX}/include
+                    --extra-ldflags=-L${PROMEKI_THIRDPARTY_PREFIX}/lib
+                    ${_promeki_ffmpeg_asm}
+                    ${_promeki_ffmpeg_extra_enables}
+            BUILD_COMMAND make
+            INSTALL_COMMAND make install
+            BUILD_BYPRODUCTS
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libavcodec.so
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libavutil.so
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libswresample.so
+                ${PROMEKI_THIRDPARTY_PREFIX}/lib/libavformat.so
+        )
+        file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        # The libav* set we link directly.  Each is a replaceable shared
+        # object beside libpromeki.so (LGPL-2.1+).  libavformat carries the
+        # muxers / demuxers consumed by the FfmpegMediaIO container backend.
+        set(PROMEKI_FFMPEG_TARGETS "")
+        foreach(_av avcodec avutil swresample avformat)
+            add_library(promeki_${_av}_vendored SHARED IMPORTED)
+            set_target_properties(promeki_${_av}_vendored PROPERTIES
+                IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/lib${_av}.so
+                INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_THIRDPARTY_PREFIX}/include
+            )
+            add_dependencies(promeki_${_av}_vendored ffmpeg-ep)
+            list(APPEND PROMEKI_FFMPEG_TARGETS promeki_${_av}_vendored)
+        endforeach()
+    endif()
+endif()
+
 # --- whisper.cpp ---
 # Vendored whisper.cpp + GGML (CPU-only build for the first cut).  The
 # build installs libwhisper.a plus three GGML archives (libggml.a is
@@ -3428,6 +3530,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/nvdecvideodecoder.h
         include/promeki/imagefilemediaio.h
         include/promeki/quicktimemediaio.h
+        include/promeki/ffmpegmediaio.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
         include/promeki/mediadesc.h
@@ -3658,6 +3761,23 @@ if(PROMEKI_ENABLE_PROAV)
         # directly.
         list(APPEND PROMEKI_SOURCES src/proav/fdkaaccodec.cpp)
     endif()
+    if(PROMEKI_ENABLE_FFMPEG)
+        # Shared FFmpeg plumbing (av_log → promeki Logger bridge, AVERROR
+        # formatter) used by every FFmpeg-backed backend.
+        list(APPEND PROMEKI_SOURCES src/proav/ffmpegsupport.cpp)
+        # Generic FFmpeg AudioEncoder / AudioDecoder backend (AC-3 / MP3 /
+        # FLAC).  Gated on PROMEKI_ENABLE_FFMPEG because the file includes
+        # <libavcodec/avcodec.h> etc. directly.
+        list(APPEND PROMEKI_SOURCES src/proav/ffmpegaudiocodec.cpp)
+        # Generic FFmpeg VideoEncoder / VideoDecoder backend: decode for
+        # H.264 / HEVC / AV1 / VP9 / ProRes (the software "fall back to
+        # FFmpeg" path) plus ProRes / MJPEG encode (LGPL-clean encoders).
+        list(APPEND PROMEKI_SOURCES src/proav/ffmpegvideocodec.cpp)
+        # Generic FFmpeg container MediaIO backend (libavformat muxers /
+        # demuxers).  Native-first fallback: claims only formats no native
+        # backend handles and is reachable explicitly via Type=FFmpeg.
+        list(APPEND PROMEKI_SOURCES src/proav/ffmpegmediaio.cpp)
+    endif()
     if(PROMEKI_ENABLE_WHISPER)
         # Vendored whisper.cpp TranscriptionEngine backend.  Includes
         # <whisper.h> directly, so the file is gated on
@@ -3848,6 +3968,13 @@ if((PROMEKI_ENABLE_FLAC OR PROMEKI_ENABLE_VORBIS) AND NOT PROMEKI_USE_SYSTEM_OGG
 endif()
 if(PROMEKI_ENABLE_OPUS AND NOT PROMEKI_USE_SYSTEM_OPUS)
     list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libopus.so*")
+endif()
+if(PROMEKI_ENABLE_FFMPEG AND NOT PROMEKI_USE_SYSTEM_FFMPEG)
+    # Full vendored FFmpeg suite ships beside libpromeki.so (LGPL-2.1+).
+    list(APPEND PROMEKI_SHIPPED_SO_PATTERNS
+        "libavcodec.so*" "libavformat.so*" "libavutil.so*"
+        "libavfilter.so*" "libavdevice.so*"
+        "libswscale.so*" "libswresample.so*" "libpostproc.so*")
 endif()
 if(PROMEKI_ENABLE_X264 AND NOT PROMEKI_USE_SYSTEM_X264)
     list(APPEND PROMEKI_SHIPPED_SO_PATTERNS "libx264.so*")
@@ -4103,6 +4230,10 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AAC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_FDKAAC_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_AAC)
+    endif()
+    if(PROMEKI_ENABLE_FFMPEG)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_FFMPEG_TARGETS})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_FFMPEG)
     endif()
     if(PROMEKI_ENABLE_WHISPER)
         # Vendored whisper.cpp installs its public headers at
@@ -4921,6 +5052,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/unit/pcmsilencefiller.cpp
             $<$<BOOL:${PROMEKI_ENABLE_OPUS}>:tests/unit/opusaudiocodec.cpp>
             $<$<BOOL:${PROMEKI_ENABLE_AAC}>:tests/unit/fdkaaccodec.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_FFMPEG}>:tests/unit/ffmpegaudiocodec.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_FFMPEG}>:tests/unit/ffmpegvideocodec.cpp>
+            $<$<BOOL:${PROMEKI_ENABLE_FFMPEG}>:tests/unit/ffmpegmediaio.cpp>
             $<$<BOOL:${PROMEKI_ENABLE_WHISPER}>:tests/unit/whispertranscriptionengine.cpp>
             tests/unit/encodeddesc.cpp
             tests/unit/flvtag.cpp

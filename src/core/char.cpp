@@ -99,32 +99,61 @@ size_t Char::toUtf8(char *buf) const {
         return 4;
 }
 
-Char Char::fromUtf8(const char *buf, size_t *bytesRead) {
-        unsigned char b0 = static_cast<unsigned char>(buf[0]);
+Char Char::fromUtf8(const char *buf, size_t avail, size_t *bytesRead) {
+        static constexpr char32_t kReplacement = 0xFFFD;
+        if (avail == 0) {
+                if (bytesRead) *bytesRead = 0;
+                return Char(kReplacement);
+        }
+        const unsigned char b0 = static_cast<unsigned char>(buf[0]);
         if (b0 < 0x80) {
                 if (bytesRead) *bytesRead = 1;
                 return Char(static_cast<char32_t>(b0));
         }
+        // Determine the sequence length and the lead byte's data bits.
+        size_t   need = 0;
+        char32_t cp   = 0;
         if ((b0 & 0xE0) == 0xC0) {
-                char32_t cp = (static_cast<char32_t>(b0 & 0x1F) << 6) | (static_cast<char32_t>(buf[1] & 0x3F));
-                if (bytesRead) *bytesRead = 2;
-                return Char(cp);
+                need = 2;
+                cp = b0 & 0x1F;
+        } else if ((b0 & 0xF0) == 0xE0) {
+                need = 3;
+                cp = b0 & 0x0F;
+        } else if ((b0 & 0xF8) == 0xF0) {
+                need = 4;
+                cp = b0 & 0x07;
+        } else {
+                // Stray continuation byte or invalid lead — resync by one.
+                if (bytesRead) *bytesRead = 1;
+                return Char(kReplacement);
         }
-        if ((b0 & 0xF0) == 0xE0) {
-                char32_t cp = (static_cast<char32_t>(b0 & 0x0F) << 12) | (static_cast<char32_t>(buf[1] & 0x3F) << 6) |
-                              (static_cast<char32_t>(buf[2] & 0x3F));
-                if (bytesRead) *bytesRead = 3;
-                return Char(cp);
+        // Truncated: the sequence runs past the available bytes.  Consume one
+        // byte and emit U+FFFD rather than reading out of bounds.
+        if (avail < need) {
+                if (bytesRead) *bytesRead = 1;
+                return Char(kReplacement);
         }
-        if ((b0 & 0xF8) == 0xF0) {
-                char32_t cp = (static_cast<char32_t>(b0 & 0x07) << 18) | (static_cast<char32_t>(buf[1] & 0x3F) << 12) |
-                              (static_cast<char32_t>(buf[2] & 0x3F) << 6) | (static_cast<char32_t>(buf[3] & 0x3F));
-                if (bytesRead) *bytesRead = 4;
-                return Char(cp);
+        for (size_t i = 1; i < need; ++i) {
+                const unsigned char cb = static_cast<unsigned char>(buf[i]);
+                if ((cb & 0xC0) != 0x80) {
+                        // Not a continuation byte — malformed sequence.
+                        if (bytesRead) *bytesRead = 1;
+                        return Char(kReplacement);
+                }
+                cp = (cp << 6) | (cb & 0x3F);
         }
-        // Invalid UTF-8 byte — return replacement character
-        if (bytesRead) *bytesRead = 1;
-        return Char(static_cast<char32_t>(0xFFFD));
+        if (bytesRead) *bytesRead = need;
+        return Char(cp);
+}
+
+Char Char::fromUtf8(const char *buf, size_t *bytesRead) {
+        // NUL-terminated convenience overload: bound the decode at the
+        // terminator (a NUL can never be a continuation byte, so a truncated
+        // trailing sequence stops there) and delegate to the bounded form.
+        // Scanning at most 4 bytes is enough to cover the longest sequence.
+        size_t avail = 0;
+        while (avail < 4 && buf[avail] != '\0') ++avail;
+        return fromUtf8(buf, avail, bytesRead);
 }
 
 PROMEKI_NAMESPACE_END

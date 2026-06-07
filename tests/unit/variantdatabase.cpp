@@ -11,6 +11,8 @@
 #include <promeki/buffer.h>
 #include <promeki/size2d.h>
 #include <promeki/uuid.h>
+#include <promeki/videoformat.h>
+#include <promeki/timecode.h>
 
 using namespace promeki;
 

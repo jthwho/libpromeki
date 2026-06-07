@@ -80,3 +80,6 @@
 [submodule "thirdparty/x264"]
 	path = thirdparty/x264
 	url = https://code.videolan.org/videolan/x264.git
+[submodule "thirdparty/ffmpeg"]
+	path = thirdparty/ffmpeg
+	url = https://git.ffmpeg.org/ffmpeg.git

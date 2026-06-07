@@ -9,6 +9,7 @@
 #include "quicktime_atom.h"
 
 #include <cstring>
+#include <promeki/colormodel.h>
 #include <promeki/file.h>
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
@@ -1114,7 +1115,9 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
         // needs before it can ingest the length-prefixed VCL NALs
         // stored in @c mdat — capture it onto the Track so the
         // MediaIO layer can hand it to a decoder without
-        // re-reading the container.
+        // re-reading the container.  @c colr carries the container's
+        // authoritative colorimetry, which overrides the Rec.709
+        // assumption baked into the FourCC-derived PixelFormat.
         while (stream.pos() < entryPayloadEnd && !stream.isError()) {
                 Box   childBox;
                 Error cbErr = readBoxHeader(stream, childBox, entryPayloadEnd);
@@ -1130,11 +1133,84 @@ Error QuickTimeReader::parseVideoSampleEntry(quicktime_atom::ReadStream &stream,
                         } else {
                                 stream.skip(childBox.payloadSize);
                         }
+                } else if (childBox.type == FourCC("colr")) {
+                        parseColrBox(stream, childBox, track);
+                } else if (childBox.type == FourCC("fiel")) {
+                        parseFielBox(stream, childBox, track);
                 } else {
                         stream.skip(childBox.payloadSize);
                 }
         }
         return Error::Ok;
+}
+
+void QuickTimeReader::parseFielBox(quicktime_atom::ReadStream &stream, const Box &box, QuickTime::Track &track) {
+        // fiel box: 1 byte field count (1 = progressive, 2 = interlaced) + 1
+        // byte field-order detail.  Drives the track's VideoScanMode, which the
+        // MediaIO layer stamps onto each frame's authoritative
+        // ImageDesc::videoScanMode().  Detail codes (ISO 14496-12 / QuickTime,
+        // matching libavformat): 1 = TT, 6 = BB, 9 = TB, 14 = BT — the leading
+        // (temporally first) field is top for TT/TB, bottom for BB/BT.
+        const int64_t childEnd = stream.pos() + box.payloadSize;
+        uint8_t       fields = stream.readU8();
+        uint8_t       detail = stream.readU8();
+        if (!stream.isError()) {
+                VideoScanMode mode(VideoScanMode::Progressive);
+                if (fields == 2) {
+                        if (detail == 1 || detail == 9) {
+                                mode = VideoScanMode(VideoScanMode::InterlacedEvenFirst);
+                        } else if (detail == 6 || detail == 14) {
+                                mode = VideoScanMode(VideoScanMode::InterlacedOddFirst);
+                        } else {
+                                mode = VideoScanMode(VideoScanMode::Interlaced);
+                        }
+                }
+                track.setVideoScanMode(mode);
+        }
+        stream.seek(childEnd);
+}
+
+void QuickTimeReader::parseColrBox(quicktime_atom::ReadStream &stream, const Box &box, QuickTime::Track &track) {
+        // colr box: a 4-byte colour_type FourCC followed by a type-specific
+        // payload.  We honour the two H.273-coded forms — 'nclc' (QuickTime,
+        // 3× uint16 primaries/transfer/matrix) and 'nclx' (ISO, the same three
+        // codes plus a byte whose top bit is the full_range_flag).  The codes
+        // are H.273 codepoints, so they resolve to a @ref ColorModel which we
+        // apply by rebasing the track's PixelFormat onto it
+        // (@ref PixelFormat::withColorModel) — colorimetry is always carried by
+        // the singular PixelFormat, never side-channel metadata.  Only
+        // *uncompressed* tracks are rebased: their surface is what consumers
+        // see directly, so colr is authoritative.  A compressed track is left
+        // alone — rebasing its codec PixelFormat onto a runtime variant would
+        // defeat the planner's codec resolution, and the decoder recovers
+        // colorimetry from the bitstream's own VUI (which matches colr in a
+        // well-formed file) when it produces the uncompressed output.  Other
+        // colour_types (ICC profiles: 'prof' / 'rICC') are skipped.
+        const int64_t childEnd = stream.pos() + box.payloadSize;
+        FourCC        colourType = stream.readFourCC();
+        if (!stream.isError() && (colourType == FourCC("nclc") || colourType == FourCC("nclx"))) {
+                uint16_t primaries = stream.readU16();
+                uint16_t transfer = stream.readU16();
+                uint16_t matrix = stream.readU16();
+                // nclx carries a full_range_flag in the top bit of a trailing
+                // byte; nclc has no range (→ keep the format's existing range).
+                VideoRange range(VideoRange::Unknown);
+                if (colourType == FourCC("nclx")) {
+                        uint8_t rangeByte = stream.readU8();
+                        range = (rangeByte & 0x80) ? VideoRange(VideoRange::Full) : VideoRange(VideoRange::Limited);
+                }
+                if (!stream.isError()) {
+                        ColorModel::ID cm = ColorModel::fromH273(static_cast<uint8_t>(primaries),
+                                                                 static_cast<uint8_t>(transfer),
+                                                                 static_cast<uint8_t>(matrix));
+                        if (cm != ColorModel::Invalid && track.pixelFormat().isValid() &&
+                            !track.pixelFormat().isCompressed()) {
+                                track.setPixelFormat(PixelFormat::withColorModel(track.pixelFormat(), cm, range));
+                        }
+                }
+        }
+        // Realign to the box end regardless of colour_type / short reads.
+        stream.seek(childEnd);
 }
 
 Error QuickTimeReader::parseTimecodeSampleEntry(int64_t entryPayloadOffset, int64_t entryPayloadEnd,

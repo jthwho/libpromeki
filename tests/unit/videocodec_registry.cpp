@@ -6,6 +6,7 @@
  */
 
 #include <doctest/doctest.h>
+#include <utility>
 #include <promeki/videocodec.h>
 #include <promeki/videoencoder.h>
 #include <promeki/videodecoder.h>
@@ -42,12 +43,23 @@ TEST_CASE("VideoCodec: lookup by name returns the registered entry") {
 }
 
 TEST_CASE("VideoCodec: codecs without a registered backend report null cleanly") {
-        VideoCodec vp9(VideoCodec::VP9);
-        CHECK(vp9.isValid());
-        CHECK_FALSE(vp9.canEncode());
-        CHECK_FALSE(vp9.canDecode());
-        CHECK(error(vp9.createEncoder()).isError());
-        CHECK(error(vp9.createDecoder()).isError());
+        // Register a throwaway codec with no encoder/decoder backend.  (We
+        // can't use a well-known codec here any more — the FFmpeg backend now
+        // services H.264/HEVC/AV1/VP9/ProRes decode, so none of them are
+        // backend-less.)  This still exercises the registry's clean-null path.
+        VideoCodec::ID  id = VideoCodec::registerType();
+        VideoCodec::Data d;
+        d.id = id;
+        d.name = "TestNoBackendCodec";
+        d.desc = "Test-only codec with no registered backend";
+        VideoCodec::registerData(std::move(d));
+
+        VideoCodec codec(id);
+        CHECK(codec.isValid());
+        CHECK_FALSE(codec.canEncode());
+        CHECK_FALSE(codec.canDecode());
+        CHECK(error(codec.createEncoder()).isError());
+        CHECK(error(codec.createDecoder()).isError());
 }
 
 #if PROMEKI_ENABLE_NVENC

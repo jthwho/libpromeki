@@ -72,6 +72,34 @@ TEST_CASE("ColorModel: toH273() maps well-known models") {
         CHECK(ColorModel::toH273(ColorModel::Invalid).primaries == 0);
 }
 
+TEST_CASE("ColorModel: fromH273() resolves codepoint triplets") {
+        // Y'CbCr families — a concrete matrix names the model.
+        CHECK(ColorModel::fromH273(1, 1, 1) == ColorModel::YCbCr_Rec709);
+        CHECK(ColorModel::fromH273(6, 6, 6) == ColorModel::YCbCr_Rec601);
+        CHECK(ColorModel::fromH273(9, 14, 9) == ColorModel::YCbCr_Rec2020);
+
+        // HDR transfer codes pin the PQ / HLG models (any concrete matrix).
+        CHECK(ColorModel::fromH273(9, 16, 9) == ColorModel::YCbCr_Rec2020_PQ);
+        CHECK(ColorModel::fromH273(9, 18, 9) == ColorModel::YCbCr_Rec2020_HLG);
+
+        // RGB families (Identity matrix).
+        CHECK(ColorModel::fromH273(1, 13, 0) == ColorModel::sRGB);
+        CHECK(ColorModel::fromH273(1, 1, 0) == ColorModel::Rec709);
+        CHECK(ColorModel::fromH273(9, 14, 0) == ColorModel::Rec2020);
+        CHECK(ColorModel::fromH273(12, 13, 0) == ColorModel::DCI_P3);
+
+        // Fully unspecified / unset returns Invalid so callers keep a default.
+        CHECK(ColorModel::fromH273(2, 2, 2) == ColorModel::Invalid);
+        CHECK(ColorModel::fromH273(0, 0, 0) == ColorModel::Invalid);
+
+        // Round-trips with toH273 for the Y'CbCr families the decoder targets.
+        for (ColorModel::ID id : {ColorModel::YCbCr_Rec709, ColorModel::YCbCr_Rec601, ColorModel::YCbCr_Rec2020,
+                                  ColorModel::YCbCr_Rec2020_PQ, ColorModel::YCbCr_Rec2020_HLG}) {
+                const ColorModel::H273 h = ColorModel::toH273(id);
+                CHECK(ColorModel::fromH273(h.primaries, h.transfer, h.matrix) == id);
+        }
+}
+
 TEST_CASE("ColorModel: toH273() maps BT.2100 HDR models") {
         // H.273 transfer codepoints: 16 = SMPTE ST 2084 (PQ),
         // 18 = ITU-R BT.2100 HLG.  BT.2020 primaries = 9.

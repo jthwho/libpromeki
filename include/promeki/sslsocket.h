@@ -160,8 +160,14 @@ class SslSocket : public TcpSocket {
 
         private:
                 struct Impl;
-                SharedPtr<Impl> _d;
+                // Declaration order is load-bearing: _d holds the
+                // mbedtls_ssl_context, which mbedtls_ssl_setup() binds to
+                // _ctx's mbedtls_ssl_config.  ~Impl runs mbedtls_ssl_free(),
+                // which still dereferences that config, so _d MUST be
+                // destroyed before _ctx.  Members destruct in reverse
+                // declaration order, hence _ctx is declared first.
                 SslContext      _ctx;
+                SharedPtr<Impl> _d;
 
                 enum SslState {
                         NotEncrypted,
